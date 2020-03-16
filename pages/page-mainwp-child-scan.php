@@ -36,7 +36,7 @@ class MainWP_Child_Scan {
 
 		self::renderHeader( '' );
 		?>
-			<a class="button-primary mwp-child-scan" href="#"><?php _e( 'Scan', 'mainwp' ); ?></a>
+			<a class="button-primary mwp-child-scan" href="#"><?php esc_html_e( 'Scan', 'mainwp' ); ?></a>
 			<?php
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 			if ( ! $websites ) {

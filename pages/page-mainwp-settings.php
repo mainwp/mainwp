@@ -98,18 +98,18 @@ class MainWP_Settings {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>" class="mainwp-submenu"><?php _e( 'Global Options', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Global Options', 'mainwp' ); ?></a>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=SettingsAdvanced' ); ?>" class="mainwp-submenu"><?php _e( 'Advanced Options', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=SettingsAdvanced' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Options', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php _e( 'MainWP Tools', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'MainWP Tools', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {
 						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 							?>
-						<a href="<?php echo admin_url( 'admin.php?page=SettingsClientReportsResponder' ); ?>" class="mainwp-submenu"><?php _e( 'Managed Client Reports', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=SettingsClientReportsResponder' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Managed Client Reports', 'mainwp' ); ?></a>
 							<?php
 						}
 					}
@@ -302,7 +302,8 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST['mainwp_frequencyDailyUpdate'] ) );
 
 				$val = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval($_POST['mainwp_sidebarPosition']) : 1 );
-				if ( $user = wp_get_current_user() ) {
+				$user = wp_get_current_user();
+				if ( $user ) {
 					update_user_option($user->ID, 'mainwp_sidebarPosition', $val, true);
 				}
 
@@ -329,8 +330,8 @@ class MainWP_Settings {
 		self::renderHeader( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
-				<?php if ( isset( $_GET['message'] ) && $_GET['message'] = 'saved' ) : ?>
-					<div class="ui green message"><i class="close icon"></i><?php _e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
+				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
+					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
@@ -356,18 +357,18 @@ class MainWP_Settings {
 										?>
 										<div class="ui action input">
 											<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" value="<?php echo $email; ?>"/>
-											<a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="<?php esc_attr_e( 'Remove this email address', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a>
+											<a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="<?php esc_attr_e( 'Remove this email address', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 										</div>
 										<div class="ui hidden fitted divider"></div>
 									<?php } ?>
-									<a href="#" id="mainwp-multi-emails-add" class="ui button basic green" data-tooltip="<?php esc_attr_e( 'Add another email address to receive email notifications to multiple email addresses.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Add Another Email', 'mainwp' ); ?></a>
+									<a href="#" id="mainwp-multi-emails-add" class="ui button basic green" data-tooltip="<?php esc_attr_e( 'Add another email address to receive email notifications to multiple email addresses.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Add Another Email', 'mainwp' ); ?></a>
 								</div>
 							</div>
 						</div>
 						<script type="text/javascript">
 							jQuery( document ).ready( function () {
 								jQuery( '#mainwp-multi-emails-add' ).on( 'click', function () {
-										jQuery( '#mainwp-multi-emails-add' ).before( '<div class="ui action input"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="Remove this email address" data-inverted=""><?php _e( 'Delete', 'mainwp' ); ?></a></div><div class="ui hidden fitted divider"></div>' );
+										jQuery( '#mainwp-multi-emails-add' ).before( '<div class="ui action input"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="Remove this email address" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a></div><div class="ui hidden fitted divider"></div>' );
 										return false;
 								} );
 								jQuery( '.mainwp-multi-emails-remove' ).on( 'click', function () {
@@ -414,62 +415,62 @@ class MainWP_Settings {
 								<?php
 								if ( $frequencyDailyUpdate == 1 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Once per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
 								<option value="2" 
 								<?php
 								if ( $frequencyDailyUpdate == 2 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Twice per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
 								<option value="3" 
 								<?php
 								if ( $frequencyDailyUpdate == 3 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Three times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Three times per day', 'mainwp' ); ?></option>
 								<option value="4" 
 								<?php
 								if ( $frequencyDailyUpdate == 4 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Four times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Four times per day', 'mainwp' ); ?></option>
 								<option value="5" 
 								<?php
 								if ( $frequencyDailyUpdate == 5 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Five times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Five times per day', 'mainwp' ); ?></option>
 								<option value="6" 
 								<?php
 								if ( $frequencyDailyUpdate == 6 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Six times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Six times per day', 'mainwp' ); ?></option>
 								<option value="7" 
 								<?php
 								if ( $frequencyDailyUpdate == 7 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Seven times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Seven times per day', 'mainwp' ); ?></option>
 								<option value="8" 
 								<?php
 								if ( $frequencyDailyUpdate == 8 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Eight times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Eight times per day', 'mainwp' ); ?></option>
 								<option value="9" 
 								<?php
 								if ( $frequencyDailyUpdate == 9 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Nine times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Nine times per day', 'mainwp' ); ?></option>
 								<option value="10" 
 								<?php
 								if ( $frequencyDailyUpdate == 10 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Ten times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Ten times per day', 'mainwp' ); ?></option>
 								<option value="11" 
 								<?php
 								if ( $frequencyDailyUpdate == 11 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Eleven times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Eleven times per day', 'mainwp' ); ?></option>
 								<option value="12" 
 								<?php
 								if ( $frequencyDailyUpdate == 12 ) {
 									?>
-									selected<?php } ?>><?php _e( 'Twelve times per day', 'mainwp' ); ?></option>
+									selected<?php } ?>><?php esc_html_e( 'Twelve times per day', 'mainwp' ); ?></option>
 							</select>
 						</div>
 					</div>
@@ -490,12 +491,12 @@ class MainWP_Settings {
 									<?php
 									if ( $sidebarPosition == 1 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Right (default)', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Right (default)', 'mainwp' ); ?></option>
 									<option value="0" 
 									<?php
 									if ( $sidebarPosition == 0 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Left', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -571,12 +572,12 @@ class MainWP_Settings {
 									<?php
 									if ( $snPluginAutomaticDailyUpdate == 1 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
 									<option value="0" 
 									<?php
 									if ( ( $snPluginAutomaticDailyUpdate !== false && $snPluginAutomaticDailyUpdate == 0 ) || $snPluginAutomaticDailyUpdate == 2 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Disabled', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -588,12 +589,12 @@ class MainWP_Settings {
 									<?php
 									if ( $snThemeAutomaticDailyUpdate == 1 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
 									<option value="0" 
 									<?php
 									if ( ( $snThemeAutomaticDailyUpdate !== false && $snThemeAutomaticDailyUpdate == 0 ) || $snThemeAutomaticDailyUpdate == 2 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Disabled', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -605,16 +606,16 @@ class MainWP_Settings {
 									<?php
 									if ( $snAutomaticDailyUpdate == 1 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Install Trusted Updates', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Install Trusted Updates', 'mainwp' ); ?></option>
 									<option value="0" 
 									<?php
 									if ( ( $snAutomaticDailyUpdate !== false && $snAutomaticDailyUpdate == 0 ) || $snAutomaticDailyUpdate == 2 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Disabled', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 								</select>
 								<div class="ui hidden divider"></div>
-								<div class="ui label"><?php _e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html($lastAutomaticUpdate); ?></div>
-								<div class="ui label"><?php _e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html($nextAutomaticUpdate); ?></div>
+								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html($lastAutomaticUpdate); ?></div>
+								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html($nextAutomaticUpdate); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -631,17 +632,17 @@ class MainWP_Settings {
 									<?php
 									if ( $disableUpdateConfirmations == 0 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Enable', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
 									<option value="2" 
 									<?php
 									if ( $disableUpdateConfirmations == 2 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Disable', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
 									<option value="1" 
 									<?php
 									if ( $disableUpdateConfirmations == 1 ) {
 										?>
-										selected<?php } ?>><?php _e( 'Disable for single updates', 'mainwp' ); ?></option>
+										selected<?php } ?>><?php esc_html_e( 'Disable for single updates', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</div>
@@ -754,7 +755,7 @@ class MainWP_Settings {
 
 		<div id="mainwp-advanced-settings" class="ui segment">
 			<?php if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) : ?>
-				<div class="ui green message"><i class="close icon"></i><?php _e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
+				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
@@ -770,7 +771,7 @@ class MainWP_Settings {
 							?>
 							<div class="ui attached message">
 								<div class="header"><?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?></div>
-								<p><?php _e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></p>
+								<p><?php esc_html_e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></p>
 								<p><?php echo __( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
 							</div>
 							<div class="ui attached segment" style="border: 1px solid #dadada;">
@@ -791,39 +792,39 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 4', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo( ( get_option( 'mainwp_maximumRequests' ) === false ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 4', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 200', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo( ( get_option( 'mainwp_minimumDelay' ) === false ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 200', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Per IP Settings', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests per IP', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 1', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo( ( get_option( 'mainwp_maximumIPRequests' ) === false ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests to the same IP', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 1000', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo( ( get_option( 'mainwp_minimumIPDelay' ) === false ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1000', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous sync requests', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo( ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 8', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo( ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 8', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous install and update requests', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo( ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/><div class="ui basic label"><?php _e( 'Default: 3', 'mainwp' ); ?></div>
+								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo( ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 3', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<h3 class="ui dividing header"><?php esc_html_e( 'SSL Settings', 'mainwp' ); ?></h3>
@@ -862,31 +863,31 @@ class MainWP_Settings {
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
 				<?php if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) : ?>
-					<div class="ui green message"><i class="close icon"></i><?php _e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
+					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
 				  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 					<h3 class="ui dividing header"><?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
 					  <div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" name="" id="force-destroy-sessions-button" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted=""/></div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></label>
-						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to start the Quick Setup Wizard', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=mainwp-setup" class="ui green button basic" ><?php _e( 'Start Quick Setup Wizard', 'mainwp' ); ?></a></div>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Start the MainWP Quick Setup Wizard', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to start the Quick Setup Wizard', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=mainwp-setup" class="ui green button basic" ><?php esc_html_e( 'Start Quick Setup Wizard', 'mainwp' ); ?></a></div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
-						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce('export_sites'); ?>" class="ui button green basic"><?php _e( 'Export Child Sites', 'mainwp' ); ?></a></div>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Export child sites to CSV file', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to export all connected sites to a CSV file.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&doExportSites=yes&_wpnonce=<?php echo wp_create_nonce('export_sites'); ?>" class="ui button green basic"><?php esc_html_e( 'Export Child Sites', 'mainwp' ); ?></a></div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Import child sites', 'mainwp' ); ?></label>
-						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to import websites to your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=managesites&do=bulknew" class="ui button green basic"><?php _e( 'Import Child Sites', 'mainwp' ); ?></a></div>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Import child sites', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to import websites to your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=managesites&do=bulknew" class="ui button green basic"><?php esc_html_e( 'Import Child Sites', 'mainwp' ); ?></a></div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-					   <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce('disconnect_sites'); ?>" onclick="if (!confirm('<?php esc_html_e('Are you sure that you want to disconnect your sites?', 'mainwp'); ?>')) return false; mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php _e( 'Disconnect Websites', 'mainwp' ); ?></a></div>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
+					   <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce('disconnect_sites'); ?>" onclick="if (!confirm('<?php esc_html_e('Are you sure that you want to disconnect your sites?', 'mainwp'); ?>')) return false; mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a></div>
 					</div>					
 					<?php echo MainWP_UI::render_screen_options(); ?>
 					<div class="ui grid field">
@@ -988,7 +989,7 @@ class MainWP_Settings {
 					?>
 					<h3 class="ui dividing header"><?php esc_html_e( 'Managed Client Reports for WooCommerce Settings', 'mainwp' ); ?></h3>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Managed Client Reports site URL', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Managed Client Reports site URL', 'mainwp' ); ?></label>
 						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter your WooCommerce reporting site URL here.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 							<input type="text"  name="live_reponder_site_url" placeholder="https://yourwoosite.com/" value="<?php echo esc_attr( get_option( 'live-report-responder-siteurl' ) ); ?>" autocomplete="off" 
 																																	   <?php
@@ -999,7 +1000,7 @@ class MainWP_Settings {
 						</div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Allow connection', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Allow connection', 'mainwp' ); ?></label>
 						<div class="ten wide column">
 							<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to allow connection.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="checkbox" name="live_reponder_provideaccess" value="yes" 
@@ -1016,7 +1017,7 @@ class MainWP_Settings {
 						</div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Require unique security ID to secure the connection', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Require unique security ID to secure the connection', 'mainwp' ); ?></label>
 						<div class="ten wide column">
 							<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to generate unique security ID for additional security.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" 
@@ -1034,7 +1035,7 @@ class MainWP_Settings {
 					</div>
 					<?php if ( get_option( 'live-reports-responder-security-id' ) == 'on' ) { ?>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php _e( 'Your unique Security ID', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Your unique Security ID', 'mainwp' ); ?></label>
 						<div class="ten wide column">
 							<div class="ui label huge">
 							  <i class="key icon"></i>

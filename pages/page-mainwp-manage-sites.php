@@ -213,7 +213,7 @@ class MainWP_Manage_Sites {
 
 						?>
 						<div class="ui grid field">
-							<label class="six wide column"><?php _e( 'Hide unwanted columns', 'mainwp' ); ?></label>
+							<label class="six wide column"><?php esc_html_e( 'Hide unwanted columns', 'mainwp' ); ?></label>
 								<div class="ten wide column">
 									  <ul class="mainwp_hide_wpmenu_checkboxes">
 									  <?php
@@ -400,13 +400,13 @@ class MainWP_Manage_Sites {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
 					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
-							<option selected value="auto"><?php _e( 'Auto detect', 'mainwp' ); ?></option>
+							<option selected value="auto"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
 							<option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
-							<option value="1.x"><?php _e( 'TLS v1.x', 'mainwp' ); ?></option>
-							<option value="2"><?php _e( 'SSL v2', 'mainwp' ); ?></option>
-							<option value="3"><?php _e( 'SSL v3', 'mainwp' ); ?></option>
-							<option value="1.0"><?php _e( 'TLS v1.0', 'mainwp' ); ?></option>
-							<option value="1.1"><?php _e( 'TLS v1.1', 'mainwp' ); ?></option>
+							<option value="1.x"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
+							<option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
+							<option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
+							<option value="1.0"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
+							<option value="1.1"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -443,8 +443,8 @@ class MainWP_Manage_Sites {
 				<?php do_action( 'mainwp-manage-sites-edit', false ); ?>
 
 				<div class="ui divider"></div>
-				<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php _e( 'Test Connection', 'mainwp' ); ?>"/>
-				<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php _e( 'Add Site', 'mainwp' ); ?>" />
+				<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php esc_html_e( 'Test Connection', 'mainwp' ); ?>"/>
+				<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php esc_html_e( 'Add Site', 'mainwp' ); ?>" />
 			</form>
 		</div>
 
@@ -488,13 +488,13 @@ class MainWP_Manage_Sites {
 			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
 				?>
 				<div class="ui modal" id="mainwp-import-sites-modal">
-					<div class="header"><?php _e( 'Import Sites', 'mainwp' ); ?></div>
+					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
 					<div class="scrolling header">
 					<?php MainWP_Manage_Sites_View::renderImportSites(); ?>
 					</div>
 					<div class="actions">
-						<div class="ui cancel button"><?php _e( 'Close', 'mainwp' ); ?></div>
-						<input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php _e( 'Pause', 'mainwp' ); ?>"/>
+						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+						<input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_html_e( 'Pause', 'mainwp' ); ?>"/>
 						<input type="button" name="mainwp_managesites_btn_save_csv" id="mainwp_managesites_btn_save_csv" disabled="disabled" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
 					</div>
 				</div>
@@ -515,20 +515,20 @@ class MainWP_Manage_Sites {
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php _e( 'Uplod the CSV file', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
 						  <div class="ten wide column">
 								<input type="file" name="mainwp_managesites_file_bulkupload" id="mainwp_managesites_file_bulkupload" accept="text/comma-separated-values"/>
 							</div>
 						</div>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php _e( 'CSV file contains a header', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
 							<div class="ui toggle checkbox">
 								<input type="checkbox" name="mainwp_managesites_chk_header_first" checked="checked" id="mainwp_managesites_chk_header_first" value="1"/>
 							</div>
 						</div>
 						<div class="ui divider"></div>
-						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php _e( 'Download Sample CSV file', 'mainwp' ); ?></a>
-						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php _e( 'Import Sites', 'mainwp' ); ?>"/>
+						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php esc_html_e( 'Import Sites', 'mainwp' ); ?>"/>
 					</form>
 				</div>
 				<?php
@@ -806,20 +806,23 @@ class MainWP_Manage_Sites {
 			if ( 1 !== $backupTaskProgress->removedFiles ) {
 				$dbBackups   = array();
 				$fullBackups = array();
-				if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
-					while ( false !== ( $file = readdir( $dh ) ) ) {
-						if ( '.' !== $file && '..' !== $file ) {
-							$theFile = $dir . $file;
-							if ( $information['db'] && MainWP_Utility::isSQLFile( $file ) ) {
-								$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-							}
+				if ( file_exists( $dir ) ) {
+					$dh = opendir( $dir );
+					if ( $dh ) {
+						while ( false !== ( $file = readdir( $dh ) ) ) {
+							if ( '.' !== $file && '..' !== $file ) {
+								$theFile = $dir . $file;
+								if ( $information['db'] && MainWP_Utility::isSQLFile( $file ) ) {
+									$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
+								}
 
-							if ( $information['full'] && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
-								$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+								if ( $information['full'] && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+									$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+								}
 							}
 						}
+						closedir( $dh );
 					}
-					closedir( $dh );
 				}
 				krsort( $dbBackups );
 				krsort( $fullBackups );
@@ -989,20 +992,23 @@ class MainWP_Manage_Sites {
 		$dbBackups   = array();
 		$fullBackups = array();
 
-		if ( file_exists( $dir ) && ( $dh = opendir( $dir ) ) ) {
-			while ( false !== ( $file = readdir( $dh ) ) ) {
-				if ( '.' !== $file && '..' !== $file ) {
-					$theFile = $dir . $file;
-					if ( 'db' === $pType && MainWP_Utility::isSQLFile( $file ) ) {
-						$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-					}
+		if ( file_exists( $dir ) ) {
+			$dh = opendir( $dir );
+			if ( $dh ) {
+				while ( false !== ( $file = readdir( $dh ) ) ) {
+					if ( '.' !== $file && '..' !== $file ) {
+						$theFile = $dir . $file;
+						if ( 'db' === $pType && MainWP_Utility::isSQLFile( $file ) ) {
+							$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
+						}
 
-					if ( 'full' === $pType && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
-						$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+						if ( 'full' === $pType && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+							$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+						}
 					}
 				}
+				closedir( $dh );
 			}
-			closedir( $dh );
 		}
 		krsort( $dbBackups );
 		krsort( $fullBackups );
@@ -1450,18 +1456,21 @@ class MainWP_Manage_Sites {
 		}
 		$dbBackups   = array();
 		$fullBackups = array();
-		if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-			while ( false !== ( $file = readdir( $dh ) ) ) {
-				if ( '.' !== $file && '..' !== $file ) {
-					$theFile = $dir . $file;
-					if ( MainWP_Utility::isSQLFile( $file ) ) {
-						$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-					} elseif ( MainWP_Utility::isArchive( $file ) ) {
-						$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+		if ( file_exists( $dir ) ) {
+			$dh            = opendir( $dir );
+			if ( $dh ) {
+				while ( false !== ( $file = readdir( $dh ) ) ) {
+					if ( '.' !== $file && '..' !== $file ) {
+						$theFile = $dir . $file;
+						if ( MainWP_Utility::isSQLFile( $file ) ) {
+							$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
+						} elseif ( MainWP_Utility::isArchive( $file ) ) {
+							$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+						}
 					}
 				}
+				closedir( $dh );
 			}
-			closedir( $dh );
 		}
 		krsort( $dbBackups );
 		krsort( $fullBackups );
@@ -1525,7 +1534,7 @@ class MainWP_Manage_Sites {
 				</div>
 				<div class="actions mainwp-modal-actions">
 					<input id="managesites-backup-all" type="button" name="Backup All" value="<?php esc_attr_e( 'Backup all', 'mainwp' ); ?>" class="button-primary"/>
-					<a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+					<a id="managesites-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php esc_html_e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
 					<input id="managesites-backup-ignore" type="button" name="Ignore" value="<?php esc_attr_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 				</div>
 		</div>
@@ -1612,7 +1621,8 @@ class MainWP_Manage_Sites {
 
 						// to fix update staging site
 						if ( $website->is_staging ) {
-							if ( $stag_gid = get_option( 'mainwp_stagingsites_group_id' ) ) {
+							$stag_gid = get_option( 'mainwp_stagingsites_group_id' );
+							if ( $stag_gid ) {
 								if ( ! in_array( $stag_gid, $groupids ) ) {
 									$groupids[] = $stag_gid; // staging site is always in Staging Sites group
 								}

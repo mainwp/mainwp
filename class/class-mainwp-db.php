@@ -1397,7 +1397,8 @@ class MainWP_DB {
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {
 				if ( ( 0 == $progress->downloadedDBComplete ) && ( 0 == $progress->downloadedFULLComplete ) ) {
-					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
+					$task = $this->getBackupTaskById( $progress->task_id );
+					if ( $task ) {
 						if ( ( 'full' == $task->type ) && ! $task->paused ) {
 							return true;
 						}

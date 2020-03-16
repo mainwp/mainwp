@@ -66,7 +66,7 @@ function checkifvalidclient( $email, $siteid ) {
 
 		$get_site_url = $wpdb->get_row( $wpdb->prepare( "SELECT `url` FROM {$wpdb->prefix}mainwp_wp WHERE id=%d", $siteid ) );
 		if ( ! empty( $get_site_url ) ) {
-			$get_site_details = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_client_report_site_token WHERE token_id=%d AND token_value='%s' AND site_url='" . $get_site_url->url . "'", 12, $email ) );
+			$get_site_details = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_client_report_site_token WHERE token_id=%d AND token_value=%s AND site_url=%s", 12, $email, $get_site_url->url ) );
 			if ( $get_site_details ) {
 				$result['result'] = 'success';
 				$result['data']   = $get_site_details;

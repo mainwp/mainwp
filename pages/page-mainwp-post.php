@@ -946,7 +946,7 @@ class MainWP_Post {
 
 								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php _e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
 								<?php if ( 'trash' === $post['status'] ) : ?>

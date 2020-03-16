@@ -31,18 +31,21 @@ class MainWP_Manage_Sites_List_Table {
 
 		$dir        = MainWP_Utility::getMainWPSpecificDir( $item['id'] );
 		$lastbackup = 0;
-		if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-			while ( ( $file = readdir( $dh ) ) !== false ) {
-				if ( $file != '.' && $file != '..' ) {
-					$theFile = $dir . $file;
-					if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
-						if ( filemtime( $theFile ) > $lastbackup ) {
-							$lastbackup = filemtime( $theFile );
+		if ( file_exists( $dir ) ) {
+			$dh            = opendir( $dir );
+			if ( $dh ) {			
+				while ( ( $file = readdir( $dh ) ) !== false ) {
+					if ( $file != '.' && $file != '..' ) {
+						$theFile = $dir . $file;
+						if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+							if ( filemtime( $theFile ) > $lastbackup ) {
+								$lastbackup = filemtime( $theFile );
+							}
 						}
 					}
 				}
+				closedir( $dh );
 			}
-			closedir( $dh );
 		}
 
 		$output = '';
@@ -256,9 +259,9 @@ class MainWP_Manage_Sites_List_Table {
 						  <i class="dropdown icon"></i>
 						  <div class="menu">
 								<div class="item" data-value="all" ><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
-								<div class="item" data-value="connected"><?php _e( 'Connected', 'mainwp' ); ?></div>
-								<div class="item" data-value="disconnected"><?php _e( 'Disconnected', 'mainwp' ); ?></div>
-								<div class="item" data-value="update"><?php _e( 'Available update', 'mainwp' ); ?></div>
+								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
+								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
+								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
 						  </div>
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php _e('Filter Sites', 'mainwp'); ?></button>
@@ -618,7 +621,7 @@ class MainWP_Manage_Sites_List_Table {
 	</table>
 	<div id="mainwp-loading-sites" style="display: none;">
 	<div class="ui active inverted dimmer">
-	  <div class="ui indeterminate large text loader"><?php _e( 'Loading ...', 'mainwp' ); ?></div>
+	  <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
 	</div>
 	</div>
 

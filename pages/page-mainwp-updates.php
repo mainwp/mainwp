@@ -534,7 +534,7 @@ class MainWP_Updates {
 					<div class="right aligned middle aligned column">
 						<form method="post" action="" class="ui mini form">
 							<div class="inline field">
-								<label for="mainwp_select_options_siteview"><?php _e( 'Show updates per ', 'mainwp' ); ?></label>
+								<label for="mainwp_select_options_siteview"><?php esc_html_e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
 									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
 									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
@@ -593,11 +593,11 @@ class MainWP_Updates {
 								<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
 							</td>
 							<td class="right aligned">
-								<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>" class="ui mini button" target="_blank"><?php _e( 'WP Admin', 'mainwp' ); ?></a>
-								<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php _e( 'Recheck', 'mainwp' ); ?></a>
-								<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini button"><?php _e( 'Ignore', 'mainwp' ); ?></a>
+								<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
 						<?php if ( ! empty( $restoreSlug ) ) { ?>
-								<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php _e( 'Restore', 'mainwp' ); ?></a>
+								<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 							<?php } ?>
 							</td>
 						</tr>
@@ -716,7 +716,7 @@ class MainWP_Updates {
 													<td class="right aligned">
 														<?php if ( $user_can_update_wordpress ) : ?>
 															<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-																<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php endif; ?>
 														<?php endif; ?>
 													</td>
@@ -791,7 +791,7 @@ class MainWP_Updates {
 							<td class="right aligned">
 								<?php if ( $user_can_update_wordpress ) : ?>
 									<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-										<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+										<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 									<?php endif; ?>
 								<?php endif; ?>
 							</td>
@@ -837,7 +837,7 @@ class MainWP_Updates {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
 										<?php
 									}
 								}
@@ -931,10 +931,10 @@ class MainWP_Updates {
 													<td><?php echo ( in_array( $slug, $trustedPlugins ) ? $trusted_label : $not_trusted_label ); ?></td>
 													<td class="right aligned">
 														<?php if ( $user_can_ignore_unignore_updates ) : ?>
-															<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+															<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 														<?php endif; ?>
 														<?php if ( $user_can_update_plugins ) : ?>
-															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo esc_attr( $website->id ); ?>, '<?php echo $plugin_name; ?>' )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo esc_attr( $website->id ); ?>, '<?php echo $plugin_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 														<?php endif; ?>
 													</td>
 												</tr>
@@ -973,7 +973,7 @@ class MainWP_Updates {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
 										<?php
 									}
 								}
@@ -1100,10 +1100,10 @@ class MainWP_Updates {
 																	<td><?php echo ( in_array( $slug, $trustedPlugins ) ? $trusted_label : $not_trusted_label ); ?></td>
 																	<td class="right aligned">
 																	<?php if ( $user_can_ignore_unignore_updates ) : ?>
-																		<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+																		<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 																	<?php endif; ?>
 																	<?php if ( $user_can_update_plugins ) : ?>
-																		<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																		<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 																	<?php endif; ?>
 																	</td>
 																</tr>
@@ -1155,7 +1155,7 @@ class MainWP_Updates {
 									$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_plugin_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
 										<?php
 									}
 								}
@@ -1181,7 +1181,7 @@ class MainWP_Updates {
 								<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? $trusted_label : $not_trusted_label ); ?></td>
 								<td class="right aligned">
 									<?php if ( $user_can_ignore_unignore_updates ) : ?>
-										<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsInfo[ $slug ]['name'] ); ?>', this )"><?php _e( 'Ignore Globally', 'mainwp' ); ?></a>
+										<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 									<?php endif; ?>
 									<?php if ( $user_can_update_plugins ) : ?>
 										<?php if ( 0 < $cnt ) : ?>
@@ -1248,10 +1248,10 @@ class MainWP_Updates {
 													<td><?php echo ( in_array( $slug, $trustedPlugins ) ? $trusted_label : $not_trusted_label ); ?></td>
 													<td class="right aligned">
 													<?php if ( $user_can_ignore_unignore_updates ) : ?>
-														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 													<?php endif; ?>
 													<?php if ( $user_can_update_plugins ) : ?>
-														<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 													<?php endif; ?>
 													</td>
 												</tr>
@@ -1301,7 +1301,7 @@ class MainWP_Updates {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
 										<?php
 									}
 								}
@@ -1389,10 +1389,10 @@ class MainWP_Updates {
 													<td><?php echo ( in_array( $slug, $trustedThemes ) ? $trusted_label : $not_trusted_label ); ?></td>
 													<td class="right aligned">
 														<?php if ( $user_can_ignore_unignore_updates ) : ?>
-															<a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+															<a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 														<?php endif; ?>
 														<?php if ( $user_can_update_themes ) : ?>
-															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo esc_attr( $website->id ); ?>, '<?php echo $theme_name; ?>' )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo esc_attr( $website->id ); ?>, '<?php echo $theme_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 														<?php endif; ?>
 													</td>
 												</tr>
@@ -1431,7 +1431,7 @@ class MainWP_Updates {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
 										<?php
 									}
 								}
@@ -1552,10 +1552,10 @@ class MainWP_Updates {
 																	<td><?php echo ( in_array( $slug, $trustedThemes ) ? $trusted_label : $not_trusted_label ); ?></td>
 																	<td class="right aligned">
 																	<?php if ( $user_can_ignore_unignore_updates ) : ?>
-																		<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+																		<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 																	<?php endif; ?>
 																	<?php if ( $user_can_update_themes ) : ?>
-																		<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																		<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 																	<?php endif; ?>
 																	</td>
 																</tr>
@@ -1607,7 +1607,7 @@ class MainWP_Updates {
 									$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 									if ( 0 < $total_theme_upgrades ) {
 										?>
-									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php _e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
+									<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
 										<?php
 									}
 								}
@@ -1629,7 +1629,7 @@ class MainWP_Updates {
 								<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? $trusted_label : $not_trusted_label ); ?></td>
 								<td class="right aligned">
 									<?php if ( $user_can_ignore_unignore_updates ) : ?>
-										<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo urlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php _e( 'Ignore Globally', 'mainwp' ); ?></a>
+										<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo urlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 									<?php endif; ?>
 									<?php if ( $user_can_update_themes ) : ?>
 										<?php if ( 0 < $cnt ) : ?>
@@ -1690,10 +1690,10 @@ class MainWP_Updates {
 													<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
 													<td class="right aligned">
 													<?php if ( $user_can_ignore_unignore_updates ) : ?>
-														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Update', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 													<?php endif; ?>
 													<?php if ( $user_can_update_themes ) : ?>
-														<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 													<?php endif; ?>
 													</td>
 												</tr>
@@ -1738,7 +1738,7 @@ class MainWP_Updates {
 										<?php MainWP_UI::render_show_all_updates_button(); ?>
 										<?php if ( $user_can_update_translation ) : ?>
 											<?php if ( 0 < $total_translation_upgrades ) : ?>
-												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php _e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 											<?php endif; ?>
 										<?php endif; ?>
 									</th>
@@ -1796,7 +1796,7 @@ class MainWP_Updates {
 														</td>
 														<td class="right aligned">
 															<?php if ( $user_can_update_translation ) { ?>
-																<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_translations_upgrade( '<?php echo $translation_slug; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_translations_upgrade( '<?php echo $translation_slug; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php } ?>
 														</td>
 													</tr>
@@ -1836,7 +1836,7 @@ class MainWP_Updates {
 										<?php MainWP_UI::render_show_all_updates_button(); ?>
 										<?php if ( $user_can_update_translation ) : ?>
 											<?php if ( 0 < $total_translation_upgrades ) : ?>
-												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php _e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 											<?php endif; ?>
 										<?php endif; ?>
 									</th>
@@ -1924,7 +1924,7 @@ class MainWP_Updates {
 																		</td>
 																		<td class="right aligned">
 																		<?php if ( $user_can_update_translation ) : ?>
-																			<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $translation_slug; ?>', <?php echo esc_attr( $group_id ); ?> )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																			<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $translation_slug; ?>', <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 																		<?php endif; ?>
 																		</td>
 																	</tr>
@@ -1964,7 +1964,7 @@ class MainWP_Updates {
 										<?php MainWP_UI::render_show_all_updates_button(); ?>
 										<?php if ( $user_can_update_translation ) : ?>
 											<?php if ( 0 < $total_translation_upgrades ) : ?>
-												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php _e( 'Update all sites', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Translations', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all sites', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Translations', 'mainwp' ); ?></a>
 											<?php endif; ?>
 										<?php endif; ?>
 									</th>
@@ -2017,7 +2017,7 @@ class MainWP_Updates {
 															<td><?php echo esc_html( $translation_upgrade['version'] ); ?></td>
 															<td class="right aligned">
 															<?php if ( $user_can_update_translation ) : ?>
-																	<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $slug; ?>' )"><?php _e( 'Update Now', 'mainwp' ); ?></a>
+																	<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $slug; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php endif ?>
 															</td>
 														</tr>
@@ -2132,7 +2132,7 @@ class MainWP_Updates {
 													<td><?php echo $outdate_notice; ?></td>
 													<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 													<?php if ( $user_can_ignore_unignore_updates ) { ?>
-														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 													<?php } ?>
 													</td>
 												</tr>
@@ -2255,7 +2255,7 @@ class MainWP_Updates {
 																<td><?php echo $outdate_notice; ?></td>
 																<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 																<?php if ( $user_can_ignore_unignore_updates ) { ?>
-																	<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+																	<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 																<?php } ?>
 																</td>
 															</tr>
@@ -2308,7 +2308,7 @@ class MainWP_Updates {
 							<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
 							<td class="right aligned">
 								<?php if ( $user_can_ignore_unignore_updates ) { ?>
-									<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>', this )"><?php _e( 'Ignore Globally', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 								<?php } ?>
 							</td>
 						</tr>
@@ -2360,7 +2360,7 @@ class MainWP_Updates {
 											<td><?php echo $outdate_notice; ?></td>
 											<td class="right aligned">
 											<?php if ( $user_can_ignore_unignore_updates ) : ?>
-												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											</td>
 										</tr>
@@ -2465,7 +2465,7 @@ class MainWP_Updates {
 													<td><?php echo $outdate_notice; ?></td>
 													<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
 														<?php if ( $user_can_ignore_unignore_updates ) { ?>
-															<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+															<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 														<?php } ?>
 													</td>
 												</tr>
@@ -2588,7 +2588,7 @@ class MainWP_Updates {
 																<td><?php echo $outdate_notice; ?></td>
 																<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
 																	<?php if ( $user_can_ignore_unignore_updates ) { ?>
-																	<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+																	<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 																	<?php } ?>
 																</td>
 															</tr>
@@ -2641,7 +2641,7 @@ class MainWP_Updates {
 							<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
 							<td class="right aligned">
 								<?php if ( $user_can_ignore_unignore_updates ) { ?>
-									<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_abandoned_ignore_all( '<?php echo $theme_name; ?>', '<?php echo urlencode( $val['name'] ); ?>', this )"><?php _e( 'Ignore Globally', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_abandoned_ignore_all( '<?php echo $theme_name; ?>', '<?php echo urlencode( $val['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 								<?php } ?>
 							</td>
 						</tr>
@@ -2693,7 +2693,7 @@ class MainWP_Updates {
 											<td><?php echo $outdate_notice; ?></td>
 											<td class="right aligned">
 											<?php if ( $user_can_ignore_unignore_updates ) : ?>
-												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php _e( 'Ignore Now', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											</td>
 										</tr>
@@ -2764,12 +2764,12 @@ class MainWP_Updates {
 		</div>
 
 		<div class="ui modal" id="updatesoverview-backup-box">
-			<div class="header"><?php _e( 'Backup Check', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Backup Check', 'mainwp' ); ?></div>
 			<div class="scrolling content mainwp-modal-content"></div>
 			<div class="actions mainwp-modal-actions">
-				<input id="updatesoverview-backup-all" type="button" name="Backup All" value="<?php _e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
-				<a id="updatesoverview-backup-now" href="javascript:void(0)" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
-				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
+				<input id="updatesoverview-backup-all" type="button" name="Backup All" value="<?php esc_html_e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
+				<a id="updatesoverview-backup-now" href="javascript:void(0)" target="_blank" style="display: none"  class="button-primary button"><?php esc_html_e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+				<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php esc_html_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 			</div>
 		</div>
 		<?php if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) : ?>

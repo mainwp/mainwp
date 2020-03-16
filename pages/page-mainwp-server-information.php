@@ -70,21 +70,21 @@ class MainWP_Server_Information {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php _e( 'Server', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php _e( 'Cron Schedules', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php _e( 'Error Log', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Error Log', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php _e( 'WP-Config File', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
 						if ( self::isApacheServerSoftware() ) {
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
 							<?php
 						}
 					}
@@ -246,29 +246,29 @@ class MainWP_Server_Information {
 			<div class="ui two column grid">
 			<div class="column"></div>
 			<div class="right aligned column">
-			<a href="#" style="margin-left:5px" class="ui small basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php _e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
-			<a href="#" class="ui small green button" id="mainwp-download-system-report"><?php _e( 'Download System Report', 'mainwp' ); ?></a>
+			<a href="#" style="margin-left:5px" class="ui small basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
+			<a href="#" class="ui small green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
 			</div>
 			</div>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
 				<thead>
 					<tr>
-						<th><?php _e( 'Server Info', 'mainwp' ); ?></th>
-						<th><?php _e( 'Required', 'mainwp' ); ?></th>
-						<th><?php _e( 'Detected', 'mainwp' ); ?></th>
-						<th><?php _e( 'Status', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Server Info', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Dashboard', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Dashboard', 'mainwp' ); ?></div></td></tr>
 					<tr>
-						<td><?php _e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
+						<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
 						<td><?php echo self::getMainWPVersion(); ?></td>
 						<td><?php echo self::getCurrentVersion(); ?></td>
 						<td><?php echo self::getMainWPVersionCheck(); ?></td>
 					</tr>
 				<?php self::checkDirectoryMainWPDirectory(); ?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Extensions', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Extensions', 'mainwp' ); ?></div></td></tr>
 				<?php
 				$extensions       = MainWP_Extensions::loadExtensions();
 				$extensions_slugs = array();
@@ -287,19 +287,19 @@ class MainWP_Server_Information {
 						<?php
 				}
 				?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'WordPress', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'WordPress', 'mainwp' ); ?></div></td></tr>
 					<?php
 					self::renderRow( 'WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, null, self::ERROR );
 					self::renderRow( 'WordPress Memory Limit', '>=', '64M', 'getWordpressMemoryLimit', '', '', null );
 					self::renderRow( 'MultiSite Disabled', '=', true, 'checkIfMultisite', '', '', null );
 					?>
 					<tr>
-						<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
+						<td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
 						<td><?php echo '= direct'; ?></td>
 						<td><?php echo self::getFileSystemMethod(); ?></td>
 						<td><?php echo self::getFileSystemMethodCheck(); ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'PHP', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'PHP', 'mainwp' ); ?></div></td></tr>
 					<?php
 					self::renderRow( 'PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, null, self::ERROR );
 					self::renderRow( 'PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null );
@@ -322,78 +322,78 @@ class MainWP_Server_Information {
 					}
 					?>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getPHPAllowUrlFopen(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Exif Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Exif Support', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getPHPExif(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP IPTC Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP IPTC Support', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getPHPIPTC(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP XML Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP XML Support', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getPHPXML(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::phpDisabledFunctions(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getLoadedPHPExtensions(); ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MySQL', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></div></td></tr>
 					<?php self::renderRow( 'MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, null, self::ERROR ); ?>
 					<tr>
-						<td colspan="2"><?php _e( 'MySQL Mode', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'MySQL Mode', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getSQLMode(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
 						<td colspan="2"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'Server Info', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Server Info', 'mainwp' ); ?></div></td></tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'WordPress Root Directory', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'WordPress Root Directory', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getWPRoot(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'Server Name', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Name', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerName(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Software', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Software', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerSoftware(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Operating System', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Operating System', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getOS(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Architecture', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Architecture', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getArchitecture(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'Server IP', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server IP', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerIP(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Protocol', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Protocol', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerProtocol(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'HTTP Host', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'HTTP Host', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getHTTPHost(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'HTTPS', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getHTTPS(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server self connect', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server self connect', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::serverSelfConnect(); ?></td>
 					</tr>
 					<tr>
@@ -401,11 +401,11 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php self::getUserAgent(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'Server Port', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Port', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerPort(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Gateway Interface', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Gateway Interface', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerGatewayInterface(); ?></td>
 					</tr>
 					<tr>
@@ -421,7 +421,7 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php self::getServerRequestTime(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Accept Content', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Accept Content', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getServerHTTPAccept(); ?></td>
 					</tr>
 					<tr>
@@ -441,16 +441,16 @@ class MainWP_Server_Information {
 						<td colspan="2"><?php self::getRemoteAddress(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'Remote Host', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Remote Host', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getRemoteHost(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
-						<td colspan="2"><?php _e( 'Remote Port', 'mainwp' ); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Remote Port', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getRemotePort(); ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Settings', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?></div></td></tr>
 					<?php self::displayMainWPOptions(); ?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
 					<?php
 					$all_extensions = MainWP_Extensions_View::getAvailableExtensions();
 					$all_plugins    = get_plugins();
@@ -471,8 +471,8 @@ class MainWP_Server_Information {
 				<tfoot class="full-width">
 				<tr>
 				  <th colspan="4">
-					<a href="#" class="ui right floated small green button" id="mainwp-download-system-report"><?php _e( 'Download System Report', 'mainwp' ); ?></a>
-							<div><?php _e( 'Please include this information when requesting support.', 'mainwp' ); ?></div>
+					<a href="#" class="ui right floated small green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
+							<div><?php esc_html_e( 'Please include this information when requesting support.', 'mainwp' ); ?></div>
 				  </th>
 				</tr>
 			  </tfoot>
@@ -492,10 +492,10 @@ class MainWP_Server_Information {
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
 				<thead>
 					<tr>
-					<th><?php _e( 'Check', 'mainwp' ); ?></th>
-					<th><?php _e( 'Required Value', 'mainwp' ); ?></th>
-					<th><?php _e( 'Detected Value', 'mainwp' ); ?></th>
-					<th class="collapsing center aligned"><?php _e( 'Status', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Check', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Required Value', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
+					<th class="collapsing center aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					</tr>
 				</thead>
 			<tbody>
@@ -581,11 +581,11 @@ class MainWP_Server_Information {
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
 			<thead>
 				<tr>
-					<th><?php _e( 'Cron Job', 'mainwp' ); ?></th>
-					<th><?php _e( 'Hook', 'mainwp' ); ?></th>
-					<th><?php _e( 'Schedule', 'mainwp' ); ?></th>
-					<th><?php _e( 'Last Run', 'mainwp' ); ?></th>
-					<th><?php _e( 'Next Run', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Cron Job', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Hook', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Schedule', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Last Run', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Next Run', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -1142,8 +1142,8 @@ class MainWP_Server_Information {
 		<table class="ui stackable celled table" id="mainwp-error-log-table">
 			<thead>
 				<tr>
-					<th><?php _e( 'Time', 'mainwp' ); ?></th>
-					<th><?php _e( 'Error', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Time', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Error', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>

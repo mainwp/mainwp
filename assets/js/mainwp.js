@@ -1494,8 +1494,7 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
             countRealItemsUpdated = 0;
             couttItemsToUpdate = 0;
 
-            if ( newList.length <= 0 ) {
-            } else {
+            if ( newList.length > 0 ) {
 
                 var data = mainwp_secure_data( {
                     action: 'mainwp_upgradeplugintheme',
@@ -3600,9 +3599,7 @@ mainwp_createuser = function () {
             jQuery( '#bulk_add_createuser' ).removeAttr( 'disabled' );
             if ( response.substring( 0, 5 ) == 'ERROR' ) {
                 var responseObj = jQuery.parseJSON( response.substring( 6 ) );
-            if ( responseObj.error != undefined ) {
-
-            } else {
+                if ( responseObj.error == undefined ) {
                     var errorMessageList = responseObj[1];
                     var errorMessage = '';
                     for ( var i = 0; i < errorMessageList.length; i++ ) {
@@ -6565,6 +6562,7 @@ serverinfo_prepare_download_info = function ( communi ) {
             //jQuery( "#download-server-information" ).slideDown();
             jQuery( "#download-server-information textarea" ).val( report ).focus().select();
     } catch ( e ) {
+        console.log('Error:');
     }
     return false;
 }

@@ -95,7 +95,7 @@ class MainWP_Hooks {
 		$ret = array();
 
 		if ( is_array( $params ) ) {
-			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) ) {
+			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {				
 				$ret['siteid'] = self::updateWPSite( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
@@ -171,7 +171,7 @@ class MainWP_Hooks {
 	public function mainwp_edit_site( $params ) {
 		$ret = array();
 		if ( is_array( $params ) ) {
-			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) ) {
+			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
 				$ret['siteid'] = self::updateWPSite( $params );
 				return $ret;
 			}

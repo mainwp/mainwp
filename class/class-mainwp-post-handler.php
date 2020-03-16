@@ -608,7 +608,8 @@ class MainWP_Post_Handler {
 	public function ajax_widgets_order() {
 
 		$this->secure_request( 'mainwp_widgets_order' );
-		if ( $user = wp_get_current_user() ) {
+		$user = wp_get_current_user();
+		if ( $user ) {
 			update_user_option($user->ID, 'mainwp_widgets_sorted_' . $_POST['page'], ( isset($_POST['order']) ? $_POST['order'] : '' ), true);
 			die( 'ok' );
 		}
@@ -655,7 +656,8 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_dismiss_activate_notice' );
 
 		global $current_user;
-		if ( ( $user_id = $current_user->ID ) && isset( $_POST['slug'] ) && ! empty( $_POST['slug'] ) ) {
+		$user_id = $current_user->ID;
+		if ( $user_id && isset( $_POST['slug'] ) && ! empty( $_POST['slug'] ) ) {
 			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
 			if ( ! is_array( $activate_notices ) ) {
 				$activate_notices = array();

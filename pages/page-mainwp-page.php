@@ -101,9 +101,9 @@ class MainWP_Page {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Pages', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) { ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 						<?php } ?>
 					<?php } ?>
 					<?php
@@ -308,10 +308,10 @@ class MainWP_Page {
 				  <div class="ui two column row">
 					<div class="column">
 					  <select class="ui dropdown" id="mainwp-bulk-actions">
-						<option value="none"><?php _e( 'Bulk Actions', 'mainwp' ); ?></option>
-						<option value="trash"><?php _e( 'Move to trash', 'mainwp' ); ?></option>
-						<option value="restore"><?php _e( 'Restore', 'mainwp' ); ?></option>
-						<option value="delete"><?php _e( 'Delete permanently', 'mainwp' ); ?></option>
+						<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+						<option value="trash"><?php esc_html_e( 'Move to trash', 'mainwp' ); ?></option>
+						<option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></option>
 					  </select>
 					  <button class="ui mini button" id="mainwp-do-pages-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 					  <?php do_action( 'mainwp_pages_actions_bar_left' ); ?>
@@ -329,7 +329,7 @@ class MainWP_Page {
 
 			<div class="mainwp-side-content mainwp-no-padding">
 			  <div class="mainwp-select-sites">
-				<div class="ui header"><?php _e( 'Select Sites', 'mainwp' ); ?></div>
+				<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 				<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 			  </div>
 			<div class="ui divider"></div>
@@ -337,20 +337,20 @@ class MainWP_Page {
 							<div class="ui mini form">
 								<div class="field">
 									<select multiple="" class="ui fluid dropdown" id="mainwp_page_search_type">
-										<option value=""><?php _e( 'Select status', 'mainwp' ); ?></option>
-										<option value="publish"><?php _e( 'Published', 'mainwp' ); ?></option>
-										<option value="pending"><?php _e( 'Pending', 'mainwp' ); ?></option>
-										<option value="private"><?php _e( 'Private', 'mainwp' ); ?></option>
-										<option value="future"><?php _e( 'Scheduled', 'mainwp' ); ?></option>
-										<option value="draft"><?php _e( 'Draft', 'mainwp' ); ?></option>
-										<option value="trash"><?php _e( 'Trash', 'mainwp' ); ?></option>
+										<option value=""><?php esc_html_e( 'Select status', 'mainwp' ); ?></option>
+										<option value="publish"><?php esc_html_e( 'Published', 'mainwp' ); ?></option>
+										<option value="pending"><?php esc_html_e( 'Pending', 'mainwp' ); ?></option>
+										<option value="private"><?php esc_html_e( 'Private', 'mainwp' ); ?></option>
+										<option value="future"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></option>
+										<option value="draft"><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
+										<option value="trash"><?php esc_html_e( 'Trash', 'mainwp' ); ?></option>
 									</select>
 								</div>
 							</div>
 			  </div>
 			  <div class="ui divider"></div>
 			<div class="mainwp-search-options">
-			  <div class="ui header"><?php _e( 'Search Options', 'mainwp' ); ?></div>
+			  <div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 				<?php self::renderSearchOptions(); ?>
 			  </div>
 			  <div class="ui divider"></div>
@@ -394,7 +394,7 @@ class MainWP_Page {
 					</select>
 				</div>
 		<div class="field">
-					<label><?php _e( 'Date range', 'mainwp' ); ?></label>
+					<label><?php esc_html_e( 'Date range', 'mainwp' ); ?></label>
 					<div class="two fields">
 						<div class="field">
 			  <div class="ui calendar mainwp_datepicker" >
@@ -425,7 +425,7 @@ class MainWP_Page {
 				</div>
 			</div>
 	  <div class="field">
-				<label><?php _e( 'Max pages to return', 'mainwp' ); ?></label>
+				<label><?php esc_html_e( 'Max pages to return', 'mainwp' ); ?></label>
 				<input type="text" name="mainwp_maximumPages"  id="mainwp_maximumPages" value="<?php echo( ( get_option( 'mainwp_maximumPages' ) === false ) ? 50 : get_option( 'mainwp_maximumPages' ) ); ?>"/>
 			</div>
 		</div>
@@ -450,7 +450,7 @@ class MainWP_Page {
 
 			<div id="mainwp-loading-pages-row" style="display: none;">
 				<div class="ui active inverted dimmer">
-					<div class="ui indeterminate large text loader"><?php _e( 'Loading Pages...', 'mainwp' ); ?></div>
+					<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Pages...', 'mainwp' ); ?></div>
 				</div>
 			</div>
 
@@ -458,11 +458,11 @@ class MainWP_Page {
 			<thead class="full-width">
 				<tr>
 					<th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<th id="mainwp-title"><?php _e( 'Title', 'mainwp' ); ?></th>
-					<th id="mainwp-author"><?php _e( 'Author', 'mainwp' ); ?></th>
+					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
+					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-comments"><i class="comment icon"></i></th>
-					<th id="mainwp-date"><?php _e( 'Date', 'mainwp' ); ?></th>
-					<th id="mainwp-status"><?php _e( 'Status', 'mainwp' ); ?></th>
+					<th id="mainwp-date"><?php esc_html_e( 'Date', 'mainwp' ); ?></th>
+					<th id="mainwp-status"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
 						?>
@@ -473,7 +473,7 @@ class MainWP_Page {
 						<?php
 					endif;
 					?>
-					<th id="mainwp-website"><?php _e( 'Website', 'mainwp' ); ?></th>
+					<th id="mainwp-website"><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 					<th id="mainwp-pages-actions" class="no-sort"></th>
 				</tr>
 			</thead>
@@ -697,18 +697,18 @@ class MainWP_Page {
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
 				<?php if ( $page['status'] == 'future' || $page['status'] == 'draft' ) : ?>
-				  <a class="item page_submitpublish" href="#"><?php _e( 'Publish', 'mainwp' ); ?></a>
+				  <a class="item page_submitpublish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $page['status'] != 'trash' ) : ?>
-					<a class="item page_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
-				  <a class="item page_submitdelete" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
+					<a class="item page_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+				  <a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $page['status'] == 'publish' ) { ?>
-								<a class="item" href="<?php echo $website->url . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php _e( 'View', 'mainwp' ); ?></a>
+								<a class="item" href="<?php echo $website->url . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 							<?php } ?>
 				<?php if ( $page['status'] == 'trash' ) { ?>
-									<a class="item page_submitrestore" href="#"><?php _e( 'Restore', 'mainwp' ); ?></a>
-									<a class="item page_submitdelete_perm" href="#"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
+									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 				<?php } ?>
 						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ); ?></a>
 							</div>
@@ -791,7 +791,7 @@ class MainWP_Page {
 		?>
 
 	<div class="ui modal" id="mainwp-posting-page-modal">
-			<div class="header"><?php $edit_id ? _e( 'Edit Page', 'mainwp' ) : _e( 'New Page', 'mainwp' ); ?></div>
+			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Page', 'mainwp' ) : esc_html_e( 'New Page', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 
 			<?php
@@ -983,7 +983,7 @@ class MainWP_Page {
 				} else {
 					?>
 					<div class="error">
-						<p><strong>ERROR</strong>: <?php _e( 'An undefined error occured.', 'mainwp' ); ?></p>
+						<p><strong>ERROR</strong>: <?php esc_html_e( 'An undefined error occured.', 'mainwp' ); ?></p>
 					</div>
 					<?php
 				}
@@ -991,12 +991,12 @@ class MainWP_Page {
 			?>
 		</div>
 		<div class="actions">
-			<a href="admin.php?page=PageBulkAdd" class="ui green button"><?php _e( 'New Page', 'mainwp' ); ?></a>
-			<div class="ui cancel button"><?php _e( 'Close', 'mainwp' ); ?></div>
+			<a href="admin.php?page=PageBulkAdd" class="ui green button"><?php esc_html_e( 'New Page', 'mainwp' ); ?></a>
+			<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 		</div>
 	</div>
 	<div class="ui active inverted dimmer" id="mainwp-posting-running">
-	  <div class="ui indeterminate large text loader"><?php _e( 'Running ...', 'mainwp' ); ?></div>
+	  <div class="ui indeterminate large text loader"><?php esc_html_e( 'Running ...', 'mainwp' ); ?></div>
 	</div>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {

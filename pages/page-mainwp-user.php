@@ -81,16 +81,16 @@ class MainWP_User {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Users', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'BulkImportUsers' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php _e( 'Import Users', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -257,8 +257,8 @@ class MainWP_User {
 						<div class="ui two column row">
 							<div class="column">
 								<select class="ui dropdown" id="mainwp-bulk-actions">
-									<option value="edit"><?php _e( 'Edit', 'mainwp' ); ?></option>
-									<option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
+									<option value="edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></option>
+									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 								</select>
 								<button class="ui mini button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 								<?php do_action( 'mainwp_users_actions_bar_left' ); ?>
@@ -272,8 +272,8 @@ class MainWP_User {
 				<div id="mainwp_users_error"></div>
 				<div id="mainwp-loading-users-row" style="display: none;">
 					<div class="ui active inverted dimmer">
-						<div class="ui indeterminate large text loader"><?php _e( 'Loading Users...', 'mainwp' ); ?>
-							<span id="mainwp_users_loading_info" class="mainwp-grabbing-info-note"><br /><?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
+						<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Users...', 'mainwp' ); ?>
+							<span id="mainwp_users_loading_info" class="mainwp-grabbing-info-note"><br /><?php esc_html_e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
 						</div>
 					</div>
 				</div>
@@ -287,7 +287,7 @@ class MainWP_User {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<div class="mainwp-select-sites">
-					<div class="ui header"><?php _e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 				</div>
 
@@ -307,7 +307,7 @@ class MainWP_User {
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
-								<option value=""><?php _e( 'Select role', 'mainwp' ); ?></option>
+								<option value=""><?php esc_html_e( 'Select role', 'mainwp' ); ?></option>
 								<?php
 								foreach ( $user_roles as $r => $n ) {
 									if ( empty( $r ) ) {
@@ -324,7 +324,7 @@ class MainWP_User {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
-					<div class="ui header"><?php _e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 					<?php self::renderSearchOptions(); ?>
 				</div>
 				<div class="ui divider"></div>
@@ -387,11 +387,11 @@ class MainWP_User {
 		?>
 		<div id="mainwp-edit-users-modal" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
-			<div class="ui message"><?php _e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
+			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_user_profile">
 				<div class="ui segment">
 					<div class="ui form">
-						<h3><?php _e( 'Name', 'mainwp' ); ?></h2>
+						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h2>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Role', 'mainwp' ); ?></label>
 							<div class="ui six wide column">
@@ -443,7 +443,7 @@ class MainWP_User {
 							</div>
 						</div>
 
-						<h3><?php _e( 'Contact Info', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'Contact Info', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Email', 'mainwp' ); ?></label>
@@ -463,19 +463,19 @@ class MainWP_User {
 							</div>
 						</div>
 
-						<h3><?php _e( 'About the user', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'About the user', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Biographical Info', 'mainwp' ); ?></label>
 							<div class="ui six wide column">
 								<div class="ui left labeled input">
 									<textarea name="description" id="description" rows="5" cols="30"></textarea>
-									<p class="description"><?php _e( 'Share a little biographical information to fill out your profile. This may be shown publicly.', 'mainwp' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Share a little biographical information to fill out your profile. This may be shown publicly.', 'mainwp' ); ?></p>
 								</div>
 							</div>
 						</div>
 
-						<h3><?php _e( 'Account Management', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'Account Management', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
@@ -777,9 +777,9 @@ class MainWP_User {
 					<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
-							<a class="item user_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
+							<a class="item user_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 							<?php if ( ( 1 != $user['id'] ) && ( $user['login'] != $website->adminname ) ) { ?>
-							<a class="item user_submitdelete" href="#"><?php _e( 'Delete', 'mainwp' ); ?></a>
+							<a class="item user_submitdelete" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } elseif ( ( 1 == $user['id'] ) || ( $user['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
@@ -1301,9 +1301,9 @@ class MainWP_User {
 					$header_line = trim( $header_line );
 					?>
 					<div class="ui modal" id="mainwp-import-users-modal">
-						<div class="header"><?php _e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
+						<div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
 						<div class="scrolling header">
-							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php _e( 'Importing Users', 'mainwp' ); ?></div>
+							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
 							<input type="hidden" id="import_user_do_import" value="1"/>
 							<input type="hidden" id="import_user_total_import" value="<?php echo $i; ?>"/>
 							<p>
@@ -1352,8 +1352,8 @@ class MainWP_User {
 				<?php } ?>
 			</div>
 			<br/>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add New', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return to Overview', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
 			<?php
 		}
 

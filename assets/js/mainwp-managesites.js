@@ -281,12 +281,7 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
                 mainwpPopup( '#managesites-backup-box' ).close();
                 var siteFeedback = undefined;
 
-                if ( response.error != undefined )
-                {
-                } else if ( response['result'] == true )
-                {
-                    //Continue..
-                } else if ( response['result']['sites'] != undefined )
+                if ( response['result'] && response['result']['sites'] != undefined )
                 {
                     siteFeedback = [ ];
                     for ( var currSiteId in response['result']['sites'] )

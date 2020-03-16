@@ -94,19 +94,19 @@ class MainWP_Recent_Posts {
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php _e('Recent Posts', 'mainwp'); ?>
-					<div class="sub header"><?php _e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
+					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
 				<div class="ui dropdown right mainwp-dropdown-tab">
-						<div class="text"><?php _e( 'Published', 'mainwp' ); ?></div>
+						<div class="text"><?php esc_html_e( 'Published', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
-						<a class="item recent_posts_published_lnk" data-tab="published" data-value="published" title="<?php esc_attr_e( 'Published', 'mainwp' ); ?>" href="#"><?php _e( 'Published', 'mainwp' ); ?></a>
-						<a class="item recent_posts_draft_lnk" data-tab="draft" data-value="draft" title="<?php esc_attr_e( 'Draft', 'mainwp' ); ?>" href="#"><?php _e( 'Draft', 'mainwp' ); ?></a>
-						<a class="item recent_posts_pending_lnk" data-tab="pending" data-value="pending" title="<?php esc_attr_e( 'Pending', 'mainwp' ); ?>" href="#"><?php _e( 'Pending', 'mainwp' ); ?></a>
-						<a class="item recent_posts_future_lnk" data-tab="future" data-value="future" title="<?php esc_attr_e( 'Scheduled', 'mainwp' ); ?>" href="#"><?php _e( 'Scheduled', 'mainwp' ); ?></a>
-						<a class="item recent_posts_trash_lnk" data-tab="trash" data-value="trash" title="<?php esc_attr_e( 'Trash', 'mainwp' ); ?>" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
+						<a class="item recent_posts_published_lnk" data-tab="published" data-value="published" title="<?php esc_attr_e( 'Published', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Published', 'mainwp' ); ?></a>
+						<a class="item recent_posts_draft_lnk" data-tab="draft" data-value="draft" title="<?php esc_attr_e( 'Draft', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Draft', 'mainwp' ); ?></a>
+						<a class="item recent_posts_pending_lnk" data-tab="pending" data-value="pending" title="<?php esc_attr_e( 'Pending', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Pending', 'mainwp' ); ?></a>
+						<a class="item recent_posts_future_lnk" data-tab="future" data-value="future" title="<?php esc_attr_e( 'Scheduled', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></a>
+						<a class="item recent_posts_trash_lnk" data-tab="trash" data-value="trash" title="<?php esc_attr_e( 'Trash', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 						</div>
 				</div>
 			</div>
@@ -122,7 +122,7 @@ class MainWP_Recent_Posts {
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-						<?php _e( 'No published posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
 					<?php
@@ -161,10 +161,10 @@ class MainWP_Recent_Posts {
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-unpublish" href="#"><?php _e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url) . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr($recent_posts_published[ $i ]['id']); ?>" target="_blank"><?php _e( 'View', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="item" href="<?php echo esc_url($recent_posts_published[ $i ]['website']->url) . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr($recent_posts_published[ $i ]['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -186,7 +186,7 @@ class MainWP_Recent_Posts {
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-						<?php _e( 'No draft posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No draft posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
 					<?php
@@ -223,9 +223,9 @@ class MainWP_Recent_Posts {
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php _e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_draft[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_draft[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -247,7 +247,7 @@ class MainWP_Recent_Posts {
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-						<?php _e( 'No pending posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No pending posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
 					<?php
@@ -284,9 +284,9 @@ class MainWP_Recent_Posts {
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php _e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_pending[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_pending[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -308,7 +308,7 @@ class MainWP_Recent_Posts {
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-						<?php _e( 'No future posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No future posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
 					<?php
@@ -345,10 +345,10 @@ class MainWP_Recent_Posts {
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a class="item mainwp-post-publish" href="#"><?php _e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_future[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php _e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#"><?php _e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_future[ $i ]['website']->id); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank"><?php _e( 'Preview', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_future[ $i ]['website']->id); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($recent_posts_future[ $i ]['website']->id); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -370,7 +370,7 @@ class MainWP_Recent_Posts {
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
 					<div class="content">
-						<?php _e( 'No trashed posts found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No trashed posts found!', 'mainwp' ); ?>
 					</div>
 				</h2>
 					<?php
@@ -407,8 +407,8 @@ class MainWP_Recent_Posts {
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
-										<a href="#" class="item mainwp-post-restore"><?php _e( 'Restore', 'mainwp' ); ?></a>
-										<a href="#" class="item mainwp-post-delete"><?php _e( 'Delete permanently', 'mainwp' ); ?></a>
+										<a href="#" class="item mainwp-post-restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+										<a href="#" class="item mainwp-post-delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -424,10 +424,10 @@ class MainWP_Recent_Posts {
 
 		<div class="ui two column grid">
 			<div class="column">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php _e( 'Manage Posts', 'mainwp' ); ?></a>
+				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
 			</div>
 			<div class="column right aligned">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php _e( 'Create New Post', 'mainwp' ); ?></a>
+				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php

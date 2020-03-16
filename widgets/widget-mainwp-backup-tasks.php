@@ -52,9 +52,9 @@ class MainWP_Backup_Tasks {
 		} else {
 			?>
 			<div class="mainwp-row-top" style="text-align: right; margin-bottom: 1em;">
-				 <a href="admin.php?page=ManageBackups" class="button" ><?php _e( 'Manage Backups', 'mainwp' ); ?></a>
+				 <a href="admin.php?page=ManageBackups" class="button" ><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
 					 <?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
-					&nbsp;&nbsp;<a href="admin.php?page=ManageBackupsAddNew" class="button-primary" ><?php _e( 'Add new task', 'mainwp' ); ?></a>
+					&nbsp;&nbsp;<a href="admin.php?page=ManageBackupsAddNew" class="button-primary" ><?php esc_html_e( 'Add new task', 'mainwp' ); ?></a>
 				<?php } ?>
 			</div>
 			<div id="mainwp-backup-tasks-widget">
@@ -110,8 +110,8 @@ class MainWP_Backup_Tasks {
 							?>
 						</div>
 						<div class="six wide column">
-							<strong><?php _e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?><br />
-							<strong><?php _e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::formatTimestamp( ( $task->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $task->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?>
+							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?><br />
+							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::formatTimestamp( ( $task->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $task->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?>
 						</div>
 					</div>
 					<?php

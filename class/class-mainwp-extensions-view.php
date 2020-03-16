@@ -87,24 +87,24 @@ class MainWP_Extensions_View {
 			<?php if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) : ?>
 				<?php delete_transient( 'mainwp_transient_deactivated_incomtible_exts' ); ?>
 				<div class="ui yellow message">
-					<div class="header"><?php _e( 'Important Note', 'mainwp' ); ?></div>
+					<div class="header"><?php esc_html_e( 'Important Note', 'mainwp' ); ?></div>
 					<p><?php echo __( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
-					<div class="header"><?php _e( 'Steps to Update Extensions', 'mainwp' ); ?></div>
+					<div class="header"><?php esc_html_e( 'Steps to Update Extensions', 'mainwp' ); ?></div>
 					<div class="ui list">
-						<div class="item">1. <?php _e( 'Go to the WP Admin > Plugins > Installed Plugins page', 'mainwp' ); ?></div>
-						<div class="item">2. <?php _e( 'Delete Version 3 Extensions (extensions older than version 4) from your MainWP Dashboard', 'mainwp' ); ?></div>
-						<div class="item">3. <?php _e( 'Go back to the MainWP > Extensions page and use the Install Extensions button', 'mainwp' ); ?></div>
+						<div class="item">1. <?php esc_html_e( 'Go to the WP Admin > Plugins > Installed Plugins page', 'mainwp' ); ?></div>
+						<div class="item">2. <?php esc_html_e( 'Delete Version 3 Extensions (extensions older than version 4) from your MainWP Dashboard', 'mainwp' ); ?></div>
+						<div class="item">3. <?php esc_html_e( 'Go back to the MainWP > Extensions page and use the Install Extensions button', 'mainwp' ); ?></div>
 					</div>
 					<p><?php echo __( 'This process does not affect your extensions settings.', 'mainwp' ); ?></p>
 				</div>
 			<?php endif; ?>
 			<?php if ( count( $extensions ) == 0 ) : ?>
 				<div class="ui secondary segment">
-					<h2 class="header"><?php _e( 'What are extensions?', 'mainwp' ); ?></h2>
+					<h2 class="header"><?php esc_html_e( 'What are extensions?', 'mainwp' ); ?></h2>
 					<p><?php esc_html_e( 'Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP. The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
 					<p><?php esc_html_e( 'MainWP Extensions are composed of PHP scripts that extend the functionality of your MainWP Dashboard. They offer new additions to your Dashboard that either enhance features that were already available or add new features to your Dashboard.', 'mainwp' ); ?></p>
 					<p><?php esc_html_e( 'MainWP offers a variety of Free and Premium Extensions in multiple categories which can be purchased separately or through one of the MainWP Membership Plans.', 'mainwp' ); ?></p>
-					<a class="ui green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php _e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a>
+					<a class="ui green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a>
 				</div>
 			<?php else : ?>
 				<div class="ui stackable grid">
@@ -219,10 +219,10 @@ class MainWP_Extensions_View {
 									<div class="field">
 									<div class="ui checkbox">
 											<input type="checkbox" id="extension-deactivate-cb" class="mainwp-extensions-deactivate-chkbox" <?php echo $extension['deactivate_checkbox'] == 'on' ? 'checked' : ''; ?>>
-											<label for="extension-deactivate-cb"><?php _e( 'Deactivate License Key', 'mainwp' ); ?></label>
+											<label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
 										</div>
 									</div>
-									<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php _e( 'Deactivate License', 'mainwp' ); ?>">
+									<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
 									<?php else : ?>
 										<input type="button" class="ui basic green fluid button mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate License', 'mainwp' ); ?>">
 									<?php endif; ?>

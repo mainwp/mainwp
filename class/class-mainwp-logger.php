@@ -18,18 +18,17 @@ class MainWP_Logger {
 
 	private $logFileNamePrefix = 'mainwp';
 	private $logFileNameSuffix = '.log';
-	// private $logMaxFiles = 5; //todo: future add log rotation
 	private $logMaxMB        = 0.5;
 	private $logDateFormat   = 'Y-m-d H:i:s';
 	private $logDirectory    = null;
-	private $logPriority     = self::DISABLED; // default
+	private $logPriority     = self::DISABLED;
 	private static $instance = null;
 
 	/**
 	 * @return MainWP_Logger
 	 */
 	public static function Instance() {
-		if ( self::$instance == null ) {
+		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Logger();
 		}
 
@@ -41,7 +40,7 @@ class MainWP_Logger {
 		$this->logDirectory = $this->logDirectory[0];
 
 		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( $enabled === false ) {
+		if ( false === $enabled ) {
 			$enabled = self::DISABLED;
 		}
 
@@ -101,8 +100,8 @@ class MainWP_Logger {
 	public function log( $pText, $pPriority ) {
 
 		$do_log = false;
-		if ( ( $pPriority == self::INFO_UPDATE && $this->logPriority == self::INFO_UPDATE ) ||
-				( $pPriority != self::INFO_UPDATE && $this->logPriority >= $pPriority ) ) {
+		if ( ( self::INFO_UPDATE == $pPriority && self::INFO_UPDATE == $this->logPriority ) ||
+				( self::INFO_UPDATE != $pPriority && $this->logPriority >= $pPriority ) ) {
 			$do_log = true;
 		}
 
@@ -133,13 +132,13 @@ class MainWP_Logger {
 					$chunkSize    = filesize( $this->logCurrentFile ) - ( $this->logMaxMB * 1048576 );
 					while ( is_resource( $logCurrentHandle ) && ! feof( $logCurrentHandle ) && ( $chunkSize > 0 ) ) {
 						$content = fread( $logCurrentHandle, $chunkSize );
-						if ( $content === false ) {
+						if ( false === $content ) {
 							break;
 						}
-
+						$pos = strrpos( $content, "\n" );
 						if ( $newLogHandle ) {
 							fwrite( $newLogHandle, $content );
-						} elseif ( $pos = strrpos( $content, "\n" ) ) {
+						} elseif ( $pos ) {
 							if ( ! $newLogHandle ) {
 								$newLogHandle = fopen( $newLogFile, 'w+' );
 							}
@@ -203,7 +202,7 @@ class MainWP_Logger {
 		$logFile = self::Instance()->getLogFile();
 		if ( ! @unlink( $logFile, 'r' ) ) {
 			$fh = @fopen( $logFile, 'w' );
-			if ( $fh === false ) {
+			if ( false === $fh ) {
 				return;
 			}
 
@@ -214,14 +213,14 @@ class MainWP_Logger {
 	public static function showLog() {
 		$logFile = self::Instance()->getLogFile();
 		$fh      = @fopen( $logFile, 'r' );
-		if ( $fh === false ) {
+		if ( false === $fh ) {
 			return;
 		}
 
-		$previousColor            = ''; // self::LOG_COLOR;
+		$previousColor            = '';
 		$fontOpen                 = false;
 		$firstLinePassedProcessed = false;
-		while ( ( $line                      = fgets( $fh ) ) !== false ) {
+		while ( false !== ( $line = fgets( $fh ) ) ) {
 			$currentColor = $previousColor;
 			if ( stristr( $line, '[DEBUG]' ) ) {
 				$currentColor    = self::DEBUG_COLOR;
@@ -255,7 +254,6 @@ class MainWP_Logger {
 				$fontOpen = true;
 			}
 
-			// process the line read.
 			echo htmlentities( $line );
 		}
 

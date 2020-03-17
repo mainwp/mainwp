@@ -1925,11 +1925,11 @@ class MainWP_System {
 
 		foreach ( $allTasks as $task ) {
 			$threshold = 0;
-			if ( 'daily' === $task->schedule ) {
+			if ( 'daily' == $task->schedule ) {
 				$threshold = ( 60 * 60 * 24 );
-			} elseif ( 'weekly' === $task->schedule ) {
+			} elseif ( 'weekly' == $task->schedule ) {
 				$threshold = ( 60 * 60 * 24 * 7 );
-			} elseif ( 'monthly' === $task->schedule ) {
+			} elseif ( 'monthly' == $task->schedule ) {
 				$threshold = ( 60 * 60 * 24 * 30 );
 			}
 			$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
@@ -2899,12 +2899,24 @@ class MainWP_System {
 			}
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
 		}
+		
+		
+		ob_start();		
+		$this->render_footer_content( $websites );		
+		$newOutput = ob_get_clean();
 
-		ob_start();
-
+		if ( true === $echo ) {
+			echo $newOutput;
+		} else {
+			return $newOutput;
+		}
+	}
+	
+	public function render_footer_content( $websites ) {
+		
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
-			$count = count( $output );
+			$count = count( $websites );
 			for ( $i = 0; $i < $count; $i ++ ) {
 				$website = $websites[ $i ];
 				if ( '' == $website->sync_errors ) {
@@ -3002,15 +3014,7 @@ class MainWP_System {
 				<div class="ui positive right labeled icon button"><?php esc_html_e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>
 			</div>
 		</div>
-
-		<?php
-		$newOutput = ob_get_clean();
-
-		if ( true === $echo ) {
-			echo $newOutput;
-		} else {
-			return $newOutput;
-		}
+		<?php		
 	}
 
 	public function new_menus() {

@@ -119,7 +119,7 @@ managesites_update_pluginsthemes_done = function ( pType )
 
     if ( websitesDone == websitesTotal )
     {        
-        updatesoverview_send_twitt_info();
+        updatesoverview_send_twitt_info(dashboardActionName);
         setTimeout( function () {
             bulkManageSitesTaskRunning = false;
             if ( websitesError <= 0 )
@@ -671,7 +671,7 @@ managesites_wordpress_upgrade_int = function ( websiteId )
 
             if ( websitesDone == websitesTotal )
             {
-                updatesoverview_send_twitt_info();
+                updatesoverview_send_twitt_info(dashboardActionName);
             }
         }
     }( websiteId ), 'json' );

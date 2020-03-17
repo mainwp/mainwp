@@ -145,7 +145,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
-		if ( 0 < count( $args ) > 0 ) {
+		if ( 0 < count( $args ) ) {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {

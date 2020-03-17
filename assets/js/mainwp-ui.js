@@ -99,13 +99,6 @@ function load_url( href, obj, e )
     }
 }
 
-function mapGetSelector()
-{
-    var el_class = jQuery( this ).attr( 'class' );
-    var el_id = jQuery( this ).attr( 'id' );
-    return el_selector = this.tagName + ( el_id ? '#' + el_id : '' ) +
-        ( !el_id && el_class ? '.' + el_class.match( /^\S+/ ) : '' );
-}
 window.onpopstate = function ( e ) {
     read_current_url();
     if ( e.state )

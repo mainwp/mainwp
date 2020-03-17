@@ -319,14 +319,5 @@ class MainWP_Sync {
 		}
 
 		return ( ! $error );
-	}
-
-	public static function statsUpdate( $pSite = null ) {
-		// todo: implement
-	}
-
-	public static function offlineCheck( $pSite = null ) {
-		// todo: implement
-	}
-
+	}	
 }

@@ -7396,10 +7396,10 @@ mwp_childscan_next = function ()
 
     jQuery( 'tr[siteid="' + childId + '"]' ).children().last().html( 'Scanning' );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_childscan',
         childId: childId
-    };
+    } );
 
     jQuery.ajax( {
         type: 'POST',

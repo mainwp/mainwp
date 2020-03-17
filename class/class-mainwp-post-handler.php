@@ -270,8 +270,11 @@ class MainWP_Post_Handler {
 	}
 
 	public function mainwp_childscan() {
-		// todo: RS: secure action
-		MainWP_Child_Scan::scan();
+		if ( $this->check_security( 'mainwp_childscan', 'security' ) ) {
+			MainWP_Child_Scan::scan();			
+		} else {
+			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
+		}
 	}
 
 	// Hide the installation warning

@@ -4,7 +4,6 @@
  *
  * Displays the MainWP > Backups Page ( Legacy ).
  *
- * @todo remove from widgets as this is not a widget but a page?
  */
 
 

@@ -18,7 +18,7 @@ function reload_init()
 var mainwp_current_url = '';
 function read_current_url()
 {
-    mainwp_current_url = document.location.href.replace( /^.*?\/([^\/]*?)\/?$/i, '$1' );
+    mainwp_current_url = document.location.href.replace( /^.*?\/([^/]*?)\/?$/i, '$1' );
     return mainwp_current_url;
 }
 function load_url( href, obj, e )

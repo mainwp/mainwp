@@ -627,11 +627,11 @@ class MainWP_Manage_Sites {
 			$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 		}
 
-		if ( ( 'zip' === $pTask->archiveFormat ) && ( 1 === $pTask->maximumFileDescriptorsOverride ) ) {
-			$maximumFileDescriptorsAuto = ( 1 === $pTask->maximumFileDescriptorsAuto );
+		if ( ( 'zip' == $pTask->archiveFormat ) && ( 1 == $pTask->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 == $pTask->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $pTask->maximumFileDescriptors;
-		} elseif ( ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) && ( 1 === $website->maximumFileDescriptorsOverride ) ) {
-			$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
+		} elseif ( ( '' == $pTask->archiveFormat || 'site' == $pTask->archiveFormat ) && ( 1 == $website->maximumFileDescriptorsOverride ) ) {
+			$maximumFileDescriptorsAuto = ( 1 == $website->maximumFileDescriptorsAuto );
 			$maximumFileDescriptors     = $website->maximumFileDescriptors;
 		} else {
 			$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -893,7 +893,7 @@ class MainWP_Manage_Sites {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
-				if ( 0 === $backupTaskProgress->downloadedDBComplete ) {
+				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
 					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}

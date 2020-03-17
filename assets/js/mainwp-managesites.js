@@ -87,7 +87,6 @@ managesites_update_pluginsthemes = function ( pType, websiteIds )
     else
         dashboardActionName = 'upgrade_all_themes';
     
-    var dateObj = new Date();
     itemsToUpdate = [];
 
     if ( websitesTotal == 0 )
@@ -587,7 +586,6 @@ managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
                     window.location.href = location.href;
                 } } );
             
-            var dateObj = new Date();
             dashboardActionName = 'upgrade_all_wp_core';
             
             managesites_wordpress_upgrade_all_int( pAllWebsiteIds );

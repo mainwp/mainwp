@@ -711,10 +711,10 @@ class MainWP_Manage_Sites {
 		} //If not fetchResult, we had a timeout.. Retry this!
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
-				// We had some attempts, check if we have information..
+				// We had some attempts, check if we have information.
 				$temp = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
-
+				// ok.
 			}
 
 			if ( ! empty( $temp ) ) {

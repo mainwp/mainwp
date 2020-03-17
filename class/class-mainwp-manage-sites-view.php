@@ -55,7 +55,7 @@ class MainWP_Manage_Sites_View {
 				'slug'       => 'managesites',
 				'href'       => 'admin.php?page=managesites',
 				'icon'       => '<i class="globe icon"></i>',
-			), 1 
+			), 1
 		);
 
 		$items_menu = array(
@@ -1630,14 +1630,14 @@ class MainWP_Manage_Sites_View {
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						// Update website
-						MainWP_DB::Instance()->updateWebsiteValues( 
+						MainWP_DB::Instance()->updateWebsiteValues(
 							$website->id, array(
 								'pubkey'   => base64_encode( $pubkey ),
 								'privkey'  => base64_encode( $privkey ),
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
-							) 
+							)
 						);
 						MainWP_Sync::syncInformationArray( $website, $information );
 						return true;

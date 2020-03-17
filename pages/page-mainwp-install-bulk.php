@@ -90,14 +90,14 @@ class MainWP_Install_Bulk {
 					'plugin_information', array(
 						'slug'   => $_POST['slug'],
 						'fields' => array( 'sections' => false ),
-					) 
+					)
 				); // Save on a bit of bandwidth.
 			} else {
-				$api = themes_api( 
+				$api = themes_api(
 					'theme_information', array(
 						'slug'   => $_POST['slug'],
 						'fields' => array( 'sections' => false ),
-					) 
+					)
 				); // Save on a bit of bandwidth.
 			}
 			$url = $api->download_link;
@@ -123,12 +123,12 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
-						$website, 
+						$website,
 						array(
 							'id',
 							'url',
 							'name',
-						) 
+						)
 					);
 				}
 			}
@@ -143,12 +143,12 @@ class MainWP_Install_Bulk {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
 								'name',
-							) 
+							)
 						);
 					}
 					MainWP_DB::free_result( $websites );
@@ -218,12 +218,12 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
-						$website, 
+						$website,
 						array(
 							'id',
 							'url',
 							'name',
-						) 
+						)
 					);
 				}
 			}
@@ -238,12 +238,12 @@ class MainWP_Install_Bulk {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
 								'name',
-							) 
+							)
 						);
 					}
 					MainWP_DB::free_result( $websites );

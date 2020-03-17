@@ -50,7 +50,7 @@ class MainWP_Settings {
 			'mainwp_tab', __( 'Settings Global options', 'mainwp' ), ' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>', 'read', 'Settings', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
@@ -58,7 +58,7 @@ class MainWP_Settings {
 				'mainwp_tab', __( 'MainWP Tools', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>', 'read', 'MainWPTools', array(
 					self::get_class_name(),
 					'renderMainWPTools',
-				) 
+				)
 			);
 		}
 
@@ -67,7 +67,7 @@ class MainWP_Settings {
 				'mainwp_tab', __( 'Advanced Options', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>', 'read', 'SettingsAdvanced', array(
 					self::get_class_name(),
 					'renderAdvanced',
-				) 
+				)
 			);
 		}
 
@@ -77,7 +77,7 @@ class MainWP_Settings {
 					'mainwp_tab', __( 'Managed Client Reports', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>', 'read', 'SettingsClientReportsResponder', array(
 						self::get_class_name(),
 						'renderReportResponder',
-					) 
+					)
 				);
 			}
 		}
@@ -149,7 +149,7 @@ class MainWP_Settings {
 				'slug'       => 'Settings',
 				'href'       => 'admin.php?page=Settings',
 				'icon'       => '<i class="cogs icon"></i>',
-			), 1 
+			), 1
 		); // level 1
 
 		$init_sub_subleftmenu = array(
@@ -311,7 +311,7 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $_POST['mainwp_timeDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST['mainwp_frequencyDailyUpdate'] ) );
 
-				$val = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval($_POST['mainwp_sidebarPosition']) : 1 );
+				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval($_POST['mainwp_sidebarPosition']) : 1 );
 				$user = wp_get_current_user();
 				if ( $user ) {
 					update_user_option($user->ID, 'mainwp_sidebarPosition', $val, true);

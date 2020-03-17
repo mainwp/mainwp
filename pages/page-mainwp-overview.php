@@ -52,11 +52,11 @@ class MainWP_Overview {
 			), MAINWP_PLUGIN_URL . 'assets/images/mainwpicon.png', '2.00001' );
 
 			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
-				add_submenu_page( 
+				add_submenu_page(
 					'mainwp_tab', 'MainWP', __( 'Overview', 'mainwp' ), 'read', 'mainwp_tab', array(
 						$this,
 						'on_show_page',
-					) 
+					)
 				);
 			}
 
@@ -71,14 +71,14 @@ class MainWP_Overview {
 	}
 
 	public static function init_left_menu() {
-		MainWP_Menu::add_left_menu( 
+		MainWP_Menu::add_left_menu(
 			array(
 				'title'      => __( 'Overview', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'mainwp_tab',
 				'href'       => 'admin.php?page=mainwp_tab',
 				'icon'       => '<i class="tachometer alternate icon"></i>',
-			), 1 
+			), 1
 		);
 	}
 
@@ -338,7 +338,7 @@ class MainWP_Overview {
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
 		} );
 	</script>
-	<?php
+		<?php
 	}
 
 	/*

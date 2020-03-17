@@ -30,10 +30,10 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		$dir        = MainWP_Utility::getMainWPSpecificDir( $item['id'] );
-		$lastbackup = 0;		
+		$lastbackup = 0;
 		if ( file_exists( $dir ) ) {
-			$dh            = opendir( $dir );
-			if ( $dh ) { 		
+			$dh = opendir( $dir );
+			if ( $dh ) {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
@@ -44,7 +44,7 @@ class MainWP_Manage_Sites_List_Table {
 						}
 					}
 				}
-				closedir( $dh );				
+				closedir( $dh );
 			}
 		}
 
@@ -973,7 +973,7 @@ class MainWP_Manage_Sites_List_Table {
 
 				if ( 5 < $total_updates ) {
 					$a_color = 'red';
-				} elseif ( 0 < $total_updates && 5 >=  $total_updates ) {
+				} elseif ( 0 < $total_updates && 5 >= $total_updates ) {
 					$a_color = 'yellow';
 				} else {
 					$a_color = 'green';
@@ -1011,11 +1011,11 @@ class MainWP_Manage_Sites_List_Table {
 
 				$cols_data = array();
 
-					foreach ( $columns as $column_name => $column_display_name ) {
-						$default_classes = esc_html( "collapsing $column_name column-$column_name" );
-						ob_start();
-						?>
-							<?php if ( 'cb' === $column_name ) { ?>
+				foreach ( $columns as $column_name => $column_display_name ) {
+					$default_classes = esc_html( "collapsing $column_name column-$column_name" );
+					ob_start();
+					?>
+						<?php if ( 'cb' === $column_name ) { ?>
 							<div class="ui checkbox"><input type="checkbox" value="<?php echo $website['id']; ?>" /></div>
 							<?php } elseif ( 'status' === $column_name ) { ?>
 								<?php if ( $hasSyncErrors ) : ?>
@@ -1089,14 +1089,14 @@ class MainWP_Manage_Sites_List_Table {
 											<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
 										</div>
 									</div>
-								<?php
+										<?php
 							} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
 								echo call_user_func( array( $this, 'column_' . $column_name ), $website );
 							} else {
 								echo $this->column_default( $website, $column_name );
 							}
 							$cols_data[ $column_name ] = ob_get_clean();
-					}
+				}
 					$all_rows[]  = $cols_data;
 					$info_rows[] = $info_item;
 			}

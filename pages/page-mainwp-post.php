@@ -44,40 +44,40 @@ class MainWP_Post {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 
+		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-			$_page = add_submenu_page( 
+			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
 					self::get_class_name(),
 					'renderBulkAdd',
-				) 
+				)
 			);
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-			$_page = add_submenu_page( 
+			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
 					self::get_class_name(),
 					'renderBulkEdit',
-				) 
+				)
 			);
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
-		add_submenu_page( 
+		add_submenu_page(
 			'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
 				self::get_class_name(),
 				'posting',
-			) 
+			)
 		);
 
 		/**
@@ -217,7 +217,7 @@ class MainWP_Post {
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'icon'       => '<i class="file alternate icon"></i>',
-			), 1 
+			), 1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -716,7 +716,7 @@ class MainWP_Post {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
 					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-						$website, 
+						$website,
 						array(
 							'id',
 							'url',
@@ -727,7 +727,7 @@ class MainWP_Post {
 							'nosslkey',
 							'http_user',
 							'http_pass',
-						) 
+						)
 					);
 				}
 			}
@@ -741,7 +741,7 @@ class MainWP_Post {
 							continue;
 						}
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
@@ -752,7 +752,7 @@ class MainWP_Post {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					}
 					MainWP_DB::free_result( $websites );
@@ -798,7 +798,7 @@ class MainWP_Post {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 
+		MainWP_Cache::addContext(
 			'Post', array(
 				'count'      => $output->posts,
 				'keyword'    => $keyword,
@@ -808,7 +808,7 @@ class MainWP_Post {
 				'sites'      => ( '' !== $sites ) ? $sites : '',
 				'groups'     => ( '' !== $groups ) ? $groups : '',
 				'search_on'  => $search_on,
-			) 
+			)
 		);
 
 		if ( 0 === $output->posts ) {
@@ -2027,7 +2027,7 @@ class MainWP_Post {
 												'nosslkey',
 												'http_user',
 												'http_pass',
-											) 
+											)
 										);
 									}
 								}
@@ -2040,7 +2040,7 @@ class MainWP_Post {
 												continue;
 											}
 											$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-												$website, 
+												$website,
 												array(
 													'id',
 													'url',
@@ -2051,7 +2051,7 @@ class MainWP_Post {
 													'nosslkey',
 													'http_user',
 													'http_pass',
-												) 
+												)
 											);
 										}
 										MainWP_DB::free_result( $websites );
@@ -2200,7 +2200,7 @@ class MainWP_Post {
 			if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 				$website                    = MainWP_DB::Instance()->getWebsiteById( $websiteid );
 				$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-					$website, 
+					$website,
 					array(
 						'id',
 						'url',
@@ -2211,7 +2211,7 @@ class MainWP_Post {
 						'nosslkey',
 						'http_user',
 						'http_pass',
-					) 
+					)
 				);
 			}
 		}
@@ -2294,12 +2294,12 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( 
+			$information = MainWP_Utility::fetchUrlAuthed(
 				$website, 'post_action', array(
 					'action'     => 'get_edit',
 					'id'         => $postId,
 					'post_type'  => $postType,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
@@ -2447,7 +2447,7 @@ class MainWP_Post {
 			array(
 				'ID'          => $new_post_id,
 				'post_status' => $post_status,
-			) 
+			)
 		);
 
 		foreach ( $post_custom as $meta_key => $meta_values ) {
@@ -2505,12 +2505,12 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( 
+			$information = MainWP_Utility::fetchUrlAuthed(
 				$website, 'set_terms', array(
 					'id'         => base64_encode( $postId ),
 					'terms'      => base64_encode( $cat_id ),
 					'taxonomy'   => base64_encode( $taxonomy ),
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			return;
@@ -2536,7 +2536,7 @@ class MainWP_Post {
 				$website, 'insert_comment', array(
 					'id'         => $postId,
 					'comments'   => base64_encode( serialize( $comments ) ),
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			return;

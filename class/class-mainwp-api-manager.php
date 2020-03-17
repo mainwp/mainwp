@@ -97,7 +97,7 @@ class MainWP_Api_Manager {
 						'product_id'     => $options['product_id'],
 						'instance'       => $options['instance_id'],
 						'platform'       => $this->domain,
-					) 
+					)
 				);
 				if ( ! $reset ) {
 					return array( 'error' => __( 'The license could not be deactivated.', 'mainwp' ) );
@@ -183,7 +183,7 @@ class MainWP_Api_Manager {
 					'product_id'     => $options['product_id'],
 					'instance'       => $options['instance_id'],
 					'platform'       => $this->domain,
-				) 
+				)
 			); // reset license key activation
 
 			$activate_results = json_decode( $activate_results, true );
@@ -218,7 +218,7 @@ class MainWP_Api_Manager {
 			array(
 				'username'   => $username,
 				'password'   => $password,
-			) 
+			)
 		);
 	}
 
@@ -232,7 +232,7 @@ class MainWP_Api_Manager {
 				'username'   => $username,
 				'password'   => $password,
 				'product_id' => $productId,
-			) 
+			)
 		);
 	}
 
@@ -241,13 +241,13 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( 
+		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware(
 			array(
 				'username'   => $username,
 				'password'   => $password,
 				'product_id' => $productId,
 				'noauth'     => $no_register ? 1 : 0,
-			) 
+			)
 		);
 	}
 

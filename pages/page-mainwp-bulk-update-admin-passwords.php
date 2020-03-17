@@ -11,11 +11,11 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 
+		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Admin Passwords', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>', 'read', 'UpdateAdminPasswords', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 		// add_action( 'load-' . $_page, array('MainWP_Bulk_Update_Admin_Passwords', 'on_load_page'));
 	}
@@ -74,7 +74,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -85,7 +85,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 					}
@@ -98,7 +98,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									continue;
 								}
 								$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-									$website, 
+									$website,
 									array(
 										'id',
 										'url',

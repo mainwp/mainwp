@@ -86,13 +86,13 @@ class MainWP_Manage_Sites {
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
 				MainWP_Site_Open::get_class_name(),
 				'render',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
 				MainWP_Site_Open::get_class_name(),
 				'renderRestore',
-			) 
+			)
 		);
 
 		/**
@@ -662,7 +662,7 @@ class MainWP_Manage_Sites {
 						'attempts'               => 0,
 						'last_error'             => '',
 						'pid'                    => $pid,
-					) 
+					)
 				);
 
 				$params = array(
@@ -694,7 +694,7 @@ class MainWP_Manage_Sites {
 								'message'    => $e->getMessage(),
 								'extra'      => $e->getMessageExtra(),
 							) ),
-						) 
+						)
 					);
 
 					return false;
@@ -1465,7 +1465,7 @@ class MainWP_Manage_Sites {
 		$dbBackups   = array();
 		$fullBackups = array();
 		if ( file_exists( $dir ) ) {
-			$dh            = opendir( $dir );
+			$dh = opendir( $dir );
 			if ( $dh ) {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {

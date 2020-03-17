@@ -153,11 +153,11 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			uasort( $this->items, array( $this, 'order_callback' ) );
 		}
 
-		$this->set_pagination_args( 
+		$this->set_pagination_args(
 			array(
 				'total_items'    => $api->info['results'],
 				'per_page'       => $args['per_page'],
-			) 
+			)
 		);
 
 		if ( isset( $api->info['groups'] ) ) {
@@ -451,12 +451,12 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 						<strong><?php esc_html_e( 'Last Updated: ', 'mainwp' ); ?></strong><?php printf( __( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
 						</span>
 					<?php
-					wp_star_rating( 
+					wp_star_rating(
 						array(
 							'rating' => $plugin['rating'],
 							'type'   => 'percent',
 							'number' => $plugin['num_ratings'],
-						) 
+						)
 					);
 					?>
 					</div>

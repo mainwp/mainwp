@@ -42,36 +42,36 @@ class MainWP_Themes {
 
 	public static function initMenu() {
 
-		$_page = add_submenu_page( 
+		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
 				self::get_class_name(),
 				'renderInstall',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
 				self::get_class_name(),
 				'renderAutoUpdate',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 				self::get_class_name(),
 				'renderIgnore',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 				self::get_class_name(),
 				'renderIgnoredAbandoned',
-			) 
+			)
 		);
 
 		/**
@@ -140,7 +140,7 @@ class MainWP_Themes {
 				'slug'       => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesManage',
 				'icon'       => '<i class="paint brush icon"></i>',
-			), 1 
+			), 1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -468,7 +468,7 @@ class MainWP_Themes {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
@@ -479,7 +479,7 @@ class MainWP_Themes {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					}
 				}
@@ -494,7 +494,7 @@ class MainWP_Themes {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -505,7 +505,7 @@ class MainWP_Themes {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 						MainWP_DB::free_result( $websites );
@@ -539,13 +539,13 @@ class MainWP_Themes {
 			}
 		}
 
-		MainWP_Cache::addContext( 
+		MainWP_Cache::addContext(
 			'Themes', array(
 				'keyword' => $keyword,
 				'status'  => $status,
 				'sites'   => ( '' !== $sites ) ? $sites : '',
 				'groups'  => ( '' !== $groups ) ? $groups : '',
-			) 
+			)
 		);
 
 		ob_start();
@@ -746,7 +746,7 @@ class MainWP_Themes {
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( 'FAIL' );
@@ -801,7 +801,7 @@ class MainWP_Themes {
 
 	public static function renderInstall() {
 		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION );
-		wp_localize_script( 
+		wp_localize_script(
 			'mainwp-theme', '_mainwpThemeSettings',
 			array(
 				'themes'          => false,
@@ -824,7 +824,7 @@ class MainWP_Themes {
 					'expandSidebar'     => __( 'Expand sidebar' ),
 				),
 				'installedThemes' => array(),
-			) 
+			)
 		);
 		self::renderHeader( 'Install' );
 		self::renderThemesTable();
@@ -1153,7 +1153,7 @@ class MainWP_Themes {
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-						$website, 
+						$website,
 						array(
 							'id',
 							'url',
@@ -1164,7 +1164,7 @@ class MainWP_Themes {
 							'nosslkey',
 							'http_user',
 							'http_pass',
-						) 
+						)
 					);
 				}
 				MainWP_DB::free_result( $websites );

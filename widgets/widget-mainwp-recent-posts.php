@@ -38,7 +38,7 @@ class MainWP_Recent_Posts {
 	 * Build the resent posts list.
 	 *
 	 * @param mixed   $renew
-	 * @param boolean $pExit ture|false If $pEixt is true then exit.
+	 * @param boolean $pExit true|false If $pEixt is true then exit.
 	 */
 	public static function renderSites( $renew, $pExit = true ) {
 
@@ -499,7 +499,7 @@ class MainWP_Recent_Posts {
 	/**
 	 * Method action()
 	 *
-	 * Post action.
+	 * Initiate try catch for chosen Action
 	 *
 	 * @param mixed $pAction Post Action.
 	 */

@@ -1,15 +1,42 @@
 <?php
+/**
+ * MainWP Plugins Widget
+ * 
+ * Grab current Child Site plugin data & build Widget
+ *
+ * @package MainWP/Plugins
+ */
 
+/**
+ * Class MainWP_Widget_Plugins
+ */
 class MainWP_Widget_Plugins {
 
+	/**
+	 * Method getClassName()
+	 *
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__ Class Name.
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Fire off renderWidget().
+	 */
 	public static function render() {
 		self::renderWidget( false, false );
 	}
 
+	/** 
+	 * Method prepair_icons()
+	 * 
+	 * Utilizes WP API to grab plugin icons, last_updated, active_installs
+	 */
 	public function prepare_icons() {
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
@@ -31,6 +58,16 @@ class MainWP_Widget_Plugins {
 		$this->items = $api->plugins;
 	}
 
+
+	/**
+	 * Method renderWidget()
+	 * 
+	 * Build Plugins Widget
+	 * 
+	 * @param mixed   $renew
+	 * @param boolean $pExit true|false If $pEixt is true then exit.
+	 * 
+	 */
 	public static function renderWidget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
@@ -179,21 +216,45 @@ class MainWP_Widget_Plugins {
 		}
 	}
 
+
+	/**
+	 * Method activatePlugin()
+	 * 
+	 * Fire off Action activate & display result
+	 */
 	public static function activatePlugin() {
 		self::action( 'activate' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * Method deactivatePlugin()
+	 * 
+	 * Fire off action deactivate & display result
+	 */
 	public static function deactivatePlugin() {
 		self::action( 'deactivate' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * Method deletePlugin()
+	 * 
+	 * Fire off action delete & display result
+	 */
 	public static function deletePlugin() {
 		self::action( 'delete' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
+
+	/**
+	 * Method action()
+	 *
+	 * Initiate try catch for chosen Action
+	 *
+	 * @param mixed $pAction Plugin Action.
+	 */
 	public static function action( $pAction ) {
 		$plugin       = $_POST['plugin'];
 		$websiteIdEnc = $_POST['websiteId'];

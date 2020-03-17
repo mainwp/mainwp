@@ -1,15 +1,47 @@
 <?php
+/**
+ * MainWP Themes Widget
+ * 
+ * Grab current Child Site theme data & build Widget
+ *
+ * @package MainWP/Plugins
+ */
 
+/**
+ * Class MainWP_Widget_Themes
+ */
 class MainWP_Widget_Themes {
 
+	/**
+	 * Method getClassName()
+	 *
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__ Class Name.
+	 */
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Fire off renderWidget().
+	 */
 	public static function render() {
 		self::renderWidget( false, false );
 	}
 
+	
+	/**
+	 * Method renderWidget()
+	 * 
+	 * Build Themes Widget
+	 * 
+	 * @param mixed   $renew
+	 * @param boolean $pExit true|false If $pEixt is true then exit.
+	 * 
+	 */
 	public static function renderWidget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
@@ -143,16 +175,33 @@ class MainWP_Widget_Themes {
 		}
 	}
 
+	/**
+	 * Method activateTheme()
+	 * 
+	 * Fire off Action activate & display result
+	 */
 	public static function activateTheme() {
 		self::action( 'activate' );
 		die( wp_json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * Method deleteTheme()
+	 * 
+	 * Fire off action deactivate & display result
+	 */
 	public static function deleteTheme() {
 		self::action( 'delete' );
 		die( wp_json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * Method action()
+	 *
+	 * Initiate try catch for chosen Action
+	 *
+	 * @param mixed $pAction Theme Action.
+	 */
 	public static function action( $pAction ) {
 		$theme        = $_POST['theme'];
 		$websiteIdEnc = $_POST['websiteId'];

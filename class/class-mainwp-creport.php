@@ -390,12 +390,18 @@ class MainWP_Live_Reports_Class {
 			}
 
 			$start_time = $end_time     = 0;
-			if ( isset( $_POST['mwp_creport_date_from'] ) && ( $start_date  = trim( $_POST['mwp_creport_date_from'] ) ) != '' ) {
-				$start_time = strtotime( $start_date );
+			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
+				$start_date  = trim( $_POST['mwp_creport_date_from'] );
+				if ( '' != $start_date ) {
+					$start_time = strtotime( $start_date );
+				}
 			}
 
-			if ( isset( $_POST['mwp_creport_date_to'] ) && ( $end_date = trim( $_POST['mwp_creport_date_to'] ) ) != '' ) {
-				$end_time = strtotime( $end_date );
+			if ( isset( $_POST['mwp_creport_date_to'] ) ) {
+				$end_date = trim( $_POST['mwp_creport_date_to'] );
+				if ( '' != $end_date ) {
+					$end_time = strtotime( $end_date );
+				}
 			}
 
 			if ( 0 === $end_time ) {
@@ -1156,7 +1162,7 @@ class MainWP_Live_Reports_Class {
 			}
 		}
 
-		$removed_sections = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', create_function( '$matches', 'return "";' ), $content );
+		$removed_sections = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', '__return_empty_string', $content );
 		$other_tokens     = array();
 		if ( preg_match_all( '/\[[^\]]+\]/is', $removed_sections, $matches ) ) {
 			$other_tokens = $matches[0];
@@ -2324,11 +2330,13 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 
-		$result = $wpdb->query( $wpdb->prepare( '
-        UPDATE ' . $this->table_name( 'client_report_site_token' ) . '
-        SET `token_value` = %s
-        WHERE `token_id` = %d AND site_url = %s', $this->escape( $token_value ), intval( $token_id ), $this->escape( $site_url )
-		) );
+		$result = $wpdb->query( 
+			$wpdb->prepare( 
+				'UPDATE ' . $this->table_name( 'client_report_site_token' ) . '
+				SET `token_value` = %s
+				WHERE `token_id` = %d AND site_url = %s', $this->escape( $token_value ), intval( $token_id ), $this->escape( $site_url )
+			) 
+		);
 
 		if ( $result ) {
 			return $this->get_tokens_by( 'id', $token_id, $site_url );
@@ -2404,7 +2412,8 @@ PRIMARY KEY  (`id`)  ';
 						'company'    => isset( $report['company'] ) ? $report['company'] : '',
 						'email'      => isset( $report['email'] ) ? $report['email'] : '',
 					);
-					if ( $updatedClient  = $this->update_client( $update_client ) ) {
+					$updatedClient  = $this->update_client( $update_client );
+					if ( $updatedClient ) {
 						$client_id = $updatedClient->clientid;
 					}
 				}

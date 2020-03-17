@@ -5,10 +5,12 @@
 class MainWP_Extensions_View {
 
 	public static function initMenu() {
-		$page = add_submenu_page( 'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
-			MainWP_Extensions::getClassName(),
-			'render',
-		) );
+		$page = add_submenu_page( 
+			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+				MainWP_Extensions::getClassName(),
+				'render',
+			) 
+		);
 
 		return $page;
 	}
@@ -220,7 +222,7 @@ class MainWP_Extensions_View {
 											<label for="extension-deactivate-cb"><?php esc_html_e( 'Deactivate License Key', 'mainwp' ); ?></label>
 										</div>
 									</div>
-									<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_attr_e( 'Deactivate License', 'mainwp' ); ?>">
+									<input type="button" class="ui basic red fluid button mainwp-extensions-deactivate" value="<?php esc_html_e( 'Deactivate License', 'mainwp' ); ?>">
 									<?php else : ?>
 									<input type="button" class="ui basic green fluid button mainwp-extensions-activate" value="<?php esc_attr_e( 'Activate License', 'mainwp' ); ?>">
 									<?php endif; ?>

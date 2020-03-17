@@ -692,11 +692,13 @@ class MainWP_Utility {
 				$_new_post = null;
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
-					$params = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
-						'id'     => $website->id,
-						'url'    => $website->url,
-						'name'   => $website->name,
-					) );
+					$params = apply_filters( 
+						'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
+							'id'     => $website->id,
+							'url'    => $website->url,
+							'name'   => $website->name,
+						) 
+					);
 				}
 
 				$ch = curl_init();
@@ -953,11 +955,13 @@ class MainWP_Utility {
 			$_new_post = null;
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {
 				$_new_post = $params['new_post'];
-				$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
-					'id'     => $website->id,
-					'url'    => $website->url,
-					'name'   => $website->name,
-				) );
+				$params    = apply_filters(
+					'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
+						'id'     => $website->id,
+						'url'    => $website->url,
+						'name'   => $website->name,
+					) 
+				);
 			}
 
 			$ch = curl_init();
@@ -1211,11 +1215,13 @@ class MainWP_Utility {
 				$result          = self::isWebsiteAvailable( $website );
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
-				MainWP_DB::Instance()->updateWebsiteValues( $website->id, array(
-					'offline_check_result' => $online_detected ? 1 : -1,
-					'offline_checks_last'  => time(),
-					'http_response_code'   => $http_code,
-				) );
+				MainWP_DB::Instance()->updateWebsiteValues( 
+					$website->id, array(
+						'offline_check_result' => $online_detected ? 1 : -1,
+						'offline_checks_last'  => time(),
+						'http_response_code'   => $http_code,
+					) 
+				);
 
 				if ( defined( 'DOING_CRON' ) && DOING_CRON && ! $online_detected ) {
 					$sitesHttpChecks = get_option( 'mainwp_automaticUpdate_httpChecks' );

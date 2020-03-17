@@ -79,7 +79,7 @@ class MainWP_Site_Info {
 				<h2 class="ui icon header">
 					<i class="info circle icon"></i>
 					<div class="content">
-						<?php _e( 'No info found!', 'mainwp' ); ?>
+						<?php esc_html_e( 'No info found!', 'mainwp' ); ?>
 						<div class="sub header"><?php esc_html_e( 'Site information could not be found. Make sure your site is properly connected and syncs correctly.', 'mainwp' ); ?></div>
 					</div>
 				</h2>

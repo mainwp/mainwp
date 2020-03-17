@@ -135,10 +135,14 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['wp_updates'] ) && $information['wp_updates'] != null ) {
-			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'wp_upgrades', wp_json_encode( array(
-				'current'    => $information['wpversion'],
-				'new'        => $information['wp_updates'],
-			) ) );
+			MainWP_DB::Instance()->updateWebsiteOption( 
+				$pWebsite, 'wp_upgrades', wp_json_encode(
+					array(
+						'current'    => $information['wpversion'],
+						'new'        => $information['wp_updates'],
+					) 
+				) 
+			);
 			$done = true;
 		} else {
 			MainWP_DB::Instance()->updateWebsiteOption( $pWebsite, 'wp_upgrades', $emptyArray );

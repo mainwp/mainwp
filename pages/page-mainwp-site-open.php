@@ -31,7 +31,7 @@ class MainWP_Site_Open {
 			$location = base64_decode( $_GET['location'] );
 		}
 
-		if ( isset( $_GET['openUrl'] ) && $_GET['openUrl'] == 'yes' ) {
+		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
 			self::openSiteLocation( $website, $location );
 		} else {
 			self::openSite( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
@@ -41,10 +41,10 @@ class MainWP_Site_Open {
 	public static function openSite( $website, $location, $pNewWindow = null ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
-		  <div class="ui active inverted dimmer">
-			<div class="ui massive text loader">Redirecting...</div>
-		  </div>
-			<form method="POST" action="<?php echo MainWP_Utility::getGetDataAuthed( $website, ( $location == null || $location == '' ) ? 'index.php' : $location  ); ?>" id="redirectForm"></form>
+			<div class="ui active inverted dimmer">
+				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+			</div>
+			<form method="POST" action="<?php echo MainWP_Utility::getGetDataAuthed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm"></form>
 		</div>
 		<?php
 	}
@@ -72,21 +72,21 @@ class MainWP_Site_Open {
 	public static function openSiteRestore( $website, $file, $size ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
-		  <div class="ui active inverted dimmer">
-			<div class="ui massive text loader">Redirecting...</div>
-		  </div>
+			<div class="ui active inverted dimmer">
+				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+			</div>
 			<?php
 
-			$url  = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
-			$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
+			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
 			$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::getFileParameter( $website ), true );
 			$postdata['size'] = $size;
 			?>
-			<form method="POST" action="<?php echo esc_url($url); ?>" id="redirectForm">
+			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
 				<?php
 				foreach ( $postdata as $name => $value ) {
-					echo '<input type="hidden" name="' . $name . '" value="' . $value . '" />';
+					echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
 				}
 				?>
 			</form>
@@ -97,21 +97,21 @@ class MainWP_Site_Open {
 	public static function openSiteLocation( $website, $open_location ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
-		  <div class="ui active inverted dimmer">
-			<div class="ui massive text loader">Redirecting...</div>
-		  </div>
+			<div class="ui active inverted dimmer">
+				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
+			</div>
 			<?php
 
-			$url  = ( isset( $website->url ) && $website->url != '' ? $website->url : $website->siteurl );
-			$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
+			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
 			$postdata                  = MainWP_Utility::getGetDataAuthed( $website, 'index.php', 'where', true );
 			$postdata['open_location'] = base64_encode( $open_location );
 			?>
-			<form method="POST" action="<?php echo $url; ?>" id="redirectForm">
+			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
 				<?php
 				foreach ( $postdata as $name => $value ) {
-					echo '<input type="hidden" name="' . $name . '" value="' . $value . '" />';
+					echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
 				}
 				?>
 			</form>

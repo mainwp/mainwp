@@ -90,13 +90,15 @@ class MainWP_Api_Manager {
 
 		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $api_email == '' || $current_api_key != $api_key ) {
 			if ( $current_api_key != $api_key ) {
-				$reset = $this->replace_license_key( array(
-					'email'          => $current_activation_email,
-					'licence_key'    => $current_api_key,
-					'product_id'     => $options['product_id'],
-					'instance'       => $options['instance_id'],
-					'platform'       => $this->domain,
-				) );
+				$reset = $this->replace_license_key(
+					array(
+						'email'          => $current_activation_email,
+						'licence_key'    => $current_api_key,
+						'product_id'     => $options['product_id'],
+						'instance'       => $options['instance_id'],
+						'platform'       => $this->domain,
+					) 
+				);
 				if ( ! $reset ) {
 					return array( 'error' => __( 'The license could not be deactivated.', 'mainwp' ) );
 				}
@@ -174,13 +176,15 @@ class MainWP_Api_Manager {
 		$return = array();
 
 		if ( $activation_status == 'Activated' && $current_api_key != '' && $current_activation_email != '' ) {
-			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate( array(
-				'email'          => $current_activation_email,
-				'licence_key'    => $current_api_key,
-				'product_id'     => $options['product_id'],
-				'instance'       => $options['instance_id'],
-				'platform'       => $this->domain,
-			) ); // reset license key activation
+			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate(
+				array(
+					'email'          => $current_activation_email,
+					'licence_key'    => $current_api_key,
+					'product_id'     => $options['product_id'],
+					'instance'       => $options['instance_id'],
+					'platform'       => $this->domain,
+				) 
+			); // reset license key activation
 
 			$activate_results = json_decode( $activate_results, true );
 			if ( $activate_results['deactivated'] == true || ( isset( $activate_results['activated'] ) && $activate_results['activated'] == 'inactive' ) ) {
@@ -210,10 +214,12 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->testloginapi( array(
-			'username'   => $username,
-			'password'   => $password,
-		) );
+		return MainWP_Api_Manager_Key::instance()->testloginapi(
+			array(
+				'username'   => $username,
+				'password'   => $password,
+			) 
+		);
 	}
 
 	public function purchase_software( $username, $password, $productId ) {
@@ -221,11 +227,13 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->purchasesoftware( array(
-			'username'   => $username,
-			'password'   => $password,
-			'product_id' => $productId,
-		) );
+		return MainWP_Api_Manager_Key::instance()->purchasesoftware(
+			array(
+				'username'   => $username,
+				'password'   => $password,
+				'product_id' => $productId,
+			) 
+		);
 	}
 
 	public function get_purchased_software( $username, $password, $productId = '', $no_register = false ) {
@@ -233,12 +241,14 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( array(
-			'username'   => $username,
-			'password'   => $password,
-			'product_id' => $productId,
-			'noauth'     => $no_register ? 1 : 0,
-		) );
+		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware( 
+			array(
+				'username'   => $username,
+				'password'   => $password,
+				'product_id' => $productId,
+				'noauth'     => $no_register ? 1 : 0,
+			) 
+		);
 	}
 
 	public function grab_license_key( $api, $username, $password ) {

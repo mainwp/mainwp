@@ -37,10 +37,12 @@ class MainWP_About {
 	 * Add WP Submenu Page "About MainWP"
 	 */
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
+		add_submenu_page( 
+			'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
 			self::getClassName(),
 			'render',
-		) );
+			) 
+		);
 	}
 
 	/**
@@ -64,8 +66,8 @@ class MainWP_About {
 			<div class="about-text"><?php echo __( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->getVersion(); ?></div>
 			<div class="mainwp-badge"><?php echo __( 'Version ', 'mainwp' ) . $mainWP->getVersion(); ?></div>
 			<h2 class="nav-tab-wrapper wp-clearfix">
-				<a class="nav-tab <?php echo $showtab == 'whatsnew' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php _e( 'What\'s New', 'mainwp' ); ?></a>
-				<a class="nav-tab <?php echo $showtab == 'changelog' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php _e( 'Version Changelog', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo $showtab == 'whatsnew' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php esc_html_e( 'What\'s New', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo $showtab == 'changelog' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php esc_html_e( 'Version Changelog', 'mainwp' ); ?></a>
 			</h2>
 			<?php
 			if ( 'whatsnew' == $showtab ) {
@@ -112,7 +114,7 @@ class MainWP_About {
 		global $mainWP;
 		?>
 		<br/>
-		<h3><?php echo esc_html($mainWP->getVersion()); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
+		<h3><?php echo esc_html($mainWP->getVersion()); ?>&nbsp;<?php esc_html_e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
 			<li>Fixed: an issue with sorting posts and pages by the publish date</li>
@@ -127,7 +129,7 @@ class MainWP_About {
 			<li>Updated: the Update process will not check for required backups if a primary backup system is not set</li>
 		</ul>
 		<hr/>
-		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>
+		<h3><?php esc_html_e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>
 		<a href="https://wordpress.org/plugins/mainwp/#developers" target="_blank">MainWP Dashboard</a><br/>
 		<a href="https://wordpress.org/plugins/mainwp-child/#developers" target="_blank">MainWP Child</a><br/>
 		<?php

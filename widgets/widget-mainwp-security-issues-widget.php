@@ -50,7 +50,7 @@ class MainWP_Security_Issues_Widget {
 
 		<h3 class="ui header handle-drag">
 			<?php esc_html_e('Security Issues', 'mainwp'); ?>
-			<div class="sub header"><?php _e( 'Detected security issues', 'mainwp' ); ?></div>
+			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>
 		</h3>
 
 		<div class="ui section hidden divider"></div>
@@ -74,7 +74,7 @@ class MainWP_Security_Issues_Widget {
 			</div>
 			<div class="column right aligned">
 				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php echo __( 'See Details', 'mainwp' ); ?></a>
-				<input type="button" class="fix-all-security-issues ui button green" value="<?php _e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
+				<input type="button" class="fix-all-security-issues ui button green" value="<?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
 			</div>
 		</div>
 
@@ -107,7 +107,7 @@ class MainWP_Security_Issues_Widget {
 							?>
 				  </div>
 				  <div class="column right aligned">
-							<a href="admin.php?page=managesites&scanid=<?php echo esc_attr($website->id); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Details', 'mainwp' ); ?></a>
+							<a href="admin.php?page=managesites&scanid=<?php echo esc_attr($website->id); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
 					  <?php if ( $website->securityIssues == 0 ) { ?>
 					  <input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } else { ?>
@@ -127,7 +127,7 @@ class MainWP_Security_Issues_Widget {
 		<h2 class="ui icon header">
 			<i class="thumbs up outline icon"></i>
 			<div class="content">
-				<?php _e( 'Well done!', 'mainwp' ); ?>
+				<?php esc_html_e( 'Well done!', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'No security issues detected!', 'mainwp' ); ?></div>
 			</div>
 		</h2>

@@ -120,7 +120,7 @@ class MainWP_Twitter {
 		?>
 		<button class="ui mini twitter button mainwp_tweet_this" msg="<?php echo urlencode($content); ?>">
 		  <i class="twitter icon"></i>
-		  <?php _e( 'Brag on Twitter', 'mainwp' ); ?>
+		  <?php esc_html_e( 'Brag on Twitter', 'mainwp' ); ?>
 		</button>
 		<?php
 		$return = ob_get_clean();

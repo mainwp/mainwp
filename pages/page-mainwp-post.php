@@ -44,33 +44,41 @@ class MainWP_Post {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		$_page = add_submenu_page( 
+			'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 		add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::getClassName(), 'get_manage_columns' ) );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
-				self::getClassName(),
-				'renderBulkAdd',
-			) );
+			$_page = add_submenu_page( 
+				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
+					self::getClassName(),
+					'renderBulkAdd',
+				) 
+			);
 			add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
-				self::getClassName(),
-				'renderBulkEdit',
-			) );
+			$_page = add_submenu_page( 
+				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
+					self::getClassName(),
+					'renderBulkEdit',
+				) 
+			);
 			add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
 		}
 
-		add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
-			self::getClassName(),
-			'posting',
-		) );
+		add_submenu_page( 
+			'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
+				self::getClassName(),
+				'posting',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
@@ -202,13 +210,15 @@ class MainWP_Post {
 
 	public static function init_left_menu( $subPages = array() ) {
 
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Posts', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'PostBulkManage',
-			'href'       => 'admin.php?page=PostBulkManage',
-			'icon'       => '<i class="file alternate icon"></i>',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Posts', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'PostBulkManage',
+				'href'       => 'admin.php?page=PostBulkManage',
+				'icon'       => '<i class="file alternate icon"></i>',
+			), 1 
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -615,7 +625,7 @@ class MainWP_Post {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; ?>] );
+					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
 				} )
 			</script>
 			<?php
@@ -705,17 +715,20 @@ class MainWP_Post {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-						'adminname',
-						'nossl',
-						'privkey',
-						'nosslkey',
-						'http_user',
-						'http_pass',
-					) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website, 
+						array(
+							'id',
+							'url',
+							'name',
+							'adminname',
+							'nossl',
+							'privkey',
+							'nosslkey',
+							'http_user',
+							'http_pass',
+						) 
+					);
 				}
 			}
 		}
@@ -727,17 +740,20 @@ class MainWP_Post {
 						if ( '' !== $website->sync_errors ) {
 							continue;
 						}
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -782,16 +798,18 @@ class MainWP_Post {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 'Post', array(
-			'count'      => $output->posts,
-			'keyword'    => $keyword,
-			'dtsstart'   => $dtsstart,
-			'dtsstop'    => $dtsstop,
-			'status'     => $status,
-			'sites'      => ( '' !== $sites ) ? $sites : '',
-			'groups'     => ( '' !== $groups ) ? $groups : '',
-			'search_on'  => $search_on,
-		) );
+		MainWP_Cache::addContext( 
+			'Post', array(
+				'count'      => $output->posts,
+				'keyword'    => $keyword,
+				'dtsstart'   => $dtsstart,
+				'dtsstop'    => $dtsstop,
+				'status'     => $status,
+				'sites'      => ( '' !== $sites ) ? $sites : '',
+				'groups'     => ( '' !== $groups ) ? $groups : '',
+				'search_on'  => $search_on,
+			) 
+		);
 
 		if ( 0 === $output->posts ) {
 			MainWP_Cache::addBody( 'Post', '' );
@@ -946,7 +964,7 @@ class MainWP_Post {
 
 								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php _e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
 								<?php if ( 'trash' === $post['status'] ) : ?>
@@ -1997,17 +2015,20 @@ class MainWP_Post {
 								foreach ( $selected_sites as $k ) {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
 										$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-										$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-											'id',
-											'url',
-											'name',
-											'adminname',
-											'nossl',
-											'privkey',
-											'nosslkey',
-											'http_user',
-											'http_pass',
-										) );
+										$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+											$website,
+											array(
+												'id',
+												'url',
+												'name',
+												'adminname',
+												'nossl',
+												'privkey',
+												'nosslkey',
+												'http_user',
+												'http_pass',
+											) 
+										);
 									}
 								}
 							} else {
@@ -2018,17 +2039,20 @@ class MainWP_Post {
 											if ( '' !== $website->sync_errors ) {
 												continue;
 											}
-											$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-												'id',
-												'url',
-												'name',
-												'adminname',
-												'nossl',
-												'privkey',
-												'nosslkey',
-												'http_user',
-												'http_pass',
-											) );
+											$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+												$website, 
+												array(
+													'id',
+													'url',
+													'name',
+													'adminname',
+													'nossl',
+													'privkey',
+													'nosslkey',
+													'http_user',
+													'http_pass',
+												) 
+											);
 										}
 										MainWP_DB::free_result( $websites );
 									}
@@ -2175,17 +2199,20 @@ class MainWP_Post {
 		if ( ! empty( $websiteid ) ) {
 			if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 				$website                    = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-				$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-					'id',
-					'url',
-					'name',
-					'adminname',
-					'nossl',
-					'privkey',
-					'nosslkey',
-					'http_user',
-					'http_pass',
-				) );
+				$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+					$website, 
+					array(
+						'id',
+						'url',
+						'name',
+						'adminname',
+						'nossl',
+						'privkey',
+						'nosslkey',
+						'http_user',
+						'http_pass',
+					) 
+				);
 			}
 		}
 
@@ -2267,11 +2294,13 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'post_action', array(
-				'action'     => 'get_edit',
-				'id'         => $postId,
-				'post_type'  => $postType,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed( 
+				$website, 'post_action', array(
+					'action'     => 'get_edit',
+					'id'         => $postId,
+					'post_type'  => $postType,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
@@ -2351,7 +2380,7 @@ class MainWP_Post {
 						$new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
 					}
 				} catch ( Exception $e ) {
-
+					// ok
 				}
 			}
 		}
@@ -2368,7 +2397,7 @@ class MainWP_Post {
 									$replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
 								}
 							} catch ( Exception $e ) {
-
+								// ok
 							}
 						}
 					}
@@ -2414,10 +2443,12 @@ class MainWP_Post {
 			return array( 'error' => 'Undefined error' );
 		}
 
-		wp_update_post( array(
-			'ID'          => $new_post_id,
-			'post_status' => $post_status,
-		) );
+		wp_update_post(
+			array(
+				'ID'          => $new_post_id,
+				'post_status' => $post_status,
+			) 
+		);
 
 		foreach ( $post_custom as $meta_key => $meta_values ) {
 			foreach ( $meta_values as $meta_value ) {
@@ -2446,7 +2477,7 @@ class MainWP_Post {
 					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
 				}
 			} catch ( Exception $e ) {
-
+				// ok
 			}
 		}
 
@@ -2474,11 +2505,13 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'set_terms', array(
-				'id'         => base64_encode( $postId ),
-				'terms'      => base64_encode( $cat_id ),
-				'taxonomy'   => base64_encode( $taxonomy ),
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed( 
+				$website, 'set_terms', array(
+					'id'         => base64_encode( $postId ),
+					'terms'      => base64_encode( $cat_id ),
+					'taxonomy'   => base64_encode( $taxonomy ),
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			return;
 		}
@@ -2499,10 +2532,12 @@ class MainWP_Post {
 			return;
 		}
 		try {
-			MainWP_Utility::fetchUrlAuthed( $website, 'insert_comment', array(
-				'id'         => $postId,
-				'comments'   => base64_encode( serialize( $comments ) ),
-			) );
+			MainWP_Utility::fetchUrlAuthed(
+				$website, 'insert_comment', array(
+					'id'         => $postId,
+					'comments'   => base64_encode( serialize( $comments ) ),
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			return;
 		}

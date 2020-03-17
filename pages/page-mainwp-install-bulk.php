@@ -53,7 +53,7 @@ class MainWP_Install_Bulk {
 			<div class="ui divider"></div>
 				<div id="mainwp-file-uploader" class="<?php echo $cls; ?>" >
 					<noscript>
-					<div class="ui message red"><?php _e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
+					<div class="ui message red"><?php esc_html_e( 'Please enable JavaScript to use file uploader.', 'mainwp' ); ?></div>
 					</noscript>
 				</div>
 				<script>
@@ -86,15 +86,19 @@ class MainWP_Install_Bulk {
 
 		if ( ! isset( $_POST['url'] ) ) {
 			if ( $_POST['type'] == 'plugin' ) {
-				$api = plugins_api( 'plugin_information', array(
-					'slug'   => $_POST['slug'],
-					'fields' => array( 'sections' => false ),
-				) ); // Save on a bit of bandwidth.
+				$api = plugins_api(
+					'plugin_information', array(
+						'slug'   => $_POST['slug'],
+						'fields' => array( 'sections' => false ),
+					) 
+				); // Save on a bit of bandwidth.
 			} else {
-				$api = themes_api( 'theme_information', array(
-					'slug'   => $_POST['slug'],
-					'fields' => array( 'sections' => false ),
-				) ); // Save on a bit of bandwidth.
+				$api = themes_api( 
+					'theme_information', array(
+						'slug'   => $_POST['slug'],
+						'fields' => array( 'sections' => false ),
+					) 
+				); // Save on a bit of bandwidth.
 			}
 			$url = $api->download_link;
 		} else {
@@ -118,11 +122,14 @@ class MainWP_Install_Bulk {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-					$output['sites'][ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-					) );
+					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+						$website, 
+						array(
+							'id',
+							'url',
+							'name',
+						) 
+					);
 				}
 			}
 		} else {
@@ -135,11 +142,14 @@ class MainWP_Install_Bulk {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
-						$output['sites'][ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-						) );
+						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+							) 
+						);
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -207,11 +217,14 @@ class MainWP_Install_Bulk {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-					$output['sites'][ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-					) );
+					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+						$website, 
+						array(
+							'id',
+							'url',
+							'name',
+						) 
+					);
 				}
 			}
 		} else {
@@ -224,11 +237,14 @@ class MainWP_Install_Bulk {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
-						$output['sites'][ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-						) );
+						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+							) 
+						);
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -284,13 +300,16 @@ class MainWP_Install_Bulk {
 
 	public static function cleanUpload() {
 		$path = MainWP_Utility::getMainWPSpecificDir( 'bulk' );
-		if ( file_exists( $path ) && ( $dh = opendir( $path ) ) ) {
-			while ( ( $file = readdir( $dh ) ) !== false ) {
-				if ( $file != '.' && $file != '..' ) {
-					@unlink( $path . $file );
+		if ( file_exists( $path ) ) {
+			$dh = opendir( $path );
+			if ( $dh ) {
+				while ( ( $file = readdir( $dh ) ) !== false ) {
+					if ( $file != '.' && $file != '..' ) {
+						@unlink( $path . $file );
+					}
 				}
+				closedir( $dh );
 			}
-			closedir( $dh );
 		}
 
 		die( wp_json_encode( array( 'ok' => true ) ) );

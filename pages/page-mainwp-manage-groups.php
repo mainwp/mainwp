@@ -10,10 +10,12 @@ class MainWP_Manage_Groups {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
-			self::getClassName(),
-			'renderAllGroups',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
+				self::getClassName(),
+				'renderAllGroups',
+			) 
+		);
 	}
 
 	public static function getGroupListContent() {
@@ -38,9 +40,9 @@ class MainWP_Manage_Groups {
 			</td>
 			<td></td>
 			<td class="right aligned">
-				<a href="#" class="managegroups-edit ui button green mini"> <?php _e( 'Edit Group', 'mainwp' ); ?></a>
+				<a href="#" class="managegroups-edit ui button green mini"> <?php esc_html_e( 'Edit Group', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-rename ui button mini"><?php esc_html_e( 'Rename Group', 'mainwp' ); ?></a>
-				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php _e( 'Save Group Name', 'mainwp' ); ?></a>
+				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php esc_html_e( 'Save Group Name', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-delete ui button basic red mini"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 			</td>
 		</tr>
@@ -99,7 +101,7 @@ class MainWP_Manage_Groups {
 						</td>
 						<td></td>
 						<td class="right aligned">
-							<a href="#" class="managegroups-savenew ui button green mini"><?php _e( 'Save Group', 'mainwp' ); ?></a>
+							<a href="#" class="managegroups-savenew ui button green mini"><?php esc_html_e( 'Save Group', 'mainwp' ); ?></a>
 							<a href="#" class="managegroups-cancel ui button basic red mini"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></a>
 						</td>
 					</tr>
@@ -108,7 +110,7 @@ class MainWP_Manage_Groups {
 				<tr>
 				  <th colspan="3">
 							<input type="button" value="<?php esc_attr_e( 'Save Selection', 'mainwp' ); ?>" class="managegroups-saveAll ui right floated green button" style="display:none" />
-							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php _e( 'Create New Group', 'mainwp' ); ?></a>
+							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php esc_html_e( 'Create New Group', 'mainwp' ); ?></a>
 				  </th>
 				</tr>
 			  </tfoot>

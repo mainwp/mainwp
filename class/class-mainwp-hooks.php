@@ -44,9 +44,10 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'getNotificationEmail' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
-			MainWP_Extensions::getClassName(),
-			'isExtensionAvailable',
-		) );
+				MainWP_Extensions::getClassName(),
+				'isExtensionAvailable',
+			) 
+		);
 		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
@@ -93,7 +94,7 @@ class MainWP_Hooks {
 		$ret = array();
 
 		if ( is_array( $params ) ) {
-			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) ) {
+			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {				
 				$ret['siteid'] = self::updateWPSite( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
@@ -166,7 +167,7 @@ class MainWP_Hooks {
 	public function mainwp_edit_site( $params ) {
 		$ret = array();
 		if ( is_array( $params ) ) {
-			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $websiteid = $params['websiteid'] ) ) {
+			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
 				$ret['siteid'] = self::updateWPSite( $params );
 				return $ret;
 			}
@@ -277,10 +278,12 @@ class MainWP_Hooks {
 	}
 
 	public function notifyUser( $userId, $subject, $content ) {
-		wp_mail( MainWP_DB::Instance()->getUserNotificationEmail( $userId ), $subject, $content, array(
-			'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-			'content-type: text/html',
-		) );
+		wp_mail( 
+			MainWP_DB::Instance()->getUserNotificationEmail( $userId ), $subject, $content, array(
+				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+				'content-type: text/html',
+			) 
+		);
 	}
 
 	public function getErrorMessage( $msg, $extra ) {
@@ -484,10 +487,12 @@ class MainWP_Hooks {
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
 				$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
-					$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgradeplugintheme', array(
-						'type'   => $type,
-						'list'   => urldecode( implode( ',', $slugs ) ),
-					) );
+					$information = MainWP_Utility::fetchUrlAuthed( 
+						$website, 'upgradeplugintheme', array(
+							'type'   => $type,
+							'list'   => urldecode( implode( ',', $slugs ) ),
+						) 
+					);
 					if ( isset( $information['sync'] ) ) {
 						unset( $information['sync'] );
 					}

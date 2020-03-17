@@ -122,11 +122,11 @@ class MainWP_Connection_Status {
 						echo $output_md5;
 					} elseif ( $hasSyncErrors ) {
 						?>
-				<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
+				<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 						<?php
 					} else {
 						?>
-								<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php
 					}
 					?>
@@ -154,7 +154,7 @@ class MainWP_Connection_Status {
 						echo $output_md5;
 					} else {
 						?>
-					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
+					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $website->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $website->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php
 					}
 					?>
@@ -182,7 +182,7 @@ class MainWP_Connection_Status {
 							echo $output_md5;
 						} else {
 							?>
-							<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
+							<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo $website->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 					<?php } ?>
 						</div>
 					</div>
@@ -293,7 +293,7 @@ class MainWP_Connection_Status {
 					<div class="column right aligned">
 						<a href="<?php echo $site->url; ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php echo __( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site->id; ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php echo __( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
-						<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $site->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $site->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $site->name ); ?> data." data-inverted=""><?php _e( 'Sync Data', 'mainwp' ); ?></a>
+						<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo $site->id; ?>" onClick="updatesoverview_wp_sync('<?php echo $site->id; ?>')" data-tooltip="Sync <?php echo stripslashes( $site->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 					</div>
 				</div>
 			<?php else : ?>
@@ -306,7 +306,7 @@ class MainWP_Connection_Status {
 					</div>
 					<div class="column right aligned">
 						<a href="<?php echo $site->url; ?>" class="ui icon mini button" target="_blank" data-tooltip="<?php echo __( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
-						<a href="#" class="mainwp-updates-overview-reconnect-site ui mini breen basic button" siteid="<?php echo $site->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $site->name ); ?>" data-inverted=""><?php _e( 'Reconnect', 'mainwp' ); ?></a>
+						<a href="#" class="mainwp-updates-overview-reconnect-site ui mini breen basic button" siteid="<?php echo $site->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $site->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 					</div>
 				</div>
 			<?php endif; ?>

@@ -30,19 +30,22 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		$dir        = MainWP_Utility::getMainWPSpecificDir( $item['id'] );
-		$lastbackup = 0;
-		if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-			while ( false !== ( $file = readdir( $dh ) ) ) {
-				if ( '.' !== $file && '..' !== $file ) {
-					$theFile = $dir . $file;
-					if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
-						if ( filemtime( $theFile ) > $lastbackup ) {
-							$lastbackup = filemtime( $theFile );
+		$lastbackup = 0;		
+		if ( file_exists( $dir ) ) {
+			$dh            = opendir( $dir );
+			if ( $dh ) { 		
+				while ( false !== ( $file = readdir( $dh ) ) ) {
+					if ( '.' !== $file && '..' !== $file ) {
+						$theFile = $dir . $file;
+						if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+							if ( filemtime( $theFile ) > $lastbackup ) {
+								$lastbackup = filemtime( $theFile );
+							}
 						}
 					}
 				}
+				closedir( $dh );				
 			}
-			closedir( $dh );
 		}
 
 		$output = '';
@@ -259,7 +262,7 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
-							</div>
+						  </div>
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
@@ -608,16 +611,16 @@ class MainWP_Manage_Sites_List_Table {
 				<tr>
 					<?php $this->print_column_headers( $optimize, false ); ?>
 				</tr>
-			</tfoot>
-		</table>
-		<div id="mainwp-loading-sites" style="display: none;">
-			<div class="ui active inverted dimmer">
-				<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
-			</div>
-		</div>
+	  </tfoot>
+	</table>
+	<div id="mainwp-loading-sites" style="display: none;">
+	<div class="ui active inverted dimmer">
+	  <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+	</div>
+	</div>
 
-		<script type="text/javascript">
-			mainwp_manage_sites_screen_options = function () {
+	<script type="text/javascript">
+		mainwp_manage_sites_screen_options = function () {
 				jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
 					onHide: function () {
 						var val = jQuery( '#mainwp_default_sites_per_page' ).val();

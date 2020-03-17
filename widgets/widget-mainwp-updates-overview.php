@@ -49,7 +49,8 @@ class MainWP_Updates_Overview {
 		}
 
 		$url = 'http://api.wordpress.org/plugins/info/1.0/';
-		if ( $ssl = wp_http_supports( array( 'ssl' ) ) ) {
+		$ssl = wp_http_supports( array( 'ssl' ) );
+		if ( $ssl ) {
 			$url = set_url_scheme( $url, 'https' );
 		}
 
@@ -498,14 +499,14 @@ class MainWP_Updates_Overview {
 							if ( $total_upgrades == 0 ) {
 								echo 'disabled'; } else {
 								?>
-								 onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php _e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php _e( 'Update Everything', 'mainwp' ); ?></a>
+								 onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
 						</div>
 					</div><!-- END Total Updates -->
 
 					<div class="ui hidden divider"></div>
-					<div class="ui horizontal divider"><?php _e( 'Update Details', 'mainwp' ); ?></div>
+					<div class="ui horizontal divider"><?php esc_html_e( 'Update Details', 'mainwp' ); ?></div>
 					<div class="ui hidden divider"></div>
 
 		<div class="ui grid">
@@ -532,7 +533,7 @@ class MainWP_Updates_Overview {
 					<?php if ( $total_wp_upgrades > 0 ) : ?>
 						<?php $continue_class = ( $continue_update == 'wpcore_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : ''; ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php _e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 					<?php else : ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
 						<a href="#" disabled class="ui grey basic button"><?php echo __( 'Update All', 'mainwp' ); ?></a>
@@ -573,7 +574,7 @@ class MainWP_Updates_Overview {
 
 							?>
 								<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-								<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php _e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 								<?php
 						}
 							endif;
@@ -614,7 +615,7 @@ class MainWP_Updates_Overview {
 
 						?>
 							<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php _e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+							<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
 					   endif;
@@ -656,7 +657,7 @@ class MainWP_Updates_Overview {
 
 						?>
 						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php _e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					}
 					endif;
@@ -667,7 +668,7 @@ class MainWP_Updates_Overview {
 		<?php endif; ?>
 
 		<div class="ui hidden divider"></div>
-		<div class="ui horizontal divider"><?php _e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
+		<div class="ui horizontal divider"><?php esc_html_e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
 		
 		<div class="ui grid">
@@ -791,12 +792,12 @@ class MainWP_Updates_Overview {
 
 		?>
 			<div class="ui modal" id="updatesoverview-backup-box" tabindex="0">
-					<div class="header"><?php _e( 'Backup Check', 'mainwp' ); ?></div>
+					<div class="header"><?php esc_html_e( 'Backup Check', 'mainwp' ); ?></div>
 					<div class="scrolling content mainwp-modal-content"></div>
 					<div class="actions mainwp-modal-actions">
-						<input id="updatesoverview-backup-all" type="button" name="Backup All" value="<?php _e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
-						<a id="updatesoverview-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php _e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
-						<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php _e( 'Ignore', 'mainwp' ); ?>" class="button"/>
+						<input id="updatesoverview-backup-all" type="button" name="Backup All" value="<?php esc_html_e( 'Backup All', 'mainwp' ); ?>" class="button-primary"/>
+						<a id="updatesoverview-backup-now" href="#" target="_blank" style="display: none"  class="button-primary button"><?php esc_html_e( 'Backup Now', 'mainwp' ); ?></a>&nbsp;
+						<input id="updatesoverview-backup-ignore" type="button" name="Ignore" value="<?php esc_html_e( 'Ignore', 'mainwp' ); ?>" class="button"/>
 					</div>
 			</div>
 
@@ -857,17 +858,20 @@ class MainWP_Updates_Overview {
 			} else {
 				$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
 				// Check if backup ok
-				$lastBackup = - 1;
-				if ( file_exists( $dir ) && ( $dh            = opendir( $dir ) ) ) {
-					while ( ( $file = readdir( $dh ) ) !== false ) {
-						if ( $file != '.' && $file != '..' ) {
-							$theFile = $dir . $file;
-							if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-								$lastBackup = filemtime( $theFile );
+				$lastBackup = - 1;				
+				if ( file_exists( $dir ) ) {
+					$dh            = opendir( $dir );
+					if ( $dh ) {
+						while ( ( $file = readdir( $dh ) ) !== false ) {
+							if ( $file != '.' && $file != '..' ) {
+								$theFile = $dir . $file;
+								if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+									$lastBackup = filemtime( $theFile );
+								}
 							}
 						}
+						closedir( $dh );
 					}
-					closedir( $dh );
 				}
 
 				$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );

@@ -352,10 +352,12 @@ class MainWP_DB {
 				foreach ( $rslts as $rslt ) {
 					$exists = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid FROM ' . $this->tableName( 'wp_sync' ) . ' WHERE wpid = %d', $rslt['id'] ), ARRAY_A );
 					if ( empty( $exists ) ) {
-						$this->wpdb->insert( $this->tableName( 'wp_sync' ), array(
-							'wpid'           => $rslt['id'],
-							$wpSyncColumn    => $rslt[ $wpSyncColumn ],
-						) );
+						$this->wpdb->insert(
+							$this->tableName( 'wp_sync' ), array(
+								'wpid'           => $rslt['id'],
+								$wpSyncColumn    => $rslt[ $wpSyncColumn ],
+							) 
+						);
 					} else {
 						$this->wpdb->update( $this->tableName( 'wp_sync' ), array( $wpSyncColumn => $rslt[ $wpSyncColumn ] ), array( 'wpid' => $rslt['id'] ) );
 					}
@@ -509,24 +511,30 @@ class MainWP_DB {
 	public function updateWebsiteOption( $website, $option, $value ) {
 		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->tableName( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
 		if ( 0 < count( $rslt ) ) {
-			$this->wpdb->delete( $this->tableName( 'wp_options' ), array(
-				'wpid'   => $website->id,
-				'name'   => $this->escape( $option ),
-			) );
+			$this->wpdb->delete(
+				$this->tableName( 'wp_options' ), array(
+					'wpid'   => $website->id,
+					'name'   => $this->escape( $option ),
+				) 
+			);
 			$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->tableName( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
 		}
 
 		if ( 0 === count( $rslt ) ) {
-			$this->wpdb->insert( $this->tableName( 'wp_options' ), array(
-				'wpid'   => $website->id,
-				'name'   => $option,
-				'value'  => $value,
-			) );
+			$this->wpdb->insert(
+				$this->tableName( 'wp_options' ), array(
+					'wpid'   => $website->id,
+					'name'   => $option,
+					'value'  => $value,
+				) 
+			);
 		} else {
-			$this->wpdb->update( $this->tableName( 'wp_options' ), array( 'value' => $value ), array(
-				'wpid'   => $website->id,
-				'name'   => $option,
-			) );
+			$this->wpdb->update(
+				$this->tableName( 'wp_options' ), array( 'value' => $value ), array(
+					'wpid'   => $website->id,
+					'name'   => $option,
+				) 
+			);
 		}
 	}
 
@@ -1198,10 +1206,12 @@ class MainWP_DB {
 				$websiteid          = $this->wpdb->insert_id;
 				$syncValues['wpid'] = $websiteid;
 				$this->wpdb->insert( $this->tableName( 'wp_sync' ), $syncValues );
-				$this->wpdb->insert( $this->tableName( 'wp_settings_backup' ), array(
-					'wpid'           => $websiteid,
-					'archiveFormat'  => 'global',
-				) );
+				$this->wpdb->insert( 
+					$this->tableName( 'wp_settings_backup' ), array(
+						'wpid'           => $websiteid,
+						'archiveFormat'  => 'global',
+					) 
+				);
 
 				foreach ( $groupnames as $groupname ) {
 					if ( $this->wpdb->insert( $this->tableName( 'group' ), array(
@@ -1214,10 +1224,12 @@ class MainWP_DB {
 				}
 				// add groupids
 				foreach ( $groupids as $groupid ) {
-					$this->wpdb->insert( $this->tableName( 'wp_group' ), array(
-						'wpid'       => $websiteid,
-						'groupid'    => $groupid,
-					) );
+					$this->wpdb->insert(
+						$this->tableName( 'wp_group' ), array(
+							'wpid'       => $websiteid,
+							'groupid'    => $groupid,
+						) 
+					);
 				}
 
 				return $websiteid;
@@ -1228,10 +1240,12 @@ class MainWP_DB {
 	}
 
 	public function updateGroupSite( $groupId, $websiteId ) {
-		$this->wpdb->insert( $this->tableName( 'wp_group' ), array(
-			'wpid'    => $websiteId,
-			'groupid' => $groupId,
-		) );
+		$this->wpdb->insert(
+			$this->tableName( 'wp_group' ), array(
+				'wpid'    => $websiteId,
+				'groupid' => $groupId,
+			) 
+		);
 	}
 
 	public function clearGroup( $groupId ) {
@@ -1326,10 +1340,12 @@ class MainWP_DB {
 				}
 				// add groupids
 				foreach ( $groupids as $groupid ) {
-					$this->wpdb->insert( $this->tableName( 'wp_group' ), array(
-						'wpid'       => $websiteid,
-						'groupid'    => $groupid,
-					) );
+					$this->wpdb->insert(
+						$this->tableName( 'wp_group' ), array(
+							'wpid'       => $websiteid,
+							'groupid'    => $groupid,
+						) 
+					);
 				}
 
 				return true;
@@ -1351,10 +1367,12 @@ class MainWP_DB {
 	}
 
 	public function updateBackupTaskProgress( $task_id, $wp_id, $values ) {
-		$this->wpdb->update( $this->tableName( 'wp_backup_progress' ), $values, array(
-			'task_id'    => $task_id,
-			'wp_id'      => $wp_id,
-		) );
+		$this->wpdb->update(
+			$this->tableName( 'wp_backup_progress' ), $values, array(
+				'task_id'    => $task_id,
+				'wp_id'      => $wp_id,
+			) 
+		);
 
 		return $this->getBackupTaskProgress( $task_id, $wp_id );
 	}
@@ -1397,7 +1415,8 @@ class MainWP_DB {
 		if ( is_array( $progresses ) ) {
 			foreach ( $progresses as $progress ) {
 				if ( ( 0 == $progress->downloadedDBComplete ) && ( 0 == $progress->downloadedFULLComplete ) ) {
-					if ( $task = $this->getBackupTaskById( $progress->task_id ) ) {
+					$task = $this->getBackupTaskById( $progress->task_id );
+					if ( $task ) {
 						if ( ( 'full' == $task->type ) && ! $task->paused ) {
 							return true;
 						}

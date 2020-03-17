@@ -515,7 +515,7 @@ class MainWP_UI {
 			</div><!-- end content -->
 			<div class="actions mainwp-modal-actions">
 			<?php echo $actions; ?>
-				<div class="mainwp-modal-close ui cancel button"><?php _e( 'Close' ); ?></div>
+				<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close' ); ?></div>
 			</div>
 		</div>
 		<?php
@@ -626,9 +626,9 @@ class MainWP_UI {
 		if ( null == $context || ! in_array( $context, $contexts ) ) {
 			$context = 'right';
 		}
-
+		$sorted = get_user_option( 'mainwp_widgets_sorted_' . $page );
 		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose
-		if ( ! $already_sorted && $sorted = get_user_option( 'mainwp_widgets_sorted_' . $page ) ) {
+		if ( ! $already_sorted && $sorted ) {
 			foreach ( explode( ',', $sorted ) as $val ) {
 				list( $widget_context, $id ) = explode( ':', $val );
 				if ( ! empty( $widget_context ) && ! empty( $id ) ) {
@@ -669,8 +669,7 @@ class MainWP_UI {
 		}
 	}
 
-	public static function get_empty_bulk_actions() {
-		ob_start();
+	public static function render_empty_bulk_actions() {		
 		?>
 		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
 		<div class="ui disabled dropdown" id="mainwp-bulk-actions">
@@ -678,9 +677,7 @@ class MainWP_UI {
 		  <div class="menu"></div>
 		</div>
 		<button class="ui tiny basic disabled button" href="javascript:void(0)" ><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-		<?php
-		$output = ob_get_clean();
-		return $output;
+		<?php	
 	}
 
 	public static function render_modal_install_plugin_theme( $what = 'plugin' ) {
@@ -705,7 +702,7 @@ class MainWP_UI {
 
 	public static function render_show_all_updates_button() {
 		?>
-		<a href="javascript:void(0)" class="ui mini button trigger-all-accordion"><?php _e( 'Show All Updates', 'mainwp' ); ?></a>
+		<a href="javascript:void(0)" class="ui mini button trigger-all-accordion"><?php esc_html_e( 'Show All Updates', 'mainwp' ); ?></a>
 		<?php
 	}
 
@@ -726,7 +723,7 @@ class MainWP_UI {
 						<label><?php esc_html_e( 'Edit note', 'mainwp' ); ?></label>
 						<textarea id="mainwp-notes-note"></textarea>
 					</div>
-					<div><?php _e( 'Allowed HTML tags:', 'mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </div>
+					<div><?php esc_html_e( 'Allowed HTML tags:', 'mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </div>
 				</div>
 		  </div>
 			<div class="actions">
@@ -836,7 +833,7 @@ class MainWP_UI {
 		</div>
 
 		<div class="ui grid field">
-		  <label class="six wide column"><?php _e( 'Hide unwanted widgets', 'mainwp' ); ?></label>
+		  <label class="six wide column"><?php esc_html_e( 'Hide unwanted widgets', 'mainwp' ); ?></label>
 		  <div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
 			<ul class="mainwp_hide_wpmenu_checkboxes">
 			<?php

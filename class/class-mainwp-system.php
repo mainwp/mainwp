@@ -212,10 +212,12 @@ class MainWP_System {
 			MainWP_Extensions::getClassName(),
 			'hookGetDashboardSites',
 		), 10, 7 );
-		add_filter( 'mainwp-manager-getextensions', array(
-			MainWP_Extensions::getClassName(),
-			'hookManagerGetExtensions',
-		) );
+		add_filter(
+			'mainwp-manager-getextensions', array(
+				MainWP_Extensions::getClassName(),
+				'hookManagerGetExtensions',
+			) 
+		);
 
 		do_action( 'mainwp-activated' );
 
@@ -1245,10 +1247,16 @@ class MainWP_System {
                                 </ul>
                                 <div></div>
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-						wp_mail( $email, $mail_title = 'MainWP - HTTP response check', MainWP_Utility::formatEmail( $email, $mail_offline, $mail_title ), array(
-							'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-							$content_type,
-						) );
+						wp_mail( 
+							$email, $mail_title = 'MainWP - HTTP response check', 
+							MainWP_Utility::formatEmail(
+								$email, $mail_offline, $mail_title 
+							), 
+							array(
+								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+								$content_type,
+							) 
+						);
 					}
 					MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 				}
@@ -1280,10 +1288,16 @@ class MainWP_System {
                                      <div> </div>
                                      <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
 						}
-						wp_mail( $email, $mail_title = 'Available Updates', MainWP_Utility::formatEmail( $email, $mail, $mail_title, $text_format ), array(
-							'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-							$content_type,
-						) );
+						wp_mail(
+							$email, $mail_title = 'Available Updates', 
+							MainWP_Utility::formatEmail(
+								$email, $mail, $mail_title, $text_format 
+							), 
+							array(
+								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+								$content_type,
+							) 
+						);
 					}
 				}
 			}
@@ -1689,16 +1703,18 @@ class MainWP_System {
 					MainWP_Logger::Instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
 
 					try {
-						MainWP_Utility::fetchUrlAuthed( $allWebsites[ $websiteId ], 'upgradeplugintheme', array(
-							'type'   => 'plugin',
-							'list'   => urldecode( implode( ',', $slugs ) ),
-						) );
+						MainWP_Utility::fetchUrlAuthed(
+							$allWebsites[ $websiteId ], 'upgradeplugintheme', array(
+								'type'   => 'plugin',
+								'list'   => urldecode( implode( ',', $slugs ) ),
+							) 
+						);
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 							MainWP_Sync::syncInformationArray( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-
+						// ok
 					}
 				}
 			} else {
@@ -1713,16 +1729,18 @@ class MainWP_System {
 					}
 
 					try {
-						MainWP_Utility::fetchUrlAuthed( $allWebsites[ $websiteId ], 'upgradeplugintheme', array(
-							'type'   => 'theme',
-							'list'   => urldecode( implode( ',', $slugs ) ),
-						) );
+						MainWP_Utility::fetchUrlAuthed(
+							$allWebsites[ $websiteId ], 'upgradeplugintheme', array(
+								'type'   => 'theme',
+								'list'   => urldecode( implode( ',', $slugs ) ),
+							)
+						);
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 							MainWP_Sync::syncInformationArray( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-
+						// ok
 					}
 				}
 			} else {
@@ -1739,7 +1757,7 @@ class MainWP_System {
 					try {
 						MainWP_Utility::fetchUrlAuthed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( Exception $e ) {
-
+						// ok
 					}
 				}
 			} else {
@@ -1825,7 +1843,7 @@ class MainWP_System {
 
 				wp_remote_get( $url . 'wp-cron.php' );
 			} catch ( Exception $e ) {
-
+				// ok
 			}
 		}
 		MainWP_DB::free_result( $websites );

@@ -41,20 +41,26 @@ class MainWP_User {
 	}
 
 	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
+				self::getClassName(),
+				'render',
+			) 
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
-			self::getClassName(),
-			'renderBulkAdd',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
+				self::getClassName(),
+				'renderBulkAdd',
+			) 
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
-			self::getClassName(),
-			'renderBulkImportUsers',
-		) );
+		add_submenu_page(
+			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
+				self::getClassName(),
+				'renderBulkImportUsers',
+			) 
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the User page via the 'mainwp-getsubpages-user' filter.
@@ -81,16 +87,16 @@ class MainWP_User {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php _e( 'Manage Users', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php _e( 'Add New', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UserBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'BulkImportUsers' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php _e( 'Import Users', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=BulkImportUsers' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php _e( 'Admin Passwords', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=UpdateAdminPasswords' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Admin Passwords', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -111,14 +117,16 @@ class MainWP_User {
 	}
 
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Users', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'UserBulkManage',
-			'href'       => 'admin.php?page=UserBulkManage',
-			'icon'       => '<i class="user icon"></i>',
-			'desc'       => 'Manage users on your child sites',
-		), 1 );
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Users', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'UserBulkManage',
+				'href'       => 'admin.php?page=UserBulkManage',
+				'icon'       => '<i class="user icon"></i>',
+				'desc'       => 'Manage users on your child sites',
+			), 1 
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -257,8 +265,8 @@ class MainWP_User {
 						<div class="ui two column row">
 							<div class="column">
 								<select class="ui dropdown" id="mainwp-bulk-actions">
-									<option value="edit"><?php _e( 'Edit', 'mainwp' ); ?></option>
-									<option value="delete"><?php _e( 'Delete', 'mainwp' ); ?></option>
+									<option value="edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></option>
+									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 								</select>
 								<button class="ui mini button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 								<?php do_action( 'mainwp_users_actions_bar_left' ); ?>
@@ -272,8 +280,8 @@ class MainWP_User {
 				<div id="mainwp_users_error"></div>
 				<div id="mainwp-loading-users-row" style="display: none;">
 					<div class="ui active inverted dimmer">
-						<div class="ui indeterminate large text loader"><?php _e( 'Loading Users...', 'mainwp' ); ?>
-							<span id="mainwp_users_loading_info" class="mainwp-grabbing-info-note"><br /><?php _e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
+						<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Users...', 'mainwp' ); ?>
+							<span id="mainwp_users_loading_info" class="mainwp-grabbing-info-note"><br /><?php esc_html_e( 'Automatically refreshing to get up to date information.', 'mainwp' ); ?></span>
 						</div>
 					</div>
 				</div>
@@ -287,7 +295,7 @@ class MainWP_User {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<div class="mainwp-select-sites">
-					<div class="ui header"><?php _e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 				</div>
 
@@ -307,7 +315,7 @@ class MainWP_User {
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
-								<option value=""><?php _e( 'Select role', 'mainwp' ); ?></option>
+								<option value=""><?php esc_html_e( 'Select role', 'mainwp' ); ?></option>
 								<?php
 								foreach ( $user_roles as $r => $n ) {
 									if ( empty( $r ) ) {
@@ -324,7 +332,7 @@ class MainWP_User {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
-					<div class="ui header"><?php _e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 					<?php self::renderSearchOptions(); ?>
 				</div>
 				<div class="ui divider"></div>
@@ -363,7 +371,7 @@ class MainWP_User {
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo $status; ?>] );
+				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
 			} );
 			</script>
 			<?php
@@ -387,11 +395,11 @@ class MainWP_User {
 		?>
 		<div id="mainwp-edit-users-modal" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
-			<div class="ui message"><?php _e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
+			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_user_profile">
 				<div class="ui segment">
 					<div class="ui form">
-						<h3><?php _e( 'Name', 'mainwp' ); ?></h2>
+						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h2>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Role', 'mainwp' ); ?></label>
 							<div class="ui six wide column">
@@ -443,7 +451,7 @@ class MainWP_User {
 							</div>
 						</div>
 
-						<h3><?php _e( 'Contact Info', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'Contact Info', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Email', 'mainwp' ); ?></label>
@@ -463,19 +471,19 @@ class MainWP_User {
 							</div>
 						</div>
 
-						<h3><?php _e( 'About the user', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'About the user', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Biographical Info', 'mainwp' ); ?></label>
 							<div class="ui six wide column">
 								<div class="ui left labeled input">
 									<textarea name="description" id="description" rows="5" cols="30"></textarea>
-									<p class="description"><?php _e( 'Share a little biographical information to fill out your profile. This may be shown publicly.', 'mainwp' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Share a little biographical information to fill out your profile. This may be shown publicly.', 'mainwp' ); ?></p>
 								</div>
 							</div>
 						</div>
 
-						<h3><?php _e( 'Account Management', 'mainwp' ); ?></h3>
+						<h3><?php esc_html_e( 'Account Management', 'mainwp' ); ?></h3>
 
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
@@ -657,17 +665,20 @@ class MainWP_User {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					}
 				}
 			}
@@ -679,17 +690,20 @@ class MainWP_User {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -708,13 +722,15 @@ class MainWP_User {
 			), $output );
 		}
 
-		MainWP_Cache::addContext( 'Users', array(
-			'count'   => $output->users,
-			'keyword' => $search,
-			'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
-			'sites'   => '' !== $sites ? $sites : '',
-			'groups'  => '' !== $groups ? $groups : '',
-		) );
+		MainWP_Cache::addContext(
+			'Users', array(
+				'count'   => $output->users,
+				'keyword' => $search,
+				'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
+				'sites'   => '' !== $sites ? $sites : '',
+				'groups'  => '' !== $groups ? $groups : '',
+			) 
+		);
 
 		// Sort if required
 
@@ -777,9 +793,9 @@ class MainWP_User {
 					<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
-							<a class="item user_getedit" href="#"><?php _e( 'Edit', 'mainwp' ); ?></a>
+							<a class="item user_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 							<?php if ( ( 1 != $user['id'] ) && ( $user['login'] != $website->adminname ) ) { ?>
-							<a class="item user_submitdelete" href="#"><?php _e( 'Delete', 'mainwp' ); ?></a>
+							<a class="item user_submitdelete" href="#"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } elseif ( ( 1 == $user['id'] ) || ( $user['login'] == $website->adminname ) ) { ?>
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
@@ -873,13 +889,15 @@ class MainWP_User {
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'user_action', array(
-				'action'    => $pAction,
-				'id'        => $userId,
-				'extra'     => $extra,
-				'user_pass' => $pass,
-				'optimize'  => $optimize,
-			) );
+			$information = MainWP_Utility::fetchUrlAuthed(
+				$website, 'user_action', array(
+					'action'    => $pAction,
+					'id'        => $userId,
+					'extra'     => $extra,
+					'user_pass' => $pass,
+					'optimize'  => $optimize,
+				) 
+			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
 		}
@@ -1146,25 +1164,9 @@ class MainWP_User {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
-					}
-				}
-			} else {
-				foreach ( $selected_groups as $k ) {
-					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
-						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
+						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website, 
+							array(
 								'id',
 								'url',
 								'name',
@@ -1174,7 +1176,29 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) );
+							) 
+						);
+					}
+				}
+			} else {
+				foreach ( $selected_groups as $k ) {
+					if ( MainWP_Utility::ctype_digit( $k ) ) {
+						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -1301,9 +1325,9 @@ class MainWP_User {
 					$header_line = trim( $header_line );
 					?>
 					<div class="ui modal" id="mainwp-import-users-modal">
-						<div class="header"><?php _e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
+						<div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
 						<div class="scrolling header">
-							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php _e( 'Importing Users', 'mainwp' ); ?></div>
+							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
 							<input type="hidden" id="import_user_do_import" value="1"/>
 							<input type="hidden" id="import_user_total_import" value="<?php echo $i; ?>"/>
 							<p>
@@ -1352,8 +1376,8 @@ class MainWP_User {
 				<?php } ?>
 			</div>
 			<br/>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php _e( 'Add New', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php _e( 'Return to Overview', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
 			<?php
 		}
 
@@ -1395,17 +1419,19 @@ class MainWP_User {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::Instance()->getWebsitesByUrl( $url );
 					if ( $website ) {
-						$dbwebsites[ $website[0]->id ] = MainWP_Utility::mapSite( $website[0], array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
+						$dbwebsites[ $website[0]->id ] = MainWP_Utility::mapSite(
+							$website[0], array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+							) 
+						);
 					} else {
 						$not_valid[]  = __( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
 						$error_sites .= $url . ';';
@@ -1418,17 +1444,20 @@ class MainWP_User {
 					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupName( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-								'id',
-								'url',
-								'name',
-								'adminname',
-								'nossl',
-								'privkey',
-								'nosslkey',
-								'http_user',
-								'http_pass',
-							) );
+							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$website, 
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								) 
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					} else {

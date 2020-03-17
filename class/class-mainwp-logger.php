@@ -135,7 +135,7 @@ class MainWP_Logger {
 						if ( false === $content ) {
 							break;
 						}
-						$pos = strrpos( $content, "\n" )
+						$pos = strrpos( $content, "\n" );
 						if ( $newLogHandle ) {
 							fwrite( $newLogHandle, $content );
 						} elseif ( $pos ) {

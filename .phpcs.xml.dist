@@ -1,59 +1,39 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="WordPress Coding Standards" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+<ruleset>
 
-	<description>The Coding standard for the WordPress Coding Standards itself.</description>
+	<file>src</file>
+	<file>index.php</file>
 
-	<file>.</file>
+	<!-- Show progress and sniff codes in all reports. -->
+	<arg value="ps"/>
 
-	<arg value="sp"/>
+	<!-- A path to strip from the front of file paths inside reports. -->
+	<arg name="basepath" value="src"/>
+	<arg name="colors"/>
 	<arg name="extensions" value="php"/>
-	<arg name="basepath" value="."/>
-	<arg name="parallel" value="8"/>
 
-	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>*/bin/*</exclude-pattern>
-	<exclude-pattern>*/.github/*</exclude-pattern>
-	<exclude-pattern>*/tests/*</exclude-pattern>
-	<!-- Exclude Composer vendor directory. -->
-	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<!-- Check for PHP cross-version compatibility. -->
+	<config name="testVersion" value="7.2-"/>
+	<rule ref="PHPCompatibilityWP"/>
 
+	<!-- WordPress coding standards. -->
 	<rule ref="WordPress">
+		<!-- Exclude as plugin adheres to the PSR-4 standard. -->
 		<exclude name="WordPress.Files.FileName"/>
-		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
-		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
 	</rule>
 
-	<!-- Enforce PSR1 compatible namespaces. -->
-	<rule ref="PSR1.Classes.ClassDeclaration"/>
-
-	<rule ref="WordPress.Arrays.MultipleStatementAlignment">
+	<!-- Specify custom nonce validation. -->
+	<rule ref="WordPress.CSRF.NonceVerification">
 		<properties>
-			<property name="alignMultilineItems" value="!=100"/>
-			<property name="exact" value="false" phpcs-only="true"/>
+			<property name="customNonceVerificationFunctions" type="array" value="validate_nonce" />
 		</properties>
 	</rule>
 
-	<rule ref="PSR2.Methods.FunctionClosingBrace"/>
-
-	<!-- Check code for cross-version PHP compatibility. -->
-	<config name="testVersion" value="5.4-"/>
-	<rule ref="PHPCompatibility">
-		<!-- Exclude PHP constants back-filled by PHPCS. -->
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_finallyFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_yieldFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_ellipsisFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_powFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_pow_equalFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_spaceshipFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_coalesceFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_coalesce_equalFound"/>
-		<exclude name="PHPCompatibility.Constants.NewConstants.t_yield_fromFound"/>
-	</rule>
-
-	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.DeprecatedWhitelistCommentFound">
-		<!-- False positive for whitelist comment recognition, but no use fixing this now
-			 as the WPCS native whitelist comments are deprecated anyhow. -->
-		<exclude-pattern>/WordPress/AbstractClassRestrictionsSniff\.php$</exclude-pattern>
+	<!-- Allow namespaced hook names in dot notation. -->
+	<rule ref="WordPress.NamingConventions.ValidHookName">
+		<properties>
+			<property name="additionalWordDelimiters" value="."/>
+		</properties>
 	</rule>
 
 </ruleset>

@@ -6,14 +6,14 @@
  * @uses MainWP_Bulk_Add
  */
 class MainWP_Bulk_Update_Admin_Passwords {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	public static function initMenu() {
 		$_page = add_submenu_page( 
 			'mainwp_tab', __( 'Admin Passwords', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>', 'read', 'UpdateAdminPasswords', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
@@ -124,8 +124,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					$output->errors = array();
 
 					MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newadminpassword', $post_data, array(
-						MainWP_Bulk_Add::getClassName(),
-						'PostingBulk_handler',
+						MainWP_Bulk_Add::get_class_name(),
+						'posting_bulk_handler',
 					), $output );
 				}
 			}

@@ -6,7 +6,7 @@
  * @uses MainWP_Bulk_Add
  */
 class MainWP_User {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -23,7 +23,7 @@ class MainWP_User {
 		 *
 		 * @see \MainWP_User::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-user', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-user', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the User page footer via the 'mainwp-pagefooter-user' action.
@@ -35,29 +35,29 @@ class MainWP_User {
 		 *
 		 * @see \MainWP_User::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-user', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-user', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderBulkAdd',
 			) 
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderBulkImportUsers',
 			) 
 		);
@@ -717,7 +717,7 @@ class MainWP_User {
 			);
 
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'search_users', $post_data, array(
-				self::getClassName(),
+				self::get_class_name(),
 				'UsersSearch_handler',
 			), $output );
 		}
@@ -822,7 +822,7 @@ class MainWP_User {
 			$output->users += self::usersSearchHandlerRenderer( $users, $website );
 			unset( $users );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -899,7 +899,7 @@ class MainWP_User {
 				) 
 			);
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
@@ -1215,8 +1215,8 @@ class MainWP_User {
 				$output->ok     = array();
 				$output->errors = array();
 				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newuser', $post_data, array(
-					MainWP_Bulk_Add::getClassName(),
-					'PostingBulk_handler',
+					MainWP_Bulk_Add::get_class_name(),
+					'posting_bulk_handler',
 				), $output );
 			}
 
@@ -1480,8 +1480,8 @@ class MainWP_User {
 			$output->ok     = array();
 			$output->errors = array();
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newuser', $post_data, array(
-				MainWP_Bulk_Add::getClassName(),
-				'PostingBulk_handler',
+				MainWP_Bulk_Add::get_class_name(),
+				'posting_bulk_handler',
 			), $output );
 		}
 

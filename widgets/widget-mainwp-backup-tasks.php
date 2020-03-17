@@ -14,13 +14,13 @@
 class MainWP_Backup_Tasks {
 
 	/**
-	 * Method getClassName()
+	 * Method get_class_name()
 	 *
 	 * Get Class Name.
 	 *
 	 * @return string CLASS Class Name.
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 

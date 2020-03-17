@@ -21,7 +21,7 @@ class MainWP_About {
 	 *
 	 * @return string __CLASS__
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -39,7 +39,7 @@ class MainWP_About {
 	public static function initMenu() {
 		add_submenu_page( 
 			'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
-			self::getClassName(),
+			self::get_class_name(),
 			'render',
 			) 
 		);

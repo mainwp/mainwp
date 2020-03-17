@@ -6,7 +6,7 @@
  * @uses MainWP_Install_Bulk
  */
 class MainWP_Themes {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -23,7 +23,7 @@ class MainWP_Themes {
 		 *
 		 * @see \MainWP_Themes::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-themes', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-themes', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
@@ -35,41 +35,41 @@ class MainWP_Themes {
 		 *
 		 * @see \MainWP_Themes::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-themes', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
 
 		$_page = add_submenu_page( 
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderInstall',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderAutoUpdate',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderIgnore',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderIgnoredAbandoned',
 			) 
 		);
@@ -525,7 +525,7 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::getClassName(), 'ThemesSearch_handler' ), $output );
+			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'ThemesSearch_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -698,7 +698,7 @@ class MainWP_Themes {
 			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
 			if ( isset( $themes['error'] ) ) {
-				$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $themes['error'], $website->url ) );
+				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $themes['error'], $website->url ) );
 
 				return;
 			}
@@ -714,7 +714,7 @@ class MainWP_Themes {
 			}
 			unset( $themes );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -995,7 +995,7 @@ class MainWP_Themes {
 	}
 
 	public static function performSearch() {
-		MainWP_Install_Bulk::performSearch( self::getClassName(), 'Themes' );
+		MainWP_Install_Bulk::performSearch( self::get_class_name(), 'Themes' );
 	}
 
 	public static function renderAutoUpdate() {
@@ -1179,7 +1179,7 @@ class MainWP_Themes {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::getClassName(), 'ThemesSearch_handler' ), $output );
+				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'ThemesSearch_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {

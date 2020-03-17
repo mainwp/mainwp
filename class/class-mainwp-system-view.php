@@ -4,7 +4,7 @@
  */
 class MainWP_System_View {
 
-	public static function getMainWPTranslations() {
+	public static function get_mainwp_translations() {
 
 		function mainwpAddTranslation( &$pArray, $pKey, $pText ) {
 			if ( ! is_array( $pArray ) ) {

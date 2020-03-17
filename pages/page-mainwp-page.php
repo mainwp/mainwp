@@ -7,7 +7,7 @@
  */
 class MainWP_Page {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -25,7 +25,7 @@ class MainWP_Page {
 		 *
 		 * @see \MainWP_Page::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-page', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
@@ -37,23 +37,23 @@ class MainWP_Page {
 		 *
 		 * @see \MainWP_Page::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-page', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::getClassName(), 'render' ) );
-		add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_page' ) );
-		add_filter( 'manage_' . $_page . '_columns', array( self::getClassName(), 'get_manage_columns' ) );
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
+		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
+		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::getClassName(), 'renderBulkAdd' ) );
-		add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'renderBulkAdd' ) );
+		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::getClassName(), 'renderBulkEdit' ) );
-		add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'renderBulkEdit' ) );
+		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::getClassName(), 'posting' ) ); // removed from menu afterwards
+		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards
 
 		/**
 		 * This hook allows you to add extra sub pages to the Page page via the 'mainwp-getsubpages-page' filter.
@@ -165,8 +165,8 @@ class MainWP_Page {
 	}
 
 	public static function on_load_page() {
-		add_action( 'admin_head', array( self::getClassName(), 'admin_head' ) );
-		add_filter( 'hidden_columns', array( self::getClassName(), 'get_hidden_columns' ), 10, 3 );
+		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
+		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
 	}
 
 	public static function get_manage_columns() {
@@ -568,7 +568,7 @@ class MainWP_Page {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_pages_data', $post_data );
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::getClassName(), 'PagesSearch_handler' ), $output );
+			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
 		}
 
 		MainWP_Cache::addContext( 
@@ -727,7 +727,7 @@ class MainWP_Page {
 			}
 			unset( $pages );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -919,7 +919,7 @@ class MainWP_Page {
 								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ),
 							);
 							$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
-							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::getClassName(), 'PostingBulk_handler' ), $output );
+							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
 						}
 
 						$failed_posts = array();

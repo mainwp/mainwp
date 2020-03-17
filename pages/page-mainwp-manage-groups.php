@@ -5,14 +5,14 @@
  */
 class MainWP_Manage_Groups {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	public static function initMenu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderAllGroups',
 			) 
 		);

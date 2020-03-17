@@ -11,15 +11,14 @@
  * Class MainWP_Widget_Plugins
  */
 class MainWP_Widget_Plugins {
-
 	/**
-	 * Method getClassName()
+	 * Method get_class_name()
 	 *
 	 * Get Class Name
 	 *
 	 * @return string __CLASS__ Class Name.
-	 */
-	public static function getClassName() {
+	 */	
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -280,7 +279,7 @@ class MainWP_Widget_Plugins {
 				) 
 			);
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

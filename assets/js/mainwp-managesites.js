@@ -36,7 +36,6 @@ mainwp_update_pluginsthemes = function ( updateType, updateSiteIds )
     managesitesContinueAfterBackup = function ( pType, sitesCount, pAllWebsiteIds ) {
         return function ()
         {
-
             var title = '';
             if ( pType == 'plugin' )
                 title = __( "Updating plugins..." );
@@ -88,9 +87,6 @@ managesites_update_pluginsthemes = function ( pType, websiteIds )
     else
         dashboardActionName = 'upgrade_all_themes';
     
-    var dateObj = new Date();
-    starttimeDashboardAction = dateObj.getTime();
-    countRealItemsUpdated = 0;
     itemsToUpdate = [];
 
     if ( websitesTotal == 0 )
@@ -122,8 +118,7 @@ managesites_update_pluginsthemes_done = function ( pType )
     mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
 
     if ( websitesDone == websitesTotal )
-    {
-        couttItemsToUpdate = itemsToUpdate.length;
+    {        
         updatesoverview_send_twitt_info();
         setTimeout( function () {
             bulkManageSitesTaskRunning = false;
@@ -229,7 +224,7 @@ jQuery( document ).on( 'click', '#managesites-backup-ignore', function () {
 
 var managesitesShowBusyFunction;
 var managesitesShowBusyTimeout;
-var managesitesShowBusy;
+
 mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
 {
     if ( mainwpParams['disable_checkBackupBeforeUpgrade'] == true ) {
@@ -237,14 +232,6 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
             managesitesContinueAfterBackup();
         return false;
     }
-
-//    if (mainwpParams['backup_before_upgrade'] != true)
-//    {
-//        if (managesitesContinueAfterBackup != undefined) managesitesContinueAfterBackup();
-//        return false;
-//    }
-
-    managesitesShowBusy = true;
     managesitesShowBusyFunction = function ()
     {
         //var backupContent = jQuery('#managesites-backup-content');
@@ -274,8 +261,7 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
         data: data,
         success: function ( pSiteNames ) {
             return function ( response )
-            {
-                managesitesShowBusy = false;
+            {                
                 clearTimeout( managesitesShowBusyTimeout );
 
                 mainwpPopup( '#managesites-backup-box' ).close();
@@ -363,7 +349,7 @@ mainwp_managesites_checkBackups = function ( sitesToUpdate, siteNames )
     return false;
 };
 
-mainwp_get_primaryBackup_link = function ( what, site_id ) {
+mainwp_get_primaryBackup_link = function ( what ) {
     var slug = '';
     switch ( what ) {
         case 'backupbuddy':
@@ -555,9 +541,6 @@ managesites_backupnow_download_file = function ( pSiteId, pSiteName, type, url, 
 };
 
 var dashboardActionName = '';
-var starttimeDashboardAction = 0;
-var countRealItemsUpdated = 0;
-var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
 managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
@@ -603,11 +586,8 @@ managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
                     window.location.href = location.href;
                 } } );
             
-            var dateObj = new Date();
             dashboardActionName = 'upgrade_all_wp_core';
-            starttimeDashboardAction = dateObj.getTime();
-            countRealItemsUpdated = 0;
-
+            
             managesites_wordpress_upgrade_all_int( pAllWebsiteIds );
 
             managesitesContinueAfterBackup = undefined;
@@ -676,15 +656,12 @@ managesites_wordpress_upgrade_int = function ( websiteId )
     {
         return function ( response )
         {
-            var result;
-
             if ( response.error )
             {
                 result = getErrorMessage( response.error );
                 dashboard_update_site_status( pWebsiteId, '<i class="red times icon"></i>', true );
             } else
-            {
-                result = response.result;
+            {                
                 dashboard_update_site_status( pWebsiteId, '<i class="green check icon"></i>' );
                 countRealItemsUpdated++;
                 couttItemsToUpdate++;

@@ -4,7 +4,7 @@
  * MainWP Manage Backups
  */
 class MainWP_Manage_Backups {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -34,7 +34,7 @@ class MainWP_Manage_Backups {
 		 *
 		 * @see \MainWP_Manage_Backups::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-backups', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-backups', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Backups page footer via the 'mainwp-pagefooter-backups' action.
@@ -46,7 +46,7 @@ class MainWP_Manage_Backups {
 		 *
 		 * @see \MainWP_Manage_Backups::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-backups', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-backups', array( self::get_class_name(), 'renderFooter' ) );
 	}
 
 	public static function initMenu() {
@@ -68,10 +68,10 @@ class MainWP_Manage_Backups {
 
 		} else {
 			if ( $enable_legacy_backup ) {
-					add_submenu_page( 'mainwp_tab', __( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( self::getClassName(), 'renderManager' ) );
+					add_submenu_page( 'mainwp_tab', __( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . __( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( self::get_class_name(), 'renderManager' ) );
 				if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
 					if ( ! MainWP_Menu::is_disable_menu_item(3, 'ManageBackupsAddNew') ) {
-						add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( self::getClassName(), 'renderNew' ) );
+						add_submenu_page( 'mainwp_tab', __( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( self::get_class_name(), 'renderNew' ) );
 					}
 				}
 			} else {
@@ -1050,8 +1050,8 @@ class MainWP_Manage_Backups {
 					$errorOutput = '';
 				}
 				$errorOutput  .= 'Site: <strong>' . MainWP_Utility::getNiceURL( $website->url ) . '</strong><br />';
-				$errorOutput  .= MainWP_Error_Helper::getErrorMessage( $e ) . '<br />';
-				$_error_output = MainWP_Error_Helper::getErrorMessage( $e );
+				$errorOutput  .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
+				$_error_output = MainWP_Error_Helper::get_error_message( $e );
 			}
 
 			$_backup_result = isset( $backupResult ) ? $backupResult : ( isset( $_error_output ) ? $_error_output : '' );

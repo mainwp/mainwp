@@ -5,7 +5,7 @@
 class MainWP_Manage_Sites_View {
 
 	public static function initMenu() {
-		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::getClassName(), 'renderManageSites' ) );
+		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::get_class_name(), 'renderManageSites' ) );
 	}
 
 	public static function initMenuSubPages( &$subPages ) {
@@ -1127,14 +1127,14 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
-			jQuery( '.ui.dropdown .item' ).tab();
-		} );
-		jQuery( 'table.ui.table' ).DataTable( {
-			"searching": true,
-			"paging" : false,
-			"info" : true,
-			"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
-			"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
+			jQuery( '.ui.dropdown .item' ).tab();		
+			jQuery( 'table.ui.table' ).DataTable( {
+				"searching": true,
+				"paging" : false,
+				"info" : true,
+				"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
+				"language" : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
+			} );
 		} );
 		</script>
 		<?php

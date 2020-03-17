@@ -7,13 +7,13 @@
  * @used-by MainWP_Themes::InstallThemes
  */
 class MainWP_Install_Bulk {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	// Has to be called in System constructor - adds handling for the main page
 	public static function init() {
-		add_action( 'admin_init', array( self::getClassName(), 'admin_init' ) );
+		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 	}
 
 	// Handles the uploading of a file
@@ -198,7 +198,7 @@ class MainWP_Install_Bulk {
 		$output->errors = array();
 		$websites       = array( MainWP_DB::Instance()->getWebsiteById( $_POST['siteId'] ) );
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
-			self::getClassName(),
+			self::get_class_name(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
@@ -290,7 +290,7 @@ class MainWP_Install_Bulk {
 		$output->errors = array();
 		$websites       = array( MainWP_DB::Instance()->getWebsiteById( $_POST['siteId'] ) );
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
-			self::getClassName(),
+			self::get_class_name(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 

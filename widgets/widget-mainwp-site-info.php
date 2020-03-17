@@ -13,11 +13,11 @@
 class MainWP_Site_Info {
 
 	/**
-	 * Method getClassName()
+	 * Method get_class_name()
 	 *
 	 * @return string __CLASS__ Class name.
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 

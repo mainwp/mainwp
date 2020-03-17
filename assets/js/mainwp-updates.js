@@ -84,8 +84,6 @@ jQuery( document ).on( 'click', '#updatesoverview-backup-ignore', function () {
 
 var dashboardActionName = '';
 var starttimeDashboardAction = 0;
-var countRealItemsUpdated = 0;
-var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
 updatesoverview_update_popup_init = function ( data ) {
@@ -248,11 +246,9 @@ updatesoverview_wordpress_upgrade_int = function ( websiteId, bulkMode )
     jQuery.post( ajaxurl, data, function ( pWebsiteId, pBulkMode )
     {
         return function ( response )
-        {
-            var result;
+        {            
             if ( response.error )
             {
-                result = getErrorMessage( response.error );
                 if ( pBulkMode )
                     updatesoverview_wordpress_upgrade_all_update_site_status( pWebsiteId, '<i class="red times icon"></i>' );                
             } else
@@ -347,7 +343,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId )
 
         for ( var i = 0; i < sitesToUpdate.length; i++ )
         {
-            var updateCount = sitesTranslationSlugs[sitesToUpdate[i]].match( /\,/g );
+            var updateCount = sitesTranslationSlugs[sitesToUpdate[i]].match( /,/g );
             if ( updateCount == null )
                 updateCount = 1;
             else
@@ -370,8 +366,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
-        
+                
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int( undefined, pSitesToUpdate, pSitesTranslationSlugs );
 
@@ -457,7 +452,6 @@ updatesoverview_translations_upgrade_all = function ( slug, translationName )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
                 itemsToUpdate = [];
 
                 //Step 3: start updates
@@ -574,8 +568,7 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                         var slugParts = pSlug.split( ',' );
                         var done = false;
                         for ( var i = 0; i < slugParts.length; i++ )
-                        {
-                            var result;
+                        {                            
                             var websiteHolder = jQuery( '.translations-bulk-updates[translation_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]' );
                             if ( !websiteHolder.exists() )
                             {
@@ -583,8 +576,7 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                             }
 
                             if ( response.error )
-                            {
-                                result = getErrorMessage( response.error );
+                            {                                
                                 if ( !done && pBulkMode )
                                     updatesoverview_translations_upgrade_all_update_site_status( pWebsiteId, '<i class="red times icon"></i>' );
                                 websiteHolder.find( 'td:last-child' ).html( '<i class="red times icon"></i>' );
@@ -615,8 +607,7 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                         }
                         
                         if (websitesDone == websitesTotal)
-                        {
-                            couttItemsToUpdate = itemsToUpdate.length;
+                        {                            
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -650,8 +641,7 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                         }
                         
                         if (websitesDone == websitesTotal)
-                        {
-                            couttItemsToUpdate = itemsToUpdate.length;
+                        {                            
                             updatesoverview_send_twitt_info();
                         }                    
                     }
@@ -768,7 +758,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId )
 
         for ( var i = 0; i < sitesToUpdate.length; i++ )
         {
-            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match( /\,/g );
+            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match( /,/g );
             if ( updateCount == null )
                 updateCount = 1;
             else
@@ -790,8 +780,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
-        
+                
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int( undefined, pSitesToUpdate, pSitesPluginSlugs );
 
@@ -877,8 +866,7 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
-        
+                
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int( pSlug, pSitesToUpdate );
 
@@ -1042,7 +1030,7 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                         var done = false;
                         for ( var i = 0; i < slugParts.length; i++ )
                         {
-                            var result;
+                            
                             var websiteHolder = jQuery( '.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]' );
                             if ( !websiteHolder.exists() )
                             {
@@ -1085,7 +1073,6 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                         
                         if (websitesDone == websitesTotal)
                         {
-                            couttItemsToUpdate = itemsToUpdate.length;
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -1117,8 +1104,7 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                         }
                                                 
                         if (websitesDone == websitesTotal)
-                        {
-                            couttItemsToUpdate = itemsToUpdate.length;
+                        {                            
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -1236,7 +1222,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId )
 
         for ( var i = 0; i < sitesToUpdate.length; i++ )
         {
-            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match( /\,/g );
+            var updateCount = sitesPluginSlugs[sitesToUpdate[i]].match( /,/g );
             if ( updateCount == null )
                 updateCount = 1;
             else
@@ -1258,8 +1244,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_themes';
                 starttimeDashboardAction = dateObj.getTime();
-                countRealItemsUpdated = 0;
-        
+                
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int( undefined, pSitesToUpdate, pSitesPluginSlugs );
 
@@ -1493,8 +1478,7 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                     }
                                         
                     if (websitesDone == websitesTotal)
-                    {
-                        couttItemsToUpdate = itemsToUpdate.length;
+                    {                        
                         updatesoverview_send_twitt_info();
                     }
                 }
@@ -1509,8 +1493,7 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                 var slugParts = pSlug.split( ',' );
                 var done = false;
                 for ( var i = 0; i < slugParts.length; i++ )
-                {
-                    var result;
+                {                    
                     var websiteHolder = jQuery( 'div[theme_slug="' + slugParts[i] + '"] div[site_id="' + pWebsiteId + '"]' );
                     if ( !websiteHolder.exists() )
                     {
@@ -1527,8 +1510,7 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                 }
                 
                 if (websitesDone == websitesTotal)
-                {
-                    couttItemsToUpdate = itemsToUpdate.length;
+                {                    
                     updatesoverview_send_twitt_info();
                 }
             }
@@ -1711,7 +1693,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
                 if ( sitesPluginSlugs[siteId] != undefined )
                 {
-                    var updateCount = sitesPluginSlugs[siteId].match( /\,/g );
+                    var updateCount = sitesPluginSlugs[siteId].match( /,/g );
                     if ( updateCount == null )
                         updateCount = 1;
                     else
@@ -1725,7 +1707,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
                 if ( sitesThemeSlugs[siteId] != undefined )
                 {
-                    var updateCount = sitesThemeSlugs[siteId].match( /\,/g );
+                    var updateCount = sitesThemeSlugs[siteId].match( /,/g );
                     if ( updateCount == null )
                         updateCount = 1;
                     else
@@ -1740,7 +1722,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
                 if ( sitesTranslationSlugs[siteId] != undefined )
                 {
-                    var updateCount = sitesTranslationSlugs[siteId].match( /\,/g );
+                    var updateCount = sitesTranslationSlugs[siteId].match( /,/g );
                     if ( updateCount == null )
                         updateCount = 1;
                     else
@@ -1769,7 +1751,6 @@ updatesoverview_global_upgrade_all = function ( which )
                     var dateObj = new Date();
                     dashboardActionName = 'upgrade_everything';
                     starttimeDashboardAction = dateObj.getTime();
-                    countRealItemsUpdated = 0;
 
                     //Step 3: start updates
                     updatesoverview_upgrade_all_int( pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs, psitesTranslationSlugs );
@@ -1959,13 +1940,13 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
             }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
             tryCount: 0,
             retryLimit: 3,
-            endError: function ( WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone )
+            endError: function ( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade )
             {
                 return function ()
                 {
                     updatesoverview_upgrade_int_flow( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request', pTransSlugToUpgrade, true );
                 }
-            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
+            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade ),
             error: function ( xhr ) {
                 this.tryCount++;
                 if ( this.tryCount >= this.retryLimit ) {
@@ -2051,13 +2032,13 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
             }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
             tryCount: 0,
             retryLimit: 3,
-            endError: function ( WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone )
+            endError: function ( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade )
             {
                 return function ()
                 {
                     updatesoverview_upgrade_int_flow( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request', pTransSlugToUpgrade, true );
                 }
-            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
+            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade ),
             error: function ( xhr ) {
                 this.tryCount++;
                 if ( this.tryCount >= this.retryLimit ) {
@@ -2126,13 +2107,13 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
             }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
             tryCount: 0,
             retryLimit: 3,
-            endError: function ( WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone )
+            endError: function ( WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade )
             {
                 return function ()
                 {
                     updatesoverview_upgrade_int_flow( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request', pTransSlugToUpgrade, true );
                 }
-            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
+            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade ),
             error: function ( xhr ) {
                 this.tryCount++;
                 if ( this.tryCount >= this.retryLimit ) {
@@ -2169,7 +2150,7 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
             type: "POST",
             url: ajaxurl,
             data: data,
-            success: function ( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug, pTransDone )
+            success: function ( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pSlug )
             {
                 return function ( response )
                 {
@@ -2215,16 +2196,16 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
                     else
                         setTimeout( fnc, 400 );
                 }
-            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
+            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade ),
             tryCount: 0,
             retryLimit: 3,
-            endError: function ( WebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone )
+            endError: function ( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade )
             {
                 return function ()
                 {
                     updatesoverview_upgrade_int_flow( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, true, true, true, 'Error processing request', pTransSlugToUpgrade, true );
                 }
-            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pThemeDone, pPluginDone, pUpgradeDone, pErrorMessage, pTransSlugToUpgrade, pTransDone ),
+            }( pWebsiteId, pThemeSlugToUpgrade, pPluginSlugToUpgrade, pWordpressUpgrade, pTransSlugToUpgrade ),
             error: function ( xhr ) {
                 this.tryCount++;
                 if ( this.tryCount >= this.retryLimit ) {
@@ -2260,8 +2241,7 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
         updatesoverview_upgrade_all_update_done();
         
         if (websitesDone == websitesTotal)
-        {
-            couttItemsToUpdate = itemsToUpdate.length;
+        {            
             updatesoverview_send_twitt_info();
         }
         return false;
@@ -2270,7 +2250,6 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
 
 var updatesoverviewShowBusyFunction;
 var updatesoverviewShowBusyTimeout;
-var updatesoverviewShowBusy;
 mainwp_updatesoverview_checkBackups = function ( sitesToUpdate, siteNames ) {
     if ( mainwpParams['disable_checkBackupBeforeUpgrade'] == true ) {
         if ( updatesoverviewContinueAfterBackup != undefined )

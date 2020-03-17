@@ -4,7 +4,7 @@
  */
 class MainWP_Bulk_Post {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 

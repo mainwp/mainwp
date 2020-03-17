@@ -84,7 +84,7 @@ mainwp_post_newmeta_submit = function( action, me ) {
 };
 
 // Cancel editing the publish time
-mainwp_post_cancel_timestamp = function(event) {
+mainwp_post_cancel_timestamp = function() {
     $('#mm').val($('#hidden_mm').val());
     $('#jj').val($('#hidden_jj').val());
     $('#aa').val($('#hidden_aa').val());
@@ -161,12 +161,12 @@ jQuery(document).ready( function($) {
 			if ( ! $timestampdiv.length )
 				return true;
 
-			var attemptedDate, originalDate, currentDate,
+			var attemptedDate, currentDate,
 				aa = $('#aa').val(),
 				mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
 
 			attemptedDate = new Date( aa, mm - 1, jj, hh, mn );
-			originalDate = new Date( $('#hidden_aa').val(), $('#hidden_mm').val() -1, $('#hidden_jj').val(), $('#hidden_hh').val(), $('#hidden_mn').val() );
+			// originalDate = new Date( $('#hidden_aa').val(), $('#hidden_mm').val() -1, $('#hidden_jj').val(), $('#hidden_hh').val(), $('#hidden_mn').val() );
 			currentDate = new Date( $('#cur_aa').val(), $('#cur_mm').val() -1, $('#cur_jj').val(), $('#cur_hh').val(), $('#cur_mn').val() );
 
 			// Catch unexpected date problems.
@@ -190,7 +190,7 @@ jQuery(document).ready( function($) {
             }(),
             monthFirst: false,
             formatter: {
-              date: function (date, settings) {
+              date: function (date) {
                 if (!date) return '';
                 var jj = date.getDate();
                 var mm = date.getMonth() + 1;
@@ -198,7 +198,7 @@ jQuery(document).ready( function($) {
                 return aa + '-' + mm + '-' + jj;
               }
             },
-            onChange: function (attemptedDate, text) {
+            onChange: function (attemptedDate) {
                 var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
                 mm =  ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
                 $('#aa').val(aa);

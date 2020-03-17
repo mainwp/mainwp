@@ -7,7 +7,7 @@
  */
 class MainWP_Error_Helper {
 
-	public static function getErrorMessage( $pException ) {
+	public static function get_error_message( $pException ) {
 		$error = $pException->getMessage();
 
 		if ( $pException->getMessage() == 'HTTPERROR' ) {
@@ -19,7 +19,7 @@ class MainWP_Error_Helper {
 		return $error;
 	}
 
-	public static function getConsoleErrorMessage( $pException ) {
+	public static function get_console_error_message( $pException ) {
 		$error = $pException->getMessage();
 
 		if ( $pException->getMessage() == 'HTTPERROR' ) {

@@ -96,7 +96,7 @@ class MainWP_System {
 		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 		if ( 0 == $ssl_api_verifyhost ) {
 			add_filter( 'http_request_args', array(
-				MainWP_Extensions::getClassName(),
+				MainWP_Extensions::get_class_name(),
 				'noSSLFilterExtensionUpgrade',
 			), 99, 2 );
 		}
@@ -186,7 +186,7 @@ class MainWP_System {
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp-activated-sub-check', array( &$this, 'activated_sub_check' ) );
-		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::getClassName(), 'isExtensionEnabled' ) );
+		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'isExtensionEnabled' ) );
 
 		/**
 		 * This hook allows you to get a list of sites via the 'mainwp-getsites' filter.
@@ -195,8 +195,8 @@ class MainWP_System {
 		 *
 		 * @see \MainWP_Extensions::hookGetSites
 		 */
-		add_filter( 'mainwp-getsites', array( MainWP_Extensions::getClassName(), 'hookGetSites' ), 10, 5 );
-		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::getClassName(), 'hookGetDBSites' ), 10, 5 );
+		add_filter( 'mainwp-getsites', array( MainWP_Extensions::get_class_name(), 'hookGetSites' ), 10, 5 );
+		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::get_class_name(), 'hookGetDBSites' ), 10, 5 );
 
 		/**
 		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.
@@ -205,16 +205,16 @@ class MainWP_System {
 		 *
 		 * @see \MainWP_Extensions::hookGetGroups
 		 */
-		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::getClassName(), 'hookGetGroups' ), 10, 4 );
+		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hookGetGroups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetchUrlsAuthed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetchUrlAuthed' ), 10, 6 );
 		add_filter( 'mainwp_getdashboardsites', array(
-			MainWP_Extensions::getClassName(),
+			MainWP_Extensions::get_class_name(),
 			'hookGetDashboardSites',
 		), 10, 7 );
 		add_filter(
 			'mainwp-manager-getextensions', array(
-				MainWP_Extensions::getClassName(),
+				MainWP_Extensions::get_class_name(),
 				'hookManagerGetExtensions',
 			) 
 		);
@@ -2345,7 +2345,7 @@ class MainWP_System {
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 
-		$mainwpTranslations = MainWP_System_View::getMainWPTranslations();
+		$mainwpTranslations = MainWP_System_View::get_mainwp_translations();
 
 		wp_localize_script( 'mainwp', 'mainwpTranslations', $mainwpTranslations );
 

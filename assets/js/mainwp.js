@@ -365,6 +365,35 @@ subMenuOut = function ( subName ) {
     jQuery( '#mainwp-' + subName ).css( 'color', '' );
 };
 
+
+function shake_element( select ) {
+    var pos = jQuery( select ).position();
+    var type = jQuery( select ).css( 'position' );
+
+  if ( type == 'static' ) {
+        jQuery( select ).css( {
+            position: 'relative'
+        } );
+    }
+
+  if ( type == 'static' || type == 'relative' ) {
+        pos.top = 0;
+        pos.left = 0;
+    }
+
+    jQuery( select ).data( 'init-type', type );
+
+    var shake = [ [ 0, 5, 60 ], [ 0, 0, 60 ], [ 0, -5, 60 ], [ 0, 0, 60 ], [ 0, 2, 30 ], [ 0, 0, 30 ], [ 0, -2, 30 ], [ 0, 0, 30 ] ];
+
+    for ( s = 0; s < shake.length; s++ ) {
+        jQuery( select ).animate( {
+            top: pos.top + shake[s][0],
+            left: pos.left + shake[s][1]
+        }, shake[s][2], 'linear' );
+    }
+}
+
+
 /**
  * Required
  */
@@ -1470,9 +1499,7 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
                 dashboardActionName = 'upgrade_all_translations';
             else
                 dashboardActionName = 'upgrade_all_themes';
-            countRealItemsUpdated = 0;
-            couttItemsToUpdate = 0;
-
+            
             if ( newList.length > 0 ) {
 
                 var data = mainwp_secure_data( {
@@ -3929,8 +3956,7 @@ mainwp_install_bulk = function ( type, slug ) {
                 dashboardActionName = 'installing_new_plugin';
             else
                 dashboardActionName = 'installing_new_theme';
-            countRealItemsUpdated = 0;
-
+            
             bulkInstallDone = 0;
 
             for ( var siteId in response.sites ) {
@@ -6414,6 +6440,29 @@ jQuery( document ).on( 'click', '.mainwp-news-tab', function ()
 
     return false;
 } );
+
+function mainwp_setCookie( c_name, value, expiredays )
+{
+    var exdate = new Date();
+    exdate.setDate( exdate.getDate() + expiredays );
+    document.cookie = c_name + "=" + escape( value ) + ( ( expiredays == null ) ? "" : ";expires=" + exdate.toUTCString() );
+}
+function mainwp_getCookie( c_name )
+{
+    if ( document.cookie.length > 0 )
+    {
+        var c_start = document.cookie.indexOf( c_name + "=" );
+        if ( c_start != -1 )
+        {
+            c_start = c_start + c_name.length + 1;
+            var c_end = document.cookie.indexOf( ";", c_start );
+            if ( c_end == -1 )
+                c_end = document.cookie.length;
+            return unescape( document.cookie.substring( c_start, c_end ) );
+        }
+    }
+    return "";
+}
 
 mainwp_uid = function () {
     // always start with a letter (for DOM friendlyness)

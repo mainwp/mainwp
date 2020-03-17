@@ -14,7 +14,7 @@ class MainWP_Manage_Groups {
 			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
 				self::get_class_name(),
 				'renderAllGroups',
-			) 
+			)
 		);
 	}
 

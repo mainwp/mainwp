@@ -521,11 +521,11 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( 
+			$information = MainWP_Utility::fetchUrlAuthed(
 				$website, 'post_action', array(
 					'action' => $pAction,
 					'id'     => $postId,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
@@ -568,7 +568,7 @@ class MainWP_Recent_Posts {
 					'action'     => $pAction,
 					'id'         => $postId,
 					'post_data'  => $post_data,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( 'FAIL' );

@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Themes Widget
- * 
+ *
  * Grab current Child Site theme data & build Widget
  *
  * @package MainWP/Plugins
@@ -31,15 +31,14 @@ class MainWP_Widget_Themes {
 		self::renderWidget( false, false );
 	}
 
-	
+
 	/**
 	 * Method renderWidget()
-	 * 
+	 *
 	 * Build Themes Widget
-	 * 
+	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit true|false If $pEixt is true then exit.
-	 * 
 	 */
 	public static function renderWidget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -176,7 +175,7 @@ class MainWP_Widget_Themes {
 
 	/**
 	 * Method activateTheme()
-	 * 
+	 *
 	 * Fire off Action activate & display result
 	 */
 	public static function activateTheme() {
@@ -186,7 +185,7 @@ class MainWP_Widget_Themes {
 
 	/**
 	 * Method deleteTheme()
-	 * 
+	 *
 	 * Fire off action deactivate & display result
 	 */
 	public static function deleteTheme() {
@@ -223,7 +222,7 @@ class MainWP_Widget_Themes {
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );

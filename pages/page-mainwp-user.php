@@ -45,21 +45,21 @@ class MainWP_User {
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
 				self::get_class_name(),
 				'renderBulkAdd',
-			) 
+			)
 		);
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
 				self::get_class_name(),
 				'renderBulkImportUsers',
-			) 
+			)
 		);
 
 		/**
@@ -125,7 +125,7 @@ class MainWP_User {
 				'href'       => 'admin.php?page=UserBulkManage',
 				'icon'       => '<i class="user icon"></i>',
 				'desc'       => 'Manage users on your child sites',
-			), 1 
+			), 1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -666,7 +666,7 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
@@ -677,7 +677,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					}
 				}
@@ -691,7 +691,7 @@ class MainWP_User {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -702,7 +702,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 						MainWP_DB::free_result( $websites );
@@ -729,7 +729,7 @@ class MainWP_User {
 				'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
-			) 
+			)
 		);
 
 		// Sort if required
@@ -896,7 +896,7 @@ class MainWP_User {
 					'extra'     => $extra,
 					'user_pass' => $pass,
 					'optimize'  => $optimize,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
@@ -1165,7 +1165,7 @@ class MainWP_User {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
@@ -1176,7 +1176,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					}
 				}
@@ -1186,7 +1186,7 @@ class MainWP_User {
 						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -1197,7 +1197,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 						MainWP_DB::free_result( $websites );
@@ -1430,7 +1430,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					} else {
 						$not_valid[]  = __( 'Unexisting website. Please try again.', 'mainwp' ) . ' ' . $url;
@@ -1445,7 +1445,7 @@ class MainWP_User {
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -1456,7 +1456,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 						MainWP_DB::free_result( $websites );

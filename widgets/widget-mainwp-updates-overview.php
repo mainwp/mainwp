@@ -235,7 +235,7 @@ class MainWP_Updates_Overview {
 
 		$currentSite = null;
 
-		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {			
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ! $globalView ) {
 				$currentSite = $website;
 			}
@@ -858,9 +858,9 @@ class MainWP_Updates_Overview {
 			} else {
 				$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
 				// Check if backup ok
-				$lastBackup = - 1;				
+				$lastBackup = - 1;
 				if ( file_exists( $dir ) ) {
-					$dh            = opendir( $dir );
+					$dh = opendir( $dir );
 					if ( $dh ) {
 						while ( ( $file = readdir( $dh ) ) !== false ) {
 							if ( $file != '.' && $file != '..' ) {

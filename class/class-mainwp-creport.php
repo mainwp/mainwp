@@ -391,7 +391,7 @@ class MainWP_Live_Reports_Class {
 
 			$start_time = $end_time     = 0;
 			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
-				$start_date  = trim( $_POST['mwp_creport_date_from'] );
+				$start_date = trim( $_POST['mwp_creport_date_from'] );
 				if ( '' != $start_date ) {
 					$start_time = strtotime( $start_date );
 				}
@@ -2093,7 +2093,7 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		foreach ( $this->default_tokens as $token_name => $token_description ) {
-			$token = array(
+			$token   = array(
 				'type'               => 1,
 				'token_name'         => $token_name,
 				'token_description'  => $token_description,
@@ -2120,7 +2120,7 @@ PRIMARY KEY  (`id`)  ';
 
 		foreach ( $this->default_formats as $format ) {
 			$current = $this->get_format_by( 'title', $format['title'], $format['type'] );
-			if ( $current  ) {
+			if ( $current ) {
 				$format['id'] = $current->id;
 				$this->update_format( $format );
 			} else {
@@ -2330,12 +2330,12 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 
-		$result = $wpdb->query( 
-			$wpdb->prepare( 
+		$result = $wpdb->query(
+			$wpdb->prepare(
 				'UPDATE ' . $this->table_name( 'client_report_site_token' ) . '
 				SET `token_value` = %s
 				WHERE `token_id` = %d AND site_url = %s', $this->escape( $token_value ), intval( $token_id ), $this->escape( $site_url )
-			) 
+			)
 		);
 
 		if ( $result ) {
@@ -2395,7 +2395,7 @@ PRIMARY KEY  (`id`)  ';
 						$update_client['clientid'] = $client_id;
 					}
 				}
-				
+
 				$updatedClient = $this->update_client( $update_client );
 				if ( $updatedClient ) {
 					$client_id = $updatedClient->clientid;
@@ -2412,7 +2412,7 @@ PRIMARY KEY  (`id`)  ';
 						'company'    => isset( $report['company'] ) ? $report['company'] : '',
 						'email'      => isset( $report['email'] ) ? $report['email'] : '',
 					);
-					$updatedClient  = $this->update_client( $update_client );
+					$updatedClient = $this->update_client( $update_client );
 					if ( $updatedClient ) {
 						$client_id = $updatedClient->clientid;
 					}

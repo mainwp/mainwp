@@ -19,14 +19,14 @@ class MainWP_Server_Information {
 			'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
 			add_submenu_page(
 				'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
 					self::get_class_name(),
 					'renderCron',
-				) 
+				)
 			);
 		}
 
@@ -35,7 +35,7 @@ class MainWP_Server_Information {
 				'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
 					self::get_class_name(),
 					'renderErrorLogPage',
-				) 
+				)
 			);
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
@@ -43,7 +43,7 @@ class MainWP_Server_Information {
 				'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
 					self::get_class_name(),
 					'renderWPConfig',
-				) 
+				)
 			);
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
@@ -52,7 +52,7 @@ class MainWP_Server_Information {
 					'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
 						self::get_class_name(),
 						'renderhtaccess',
-					) 
+					)
 				);
 			}
 		}
@@ -61,7 +61,7 @@ class MainWP_Server_Information {
 				'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
 					self::get_class_name(),
 					'renderActionLogs',
-				) 
+				)
 			);
 		}
 		self::$subPages = apply_filters( 'mainwp-getsubpages-server', array() );
@@ -547,7 +547,7 @@ class MainWP_Server_Information {
 				'slug'       => 'mainwp',
 				'fields'     => array( 'sections' => false ),
 				'timeout'    => 60,
-			) 
+			)
 		);
 		if ( is_object( $api ) && isset( $api->version ) ) {
 			$_SESSION['cachedTime']    = time();

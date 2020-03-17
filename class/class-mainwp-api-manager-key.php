@@ -95,7 +95,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
@@ -133,7 +133,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
@@ -171,7 +171,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
@@ -209,7 +209,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		$log = $request;
@@ -264,7 +264,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
@@ -297,7 +297,7 @@ class MainWP_Api_Manager_Key {
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Plugins Widget
- * 
+ *
  * Grab current Child Site plugin data & build Widget
  *
  * @package MainWP/Plugins
@@ -17,7 +17,7 @@ class MainWP_Widget_Plugins {
 	 * Get Class Name
 	 *
 	 * @return string __CLASS__ Class Name.
-	 */	
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -31,9 +31,9 @@ class MainWP_Widget_Plugins {
 		self::renderWidget( false, false );
 	}
 
-	/** 
+	/**
 	 * Method prepair_icons()
-	 * 
+	 *
 	 * Utilizes WP API to grab plugin icons, last_updated, active_installs
 	 */
 	public function prepare_icons() {
@@ -60,12 +60,11 @@ class MainWP_Widget_Plugins {
 
 	/**
 	 * Method renderWidget()
-	 * 
+	 *
 	 * Build Plugins Widget
-	 * 
+	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit true|false If $pEixt is true then exit.
-	 * 
 	 */
 	public static function renderWidget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -218,7 +217,7 @@ class MainWP_Widget_Plugins {
 
 	/**
 	 * Method activatePlugin()
-	 * 
+	 *
 	 * Fire off Action activate & display result
 	 */
 	public static function activatePlugin() {
@@ -228,7 +227,7 @@ class MainWP_Widget_Plugins {
 
 	/**
 	 * Method deactivatePlugin()
-	 * 
+	 *
 	 * Fire off action deactivate & display result
 	 */
 	public static function deactivatePlugin() {
@@ -238,7 +237,7 @@ class MainWP_Widget_Plugins {
 
 	/**
 	 * Method deletePlugin()
-	 * 
+	 *
 	 * Fire off action delete & display result
 	 */
 	public static function deletePlugin() {
@@ -272,11 +271,11 @@ class MainWP_Widget_Plugins {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( 
+			$information = MainWP_Utility::fetchUrlAuthed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );

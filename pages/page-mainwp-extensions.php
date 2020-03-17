@@ -98,7 +98,7 @@ class MainWP_Extensions {
 		self::$extensions = array();
 		$all_extensions   = array();
 
-		$newExtensions = apply_filters( 'mainwp-getextensions', array() );
+		$newExtensions      = apply_filters( 'mainwp-getextensions', array() );
 		$activations_cached = get_option( 'mainwp_extensions_all_activation_cached', array() );
 
 		if ( ! is_array( $activations_cached ) ) {
@@ -189,10 +189,10 @@ class MainWP_Extensions {
 			if ( ! isset( $extension['name'] ) ) {
 				$extension['name'] = $plugin_data['Name'];
 			}
-			$extension['version']     = $plugin_data['Version'];
-			$extension['description'] = $plugin_data['Description'];
-			$extension['author']      = $plugin_data['Author'];
-			$extension['iconURI']     = isset( $extension['icon'] ) ? $extension['icon'] : $file_data['IconURI'];
+			$extension['version']          = $plugin_data['Version'];
+			$extension['description']      = $plugin_data['Description'];
+			$extension['author']           = $plugin_data['Author'];
+			$extension['iconURI']          = isset( $extension['icon'] ) ? $extension['icon'] : $file_data['IconURI'];
 			$extension['SupportForumURI']  = $file_data['SupportForumURI'];
 			$extension['DocumentationURI'] = $file_data['DocumentationURI'];
 			$extension['page']             = 'Extensions-' . str_replace( ' ', '-', ucwords( str_replace( '-', ' ', dirname( $slug ) ) ) );
@@ -289,7 +289,7 @@ class MainWP_Extensions {
 					'href'              => 'admin.php?page=Extensions',
 					'icon'              => '<i class="plug icon"></i>',
 					'id'                => 'menu-item-extensions',
-				),	1 
+				), 1
 			);
 
 			if ( 0 < count( $extPages ) ) {
@@ -411,25 +411,25 @@ class MainWP_Extensions {
 			'wp_ajax_mainwp_extension_remove_menu', array(
 				self::get_class_name(),
 				'removeExtensionMenuFromMainWPMenu',
-			) 
+			)
 		);
 		MainWP_Post_Handler::Instance()->addAction(
 			'mainwp_extension_activate', array(
 				self::get_class_name(),
 				'activateExtension',
-			) 
+			)
 		);
-		MainWP_Post_Handler::Instance()->addAction( 
+		MainWP_Post_Handler::Instance()->addAction(
 			'mainwp_extension_deactivate', array(
 				self::get_class_name(),
 				'deactivateExtension',
-			) 
+			)
 		);
 		add_action(
 			'wp_ajax_mainwp_extension_testextensionapilogin', array(
 				self::get_class_name(),
 				'testExtensionsApiLogin',
-			) 
+			)
 		);
 
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
@@ -437,19 +437,19 @@ class MainWP_Extensions {
 				'wp_ajax_mainwp_extension_grabapikey', array(
 					self::get_class_name(),
 					'grabapikeyExtension',
-				) 
+				)
 			);
 			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_saveextensionapilogin', array(
 					self::get_class_name(),
 					'saveExtensionsApiLogin',
-				) 
+				)
 			);
 			add_action(
 				'wp_ajax_mainwp_extension_getpurchased', array(
 					self::get_class_name(),
 					'getPurchasedExts',
-				) 
+				)
 			);
 			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_downloadandinstall', array(
@@ -461,13 +461,13 @@ class MainWP_Extensions {
 				'mainwp_extension_bulk_activate', array(
 					self::get_class_name(),
 					'bulkActivate',
-				) 
+				)
 			);
 			add_action(
 				'wp_ajax_mainwp_extension_apisslverifycertificate', array(
 					self::get_class_name(),
 					'saveApiSSLVerify',
-				) 
+				)
 			);
 		}
 	}
@@ -868,14 +868,14 @@ class MainWP_Extensions {
 
 		add_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
-		$result = $installer->run( 
+		$result = $installer->run(
 			array(
 				'package'           => $url,
 				'destination'       => WP_PLUGIN_DIR,
 				'clear_destination' => false,
 				'clear_working'     => true,
 				'hook_extra'        => array(),
-			) 
+			)
 		);
 
 		remove_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
@@ -1335,7 +1335,7 @@ class MainWP_Extensions {
 				$clone_site = current( $clone_sites );
 				if ( $clone_site && $clone_site->is_staging ) {
 					if ( $force_update ) {
-						MainWP_DB::Instance()->updateWebsiteValues( 
+						MainWP_DB::Instance()->updateWebsiteValues(
 							$clone_site->id, array(
 								'adminname'          => $website->adminname,
 								'pubkey'             => $website->pubkey,
@@ -1347,7 +1347,7 @@ class MainWP_Extensions {
 								'http_user'          => $website->http_user,
 								'http_pass'          => $website->http_pass,
 								'ssl_version'        => $website->ssl_version,
-							) 
+							)
 						);
 					}
 					$ret['siteid']   = $clone_site->id;

@@ -135,7 +135,7 @@ class MainWP_Page {
 				'slug'       => 'PageBulkManage',
 				'href'       => 'admin.php?page=PageBulkManage',
 				'icon'       => '<i class="file icon"></i>',
-			), 1 
+			), 1
 		); // level 1
 
 		$init_sub_subleftmenu = array(
@@ -571,7 +571,7 @@ class MainWP_Page {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
 		}
 
-		MainWP_Cache::addContext( 
+		MainWP_Cache::addContext(
 			'Page', array(
 				'count'      => $output->pages,
 				'keyword'    => $keyword,
@@ -581,7 +581,7 @@ class MainWP_Page {
 				'sites'      => ( $sites != '' ) ? $sites : '',
 				'groups'     => ( $groups != '' ) ? $groups : '',
 				'search_on'  => $search_on,
-			) 
+			)
 		);
 
 		// Sort if required

@@ -105,7 +105,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			$target_url, array(
 				'timeout'   => 50,
 				'sslverify' => $apisslverify,
-			) 
+			)
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

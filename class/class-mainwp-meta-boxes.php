@@ -5,7 +5,6 @@
 class MainWP_Meta_Boxes {
 
 	public static function initMetaBoxes() {
-
 	}
 
 	public function select_sites( $post ) {
@@ -224,7 +223,7 @@ class MainWP_Meta_Boxes {
 	}
 
 	private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
-		
+
 		/*
 		 * verify this came from the our screen and with proper authorization.
 		 */

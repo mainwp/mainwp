@@ -64,25 +64,25 @@ class MainWP_Post_Handler {
 			'wp_ajax_mainwp_preparebulkinstallplugintheme', array(
 				&$this,
 				'mainwp_preparebulkinstallplugintheme',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_installbulkinstallplugintheme', array(
 				&$this,
 				'mainwp_installbulkinstallplugintheme',
-			) 
+			)
 		);
 		add_action(
 			'wp_ajax_mainwp_preparebulkuploadplugintheme', array(
 				&$this,
 				'mainwp_preparebulkuploadplugintheme',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_installbulkuploadplugintheme', array(
 				&$this,
 				'mainwp_installbulkuploadplugintheme',
-			) 
+			)
 		);
 		$this->addAction( 'mainwp_cleanbulkuploadplugintheme', array( &$this, 'mainwp_cleanbulkuploadplugintheme' ) );
 
@@ -102,31 +102,31 @@ class MainWP_Post_Handler {
 			'mainwp_unignorepluginsthemes', array(
 				&$this,
 				'mainwp_unignorepluginsthemes',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_unignoreabandonedplugintheme', array(
 				&$this,
 				'mainwp_unignoreabandonedplugintheme',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_unignoreabandonedpluginsthemes', array(
 				&$this,
 				'mainwp_unignoreabandonedpluginsthemes',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_dismissoutdateplugintheme', array(
 				&$this,
 				'mainwp_dismissoutdateplugintheme',
-			) 
+			)
 		); // ok
 		$this->addAction(
 			'mainwp_dismissoutdatepluginsthemes', array(
 				&$this,
 				'mainwp_dismissoutdatepluginsthemes',
-			) 
+			)
 		); // ok
 		$this->addAction( 'mainwp_trust_plugin', array( &$this, 'mainwp_trust_plugin' ) );
 		$this->addAction( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
@@ -171,7 +171,7 @@ class MainWP_Post_Handler {
 			'wp_ajax_mainwp_twitter_dashboard_action', array(
 				&$this,
 				'mainwp_twitter_dashboard_action',
-			) 
+			)
 		); // ok
 
 		add_action( 'wp_ajax_mainwp_reset_usercookies', array( &$this, 'mainwp_reset_usercookies' ) ); // ok
@@ -271,7 +271,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_childscan() {
 		if ( $this->check_security( 'mainwp_childscan', 'security' ) ) {
-			MainWP_Child_Scan::scan();			
+			MainWP_Child_Scan::scan();
 		} else {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -752,9 +752,9 @@ class MainWP_Post_Handler {
 						'error' => array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
-							),
-					) 
-				) 
+						),
+					)
+				)
 			);
 		}
 	}
@@ -765,15 +765,15 @@ class MainWP_Post_Handler {
 		try {
 			wp_send_json( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) );
 		} catch ( MainWP_Exception $e ) {
-			die( 
+			die(
 				wp_json_encode(
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -791,8 +791,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -848,8 +848,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -872,14 +872,14 @@ class MainWP_Post_Handler {
 			wp_send_json( array( 'result' => $result ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
-				wp_json_encode( 
+				wp_json_encode(
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -901,8 +901,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -924,8 +924,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -947,8 +947,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -977,7 +977,7 @@ class MainWP_Post_Handler {
 					'fileName'       => $fileName,
 					'fileNameUID'    => $fileNameUID,
 					'type'           => $type,
-				) 
+				)
 			);
 
 			if ( ! isset( $result['size'] ) ) {
@@ -1009,8 +1009,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1028,8 +1028,8 @@ class MainWP_Post_Handler {
 						array(
 							'status' => 'stalled',
 							'info'   => $info,
-						) 
-					) 
+						)
+					)
 				);
 			} elseif ( isset( $array[ $_POST['unique'] ]['finished'] ) ) {
 				die(
@@ -1037,8 +1037,8 @@ class MainWP_Post_Handler {
 						array(
 							'status' => 'done',
 							'info'   => $info,
-						) 
-					) 
+						)
+					)
 				);
 			} else {
 				if ( $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes
@@ -1047,8 +1047,8 @@ class MainWP_Post_Handler {
 							array(
 								'status' => 'stalled',
 								'info'   => $info,
-							) 
-						) 
+							)
+						)
 					);
 				} else {
 					die(
@@ -1056,8 +1056,8 @@ class MainWP_Post_Handler {
 							array(
 								'status' => 'busy',
 								'info'   => $info,
-							) 
-						) 
+							)
+						)
 					);
 				}
 			}
@@ -1069,8 +1069,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1096,8 +1096,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1253,12 +1253,12 @@ class MainWP_Post_Handler {
 			die(
 				wp_json_encode(
 					array(
-					'error' => array(
+						'error' => array(
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1278,8 +1278,8 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1453,12 +1453,12 @@ class MainWP_Post_Handler {
 							'message'    => $e->getMessage(),
 							'extra'      => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
-	
+
 	public function mainwp_upgrade_plugintheme() {
 
 		if ( ! isset($_POST['type'] ) ) {
@@ -1546,8 +1546,8 @@ class MainWP_Post_Handler {
 							'message' => $e->getMessage(),
 							'extra'   => $e->getMessageExtra(),
 						),
-					) 
-				) 
+					)
+				)
 			);
 		}
 	}
@@ -1745,20 +1745,20 @@ class MainWP_Post_Handler {
 		$result       = MainWP_Utility::isWebsiteAvailable( $website );
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$check_result = MainWP_Utility::check_ignored_http_code( $http_code );
-		MainWP_DB::Instance()->updateWebsiteValues( 
+		MainWP_DB::Instance()->updateWebsiteValues(
 			$website->id, array(
 				'offline_check_result'   => $check_result ? '1' : '-1',
 				'offline_checks_last'    => time(),
 				'http_response_code'     => $http_code,
-			) 
+			)
 		);
 		die(
 			wp_json_encode(
 				array(
 					'httpcode' => esc_html($http_code),
 					'status'   => $check_result ? 1 : 0,
-				) 
-			) 
+				)
+			)
 		);
 	}
 

@@ -43,18 +43,18 @@ class MainWP_Plugins {
 	}
 
 	public static function initMenu() {
-		$_page = add_submenu_page( 
+		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
 			$page = add_submenu_page(
 				'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
 					self::get_class_name(),
 					'renderInstall',
-				) 
+				)
 			);
 
 			add_action( 'load-' . $page, array( self::get_class_name(), 'load_page' ) );
@@ -64,19 +64,19 @@ class MainWP_Plugins {
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
 				self::get_class_name(),
 				'renderAutoUpdate',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
 				self::get_class_name(),
 				'renderIgnore',
-			) 
+			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
-			self::get_class_name(),
+				self::get_class_name(),
 				'renderIgnoredAbandoned',
-			) 
+			)
 		);
 
 		/**
@@ -159,7 +159,7 @@ class MainWP_Plugins {
 				'slug'        => 'PluginsManage',
 				'href'        => 'admin.php?page=PluginsManage',
 				'icon'        => '<i class="plug icon"></i>',
-			), 1 
+			), 1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -489,7 +489,7 @@ class MainWP_Plugins {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
 						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-							$website, 
+							$website,
 							array(
 								'id',
 								'url',
@@ -500,7 +500,7 @@ class MainWP_Plugins {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) 
+							)
 						);
 					}
 				}
@@ -515,7 +515,7 @@ class MainWP_Plugins {
 								continue;
 							}
 							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-								$website, 
+								$website,
 								array(
 									'id',
 									'url',
@@ -526,7 +526,7 @@ class MainWP_Plugins {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-								) 
+								)
 							);
 						}
 						MainWP_DB::free_result( $websites );
@@ -560,13 +560,13 @@ class MainWP_Plugins {
 			}
 		}
 
-		MainWP_Cache::addContext( 
+		MainWP_Cache::addContext(
 			'Plugins', array(
 				'keyword' => $keyword,
 				'status'  => $status,
 				'sites'   => ( '' !== $sites ) ? $sites : '',
 				'groups'  => ( '' !== $groups ) ? $groups : '',
-			) 
+			)
 		);
 
 		ob_start();
@@ -812,11 +812,11 @@ class MainWP_Plugins {
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
 			$plugin      = urldecode( $plugin );
-			$information = MainWP_Utility::fetchUrlAuthed( 
+			$information = MainWP_Utility::fetchUrlAuthed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,
-				) 
+				)
 			);
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
@@ -1093,7 +1093,7 @@ class MainWP_Plugins {
 				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
-						$website, 
+						$website,
 						array(
 							'id',
 							'url',
@@ -1104,7 +1104,7 @@ class MainWP_Plugins {
 							'nosslkey',
 							'http_user',
 							'http_pass',
-						) 
+						)
 					);
 				}
 				MainWP_DB::free_result( $websites );

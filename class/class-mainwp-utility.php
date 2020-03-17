@@ -51,7 +51,7 @@ class MainWP_Utility {
 		$output = wp_strip_all_tags( $pInput );
 		if ( strlen( $output ) > $pMax ) {
 			$outputCut = substr( $output, 0, $pMax );
-			$output = substr( $outputCut, 0, strrpos( $outputCut, ' ' ) ) . '...';
+			$output    = substr( $outputCut, 0, strrpos( $outputCut, ' ' ) ) . '...';
 		}
 		echo $output;
 	}
@@ -692,12 +692,12 @@ class MainWP_Utility {
 				$_new_post = null;
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
-					$params = apply_filters( 
+					$params    = apply_filters(
 						'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
 							'id'     => $website->id,
 							'url'    => $website->url,
 							'name'   => $website->name,
-						) 
+						)
 					);
 				}
 
@@ -813,9 +813,9 @@ class MainWP_Utility {
 			foreach ( $requestHandles as $id => $ch ) {
 				$website = &$handleToWebsite[ self::get_resource_id( $ch ) ];
 
-				$identifier = null;
-				$semLock    = '103218';
-				$identifier = self::getLockIdentifier( $semLock );
+				$identifier   = null;
+				$semLock      = '103218';
+				$identifier   = self::getLockIdentifier( $semLock );
 				$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
 				if ( 0 < $minimumDelay ) {
 					$minimumDelay = $minimumDelay / 1000;
@@ -960,7 +960,7 @@ class MainWP_Utility {
 						'id'     => $website->id,
 						'url'    => $website->url,
 						'name'   => $website->name,
-					) 
+					)
 				);
 			}
 
@@ -1200,7 +1200,7 @@ class MainWP_Utility {
 		if ( ! $request_update ) {
 			$information = self::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
 		} else {
-			$slug = $params['list'];
+			$slug                    = $params['list'];
 			$information['upgrades'] = array( $slug => 1 );
 		}
 
@@ -1215,12 +1215,12 @@ class MainWP_Utility {
 				$result          = self::isWebsiteAvailable( $website );
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
-				MainWP_DB::Instance()->updateWebsiteValues( 
+				MainWP_DB::Instance()->updateWebsiteValues(
 					$website->id, array(
 						'offline_check_result' => $online_detected ? 1 : -1,
 						'offline_checks_last'  => time(),
 						'http_response_code'   => $http_code,
-					) 
+					)
 				);
 
 				if ( defined( 'DOING_CRON' ) && DOING_CRON && ! $online_detected ) {
@@ -1335,8 +1335,8 @@ class MainWP_Utility {
 
 		$identifier = null;
 		if ( $checkConstraints ) {
-			$semLock = '103218';
-			$identifier = self::getLockIdentifier( $semLock );
+			$semLock      = '103218';
+			$identifier   = self::getLockIdentifier( $semLock );
 			$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
 			if ( 0 < $minimumDelay ) {
 				$minimumDelay = $minimumDelay / 1000;
@@ -1827,7 +1827,7 @@ class MainWP_Utility {
 			$img_data = array();
 		}
 		include_once ABSPATH . 'wp-admin/includes/file.php';
-		$upload_dir = wp_upload_dir();
+		$upload_dir     = wp_upload_dir();
 		$temporary_file = download_url( $img_url );
 
 		if ( is_wp_error( $temporary_file ) ) {

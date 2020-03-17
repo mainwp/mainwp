@@ -5,11 +5,11 @@
 class MainWP_Extensions_View {
 
 	public static function initMenu() {
-		$page = add_submenu_page( 
+		$page = add_submenu_page(
 			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
 				MainWP_Extensions::get_class_name(),
 				'render',
-			) 
+			)
 		);
 
 		return $page;
@@ -155,7 +155,7 @@ class MainWP_Extensions_View {
 
 						if ( isset( $extensions_data['img'] ) ) {
 							$img_url = $extensions_data['img'];
-						} elseif ( isset( $extension['iconURI'] ) &&  '' !== $extension['iconURI'] ) {
+						} elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
 							$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
 						} else {
 							$img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
@@ -228,7 +228,7 @@ class MainWP_Extensions_View {
 									<?php endif; ?>
 								</div>
 							</div>
-							<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
+								<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 							<div class="extra content api-feedback" style="display:none;">
 								<div class="ui mini message"></div>
 							</div>
@@ -298,7 +298,7 @@ class MainWP_Extensions_View {
 			</div>
 			<div style="clear:both"></div>
 		</div>
-	<?php
+		<?php
 	}
 
 	public static function getExtensionGroups() {

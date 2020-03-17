@@ -111,7 +111,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 				array(
 					'result' => 'success',
 					'data'   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) ),
-				) 
+				)
 			);
 			exit;
 		} else {
@@ -119,7 +119,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 				array(
 					'result'  => 'error',
 					'message' => 'Permission Denied',
-				) 
+				)
 			);
 			exit;
 		}
@@ -128,7 +128,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			array(
 				'result'  => 'error',
 				'message' => $secureconnection['error'],
-			) 
+			)
 		);
 		exit;
 	} else {
@@ -136,7 +136,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			array(
 				'result'  => 'error',
 				'message' => 'Error - Invalid Request',
-			) 
+			)
 		);
 		exit;
 	}
@@ -178,7 +178,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 					array(
 						'result' => 'success',
 						'data'   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) ),
-					) 
+					)
 				);
 				exit;
 			} else {
@@ -186,7 +186,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 					array(
 						'result'  => 'error',
 						'message' => 'No Report Found',
-					) 
+					)
 				);
 				exit;
 			}
@@ -195,7 +195,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				array(
 					'result'  => 'error',
 					'message' => 'Permission Denied',
-				) 
+				)
 			);
 			exit;
 		}
@@ -204,7 +204,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 			array(
 				'result'  => 'error',
 				'message' => $secureconnection['error'],
-			) 
+			)
 		);
 		exit;
 	} else {
@@ -212,7 +212,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 			array(
 				'result'  => 'error',
 				'message' => 'Error - Invalid Request',
-			) 
+			)
 		);
 		exit;
 	}
@@ -247,7 +247,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 				array(
 					'result'  => 'error',
 					'message' => 'Permission Denied',
-				) 
+				)
 			);
 			exit;
 		}
@@ -256,7 +256,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 			array(
 				'result'  => 'error',
 				'message' => $secureconnection['error'],
-			) 
+			)
 		);
 		exit;
 	} else {
@@ -264,7 +264,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 			array(
 				'result'  => 'error',
 				'message' => 'Error - Invalid Request',
-			) 
+			)
 		);
 		exit;
 	}
@@ -299,7 +299,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 				array(
 					'result'  => 'error',
 					'message' => 'Permission Denied',
-				) 
+				)
 			);
 			exit;
 		}
@@ -308,7 +308,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 			array(
 				'result'  => 'error',
 				'message' => $secureconnection['error'],
-			) 
+			)
 		);
 		exit;
 	} else {
@@ -316,7 +316,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 			array(
 				'result'  => 'error',
 				'message' => 'Error - Invalid Request',
-			) 
+			)
 		);
 		exit;
 	}
@@ -330,7 +330,7 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 				array(
 					'result'  => 'success',
 					'message' => 'Access has been granted',
-				) 
+				)
 			);
 			exit;
 		} else {
@@ -338,7 +338,7 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 				array(
 					'result'  => 'error',
 					'message' => 'Error - Connection not allowed in the Managed Client Reports for WooCommerce Responder settings',
-				) 
+				)
 			);
 			exit;
 		}
@@ -347,7 +347,7 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 			array(
 				'result'  => 'error',
 				'message' => $secureconnection['error'],
-			) 
+			)
 		);
 		exit;
 	} else {
@@ -355,7 +355,7 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 			array(
 				'result'  => 'error',
 				'message' => 'Error - Invalid Request',
-			) 
+			)
 		);
 		exit;
 	}

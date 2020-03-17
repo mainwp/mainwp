@@ -36,7 +36,7 @@ class MainWP_Updates {
 			'mainwp_tab', __( 'Updates', 'mainwp' ), '<span id="mainwp-Updates">' . __( 'Updates', 'mainwp' ) . '</span>', 'read', 'UpdatesManage', array(
 				self::get_class_name(),
 				'render',
-			) 
+			)
 		);
 
 		MainWP_Menu::add_left_menu(
@@ -46,7 +46,7 @@ class MainWP_Updates {
 				'slug'              => 'UpdatesManage',
 				'href'              => 'admin.php?page=UpdatesManage',
 				'icon'              => '<i class="sync icon"></i>',
-			), 1 
+			), 1
 		);
 	}
 
@@ -960,9 +960,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 					<thead>
@@ -1418,9 +1418,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
 					<thead>
@@ -1593,9 +1593,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 					<thead>
@@ -1956,7 +1956,7 @@ class MainWP_Updates {
 						</table>
 						<?php
 						else :
-						?>
+							?>
 						<!-- Per Item -->
 						<table class="ui stackable single line table" id="mainwp-translations-sites-table">
 							<thead>
@@ -2060,11 +2060,11 @@ class MainWP_Updates {
 			<!-- Abandoned Plugins -->
 
 			<?php if ( 'abandoned-plugins' === $current_tab ) : ?>
-			<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
+				<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
 			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
 				<?php
 				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
-				?>
+					?>
 				<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
 					<thead>
@@ -2157,9 +2157,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-				?>
+					?>
 				<!-- Per Group -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-groups-table">
 					<thead>
@@ -2285,9 +2285,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-abandoned-plugins-items-table">
 					<thead>
@@ -2395,7 +2395,7 @@ class MainWP_Updates {
 			<!-- Abandoned Themes -->
 
 			<?php if ( 'abandoned-themes' === $current_tab ) : ?>
-			<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
+				<?php $str_format = __( 'Updated %s days ago', 'mainwp' ); ?>
 			<div class="ui <?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-themes">
 				<?php
 				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
@@ -2618,9 +2618,9 @@ class MainWP_Updates {
 						</tr>
 					</tfoot>
 				</table>
-				<?php
+					<?php
 				else :
-				?>
+					?>
 				<!-- Per Item -->
 				<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 					<thead>
@@ -2888,11 +2888,11 @@ class MainWP_Updates {
 				$decodedIgnoredPlugins = array();
 			}
 			$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
-			MainWP_DB::Instance()->updateUserExtension( 
+			MainWP_DB::Instance()->updateUserExtension(
 				array(
 					'userid'             => null,
 					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
-				) 
+				)
 			);
 		} elseif ( 'theme' === $type ) {
 			$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -2904,7 +2904,7 @@ class MainWP_Updates {
 				array(
 					'userid'         => null,
 					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
-				) 
+				)
 			);
 		}
 
@@ -2930,7 +2930,7 @@ class MainWP_Updates {
 				array(
 					'userid'             => null,
 					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
-				) 
+				)
 			);
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
@@ -2948,7 +2948,7 @@ class MainWP_Updates {
 				array(
 					'userid'         => null,
 					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
-				) 
+				)
 			);
 		}
 
@@ -3010,7 +3010,7 @@ class MainWP_Updates {
 				array(
 					'userid'             => null,
 					'dismissed_plugins'  => wp_json_encode( $decodedIgnoredPlugins ),
-				) 
+				)
 			);
 		} elseif ( 'theme' === $type ) {
 			if ( '_ALL_' === $slug ) {
@@ -3028,7 +3028,7 @@ class MainWP_Updates {
 				array(
 					'userid'             => null,
 					'dismissed_themes'   => wp_json_encode( $decodedIgnoredThemes ),
-				) 
+				)
 			);
 		}
 
@@ -3072,7 +3072,7 @@ class MainWP_Updates {
 				array(
 					'userid'             => null,
 					'dismissed_plugins'  => wp_json_encode( $decodedDismissedPlugins ),
-				) 
+				)
 			);
 		} elseif ( 'theme' === $type ) {
 			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
@@ -3084,7 +3084,7 @@ class MainWP_Updates {
 				array(
 					'userid'             => null,
 					'dismissed_themes'   => wp_json_encode( $decodedDismissedThemes ),
-				) 
+				)
 			);
 		}
 

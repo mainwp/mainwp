@@ -216,7 +216,7 @@ class MainWP_System {
 			'mainwp-manager-getextensions', array(
 				MainWP_Extensions::get_class_name(),
 				'hookManagerGetExtensions',
-			) 
+			)
 		);
 
 		do_action( 'mainwp-activated' );
@@ -1240,22 +1240,22 @@ class MainWP_System {
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
 						MainWP_Logger::Instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-						$mail_offline                = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+						$mail_offline           = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
                                 <ul>
                                 ' . $mail_offline . '
                                 </ul>
                                 <div></div>
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-						wp_mail( 
-							$email, $mail_title = 'MainWP - HTTP response check', 
+						wp_mail(
+							$email, $mail_title = 'MainWP - HTTP response check',
 							MainWP_Utility::formatEmail(
-								$email, $mail_offline, $mail_title 
-							), 
+								$email, $mail_offline, $mail_title
+							),
 							array(
 								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 								$content_type,
-							) 
+							)
 						);
 					}
 					MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
@@ -1289,14 +1289,14 @@ class MainWP_System {
                                      <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
 						}
 						wp_mail(
-							$email, $mail_title = 'Available Updates', 
+							$email, $mail_title = 'Available Updates',
 							MainWP_Utility::formatEmail(
-								$email, $mail, $mail_title, $text_format 
-							), 
+								$email, $mail, $mail_title, $text_format
+							),
 							array(
 								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 								$content_type,
-							) 
+							)
 						);
 					}
 				}
@@ -1707,7 +1707,7 @@ class MainWP_System {
 							$allWebsites[ $websiteId ], 'upgradeplugintheme', array(
 								'type'   => 'plugin',
 								'list'   => urldecode( implode( ',', $slugs ) ),
-							) 
+							)
 						);
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -2899,10 +2899,9 @@ class MainWP_System {
 			}
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
 		}
-		
-		
-		ob_start();		
-		$this->render_footer_content( $websites );		
+
+		ob_start();
+		$this->render_footer_content( $websites );
 		$newOutput = ob_get_clean();
 
 		if ( true === $echo ) {
@@ -2911,9 +2910,9 @@ class MainWP_System {
 			return $newOutput;
 		}
 	}
-	
+
 	public function render_footer_content( $websites ) {
-		
+
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
 			$count = count( $websites );
@@ -3014,7 +3013,7 @@ class MainWP_System {
 				<div class="ui positive right labeled icon button"><?php esc_html_e('Yes', 'mainwp'); ?><i class="checkmark icon"></i></div>
 			</div>
 		</div>
-		<?php		
+		<?php
 	}
 
 	public function new_menus() {

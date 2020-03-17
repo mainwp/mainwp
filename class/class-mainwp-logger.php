@@ -18,11 +18,11 @@ class MainWP_Logger {
 
 	private $logFileNamePrefix = 'mainwp';
 	private $logFileNameSuffix = '.log';
-	private $logMaxMB        = 0.5;
-	private $logDateFormat   = 'Y-m-d H:i:s';
-	private $logDirectory    = null;
-	private $logPriority     = self::DISABLED;
-	private static $instance = null;
+	private $logMaxMB          = 0.5;
+	private $logDateFormat     = 'Y-m-d H:i:s';
+	private $logDirectory      = null;
+	private $logPriority       = self::DISABLED;
+	private static $instance   = null;
 
 	/**
 	 * @return MainWP_Logger

@@ -63,7 +63,7 @@ class MainWP_Manage_Backups {
 					'slug'       => 'ManageBackups' . $customPage['slug'],
 					'href'       => 'admin.php?page=ManageBackups' . $customPage['slug'],
 					'icon'       => '<i class="hdd outline icon"></i>',
-				), 1 
+				), 1
 			); // level 1
 
 		} else {
@@ -143,7 +143,7 @@ class MainWP_Manage_Backups {
 					'slug'              => 'ManageBackups',
 					'href'              => 'admin.php?page=ManageBackups',
 					'icon'              => '<i class="hdd outline icon"></i>',
-				), 1 
+				), 1
 			); // level 1
 
 			$init_sub_subleftmenu = array(

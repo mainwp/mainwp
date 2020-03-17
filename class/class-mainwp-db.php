@@ -356,7 +356,7 @@ class MainWP_DB {
 							$this->tableName( 'wp_sync' ), array(
 								'wpid'           => $rslt['id'],
 								$wpSyncColumn    => $rslt[ $wpSyncColumn ],
-							) 
+							)
 						);
 					} else {
 						$this->wpdb->update( $this->tableName( 'wp_sync' ), array( $wpSyncColumn => $rslt[ $wpSyncColumn ] ), array( 'wpid' => $rslt['id'] ) );
@@ -515,7 +515,7 @@ class MainWP_DB {
 				$this->tableName( 'wp_options' ), array(
 					'wpid'   => $website->id,
 					'name'   => $this->escape( $option ),
-				) 
+				)
 			);
 			$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->tableName( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
 		}
@@ -526,14 +526,14 @@ class MainWP_DB {
 					'wpid'   => $website->id,
 					'name'   => $option,
 					'value'  => $value,
-				) 
+				)
 			);
 		} else {
 			$this->wpdb->update(
 				$this->tableName( 'wp_options' ), array( 'value' => $value ), array(
 					'wpid'   => $website->id,
 					'name'   => $option,
-				) 
+				)
 			);
 		}
 	}
@@ -1206,11 +1206,11 @@ class MainWP_DB {
 				$websiteid          = $this->wpdb->insert_id;
 				$syncValues['wpid'] = $websiteid;
 				$this->wpdb->insert( $this->tableName( 'wp_sync' ), $syncValues );
-				$this->wpdb->insert( 
+				$this->wpdb->insert(
 					$this->tableName( 'wp_settings_backup' ), array(
 						'wpid'           => $websiteid,
 						'archiveFormat'  => 'global',
-					) 
+					)
 				);
 
 				foreach ( $groupnames as $groupname ) {
@@ -1228,7 +1228,7 @@ class MainWP_DB {
 						$this->tableName( 'wp_group' ), array(
 							'wpid'       => $websiteid,
 							'groupid'    => $groupid,
-						) 
+						)
 					);
 				}
 
@@ -1244,7 +1244,7 @@ class MainWP_DB {
 			$this->tableName( 'wp_group' ), array(
 				'wpid'    => $websiteId,
 				'groupid' => $groupId,
-			) 
+			)
 		);
 	}
 
@@ -1344,7 +1344,7 @@ class MainWP_DB {
 						$this->tableName( 'wp_group' ), array(
 							'wpid'       => $websiteid,
 							'groupid'    => $groupid,
-						) 
+						)
 					);
 				}
 
@@ -1371,7 +1371,7 @@ class MainWP_DB {
 			$this->tableName( 'wp_backup_progress' ), $values, array(
 				'task_id'    => $task_id,
 				'wp_id'      => $wp_id,
-			) 
+			)
 		);
 
 		return $this->getBackupTaskProgress( $task_id, $wp_id );

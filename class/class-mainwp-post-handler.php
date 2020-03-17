@@ -94,7 +94,7 @@ class MainWP_Post_Handler {
 		// Widget: RightNow
 		$this->addAction( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 		$this->addAction( 'mainwp_upgradewp', array( &$this, 'mainwp_upgradewp' ) );
-		$this->addAction( 'mainwp_upgradeplugintheme', array( &$this, 'mainwp_upgradeplugintheme' ) );
+		$this->addAction( 'mainwp_upgradeplugintheme', array( &$this, 'mainwp_upgrade_plugintheme' ) );
 		$this->addAction( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); // ok
 		$this->addAction( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); // ok
 		$this->addAction( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); // ok
@@ -184,7 +184,7 @@ class MainWP_Post_Handler {
 			$this->addAction( 'mainwp_post_restore', array( &$this, 'mainwp_post_restore' ) );
 			$this->addAction( 'mainwp_post_approve', array( &$this, 'mainwp_post_approve' ) );
 		}
-		$this->addAction( 'mainwp_post_addmeta', array( MainWP_Post::getClassName(), 'ajax_add_meta' ) );
+		$this->addAction( 'mainwp_post_addmeta', array( MainWP_Post::get_class_name(), 'ajax_add_meta' ) );
 		// Page: Pages
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			$this->addAction( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
@@ -1455,9 +1455,8 @@ class MainWP_Post_Handler {
 			);
 		}
 	}
-
-	// todo: rename
-	public function mainwp_upgradeplugintheme() {
+	
+	public function mainwp_upgrade_plugintheme() {
 
 		if ( ! isset($_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );

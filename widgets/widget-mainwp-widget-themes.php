@@ -2,7 +2,7 @@
 
 class MainWP_Widget_Themes {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -178,7 +178,7 @@ class MainWP_Widget_Themes {
 				) 
 			);
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {

@@ -13,13 +13,13 @@
 class MainWP_Updates_Overview {
 
 	/**
-	 * Method getClassName()
+	 * Method get_class_name()
 	 *
 	 * Get Class Name
 	 *
 	 * @return string __CLASS__ Class Name.
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -235,7 +235,7 @@ class MainWP_Updates_Overview {
 
 		$currentSite = null;
 
-		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {			
 			if ( ! $globalView ) {
 				$currentSite = $website;
 			}

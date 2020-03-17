@@ -5,7 +5,7 @@
  */
 class MainWP_Settings {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -22,7 +22,7 @@ class MainWP_Settings {
 		 *
 		 * @see \MainWP_Settings::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-settings', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-settings', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
@@ -34,11 +34,11 @@ class MainWP_Settings {
 		 *
 		 * @see \MainWP_Settings::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-settings', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-settings', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'admin_init', array( self::getClassName(), 'admin_init' ) );
+		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
 	public static function admin_init() {
@@ -48,7 +48,7 @@ class MainWP_Settings {
 	public static function initMenu() {
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Settings Global options', 'mainwp' ), ' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>', 'read', 'Settings', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
@@ -56,7 +56,7 @@ class MainWP_Settings {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'MainWP Tools', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>', 'read', 'MainWPTools', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderMainWPTools',
 				) 
 			);
@@ -65,7 +65,7 @@ class MainWP_Settings {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Advanced Options', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>', 'read', 'SettingsAdvanced', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderAdvanced',
 				) 
 			);
@@ -75,7 +75,7 @@ class MainWP_Settings {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 				$_page = add_submenu_page(
 					'mainwp_tab', __( 'Managed Client Reports', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>', 'read', 'SettingsClientReportsResponder', array(
-						self::getClassName(),
+						self::get_class_name(),
 						'renderReportResponder',
 					) 
 				);

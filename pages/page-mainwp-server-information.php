@@ -10,21 +10,21 @@ class MainWP_Server_Information {
 
 	public static $subPages;
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	public static function initMenu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
 			add_submenu_page(
 				'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderCron',
 				) 
 			);
@@ -33,7 +33,7 @@ class MainWP_Server_Information {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
 			add_submenu_page(
 				'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderErrorLogPage',
 				) 
 			);
@@ -41,7 +41,7 @@ class MainWP_Server_Information {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
 			add_submenu_page(
 				'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderWPConfig',
 				) 
 			);
@@ -50,7 +50,7 @@ class MainWP_Server_Information {
 			if ( self::isApacheServerSoftware() ) {
 				add_submenu_page(
 					'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
-						self::getClassName(),
+						self::get_class_name(),
 						'renderhtaccess',
 					) 
 				);
@@ -59,7 +59,7 @@ class MainWP_Server_Information {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
 			add_submenu_page(
 				'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderActionLogs',
 				) 
 			);
@@ -674,7 +674,7 @@ class MainWP_Server_Information {
 	}
 
 	public static function renderRow( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( self::getClassName(), $pGetter ) );
+		$currentVersion = call_user_func( array( self::get_class_name(), $pGetter ) );
 		?>
 		<tr>
 			<td><?php echo $pConfig; ?></td>
@@ -694,7 +694,7 @@ class MainWP_Server_Information {
 	}
 
 	public static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( self::getClassName(), $pGetter ) );
+		$currentVersion = call_user_func( array( self::get_class_name(), $pGetter ) );
 		?>
 		<tr>
 			<td><?php echo $pConfig; ?></td>

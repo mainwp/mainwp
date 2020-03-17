@@ -3,7 +3,7 @@
  * MainWP Twitter Bragger
  */
 class MainWP_Twitter {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 

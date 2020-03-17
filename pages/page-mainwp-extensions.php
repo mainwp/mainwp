@@ -4,7 +4,7 @@
  * MainWP Extensions Page
  */
 class MainWP_Extensions {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -74,7 +74,7 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-extensions', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Extensions page footer via the 'mainwp-pagefooter-extensions' action.
@@ -83,11 +83,11 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-extensions', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 
-		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::getClassName(), 'genApiPassword' ), 10, 3 );
+		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::get_class_name(), 'genApiPassword' ), 10, 3 );
 	}
 
 	public static function initMenu() {
@@ -406,28 +406,28 @@ class MainWP_Extensions {
 	}
 
 	public static function initAjaxHandlers() {
-		add_action( 'wp_ajax_mainwp_extension_add_menu', array( self::getClassName(), 'ajaxAddExtensionMenu' ) );
+		add_action( 'wp_ajax_mainwp_extension_add_menu', array( self::get_class_name(), 'ajaxAddExtensionMenu' ) );
 		add_action(
 			'wp_ajax_mainwp_extension_remove_menu', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'removeExtensionMenuFromMainWPMenu',
 			) 
 		);
 		MainWP_Post_Handler::Instance()->addAction(
 			'mainwp_extension_activate', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'activateExtension',
 			) 
 		);
 		MainWP_Post_Handler::Instance()->addAction( 
 			'mainwp_extension_deactivate', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'deactivateExtension',
 			) 
 		);
 		add_action(
 			'wp_ajax_mainwp_extension_testextensionapilogin', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'testExtensionsApiLogin',
 			) 
 		);
@@ -435,37 +435,37 @@ class MainWP_Extensions {
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 			add_action(
 				'wp_ajax_mainwp_extension_grabapikey', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'grabapikeyExtension',
 				) 
 			);
 			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_saveextensionapilogin', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'saveExtensionsApiLogin',
 				) 
 			);
 			add_action(
 				'wp_ajax_mainwp_extension_getpurchased', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'getPurchasedExts',
 				) 
 			);
 			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_downloadandinstall', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'downloadAndInstall',
 				)
 			);
 			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_bulk_activate', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'bulkActivate',
 				) 
 			);
 			add_action(
 				'wp_ajax_mainwp_extension_apisslverifycertificate', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'saveApiSSLVerify',
 				) 
 			);
@@ -863,10 +863,10 @@ class MainWP_Extensions {
 		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 
 		if ( '0' === $ssl_verifyhost || 0 == $ssl_api_verifyhost ) {
-			add_filter( 'http_request_args', array( self::getClassName(), 'noSSLFilterFunction' ), 99, 2 );
+			add_filter( 'http_request_args', array( self::get_class_name(), 'noSSLFilterFunction' ), 99, 2 );
 		}
 
-		add_filter( 'http_request_args', array( self::getClassName(), 'http_request_reject_unsafe_urls' ), 99, 2 );
+		add_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
 		$result = $installer->run( 
 			array(
@@ -878,10 +878,10 @@ class MainWP_Extensions {
 			) 
 		);
 
-		remove_filter( 'http_request_args', array( self::getClassName(), 'http_request_reject_unsafe_urls' ), 99, 2 );
+		remove_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
 		if ( '0' === $ssl_verifyhost ) {
-			remove_filter( 'http_request_args', array( self::getClassName(), 'noSSLFilterFunction' ), 99 );
+			remove_filter( 'http_request_args', array( self::get_class_name(), 'noSSLFilterFunction' ), 99 );
 		}
 
 		$error       = null;
@@ -1059,7 +1059,7 @@ class MainWP_Extensions {
 
 			return MainWP_Utility::fetchUrlAuthed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
 		} catch ( MainWP_Exception $e ) {
-			return array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) );
+			return array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
 		}
 	}
 

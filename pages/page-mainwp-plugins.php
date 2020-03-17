@@ -7,7 +7,7 @@
  */
 class MainWP_Plugins {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -25,7 +25,7 @@ class MainWP_Plugins {
 		 *
 		 * @see \MainWP_Plugins::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-plugins', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-plugins', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Plugins page footer via the 'mainwp-pagefooter-plugins' action.
@@ -37,44 +37,44 @@ class MainWP_Plugins {
 		 *
 		 * @see \MainWP_Plugins::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-plugins', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-plugins', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
 		$_page = add_submenu_page( 
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
 			$page = add_submenu_page(
 				'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderInstall',
 				) 
 			);
 
-			add_action( 'load-' . $page, array( self::getClassName(), 'load_page' ) );
+			add_action( 'load-' . $page, array( self::get_class_name(), 'load_page' ) );
 		}
 
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderAutoUpdate',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'renderIgnore',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
-			self::getClassName(),
+			self::get_class_name(),
 				'renderIgnoredAbandoned',
 			) 
 		);
@@ -546,7 +546,7 @@ class MainWP_Plugins {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::getClassName(), 'PluginsSearch_handler' ), $output );
+			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'PluginsSearch_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -726,7 +726,7 @@ class MainWP_Plugins {
 			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
 			if ( isset( $plugins['error'] ) ) {
-				$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $plugins['error'], $website->url ) );
+				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $plugins['error'], $website->url ) );
 				return;
 			}
 
@@ -741,7 +741,7 @@ class MainWP_Plugins {
 			}
 			unset( $plugins );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -819,7 +819,7 @@ class MainWP_Plugins {
 				) 
 			);
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -1119,7 +1119,7 @@ class MainWP_Plugins {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::getClassName(), 'PluginsSearch_handler' ), $output );
+				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'PluginsSearch_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {

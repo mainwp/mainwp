@@ -31,7 +31,11 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getUserExtension', array( &$this, 'getUserExtension' ) );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'getWebsitesByUrl' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'getWebsitesByUrl' ) );
-		add_filter( 'mainwp_getErrorMessage', array( &$this, 'getErrorMessage' ), 10, 2 );
+		/*
+		 *  @deprecated 4.0.7. Please use `mainwp_get_error_message`.
+		 */
+		add_filter( 'mainwp_getErrorMessage', array( &$this, 'get_error_message' ), 10, 2 );
+		add_filter( 'mainwp_get_error_message', array( &$this, 'get_error_message' ), 10, 2 );
 		add_filter( 'mainwp_getwebsitesbygroupids', array( &$this, 'hookGetWebsitesByGroupIds' ), 10, 2 );
 
 		add_filter( 'mainwp_cache_getcontext', array( &$this, 'cache_getcontext' ) );
@@ -44,7 +48,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'getNotificationEmail' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
-				MainWP_Extensions::getClassName(),
+				MainWP_Extensions::get_class_name(),
 				'isExtensionAvailable',
 			) 
 		);
@@ -286,8 +290,8 @@ class MainWP_Hooks {
 		);
 	}
 
-	public function getErrorMessage( $msg, $extra ) {
-		return MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $msg, $extra ) );
+	public function get_error_message( $msg, $extra ) {
+		return MainWP_Error_Helper::get_error_message( new MainWP_Exception( $msg, $extra ) );
 	}
 
 	public function getUserExtension() {
@@ -347,7 +351,7 @@ class MainWP_Hooks {
 		$output->results = array();
 		if ( $dbwebsites ) {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
-				MainWP_Post::getClassName(),
+				MainWP_Post::get_class_name(),
 				'hookPostsSearch_handler',
 			), $output, $is_external_hook = true );
 		}
@@ -501,7 +505,7 @@ class MainWP_Hooks {
 				}
 			}
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		die();

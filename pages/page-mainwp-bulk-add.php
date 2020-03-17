@@ -10,11 +10,11 @@
  * @used-by MainWP_Bulk_Update_Admin_Passwords::BulkAddUser
  */
 class MainWP_Bulk_Add {
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	public static function PostingBulk_handler( $data, $website, &$output ) {
+	public static function posting_bulk_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
@@ -33,8 +33,8 @@ class MainWP_Bulk_Add {
 				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}
 		} else {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'PostingBulk_handler', '[' . $website->url . '] Result was: [' . $data . ']' );
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			MainWP_Logger::Instance()->debugForWebsite( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [' . $data . ']' );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 }

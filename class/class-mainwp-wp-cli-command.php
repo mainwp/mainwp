@@ -115,7 +115,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
@@ -177,7 +177,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
@@ -443,7 +443,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
 							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
 						}
@@ -704,7 +704,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
 							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
 						}

@@ -5,7 +5,7 @@
  */
 class MainWP_Manage_Sites {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -39,7 +39,7 @@ class MainWP_Manage_Sites {
 		 *
 		 * @see \MainWP_Manage_Sites::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-sites', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Sites page footer via the 'mainwp-pagefooter-sites' action.
@@ -51,12 +51,12 @@ class MainWP_Manage_Sites {
 		 *
 		 * @see \MainWP_Manage_Sites::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-sites', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::getClassName(), 'render' ) );
-		add_action( 'mainwp-extension-sites-edit', array( self::getClassName(), 'on_edit_site' ) );
+		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
+		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
 	public static function on_screen_layout_columns( $columns, $screen ) {
@@ -69,12 +69,12 @@ class MainWP_Manage_Sites {
 
 	public static function initMenu() {
 		self::$page = MainWP_Manage_Sites_View::initMenu();
-		add_action( 'load-' . self::$page, array( self::getClassName(), 'on_load_page' ) );
+		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
 		if ( isset( $_REQUEST['dashboard'] ) ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_managesites' );
-			add_filter( 'screen_layout_columns', array( self::getClassName(), 'on_screen_layout_columns' ), 10, 2 );
+			add_filter( 'screen_layout_columns', array( self::get_class_name(), 'on_screen_layout_columns' ), 10, 2 );
 
 			$val = get_user_option( 'screen_layout_' . self::$page );
 			if ( ! MainWP_Utility::ctype_digit( $val ) ) {
@@ -84,13 +84,13 @@ class MainWP_Manage_Sites {
 		}
 		add_submenu_page(
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
-				MainWP_Site_Open::getClassName(),
+				MainWP_Site_Open::get_class_name(),
 				'render',
 			) 
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
-				MainWP_Site_Open::getClassName(),
+				MainWP_Site_Open::get_class_name(),
 				'renderRestore',
 			) 
 		);
@@ -107,7 +107,7 @@ class MainWP_Manage_Sites {
 					continue;
 				}
 				$_page = add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageSites' . $subPage['slug'], $subPage['callback'] );
-				add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_subpages' ), 9 );
+				add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_subpages' ), 9 );
 				if ( isset( $subPage['on_load_callback'] ) && ! empty( $subPage['on_load_callback'] ) ) {
 					add_action( 'load-' . $_page, $subPage['on_load_callback'] );
 				}
@@ -1362,52 +1362,52 @@ class MainWP_Manage_Sites {
 
 		// Load the Updates Overview widget
 		if ( self::$enable_widgets['overview'] ) {
-			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::getClassName(), 'render' ), self::$page, 'left', __( 'Updates Overview', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', __( 'Updates Overview', 'mainwp' ) );
 		}
 
 		// Load the Recent Posts widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
-				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::getClassName(), 'render' ), self::$page, 'right', __( 'Recent Posts', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
-				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::getClassName(), 'render' ), self::$page, 'right', __( 'Recent Pages', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
 		// Load the Pluins widget
 		if ( self::$enable_widgets['plugins'] ) {
-			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::getClassName(), 'render' ), self::$page, 'left', __( 'Plugins', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', __( 'Plugins', 'mainwp' ) );
 		}
 
 		// Load the Themes widget
 		if ( self::$enable_widgets['themes'] ) {
-			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::getClassName(), 'render' ), self::$page, 'left', __( 'Themes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', __( 'Themes', 'mainwp' ) );
 		}
 
 		// Load the Connection Status widget
 		if ( self::$enable_widgets['connection_status'] ) {
-			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::getClassName(), 'render' ), self::$page, 'left', __( 'Connection Status', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), self::$page, 'left', __( 'Connection Status', 'mainwp' ) );
 		}
 
 		// Load the Securtiy Issues widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::getClassName(), 'renderWidget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'renderWidget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
 		// Load the Notes widget
 		if ( self::$enable_widgets['notes'] ) {
-			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::getClassName(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
+			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
 		}
 
 		// Load the Site Info widget
-		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::getClassName(), 'render' ), self::$page, 'right', __( 'Child site info', 'mainwp' ));
+		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'right', __( 'Child site info', 'mainwp' ));
 
 		$i = 0;
 		foreach ( $extMetaBoxs as $metaBox ) {

@@ -23,7 +23,7 @@
                 return false;
             },
             getItem: function ( id ) {
-                var values = $.grep( this.popupsQueue, function ( val, idx ) {
+                var values = $.grep( this.popupsQueue, function ( val ) {
                     return val.overlayId == id;
                 } );
                 var val = null;
@@ -99,7 +99,7 @@
                     var self = this;
                     var closebuttonEl = this.$overlayElementId.find( '.mainwp-modal-close' );
                     if ( closebuttonEl.length > 0 ) {
-                        $( closebuttonEl ).click( function ( e ) {
+                        $( closebuttonEl ).click( function () {
                             self.close(true);
                         } );
                     }

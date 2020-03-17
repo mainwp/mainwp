@@ -5,7 +5,7 @@
  */
 class MainWP_Updates {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -17,7 +17,7 @@ class MainWP_Updates {
 		 *
 		 * @see \MainWP_Updates::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-updates', array( MainWP_Post::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-updates', array( MainWP_Post::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Updates page footer via the 'mainwp-pagefooter-updates' action.
@@ -26,15 +26,15 @@ class MainWP_Updates {
 		 *
 		 * @see \MainWP_Updates::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-updates', array( MainWP_Post::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-updates', array( MainWP_Post::get_class_name(), 'renderFooter' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Updates', 'mainwp' ), '<span id="mainwp-Updates">' . __( 'Updates', 'mainwp' ) . '</span>', 'read', 'UpdatesManage', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);

@@ -98,18 +98,7 @@ function load_url( href, obj, e )
 
     }
 }
-function getSelector( obj )
-{
-    var elements = jQuery( obj ).parentsUntil( 'body' ).map( mapGetSelector ).get().reverse();
-    elements.push( jQuery( obj ).map( mapGetSelector ).get() );
-    jQuery( obj ).parentsUntil( 'body' ).each( function ( i ) {
-        var current_selector = elements.slice( 0, elements.length - ( i + 1 ) ).join( " > " );
-        var element_index = jQuery( this ).index( current_selector );
-        if ( element_index > -1 )
-            elements[elements.length - ( i + 2 )] += ':eq(' + element_index + ')';
-    } );
-    return elements.join( " > " );
-}
+
 function mapGetSelector()
 {
     var el_class = jQuery( this ).attr( 'class' );
@@ -123,25 +112,11 @@ window.onpopstate = function ( e ) {
         load_url( mainwp_current_url, e.state.anchor );
     //alert(mainwp_current_url);
 }
-jQuery( document ).ready( function ()
-{
-//	read_current_url();
-//	jQuery('#adminmenu li a').click(function(e){
-//		var href = jQuery(this).attr('href');
-//		var data_obj = {
-//			'anchor': getSelector(this)
-//		};
-//		load_url(href, data_obj.anchor, e);
-//		if (typeof history.pushState !== 'undefined') {
-//			var title = jQuery(this).text();
-//			history.pushState(data_obj, title, href);
-//		}
-//	});
-} );
 
 
 
-function scroll_element( e )
+
+function scroll_element()
 {
     var top = jQuery( this ).scrollTop();
     var start = 20;
@@ -181,36 +156,6 @@ jQuery( document ).ready( function () {
     jQuery( window ).scroll( scroll_element ).resize( stick_element_reset );
     stick_element_init();
 } );
-
-
-
-function shake_element( select ) {
-    var pos = jQuery( select ).position();
-    var type = jQuery( select ).css( 'position' );
-
-  if ( type == 'static' ) {
-        jQuery( select ).css( {
-            position: 'relative'
-        } );
-    }
-
-  if ( type == 'static' || type == 'relative' ) {
-        pos.top = 0;
-        pos.left = 0;
-    }
-
-    jQuery( select ).data( 'init-type', type );
-
-    var shake = [ [ 0, 5, 60 ], [ 0, 0, 60 ], [ 0, -5, 60 ], [ 0, 0, 60 ], [ 0, 2, 30 ], [ 0, 0, 30 ], [ 0, -2, 30 ], [ 0, 0, 30 ] ];
-
-    for ( s = 0; s < shake.length; s++ ) {
-        jQuery( select ).animate( {
-            top: pos.top + shake[s][0],
-            left: pos.left + shake[s][1]
-        }, shake[s][2], 'linear' );
-    }
-}
-
 
 mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateType ) {    // updateType: 1 single update, 2 multi update
     if ( jQuery('#mainwp-disable-update-confirmations').length > 0 ) {            

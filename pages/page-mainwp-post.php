@@ -7,7 +7,7 @@
  */
 class MainWP_Post {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -24,7 +24,7 @@ class MainWP_Post {
 		 *
 		 * @see \MainWP_Post::renderHeader
 		 */
-		add_action( 'mainwp-pageheader-post', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'renderHeader' ) );
 
 		/**
 		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
@@ -36,46 +36,46 @@ class MainWP_Post {
 		 *
 		 * @see \MainWP_Post::renderFooter
 		 */
-		add_action( 'mainwp-pagefooter-post', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-post', array( self::get_class_name(), 'renderFooter' ) );
 
-		add_filter( 'admin_post_thumbnail_html', array( self::getClassName(), 'admin_post_thumbnail_html' ), 10, 3 );
+		add_filter( 'admin_post_thumbnail_html', array( self::get_class_name(), 'admin_post_thumbnail_html' ), 10, 3 );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
 	public static function initMenu() {
 		$_page = add_submenu_page( 
 			'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'render',
 			) 
 		);
-		add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_page' ) );
-		add_filter( 'manage_' . $_page . '_columns', array( self::getClassName(), 'get_manage_columns' ) );
+		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
+		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
 			$_page = add_submenu_page( 
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderBulkAdd',
 				) 
 			);
-			add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
+			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
 			$_page = add_submenu_page( 
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
-					self::getClassName(),
+					self::get_class_name(),
 					'renderBulkEdit',
 				) 
 			);
-			add_action( 'load-' . $_page, array( self::getClassName(), 'on_load_add_edit' ) );
+			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		add_submenu_page( 
 			'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
-				self::getClassName(),
+				self::get_class_name(),
 				'posting',
 			) 
 		);
@@ -98,8 +98,8 @@ class MainWP_Post {
 	}
 
 	public static function on_load_page() {
-		add_action( 'admin_head', array( self::getClassName(), 'admin_head' ) );
-		add_filter( 'hidden_columns', array( self::getClassName(), 'get_hidden_columns' ), 10, 3 );
+		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
+		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
 	}
 
 	public static function on_load_add_edit() {
@@ -793,7 +793,7 @@ class MainWP_Post {
 
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
-				self::getClassName(),
+				self::get_class_name(),
 				'PostsSearch_handler',
 			), $output );
 		}
@@ -994,7 +994,7 @@ class MainWP_Post {
 			}
 			unset( $posts );
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -2075,8 +2075,8 @@ class MainWP_Post {
 									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
 								);
 								MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array(
-									MainWP_Bulk_Add::getClassName(),
-									'PostingBulk_handler',
+									MainWP_Bulk_Add::get_class_name(),
+									'posting_bulk_handler',
 								), $output );
 							}
 
@@ -2181,7 +2181,7 @@ class MainWP_Post {
 			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			$output->cats[ $website->id ] = is_array( $information ) ? $information : array();
 		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
@@ -2241,7 +2241,7 @@ class MainWP_Post {
 				'taxonomy' => base64_encode( $opt ),
 			);
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_terms', $post_data, array(
-				self::getClassName(),
+				self::get_class_name(),
 				'PostsGetTerms_handler',
 			), $output );
 			foreach ( $dbwebsites as $siteid => $website ) {
@@ -2302,7 +2302,7 @@ class MainWP_Post {
 				) 
 			);
 		} catch ( MainWP_Exception $e ) {
-			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::getErrorMessage( $e ) ) ) );
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {

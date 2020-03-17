@@ -15,11 +15,11 @@
 class MainWP_Recent_Pages {
 
 	/**
-	 * Method getClassName()
+	 * Method get_class_name()
 	 *
 	 * @return string __CLASS__ Class Name
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 

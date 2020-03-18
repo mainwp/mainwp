@@ -1,5 +1,16 @@
 <?php
+/**
+ * MainWP Client Live Reports 
+ * 
+ * Legacy Client Reports Extension.
+ * 
+ * @Depriciated moved to external Extension 
+ * @see MainWP-Client-Reports-Extension 
+ */
 
+/**
+ * Class LiveReportResponder
+ */
 class LiveReportResponder {
 
 	public static $instance = null;

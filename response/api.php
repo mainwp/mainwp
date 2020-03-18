@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Client Live Report Responder
+ * 
+ * Legacy Client Reports Extension.
+ * 
+ * @Depriciated moved to external Extension 
+ * @see MainWP-Client-Reports-Extension 
+ */
 
 function liveReportsResponderClasses() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {

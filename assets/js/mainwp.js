@@ -4645,7 +4645,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
                  download_retry_fail(pSiteId, pData, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl);
                  },10000);*/
             }
-        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url, ),
+        }( pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url ),
         dataType: 'json' } );
 };
 

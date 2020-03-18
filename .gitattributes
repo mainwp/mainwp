@@ -12,3 +12,8 @@ LICENSE.txt export-ignore
 README.md export-ignore
 phpunit.xml.dist export-ignore
 phpdoc.dist.xml export-ignore
+
+# force everything to have Unix-style line endings (LF), except for Windows batch files that require CRLF:
+* text=auto eol=lf
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf

@@ -124,7 +124,7 @@ class MainWP_Widget_Plugins {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php _e('Plugins', 'mainwp'); ?>
+					<?php esc_html_e('Plugins', 'mainwp'); ?>
 					<div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>

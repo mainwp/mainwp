@@ -43,7 +43,7 @@ class MainWP_Backup_Tasks {
 		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
 		// MainWP_UI::renderBeginReadyPopup();
 		?>
-		<h3><?php _e('Backup tasks', 'mainwp'); ?></h3>
+		<h3><?php esc_html_e('Backup tasks', 'mainwp'); ?></h3>
 		<?php
 		if ( count( $tasks ) == 0 ) {
 			echo 'You have no scheduled backup tasks. <a href="admin.php?page=ManageBackupsAddNew">Go create one!</a>';

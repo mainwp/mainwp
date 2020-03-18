@@ -405,7 +405,7 @@ class MainWP_Manage_Sites {
 					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
 							<option selected value="auto"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-							<option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+							<option value="1.2"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
 							<option value="1.x"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
 							<option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
 							<option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>

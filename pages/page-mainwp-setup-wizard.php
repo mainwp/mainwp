@@ -1065,7 +1065,7 @@ class MainWP_Setup_Wizard {
 								<div class="ui green message"><?php echo __( 'Extension activated successfully!', 'mainwp' ); ?></div>
 							<?php else : ?>
 									<div id="mwp_setup_active_extension" style="display: none;">
-										<p><span class="description"><?php _e('Grabbing the API Key and activating the Extension ...', 'mainwp'); ?></span>
+										<p><span class="description"><?php esc_html_e('Grabbing the API Key and activating the Extension ...', 'mainwp'); ?></span>
 											<span id="mwp_setup_grabing_api_key_loading">
 												<i class="fa fa-spinner fa-pulse" style="display: none;"></i><span class="status hidden"></span>
 											</span>

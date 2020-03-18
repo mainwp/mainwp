@@ -92,7 +92,7 @@ class MainWP_Widget_Themes {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php _e('Themes', 'mainwp'); ?>
+					<?php esc_html_e('Themes', 'mainwp'); ?>
 					<div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>

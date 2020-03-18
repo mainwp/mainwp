@@ -62,39 +62,39 @@ class MainWP_Twitter {
 		$message    = '';
 		$first_word = self::randomWord();
 		switch ( $what ) {
-			case 'upgrade_everything':				
+			case 'upgrade_everything':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_wp_core':				
+			case 'upgrade_all_wp_core':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> WordPress site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> WordPress sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_plugins':				
+			case 'upgrade_all_plugins':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> plugin', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> plugins', $value['sites'] ), $value['items'], 'mainwp' ) . ' ' . _n( sprintf( 'on <strong>%d</strong> site', $value['sites'] ), sprintf( 'on <strong>%d</strong> sites', $value['sites'] ), $value['items'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_themes':				
+			case 'upgrade_all_themes':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> theme', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> themes', $value['sites'] ), $value['items'], 'mainwp' ) . ' ' . _n( sprintf( 'on <strong>%d</strong> site', 'on <strong>%d</strong> sites', $value['sites'], 'mainwp' ), $value['items'], $value['sites'] );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'new_post':				
+			case 'new_post':
 				$message = _n( sprintf( 'you just published a new post on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just published a new post on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'new_page':				
+			case 'new_page':
 				$message = _n( sprintf( 'you just published a new page on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just published a new page on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'installing_new_plugin':				
+			case 'installing_new_plugin':
 				$message = _n( sprintf( 'you just installed a new plugin on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just installed a new plugin on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'installing_new_theme':				
+			case 'installing_new_theme':
 				$message = _n( sprintf( 'you just installed a new theme on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just installed a new theme on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;
-			case 'create_new_user':				
+			case 'create_new_user':
 				$message = _n( sprintf( 'you just created a new user on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just created a new user on <strong>%d</strong> site', $value['sites'] ), $value['sites'], 'mainwp' );
 				$message = $first_word . ', ' . $message;
 				break;

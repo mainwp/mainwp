@@ -1386,42 +1386,42 @@ class MainWP_Server_Information {
 					<select name="actionlogs_status">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>"
 												<?php
-													if ( MainWP_Logger::DISABLED == $enabled ) :
-														echo 'selected';
+												if ( MainWP_Logger::DISABLED == $enabled ) :
+													echo 'selected';
 		endif;
-													?>
+												?>
 		>Disabled
 						</option>
 						<option value="<?php echo MainWP_Logger::WARNING; ?>"
 												<?php
-													if ( MainWP_Logger::WARNING == $enabled ) :
-														echo 'selected';
+												if ( MainWP_Logger::WARNING == $enabled ) :
+													echo 'selected';
 						endif;
-													?>
+												?>
 						>Warning
 						</option>
 						<option value="<?php echo MainWP_Logger::INFO; ?>"
 												<?php
-													if ( MainWP_Logger::INFO == $enabled ) :
-														echo 'selected';
+												if ( MainWP_Logger::INFO == $enabled ) :
+													echo 'selected';
 								endif;
-													?>
+												?>
 								>Info
 						</option>
 						<option value="<?php echo MainWP_Logger::DEBUG; ?>"
 												<?php
-													if ( MainWP_Logger::DEBUG == $enabled ) :
-														echo 'selected';
+												if ( MainWP_Logger::DEBUG == $enabled ) :
+													echo 'selected';
 								endif;
-													?>
+												?>
 								>Debug
 						</option>
 						 <option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>"
 												<?php
-													if ( MainWP_Logger::INFO_UPDATE == $enabled ) :
-														echo 'selected';
+												if ( MainWP_Logger::INFO_UPDATE == $enabled ) :
+													echo 'selected';
 							endif;
-													?>
+												?>
 							>Info Update
 						</option>
 					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>

@@ -19,7 +19,7 @@
         <config name="installed_paths" value="../../wp-coding-standards/wpcs" />
  
 	<!-- Specify custom nonce validation. -->
-	<rule ref="WordPress.CSRF.NonceVerification">
+	<rule ref="WordPress.CSRF.NonceVerification">            
 		<properties>
 			<property name="customNonceVerificationFunctions" type="array" value="validate_nonce" />
 		</properties>

@@ -290,7 +290,7 @@ class MainWP_Post_Handler {
 	 */
 	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		MainWP_User::renderTable( false, $_POST['role'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search'] );
 		die();
 	}
@@ -300,7 +300,7 @@ class MainWP_Post_Handler {
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		$result = MainWP_Themes::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
@@ -328,7 +328,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		MainWP_Themes::renderAllThemesTable();
 		die();
 	}
@@ -345,14 +345,14 @@ class MainWP_Post_Handler {
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		$result = MainWP_Plugins::renderTable( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
 
 	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		MainWP_Plugins::renderAllActiveTable();
 		die();
 	}
@@ -435,7 +435,7 @@ class MainWP_Post_Handler {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50  );
 		}
 
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 
 		MainWP_Post::renderTable( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['postId'], $_POST['userId'], $post_type, $_POST['search_on'] );
 
@@ -475,7 +475,7 @@ class MainWP_Post_Handler {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50  );
 		}
 
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 
 		MainWP_Page::renderTable( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search_on'] );
 		die();
@@ -670,7 +670,7 @@ class MainWP_Post_Handler {
 		global $current_user;
 		$user_id = $current_user->ID;
 		if ( $user_id && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
-			MainWP_Twitter::clearTwitterInfo( $_POST['what'], $_POST['twitId'] );
+			MainWP_Twitter::clear_twitter_info( $_POST['what'], $_POST['twitId'] );
 		}
 		die( 1 );
 	}
@@ -695,18 +695,18 @@ class MainWP_Post_Handler {
 
 		$success = false;
 		if ( isset( $_POST['actionName'] ) && isset( $_POST['countSites'] ) && ! empty( $_POST['countSites'] ) ) {
-			$success = MainWP_Twitter::updateTwitterInfo( $_POST['actionName'], $_POST['countSites'], (int) $_POST['countSeconds'], ( isset( $_POST['countRealItems'] ) ? $_POST['countRealItems'] : 0 ), time(), ( isset( $_POST['countItems'] ) ? $_POST['countItems'] : 0 ) );
+			$success = MainWP_Twitter::update_twitter_info( $_POST['actionName'], $_POST['countSites'], (int) $_POST['countSeconds'], ( isset( $_POST['countRealItems'] ) ? $_POST['countRealItems'] : 0 ), time(), ( isset( $_POST['countItems'] ) ? $_POST['countItems'] : 0 ) );
 		}
 
 		if ( isset( $_POST['showNotice'] ) && ! empty( $_POST['showNotice'] ) ) {
-			if ( MainWP_Twitter::enabledTwitterMessages() ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $_POST['actionName'] );
+			if ( MainWP_Twitter::enabled_twitter_messages() ) {
+				$twitters = MainWP_Twitter::get_twitter_notice( $_POST['actionName'] );
 				$html     = '';
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $_POST['actionName'], $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr($_POST['actionName']) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::genTwitterButton( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$sendText = MainWP_Twitter::get_twit_to_send( $_POST['actionName'], $timeid );
+							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr($_POST['actionName']) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}

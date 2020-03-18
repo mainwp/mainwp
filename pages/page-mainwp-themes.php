@@ -262,7 +262,7 @@ class MainWP_Themes {
 	}
 
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
 		$selected_sites  = array();
 		$selected_groups = array();
 
@@ -274,7 +274,7 @@ class MainWP_Themes {
 			}
 		}
 
-		$cachedResult = MainWP_Cache::getCachedResult( 'Themes' );
+		$cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
 		self::renderHeader( 'Manage' );
 		?>
@@ -358,7 +358,7 @@ class MainWP_Themes {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 
@@ -393,7 +393,7 @@ class MainWP_Themes {
 	}
 
 	public static function renderTable( $keyword, $status, $groups, $sites ) {
-		MainWP_Cache::initCache( 'Themes' );
+		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new stdClass();
 		$output->errors = array();
@@ -539,7 +539,7 @@ class MainWP_Themes {
 			}
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Themes', array(
 				'keyword' => $keyword,
 				'status'  => $status,
@@ -586,7 +586,7 @@ class MainWP_Themes {
 				'result'       => $newOutput,
 				'bulk_actions' => $bulkActions,
 			);
-			MainWP_Cache::addResult( 'Themes', $result );
+			MainWP_Cache::add_result( 'Themes', $result );
 
 			return $result;
 		}
@@ -688,7 +688,7 @@ class MainWP_Themes {
 				'bulk_actions' => $bulkActions,
 			);
 
-			MainWP_Cache::addResult( 'Themes', $result );
+			MainWP_Cache::add_result( 'Themes', $result );
 			return $result;
 	}
 

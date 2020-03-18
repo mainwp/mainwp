@@ -4,19 +4,19 @@
  */
 class MainWP_Cache {
 
-	public static function initSession() {
+	public static function init_session() {
 		if ( '' === session_id() ) {
 			session_start();
 		}
 	}
 
-	public static function initCache( $page ) {
+	public static function init_cache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
 	}
 
-	public static function addContext( $page, $context ) {
+	public static function add_context( $page, $context ) {
 		if ( ! is_array( $context ) ) {
 			$context = array();
 		}
@@ -25,11 +25,11 @@ class MainWP_Cache {
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = $context;
 	}
 
-	public static function addBody( $page, $body ) {
+	public static function add_body( $page, $body ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ] .= $body;
 	}
 
-	public static function getCachedContext( $page ) {
+	public static function get_cached_context( $page ) {
 		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
 
 		if ( null != $cachedSearch ) {
@@ -47,17 +47,17 @@ class MainWP_Cache {
 		return $cachedSearch;
 	}
 
-	public static function echoBody( $page ) {
+	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
 			echo $_SESSION[ 'MainWP' . $page . 'Search' ];
 		}
 	}
 
-	public static function addResult( $page, $result ) {
+	public static function add_result( $page, $result ) {
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
 	}
 
-	public static function getCachedResult( $page ) {
+	public static function get_cached_result( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] ) ) {
 			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ];
 		}

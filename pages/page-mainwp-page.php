@@ -288,7 +288,7 @@ class MainWP_Page {
 			return;
 		}
 
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Page' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 
 		$selected_sites = $selected_groups = array();
 		if ( $cachedSearch != null ) {
@@ -366,7 +366,7 @@ class MainWP_Page {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Page' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 		<div class="ui mini form">
@@ -482,7 +482,7 @@ class MainWP_Page {
 			<tbody id="mainwp-posts-list">
 				<?php
 				if ( $cached ) {
-					MainWP_Cache::echoBody( 'Page' );
+					MainWP_Cache::echo_body( 'Page' );
 				} else {
 					self::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
 				}
@@ -521,7 +521,7 @@ class MainWP_Page {
 
 	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
-		MainWP_Cache::initCache( 'Page' );
+		MainWP_Cache::init_cache( 'Page' );
 
 		// Fetch all!
 		// Build websites array
@@ -571,7 +571,7 @@ class MainWP_Page {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Page', array(
 				'count'      => $output->pages,
 				'keyword'    => $keyword,
@@ -595,7 +595,7 @@ class MainWP_Page {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Page', $newOutput );
+			MainWP_Cache::add_body( 'Page', $newOutput );
 			return;
 		}
 	}
@@ -722,7 +722,7 @@ class MainWP_Page {
 				<?php
 				$newOutput = ob_get_clean();
 				echo $newOutput;
-				MainWP_Cache::addBody( 'Page', $newOutput );
+				MainWP_Cache::add_body( 'Page', $newOutput );
 				$output->pages++;
 			}
 			unset( $pages );
@@ -965,18 +965,18 @@ class MainWP_Page {
 
 						if ( ! empty( $countSites ) ) {
 							$seconds = ( time() - $startTime );
-							MainWP_Twitter::updateTwitterInfo( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
+							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
-						if ( MainWP_Twitter::enabledTwitterMessages() ) {
-							$twitters = MainWP_Twitter::getTwitterNotice( 'new_page' );
+						if ( MainWP_Twitter::enabled_twitter_messages() ) {
+							$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
 							if ( is_array( $twitters ) ) {
 								foreach ( $twitters as $timeid => $twit_mess ) {
 									if ( ! empty( $twit_mess ) ) {
-										$sendText = MainWP_Twitter::getTwitToSend( 'new_page', $timeid );
+										$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
 										?>
 										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 										</div>
 										<?php
 									}

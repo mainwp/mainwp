@@ -243,7 +243,7 @@ class MainWP_User {
 			return;
 		}
 
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
 		$selected_sites = $selected_groups = array();
 
@@ -347,7 +347,7 @@ class MainWP_User {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 
@@ -526,7 +526,7 @@ class MainWP_User {
 			<tbody id="mainwp-users-list">
 			<?php
 			if ( $cached ) {
-				MainWP_Cache::echoBody( 'Users' );
+				MainWP_Cache::echo_body( 'Users' );
 			} else {
 				self::renderTableBody( $role, $groups, $sites, $search );
 			}
@@ -559,7 +559,7 @@ class MainWP_User {
 	}
 
 	public static function renderTableBody( $role = '', $groups = '', $sites = '', $search = null ) {
-		MainWP_Cache::initCache( 'Users' );
+		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new stdClass();
 		$output->errors = array();
@@ -722,7 +722,7 @@ class MainWP_User {
 			), $output );
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Users', array(
 				'count'   => $output->users,
 				'keyword' => $search,
@@ -741,7 +741,7 @@ class MainWP_User {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Users', $newOutput );
+			MainWP_Cache::add_body( 'Users', $newOutput );
 
 			return;
 		}
@@ -807,7 +807,7 @@ class MainWP_User {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Users', $newOutput );
+			MainWP_Cache::add_body( 'Users', $newOutput );
 			$return ++;
 		}
 
@@ -1230,18 +1230,18 @@ class MainWP_User {
 
 			if ( ! empty( $countSites ) ) {
 				$seconds = ( time() - $startTime );
-				MainWP_Twitter::updateTwitterInfo( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
+				MainWP_Twitter::update_twitter_info( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
 			}
 
-			if ( MainWP_Twitter::enabledTwitterMessages() ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( 'create_new_user' );
+			if ( MainWP_Twitter::enabled_twitter_messages() ) {
+				$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( 'create_new_user', $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( 'create_new_user', $timeid );
 							?>
 							<div class="mainwp-tips ui info message twitter" style="margin:0">
-								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 							</div>
 							<?php
 						}

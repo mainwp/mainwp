@@ -3867,7 +3867,7 @@ jQuery( document ).ready( function () {
             if ( selected.length == 0 ) {
                 feedback( 'mainwp-message-zone', __( 'Please select plugin to install files.' ), 'yellow' );
             } else {
-                var selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) );
+                var selectedId = /^install-([^-]*)-(.*)$/.exec( selected.attr( 'id' ) );
                 if ( selectedId ) {
                     mainwp_install_bulk( 'plugin', selectedId[2] );
                 }
@@ -3886,7 +3886,7 @@ jQuery( document ).ready( function () {
             if ( selected.length == 0 ) {
                 feedback( 'mainwp-message-zone', __( 'Please select theme to install files.' ), 'yellow' );
             } else {
-                var selectedId = /^install-([^\-]*)-(.*)$/.exec( selected.attr( 'id' ) );
+                var selectedId = /^install-([^-]*)-(.*)$/.exec( selected.attr( 'id' ) );
                 if ( selectedId )
                     mainwp_install_bulk( 'theme', selectedId[2] );
             }
@@ -6989,7 +6989,68 @@ mainwp_managesites_doaction = function ( action ) {
     if ( bulkManageSitesTaskRunning )
       return false;
 
-    var _callback  = function() {
+    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
+      var confirmMsg = '';
+      var _selection_cancelled = false;
+      if ( action == 'delete' ) {
+          confirmMsg = __( "You are about to remove the selected sites from your MainWP Dashboard?" );
+      } else if ( action == 'update_plugins' ) {
+          confirmMsg = __( "You are about to update plugins on the selected sites?" );
+          _selection_cancelled = true;
+      } else if ( action == 'update_themes' ) {
+          confirmMsg = __( "You are about to update themes on the selected sites?" );
+          _selection_cancelled = true;
+      } else if ( action == 'update_wpcore' ) {
+          confirmMsg = __( "You are about to update WordPress core files on the selected sites?" );
+          _selection_cancelled = true;
+      } else if ( action == 'update_translations' ) {
+          confirmMsg = __( "You are about to update translations on the selected sites?" );
+          _selection_cancelled = true;
+      }
+
+      if ( confirmMsg == '' )
+        return false;
+      var _cancelled_callback  = null;
+      if ( _selection_cancelled ) {
+        _cancelled_callback  = function() {
+          console.log('_cancelled_callback');
+          //jQuery('#bulk-action-selector-top').dropdown("set selected", "-1"); ; // default value
+          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync");  // default value
+        };
+      }
+
+      var updateType; // undefined
+
+      if ( action == 'update_plugins' || action == 'update_themes'  || action == 'update_translations' ) {
+          updateType = 2; // multi update
+      }
+
+      mainwp_confirm( confirmMsg, _managesites_doaction_callback, _cancelled_callback, updateType );
+      return false; // return those case
+    }
+
+    _managesites_doaction_callback(); // other case callback
+
+    return false;
+  }
+
+  jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
+    var row = jQuery( this ).closest( 'tr' );
+    switch ( action ) {
+      case 'open_wpadmin':
+        var url = row.find( 'a.open_newwindow_wpadmin' ).attr( 'href' );
+        window.open( url, '_blank' );
+        break;
+      case 'open_frontpage':
+        var url = row.find( 'a.open_site_url' ).attr( 'href' );
+        window.open( url, '_blank' );
+        break;
+      }
+  } );
+  return false;
+}
+
+_managesites_doaction_callback  = function() {
       managesites_bulk_init();
       bulkManageSitesTotal = jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]' ).length;
       bulkManageSitesTaskRunning = true;
@@ -7028,69 +7089,8 @@ mainwp_managesites_doaction = function ( action ) {
         var selectedIds = jQuery.map( jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ), function( el ) { return jQuery( el ).val(); });
         mainwp_managesites_bulk_refresh_favico(selectedIds);
       }
-    }
-
-
-    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
-      var confirmMsg = '';
-      var _selection_cancelled = false;
-      if ( action == 'delete' ) {
-          confirmMsg = __( "You are about to remove the selected sites from your MainWP Dashboard?" );
-      } else if ( action == 'update_plugins' ) {
-          confirmMsg = __( "You are about to update plugins on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_themes' ) {
-          confirmMsg = __( "You are about to update themes on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_wpcore' ) {
-          confirmMsg = __( "You are about to update WordPress core files on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_translations' ) {
-          confirmMsg = __( "You are about to update translations on the selected sites?" );
-          _selection_cancelled = true;
-      }
-
-      if ( confirmMsg == '' )
-        return false;
-      var _cancelled_callback  = null;
-      if ( _selection_cancelled ) {
-        _cancelled_callback  = function() {
-          console.log('_cancelled_callback');
-          //jQuery('#bulk-action-selector-top').dropdown("set selected", "-1"); ; // default value
-          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync");  // default value
-        };
-      }
-
-      var updateType; // undefined
-
-      if ( action == 'update_plugins' || action == 'update_themes'  || action == 'update_translations' ) {
-          updateType = 2; // multi update
-      }
-
-      mainwp_confirm( confirmMsg, _callback, _cancelled_callback, updateType );
-      return false; // return those case
-    }
-
-    _callback(); // other case callback
-
-    return false;
-  }
-
-  jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
-    var row = jQuery( this ).closest( 'tr' );
-    switch ( action ) {
-      case 'open_wpadmin':
-        var url = row.find( 'a.open_newwindow_wpadmin' ).attr( 'href' );
-        window.open( url, '_blank' );
-        break;
-      case 'open_frontpage':
-        var url = row.find( 'a.open_site_url' ).attr( 'href' );
-        window.open( url, '_blank' );
-        break;
-      }
-  } );
-  return false;
 }
+    
 
 jQuery( document ).on( 'click', '.managesites_syncdata', function () {
     var row = jQuery( this ).closest( 'tr' );

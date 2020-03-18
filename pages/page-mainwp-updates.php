@@ -493,21 +493,21 @@ class MainWP_Updates {
 
 		self::renderHeader( 'UpdatesManage' );
 
-		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
 				'upgrade_all_plugins',
 				'upgrade_all_themes',
 				'upgrade_all_wp_core',
 			);
 			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				$twitters = MainWP_Twitter::get_twitter_notice( $what );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 							if ( ! empty( $sendText ) ) {
 								?>
-								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?></div>
+								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?></div>
 								<?php
 							}
 						}

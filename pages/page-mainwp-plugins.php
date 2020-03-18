@@ -287,7 +287,7 @@ class MainWP_Plugins {
 	}
 
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::getCachedContext( 'Plugins' );
+		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
 		$selected_sites  = array();
 		$selected_groups = array();
 		if ( null != $cachedSearch ) {
@@ -297,7 +297,7 @@ class MainWP_Plugins {
 				$selected_groups = $cachedSearch['groups'];
 			}
 		}
-		$cachedResult = MainWP_Cache::getCachedResult( 'Plugins' );
+		$cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
 		self::renderHeader( 'Manage' );
 		?>
 
@@ -382,7 +382,7 @@ class MainWP_Plugins {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 		<div class="ui mini form">
@@ -416,7 +416,7 @@ class MainWP_Plugins {
 	}
 
 	public static function renderTable( $keyword, $status, $groups, $sites ) {
-		MainWP_Cache::initCache( 'Plugins' );
+		MainWP_Cache::init_cache( 'Plugins' );
 
 			$output          = new stdClass();
 			$output->errors  = array();
@@ -560,7 +560,7 @@ class MainWP_Plugins {
 			}
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Plugins', array(
 				'keyword' => $keyword,
 				'status'  => $status,
@@ -610,7 +610,7 @@ class MainWP_Plugins {
 				'result'       => $newOutput,
 				'bulk_actions' => $bulkActions,
 			);
-			MainWP_Cache::addResult( 'Plugins', $result );
+			MainWP_Cache::add_result( 'Plugins', $result );
 
 			return $result;
 		}
@@ -716,7 +716,7 @@ class MainWP_Plugins {
 			'bulk_actions' => $bulkActions,
 		);
 
-		MainWP_Cache::addResult( 'Plugins', $result );
+		MainWP_Cache::add_result( 'Plugins', $result );
 		return $result;
 	}
 

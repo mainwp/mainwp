@@ -91,7 +91,7 @@ class MainWP_Manage_Sites {
 		add_submenu_page(
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
 				MainWP_Site_Open::get_class_name(),
-				'renderRestore',
+				'render_restore',
 			)
 		);
 
@@ -1500,22 +1500,22 @@ class MainWP_Manage_Sites {
 
 		self::renderHeader( '' );
 
-		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
 				'upgrade_all_plugins',
 				'upgrade_all_themes',
 				'upgrade_all_wp_core',
 			);
 			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				$twitters = MainWP_Twitter::get_twitter_notice( $what );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 							if ( ! empty( $sendText ) ) {
 								?>
 								<div class="mainwp-tips ui info message twitter" style="margin:0">
-									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 								</div>
 								<?php
 							}

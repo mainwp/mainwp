@@ -24,18 +24,18 @@ class MainWP_Site_Info {
 	/**
 	 * Method render()
 	 *
-	 * @return mixed renderSiteInfo()
+	 * @return mixed render_site_info()
 	 */
 	public static function render() {
-		self::renderSiteInfo();
+		self::render_site_info();
 	}
 
 	/**
-	 * Method renderSiteInfo()
+	 * Method render_site_info()
 	 *
 	 * Grab Child Site Info and render.
 	 */
-	public static function renderSiteInfo() {
+	public static function render_site_info() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;

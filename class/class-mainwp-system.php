@@ -691,7 +691,7 @@ class MainWP_System {
 					}
 
 					$api_slug = dirname( $plugin_slug );
-					$rslt     = MainWP_API_Settings::getUpgradeInformation( $api_slug );
+					$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
 
 					if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 						$transient->response[ $plugin_slug ] = self::mapRsltObj( $rslt );
@@ -707,7 +707,7 @@ class MainWP_System {
 							continue;
 						}
 						$api_slug = dirname( $plugin_slug );
-						$rslt     = MainWP_API_Settings::getUpgradeInformation( $api_slug );
+						$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
 						if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 
 							$this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
@@ -729,7 +729,7 @@ class MainWP_System {
 		}
 
 		if ( isset( $_GET['do'] ) && 'checkUpgrade' === $_GET['do'] && ( ( time() - $this->upgradeVersionInfo->updated ) > 30 ) ) {
-			$this->checkUpgrade();
+			$this->check_upgrade();
 		}
 
 		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
@@ -758,8 +758,8 @@ class MainWP_System {
 		return $obj;
 	}
 
-	private function checkUpgrade() {
-		$result = MainWP_API_Settings::checkUpgrade();
+	private function check_upgrade() {
+		$result = MainWP_API_Settings::check_upgrade();
 		if ( null === $this->upgradeVersionInfo ) {
 			$this->upgradeVersionInfo = new stdClass();
 		}
@@ -776,7 +776,7 @@ class MainWP_System {
 		}
 
 		if ( ( null == $this->upgradeVersionInfo ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {  // one minute before recheck to prevent check update information to many times
-			$this->checkUpgrade();
+			$this->check_upgrade();
 		}
 
 		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
@@ -811,7 +811,7 @@ class MainWP_System {
 		if ( '' !== $am_slugs ) {
 			$am_slugs = explode( ',', $am_slugs );
 			if ( in_array( $arg->slug, $am_slugs ) ) {
-				$info = MainWP_API_Settings::getPluginInformation( $arg->slug );
+				$info = MainWP_API_Settings::get_plugin_information( $arg->slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
 						$exts_data = MainWP_Extensions_View::getAvailableExtensions();
@@ -2337,7 +2337,7 @@ class MainWP_System {
 			'use_wp_datepicker'                  => $use_wp_datepicker ? 1 : 0,
 			'date_format'                        => get_option( 'date_format' ),
 			'time_format'                        => get_option( 'time_format' ),
-			'enabledTwit'                        => MainWP_Twitter::enabledTwitterMessages(),
+			'enabledTwit'                        => MainWP_Twitter::enabled_twitter_messages(),
 			'maxSecondsTwit'                     => MAINWP_TWITTER_MAX_SECONDS,
 			'installedBulkSettingsManager'       => MainWP_Extensions::isExtensionAvailable( 'mainwp-bulk-settings-manager' ) ? 1 : 0,
 			'maximumSyncRequests'                => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
@@ -2433,7 +2433,7 @@ class MainWP_System {
 					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
 					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
 					if ( ! $enabled_twit ) {
-						MainWP_Twitter::clearAllTwitterMessages();
+						MainWP_Twitter::clear_all_twitter_messages();
 					}
 				}
 			} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
@@ -2757,7 +2757,7 @@ class MainWP_System {
 			'UserBulkManage',
 		)) ) {
 			// start session
-			MainWP_Cache::initSession();
+			MainWP_Cache::init_session();
 		}
 	}
 
@@ -2792,7 +2792,7 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
 		// wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version, true );
-		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version, true );
+		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // Load at header.
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-jqueryfiletree', MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js', array(), $this->current_version, true );

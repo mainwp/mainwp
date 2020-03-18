@@ -19,7 +19,7 @@ class MainWP_Site_Open {
 			exit();
 		}
 
-		$id      = $_GET['websiteid'];
+		$id      = intval( $_GET['websiteid'] );
 		$website = MainWP_DB::Instance()->getWebsiteById( $id );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
@@ -32,13 +32,13 @@ class MainWP_Site_Open {
 		}
 
 		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
-			self::openSiteLocation( $website, $location );
+			self::open_site_location( $website, $location );
 		} else {
-			self::openSite( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
+			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
 		}
 	}
 
-	public static function openSite( $website, $location, $pNewWindow = null ) {
+	public static function open_site( $website, $location, $pNewWindow = null ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
 			<div class="ui active inverted dimmer">
@@ -49,12 +49,12 @@ class MainWP_Site_Open {
 		<?php
 	}
 
-	public static function renderRestore() {
+	public static function render_restore() {
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
 		}
 
-		$id      = $_GET['websiteid'];
+		$id      = intval( $_GET['websiteid'] );
 		$website = MainWP_DB::Instance()->getWebsiteById( $id );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
@@ -66,10 +66,10 @@ class MainWP_Site_Open {
 			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) );
 		}
 
-		self::openSiteRestore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
+		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
 	}
 
-	public static function openSiteRestore( $website, $file, $size ) {
+	public static function open_site_restore( $website, $file, $size ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
 			<div class="ui active inverted dimmer">
@@ -94,7 +94,7 @@ class MainWP_Site_Open {
 		<?php
 	}
 
-	public static function openSiteLocation( $website, $open_location ) {
+	public static function open_site_location( $website, $open_location ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
 			<div class="ui active inverted dimmer">

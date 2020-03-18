@@ -217,7 +217,7 @@ class MainWP_Overview {
 
 		<div id="mainwp-dashboard-info-box">
 			<?php
-			if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
+			if ( empty( $current_wp_id ) && MainWP_Twitter::enabled_twitter_messages() ) {
 				$filter = array(
 					'upgrade_everything',
 					'upgrade_all_wp_core',
@@ -225,16 +225,16 @@ class MainWP_Overview {
 					'upgrade_all_themes',
 				);
 				foreach ( $filter as $what ) {
-					$twitters = MainWP_Twitter::getTwitterNotice( $what );
+					$twitters = MainWP_Twitter::get_twitter_notice( $what );
 
 					if ( is_array( $twitters ) ) {
 						foreach ( $twitters as $timeid => $twit_mess ) {
 							if ( ! empty( $twit_mess ) ) {
-								$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+								$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 								if ( ! empty( $sendText) ) {
 									?>
 									<div class="mainwp-tips ui info message twitter" style="margin:0">
-										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 									</div>
 									<?php
 								}

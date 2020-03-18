@@ -257,23 +257,23 @@ class MainWP_Hooks {
 	}
 
 	public function cache_getcontext( $page ) {
-		return MainWP_Cache::getCachedContext( $page );
+		return MainWP_Cache::get_cached_context( $page );
 	}
 
 	public function cache_echo_body( $page ) {
-		MainWP_Cache::echoBody( $page );
+		MainWP_Cache::echo_body( $page );
 	}
 
 	public function cache_init( $page ) {
-		MainWP_Cache::initCache( $page );
+		MainWP_Cache::init_cache( $page );
 	}
 
 	public function cache_add_context( $page, $context ) {
-		MainWP_Cache::addContext( $page, $context );
+		MainWP_Cache::add_context( $page, $context );
 	}
 
 	public function cache_add_body( $page, $body ) {
-		MainWP_Cache::addBody( $page, $body );
+		MainWP_Cache::add_body( $page, $body );
 	}
 
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true,

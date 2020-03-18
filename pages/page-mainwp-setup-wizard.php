@@ -805,7 +805,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_purchase_extension_save() {
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 
 		$purchase_extension_history = isset( $_SESSION['purchase_extension_history'] ) ? $_SESSION['purchase_extension_history'] : array();
 
@@ -886,7 +886,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public static function ajax_save_extensions_api_login() {
-		MainWP_Cache::initSession();
+		MainWP_Cache::init_session();
 		MainWP_Extensions::saveExtensionsApiLogin();
 		die();
 	}

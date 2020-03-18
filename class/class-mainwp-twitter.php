@@ -7,7 +7,7 @@ class MainWP_Twitter {
 		return __CLASS__;
 	}
 
-	static function get_filter() {
+	public static function get_filter() {
 		return array(
 			'upgrade_everything',
 			'upgrade_all_wp_core',
@@ -21,7 +21,7 @@ class MainWP_Twitter {
 		);
 	}
 
-	public static function enabledTwitterMessages() {
+	public static function enabled_twitter_messages() {
 		if ( ! get_option( 'mainwp_hide_twitters_message', 0 ) ) {
 			return true;
 		}
@@ -29,7 +29,7 @@ class MainWP_Twitter {
 		return false;
 	}
 
-	public static function clearAllTwitterMessages() {
+	public static function clear_all_twitter_messages() {
 		$filters = self::get_filter();
 		$user_id = get_current_user_id();
 
@@ -53,7 +53,7 @@ class MainWP_Twitter {
 		return $words[ rand( 0, 6 ) ];
 	}
 
-	public static function getNotice( $what, $value ) {
+	public static function get_notice( $what, $value ) {
 
 		if ( ! is_array( $value ) || empty( $value['sites'] ) || ! isset( $value['seconds'] ) ) {
 			return '';
@@ -62,41 +62,41 @@ class MainWP_Twitter {
 		$message    = '';
 		$first_word = self::randomWord();
 		switch ( $what ) {
-			case 'upgrade_everything':
-				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> site', 'you just updated <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'upgrade_everything':				
+				$message = _n( sprintf( 'you just updated <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_wp_core':
-				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> WordPress site', 'you just updated <strong>%d</strong> WordPress sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'upgrade_all_wp_core':				
+				$message = _n( sprintf( 'you just updated <strong>%d</strong> WordPress site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> WordPress sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_plugins':
-				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> plugin', 'you just updated <strong>%d</strong> plugins', $value['items'], 'mainwp' ) . ' ' . _n( 'on <strong>%d</strong> site', 'on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['items'], $value['sites'] );
+			case 'upgrade_all_plugins':				
+				$message = _n( sprintf( 'you just updated <strong>%d</strong> plugin', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> plugins', $value['sites'] ), $value['items'], 'mainwp' ) . ' ' . _n( sprintf( 'on <strong>%d</strong> site', $value['sites'] ), sprintf( 'on <strong>%d</strong> sites', $value['sites'] ), $value['items'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'upgrade_all_themes':
-				$message = $first_word . ', ' . _n( 'you just updated <strong>%d</strong> theme', 'you just updated <strong>%d</strong> themes', $value['items'], 'mainwp' ) . ' ' . _n( 'on <strong>%d</strong> site', 'on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['items'], $value['sites'] );
+			case 'upgrade_all_themes':				
+				$message = _n( sprintf( 'you just updated <strong>%d</strong> theme', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> themes', $value['sites'] ), $value['items'], 'mainwp' ) . ' ' . _n( sprintf( 'on <strong>%d</strong> site', 'on <strong>%d</strong> sites', $value['sites'], 'mainwp' ), $value['items'], $value['sites'] );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'new_post':
-				$message = $first_word . ', ' . _n( 'you just published a new post on <strong>%d</strong> site', 'you just published a new post on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'new_post':				
+				$message = _n( sprintf( 'you just published a new post on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just published a new post on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'new_page':
-				$message = $first_word . ', ' . _n( 'you just published a new page on <strong>%d</strong> site', 'you just published a new page on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'new_page':				
+				$message = _n( sprintf( 'you just published a new page on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just published a new page on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'installing_new_plugin':
-				$message = $first_word . ', ' . _n( 'you just installed a new plugin on <strong>%d</strong> site', 'you just installed a new plugin on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( __( $message ), $value['sites'] );
+			case 'installing_new_plugin':				
+				$message = _n( sprintf( 'you just installed a new plugin on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just installed a new plugin on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'installing_new_theme':
-				$message = $first_word . ', ' . _n( 'you just installed a new theme on <strong>%d</strong> site', 'you just installed a new theme on <strong>%d</strong> sites', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'installing_new_theme':				
+				$message = _n( sprintf( 'you just installed a new theme on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just installed a new theme on <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
-			case 'create_new_user':
-				$message = $first_word . ', ' . _n( 'you just created a new user on <strong>%d</strong> site', 'you just created a new user on <strong>%d</strong> site', $value['sites'], 'mainwp' );
-				$message = sprintf( $message, $value['sites'] );
+			case 'create_new_user':				
+				$message = _n( sprintf( 'you just created a new user on <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just created a new user on <strong>%d</strong> site', $value['sites'] ), $value['sites'], 'mainwp' );
+				$message = $first_word . ', ' . $message;
 				break;
 		}
 
@@ -105,9 +105,9 @@ class MainWP_Twitter {
 			if ( $in_sec <= 60 ) {
 				if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
 					$real_updated = $value['real_items'];
-					$message     .= ', ' . sprintf( _n( '<strong>%d</strong> total update', '<strong>%d</strong> total updates', $real_updated, 'mainwp' ), $real_updated );
+					$message     .= ', ' . _n( sprintf( '<strong>%d</strong> total update', $real_updated ), sprintf( '<strong>%d</strong> total updates', $real_updated), $real_updated, 'mainwp' );
 				}
-				$message .= ' ' . sprintf( _n( 'in <strong>%d</strong> second', 'in <strong>%d</strong> seconds', $in_sec, 'mainwp' ), $in_sec );
+				$message .= ' ' . _n( sprintf( 'in <strong>%d</strong> second', $real_updated ), sprintf( 'in <strong>%d</strong> seconds', $in_sec ), $in_sec, 'mainwp' );
 			}
 			$message .= '!';
 		}
@@ -115,7 +115,7 @@ class MainWP_Twitter {
 		return $message;
 	}
 
-	public static function genTwitterButton( $content, $echo = true ) {
+	public static function gen_twitter_button( $content, $echo = true ) {
 		ob_start();$content
 		?>
 		<button class="ui mini twitter button mainwp_tweet_this" msg="<?php echo urlencode($content); ?>">
@@ -132,7 +132,7 @@ class MainWP_Twitter {
 		}
 	}
 
-	public static function updateTwitterInfo( $what, $countSites = 0, $countSec = 0, $coutRealItems = 0, $twId = 0, $countItems = 1 ) {
+	public static function update_twitter_info( $what, $countSites = 0, $countSec = 0, $coutRealItems = 0, $twId = 0, $countItems = 1 ) {
 		if ( empty( $twId ) ) {
 			return false;
 		}
@@ -173,7 +173,7 @@ class MainWP_Twitter {
 		return false;
 	}
 
-	public static function clearTwitterInfo( $what, $twId = 0 ) {
+	public static function clear_twitter_info( $what, $twId = 0 ) {
 		if ( empty( $twId ) ) {
 			return false;
 		}
@@ -201,7 +201,7 @@ class MainWP_Twitter {
 		return true;
 	}
 
-	public static function getTwitterNotice( $what, $twId = 0 ) {
+	public static function get_twitter_notice( $what, $twId = 0 ) {
 
 		$filters = self::get_filter();
 
@@ -218,14 +218,14 @@ class MainWP_Twitter {
 			if ( ! empty( $twId ) ) {
 				if ( isset( $twitter_messages[ $twId ] ) ) {
 					$value = $twitter_messages[ $twId ];
-					$mess  = self::getNotice( $what, $value );
+					$mess  = self::get_notice( $what, $value );
 					if ( ! empty( $mess ) ) {
 						$return[ $twId ] = $mess;
 					}
 				}
 			} else {
 				foreach ( $twitter_messages as $time => $value ) {
-					$mess = self::getNotice( $what, $value );
+					$mess = self::get_notice( $what, $value );
 					if ( ! empty( $mess ) ) {
 						$return[ $time ] = $mess;
 					}
@@ -236,7 +236,7 @@ class MainWP_Twitter {
 		return $return;
 	}
 
-	public static function getTwitToSend( $what, $twId = 0 ) {
+	public static function get_twit_to_send( $what, $twId = 0 ) {
 
 		$filters = self::get_filter();
 

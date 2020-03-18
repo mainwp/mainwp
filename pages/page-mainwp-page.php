@@ -468,10 +468,10 @@ class MainWP_Page {
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
 						?>
-						<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php echo __( 'Links', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php echo __( 'Linked', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php echo __( 'SEO score', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php echo __( 'Readability score', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php esc_html_e( 'Linked', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php esc_html_e( 'SEO score', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></span></th>
 						<?php
 					endif;
 					?>
@@ -694,7 +694,7 @@ class MainWP_Page {
 					};
 					?>
 					<td class="website">
-						<a href="<?php echo $website->url; ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $website->url; ?></a>
+						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
 		  <td class="right aligned">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
@@ -708,13 +708,13 @@ class MainWP_Page {
 				  <a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $page['status'] == 'publish' ) { ?>
-								<a class="item" href="<?php echo $website->url . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+								<a class="item" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 							<?php } ?>
 				<?php if ( $page['status'] == 'trash' ) { ?>
 									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 				<?php } ?>
-						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ); ?></a>
+						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							</div>
 						</div>
 					</td>
@@ -1020,7 +1020,7 @@ class MainWP_Page {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'PageBulkManage' || $_GET['page'] == 'PageBulkAdd' ) ) {
 			?>
-			<p><?php echo __( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/" target="_blank">Manage Pages</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/create-a-new-page/" target="_blank">Create a New Page</a></div>

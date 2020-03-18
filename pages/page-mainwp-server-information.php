@@ -1007,7 +1007,7 @@ class MainWP_Server_Information {
 
 	public static function getServerAcceptCharset() {
 		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( $_SERVER['HTTP_ACCEPT_CHARSET'] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
+			esc_html_e( 'N/A', 'mainwp' );
 		} else {
 			echo $_SERVER['HTTP_ACCEPT_CHARSET'];
 		}
@@ -1027,9 +1027,9 @@ class MainWP_Server_Information {
 
 	public static function getHTTPS() {
 		if ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] != '' ) {
-			echo __( 'ON', 'mainwp' ) . ' - ' . $_SERVER['HTTPS'];
+			esc_html_e( 'ON', 'mainwp' ) . ' - ' . $_SERVER['HTTPS'];
 		} else {
-			echo __( 'OFF', 'mainwp' );
+			esc_html_e( 'OFF', 'mainwp' );
 		}
 	}
 
@@ -1069,7 +1069,7 @@ class MainWP_Server_Information {
 
 	public static function getRemoteHost() {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( $_SERVER['REMOTE_HOST'] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
+			esc_html_e( 'N/A', 'mainwp' );
 		} else {
 			echo $_SERVER['REMOTE_HOST'];
 		}
@@ -1097,7 +1097,7 @@ class MainWP_Server_Information {
 
 	public static function getServerPathTranslated() {
 		if ( ! isset( $_SERVER['PATH_TRANSLATED'] ) || ( $_SERVER['PATH_TRANSLATED'] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
+			esc_html_e( 'N/A', 'mainwp' );
 		} else {
 			echo $_SERVER['PATH_TRANSLATED'];
 		}
@@ -1303,11 +1303,11 @@ class MainWP_Server_Information {
 		<div id="mainwp-show-wp-config">
 			<?php
 			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
-				echo __( 'File content could not be displayed.', 'mainwp' );
+				esc_html_e( 'File content could not be displayed.', 'mainwp' );
 				echo '<br />';
-				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
+				esc_html_e( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
 				echo '<br />';
-				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
+				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
 					@show_source( ABSPATH . 'wp-config.php' );
@@ -1431,11 +1431,11 @@ class MainWP_Server_Information {
 		<div id="mainwp-show-htaccess">
 			<?php
 			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
-				echo __( 'File content could not be displayed.', 'mainwp' );
+				esc_html_e( 'File content could not be displayed.', 'mainwp' );
 				echo '<br />';
-				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
+				esc_html_e( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
 				echo '<br />';
-				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
+				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				show_source( ABSPATH . '.htaccess' );
 			}
@@ -1456,7 +1456,7 @@ class MainWP_Server_Information {
 				echo $arr[ $i ] . ', ';
 			}
 		} else {
-			echo __( 'No functions disabled.', 'mainwp' );
+			esc_html_e( 'No functions disabled.', 'mainwp' );
 		}
 	}
 

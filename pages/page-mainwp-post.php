@@ -888,7 +888,7 @@ class MainWP_Post {
 					}
 					?>
 					"/>
-					<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>"/>
 
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
 
@@ -896,7 +896,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
+							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval($website->id); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
 										 <?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -964,7 +964,7 @@ class MainWP_Post {
 
 								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
 								<?php if ( 'trash' === $post['status'] ) : ?>
@@ -1464,7 +1464,7 @@ class MainWP_Post {
 		}
 
 		if ( ! $post_type_object || $input_type !== $post_type || ( 'bulkpost' !== $post_type && 'bulkpage' !== $post_type ) ) {
-			echo __( 'Invalid post type.', 'mainwp' );
+			esc_html_e( 'Invalid post type.', 'mainwp' );
 			return;
 		}
 
@@ -1586,7 +1586,7 @@ class MainWP_Post {
 					<div class="field">
 						<label><?php esc_html_e( 'Excerpt', 'mainwp' ); ?></label>
 							<textarea rows="1" name="excerpt" id="excerpt"></textarea>
-						<em><?php echo __( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme.', 'mainwp' ); ?></em>
+						<em><?php esc_html_e( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme.', 'mainwp' ); ?></em>
 					</div>
 					<div class="field">
 						<label><?php esc_html_e( 'Tags', 'mainwp' ); ?></label>

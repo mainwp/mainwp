@@ -119,7 +119,7 @@ class MainWP_Updates_Overview {
 			// No settings saved!
 			return;
 		} else {
-			echo __( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $dtsSync ) ) . ')';
+			esc_html_e( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $dtsSync ) ) . ')';
 		}
 	}
 
@@ -487,7 +487,7 @@ class MainWP_Updates_Overview {
 								<?php echo $total_upgrades; ?>
 							  </div>
 							  <div class="label">
-								<?php echo __('Total Updates', 'mainwp'); ?>
+								<?php esc_html_e('Total Updates', 'mainwp'); ?>
 							  </div>
 							</div>
 						</div>
@@ -517,7 +517,7 @@ class MainWP_Updates_Overview {
 						<?php echo $total_wp_upgrades; ?>
 					  </div>
 					  <div class="label">
-					<?php echo __('WordPress Updates', 'mainwp'); ?>
+					<?php esc_html_e('WordPress Updates', 'mainwp'); ?>
 					  </div>
 					  </div>
 				</div>
@@ -532,11 +532,11 @@ class MainWP_Updates_Overview {
 					?>
 					<?php if ( $total_wp_upgrades > 0 ) : ?>
 						<?php $continue_class = ( $continue_update == 'wpcore_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : ''; ?>
-						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php else : ?>
-						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" disabled class="ui grey basic button"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
 								</div>
@@ -551,7 +551,7 @@ class MainWP_Updates_Overview {
 										<?php echo $total_plugin_upgrades; ?>
 									  </div>
 										<div class="label">
-							<?php echo __('Plugin Updates', 'mainwp'); ?>
+							<?php esc_html_e('Plugin Updates', 'mainwp'); ?>
 										</div>
 										</div>
 									</div>
@@ -567,14 +567,14 @@ class MainWP_Updates_Overview {
 
 						if ( $total_plugin_upgrades == 0 ) {
 							?>
-								   <a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-									<a href="#" disabled class="ui grey basic button"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								   <a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+									<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							   <?php
 						} else {
 
 							?>
-								<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-								<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+								<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 								<?php
 						}
 							endif;
@@ -591,7 +591,7 @@ class MainWP_Updates_Overview {
 							<?php echo $total_theme_upgrades; ?>
 							</div>
 						<div class="label">
-							<?php echo __('Theme Updates', 'mainwp'); ?>
+							<?php esc_html_e('Theme Updates', 'mainwp'); ?>
 						</div>
 							</div>
 						</div>
@@ -608,14 +608,14 @@ class MainWP_Updates_Overview {
 
 					if ( $total_theme_upgrades == 0 ) {
 						?>
-								<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-								<a href="#" disabled class="ui grey basic button"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+								<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+								<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						   <?php
 					} else {
 
 						?>
-							<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+							<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+							<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
 					   endif;
@@ -633,7 +633,7 @@ class MainWP_Updates_Overview {
 							<?php echo $total_translation_upgrades; ?>
 						</div>
 						<div class="label">
-							<?php echo __('Translation Updates', 'mainwp'); ?>
+							<?php esc_html_e('Translation Updates', 'mainwp'); ?>
 								</div>
 						</div>
 					</div>
@@ -650,14 +650,14 @@ class MainWP_Updates_Overview {
 
 					if ( $total_translation_upgrades == 0 ) {
 						?>
-						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" disabled class="ui grey basic button"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					} else {
 
 						?>
-						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo __( 'Update All', 'mainwp' ); ?></a>
+						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					}
 					endif;
@@ -686,12 +686,12 @@ class MainWP_Updates_Overview {
 							<?php echo $total_plugins_outdate; ?>
 							</div>
 							<div class="label">
-							<?php echo __( 'Abandoned Plugins', 'mainwp' ); ?>
+							<?php esc_html_e( 'Abandoned Plugins', 'mainwp' ); ?>
 								</div>
 									</div>
 										</div>
 										<div class="right aligned column">
-											<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
+											<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 									</div>
 								</div>
 							</div>
@@ -711,12 +711,12 @@ class MainWP_Updates_Overview {
 							<?php echo $total_themes_outdate; ?>
 							</div>
 						<div class="label">
-							<?php echo __( 'Abandoned Themes', 'mainwp' ); ?>
+							<?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?>
 										</div>
 										</div>
 										</div>
 								<div class="right aligned column">
-									<a href="<?php echo $detail_aban_themes; ?>" class="ui button"><?php echo __( 'See Details', 'mainwp' ); ?></a>
+									<a href="<?php echo $detail_aban_themes; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 							</div>
 				</div>
 			</div>

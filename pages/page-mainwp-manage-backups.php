@@ -618,7 +618,7 @@ class MainWP_Manage_Backups {
 		</div>
 		<div class="mainwp-side-content mainwp-no-padding">
 			<div class="mainwp-select-sites">
-				<div class="ui header"><?php echo __( 'Select Sites', 'mainwp' ); ?></div>
+				<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 				<?php MainWP_UI::select_sites_box( 'checkbox', true, true, '', '', $selected_websites, $selected_groups, true ); ?>
 			</div>
 			<div class="ui divider"></div>
@@ -690,7 +690,7 @@ class MainWP_Manage_Backups {
 
 	<div class="ui divider hidden"></div>
 	<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-	<h3 class="header"><?php echo __( 'Backup Details', 'mainwp' ); ?></h3>
+	<h3 class="header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
 	<div class="ui grid field">
 		<label class="six wide column middle aligned"><?php esc_html_e( 'Backup task name', 'mainwp' ); ?></label>
 		<div class="ten wide column">
@@ -730,32 +730,32 @@ class MainWP_Manage_Backups {
 				<?php
 				if ( $useSite ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Site specific setting', 'mainwp' ); ?></option>
+					selected<?php endif; ?>><?php esc_html_e( 'Site specific setting', 'mainwp' ); ?></option>
 				<option value="global" 
 				<?php
 				if ( $useGlobal ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Global setting', 'mainwp' ); ?> (<?php echo $globalArchiveFormatText; ?>)</option>
+					selected<?php endif; ?>><?php esc_html_e( 'Global setting', 'mainwp' ); ?> (<?php echo $globalArchiveFormatText; ?>)</option>
 				<option value="zip" 
 				<?php
 				if ( $archiveFormat == 'zip' ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Zip', 'mainwp' ); ?></option>
+					selected<?php endif; ?>><?php esc_html_e( 'Zip', 'mainwp' ); ?></option>
 				<option value="tar" 
 				<?php
 				if ( $archiveFormat == 'tar' ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Tar', 'mainwp' ); ?></option>
+					selected<?php endif; ?>><?php esc_html_e( 'Tar', 'mainwp' ); ?></option>
 				<option value="tar.gz" 
 				<?php
 				if ( $archiveFormat == 'tar.gz' ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Tar GZip', 'mainwp' ); ?></option>
+					selected<?php endif; ?>><?php esc_html_e( 'Tar GZip', 'mainwp' ); ?></option>
 				<option value="tar.bz2" 
 				<?php
 				if ( $archiveFormat == 'tar.bz2' ) :
 					?>
-					selected<?php endif; ?>><?php echo __( 'Tar BZip2', 'mainwp' ); ?></option>
+					selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
 			</select>
 		</div>
 	</div>
@@ -763,7 +763,7 @@ class MainWP_Manage_Backups {
 		$style = isset( $task ) && $task->type == 'db' ? 'style="display: none;"' : '';
 		?>
 	<div class="mainwp-backup-full-exclude" <?php echo $style; ?>>
-	<h3 class="header"><?php echo __( 'Backup Excludes', 'mainwp' ); ?></h3>
+	<h3 class="header"><?php esc_html_e( 'Backup Excludes', 'mainwp' ); ?></h3>
 	<div class="ui grid field">
 		<label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
 	  <div class="ten wide column ui toggle checkbox">
@@ -774,7 +774,7 @@ class MainWP_Manage_Backups {
 		<label class="six wide column middle aligned"></label>
 	  <div class="ten wide column ui toggle checkbox">
 			<textarea id="mainwp-kbl-content" disabled></textarea><br />
-			<em><?php echo __( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
+			<em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
 		</div>
 	</div>
 	<div class="ui grid field">
@@ -787,7 +787,7 @@ class MainWP_Manage_Backups {
 		<label class="six wide column middle aligned"></label>
 	  <div class="ten wide column ui toggle checkbox">
 			<textarea id="mainwp-kcl-content" disabled></textarea><br />
-			<em><?php echo __( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
+			<em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
 		</div>
 	</div>
 	<div class="ui grid field">
@@ -800,7 +800,7 @@ class MainWP_Manage_Backups {
 		<label class="six wide column middle aligned"></label>
 	  <div class="ten wide column ui toggle checkbox">
 			<textarea id="mainwp-nwl-content" disabled></textarea><br />
-			<em><?php echo __( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
+			<em><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
 		</div>
 	</div>
 	<div class="ui grid field">

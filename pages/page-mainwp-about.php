@@ -61,10 +61,10 @@ class MainWP_About {
 		}
 		?>
 		<div class="wrap about-wrap">
-			<h1><?php echo __( 'Welcome to MainWP Dashboard', 'mainwp' ) . '&nbsp;' . $mainWP->getVersion(); ?></h1>
+			<h1><?php esc_html_e( 'Welcome to MainWP Dashboard', 'mainwp' ) . '&nbsp;' . $mainWP->getVersion(); ?></h1>
 
-			<div class="about-text"><?php echo __( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->getVersion(); ?></div>
-			<div class="mainwp-badge"><?php echo __( 'Version ', 'mainwp' ) . $mainWP->getVersion(); ?></div>
+			<div class="about-text"><?php esc_html_e( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->getVersion(); ?></div>
+			<div class="mainwp-badge"><?php esc_html_e( 'Version ', 'mainwp' ) . $mainWP->getVersion(); ?></div>
 			<h2 class="nav-tab-wrapper wp-clearfix">
 				<a class="nav-tab <?php echo $showtab == 'whatsnew' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php esc_html_e( 'What\'s New', 'mainwp' ); ?></a>
 				<a class="nav-tab <?php echo $showtab == 'changelog' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php esc_html_e( 'Version Changelog', 'mainwp' ); ?></a>

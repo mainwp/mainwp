@@ -782,7 +782,7 @@ class MainWP_Settings {
 							<div class="ui attached message">
 								<div class="header"><?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?></div>
 								<p><?php esc_html_e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></p>
-								<p><?php echo __( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
+								<p><?php esc_html_e( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
 							</div>
 							<div class="ui attached segment" style="border: 1px solid #dadada;">
 								<div class="ui grid field">
@@ -1077,7 +1077,7 @@ class MainWP_Settings {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'Settings' || $_GET['page'] == 'SettingsAdvanced' || $_GET['page'] == 'MainWPTools' || $_GET['page'] == 'SettingsClientReportsResponder' ) ) {
 			?>
-			<p><?php echo __( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
 			</div>

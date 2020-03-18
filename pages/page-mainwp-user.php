@@ -778,7 +778,7 @@ class MainWP_User {
 					<td class="name column-name">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>" />
 					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
 					<div class="row-actions-working">
 						<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait', 'mainwp' ); ?>
@@ -1516,7 +1516,7 @@ class MainWP_User {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
 			?>
-			<p><?php echo __( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/" target="_blank">Manage Users</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/create-a-new-user/" target="_blank">Create a New User</a></div>

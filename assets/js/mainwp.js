@@ -449,7 +449,7 @@ jQuery( document ).ready( function () {
       securityIssues_fix( 'all' );
     } );
 
-    jQuery( '#securityIssues_refresh' ).live( 'click', function ( event ) {
+    jQuery( '#securityIssues_refresh' ).live( 'click', function () {
       for ( var i = 0; i < securityIssues_fixes.length; i++ ) {
         var securityIssueCurrentIssue = jQuery( '#' + securityIssues_fixes[i] + '_fix' );
         if ( securityIssueCurrentIssue ) {
@@ -2089,7 +2089,7 @@ managebackups_backup_upload_file_retry_fail = function ( pData, pSiteId, pSiteNa
                             }
                         }( pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId ),
                         error: function ( pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId ) {
-                            return function ( response ) {
+                            return function () {
                                 managebackups_backup_upload_file_retry_fail( pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError );
                             }
                         }( pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId ),
@@ -4548,7 +4548,7 @@ backup_download_file = function ( pSiteId, type, url, file, regexfile, size, sub
     appendToDiv( backsprocessContentEl, __( 'Downloading the file.' ) + ' <div id="managesite-backup-status-progress" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>' );
     jQuery( '#managesite-backup-status-progress' ).progress( { value: 0, total: size } );
 
-    var fnc = function ( pFile ) {
+    var fnc = function () {
         return function ( pFunction ) {
             var data = mainwp_secure_data( {
                 action: 'mainwp_backup_getfilesize',
@@ -6696,8 +6696,8 @@ mainwp_twitter_dismiss = function(obj) {
         what: jQuery(obj).closest('.mainwp-tips').find('.mainwp-tip').attr('twit-what')
     } );
 
-    jQuery.post( ajaxurl, data, function (res) {
-
+    jQuery.post( ajaxurl, data, function () {
+        // Ok.
     });
 };
 

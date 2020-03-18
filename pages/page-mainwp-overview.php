@@ -283,7 +283,7 @@ class MainWP_Overview {
 			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
 
 		<div class="ui modal" id="mainwp-overview-screen-options-modal">
-			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="content ui form">
 				<form method="POST" action="">
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />

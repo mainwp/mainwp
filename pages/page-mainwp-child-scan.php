@@ -40,7 +40,7 @@ class MainWP_Child_Scan {
 			<?php
 			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
 			if ( ! $websites ) {
-				echo __( '<p>No websites to scan.</p>', 'mainwp' );
+				esc_html_e( '<p>No websites to scan.</p>', 'mainwp' );
 			} else {
 				?>
 				<table id="mwp_child_scan_childsites">

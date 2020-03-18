@@ -306,7 +306,7 @@ class MainWP_Setup_Wizard {
 					<div class="ui fluid input">
 						<input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
 					</div>
-					<div><em><?php echo __( 'If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path.', 'mainwp' ); ?></em></div>
+					<div><em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path.', 'mainwp' ); ?></em></div>
 					<div><em><?php echo sprintf( __( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
 				</div>
 			</div>
@@ -507,14 +507,14 @@ class MainWP_Setup_Wizard {
 		</form>
 
 		<div id="mainwp-setup-hosting-notice" class="ui modal">
-			<div class="header"><?php echo __( 'Important Notice', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Important Notice', 'mainwp' ); ?></div>
 			<div class="content">
 				<?php esc_html_e( 'Running over 50 sites on shared hosting can be resource intensive for the server so we will turn on caching for you to help. Updates will be cached for quick loading. A manual sync from the Dashboard is required to view new plugins, themes, pages or users.', 'mainwp' ); ?>
 			</div>
 			<div class="actions">
 				<div class="ui positive right labeled icon button">
 					<i class="check icon"></i>
-					<?php echo __( 'OK, I Understand', 'mainwp' ); ?>
+					<?php esc_html_e( 'OK, I Understand', 'mainwp' ); ?>
 				</div>
 			</div>
 		</div>
@@ -748,7 +748,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui hidden divider"></div>
 			<div class="" id="mainwp-quick-setup-account-login" <?php echo $style_alt; ?>>
 				<h4 class="ui dividing header"><?php esc_html_e( 'MainWP Account Details', 'mainwp' ); ?></h4>
-				<div class="ui info message"><?php echo __( 'This Extension if free, however it requires a free MainWP account to receive updates and support.', 'mainwp' ); ?></div>
+				<div class="ui info message"><?php esc_html_e( 'This Extension if free, however it requires a free MainWP account to receive updates and support.', 'mainwp' ); ?></div>
 				<div class="field">
 					<label><?php esc_html_e( 'Enter your Username & Password registered at mainwp.com', 'mainwp' ); ?></label>
 					<div class="two fields">
@@ -1028,7 +1028,7 @@ class MainWP_Setup_Wizard {
 				<input type="hidden" name="mwp_setup_extension_product_id" id="mwp_setup_extension_product_id" value="<?php echo esc_attr( $ext_product_id ); ?>" slug="<?php echo esc_attr( $ext_slug ); ?>">
 			<div id="mainwp-quick-setup-extension-insatllation">
 				<?php if ( $ext_installed ) : ?>
-					<div class="ui green message"><?php echo __( 'Extension installed successfully!', 'mainwp' ); ?></div>
+					<div class="ui green message"><?php esc_html_e( 'Extension installed successfully!', 'mainwp' ); ?></div>
 					<?php if ( ! $ext_activated ) : ?>
 							<script type="text/javascript">
 								jQuery( document ).ready( function () {
@@ -1062,7 +1062,7 @@ class MainWP_Setup_Wizard {
 						</div>
 						<div id="mainwp-quick-setup-extension-activation">
 							<?php if ( $ext_activated ) : ?>
-								<div class="ui green message"><?php echo __( 'Extension activated successfully!', 'mainwp' ); ?></div>
+								<div class="ui green message"><?php esc_html_e( 'Extension activated successfully!', 'mainwp' ); ?></div>
 							<?php else : ?>
 									<div id="mwp_setup_active_extension" style="display: none;">
 										<p><span class="description"><?php esc_html_e('Grabbing the API Key and activating the Extension ...', 'mainwp'); ?></span>

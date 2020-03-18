@@ -385,7 +385,7 @@ class MainWP_System {
 			}
 		}
 		$sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' );
-		if ( $sched == false ) {
+		if ( false == $sched ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'minutely', 'mainwp_cronupdatescheck_action' );
 			}

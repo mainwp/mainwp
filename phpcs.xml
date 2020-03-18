@@ -16,6 +16,8 @@
 		<exclude name="WordPress.Files.FileName"/>
 	</rule>
 
+        <config name="installed_paths" value="../../wp-coding-standards/wpcs" />
+ 
 	<!-- Specify custom nonce validation. -->
 	<rule ref="WordPress.CSRF.NonceVerification">
 		<properties>

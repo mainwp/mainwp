@@ -1110,7 +1110,7 @@ class MainWP_Utility {
 	public static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null ) {
 		return self::fetch_url_authed( $website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null );
 	}
-	
+
 	public static function fetch_url_authed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								$pRetryFailed = true, $rawResponse = null ) {
 		if ( ! is_array( $params ) ) {
@@ -3337,10 +3337,10 @@ EOT;
 	public static function maybe_unserialyze( $data ) {
 		if ( '' == $data || is_array( $data ) ) {
 			return $data;
-		} else if ( is_serialized( $data )) {
+		} elseif ( is_serialized( $data ) ) {
 			return maybe_unserialize( $data );
 		} else {
 			return maybe_unserialize( base64_decode( $data ) );
-		} 			
+		}
 	}
 }

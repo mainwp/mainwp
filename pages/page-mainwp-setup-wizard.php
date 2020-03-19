@@ -17,12 +17,12 @@ class MainWP_Setup_Wizard {
 
 	private $step  = '';
 	private $steps = array();
-	
+
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ), 999 );
 	}
-	
+
 
 	public function admin_menus() {
 		add_dashboard_page( '', '', 'manage_options', 'mainwp-setup', '' );

@@ -3332,10 +3332,10 @@ EOT;
 	public static function maybe_unserialyze( $data ) {
 		if ( '' == $data || is_array( $data ) ) {
 			return $data;
-		} else if ( is_serialized( $data )) {
+		} elseif ( is_serialized( $data ) ) {
 			return maybe_unserialize( $data );
 		} else {
 			return maybe_unserialize( base64_decode( $data ) );
-		} 			
+		}
 	}
 }

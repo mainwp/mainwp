@@ -1943,10 +1943,10 @@ class MainWP_Post {
 						$_post = get_post( $id );
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
-							$val  = get_post_meta( $id, '_selected_sites', true );
-							$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
-							$val = get_post_meta( $id, '_selected_groups', true );
-							$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
+							$val             = get_post_meta( $id, '_selected_sites', true );
+							$selected_sites  = MainWP_Utility::maybe_unserialyze( $val );
+							$val             = get_post_meta( $id, '_selected_groups', true );
+							$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
 
 							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) );
 

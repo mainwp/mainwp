@@ -801,11 +801,11 @@ class MainWP_Live_Reports_Class {
 
 	public static function filter_report( $report, $allowed_tokens ) {
 		global $mainWPCReportExtensionActivator;
-		$websites   = array();		
-		
-		$sel_sites	= MainWP_Utility::maybe_unserialyze( $report->sites );
-		$sel_groups	= MainWP_Utility::maybe_unserialyze( $report->groups );
-		
+		$websites = array();
+
+		$sel_sites  = MainWP_Utility::maybe_unserialyze( $report->sites );
+		$sel_groups = MainWP_Utility::maybe_unserialyze( $report->groups );
+
 		if ( ! is_array( $sel_sites ) ) {
 			$sel_sites = array();
 		}

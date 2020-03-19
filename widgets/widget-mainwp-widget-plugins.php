@@ -271,7 +271,7 @@ class MainWP_Widget_Plugins {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,

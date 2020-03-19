@@ -296,7 +296,7 @@ class MainWP_Manage_Sites_View {
 
 						$line = trim( $originalLine );
 
-						if ( MainWP_Utility::startsWith( $line, '#' ) ) {
+						if ( MainWP_Utility::starts_with( $line, '#' ) ) {
 							continue;
 						}
 
@@ -1418,8 +1418,8 @@ class MainWP_Manage_Sites_View {
 				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="ui left action input">
 									<select class="ui compact selection dropdown" id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol">
-										<option <?php echo ( MainWP_Utility::startsWith( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
-										<option <?php echo ( MainWP_Utility::startsWith( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
+										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
+										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 									</select>
 									<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo MainWP_Utility::removeHttpPrefix( $website->url, true ); ?>" />
 								</div>
@@ -1617,7 +1617,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey  = '-1';
 				}
 
-				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array(
+				$information = MainWP_Utility::fetch_url_not_authed( $website->url, $website->adminname, 'register', array(
 					'pubkey'   => $pubkey,
 					'server'   => get_admin_url(),
 					'uniqueId' => $website->uniqueId,
@@ -1715,7 +1715,7 @@ class MainWP_Manage_Sites_View {
 				$http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 				$force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-				$information       = MainWP_Utility::fetchUrlNotAuthed( $url, $params['wpadmin'], 'register', array(
+				$information       = MainWP_Utility::fetch_url_not_authed( $url, $params['wpadmin'], 'register', array(
 					'pubkey'     => $pubkey,
 					'server'     => get_admin_url(),
 					'uniqueId'   => $addUniqueId,

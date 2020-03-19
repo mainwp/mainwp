@@ -550,7 +550,7 @@ class MainWP_Plugins {
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -812,7 +812,7 @@ class MainWP_Plugins {
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
 			$plugin      = urldecode( $plugin );
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,
@@ -1126,7 +1126,7 @@ class MainWP_Plugins {
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 
 					}
 					echo '<div class="ui hidden divider"></div>';

@@ -890,7 +890,7 @@ class MainWP_User {
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'user_action', array(
 					'action'    => $pAction,
 					'id'        => $userId,
@@ -1298,7 +1298,7 @@ class MainWP_User {
 
 						$line = trim( $originalLine );
 
-						if ( MainWP_Utility::startsWith( $line, '#' ) ) {
+						if ( MainWP_Utility::starts_with( $line, '#' ) ) {
 							continue;
 						}
 

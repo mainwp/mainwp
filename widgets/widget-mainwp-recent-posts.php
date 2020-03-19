@@ -521,7 +521,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action' => $pAction,
 					'id'     => $postId,
@@ -563,7 +563,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action'     => $pAction,
 					'id'         => $postId,

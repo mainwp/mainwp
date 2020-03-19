@@ -87,7 +87,7 @@ class MainWP_Child_Scan {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			$rslt       = MainWP_Utility::fetchUrlAuthed( $website, 'search_users', $post_data );
+			$rslt       = MainWP_Utility::fetch_url_authed( $website, 'search_users', $post_data );
 			$usersfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 
 			if ( ! $usersfound ) {
@@ -99,7 +99,7 @@ class MainWP_Child_Scan {
 				$post_data['status'] = 'active';
 				$post_data['filter'] = true;
 
-				$rslt = MainWP_Utility::fetchUrlAuthed( $website, 'get_all_plugins', $post_data );
+				$rslt = MainWP_Utility::fetch_url_authed( $website, 'get_all_plugins', $post_data );
 
 				$pluginfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 

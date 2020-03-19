@@ -218,7 +218,7 @@ class MainWP_Widget_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,

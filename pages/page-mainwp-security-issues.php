@@ -234,7 +234,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'security' );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'security' );
 
 		return $information;
 	}
@@ -249,7 +249,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
 			unset( $information['sync'] );
@@ -268,7 +268,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
 			unset( $information['sync'] );

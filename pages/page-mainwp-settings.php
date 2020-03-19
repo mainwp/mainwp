@@ -266,7 +266,7 @@ class MainWP_Settings {
 		echo '</div>';
 	}
 
-	public static function handleSettingsPost() {
+	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			$save_emails   = array();
@@ -287,7 +287,7 @@ class MainWP_Settings {
 			$userExtension->pluginDir = '';
 
 			MainWP_DB::Instance()->updateUserExtension( $userExtension );
-			if ( MainWP_Utility::isAdmin() ) {
+			if ( MainWP_Utility::is_admin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );

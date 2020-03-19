@@ -3706,38 +3706,17 @@ mainwp_import_users = function () {
     }
 
     if ( decoded_data != false ) {
-        var import_user_username = decoded_data.user_login;
-        var import_user_email = decoded_data.email;
-        var import_user_fname = decoded_data.first_name;
-        var import_user_lname = decoded_data.last_name;
-        var import_user_website = decoded_data.url;
-        var import_user_passw = decoded_data.pass1;
-        var import_user_send_passw = decoded_data.send_password;
-        var import_user_role = decoded_data.role;
-        var import_user_select_sites = decoded_data.select_sites;
-        var import_user_select_groups = decoded_data.select_groups;
+        var import_user_username = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
+        var import_user_email = decoded_data.email == undefined ? '' : decoded_data.email;
+        var import_user_fname = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
+        var import_user_lname = decoded_data.last_name == undefined ? '' : decoded_data.last_name ;
+        var import_user_website = decoded_data.url == undefined ? '' : decoded_data.url;
+        var import_user_passw = decoded_data.pass1 == undefined ? '' : decoded_data.pass1;
+        var import_user_send_passw = decoded_data.send_password == undefined ? '' : decoded_data.send_password;
+        var import_user_role = decoded_data.role == undefined ? '' : decoded_data.role;
+        var import_user_select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
+        var import_user_select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
         var import_user_select_by = '';
-
-        if ( import_user_username == undefined )
-            import_user_username = '';
-        if ( import_user_email == undefined )
-            import_user_email = '';
-        if ( import_user_fname == undefined )
-            import_user_fname = '';
-        if ( import_user_lname == undefined )
-            import_user_lname = '';
-        if ( import_user_website == undefined )
-            import_user_website = '';
-        if ( import_user_passw == undefined )
-            import_user_passw = '';
-        if ( import_user_send_passw == undefined )
-            import_user_send_passw = '';
-        if ( import_user_role == undefined )
-            import_user_role = '';
-        if ( import_user_select_sites == undefined )
-            import_user_select_sites = '';
-        if ( import_user_select_groups == undefined )
-            import_user_select_groups = '';
 
         jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + '] ' + original_line + '\n');
 
@@ -6993,31 +6972,35 @@ mainwp_managesites_doaction = function ( action ) {
 
     if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
       var confirmMsg = '';
-      var _selection_cancelled = false;
-      if ( action == 'delete' ) {
-          confirmMsg = __( "You are about to remove the selected sites from your MainWP Dashboard?" );
-      } else if ( action == 'update_plugins' ) {
-          confirmMsg = __( "You are about to update plugins on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_themes' ) {
-          confirmMsg = __( "You are about to update themes on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_wpcore' ) {
-          confirmMsg = __( "You are about to update WordPress core files on the selected sites?" );
-          _selection_cancelled = true;
-      } else if ( action == 'update_translations' ) {
-          confirmMsg = __( "You are about to update translations on the selected sites?" );
-          _selection_cancelled = true;
+      var _selection_cancelled = false;      
+      switch ( action ) {
+            case 'delete':
+                confirmMsg = __( "You are about to remove the selected sites from your MainWP Dashboard?" );
+            break;
+            case 'update_plugins':
+                confirmMsg = __( "You are about to update plugins on the selected sites?" );
+                _selection_cancelled = true;
+            break;
+            case 'update_themes':
+                confirmMsg = __( "You are about to update themes on the selected sites?" );
+                _selection_cancelled = true;
+            break;
+            case 'update_wpcore':
+                confirmMsg = __( "You are about to update WordPress core files on the selected sites?" );
+                _selection_cancelled = true;
+            break;
+            case 'update_translations':
+                confirmMsg = __( "You are about to update translations on the selected sites?" );
+                _selection_cancelled = true;
+            break;            
       }
-
+      
       if ( confirmMsg == '' )
         return false;
       var _cancelled_callback  = null;
       if ( _selection_cancelled ) {
         _cancelled_callback  = function() {
-          console.log('_cancelled_callback');
-          //jQuery('#bulk-action-selector-top').dropdown("set selected", "-1"); ; // default value
-          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync");  // default value
+          jQuery('#mainwp-sites-bulk-actions-menu').dropdown("set selected", "sync");
         };
       }
 

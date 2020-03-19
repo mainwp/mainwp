@@ -991,7 +991,7 @@ class MainWP_Manage_Backups {
 
 				foreach ( $sites as $siteid ) {
 					$website = MainWP_DB::Instance()->getWebsiteById( $siteid );
-					$output .= '&nbsp;&bull;&nbsp;<a href="' . $website->url . '">' . MainWP_Utility::getNiceURL( $website->url ) . '</a><br />';
+					$output .= '&nbsp;&bull;&nbsp;<a href="' . $website->url . '">' . MainWP_Utility::get_nice_url( $website->url ) . '</a><br />';
 				}
 
 				$output .= '<br />Backup details:<br /><br />';
@@ -1045,14 +1045,14 @@ class MainWP_Manage_Backups {
 				}
 
 				if ( $error ) {
-					$errorOutput .= 'Site: <strong>' . MainWP_Utility::getNiceURL( $website->url ) . '</strong><br />';
+					$errorOutput .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
 					$errorOutput .= $tmpErrorOutput . '<br />';
 				}
 			} catch ( Exception $e ) {
 				if ( $errorOutput == null ) {
 					$errorOutput = '';
 				}
-				$errorOutput  .= 'Site: <strong>' . MainWP_Utility::getNiceURL( $website->url ) . '</strong><br />';
+				$errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
 				$errorOutput  .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
 				$_error_output = MainWP_Error_Helper::get_error_message( $e );
 			}
@@ -1338,9 +1338,9 @@ class MainWP_Manage_Backups {
 					if ( isset( $currentArr[ $pathPart ] ) ) {
 						$currentArr = $currentArr[ $pathPart ];
 					} else {
-						if ( MainWP_Utility::endsWith( $pathPart, '*' ) ) {
+						if ( MainWP_Utility::ends_with( $pathPart, '*' ) ) {
 							foreach ( $currentArr as $key => $val ) {
-								if ( MainWP_Utility::startsWith( $key, substr( $pathPart, 0, strlen( $pathPart ) - 1 ) ) ) {
+								if ( MainWP_Utility::starts_with( $key, substr( $pathPart, 0, strlen( $pathPart ) - 1 ) ) ) {
 									if ( $newExcludeSuffix == null ) {
 										$newExcludeSuffix = array();
 									}

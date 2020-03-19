@@ -797,9 +797,9 @@ class MainWP_Post_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'disconnect');
+			$information = MainWP_Utility::fetch_url_authed( $website, 'disconnect');
 		} catch ( Exception $e ) {
-			$information = array( 'error' => __( 'fetchUrlAuthed exception', 'mainwp' ) );
+			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
 		wp_send_json( $information );
@@ -955,7 +955,7 @@ class MainWP_Post_Handler {
 
 			MainWP_Utility::endSession();
 			// Send request to the childsite!
-			$result = MainWP_Utility::fetchUrlAuthed(
+			$result = MainWP_Utility::fetch_url_authed(
 				$website, 'createBackupPoll', array(
 					'fileName'       => $fileName,
 					'fileNameUID'    => $fileNameUID,
@@ -1351,14 +1351,14 @@ class MainWP_Post_Handler {
 			}
 		}
 
-		$rslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+		$rslt = MainWP_Utility::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 
 		if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url    .= 'wp-admin/';
-			$newrslt = MainWP_Utility::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+			$newrslt = MainWP_Utility::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 			if ( isset( $newrslt['error'] ) && ( '' !== $rslt['error'] ) ) {
 				$rslt = $newrslt;
 			}
@@ -1722,7 +1722,7 @@ class MainWP_Post_Handler {
 			die( -1 );
 		}
 
-		$result       = MainWP_Utility::isWebsiteAvailable( $website );
+		$result       = MainWP_Utility::is_website_available( $website );
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$check_result = MainWP_Utility::check_ignored_http_code( $http_code );
 		MainWP_DB::Instance()->updateWebsiteValues(
@@ -1770,7 +1770,7 @@ class MainWP_Post_Handler {
 	}
 
 	public function secure_request( $action = '', $query_arg = 'security' ) {
-		if ( ! MainWP_Utility::isAdmin() ) {
+		if ( ! MainWP_Utility::is_admin() ) {
 			die( 0 );
 		}
 		if ( '' === $action ) {
@@ -1847,19 +1847,19 @@ class MainWP_Post_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'settings_tools', array(
 					'action' => 'force_destroy_sessions',
 				)
 			);
 			global $mainWP;
-			if ( ( '2.0.22' === $mainWP->getVersion() ) || ( '2.0.23' === $mainWP->getVersion() ) ) {
+			if ( ( '2.0.22' === $mainWP->get_version() ) || ( '2.0.23' === $mainWP->get_version() ) ) {
 				if ( get_option( 'mainwp_fixed_security_2022' ) != 1 ) {
 					update_option( 'mainwp_fixed_security_2022', 1 );
 				}
 			}
 		} catch ( Exception $e ) {
-			$information = array( 'error' => __( 'fetchUrlAuthed exception', 'mainwp' ) );
+			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
 		// die( wp_json_encode( $information ) );

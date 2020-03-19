@@ -2796,7 +2796,7 @@ class MainWP_Updates {
 
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgrade' );
+				$information = MainWP_Utility::fetch_url_authed( $website, 'upgrade' );
 
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', wp_json_encode( array() ) );
@@ -3102,7 +3102,7 @@ class MainWP_Updates {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $id );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$information = MainWP_Utility::fetchUrlAuthed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
+				$information = MainWP_Utility::fetch_url_authed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
 					'type'   => $type,
 					'list'   => urldecode( $list ),
 				), true );

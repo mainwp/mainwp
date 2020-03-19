@@ -62,8 +62,8 @@ class MainWP_Manage_Groups {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
 			<div class="item ui checkbox">
-				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" >
-				<label for="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></label>
+				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>" >
+				<label for="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>"><?php echo MainWP_Utility::get_nice_url( $website->url ); ?></label>
 			</div>
 			<?php
 		}

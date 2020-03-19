@@ -2296,7 +2296,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action'     => 'get_edit',
 					'id'         => $postId,
@@ -2504,7 +2504,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'set_terms', array(
 					'id'         => base64_encode( $postId ),
 					'terms'      => base64_encode( $cat_id ),
@@ -2531,7 +2531,7 @@ class MainWP_Post {
 			return;
 		}
 		try {
-			MainWP_Utility::fetchUrlAuthed(
+			MainWP_Utility::fetch_url_authed(
 				$website, 'insert_comment', array(
 					'id'         => $postId,
 					'comments'   => base64_encode( serialize( $comments ) ),

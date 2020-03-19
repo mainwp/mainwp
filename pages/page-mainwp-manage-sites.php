@@ -571,7 +571,7 @@ class MainWP_Manage_Sites {
 		// Creating a backup
 		$website   = MainWP_DB::Instance()->getWebsiteById( $siteid );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $type, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
@@ -579,7 +579,7 @@ class MainWP_Manage_Sites {
 		$subfolder = MainWP_Utility::removePreSlashSpaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
-		if ( ! MainWP_System::Instance()->isSingleUser() && ( $userid != $website->userid ) ) {
+		if ( ! MainWP_System::Instance()->is_single_user() && ( $userid != $website->userid ) ) {
 			throw new MainWP_Exception( 'Undefined error.' );
 		}
 
@@ -685,7 +685,7 @@ class MainWP_Manage_Sites {
 
 				MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
+				$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
 				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
@@ -715,7 +715,7 @@ class MainWP_Manage_Sites {
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
 				// We had some attempts, check if we have information.
-				$temp = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
+				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
 				// ok.
 			}
@@ -727,7 +727,7 @@ class MainWP_Manage_Sites {
 
 						try {
 							// reinitiate the request!
-							$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+							$information = MainWP_Utility::fetch_url_authed( $website, 'backup', array(
 								'type'                  => $type,
 								'exclude'               => $exclude,
 								'excludebackup'         => $excludebackup,
@@ -957,7 +957,7 @@ class MainWP_Manage_Sites {
 					}
 
 					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
-					MainWP_Utility::fetchUrlAuthed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
+					MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
 					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
 			}
@@ -1057,7 +1057,7 @@ class MainWP_Manage_Sites {
 
 	public static function backupDeleteFile( $pSiteId, $pFile ) {
 		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
-		MainWP_Utility::fetchUrlAuthed( $website, 'delete_backup', array( 'del' => $pFile ) );
+		MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
 
 		return true;
 	}
@@ -1066,7 +1066,7 @@ class MainWP_Manage_Sites {
 		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
 
 		MainWP_Utility::endSession();
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
 
 		$status = $information['status'];
 
@@ -1076,7 +1076,7 @@ class MainWP_Manage_Sites {
 			$result['size'] = $information['size'];
 
 			$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-			$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+			$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 			$subfolder = str_replace( '%type%', $type, $subfolder );
 			$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 			$subfolder = str_replace( '%task%', '', $subfolder );
@@ -1161,7 +1161,7 @@ class MainWP_Manage_Sites {
 		// Creating a backup
 		$website   = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
-		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $pType, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
@@ -1264,7 +1264,7 @@ class MainWP_Manage_Sites {
 
 		MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
@@ -1710,7 +1710,7 @@ class MainWP_Manage_Sites {
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information    = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
+				$information    = MainWP_Utility::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
 
 				if ( isset( $information['wpversion'] ) ) { // Version found - able to add
 					$ret['response'] = 'OK';
@@ -1813,7 +1813,7 @@ class MainWP_Manage_Sites {
 				// do not deactive child on staging site, it will deactive child plugin of source site
 				if ( ! $website->is_staging ) {
 					try {
-						$information = MainWP_Utility::fetchUrlAuthed( $website, 'deactivate' );
+						$information = MainWP_Utility::fetch_url_authed( $website, 'deactivate' );
 					} catch ( MainWP_Exception $e ) {
 						$error = $e->getMessage();
 					}
@@ -1852,8 +1852,8 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
-	public static function handleSettingsPost() {
-		if ( MainWP_Utility::isAdmin() ) {
+	public static function handle_settings_post() {
+		if ( MainWP_Utility::is_admin() ) {
 			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
@@ -1926,7 +1926,7 @@ class MainWP_Manage_Sites {
 				$error    = '';
 				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';
 				try {
-					$information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+					$information = MainWP_Utility::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}

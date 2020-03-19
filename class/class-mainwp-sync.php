@@ -48,7 +48,7 @@ class MainWP_Sync {
 			$primaryBackup = MainWP_Utility::get_primary_backup();
 
 			$othersData  = apply_filters( 'mainwp-sync-others-data', array(), $pWebsite );
-			$information = MainWP_Utility::fetchUrlAuthed( $pWebsite, 'stats', array(
+			$information = MainWP_Utility::fetch_url_authed( $pWebsite, 'stats', array(
 				'optimize'                       => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
 				'heatMap'                        => 0,
 				'cloneSites'                     => ( ! $cloneEnabled ? 0 : urlencode( wp_json_encode( $cloneSites ) ) ),

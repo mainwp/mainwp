@@ -72,7 +72,7 @@ class MainWP_Logger {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
+		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 	}
 
 	public function infoForWebsite( $pWebsite, $pAction, $pMessage ) {
@@ -80,7 +80,7 @@ class MainWP_Logger {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
+		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 	}
 
 	public function warningForWebsite( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
@@ -94,7 +94,7 @@ class MainWP_Logger {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::getNiceURL( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
+		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
 	}
 
 	public function log( $pText, $pPriority ) {

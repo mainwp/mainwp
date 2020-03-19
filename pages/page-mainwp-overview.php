@@ -43,7 +43,7 @@ class MainWP_Overview {
 	}
 
 	function on_admin_menu() {
-		if ( MainWP_Utility::isAdmin() ) {
+		if ( MainWP_Utility::is_admin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
 			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(

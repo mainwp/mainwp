@@ -529,7 +529,7 @@ class MainWP_Themes {
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -742,7 +742,7 @@ class MainWP_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,
@@ -1184,7 +1184,7 @@ class MainWP_Themes {
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 					}
 					echo '<div class="ui hidden divider"></div>';
 				}

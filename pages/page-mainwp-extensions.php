@@ -1062,7 +1062,7 @@ class MainWP_Extensions {
 				throw new MainWP_Exception( 'You can not edit this website.' );
 			}
 
-			return MainWP_Utility::fetchUrlAuthed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
+			return MainWP_Utility::fetch_url_authed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
 		} catch ( MainWP_Exception $e ) {
 			return array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
 		}
@@ -1160,7 +1160,7 @@ class MainWP_Extensions {
 			return array(
 				array(
 					'id'        => $websiteid,
-					'url'       => MainWP_Utility::getNiceURL( $website->url, true ),
+					'url'       => MainWP_Utility::get_nice_url( $website->url, true ),
 					'name'      => $website->name,
 					'totalsize' => $website->totalsize,
 				),
@@ -1227,7 +1227,7 @@ class MainWP_Extensions {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$re = array(
 				'id'        => $website->id,
-				'url'       => MainWP_Utility::getNiceURL( $website->url, true ),
+				'url'       => MainWP_Utility::get_nice_url( $website->url, true ),
 				'name'      => $website->name,
 				'totalsize' => $website->totalsize,
 			);

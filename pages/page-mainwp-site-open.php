@@ -44,7 +44,9 @@ class MainWP_Site_Open {
 			<div class="ui active inverted dimmer">
 				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
 			</div>
-			<form method="POST" action="<?php echo MainWP_Utility::getGetDataAuthed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm"></form>
+			<form method="POST" action="<?php echo MainWP_Utility::getGetDataAuthed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+			</form>
 		</div>
 		<?php
 	}
@@ -84,6 +86,7 @@ class MainWP_Site_Open {
 			$postdata['size'] = $size;
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php
 				foreach ( $postdata as $name => $value ) {
 					echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
@@ -109,6 +112,7 @@ class MainWP_Site_Open {
 			$postdata['open_location'] = base64_encode( $open_location );
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php
 				foreach ( $postdata as $name => $value ) {
 					echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';

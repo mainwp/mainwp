@@ -2486,10 +2486,6 @@ class MainWP_Post {
 		return $ret;
 	}
 
-	public static function testPost() {
-		do_action( 'mainwp-do-action', 'test_post' );
-	}
-
 	public static function setTerms( $postId, $cat_id, $taxonomy, $websiteIdEnc ) {
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
 			return;

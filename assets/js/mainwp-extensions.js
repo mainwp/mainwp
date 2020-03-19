@@ -3,10 +3,10 @@
 jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
 {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_add_menu',
         slug: extensionSlug
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function ( response )
     {
@@ -24,10 +24,10 @@ jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
 jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function ()
 {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_remove_menu',
         slug: extensionSlug
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function ( response )
     {
@@ -248,11 +248,11 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
   var pwd = grabingEl.find( '#mainwp_com_password' ).val();
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_testextensionapilogin',
         username: username,
         password: pwd
-    };
+    } );
 
     if ( retring == true ) {
     statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
@@ -320,12 +320,12 @@ extensions_activate_next = function ( pObj ) {
   apiEl.attr( "status", "running" );
 
   var extensionSlug = apiEl.attr( 'extension-slug' );
-  var data = {
+  var data = mainwp_secure_data( {
     action: 'mainwp_extension_grabapikey',
     username: username,
     password: pwd,
     slug: extensionSlug
-  };
+  } );
 
   currentActivateThreads++;
 
@@ -383,11 +383,11 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
 
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_getpurchased',
         username: username,
         password: pwd
-    };
+    } );
 
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
@@ -576,10 +576,10 @@ jQuery( document ).on( 'click', '#mainwp-extensions-api-sslverify-certificate', 
     var statusEl = parent.find( 'span.status' );
     var loadingEl = parent.find( "i" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_apisslverifycertificate',
         api_sslverify: jQuery( "#mainwp_api_sslVerifyCertificate" ).val()
-    };
+    } );
 
     statusEl.hide();
     loadingEl.show();

@@ -17,20 +17,12 @@ class MainWP_Setup_Wizard {
 
 	private $step  = '';
 	private $steps = array();
-	// private $backup_extensions         = array();
-	// private $uptime_robot_api_url  = 'https://api.uptimerobot.com/v2';
-
+	
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ), 999 );
 	}
-
-	public static function init() {
-		// add_action( 'wp_ajax_mainwp_setup_extension_getextension', array( 'MainWP_Setup_Wizard', 'ajax_get_backup_extension' ) );
-		// add_action( 'wp_ajax_mainwp_setup_extension_downloadandinstall', array( 'MainWP_Setup_Wizard', 'ajax_download_and_install' ) );
-		// add_action( 'wp_ajax_mainwp_setup_extension_grabapikey', array( 'MainWP_Setup_Wizard', 'ajax_grab_api_key' ) );
-		// add_action( 'wp_ajax_mainwp_setup_extension_activate_plugin', array( 'MainWP_Setup_Wizard', 'ajax_activate_plugin' ) );
-	}
+	
 
 	public function admin_menus() {
 		add_dashboard_page( '', '', 'manage_options', 'mainwp-setup', '' );
@@ -261,6 +253,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Installation', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="grouped fields">
 				<label><?php esc_html_e( 'What type of server is this?', 'mainwp' ); ?></label>
 				<div class="field" id="mainwp-setup-installation-hosting-type">
@@ -392,6 +385,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 			<div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
 			<div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
@@ -460,6 +454,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Performance', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<?php if ( $installation_hosting_type == 1 ) : ?>
 			<div class="field">
 				<label><?php esc_html_e( 'What type of hosting is this MainWP Dashboard site on?', 'mainwp' ); ?></label>
@@ -557,6 +552,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Optimization', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="field">
 				<label><?php esc_html_e( 'Add MainWP Child to trusted updates?', 'mainwp' ); ?></label>
 				<div class="ui info message"><?php esc_html_e( 'This allows your MainWP Dashboard to automatically update the MainWP Child plugin whenever a new version is released.', 'mainwp' ); ?></div>
@@ -611,6 +607,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Notifications', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="field">
 				<label><?php esc_html_e( 'Do you want to receive important email notifications from your MainWP Dashboard?', 'mainwp' ); ?></label>
 				<div class="ui toggle checkbox">
@@ -716,6 +713,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'Backups', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="field">
 				<label><?php esc_html_e( 'Are you planning to use MainWP for backups?', 'mainwp' ); ?></label>
 				<div class="ui toggle checkbox">
@@ -1025,6 +1023,7 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1><?php esc_html_e( 'Backups', 'mainwp' ); ?></h1>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="mwp_setup_extension_product_id" id="mwp_setup_extension_product_id" value="<?php echo esc_attr( $ext_product_id ); ?>" slug="<?php echo esc_attr( $ext_slug ); ?>">
 			<div id="mainwp-quick-setup-extension-insatllation">
 				<?php if ( $ext_installed ) : ?>
@@ -1128,6 +1127,7 @@ class MainWP_Setup_Wizard {
 		<a class="ui green big fluid button" target="_blank" onclick="return mainwp_setup_auth_uptime_robot( '<?php echo $uptimerobot_url; ?>' );" href="<?php echo $uptimerobot_url; ?>"><?php esc_html_e( 'Click Here To Authorize Uptime Robot', 'mainwp' ); ?></a>
 		<div class="ui divider"></div>
 		<form method="post" class="ui form">
+			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<?php if ( ! empty( $ur_api_key ) ) : ?>
 			<div class="field">
 				<label><?php esc_html_e( 'Your Uptime Robot API key', 'mainwp' ); ?></label>

@@ -397,6 +397,7 @@ class MainWP_User {
 			<div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
 			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_user_profile">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="ui segment">
 					<div class="ui form">
 						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h2>
@@ -933,6 +934,7 @@ class MainWP_User {
 
 		<div class="ui alt segment" id="mainwp-add-users">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1063,6 +1065,7 @@ class MainWP_User {
 		<?php self::renderHeader( 'Import' ); ?>
 		<div id="MainWP_Bulk_AddUser">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php echo self::renderImportUsers(); ?>
 			</form>
 		</div>
@@ -1079,6 +1082,7 @@ class MainWP_User {
 				<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 				<div class="ui segment form">
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
 							<div class="ten wide column">

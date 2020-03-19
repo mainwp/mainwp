@@ -259,10 +259,10 @@ class MainWP_Manage_Groups {
 
 					var groupId = parentObj.attr( 'group-id' );
 
-					var data = {
+					var data = mainwp_secure_data( {
 						action: 'mainwp_group_getsites',
 						groupId: groupId
-					}
+					} );
 
 		  jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
 					jQuery.post( ajaxurl, data, function ( response ) {

@@ -51,12 +51,6 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups.', 'mainwp' );
 			}
 
-			// if ( ! isset( $_POST['pass1'] ) || $_POST['pass1'] == '' || ! isset( $_POST['pass2'] ) || $_POST['pass2'] == '' ) {
-			// $errors[] = __( 'Please enter the password twice.', 'mainwp' );
-			// } else if ( $_POST['pass1'] != $_POST['pass2'] ) {
-			// $errors[] = __( 'Please enter the same password in the both password fields.', 'mainwp' );
-			// }
-
 			if ( ! isset( $_POST['password'] ) || $_POST['password'] == '' ) {
 				$errors[] = __( 'Please enter the password.', 'mainwp' );
 			}
@@ -160,6 +154,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		<?php endif; ?>
 		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
 					<div class="mainwp-main-content">
 						<div class="ui hidden divider"></div>

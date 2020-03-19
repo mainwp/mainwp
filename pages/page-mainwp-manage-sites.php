@@ -193,6 +193,7 @@ class MainWP_Manage_Sites {
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 					<div class="scrolling content ui form">
 						<form method="POST" action="" id="manage-sites-screen-options-form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
@@ -322,6 +323,7 @@ class MainWP_Manage_Sites {
 			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
 
 			<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
@@ -489,7 +491,7 @@ class MainWP_Manage_Sites {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
+			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 				?>
 				<div class="ui modal" id="mainwp-import-sites-modal">
 					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
@@ -518,6 +520,7 @@ class MainWP_Manage_Sites {
 				<div class="ui segment" id="mainwp-import-sites">
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
 						  <div class="ten wide column">
@@ -1529,6 +1532,7 @@ class MainWP_Manage_Sites {
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 			<form method="post" class="mainwp-table-container">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php
 				self::$sitesTable->display( $optimize_for_sites_table );
 				self::$sitesTable->clear_items();

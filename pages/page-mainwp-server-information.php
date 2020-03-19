@@ -1367,6 +1367,7 @@ class MainWP_Server_Information {
 
 			<div style="padding: 1em;">
 				<form method="POST" action="">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					Status:
 					<select name="actionlogs_status">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" 

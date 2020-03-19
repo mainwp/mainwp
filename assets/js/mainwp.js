@@ -1498,10 +1498,11 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
             else if (pWhat == 'translation')
                 dashboardActionName = 'upgrade_all_translations';
             else
-                dashboardActionName = 'upgrade_all_themes';
+                dashboardActionName = 'upgrade_all_themes';            
+            countRealItemsUpdated = 0;
+            couttItemsToUpdate = 0;
             
             if ( newList.length > 0 ) {
-
                 var data = mainwp_secure_data( {
                     action: 'mainwp_upgradeplugintheme',
                     websiteId: pId,
@@ -1536,7 +1537,7 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
                             var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
                             jQuery('#bulk_install_info').html('<i class="fa fa-spinner fa-pulse"></i>');
                             if (countSec <= mainwpParams.maxSecondsTwit) {
-                                var data = {
+                                var data = mainwp_secure_data( {
                                     action: 'mainwp_twitter_dashboard_action',
                                     actionName: dashboardActionName,
                                     countSites: 1,
@@ -1544,7 +1545,7 @@ updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, g
                                     countItems: couttItemsToUpdate,
                                     countRealItems: countRealItemsUpdated,
                                     showNotice: 1
-                                };
+                                } );
                                 jQuery.post(ajaxurl, data, function (res) {
                                     if (res && res != '') {
                                         jQuery('#mainwp-dashboard-info-box').html(res);
@@ -1700,10 +1701,10 @@ managebackups_run_now = function ( el )
     var taskId = el.attr( 'task_id' );
     var taskType = el.attr( 'task_type' );
     //Fetch the sites to backup
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_backuptask_get_sites',
         task_id: taskId
-    };
+    } );
 
     manageBackupsError = false;
 
@@ -2544,10 +2545,10 @@ mainwp_overview_reconnect = function ( pElement ) {
     var parent = pElement.parent();
     parent.html( '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_reconnectwp',
         siteid: wrapElement.attr( 'site_id' )
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function () {
         return function ( response ) {
@@ -2572,10 +2573,10 @@ mainwp_overview_reconnect = function ( pElement ) {
 mainwp_managesites_reconnect = function ( pElement ) {
   var wrapElement = pElement.closest('tr');
   wrapElement.html( '<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>' );
-  var data = {
+  var data = mainwp_secure_data( {
     action: 'mainwp_reconnectwp',
     siteid: wrapElement.attr( 'siteid' )
-  };
+  } );
 
   jQuery.post( ajaxurl, data, function ( pWrapElement ) {
     return function ( response ) {
@@ -3450,13 +3451,13 @@ mainwp_newpost_updateCategories = function ()
 
         var selected_categories = catsSelection.dropdown('get value');
 
-        var data = {
+        var data = mainwp_secure_data( {
             action: 'mainwp_get_categories',
             sites: encodeURIComponent( sites.join( ',' ) ),
             groups: encodeURIComponent( groups.join( ',' ) ),
             selected_categories: selected_categories ? encodeURIComponent( selected_categories.join( ',' ) ) : '',
             post_id: jQuery( '#post_ID' ).val()
-        };
+        } );
 
         jQuery.post( ajaxurl, data, function ( pSelectedCategories ) {
             return function ( response ) {
@@ -3909,12 +3910,12 @@ bulkInstallTotal = 0;
 bulkInstallDone = 0;
 
 mainwp_install_bulk = function ( type, slug ) {
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_preparebulkinstallplugintheme',
         type: type,
         slug: slug,
         selected_by: jQuery( '#select_by' ).val()
-    };
+    } );
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
@@ -3956,6 +3957,7 @@ mainwp_install_bulk = function ( type, slug ) {
                 dashboardActionName = 'installing_new_plugin';
             else
                 dashboardActionName = 'installing_new_theme';
+            countRealItemsUpdated = 0;
             
             bulkInstallDone = 0;
 
@@ -4002,7 +4004,7 @@ mainwp_install_bulk_start_next = function ( pType, pUrl, pActivatePlugin, pOverw
             var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
             jQuery('#bulk_install_info').html('<i class="fa fa-spinner fa-pulse"></i>');
             if (countSec <= mainwpParams.maxSecondsTwit) {
-                var data = {
+                var data = mainwp_secure_data( {
                     action:'mainwp_twitter_dashboard_action',
                     actionName: dashboardActionName,
                     countSites: countRealItemsUpdated,
@@ -4010,7 +4012,7 @@ mainwp_install_bulk_start_next = function ( pType, pUrl, pActivatePlugin, pOverw
                     countItems: 1,
                     countRealItems: countRealItemsUpdated,
                     showNotice: 1
-                };
+                } );
                 jQuery.post(ajaxurl, data, function (res) {
                     if (res && res != ''){
                         jQuery('#bulk_install_info').html(res);
@@ -4128,11 +4130,11 @@ mainwp_upload_bulk = function ( type ) {
         return;
     }
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_preparebulkuploadplugintheme',
         type: type,
         selected_by: jQuery( '#select_by' ).val()
-    };
+    } );
     if ( jQuery( '#select_by' ).val() == 'site' ) {
         var selected_sites = [ ];
         jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
@@ -5185,7 +5187,7 @@ mainwp_fetch_pages = function () {
         jQuery( '#mainwp_pages_error' ).hide();
     }
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_pages_search',
         keyword: jQuery( '#mainwp_page_search_by_keyword' ).val(),
         dtsstart: jQuery( '#mainwp_page_search_by_dtsstart' ).val(),
@@ -5195,7 +5197,7 @@ mainwp_fetch_pages = function () {
         'sites[]': selected_sites,
         maximum: jQuery( "#mainwp_maximumPages" ).val(),
         search_on: jQuery( "#mainwp_page_search_on" ).val(),
-    };
+    } );
 
     jQuery( '#mainwp-loading-pages-row' ).show();
     jQuery.post( ajaxurl, data, function ( response ) {
@@ -5718,7 +5720,7 @@ mainwp_fetch_posts = function ( postId, userId ) {
         jQuery( '#mainwp-message-zone' ).hide();
     }
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_posts_search',
         keyword: jQuery( '#mainwp_post_search_by_keyword' ).val(),
         dtsstart: jQuery( '#mainwp_post_search_by_dtsstart' ).val(),
@@ -5731,7 +5733,7 @@ mainwp_fetch_posts = function ( postId, userId ) {
         post_type: jQuery( "#mainwp_get_custom_post_types_select" ).val(),
         maximum: jQuery( "#mainwp_maximumPosts" ).val(),
         search_on: jQuery( "#mainwp_post_search_on" ).val()
-    };
+    } );
 
     jQuery( '#mainwp-loading-posts-row' ).show();
     jQuery.post( ajaxurl, data, function ( response ) {
@@ -7143,10 +7145,10 @@ mainwp_managesites_bulk_reconnect_specific = function ( pCheckedBox ) {
 
     rowObj.html( '<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>' );
 
-    var data = {
+    var data = mainwp_secure_data( {
       action: 'mainwp_reconnectwp',
       siteid: siteId
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function ( response ) {
       bulkManageSitesCurrentThreads--;

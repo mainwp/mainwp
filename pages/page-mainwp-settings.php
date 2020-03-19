@@ -345,6 +345,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'Settings' ); ?>" />
 						<h3 class="ui dividing header"><?php esc_html_e( 'Optimization', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
@@ -769,6 +770,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 						<?php
 						if ( self::showOpensslLibConfig() ) {
@@ -877,6 +879,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 					<h3 class="ui dividing header"><?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
 					<div class="ui grid field">

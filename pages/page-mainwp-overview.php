@@ -286,6 +286,7 @@ class MainWP_Overview {
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="content ui form">
 				<form method="POST" action="">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
 					<?php echo MainWP_UI::render_screen_options( false ); ?>
 			</div>

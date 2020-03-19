@@ -887,7 +887,10 @@ class MainWP_Plugins {
 				<?php MainWP_Install_Bulk::renderUpload( 'plugin' ); ?>
 			</div>
 			<div class="mainwp-browse-plugins">
-				<form id="plugin-filter" method="post"><?php self::$pluginsTable->display(); ?></form>
+				<form id="plugin-filter" method="post">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<?php self::$pluginsTable->display(); ?>
+				</form>
 			</div>
 			<?php
 			MainWP_UI::render_modal_install_plugin_theme();

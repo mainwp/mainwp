@@ -868,6 +868,7 @@ class MainWP_Themes {
 					</div>
 					<div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
 					<form id="theme-filter" method="post">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="mainwp-browse-themes content-filterable hide-if-upload"></div>
 						<div class="theme-install-overlay wp-full-overlay expanded"></div>
 					</form>

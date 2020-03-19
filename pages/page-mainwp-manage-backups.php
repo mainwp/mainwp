@@ -345,6 +345,7 @@ class MainWP_Manage_Backups {
 					</div>
 
 				<form method="post" class="mainwp-table-container">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<?php
 					MainWP_UI::render_modal_edit_notes();
 					self::Instance()->display( $backup_items );
@@ -573,6 +574,7 @@ class MainWP_Manage_Backups {
 		<div class="ui alt segment">
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 			<form method="POST" action="" class="ui form">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="mainwp_managebackups_edit_id" id="mainwp_managebackups_edit_id" value="<?php echo esc_attr($task->id); ?>"/>
 				<?php
 				self::renderNewEdit( $task );
@@ -593,6 +595,7 @@ class MainWP_Manage_Backups {
 		<div class="ui alt segment">
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 			<form method="POST" action="" id="mainwp-backup-task-form" class="ui form">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php self::renderNewEdit( null ); ?>
 			</form>
 		</div>

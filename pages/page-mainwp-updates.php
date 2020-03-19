@@ -537,6 +537,7 @@ class MainWP_Updates {
 					</div>
 					<div class="right aligned middle aligned column">
 						<form method="post" action="" class="ui mini form">
+							<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 							<div class="inline field">
 								<label for="mainwp_select_options_siteview"><?php esc_html_e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">

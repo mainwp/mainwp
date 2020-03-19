@@ -270,7 +270,7 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 		$errors = array();
-		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {			
+		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
 				$content  = file_get_contents( $tmp_path );

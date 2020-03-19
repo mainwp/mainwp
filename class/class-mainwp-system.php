@@ -231,7 +231,7 @@ class MainWP_System {
 		MainWP_Page::init();
 		MainWP_Themes::init();
 		MainWP_Plugins::init();
-		MainWP_Updates_Overview::init();		
+		MainWP_Updates_Overview::init();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MainWP_WP_CLI_Command::init();
 		}
@@ -1767,7 +1767,7 @@ class MainWP_System {
 		}
 	}
 
-	public static function sync_site_icon( $siteId = null ) {		
+	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {

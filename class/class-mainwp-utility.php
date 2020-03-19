@@ -3323,7 +3323,7 @@ EOT;
 			return json_decode( $data, true );
 		}
 	}
-	
+
 	public static function render_mainwp_nonce() {
 		wp_nonce_field( 'mainwp-admin-nonce' );
 	}

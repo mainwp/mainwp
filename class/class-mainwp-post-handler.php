@@ -60,7 +60,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
 
 		// Page: InstallPlugins/Themes
-		$this->addAction( 
+		$this->addAction(
 			'mainwp_preparebulkinstallplugintheme', array(
 				&$this,
 				'mainwp_preparebulkinstallplugintheme',
@@ -87,7 +87,7 @@ class MainWP_Post_Handler {
 		$this->addAction( 'mainwp_cleanbulkuploadplugintheme', array( &$this, 'mainwp_cleanbulkuploadplugintheme' ) );
 
 		// Page: BulkAddUser
-		$this->addAction( 'mainwp_bulkadduser', array( &$this, 'mainwp_bulkadduser' ) );		
+		$this->addAction( 'mainwp_bulkadduser', array( &$this, 'mainwp_bulkadduser' ) );
 		$this->addAction( 'mainwp_importuser', array( &$this, 'mainwp_importuser' ) );
 
 		// Widget: RightNow
@@ -194,7 +194,7 @@ class MainWP_Post_Handler {
 
 		// Page: Posts
 		$this->addAction( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); // ok
-		$this->addAction( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); // ok		
+		$this->addAction( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); // ok
 		$this->addAction( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 
 		// Page: Pages
@@ -672,7 +672,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_twitter_dashboard_action() {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
-		
+
 		$success = false;
 		if ( isset( $_POST['actionName'] ) && isset( $_POST['countSites'] ) && ! empty( $_POST['countSites'] ) ) {
 			$success = MainWP_Twitter::update_twitter_info( $_POST['actionName'], $_POST['countSites'], (int) $_POST['countSeconds'], ( isset( $_POST['countRealItems'] ) ? $_POST['countRealItems'] : 0 ), time(), ( isset( $_POST['countItems'] ) ? $_POST['countItems'] : 0 ) );
@@ -1287,7 +1287,7 @@ class MainWP_Post_Handler {
 			$siteId = null;
 			if ( isset( $_POST['siteId'] ) ) {
 				$siteId = intval( $_POST['siteId'] );
-			}		
+			}
 			$result = MainWP_System::sync_site_icon( $siteId );
 			wp_send_json( $result );
 		} else {

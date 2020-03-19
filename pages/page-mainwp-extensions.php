@@ -433,7 +433,7 @@ class MainWP_Extensions {
 		);
 
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
-			MainWP_Post_Handler::Instance()->addAction(			
+			MainWP_Post_Handler::Instance()->addAction(
 				'mainwp_extension_grabapikey', array(
 					self::get_class_name(),
 					'grabapikeyExtension',

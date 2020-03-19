@@ -3317,6 +3317,7 @@ EOT;
 	}
 
 	public static function get_child_response( $data ) {
+		// to compatible.
 		if ( is_serialized( $data ) ) {
 			return unserialize( $data, array( 'allowed_classes' => false ) );
 		} else {
@@ -3326,5 +3327,15 @@ EOT;
 	
 	public static function render_mainwp_nonce() {
 		wp_nonce_field( 'mainwp-admin-nonce' );
+	}
+	
+	public static function maybe_unserialyze( $data ) {
+		if ( '' == $data || is_array( $data ) ) {
+			return $data;
+		} else if ( is_serialized( $data )) {
+			return maybe_unserialize( $data );
+		} else {
+			return maybe_unserialize( base64_decode( $data ) );
+		} 			
 	}
 }

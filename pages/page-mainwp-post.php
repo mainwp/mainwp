@@ -1026,7 +1026,7 @@ class MainWP_Post {
 
 		if ( is_serialized( $entry['meta_value'] ) ) {
 			if ( is_serialized_string( $entry['meta_value'] ) ) {
-				$entry['meta_value'] = maybe_unserialize( $entry['meta_value'] );
+				$entry['meta_value'] = MainWP_Utility::maybe_unserialyze( $entry['meta_value'] );
 			} else {
 				--$count;
 				return '';
@@ -1943,8 +1943,10 @@ class MainWP_Post {
 						$_post = get_post( $id );
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
-							$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
-							$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
+							$val  = get_post_meta( $id, '_selected_sites', true );
+							$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
+							$val = get_post_meta( $id, '_selected_groups', true );
+							$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
 
 							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) );
 
@@ -2226,11 +2228,11 @@ class MainWP_Post {
 
 		if ( 'bulk' === $prefix ) {
 			$opt           = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
-			$selected_cats = unserialize( base64_decode( $opt ) );
+			$selected_cats = MainWP_Utility::maybe_unserialyze( $opt );
 		} else {
 			$opt = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', $keyword_option );
 			if ( is_array( $opt ) && is_array( $opt[ $prefix ] ) ) {
-				$selected_cats = unserialize( base64_decode( $opt[ $prefix ]['selected_cats'] ) );
+				$selected_cats = MainWP_Utility::maybe_unserialyze( $opt[ $prefix ]['selected_cats'] );
 			}
 		}
 		$selected_cats = is_array( $selected_cats ) ? $selected_cats : array();
@@ -2314,7 +2316,8 @@ class MainWP_Post {
 		} else {
 			$ret = self::newPost( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
-				update_post_meta( $ret['id'], '_selected_sites', base64_encode( serialize( array( $websiteId ) ) ) );
+				// to support edit post
+				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
 			wp_send_json( $ret );

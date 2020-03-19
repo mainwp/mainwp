@@ -8,16 +8,23 @@ class MainWP_Meta_Boxes {
 	}
 
 	public function select_sites( $post ) {
-		$selected_sites = unserialize( base64_decode( get_post_meta( $post->ID, '_selected_sites', true ) ) );
-		if ( '' === $selected_sites ) {
+		
+		$val = get_post_meta( $post->ID, '_selected_sites', true );
+		$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
+				
+		if ( '' == $selected_sites ) {
 			$selected_sites = array();
 		}
 
 		if ( isset( $_REQUEST['select'] ) ) {
 			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( $_REQUEST['select'] ) );
 		}
-		$selected_groups = unserialize( base64_decode( get_post_meta( $post->ID, '_selected_groups', true ) ) );
-		if ( '' === $selected_groups ) {
+		
+		$val = get_post_meta( $post->ID, '_selected_groups', true );
+		$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
+			
+		
+		if ( '' == $selected_groups ) {
 			$selected_groups = array();
 		}
 		?>
@@ -62,8 +69,8 @@ class MainWP_Meta_Boxes {
 				foreach ( $_POST['selected_sites'] as $selected ) {
 					$selected_wp[] = $selected;
 				}
-			}
-			update_post_meta( $post_id, '_selected_sites', base64_encode( serialize( $selected_wp ) ) );
+			}			
+			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 
 			$selected_group = array();
 			if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
@@ -71,7 +78,7 @@ class MainWP_Meta_Boxes {
 					$selected_group[] = $selected;
 				}
 			}
-			update_post_meta( $post_id, '_selected_groups', base64_encode( serialize( $selected_group ) ) );
+			update_post_meta( $post_id, '_selected_groups', $selected_group );
 			update_post_meta( $post_id, '_selected_by', $_POST['select_by'] );
 
 			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_group ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {

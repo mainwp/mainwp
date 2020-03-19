@@ -701,7 +701,7 @@ class MainWP_Updates {
 													continue;
 												}
 
-												$total_group_wp_updates += 1;
+												$total_group_wp_updates++;
 												?>
 												<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
 													<td>

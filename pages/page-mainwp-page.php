@@ -818,8 +818,10 @@ class MainWP_Page {
 					$_post = get_post( $id );
 					if ( $_post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );
-						$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
-						$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
+						$val  = get_post_meta( $id, '_selected_sites', true );
+						$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
+						$val = get_post_meta( $id, '_selected_groups', true );
+						$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
 						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) );
 						$post_custom     = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';

@@ -7,13 +7,18 @@ class MainWP_UI {
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( $postId ) {
-			$selected_websites = unserialize( base64_decode( get_post_meta( $postId, '_selected_sites', true ) ) );
-			if ( '' === $selected_websites ) {
+			
+			$sites_val = get_post_meta( $postId, '_selected_sites', true );
+			$selected_websites	= MainWP_Utility::maybe_unserialyze( $sites_val );
+			
+			if ( '' == $selected_websites ) {
 				$selected_websites = array();
 			}
 
-			$selected_groups = unserialize( base64_decode( get_post_meta( $postId, '_selected_groups', true ) ) );
-			if ( '' === $selected_groups ) {
+			$groups_val = get_post_meta( $postId, '_selected_groups', true );
+			$selected_groups	= MainWP_Utility::maybe_unserialyze( $groups_val );
+						
+			if ( '' == $selected_groups ) {
 				$selected_groups = array();
 			}
 		}

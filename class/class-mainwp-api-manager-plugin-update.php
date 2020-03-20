@@ -26,7 +26,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	protected static $_instance = null;
 
 	/**
-	 * @static Method instance()
+	 * Method instance()
+	 * 
+	 * @static
 	 * @return class instance
 	 */
 	public static function instance() {
@@ -145,6 +147,8 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * @access public
 	 * @since  1.0.0
+	 * @param mixed $args
+	 * @param boolen $bulk_check Check if updating in bulk true|false
 	 * @return object $response
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {

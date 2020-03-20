@@ -4,7 +4,7 @@
  * 
  * Legacy Client Reports Extension.
  * 
- * @Depriciated moved to external Extension
+ * @deprecated moved to external Extension
  */
 
 /**

@@ -58,7 +58,7 @@ class MainWP_User {
 		add_submenu_page(
 			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
 				self::get_class_name(),
-				'renderBulkImportUsers',
+				'render_bulk_import_users',
 			)
 		);
 
@@ -290,7 +290,7 @@ class MainWP_User {
 					<?php self::render_table( true ); ?>
 				</div>
 				<div id="mainwp-update-users-box" class="ui segment">
-					<?php self::renderUpdateUsers(); ?>
+					<?php self::render_update_users(); ?>
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
@@ -378,7 +378,7 @@ class MainWP_User {
 		}
 	}
 
-	public static function renderUpdateUsers() {
+	public static function render_update_users() {
 
 		$editable_roles = array(
 			'donotupdate'   => __( 'Do not update', 'mainwp' ),
@@ -612,7 +612,7 @@ class MainWP_User {
 							}
 
 							$tmpUsers       = array( $user );
-							$output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );
+							$output->users += self::users_search_handler_renderer( $tmpUsers, $website );
 						}
 					}
 				}
@@ -653,7 +653,7 @@ class MainWP_User {
 								}
 
 								$tmpUsers       = array( $user );
-								$output->users += self::usersSearchHandlerRenderer( $tmpUsers, $website );
+								$output->users += self::users_search_handler_renderer( $tmpUsers, $website );
 							}
 						}
 						MainWP_DB::free_result( $websites );
@@ -717,9 +717,9 @@ class MainWP_User {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'search_users', $post_data, array(
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'search_users', $post_data, array(
 				self::get_class_name(),
-				'UsersSearch_handler',
+				'users_search_handler',
 			), $output );
 		}
 
@@ -748,7 +748,7 @@ class MainWP_User {
 		}
 	}
 
-	private static function getRole( $role ) {
+	private static function get_role( $role ) {
 		if ( is_array( $role ) ) {
 			$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
 			$ret           = '';
@@ -768,7 +768,7 @@ class MainWP_User {
 		return ucfirst( $role );
 	}
 
-	protected static function usersSearchHandlerRenderer( $users, $website ) {
+	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
 
 		foreach ( $users as $user ) {
@@ -787,7 +787,7 @@ class MainWP_User {
 					</td>
 				<td class="username column-username"><strong><abbr title="<?php echo esc_attr( $user['login'] ); ?>"><?php echo esc_html( $user['login'] ); ?></abbr></strong></td>
 				<td class="email column-email"><a href="mailto:<?php echo esc_attr( $user['email'] ); ?>"><?php echo esc_html( $user['email'] ); ?></a></td>
-				<td class="role column-role"><?php echo self::getRole( $user['role'] ); ?></td>
+				<td class="role column-role"><?php echo self::get_role( $user['role'] ); ?></td>
 				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
@@ -815,12 +815,12 @@ class MainWP_User {
 		return $return;
 	}
 
-	public static function UsersSearch_handler( $data, $website, &$output ) {
+	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 			unset( $results );
-			$output->users += self::usersSearchHandlerRenderer( $users, $website );
+			$output->users += self::users_search_handler_renderer( $users, $website );
 			unset( $users );
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
@@ -837,12 +837,12 @@ class MainWP_User {
 		wp_send_json( $information );
 	}
 
-	public static function updateUser() {
+	public static function update_user() {
 		self::action( 'update_user' );
 		die( wp_json_encode( array( 'result' => __( 'User has been updated', 'mainwp' ) ) ) );
 	}
 
-	public static function updatePassword() {
+	public static function update_password() {
 		self::action( 'update_password' );
 		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
@@ -1056,9 +1056,9 @@ class MainWP_User {
 		self::render_footer( 'Add' );
 	}
 
-	public static function renderBulkImportUsers() {
+	public static function render_bulk_import_users() {
 		if ( isset( $_FILES['import_user_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
-			self::renderBulkUpload();
+			self::render_bulk_upload();
 			return;
 		}
 		?>
@@ -1066,14 +1066,14 @@ class MainWP_User {
 		<div id="MainWP_Bulk_AddUser">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<?php echo self::renderImportUsers(); ?>
+				<?php echo self::render_import_users(); ?>
 			</form>
 		</div>
 		<?php
 		self::render_footer( 'Import' );
 	}
 
-	public static function renderImportUsers() {
+	public static function render_import_users() {
 		?>
 		<div class="ui segment" id="mainwp-import-sites">
 			<div class="ui hidden divider"></div>
@@ -1104,7 +1104,7 @@ class MainWP_User {
 		<?php
 	}
 
-	public static function doBukAdd() {
+	public static function do_buk_add() {
 		$errors      = array();
 		$errorFields = array();
 
@@ -1218,7 +1218,7 @@ class MainWP_User {
 				$output         = new stdClass();
 				$output->ok     = array();
 				$output->errors = array();
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newuser', $post_data, array(
+				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(
 					MainWP_Bulk_Add::get_class_name(),
 					'posting_bulk_handler',
 				), $output );
@@ -1277,7 +1277,7 @@ class MainWP_User {
 		}
 	}
 
-	public static function renderBulkUpload() {
+	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
 
 		$errors = array();
@@ -1388,7 +1388,7 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
-	public static function doImport() {
+	public static function do_import() {
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();
 			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
@@ -1483,7 +1483,7 @@ class MainWP_User {
 			$output         = new stdClass();
 			$output->ok     = array();
 			$output->errors = array();
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newuser', $post_data, array(
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(
 				MainWP_Bulk_Add::get_class_name(),
 				'posting_bulk_handler',
 			), $output );

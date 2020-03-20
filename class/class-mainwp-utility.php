@@ -563,7 +563,7 @@ class MainWP_Utility {
 		return null;
 	}
 
-	public static function getGetDataAuthed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
+	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
 			$nonce = rand( 0, 9999 );
@@ -626,7 +626,7 @@ class MainWP_Utility {
 		return null;
 	}
 
-	static function fetchUrlsAuthed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
+	static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}
@@ -641,7 +641,7 @@ class MainWP_Utility {
 			$loops = ceil( $total / $chunkSize );
 			for ( $i = 0; $i < $loops; $i ++ ) {
 				$newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
-				self::fetchUrlsAuthed( $newSites, $what, $params, $handler, $output, $whatPage, $others, $is_external_hook );
+				self::fetch_urls_authed( $newSites, $what, $params, $handler, $output, $whatPage, $others, $is_external_hook );
 				sleep( 5 );
 			}
 
@@ -1106,11 +1106,6 @@ class MainWP_Utility {
 		return true;
 	}
 
-	// deprecated, to compatible.
-	public static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null ) {
-		return self::fetch_url_authed( $website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null );
-	}
-
 	public static function fetch_url_authed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								$pRetryFailed = true, $rawResponse = null ) {
 		if ( ! is_array( $params ) ) {
@@ -1203,7 +1198,7 @@ class MainWP_Utility {
 		$information = array();
 
 		if ( ! $request_update ) {
-			$information = self::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+			$information = self::fetch_url( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
 		} else {
 			$slug                    = $params['list'];
 			$information['upgrades'] = array( $slug => 1 );
@@ -1259,10 +1254,10 @@ class MainWP_Utility {
 		$website  = null;
 
 		$others['function'] = $what;
-		return self::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
+		return self::fetch_url( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
 	}
 
-	public static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	public static function fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 						$verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0,
 						$others = array() ) {
 		$start = time();
@@ -1277,25 +1272,25 @@ class MainWP_Utility {
 				$tmpUrl .= 'wp-admin/admin-ajax.php';
 			}
 
-			return self::_fetchUrl( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+			return self::_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 		} catch ( Exception $e ) {
 			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
 				throw $e;
 			}
 
 			try {
-				return self::_fetchUrl( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+				return self::_fetch_url( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 			} catch ( Exception $ex ) {
 				throw $e;
 			}
 		}
 	}
 
-	public static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	public static function _fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
@@ -1489,7 +1484,7 @@ class MainWP_Utility {
 		@ini_set( 'max_execution_time', $timeout );
 		self::end_session();
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Executing handlers' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Executing handlers' );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1532,30 +1527,30 @@ class MainWP_Utility {
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'post data: [' . print_r( $postdata, 1 ) . ']' );
 		}
 
 		if ( ( false === $data ) && ( 0 === $http_status ) ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( empty( $data ) && ! empty( $err ) ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = self::get_child_response( base64_decode( $result ) );
 
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 === $http_status && ! empty( $err ) ) {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( $raw_response ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Response: [RAW]' );
 			return $data;
 		} else {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}
@@ -1678,7 +1673,7 @@ class MainWP_Utility {
 
 	public static function redirect_request_site( $website, $where_url ) {
 
-		$request_url = self::getGetDataAuthed( $website, $where_url );
+		$request_url = self::get_get_data_authed( $website, $where_url );
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$args  = array(
@@ -1837,7 +1832,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_icons_dir() {
-		$dirs = self::getMainWPDir();
+		$dirs = self::get_mainwp_dir();
 		$dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 		$url  = $dirs[1] . 'icons/';
 		if ( ! file_exists( $dir ) ) {
@@ -1849,7 +1844,7 @@ class MainWP_Utility {
 		return array( $dir, $url );
 	}
 
-	public static function getMainWPDir() {
+	public static function get_mainwp_dir() {
 		$upload_dir = wp_upload_dir();
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
 		$url        = $upload_dir['baseurl'] . '/mainwp/';
@@ -1865,7 +1860,7 @@ class MainWP_Utility {
 
 	public static function get_download_url( $what, $filename ) {
 		$specificDir = self::get_mainwp_specific_dir( $what );
-		$mwpDir      = self::getMainWPDir();
+		$mwpDir      = self::get_mainwp_dir();
 		$mwpDir      = $mwpDir[0];
 		$fullFile    = $specificDir . $filename;
 
@@ -1884,7 +1879,7 @@ class MainWP_Utility {
 
 		global $wp_filesystem;
 
-		$dirs   = self::getMainWPDir();
+		$dirs   = self::get_mainwp_dir();
 		$newdir = $dirs[0] . $userid . ( null != $dir ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '' );
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -1919,7 +1914,7 @@ class MainWP_Utility {
 
 			global $wp_filesystem;
 
-			$dirs      = self::getMainWPDir();
+			$dirs      = self::get_mainwp_dir();
 			$cookieDir = $dirs[0] . 'cookies';
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -1963,7 +1958,7 @@ class MainWP_Utility {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
-		$dirs = self::getMainWPDir();
+		$dirs = self::get_mainwp_dir();
 
 		return $dirs[1] . $userid . '/' . $dir . '/';
 	}
@@ -3131,7 +3126,7 @@ EOT;
 		return $content;
 	}
 
-	public static function showMainWPMessage( $type, $notice_id ) {
+	public static function show_mainwp_message( $type, $notice_id ) {
 		$status = get_user_option( 'mainwp_notice_saved_status' );
 		if ( ! is_array( $status ) ) {
 			$status = array();

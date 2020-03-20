@@ -103,7 +103,7 @@ class MainWP_Hooks {
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
 				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
-				list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addWPSite( $website, $params );
+				list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $params );
 
 				if ( '' !== $error ) {
 					return array( 'error' => $error );
@@ -350,7 +350,7 @@ class MainWP_Hooks {
 		$output          = new stdClass();
 		$output->results = array();
 		if ( $dbwebsites ) {
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_posts', $post_data, array(
 				MainWP_Post::get_class_name(),
 				'hook_posts_search_handler',
 			), $output, $is_external_hook = true );
@@ -369,7 +369,7 @@ class MainWP_Hooks {
 
 	public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
 
-		$dirs = MainWP_Utility::getMainWPDir();
+		$dirs = MainWP_Utility::get_mainwp_dir();
 
 		$newdir = $dirs[0] . ( null != $dir ? $dir . DIRECTORY_SEPARATOR : '' );
 		$url    = $dirs[1] . '/' . $dir . '/';
@@ -442,22 +442,22 @@ class MainWP_Hooks {
 	}
 
 	public function activePlugin() {
-		MainWP_Plugins::activatePlugins();
+		MainWP_Plugins::activate_plugins();
 		die();
 	}
 
 	public function deactivePlugin() {
-		MainWP_Plugins::deactivatePlugins();
+		MainWP_Plugins::deactivate_plugins();
 		die();
 	}
 
 	public function deletePlugin() {
-		MainWP_Plugins::deletePlugins();
+		MainWP_Plugins::delete_plugins();
 		die();
 	}
 
 	public function deleteTheme() {
-		MainWP_Themes::deleteThemes();
+		MainWP_Themes::delete_themes();
 		die();
 	}
 

@@ -568,7 +568,7 @@ class MainWP_Page {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_pages_data', $post_data );
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
 		}
 
 		MainWP_Cache::add_context(
@@ -921,7 +921,7 @@ class MainWP_Page {
 								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ),
 							);
 							$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
-							MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
+							MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
 						}
 
 						$failed_posts = array();

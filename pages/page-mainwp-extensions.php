@@ -1048,7 +1048,7 @@ class MainWP_Extensions {
 			return false;
 		}
 
-		return MainWP_Utility::fetchUrlsAuthed( $dbwebsites, $what, $params, $handle, $output );
+		return MainWP_Utility::fetch_urls_authed( $dbwebsites, $what, $params, $handle, $output );
 	}
 
 	public static function hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {

@@ -477,7 +477,7 @@ class MainWP_System {
 	}
 
 	public function mainwp_4_update_notice() {
-		if ( MainWP_Utility::showMainWPMessage( 'notice', 'upgrade_4' ) ) {
+		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_4' ) ) {
 			?>
 			<div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
@@ -501,7 +501,7 @@ class MainWP_System {
 
 		$phpver = phpversion();
 		if ( version_compare( $phpver, '5.5', '<' ) ) {
-			if ( MainWP_Utility::showMainWPMessage( 'notice', 'phpver_5_5' ) ) {
+			if ( MainWP_Utility::show_mainwp_message( 'notice', 'phpver_5_5' ) ) {
 				?>
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
@@ -512,8 +512,8 @@ class MainWP_System {
 			}
 		}
 
-		if ( MainWP_Server_Information::isOpensslConfigWarning() ) {
-			if ( MainWP_Utility::showMainWPMessage( 'notice', 'ssl_warn' ) ) {
+		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
+			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
 				if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) {
 					?>
 					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -538,7 +538,7 @@ class MainWP_System {
 
 		if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {
 			if ( self::is_mainwp_pages() ) {
-				if ( ! MainWP_Plugins::checkAutoUpdatePlugin( 'mainwp-child/mainwp-child.php' ) ) {
+				if ( ! MainWP_Plugins::check_auto_update_plugin( 'mainwp-child/mainwp-child.php' ) ) {
 					?>
 					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 						<i class="info circle icon"></i>
@@ -1690,7 +1690,7 @@ class MainWP_System {
 
 					try {
 						$result = MainWP_Manage_Sites::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-						MainWP_Manage_Sites::backupDownloadFile( $siteId, 'full', $result['url'], $result['local'] );
+						MainWP_Manage_Sites::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
 						$sitesCheckCompleted[ $siteId ] = true;
 						MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
 					} catch ( Exception $e ) {
@@ -1793,7 +1793,7 @@ class MainWP_System {
 					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
 					$content = MainWP_Utility::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
-						$dirs     = MainWP_Utility::getMainWPDir();
+						$dirs     = MainWP_Utility::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 						if ( ! @is_dir( $iconsDir ) ) {
 							@mkdir( $iconsDir, 0777, true );
@@ -1968,7 +1968,7 @@ class MainWP_System {
 				// Try reconnecting
 				MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Trying to reconnect' );
 				try {
-					if ( MainWP_Manage_Sites::_reconnectSite( $website ) ) {
+					if ( MainWP_Manage_Sites::_reconnect_site( $website ) ) {
 						// Reconnected
 						MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Reconnected successfully' );
 					}
@@ -2206,7 +2206,7 @@ class MainWP_System {
 
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
-			$mwpDir = MainWP_Utility::getMainWPDir();
+			$mwpDir = MainWP_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $_REQUEST['mwpdl'] );
 

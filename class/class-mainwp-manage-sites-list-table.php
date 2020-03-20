@@ -176,7 +176,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	public function generate_tabletop() {
-		$this->renderManageSitesTableTop();
+		$this->render_manage_sites_table_top();
 	}
 
 	public function get_bulk_actions() {
@@ -200,7 +200,7 @@ class MainWP_Manage_Sites_List_Table {
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
 	}
 
-	public function renderManageSitesTableTop() {
+	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
 		$selected_status = isset( $_REQUEST['status'] ) ? $_REQUEST['status'] : '';

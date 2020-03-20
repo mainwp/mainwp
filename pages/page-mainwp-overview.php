@@ -199,13 +199,13 @@ class MainWP_Overview {
 
 		MainWP_UI::render_second_top_header();
 
-		self::renderDashboardBody( array(), $this->dashBoard, $screen_layout_columns );
+		self::render_dashboard_body( array(), $this->dashBoard, $screen_layout_columns );
 		?>
 		</div>
 		<?php
 	}
 
-	public static function renderDashboardBody( $websites, $pDashboard, $pScreenLayout ) {
+	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {
 
 		$current_wp_id = MainWP_Utility::get_current_wpid();
 		$website       = null;
@@ -249,7 +249,7 @@ class MainWP_Overview {
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<div class="mainwp-primary-content-wrap">
 
-			<?php if ( MainWP_Utility::showMainWPMessage( 'notice', 'widgets' ) ) : ?>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
 					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Tools%2$s page and select options from "Hide unwanted widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>

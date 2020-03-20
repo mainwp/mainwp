@@ -5,8 +5,8 @@
  *
  * @used-by MainWP_Page::BulkAddPage
  * @used-by MainWP_Post::BulkAddPost
- * @used-by MainWP_User::doBukAdd
- * @used-by MainWP_User::doImport
+ * @used-by MainWP_User::do_buk_add
+ * @used-by MainWP_User::do_import
  * @used-by MainWP_Bulk_Update_Admin_Passwords::BulkAddUser
  */
 class MainWP_Bulk_Add {

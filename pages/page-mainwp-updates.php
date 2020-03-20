@@ -2956,7 +2956,7 @@ class MainWP_Updates {
 		return 'success';
 	}
 
-	public static function unIgnore_abandoned_plugin_theme( $type, $slug, $id ) {
+	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
 		if ( isset( $id ) ) {
 			if ( '_ALL_' === $id ) {
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -2992,7 +2992,7 @@ class MainWP_Updates {
 		return 'success';
 	}
 
-	public static function unIgnore_abandoned_plugins_themes( $type, $slug ) {
+	public static function unignore_abandoned_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
 		$userExtension = MainWP_DB::instance()->get_user_extension();
 		if ( 'plugin' === $type ) {

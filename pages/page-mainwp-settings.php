@@ -703,7 +703,7 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo( ( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) === false ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>									
-					<?php MainWP_Manage_Sites_View::renderSettings(); ?>
+					<?php MainWP_Manage_Sites_View::render_settings(); ?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
@@ -715,7 +715,7 @@ class MainWP_Settings {
 	}
 
 	public static function showOpensslLibConfig() {
-		if ( MainWP_Server_Information::isOpensslConfigWarning() ) {
+		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			return true;
 		} else {
 			if ( self::isLocalWindowConfig() ) {

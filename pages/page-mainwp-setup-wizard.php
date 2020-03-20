@@ -344,7 +344,7 @@ class MainWP_Setup_Wizard {
 		?>
 			<h1><?php esc_html_e( 'System Requirements Check', 'mainwp' ); ?></h1>
 			<div class="ui message warning"><?php esc_html_e( 'Any Warning here may cause the MainWP Dashboard to malfunction. After you complete the Quick Start setup it is recommended to contact your host’s support and updating your server configuration for optimal performance.', 'mainwp' ); ?></div>
-			<?php MainWP_Server_Information::renderQuickSetupSystemCheck(); ?>
+			<?php MainWP_Server_Information::render_quick_setup_system_check(); ?>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>

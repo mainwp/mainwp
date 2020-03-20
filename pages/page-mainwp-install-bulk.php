@@ -104,7 +104,7 @@ class MainWP_Install_Bulk {
 		} else {
 			$url = $_POST['url'];
 
-			$mwpDir = MainWP_Utility::getMainWPDir();
+			$mwpDir = MainWP_Utility::get_mainwp_dir();
 			$mwpUrl = $mwpDir[1];
 			if ( stristr( $url, $mwpUrl ) ) {
 				$fullFile = $mwpDir[0] . str_replace( $mwpUrl, '', $url );
@@ -197,7 +197,7 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
+		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );
@@ -289,7 +289,7 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
+		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
 			'InstallPluginTheme_handler',
 		), $output, null, array( 'upgrade' => true ) );

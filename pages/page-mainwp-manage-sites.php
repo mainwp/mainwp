@@ -264,7 +264,7 @@ class MainWP_Manage_Sites {
 		wp_send_json( $output );
 	}
 
-	public static function renderNewSite() {
+	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$referrer_page_check = false;
 		$referrer_page       = wp_get_referer();
@@ -388,7 +388,7 @@ class MainWP_Manage_Sites {
 				  </div>
 				</div>
 
-				<?php MainWP_Manage_Sites_View::renderSyncExtsSettings(); ?>
+				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
 
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
@@ -484,7 +484,7 @@ class MainWP_Manage_Sites {
 		self::render_footer( $showpage );
 	}
 
-	public static function renderBulkNewSite() {
+	public static function render_bulk_new_site() {
 		$showpage = 'BulkAddNew';
 		self::render_header( $showpage );
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
@@ -496,7 +496,7 @@ class MainWP_Manage_Sites {
 				<div class="ui modal" id="mainwp-import-sites-modal">
 					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
 					<div class="scrolling header">
-					<?php MainWP_Manage_Sites_View::renderImportSites(); ?>
+					<?php MainWP_Manage_Sites_View::render_import_sites(); ?>
 					</div>
 					<div class="actions">
 						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
@@ -547,7 +547,7 @@ class MainWP_Manage_Sites {
 	/**
 	 * @throws MainWP_Exception
 	 */
-	public static function backupSite( $siteid, $pTask, $subfolder ) {
+	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
@@ -897,7 +897,7 @@ class MainWP_Manage_Sites {
 				}
 
 				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
-					MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
 			}
@@ -956,7 +956,7 @@ class MainWP_Manage_Sites {
 						}
 					}
 
-					MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
 					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
@@ -978,7 +978,7 @@ class MainWP_Manage_Sites {
 		return $backup_result;
 	}
 
-	public static function backupGetfilesize( $pFile ) {
+	public static function backup_get_file_size( $pFile ) {
 		$dir = MainWP_Utility::get_mainwp_specific_dir();
 
 		if ( stristr( $pFile, $dir ) && file_exists( $pFile ) ) {
@@ -988,7 +988,7 @@ class MainWP_Manage_Sites {
 		return 0;
 	}
 
-	public static function backupDownloadFile( $pSiteId, $pType, $pUrl, $pFile ) {
+	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$dir = dirname( $pFile ) . '/';
 		@mkdir( $dir, 0777, true );
 		if ( ! file_exists( $dir . 'index.php' ) ) {
@@ -1045,24 +1045,24 @@ class MainWP_Manage_Sites {
 
 		$what = null;
 		if ( 'db' === $pType ) {
-			MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		if ( 'full' === $pType ) {
-			MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		return true;
 	}
 
-	public static function backupDeleteFile( $pSiteId, $pFile ) {
+	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
 
 		return true;
 	}
 
-	public static function backupCheckpid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
+	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 
 		MainWP_Utility::end_session();
@@ -1431,35 +1431,35 @@ class MainWP_Manage_Sites {
 		}
 	}
 
-	public static function renderUpdates( $website ) {
+	public static function render_updates( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesUpdates' );
-		MainWP_Manage_Sites_View::renderUpdates();
+		MainWP_Manage_Sites_View::render_updates();
 		self::render_footer( 'ManageSitesUpdates' );
 	}
 
-	public static function renderDashboard( $website ) {
+	public static function render_dashboard( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesDashboard' );
-		MainWP_Manage_Sites_View::renderDashboard( $website, self::$page );
+		MainWP_Manage_Sites_View::render_dashboard( $website, self::$page );
 		self::render_footer( 'ManageSitesDashboard' );
 	}
 
-	public static function renderBackupSite( $website ) {
+	public static function render_backup_site( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesBackups' );
-		MainWP_Manage_Sites_View::renderBackupSite( $website );
+		MainWP_Manage_Sites_View::render_backup_site( $website );
 		self::render_footer( 'ManageSitesBackups' );
 	}
 
-	public static function renderScanSite( $website ) {
+	public static function render_scan_site( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'SecurityScan' );
-		MainWP_Manage_Sites_View::renderScanSite( $website );
+		MainWP_Manage_Sites_View::render_scan_site( $website );
 		self::render_footer( 'SecurityScan' );
 	}
 
-	public static function showBackups( &$website ) {
+	public static function show_backups( &$website ) {
 		$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
 		if ( ! file_exists( $dir . 'index.php' ) ) {
@@ -1486,14 +1486,10 @@ class MainWP_Manage_Sites {
 		krsort( $dbBackups );
 		krsort( $fullBackups );
 
-		MainWP_Manage_Sites_View::showBackups( $website, $fullBackups, $dbBackups );
+		MainWP_Manage_Sites_View::show_backups( $website, $fullBackups, $dbBackups );
 	}
 
-	protected static function getOppositeOrderBy( $pOrderBy ) {
-		return ( 'asc' === $pOrderBy ? 'desc' : 'asc' );
-	}
-
-	public static function renderAllSites( $showDelete = true, $showAddNew = true ) {
+	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
 		$optimize_for_sites_table = ( 1 === get_option('mainwp_optimize') );
 
@@ -1555,14 +1551,14 @@ class MainWP_Manage_Sites {
 		self::render_footer( '' );
 	}
 
-	public static function renderManageSites() {
+	public static function render_manage_sites() {
 		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
 			if ( 'new' === $_REQUEST['do'] ) {
-				self::renderNewSite();
+				self::render_new_site();
 			} elseif ( 'bulknew' === $_REQUEST['do'] ) {
-				self::renderBulkNewSite();
+				self::render_bulk_new_site();
 			}
 
 			return;
@@ -1574,7 +1570,7 @@ class MainWP_Manage_Sites {
 
 				$backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 				if ( MainWP_Utility::can_edit_website( $backupwebsite ) ) {
-					self::renderBackupSite( $backupwebsite );
+					self::render_backup_site( $backupwebsite );
 
 					return;
 				}
@@ -1586,7 +1582,7 @@ class MainWP_Manage_Sites {
 
 			$scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $scanwebsite ) ) {
-				self::renderScanSite( $scanwebsite );
+				self::render_scan_site( $scanwebsite );
 
 				return;
 			}
@@ -1597,7 +1593,7 @@ class MainWP_Manage_Sites {
 
 			$dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $dashboardWebsite ) ) {
-				self::renderDashboard( $dashboardWebsite );
+				self::render_dashboard( $dashboardWebsite );
 
 				return;
 			}
@@ -1607,7 +1603,7 @@ class MainWP_Manage_Sites {
 			$websiteid      = $_GET['updateid'];
 			$updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $updatesWebsite ) ) {
-				self::renderUpdates( $updatesWebsite );
+				self::render_updates( $updatesWebsite );
 				return;
 			}
 		}
@@ -1683,23 +1679,23 @@ class MainWP_Manage_Sites {
 						$updated = true;
 					}
 				}
-				self::renderEditSite( $websiteid, $updated );
+				self::render_edit_site( $websiteid, $updated );
 				return;
 			}
 		}
-		self::renderAllSites();
+		self::render_all_sites();
 	}
 
-	public static function renderEditSite( $websiteid, $updated ) {
+	public static function render_edit_site( $websiteid, $updated ) {
 		if ( $websiteid ) {
 			MainWP_Utility::set_current_wpid( $websiteid );
 		}
 		self::render_header( 'ManageSitesEdit' );
-		MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated );
+		MainWP_Manage_Sites_View::render_edit_site( $websiteid, $updated );
 		self::render_footer( 'ManageSitesEdit' );
 	}
 
-	public static function checkSite() {
+	public static function check_site() {
 		$website = MainWP_DB::instance()->get_websites_by_url( $_POST['url'] );
 		$ret     = array();
 		if ( MainWP_Utility::can_edit_website( $website ) ) { // Already added to the database - so exists.
@@ -1728,13 +1724,13 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( $ret ) ); // ok
 	}
 
-	public static function reconnectSite() {
+	public static function reconnect_site() {
 		$siteId = $_POST['siteid'];
 
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-				self::_reconnectSite( $website );
+				self::_reconnect_site( $website );
 			} else {
 				throw new Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
@@ -1745,11 +1741,11 @@ class MainWP_Manage_Sites {
 		die( __( 'Site has been reconnected successfully!', 'mainwp' ) );
 	}
 
-	public static function _reconnectSite( $website ) {
-		return MainWP_Manage_Sites_View::_reconnectSite( $website );
+	public static function _reconnect_site( $website ) {
+		return MainWP_Manage_Sites_View::_reconnect_site( $website );
 	}
 
-	public static function addSite() {
+	public static function add_site() {
 		$ret     = array();
 		$error   = '';
 		$message = '';
@@ -1758,7 +1754,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB
 			$website                           = MainWP_DB::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
-			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addSite( $website );
+			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
 		}
 
 		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
@@ -1787,7 +1783,7 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( array( 'error' => __( 'Undefined error!', 'mainwp' ) ) ) );
 	}
 
-	public static function saveNote() {
+	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
@@ -1803,7 +1799,7 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( array( 'undefined_error' => true ) ) );
 	}
 
-	public static function removeSite() {
+	public static function remove_site() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
@@ -1919,7 +1915,7 @@ class MainWP_Manage_Sites {
 		}
 	}
 
-	public static function updateChildsiteValue() {
+	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['site_id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {

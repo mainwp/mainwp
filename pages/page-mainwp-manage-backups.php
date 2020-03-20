@@ -1014,7 +1014,7 @@ class MainWP_Manage_Backups {
 			try {
 				$subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
-				$backupResult = MainWP_Manage_Sites::backupSite( $siteid, $task, $subfolder );
+				$backupResult = MainWP_Manage_Sites::backup_site( $siteid, $task, $subfolder );
 
 				// When we receive a timeout, we return false..
 				if ( $backupResult === false ) {

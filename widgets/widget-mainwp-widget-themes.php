@@ -174,11 +174,11 @@ class MainWP_Widget_Themes {
 	}
 
 	/**
-	 * Method activateTheme()
+	 * Method activate_theme()
 	 *
 	 * Fire off Action activate & display result
 	 */
-	public static function activateTheme() {
+	public static function activate_theme() {
 		self::action( 'activate' );
 		die( wp_json_encode( array( 'result' => __( 'Theme has been activated!', 'mainwp' ) ) ) );
 	}

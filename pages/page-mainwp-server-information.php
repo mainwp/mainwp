@@ -25,7 +25,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
 					self::get_class_name(),
-					'renderCron',
+					'render_cron',
 				)
 			);
 		}
@@ -34,7 +34,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
 					self::get_class_name(),
-					'renderErrorLogPage',
+					'render_error_log_page',
 				)
 			);
 		}
@@ -42,16 +42,16 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
 					self::get_class_name(),
-					'renderWPConfig',
+					'render_wp_config',
 				)
 			);
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-			if ( self::isApacheServerSoftware() ) {
+			if ( self::is_apache_server_software() ) {
 				add_submenu_page(
 					'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
 						self::get_class_name(),
-						'renderhtaccess',
+						'render_htaccess',
 					)
 				);
 			}
@@ -60,7 +60,7 @@ class MainWP_Server_Information {
 			add_submenu_page(
 				'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
 					self::get_class_name(),
-					'renderActionLogs',
+					'render_action_logs',
 				)
 			);
 		}
@@ -94,7 +94,7 @@ class MainWP_Server_Information {
 					<?php } ?>
 					<?php
 					if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-						if ( self::isApacheServerSoftware() ) {
+						if ( self::is_apache_server_software() ) {
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
 							<?php
@@ -173,7 +173,7 @@ class MainWP_Server_Information {
 			),
 		);
 
-		if ( ! self::isApacheServerSoftware() ) {
+		if ( ! self::is_apache_server_software() ) {
 			if ( '.htaccess' === $init_sub_subleftmenu[4]['slug'] ) {
 				unset( $init_sub_subleftmenu[4] );
 			}
@@ -228,7 +228,7 @@ class MainWP_Server_Information {
 			}
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-				if ( self::isApacheServerSoftware() ) {
+				if ( self::is_apache_server_software() ) {
 					$renderItems[] = array(
 						'title'  => __( '.htaccess File', 'mainwp' ),
 						'href'   => 'admin.php?page=.htaccess',
@@ -277,11 +277,11 @@ class MainWP_Server_Information {
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Dashboard', 'mainwp' ); ?></div></td></tr>
 					<tr>
 						<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-						<td><?php echo self::getMainWPVersion(); ?></td>
-						<td><?php echo self::getCurrentVersion(); ?></td>
-						<td><?php echo self::getMainWPVersionCheck(); ?></td>
+						<td><?php echo self::get_mainwp_version(); ?></td>
+						<td><?php echo self::get_current_version(); ?></td>
+						<td><?php echo self::get_mainwp_version_check(); ?></td>
 					</tr>
-				<?php self::checkDirectoryMainWPDirectory(); ?>
+				<?php self::check_directory_mainwp_directory(); ?>
 					<tr>
 						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Extensions', 'mainwp' ); ?></div></td>
 					</tr>
@@ -298,76 +298,76 @@ class MainWP_Server_Information {
 							<td><?php echo esc_html( $extension['name'] ); ?></td>
 							<td><?php echo esc_html( $extension['version'] ); ?></td>
 							<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
-							<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( self::WARNING ); ?></td>
+							<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( self::WARNING ); ?></td>
 						</tr>
 						<?php
 				}
 				?>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'WordPress', 'mainwp' ); ?></div></td></tr>
 					<?php
-					self::renderRow( 'WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, null, self::ERROR );
-					self::renderRow( 'WordPress Memory Limit', '>=', '64M', 'getWordpressMemoryLimit', '', '', null );
-					self::renderRow( 'MultiSite Disabled', '=', true, 'checkIfMultisite', '', '', null );
+					self::render_row( 'WordPress Version', '>=', '3.6', 'get_wordpress_version', '', '', null, null, self::ERROR );
+					self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
+					self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
 					?>
 					<tr>
 						<td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
 						<td><?php echo esc_html( '= direct' ); ?></td>
-						<td><?php echo self::getFileSystemMethod(); ?></td>
-						<td><?php echo self::getFileSystemMethodCheck(); ?></td>
+						<td><?php echo self::get_file_system_method(); ?></td>
+						<td><?php echo self::get_file_system_method_check(); ?></td>
 					</tr>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'PHP', 'mainwp' ); ?></div></td></tr>
 					<?php
-					self::renderRow( 'PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, null, self::ERROR );
-					self::renderRow( 'PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null );
-					self::renderRow( 'PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0' );
-					self::renderRow( 'PHP Max Input Time', '>=', '30', 'getMaxInputTime', 'seconds', '=', '0' );
-					self::renderRow( 'PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'filesize' );
-					self::renderRow( 'PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null );
-					self::renderRow( 'PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '', '', null, 'filesize' );
-					self::renderRow( 'PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '', '', null, 'filesize' );
-					self::renderRow( 'SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null );
-					self::renderRow( 'SSL Warnings', '=', '', 'getSSLWarning', 'empty', '', null );
-					self::renderRow( 'cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, null, self::ERROR );
-					self::renderRow( 'cURL Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0' );
+					self::render_row( 'PHP Version', '>=', '5.6', 'get_php_version', '', '', null, null, self::ERROR );
+					self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
+					self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
+					self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
+					self::render_row( 'PHP Memory Limit', '>=', '128M', 'get_php_memory_limit', '', '', null, 'filesize' );
+					self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
+					self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
+					self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
+					self::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
+					self::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
+					self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
+					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
-						self::renderRow( 'cURL Version', '>=', '7.18.1', 'getCurlVersion', '', '', null );
-						self::renderRow( 'cURL SSL Version', '>=', array(
+						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
+						self::render_row( 'cURL SSL Version', '>=', array(
 							'version_number' => 0x009080cf,
 							'version'        => 'OpenSSL/0.9.8l',
-						), 'getCurlSSLVersion', '', '', null, 'curlssl' );
+						), 'get_curl_ssl_version', '', '', null, 'curlssl' );
 					}
 					?>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPAllowUrlFopen(); ?></td>
+						<td colspan="2"><?php self::get_php_allow_url_fopen(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP Exif Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPExif(); ?></td>
+						<td colspan="2"><?php self::get_php_exif(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP IPTC Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPIPTC(); ?></td>
+						<td colspan="2"><?php self::get_php_iptc(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP XML Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPXML(); ?></td>
+						<td colspan="2"><?php self::get_php_xml(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::phpDisabledFunctions(); ?></td>
+						<td colspan="2"><?php self::php_disabled_functions(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getLoadedPHPExtensions(); ?></td>
+						<td colspan="2"><?php self::get_loaded_php_extensions(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></div></td>
 					</tr>
-					<?php self::renderRow( 'MySQL Version', '>=', '5.0', 'get_my_sql_version', '', '', null, null, self::ERROR ); ?>
+					<?php self::render_row( 'MySQL Version', '>=', '5.0', 'get_my_sql_version', '', '', null, null, self::ERROR ); ?>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'MySQL Mode', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getSQLMode(); ?></td>
+						<td colspan="2"><?php self::get_sql_mode(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
@@ -378,98 +378,98 @@ class MainWP_Server_Information {
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'WordPress Root Directory', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getWPRoot(); ?></td>
+						<td colspan="2"><?php self::get_wp_root(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Server Name', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerName(); ?></td>
+						<td colspan="2"><?php self::get_server_name(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Server Software', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerSoftware(); ?></td>
+						<td colspan="2"><?php self::get_server_software(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Operating System', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getOS(); ?></td>
+						<td colspan="2"><?php self::get_os(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Architecture', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getArchitecture(); ?></td>
+						<td colspan="2"><?php self::get_architecture(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Server IP', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerIP(); ?></td>
+						<td colspan="2"><?php self::get_server_ip(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Server Protocol', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerProtocol(); ?></td>
+						<td colspan="2"><?php self::get_server_protocol(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'HTTP Host', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getHTTPHost(); ?></td>
+						<td colspan="2"><?php self::get_http_host(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getHTTPS(); ?></td>
+						<td colspan="2"><?php self::get_https(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Server self connect', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::serverSelfConnect(); ?></td>
+						<td colspan="2"><?php self::server_self_connect(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getUserAgent(); ?></td>
+						<td colspan="2"><?php self::get_user_agent(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Server Port', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerPort(); ?></td>
+						<td colspan="2"><?php self::get_server_port(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Gateway Interface', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerGatewayInterface(); ?></td>
+						<td colspan="2"><?php self::get_server_gateway_interface(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::memoryUsage(); ?></td>
+						<td colspan="2"><?php self::memory_usage(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getCompleteURL(); ?></td>
+						<td colspan="2"><?php self::get_complete_url(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerRequestTime(); ?></td>
+						<td colspan="2"><?php self::get_server_request_time(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Accept Content', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerHTTPAccept(); ?></td>
+						<td colspan="2"><?php self::get_server_http_accept(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerAcceptCharset(); ?></td>
+						<td colspan="2"><?php self::get_server_accept_charset(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getScriptFileName(); ?></td>
+						<td colspan="2"><?php self::get_script_file_name(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getCurrentPageURI(); ?></td>
+						<td colspan="2"><?php self::get_current_page_uri(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemoteAddress(); ?></td>
+						<td colspan="2"><?php self::get_remote_address(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Remote Host', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemoteHost(); ?></td>
+						<td colspan="2"><?php self::get_remote_host(); ?></td>
 					</tr>
 					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Remote Port', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemotePort(); ?></td>
+						<td colspan="2"><?php self::get_remote_port(); ?></td>
 					</tr>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?></div></td></tr>
-					<?php self::displayMainWPOptions(); ?>
+					<?php self::display_mainwp_options(); ?>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
 					<?php
 					$all_extensions = MainWP_Extensions_View::getAvailableExtensions();
@@ -507,7 +507,7 @@ class MainWP_Server_Information {
 		self::render_footer( '' );
 	}
 
-	public static function renderQuickSetupSystemCheck() {
+	public static function render_quick_setup_system_check() {
 		?>
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
 			<thead>
@@ -520,9 +520,9 @@ class MainWP_Server_Information {
 			</thead>
 			<tbody>
 				<?php
-				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '5.6', 'getPHPVersion', '', '', null );
-				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'getSSLSupport', '', '', null );
-				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'getCurlSupport', '', '', null );
+				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '5.6', 'get_php_version', '', '', null );
+				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
+				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
 				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_my_sql_version', '', '', null );
 				?>
 			</tbody>
@@ -538,12 +538,12 @@ class MainWP_Server_Information {
 		return false;
 	}
 
-	public static function getCurrentVersion() {
+	public static function get_current_version() {
 		$currentVersion = get_option( 'mainwp_plugin_version' );
 		return $currentVersion;
 	}
 
-	public static function getMainWPVersion() {
+	public static function get_mainwp_version() {
 		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( null !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
 			return $_SESSION['cachedVersion'];
 		}
@@ -567,13 +567,13 @@ class MainWP_Server_Information {
 	 * Compare the detected MainWP Dashboard version agains the verion in WP.org
 	 */
 
-	public static function getMainWPVersionCheck() {
+	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest  = self::getMainwpVersion();
 		if ( $current == $latest ) {
 			return '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>';
 		} else {
-			return self::getWarningHTML();
+			return self::get_warning_html();
 		}
 	}
 
@@ -581,7 +581,7 @@ class MainWP_Server_Information {
 	 * Render the Cron Schedule page
 	 */
 
-	public static function renderCron() {
+	public static function render_cron() {
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
@@ -650,12 +650,12 @@ class MainWP_Server_Information {
 	 * Check if the ../wp-content/uploads/mainwp/ directory is writable
 	 */
 
-	public static function checkDirectoryMainWPDirectory() {
-		$dirs = MainWP_Utility::getMainWPDir();
+	public static function check_directory_mainwp_directory() {
+		$dirs = MainWP_Utility::get_mainwp_dir();
 		$path = $dirs[0];
 
 		if ( ! is_dir( dirname( $path ) ) ) {
-			return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Found', false, self::ERROR );
+			return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Found', false, self::ERROR );
 		}
 
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
@@ -665,30 +665,30 @@ class MainWP_Server_Information {
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 			if ( ! $wp_filesystem->is_writable( $path ) ) {
-				return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
+				return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
 			}
 		} else {
 			if ( ! is_writable( $path ) ) {
-				return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
+				return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
 			}
 		}
-		return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
+		return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
 	}
 
 	// Print the directory check row
-	public static function renderDirectoryRow( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
+	public static function render_directory_row( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
 		?>
 		<tr>
 			<td><?php echo esc_html( $pName ); ?></td>
 			<td><?php echo esc_html( $pCheck ); ?></td>
 			<td><?php echo esc_html( $pResult ); ?></td>
-			<td><?php echo ( $pPassed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+			<td><?php echo ( $pPassed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		</tr>
 		<?php
 		return true;
 	}
 
-	public static function renderRow( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+	public static function render_row( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( self::get_class_name(), $pGetter ) );
 		?>
 		<tr>
@@ -696,13 +696,13 @@ class MainWP_Server_Information {
 			<td><?php echo esc_html( $pCompare ); ?><?php echo ( true === $pVersion ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td><?php echo ( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo ( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-				<td><?php echo ( self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } elseif ( ( 'getMaxInputTime' === $pGetter || 'getMaxExecutionTime' === $pGetter ) && -1 == $currentVersion ) { ?>
+				<td><?php echo ( self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( ( 'get_max_input_time' === $pGetter || 'get_max_execution_time' === $pGetter ) && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>
-				<td><?php echo ( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo ( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
@@ -716,28 +716,28 @@ class MainWP_Server_Information {
 			<td><?php echo esc_html( $pCompare ); ?>  <?php echo ( true === $pVersion ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
 			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td><?php echo ( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo ( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-				<td><?php echo ( self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } elseif ( 'getMaxInputTime' === $pGetter && -1 == $currentVersion ) { ?>
+				<td><?php echo ( self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'get_max_input_time' === $pGetter && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 		<?php } else { ?>
-				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
 	}
 
 	// Check if the Dashboard site is Multisite setup
-	public static function checkIfMultisite() {
+	public static function check_if_multisite() {
 		$isMultisite = ! is_multisite() ? true : false;
 
 		return $isMultisite;
 	}
 
-	public static function checkCURLSSLInfo() {
-		$isSupport = ( self::getCurlSupport() && self::getSSLSupport() ) ? true : false;
-		$checkCURL = version_compare( self::getCurlVersion(), '7.18.1', '>=' );
+	public static function check_curl_ssl_info() {
+		$isSupport = ( self::get_curl_support() && self::get_ssl_support() ) ? true : false;
+		$checkCURL = version_compare( self::get_curl_version(), '7.18.1', '>=' );
 		$checkSSL  = self::curlssl_compare( array(
 			'version_number' => 0x009080cf,
 			'version'        => 'OpenSSL/0.9.8l',
@@ -772,54 +772,54 @@ class MainWP_Server_Information {
 		return false;
 	}
 
-	public static function getFileSystemMethod() {
+	public static function get_file_system_method() {
 		$fs = get_filesystem_method();
 
 		return $fs;
 	}
 
-	public static function getFileSystemMethodCheck() {
-		$fsmethod = self::getFileSystemMethod();
+	public static function get_file_system_method_check() {
+		$fsmethod = self::get_file_system_method();
 		if ( 'direct' === $fsmethod ) {
 			return '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>';
 		} else {
-			return self::getWarningHTML();
+			return self::get_warning_html();
 		}
 	}
 
-	public static function getLoadedPHPExtensions() {
+	public static function get_loaded_php_extensions() {
 		$extensions = get_loaded_extensions();
 		sort( $extensions );
 		echo implode( ', ', $extensions );
 	}
 
-	public static function getWordpressMemoryLimit() {
+	public static function get_wordpress_memory_limit() {
 		return WP_MEMORY_LIMIT;
 	}
 
-	public static function getCurlVersion() {
+	public static function get_curl_version() {
 		$curlversion = curl_version();
 
 		return $curlversion['version'];
 	}
 
-	public static function getCurlSSLVersion() {
+	public static function get_curl_ssl_version() {
 		$curlversion = curl_version();
 
 		return $curlversion['ssl_version'];
 	}
 
-	public static function getWordpressVersion() {
+	public static function get_wordpress_version() {
 		global $wp_version;
 
 		return $wp_version;
 	}
 
-	public static function getSSLSupport() {
+	public static function get_ssl_support() {
 		return extension_loaded( 'openssl' );
 	}
 
-	public static function getSSLWarning() {
+	public static function get_ssl_warning() {
 		$conf     = array( 'private_key_bits' => 2048 );
 		$conf_loc = MainWP_System::get_openssl_conf();
 		if ( ! empty( $conf_loc ) ) {
@@ -833,8 +833,8 @@ class MainWP_Server_Information {
 		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
 	}
 
-	public static function isOpensslConfigWarning() {
-		$ssl_warning = self::getSSLWarning();
+	public static function is_openssl_config_warning() {
+		$ssl_warning = self::get_ssl_warning();
 		if ( '' !== $ssl_warning ) {
 			if ( false !== stristr( $ssl_warning, __( 'No such file or directory found', 'mainwp' ) ) ) {
 				return true;
@@ -843,31 +843,31 @@ class MainWP_Server_Information {
 		return false;
 	}
 
-	public static function getCurlSupport() {
+	public static function get_curl_support() {
 		return function_exists( 'curl_version' );
 	}
 
-	public static function getCurlTimeout() {
+	public static function get_curl_timeout() {
 		return ini_get( 'default_socket_timeout' );
 	}
 
-	public static function getPHPVersion() {
+	public static function get_php_version() {
 		return phpversion();
 	}
 
-	public static function getMaxExecutionTime() {
+	public static function get_max_execution_time() {
 		return ini_get( 'max_execution_time' );
 	}
 
-	public static function getMaxInputTime() {
+	public static function get_max_input_time() {
 		return ini_get( 'max_input_time' );
 	}
 
-	public static function getUploadMaxFilesize() {
+	public static function get_upload_max_filesize() {
 		return ini_get( 'upload_max_filesize' );
 	}
 
-	public static function getPostMaxSize() {
+	public static function get_post_max_size() {
 		return ini_get( 'post_max_size' );
 	}
 
@@ -875,11 +875,11 @@ class MainWP_Server_Information {
 		return MainWP_DB::instance()->get_my_sql_version();
 	}
 
-	public static function getPHPMemoryLimit() {
+	public static function get_php_memory_limit() {
 		return ini_get( 'memory_limit' );
 	}
 
-	public static function getOS( $return = false ) {
+	public static function get_os( $return = false ) {
 		if ( $return ) {
 			return PHP_OS;
 		} else {
@@ -887,14 +887,14 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getArchitecture() {
+	public static function get_architecture() {
 		echo( PHP_INT_SIZE * 8 )
 		?>
 		&nbsp;bit
 		<?php
 	}
 
-	public static function memoryUsage() {
+	public static function memory_usage() {
 		if ( function_exists( 'memory_get_usage' ) ) {
 			$memory_usage = round( memory_get_usage() / 1024 / 1024, 2 ) . ' MB';
 		} else {
@@ -903,12 +903,12 @@ class MainWP_Server_Information {
 		echo $memory_usage;
 	}
 
-	public static function getOutputBufferSize() {
+	public static function get_output_buffer_size() {
 		return ini_get( 'pcre.backtrack_limit' );
 	}
 
-	public static function getPHPSafeMode() {
-		if ( version_compare( self::getPHPVersion(), '5.3.0' ) >= 0 ) {
+	public static function get_php_safe_mode() {
+		if ( version_compare( self::get_php_version(), '5.3.0' ) >= 0 ) {
 			return true;
 		}
 
@@ -919,7 +919,7 @@ class MainWP_Server_Information {
 		return true;
 	}
 
-	public static function getSQLMode() {
+	public static function get_sql_mode() {
 		global $wpdb;
 		$mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" );
 		if ( is_array( $mysqlinfo ) ) {
@@ -931,7 +931,7 @@ class MainWP_Server_Information {
 		echo $sql_mode;
 	}
 
-	public static function getPHPAllowUrlFopen() {
+	public static function get_php_allow_url_fopen() {
 		if ( ini_get( 'allow_url_fopen' ) ) {
 			$allow_url_fopen = __( 'YES', 'mainwp' );
 		} else {
@@ -940,7 +940,7 @@ class MainWP_Server_Information {
 		echo $allow_url_fopen;
 	}
 
-	public static function getPHPExif() {
+	public static function get_php_exif() {
 		if ( is_callable( 'exif_read_data' ) ) {
 			$exif = __( 'YES', 'mainwp' ) . ' ( V' . substr( phpversion( 'exif' ), 0, 4 ) . ')';
 		} else {
@@ -949,7 +949,7 @@ class MainWP_Server_Information {
 		echo $exif;
 	}
 
-	public static function getPHPIPTC() {
+	public static function get_php_iptc() {
 		if ( is_callable( 'iptcparse' ) ) {
 			$iptc = __( 'YES', 'mainwp' );
 		} else {
@@ -958,7 +958,7 @@ class MainWP_Server_Information {
 		echo $iptc;
 	}
 
-	public static function getPHPXML() {
+	public static function get_php_xml() {
 		if ( is_callable( 'xml_parser_create' ) ) {
 			$xml = __( 'YES', 'mainwp' );
 		} else {
@@ -967,19 +967,19 @@ class MainWP_Server_Information {
 		echo $xml;
 	}
 
-	public static function getCurrentlyExecutingScript() {
+	public static function get_currently_executing_script() {
 		echo $_SERVER['PHP_SELF'];
 	}
 
-	public static function getServerGatewayInterface() {
+	public static function get_server_gateway_interface() {
 		echo isset( $_SERVER['GATEWAY_INTERFACE'] ) ? $_SERVER['GATEWAY_INTERFACE'] : '';
 	}
 
-	public static function getServerIP() {
+	public static function get_server_ip() {
 		echo $_SERVER['SERVER_ADDR'];
 	}
 
-	public static function getServerName( $return = false ) {
+	public static function get_server_name( $return = false ) {
 		if ( $return ) {
 			return $_SERVER['SERVER_NAME'];
 		} else {
@@ -987,7 +987,7 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getServerSoftware( $return = false ) {
+	public static function get_server_software( $return = false ) {
 		if ( $return ) {
 			return $_SERVER['SERVER_SOFTWARE'];
 		} else {
@@ -995,32 +995,32 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function isApacheServerSoftware( $return = false ) {
-		$server = self::getServerSoftware( true );
+	public static function is_apache_server_software( $return = false ) {
+		$server = self::get_server_software( true );
 		return ( false !== stripos( $server, 'apache' ) ) ? true : false;
 	}
 
-	public static function getServerProtocol() {
+	public static function get_server_protocol() {
 		echo $_SERVER['SERVER_PROTOCOL'];
 	}
 
-	public static function getServerRequestMethod() {
+	public static function get_server_request_method() {
 		echo $_SERVER['REQUEST_METHOD'];
 	}
 
-	public static function getServerRequestTime() {
+	public static function get_server_request_time() {
 		echo $_SERVER['REQUEST_TIME'];
 	}
 
-	public static function getServerQueryString() {
+	public static function get_server_query_string() {
 		echo $_SERVER['QUERY_STRING'];
 	}
 
-	public static function getServerHTTPAccept() {
+	public static function get_server_http_accept() {
 		echo $_SERVER['HTTP_ACCEPT'];
 	}
 
-	public static function getServerAcceptCharset() {
+	public static function get_server_accept_charset() {
 		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
@@ -1028,19 +1028,19 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getHTTPHost() {
+	public static function get_http_host() {
 		echo $_SERVER['HTTP_HOST'];
 	}
 
-	public static function getCompleteURL() {
+	public static function get_complete_url() {
 		echo isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
 	}
 
-	public static function getUserAgent() {
+	public static function get_user_agent() {
 		echo $_SERVER['HTTP_USER_AGENT'];
 	}
 
-	public static function getHTTPS() {
+	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
 			esc_html_e( 'ON', 'mainwp' ) . ' - ' . $_SERVER['HTTPS'];
 		} else {
@@ -1048,7 +1048,7 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function serverSelfConnect() {
+	public static function server_self_connect() {
 		$url         = site_url( 'wp-cron.php' );
 		$query_args  = array( 'mainwp_run' => 'test' );
 		$url         = esc_url_raw( add_query_arg( $query_args, $url ) );
@@ -1078,11 +1078,11 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getRemoteAddress() {
+	public static function get_remote_address() {
 		echo $_SERVER['REMOTE_ADDR'];
 	}
 
-	public static function getRemoteHost() {
+	public static function get_remote_host() {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( '' === $_SERVER['REMOTE_HOST'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
@@ -1090,27 +1090,27 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getRemotePort() {
+	public static function get_remote_port() {
 		echo $_SERVER['REMOTE_PORT'];
 	}
 
-	public static function getScriptFileName() {
+	public static function get_script_file_name() {
 		echo $_SERVER['SCRIPT_FILENAME'];
 	}
 
-	public static function getServerAdmin() {
+	public static function get_server_admin() {
 		echo $_SERVER['SERVER_ADMIN'];
 	}
 
-	public static function getServerPort() {
+	public static function get_server_port() {
 		echo $_SERVER['SERVER_PORT'];
 	}
 
-	public static function getServerSignature() {
+	public static function get_server_signature() {
 		echo $_SERVER['SERVER_SIGNATURE'];
 	}
 
-	public static function getServerPathTranslated() {
+	public static function get_server_path_translated() {
 		if ( ! isset( $_SERVER['PATH_TRANSLATED'] ) || ( '' === $_SERVER['PATH_TRANSLATED'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
@@ -1118,19 +1118,19 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function getScriptName() {
+	public static function get_script_name() {
 		echo $_SERVER['SCRIPT_NAME'];
 	}
 
-	public static function getCurrentPageURI() {
+	public static function get_current_page_uri() {
 		echo $_SERVER['REQUEST_URI'];
 	}
 
-	public static function getWPRoot() {
+	public static function get_wp_root() {
 		echo ABSPATH;
 	}
 
-	public function formatSizeUnits( $bytes ) {
+	public function format_size_units( $bytes ) {
 		if ( 1073741824 <= $bytes ) {
 			$bytes = number_format( $bytes / 1073741824, 2 ) . ' GB';
 		} elseif ( 1048576 <= $bytes ) {
@@ -1160,7 +1160,7 @@ class MainWP_Server_Information {
 	 * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
 	 */
 
-	public static function renderErrorLogPage() {
+	public static function render_error_log_page() {
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'error log', 'mainwp' );
@@ -1178,14 +1178,14 @@ class MainWP_Server_Information {
 				</tr>
 			</thead>
 			<tbody>
-				<?php self::renderErrorLog(); ?>
+				<?php self::render_error_log(); ?>
 			</tbody>
 		</table>
 		<?php
 		self::render_footer( 'ErrorLog' );
 	}
 
-	public static function renderErrorLog() {
+	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
 			echo '<tr><td colspan="2">' . esc_html_( 'Error logging disabled.', 'mainwp' );
@@ -1305,7 +1305,7 @@ class MainWP_Server_Information {
 		return array_slice( $lines, 0, $line_count );
 	}
 
-	public static function renderWPConfig() {
+	public static function render_wp_config() {
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
@@ -1351,7 +1351,7 @@ class MainWP_Server_Information {
 		self::render_footer( 'WPConfig' );
 	}
 
-	public static function renderActionLogs() {
+	public static function render_action_logs() {
 		self::render_header( 'Action logs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
@@ -1434,7 +1434,7 @@ class MainWP_Server_Information {
 		self::render_footer( 'Action logs' );
 	}
 
-	public static function renderhtaccess() {
+	public static function render_htaccess() {
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
@@ -1462,7 +1462,7 @@ class MainWP_Server_Information {
 	}
 
 	// Check for the disabled php functions.
-	public static function phpDisabledFunctions() {
+	public static function php_disabled_functions() {
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( '' !== $disabled_functions ) {
 			$arr = explode( ',', $disabled_functions );
@@ -1476,7 +1476,7 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function mainwpOptions() {
+	public static function mainwp_options() {
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),
 			'mainwp_wp_cron'                         => __( 'Use WP-Cron', 'mainwp' ),
@@ -1571,14 +1571,14 @@ class MainWP_Server_Information {
 		return $options_value;
 	}
 
-	public static function displayMainWPOptions() {
-		$options = self::mainwpOptions();
+	public static function display_mainwp_options() {
+		$options = self::mainwp_options();
 		foreach ( $options as $option ) {
 			echo '<tr><td colspan="2">' . $option['label'] . '</td><td colspan="2">' . $option['value'] . '</td></tr>';
 		}
 	}
 
-	private static function getWarningHTML( $errorType = self::WARNING ) {
+	private static function get_warning_html( $errorType = self::WARNING ) {
 		if ( self::WARNING == $errorType ) {
 			return '<div class="ui yellow basic label"><i class="exclamation circle icon"></i> ' . __( 'Warning', 'mainwp' ) . '</div>';
 		}

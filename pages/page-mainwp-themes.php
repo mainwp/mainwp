@@ -52,25 +52,25 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
 				self::get_class_name(),
-				'renderInstall',
+				'render_install',
 			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
 				self::get_class_name(),
-				'renderAutoUpdate',
+				'render_auto_update',
 			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
 				self::get_class_name(),
-				'renderIgnore',
+				'render_ignore',
 			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
 				self::get_class_name(),
-				'renderIgnoredAbandoned',
+				'render_ignored_abandoned',
 			)
 		);
 
@@ -525,7 +525,7 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'ThemesSearch_handler' ), $output );
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'themes_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -692,7 +692,7 @@ class MainWP_Themes {
 			return $result;
 	}
 
-	public static function ThemesSearch_handler( $data, $website, &$output ) {
+	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) );
@@ -718,12 +718,12 @@ class MainWP_Themes {
 		}
 	}
 
-	public static function activateTheme() {
+	public static function activate_theme() {
 		self::action( 'activate', $_POST['theme'] );
 		die( 'SUCCESS' );
 	}
 
-	public static function deleteThemes() {
+	public static function delete_themes() {
 		self::action( 'delete', implode( '||', $_POST['themes'] ) );
 		die( 'SUCCESS' );
 	}
@@ -763,7 +763,7 @@ class MainWP_Themes {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	public static function ignoreUpdates() {
+	public static function ignore_updates() {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		$websiteId = $websiteIdEnc;
@@ -799,7 +799,7 @@ class MainWP_Themes {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	public static function renderInstall() {
+	public static function render_install() {
 		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION );
 		wp_localize_script(
 			'mainwp-theme', '_mainwpThemeSettings',
@@ -827,11 +827,11 @@ class MainWP_Themes {
 			)
 		);
 		self::render_header( 'Install' );
-		self::renderThemesTable();
+		self::render_themes_table();
 		self::render_footer( 'Install' );
 	}
 
-	public static function renderThemesTable() {
+	public static function render_themes_table() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
 			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
@@ -995,11 +995,11 @@ class MainWP_Themes {
 		<?php
 	}
 
-	public static function performSearch() {
-		MainWP_Install_Bulk::performSearch( self::get_class_name(), 'Themes' );
+	public static function perform_search() {
+		MainWP_Install_Bulk::perform_search( self::get_class_name(), 'Themes' );
 	}
 
-	public static function renderAutoUpdate() {
+	public static function render_auto_update() {
 
 		$cachedThemesSearch = null;
 		if ( isset( $_SESSION['SNThemesAllStatus'] ) ) {
@@ -1057,7 +1057,7 @@ class MainWP_Themes {
 						<div id="mainwp-auto-updates-themes-table-wrapper">
 							<?php
 							if ( isset( $_SESSION['SNThemesAll'] ) ) {
-								self::renderAllThemesTable( $_SESSION['SNThemesAll'] );
+								self::render_all_themes_table( $_SESSION['SNThemesAll'] );
 							}
 							?>
 						</div>
@@ -1113,7 +1113,7 @@ class MainWP_Themes {
 		self::render_footer( 'AutoUpdate' );
 	}
 
-	public static function renderAllThemesTable( $output = null ) {
+	public static function render_all_themes_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
 
@@ -1180,7 +1180,7 @@ class MainWP_Themes {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'ThemesSearch_handler' ), $output );
+				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( self::get_class_name(), 'themes_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
@@ -1317,7 +1317,7 @@ class MainWP_Themes {
 		<?php
 	}
 
-	public static function renderIgnore() {
+	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
@@ -1459,7 +1459,7 @@ class MainWP_Themes {
 		self::render_footer( 'Ignore' );
 	}
 
-	public static function renderIgnoredAbandoned() {
+	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
@@ -1589,7 +1589,7 @@ class MainWP_Themes {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
-	public static function trustPost() {
+	public static function trust_post() {
 		$userExtension = MainWP_DB::instance()->get_user_extension();
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
@@ -1621,7 +1621,7 @@ class MainWP_Themes {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
-	public static function saveTrustedThemeNote() {
+	public static function save_trusted_theme_note() {
 		$slug               = urldecode( $_POST['slug'] );
 		$note               = stripslashes( $_POST['note'] );
 		$esc_note           = MainWP_Utility::esc_content( $note );

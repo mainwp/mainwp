@@ -117,7 +117,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					$output->ok     = array();
 					$output->errors = array();
 
-					MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'newadminpassword', $post_data, array(
+					MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newadminpassword', $post_data, array(
 						MainWP_Bulk_Add::get_class_name(),
 						'posting_bulk_handler',
 					), $output );

@@ -44,7 +44,7 @@ class MainWP_Site_Open {
 			<div class="ui active inverted dimmer">
 				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
 			</div>
-			<form method="POST" action="<?php echo MainWP_Utility::getGetDataAuthed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm">
+			<form method="POST" action="<?php echo MainWP_Utility::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			</form>
 		</div>
@@ -82,7 +82,7 @@ class MainWP_Site_Open {
 			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-			$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::get_file_parameter( $website ), true );
+			$postdata         = MainWP_Utility::get_get_data_authed( $website, $file, MainWP_Utility::get_file_parameter( $website ), true );
 			$postdata['size'] = $size;
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
@@ -108,7 +108,7 @@ class MainWP_Site_Open {
 			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-			$postdata                  = MainWP_Utility::getGetDataAuthed( $website, 'index.php', 'where', true );
+			$postdata                  = MainWP_Utility::get_get_data_authed( $website, 'index.php', 'where', true );
 			$postdata['open_location'] = base64_encode( $open_location );
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">

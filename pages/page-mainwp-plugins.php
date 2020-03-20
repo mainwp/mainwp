@@ -53,7 +53,7 @@ class MainWP_Plugins {
 			$page = add_submenu_page(
 				'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
 					self::get_class_name(),
-					'renderInstall',
+					'render_install',
 				)
 			);
 
@@ -63,19 +63,19 @@ class MainWP_Plugins {
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
 				self::get_class_name(),
-				'renderAutoUpdate',
+				'render_auto_update',
 			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
 				self::get_class_name(),
-				'renderIgnore',
+				'render_ignore',
 			)
 		);
 		add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
 				self::get_class_name(),
-				'renderIgnoredAbandoned',
+				'render_ignored_abandoned',
 			)
 		);
 
@@ -546,7 +546,7 @@ class MainWP_Plugins {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'PluginsSearch_handler' ), $output );
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'plugins_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -720,7 +720,7 @@ class MainWP_Plugins {
 		return $result;
 	}
 
-	public static function PluginsSearch_handler( $data, $website, &$output ) {
+	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];
 			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) );
@@ -745,19 +745,19 @@ class MainWP_Plugins {
 		}
 	}
 
-	public static function activatePlugins() {
+	public static function activate_plugins() {
 		self::action( 'activate' );
 	}
 
-	public static function deactivatePlugins() {
+	public static function deactivate_plugins() {
 		self::action( 'deactivate' );
 	}
 
-	public static function deletePlugins() {
+	public static function delete_plugins() {
 		self::action( 'delete' );
 	}
 
-	public static function ignoreUpdates() {
+	public static function ignore_updates() {
 		$websiteIdEnc = $_POST['websiteId'];
 		$websiteId    = $websiteIdEnc;
 
@@ -829,13 +829,13 @@ class MainWP_Plugins {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	public static function renderInstall() {
+	public static function render_install() {
 		self::render_header( 'Install' );
-		self::renderPluginsTable();
+		self::render_plugins_table();
 		self::render_footer( 'Install' );
 	}
 
-	public static function renderPluginsTable() {
+	public static function render_plugins_table() {
 		global $tab;
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
@@ -942,7 +942,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	public static function renderAutoUpdate() {
+	public static function render_auto_update() {
 		$cachedAUSearch = null;
 
 		if ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {
@@ -999,7 +999,7 @@ class MainWP_Plugins {
 						<div id="mainwp-auto-updates-plugins-table-wrapper">
 						<?php
 						if ( isset( $_SESSION['MainWP_PluginsActive'] ) ) {
-							self::renderAllActiveTable( $_SESSION['MainWP_PluginsActive'] );
+							self::render_all_active_table( $_SESSION['MainWP_PluginsActive'] );
 						}
 						?>
 					</div>
@@ -1055,7 +1055,7 @@ class MainWP_Plugins {
 		self::render_footer( 'AutoUpdate' );
 	}
 
-	public static function renderAllActiveTable( $output = null ) {
+	public static function render_all_active_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
 
@@ -1122,7 +1122,7 @@ class MainWP_Plugins {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'PluginsSearch_handler' ), $output );
+				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( self::get_class_name(), 'plugins_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
@@ -1275,7 +1275,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	public static function renderIgnore() {
+	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
@@ -1419,7 +1419,7 @@ class MainWP_Plugins {
 		self::render_footer( 'Ignore' );
 	}
 
-	public static function renderIgnoredAbandoned() {
+	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->dismissed_plugins, true );
@@ -1553,7 +1553,7 @@ class MainWP_Plugins {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
-	public static function trustPost() {
+	public static function trust_post() {
 		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
@@ -1585,7 +1585,7 @@ class MainWP_Plugins {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
-	public static function trustPlugin( $slug ) {
+	public static function trust_plugin( $slug ) {
 		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
@@ -1599,7 +1599,7 @@ class MainWP_Plugins {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
-	public static function checkAutoUpdatePlugin( $slug ) {
+	public static function check_auto_update_plugin( $slug ) {
 		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
 			return false;
 		}
@@ -1611,7 +1611,7 @@ class MainWP_Plugins {
 			return false;
 	}
 
-	public static function saveTrustedPluginNote() {
+	public static function save_trusted_plugin_note() {
 		$slug                = urldecode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );
 		$esc_note            = MainWP_Utility::esc_content( $note );

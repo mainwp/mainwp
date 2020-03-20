@@ -3,6 +3,8 @@
  * MainWP API Manager Update Handler
  *
  * This class handles updates for MainWP Extension.
+ *
+ * @package MainWP API Manager/Update Handler
  */
 
 // Exit if accessed directly.

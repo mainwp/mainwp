@@ -4,11 +4,12 @@
  * 
  * Legacy Client Reports Extension.
  * 
- * @deprecated moved to external Extension
  */
 
 /**
  * Class LiveReportResponder
+ * 
+ * @deprecated moved to external Extension
  */
 class LiveReportResponder {
 

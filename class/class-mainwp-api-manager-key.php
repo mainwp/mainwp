@@ -217,7 +217,7 @@ class MainWP_Api_Manager_Key {
 			unset( $log['http_response'] );
 		}
 
-		MainWP_Logger::Instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
+		MainWP_Logger::instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
 			if ( self::$apisslverify == 1 ) {

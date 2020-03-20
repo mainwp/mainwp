@@ -15,7 +15,7 @@ class MainWP_Manage_Backups {
 
 	private static $instance = null;
 
-	public static function Instance() {
+	public static function instance() {
 		if ( self::$instance == null ) {
 			self::$instance = new MainWP_Manage_Backups();
 		}
@@ -32,9 +32,9 @@ class MainWP_Manage_Backups {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-backups'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
 		 *
-		 * @see \MainWP_Manage_Backups::renderHeader
+		 * @see \MainWP_Manage_Backups::render_header
 		 */
-		add_action( 'mainwp-pageheader-backups', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-backups', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Backups page footer via the 'mainwp-pagefooter-backups' action.
@@ -44,12 +44,12 @@ class MainWP_Manage_Backups {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-backups'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
 		 *
-		 * @see \MainWP_Manage_Backups::renderFooter
+		 * @see \MainWP_Manage_Backups::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-backups', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-backups', array( self::get_class_name(), 'render_footer' ) );
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$enable_legacy_backup = get_option('mainwp_enableLegacyBackupFeature');
 		$mainwp_primaryBackup = get_option('mainwp_primaryBackup');
 		$customPage           = apply_filters( 'mainwp-getcustompage-backups', false );
@@ -96,7 +96,7 @@ class MainWP_Manage_Backups {
 		self::init_left_menu(self::$subPages, $enable_legacy_backup );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		if ( self::$hideSubmenuBackups && ( empty( self::$subPages ) || ! is_array( self::$subPages ) ) ) {
 			return;
 		}
@@ -177,7 +177,7 @@ class MainWP_Manage_Backups {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
 			'title' => __( 'Backups', 'mainwp' ),
@@ -234,7 +234,7 @@ class MainWP_Manage_Backups {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 			echo '</div>';
 	}
 
@@ -255,7 +255,7 @@ class MainWP_Manage_Backups {
 				$newSiteIds = '';
 				$siteIds    = ( $backupTask->sites == '' ? array() : explode( ',', $backupTask->sites ) );
 				foreach ( $siteIds as $siteId ) {
-					$site = MainWP_DB::Instance()->getWebsiteById( $siteId );
+					$site = MainWP_DB::instance()->get_website_by_id( $siteId );
 					if ( ! empty( $site ) ) {
 						$newSiteIds .= ',' . $siteId;
 					}
@@ -265,14 +265,14 @@ class MainWP_Manage_Backups {
 
 				if ( $newSiteIds != $backupTask->sites ) {
 					$nothingChanged = false;
-					MainWP_DB::Instance()->updateBackupTaskWithValues( $backupTask->id, array( 'sites' => $newSiteIds ) );
+					MainWP_DB::instance()->update_backup_task_with_values( $backupTask->id, array( 'sites' => $newSiteIds ) );
 				}
 			} else {
 				// Check if groups exist
 				$newGroupIds = '';
 				$groupIds    = explode( ',', $backupTask->groups );
 				foreach ( $groupIds as $groupId ) {
-					$group = MainWP_DB::Instance()->getGroupById( $groupId );
+					$group = MainWP_DB::instance()->get_group_by_id( $groupId );
 					if ( ! empty( $group ) ) {
 						$newGroupIds .= ',' . $groupId;
 					}
@@ -281,7 +281,7 @@ class MainWP_Manage_Backups {
 
 				if ( $newGroupIds != $backupTask->groups ) {
 					$nothingChanged = false;
-					MainWP_DB::Instance()->updateBackupTaskWithValues( $backupTask->id, array( 'groups' => $newGroupIds ) );
+					MainWP_DB::instance()->update_backup_task_with_values( $backupTask->id, array( 'groups' => $newGroupIds ) );
 				}
 			}
 		}
@@ -298,14 +298,14 @@ class MainWP_Manage_Backups {
 			}
 			$backupTaskId = $_GET['id'];
 
-			$backupTask = MainWP_DB::Instance()->getBackupTaskById( $backupTaskId );
+			$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
 			if ( $backupTask != null ) {
 				if ( ! self::validateBackupTasks( array( $backupTask ) ) ) {
-					$backupTask = MainWP_DB::Instance()->getBackupTaskById( $backupTaskId );
+					$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
 				}
 			}
 		}
@@ -317,12 +317,12 @@ class MainWP_Manage_Backups {
 
 		if ( $backupTask == null ) {
 
-			$backup_items = MainWP_DB::Instance()->getBackupTasksForUser();
+			$backup_items = MainWP_DB::instance()->get_backup_tasks_for_user();
 			if ( ! self::validateBackupTasks( $backup_items ) ) {
-				$backup_items = MainWP_DB::Instance()->getBackupTasksForUser();
+				$backup_items = MainWP_DB::instance()->get_backup_tasks_for_user();
 			}
 
-			self::renderHeader( '' );
+			self::render_header( '' );
 			?>
 			<?php if ( count( $primaryBackupMethods ) == 0 ) { ?>
 				<div class="mainwp-notice mainwp-notice-blue"><?php echo sprintf( __( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
@@ -348,7 +348,7 @@ class MainWP_Manage_Backups {
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<?php
 					MainWP_UI::render_modal_edit_notes();
-					self::Instance()->display( $backup_items );
+					self::instance()->display( $backup_items );
 					?>
 				</form>
 			</div>
@@ -363,7 +363,7 @@ class MainWP_Manage_Backups {
 
 			   </div>
 			<?php
-			self::renderFooter( '' );
+			self::render_footer( '' );
 		} else {
 			self::renderEdit( $backupTask );
 		}
@@ -415,7 +415,7 @@ class MainWP_Manage_Backups {
 						$sites  = ( $item->sites == '' ? array() : explode( ',', $item->sites ) );
 						$groups = ( $item->groups == '' ? array() : explode( ',', $item->groups ) );
 						foreach ( $groups as $group ) {
-							$websites = MainWP_DB::Instance()->getWebsitesByGroupId( $group );
+							$websites = MainWP_DB::instance()->get_websites_by_group_id( $group );
 							if ( $websites == null ) {
 								continue;
 							}
@@ -542,10 +542,10 @@ class MainWP_Manage_Backups {
 	}
 
 	public function column_details( $item ) {
-		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( $item->last_run_manually == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->last_run_manually ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->last_run ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( $item->completed == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $item->completed ) ) ) . '<br />';
-		$output .= '<strong>' . __( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::formatTimestamp( ( $item->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $item->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::getTimestamp( $item->last_run ) ) );
+		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( $item->last_run_manually == 0 ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
+		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
+		$output .= '<strong>' . __( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( $item->completed == 0 ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->completed ) ) ) . '<br />';
+		$output .= '<strong>' . __( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( $item->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( $item->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $item->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
 		$output .= '<strong>';
 		if ( $item->last_run != 0 && $item->completed < $item->last_run ) {
 			$output         .= __( '<br />CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
@@ -569,7 +569,7 @@ class MainWP_Manage_Backups {
 
 
 	public static function renderEdit( $task ) {
-		self::renderHeader( 'ManageBackupsEdit' );
+		self::render_header( 'ManageBackupsEdit' );
 		?>
 		<div class="ui alt segment">
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -582,7 +582,7 @@ class MainWP_Manage_Backups {
 			</form>
 		</div>
 		<?php
-		self::renderFooter( 'ManageBackupsEdit' );
+		self::render_footer( 'ManageBackupsEdit' );
 	}
 
 	public static function renderNew() {
@@ -590,7 +590,7 @@ class MainWP_Manage_Backups {
 			mainwp_do_not_have_permissions( __( 'add backup tasks', 'mainwp' ) );
 			return;
 		}
-		self::renderHeader( 'AddNew' );
+		self::render_header( 'AddNew' );
 		?>
 		<div class="ui alt segment">
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -600,7 +600,7 @@ class MainWP_Manage_Backups {
 			</form>
 		</div>
 		<?php
-		self::renderFooter( 'AddNew' );
+		self::render_footer( 'AddNew' );
 	}
 
 	public static function renderNewEdit( $task ) {
@@ -648,14 +648,14 @@ class MainWP_Manage_Backups {
 			}
 			$backupTaskId = $_GET['id'];
 
-			$backupTask = MainWP_DB::Instance()->getBackupTaskById( $backupTaskId );
+			$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
 			if ( $backupTask != null ) {
 				if ( ! self::validateBackupTasks( array( $backupTask ) ) ) {
-					$backupTask = MainWP_DB::Instance()->getBackupTaskById( $backupTaskId );
+					$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
 				}
 			}
 		}
@@ -841,7 +841,7 @@ class MainWP_Manage_Backups {
 		}
 
 		$backupId = $_POST['id'];
-		$task     = MainWP_DB::Instance()->getBackupTaskById( $backupId );
+		$task     = MainWP_DB::instance()->get_backup_task_by_id( $backupId );
 
 		if ( ! MainWP_Utility::can_edit_backuptask( $task ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
@@ -851,7 +851,7 @@ class MainWP_Manage_Backups {
 		$type           = $_POST['type'];
 		$excludedFolder = trim( $_POST['exclude'], "\n" );
 		$excludedFolder = explode( "\n", $excludedFolder );
-		$excludedFolder = array_map( array( 'MainWP_Utility', 'trimSlashes' ), $excludedFolder );
+		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 		$excludedFolder = implode( ',', $excludedFolder );
 		$sites          = '';
@@ -883,7 +883,7 @@ class MainWP_Manage_Backups {
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
-		if ( MainWP_DB::Instance()->updateBackupTask( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
+		if ( MainWP_DB::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
 			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 		} else {
 			die( wp_json_encode( array( 'result' => __( 'Task updated successfully.', 'mainwp' ) ) ) );
@@ -903,7 +903,7 @@ class MainWP_Manage_Backups {
 		$type           = $_POST['type'];
 		$excludedFolder = trim( $_POST['exclude'], "\n" );
 		$excludedFolder = explode( "\n", $excludedFolder );
-		$excludedFolder = array_map( array( 'MainWP_Utility', 'trimSlashes' ), $excludedFolder );
+		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 		$excludedFolder = implode( ',', $excludedFolder );
 
@@ -934,7 +934,7 @@ class MainWP_Manage_Backups {
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 		$loadFilesBeforeZip             = isset($_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
-		$task = MainWP_DB::Instance()->addBackupTask( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
+		$task = MainWP_DB::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
 
 		if ( ! $task ) {
 			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
@@ -948,10 +948,10 @@ class MainWP_Manage_Backups {
 	public static function executeBackupTask( $task, $nrOfSites = 0, $updateRun = true ) {
 
 		if ( $updateRun ) {
-			MainWP_DB::Instance()->updateBackupRun( $task->id );
+			MainWP_DB::instance()->update_backup_run( $task->id );
 		}
 
-		$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+		$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 
 		$completed_sites = $task->completed_sites;
 
@@ -972,7 +972,7 @@ class MainWP_Manage_Backups {
 		} else {
 			$groups = explode( ',', $task->groups );
 			foreach ( $groups as $groupid ) {
-				$group_sites = MainWP_DB::Instance()->getWebsitesByGroupId( $groupid );
+				$group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
 				foreach ( $group_sites as $group_site ) {
 					if ( in_array( $group_site->id, $sites ) ) {
 						continue;
@@ -985,12 +985,12 @@ class MainWP_Manage_Backups {
 
 		$lastStartNotification = $task->lastStartNotificationSent;
 		if ( $updateRun && ( get_option( 'mainwp_notificationOnBackupStart' ) == 1 ) && ( $lastStartNotification < $task->last_run ) ) {
-			$email = MainWP_DB::Instance()->getUserNotificationEmail( $task->userid );
+			$email = MainWP_DB::instance()->get_user_notification_email( $task->userid );
 			if ( $email != '' ) {
-				$output = 'A scheduled backup has started with MainWP on ' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( time() ) ) . ' for the following ' . count( $sites ) . ' sites:<br />';
+				$output = 'A scheduled backup has started with MainWP on ' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( time() ) ) . ' for the following ' . count( $sites ) . ' sites:<br />';
 
 				foreach ( $sites as $siteid ) {
-					$website = MainWP_DB::Instance()->getWebsiteById( $siteid );
+					$website = MainWP_DB::instance()->get_website_by_id( $siteid );
 					$output .= '&nbsp;&bull;&nbsp;<a href="' . $website->url . '">' . MainWP_Utility::get_nice_url( $website->url ) . '</a><br />';
 				}
 
@@ -998,8 +998,8 @@ class MainWP_Manage_Backups {
 				$output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
 				$output .= '<strong>Backup type</strong> - ' . ( $task->type == 'db' ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
 				$output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
-				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::formatEmail( $email, $output, $mail_title ), 'content-type: text/html' );
-				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'lastStartNotificationSent' => time() ) );
+				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::format_email( $email, $output, $mail_title ), 'content-type: text/html' );
+				MainWP_DB::instance()->update_backup_task_with_values( $task->id, array( 'lastStartNotificationSent' => time() ) );
 			}
 		}
 
@@ -1009,7 +1009,7 @@ class MainWP_Manage_Backups {
 			if ( isset( $completed_sites[ $siteid ] ) && ( $completed_sites[ $siteid ] == true ) ) {
 				continue;
 			}
-			$website = MainWP_DB::Instance()->getWebsiteById( $siteid );
+			$website = MainWP_DB::instance()->get_website_by_id( $siteid );
 
 			try {
 				$subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
@@ -1062,7 +1062,7 @@ class MainWP_Manage_Backups {
 
 			$currentCount ++;
 
-			$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 
 			$completed_sites = $task->completed_sites;
 
@@ -1074,7 +1074,7 @@ class MainWP_Manage_Backups {
 			}
 
 			$completed_sites[ $siteid ] = true;
-			MainWP_DB::Instance()->updateCompletedSites( $task->id, $completed_sites );
+			MainWP_DB::instance()->update_completed_sites( $task->id, $completed_sites );
 
 			if ( ( $nrOfSites != 0 ) && ( $nrOfSites <= $currentCount ) ) {
 				break;
@@ -1083,21 +1083,21 @@ class MainWP_Manage_Backups {
 
 		// update completed sites
 		if ( $errorOutput != null ) {
-			MainWP_DB::Instance()->updateBackupErrors( $task->id, $errorOutput );
+			MainWP_DB::instance()->update_backup_errors( $task->id, $errorOutput );
 		}
 
 		if ( count( $completed_sites ) == count( $sites ) ) {
-			MainWP_DB::Instance()->updateBackupCompleted( $task->id );
+			MainWP_DB::instance()->update_backup_completed( $task->id );
 
 			if ( get_option( 'mainwp_notificationOnBackupFail' ) == 1 ) {
-				$email = MainWP_DB::Instance()->getUserNotificationEmail( $task->userid );
+				$email = MainWP_DB::instance()->get_user_notification_email( $task->userid );
 				if ( $email != '' ) {
-					$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+					$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 					if ( $task->backup_errors != '' ) {
 						$errorOutput = 'Errors occurred while executing task: <strong>' . $task->name . '</strong><br /><br />' . $task->backup_errors;
-						wp_mail( $email, $mail_title = 'A scheduled backup had an Error - MainWP', MainWP_Utility::formatEmail( $email, $errorOutput, $mail_title ), 'content-type: text/html' );
+						wp_mail( $email, $mail_title = 'A scheduled backup had an Error - MainWP', MainWP_Utility::format_email( $email, $errorOutput, $mail_title ), 'content-type: text/html' );
 
-						MainWP_DB::Instance()->updateBackupErrors( $task->id, '' );
+						MainWP_DB::instance()->update_backup_errors( $task->id, '' );
 					}
 				}
 			}
@@ -1107,7 +1107,7 @@ class MainWP_Manage_Backups {
 	}
 
 	public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
-		$backupTask = MainWP_DB::Instance()->getBackupTaskById( $pTaskId );
+		$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $pTaskId );
 
 		$subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $backupTask->name ), $backupTask->subfolder );
 
@@ -1136,7 +1136,7 @@ class MainWP_Manage_Backups {
 
 	public static function getBackupTaskSites( $pTaskId ) {
 		$sites      = array();
-		$backupTask = MainWP_DB::Instance()->getBackupTaskById( $pTaskId );
+		$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $pTaskId );
 		if ( $backupTask->groups == '' ) {
 			if ( $backupTask->sites != '' ) {
 				$sites = explode( ',', $backupTask->sites );
@@ -1144,7 +1144,7 @@ class MainWP_Manage_Backups {
 		} else {
 			$groups = explode( ',', $backupTask->groups );
 			foreach ( $groups as $groupid ) {
-				$group_sites = MainWP_DB::Instance()->getWebsitesByGroupId( $groupid );
+				$group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
 				foreach ( $group_sites as $group_site ) {
 					if ( in_array( $group_site->id, $sites ) ) {
 						continue;
@@ -1156,7 +1156,7 @@ class MainWP_Manage_Backups {
 
 		$allSites = array();
 		foreach ( $sites as $site ) {
-			$website    = MainWP_DB::Instance()->getWebsiteById( $site );
+			$website    = MainWP_DB::instance()->get_website_by_id( $site );
 			$allSites[] = array(
 				'id'       => $website->id,
 				'name'     => $website->name,
@@ -1166,7 +1166,7 @@ class MainWP_Manage_Backups {
 		}
 
 		$remoteDestinations = apply_filters( 'mainwp_backuptask_remotedestinations', array(), $backupTask );
-		MainWP_DB::Instance()->updateBackupRunManually( $pTaskId );
+		MainWP_DB::instance()->update_backup_run_manually( $pTaskId );
 
 		return array(
 			'sites'              => $allSites,
@@ -1178,7 +1178,7 @@ class MainWP_Manage_Backups {
 		$websites = array();
 		if ( isset( $_REQUEST['site'] ) && ( $_REQUEST['site'] != '' ) ) {
 			$siteId  = $_REQUEST['site'];
-			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$websites[] = $website;
 			}
@@ -1194,7 +1194,7 @@ class MainWP_Manage_Backups {
 				$siteIdsRequested[] = $siteId;
 			}
 
-			$websites = MainWP_DB::Instance()->getWebsitesByIds( $siteIdsRequested );
+			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( $_REQUEST['groups'] != '' ) ) {
 			$groupIds          = explode( ',', urldecode( $_REQUEST['groups'] ) );
 			$groupIdsRequested = array();
@@ -1207,7 +1207,7 @@ class MainWP_Manage_Backups {
 				$groupIdsRequested[] = $groupId;
 			}
 
-			$websites = MainWP_DB::Instance()->getWebsitesByGroupIds( $groupIdsRequested );
+			$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
 		}
 
 		if ( count( $websites ) == 0 ) {
@@ -1440,10 +1440,10 @@ class MainWP_Manage_Backups {
 
 	public static function removeBackup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$task = MainWP_DB::Instance()->getBackupTaskById( $_POST['id'] );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
 				// Remove from DB
-				MainWP_DB::Instance()->removeBackupTask( $task->id );
+				MainWP_DB::instance()->remove_backup_task( $task->id );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}
@@ -1452,9 +1452,9 @@ class MainWP_Manage_Backups {
 
 	public static function resumeBackup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$task = MainWP_DB::Instance()->getBackupTaskById( $_POST['id'] );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
-				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'paused' => 0 ) );
+				MainWP_DB::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 0 ) );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}
@@ -1463,9 +1463,9 @@ class MainWP_Manage_Backups {
 
 	public static function pauseBackup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$task = MainWP_DB::Instance()->getBackupTaskById( $_POST['id'] );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
-				MainWP_DB::Instance()->updateBackupTaskWithValues( $task->id, array( 'paused' => 1 ) );
+				MainWP_DB::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
 		}

@@ -99,7 +99,7 @@ class MainWP_Overview {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
-		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
+		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );

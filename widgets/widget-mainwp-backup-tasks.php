@@ -40,7 +40,7 @@ class MainWP_Backup_Tasks {
 	 */
 	public static function render() {
 
-		$tasks = MainWP_DB::Instance()->getBackupTasksForUser();
+		$tasks = MainWP_DB::instance()->get_backup_tasks_for_user();
 		// MainWP_UI::renderBeginReadyPopup();
 		?>
 		<h3><?php esc_html_e('Backup tasks', 'mainwp'); ?></h3>
@@ -77,7 +77,7 @@ class MainWP_Backup_Tasks {
 					if ( $task->groups != '' ) {
 						$groups = explode( ',', $task->groups );
 						foreach ( $groups as $groupid ) {
-							$group_sites = MainWP_DB::Instance()->getWebsitesByGroupId( $groupid );
+							$group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
 							foreach ( $group_sites as $group_site ) {
 								if ( in_array( $group_site->id, $sites ) ) {
 									continue;
@@ -108,8 +108,8 @@ class MainWP_Backup_Tasks {
 							?>
 						</div>
 						<div class="six wide column">
-							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? '-' : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?><br />
-							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::formatTimestamp( ( $task->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $task->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::getTimestamp( $task->last_run ) ) ); ?>
+							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?><br />
+							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( $task->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $task->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?>
 						</div>
 					</div>
 					<?php

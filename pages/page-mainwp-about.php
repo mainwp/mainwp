@@ -36,7 +36,7 @@ class MainWP_About {
 	 *
 	 * Add WP Submenu Page "About MainWP"
 	 */
-	public static function initMenu() {
+	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
 				self::get_class_name(),

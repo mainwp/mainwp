@@ -23,9 +23,9 @@ class MainWP_Page {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
 		 *
-		 * @see \MainWP_Page::renderHeader
+		 * @see \MainWP_Page::render_header
 		 */
-		add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
@@ -35,22 +35,22 @@ class MainWP_Page {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-page'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
 		 *
-		 * @see \MainWP_Page::renderFooter
+		 * @see \MainWP_Page::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'renderBulkAdd' ) );
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PageBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'renderBulkEdit' ) );
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
 		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards
@@ -94,7 +94,7 @@ class MainWP_Page {
 		MainWP_Post::on_load_bulkpost( $post_id );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Pages" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open" style="">
@@ -219,7 +219,7 @@ class MainWP_Page {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '', $post_id = null ) {
+	public static function render_header( $shownPage = '', $post_id = null ) {
 
 		$params = array(
 			'title' => __( 'Pages', 'mainwp' ),
@@ -276,7 +276,7 @@ class MainWP_Page {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		?>
 		</div>
 		<?php
@@ -301,7 +301,7 @@ class MainWP_Page {
 
 		// Loads the page screen via AJAX, which redirects to the "posting()" to really post the posts to the saved sites
 		?>
-		<?php self::renderHeader( 'BulkManage' ); ?>
+		<?php self::render_header( 'BulkManage' ); ?>
 
 		<div id="mainwp-manage-pages"  class="ui alt segment">
 			<div class="mainwp-main-content">
@@ -325,7 +325,7 @@ class MainWP_Page {
 				</div>
 			  </div>
 			  <div class="ui segment" id="mainwp_pages_wrap_table">
-				<?php self::renderTable( true ); ?>
+				<?php self::render_table( true ); ?>
 			  </div>
 			</div>
 
@@ -353,7 +353,7 @@ class MainWP_Page {
 			  <div class="ui divider"></div>
 			<div class="mainwp-search-options">
 			  <div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-				<?php self::renderSearchOptions(); ?>
+				<?php self::render_search_options(); ?>
 			  </div>
 			  <div class="ui divider"></div>
 			  <div class="mainwp-search-submit">
@@ -365,7 +365,7 @@ class MainWP_Page {
 		<?php
 	}
 
-	public static function renderSearchOptions() {
+	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
@@ -445,7 +445,7 @@ class MainWP_Page {
 		}
 	}
 
-	public static function renderTable( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '',
+	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '',
 									 $sites = '', $search_on = 'all' ) {
 		?>
 			<div id="mainwp_pages_error"></div>
@@ -484,7 +484,7 @@ class MainWP_Page {
 				if ( $cached ) {
 					MainWP_Cache::echo_body( 'Page' );
 				} else {
-					self::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
+					self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
 				}
 				?>
 			</tbody>
@@ -519,7 +519,7 @@ class MainWP_Page {
 		<?php
 	}
 
-	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
 		MainWP_Cache::init_cache( 'Page' );
 
@@ -529,20 +529,20 @@ class MainWP_Page {
 		if ( $sites != '' ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 				}
 			}
 		}
 		if ( $groups != '' ) {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -600,7 +600,7 @@ class MainWP_Page {
 		}
 	}
 
-	private static function getStatus( $status ) {
+	private static function get_status( $status ) {
 		if ( $status == 'publish' ) {
 			return 'Published';
 		}
@@ -623,7 +623,7 @@ class MainWP_Page {
 				if ( isset( $page['dts'] ) ) {
 					$raw_dts = $page['dts'];
 					if ( ! stristr( $page['dts'], '-' ) ) {
-						$page['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $page['dts'] ) );
+						$page['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $page['dts'] ) );
 					}
 				}
 
@@ -672,7 +672,7 @@ class MainWP_Page {
 					<td class="date">
 						<abbr raw_value="<?php echo esc_attr($raw_dts); ?>" title="<?php echo esc_attr($page['dts']); ?>"><?php echo esc_html($page['dts']); ?></abbr>
 					</td>
-					<td class="status"><?php echo self::getStatus( $page['status'] ); ?>
+					<td class="status"><?php echo self::get_status( $page['status'] ); ?>
 					</td>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) {
@@ -756,7 +756,7 @@ class MainWP_Page {
 		die( wp_json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
-	public static function renderBulkAdd() {
+	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
@@ -766,7 +766,7 @@ class MainWP_Page {
 		self::render_addedit($post_id, 'BulkAdd');
 	}
 
-	public static function renderBulkEdit() {
+	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
@@ -777,9 +777,9 @@ class MainWP_Page {
 	}
 
 	public static function render_addedit( $post_id, $what ) {
-		self::renderHeader( $what, $post_id );
+		self::render_header( $what, $post_id );
 		MainWP_Post::render_bulkpost( $post_id, 'bulkpage' );
-		self::renderFooter( $what );
+		self::render_footer( $what );
 	}
 
 	public static function posting() {
@@ -887,19 +887,19 @@ class MainWP_Page {
 						if ( $selected_by == 'site' ) { // Get all selected websites
 							foreach ( $selected_sites as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
-									$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-									$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+									$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+									$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 								}
 							}
 						} else { // Get all websites from the selected groups
 							foreach ( $selected_groups as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
-									$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+									$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 									while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 										if ( $website->sync_errors != '' ) {
 											continue;
 										}
-										$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
 									}
 									MainWP_DB::free_result( $websites );
 								}

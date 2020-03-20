@@ -9,7 +9,7 @@ class MainWP_Manage_Groups {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
 				self::get_class_name(),
@@ -20,7 +20,7 @@ class MainWP_Manage_Groups {
 
 	public static function getGroupListContent() {
 
-		$groups = MainWP_DB::Instance()->getGroupsAndCount();
+		$groups = MainWP_DB::instance()->get_groups_and_count();
 
 		foreach ( $groups as $group ) {
 			self::createGroupItem( $group );
@@ -57,7 +57,7 @@ class MainWP_Manage_Groups {
 	}
 
 	public static function getWebsiteListContent() {
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
@@ -318,7 +318,7 @@ class MainWP_Manage_Groups {
 
 	public static function renameGroup() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
 				$name = $_POST['newName'];
 				if ( $name == '' ) {
@@ -327,10 +327,10 @@ class MainWP_Manage_Groups {
 
 				$name = self::checkGroupName( $name, $group->id );
 				// update group
-				$nr = MainWP_DB::Instance()->updateGroup( $group->id, $name );
+				$nr = MainWP_DB::instance()->update_group( $group->id, $name );
 
 				// Reload group
-				$group = MainWP_DB::Instance()->getGroupById( $group->id );
+				$group = MainWP_DB::instance()->get_group_by_id( $group->id );
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
@@ -338,10 +338,10 @@ class MainWP_Manage_Groups {
 
 	public static function deleteGroup() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
 				// Remove from DB
-				$nr = MainWP_DB::Instance()->removegroup( $group->id );
+				$nr = MainWP_DB::instance()->removegroup( $group->id );
 
 				if ( $nr > 0 ) {
 					die( 'OK' );
@@ -363,7 +363,7 @@ class MainWP_Manage_Groups {
 			$groupName = $matches[1];
 		}
 
-		$group = MainWP_DB::Instance()->getGroupByNameForUser( $groupName );
+		$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName );
 		while ( $group && ( ( $groupId == null ) || ( $group->id != $groupId ) ) ) {
 			if ( $cnt == null ) {
 				$cnt = 1;
@@ -371,18 +371,18 @@ class MainWP_Manage_Groups {
 				$cnt ++;
 			}
 
-			$group = MainWP_DB::Instance()->getGroupByNameForUser( $groupName . ' (' . $cnt . ')' );
+			$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName . ' (' . $cnt . ')' );
 		}
 
 		return $groupName . ( $cnt == null ? '' : ' (' . $cnt . ')' );
 	}
 
-	public static function addGroup() {
+	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB::Instance()->addGroup( $current_user->ID, self::checkGroupName( $_POST['newName'] ) );
+			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, self::checkGroupName( $_POST['newName'] ) );
 			do_action( 'mainwp_added_new_group', $groupId );
-			$group = MainWP_DB::Instance()->getGroupById( $groupId );
+			$group = MainWP_DB::instance()->get_group_by_id( $groupId );
 			self::createGroupItem( $group );
 			die();
 		}
@@ -391,9 +391,9 @@ class MainWP_Manage_Groups {
 
 	public static function getSites() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				$websites   = MainWP_DB::Instance()->getWebsitesByGroupId( $group->id );
+				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
 				$websiteIds = array();
 				if ( ! empty( $websites ) ) {
 					foreach ( $websites as $website ) {
@@ -407,16 +407,16 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
-	public static function updateGroup() {
+	public static function update_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				MainWP_DB::Instance()->clearGroup( $group->id );
+				MainWP_DB::instance()->clear_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {
 					foreach ( $_POST['websiteIds'] as $websiteId ) {
-						$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 						if ( MainWP_Utility::can_edit_website( $website ) ) {
-							MainWP_DB::Instance()->updateGroupSite( $group->id, $website->id );
+							MainWP_DB::instance()->update_group_site( $group->id, $website->id );
 						}
 					}
 				}

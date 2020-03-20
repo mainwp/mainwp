@@ -4,11 +4,11 @@
  */
 class MainWP_Manage_Sites_View {
 
-	public static function initMenu() {
+	public static function init_menu() {
 		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::get_class_name(), 'renderManageSites' ) );
 	}
 
-	public static function initMenuSubPages( &$subPages ) {
+	public static function init_subpages_menu( &$subPages ) {
 		?>
 		<div id="menu-mainwp-Sites" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open" style="">
@@ -107,7 +107,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	public static function renderHeader( $shownPage = '', &$subPages = '' ) {
+	public static function render_header( $shownPage = '', &$subPages = '' ) {
 
 		if ( '' === $shownPage ) {
 			$shownPage = 'ManageSites';
@@ -189,7 +189,7 @@ class MainWP_Manage_Sites_View {
 		$pagetitle = __( 'Sites', 'mainwp' );
 
 		if ( 0 !== $site_id ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $site_id );
+			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 			$imgfavi = '';
 			if ( 1 === get_option( 'mainwp_use_favicon', 1 ) ) {
 				$favi_url = MainWP_Utility::get_favico_url( $website );
@@ -253,7 +253,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	public static function renderFooter( $shownPage, &$subPages ) {
+	public static function render_footer( $shownPage, &$subPages ) {
 		echo '</div>';
 	}
 
@@ -454,7 +454,7 @@ class MainWP_Manage_Sites_View {
 		foreach ( $fullBackups as $key => $fullBackup ) {
 			$downloadLink = admin_url( '?sig=' . md5( filesize( $fullBackup ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
 			$output      .= '<div class="ui grid field">';
-			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
+			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
 			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
 			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>';
 			$output      .= '</div>';
@@ -471,7 +471,7 @@ class MainWP_Manage_Sites_View {
 		foreach ( $dbBackups as $key => $dbBackup ) {
 			$downloadLink = admin_url( '?sig=' . md5( filesize( $dbBackup ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $dbBackup ) ) );
 			$output      .= '<div class="ui grid field">';
-			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . basename( $dbBackup ) . '" href="' . $downloadLink . '" download class="button">Download</a></div>';
+			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . basename( $dbBackup ) . '" href="' . $downloadLink . '" download class="button">Download</a></div>';
 			$output      .= '</div>';
 		}
 		?>
@@ -671,9 +671,9 @@ class MainWP_Manage_Sites_View {
 
 	public static function renderIndividualUpdates( $id ) {
 		global $current_user;
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
-		$sql           = MainWP_DB::Instance()->getSQLWebsiteById( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
-		$websites      = MainWP_DB::Instance()->query( $sql );
+		$userExtension = MainWP_DB::instance()->get_user_extension();
+		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+		$websites      = MainWP_DB::instance()->query( $sql );
 
 		MainWP_DB::data_seek( $websites, 0 );
 		if ( $websites ) {
@@ -760,7 +760,7 @@ class MainWP_Manage_Sites_View {
 					</thead>
 					<tbody> <!-- individual -->
 					<?php if ( ! $website->is_ignoreCoreUpdates ) : ?>
-						<?php $wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true ); ?>
+						<?php $wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true ); ?>
 						<?php if ( ( 0 !== count( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
 						<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
 							<td>
@@ -798,7 +798,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
 				<?php
 				$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
@@ -882,7 +882,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( ! $website->is_ignoreThemeUpdates ) : ?>
 				<?php
 				$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
@@ -999,11 +999,11 @@ class MainWP_Manage_Sites_View {
 			</div>
 			<?php endif; ?>
 			<?php
-			$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
+			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
 			if ( ! is_array( $plugins_outdate ) ) {
 				$plugins_outdate = array();
 			}
-			$pluginsOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+			$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 			if ( is_array( $pluginsOutdateDismissed ) ) {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
 			}
@@ -1067,13 +1067,13 @@ class MainWP_Manage_Sites_View {
 			</div>
 
 			<?php
-			$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
+			$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 			if ( ! is_array( $themes_outdate ) ) {
 				$themes_outdate = array();
 			}
 
 			if ( 0 < count( $themes_outdate ) ) {
-				$themesOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+				$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 				if ( is_array( $themesOutdateDismissed ) ) {
 					$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
 				}
@@ -1185,7 +1185,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function renderBackupDetails( $websiteid ) {
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 		if ( empty( $website ) ) {
 			return;
 		}
@@ -1193,7 +1193,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function renderBackupOptions( $websiteid ) {
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 
 		if ( empty( $website ) ) {
 			return;
@@ -1240,7 +1240,7 @@ class MainWP_Manage_Sites_View {
 					$globalArchiveFormatText = 'Tar BZip2';
 				}
 
-				$backupSettings = MainWP_DB::Instance()->getWebsiteBackupSettings( $website->id );
+				$backupSettings = MainWP_DB::instance()->get_website_backup_settings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
 				$useGlobal      = ( 'global' === $archiveFormat );
 				?>
@@ -1354,7 +1354,7 @@ class MainWP_Manage_Sites_View {
 			<?php
 			// Recnder security check issues
 			$websiteid = isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ? $_GET['scanid'] : null;
-			$website   = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
 				return;
 			}
@@ -1391,7 +1391,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
@@ -1400,7 +1400,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
+		$groups = MainWP_DB::instance()->get_groups_for_current_user();
 
 		?>
 
@@ -1421,7 +1421,7 @@ class MainWP_Manage_Sites_View {
 										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
 										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 									</select>
-									<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo MainWP_Utility::removeHttpPrefix( $website->url, true ); ?>" />
+									<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo MainWP_Utility::remove_http_prefix( $website->url, true ); ?>" />
 								</div>
 							</div>
 						</div>
@@ -1455,7 +1455,7 @@ class MainWP_Manage_Sites_View {
 
 						<?php
 
-						$groupsSite  = MainWP_DB::Instance()->getGroupsByWebsiteId( $website->id );
+						$groupsSite  = MainWP_DB::instance()->get_groups_by_website_id( $website->id );
 						$init_groups = '';
 						foreach ( $groups as $group ) {
 							$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
@@ -1632,7 +1632,7 @@ class MainWP_Manage_Sites_View {
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						// Update website
-						MainWP_DB::Instance()->updateWebsiteValues(
+						MainWP_DB::instance()->update_website_values(
 							$website->id, array(
 								'pubkey'   => base64_encode( $pubkey ),
 								'privkey'  => base64_encode( $privkey ),
@@ -1745,7 +1745,7 @@ class MainWP_Manage_Sites_View {
 								}
 							}
 							foreach ( $tmpArr as $tmp ) {
-								$getgroup = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+								$getgroup = MainWP_DB::instance()->get_group_by_name_for_user( trim( $tmp ) );
 								if ( $getgroup ) {
 									if ( ! in_array( $getgroup->id, $groupids ) ) {
 										$groupids[] = $getgroup->id;
@@ -1759,7 +1759,7 @@ class MainWP_Manage_Sites_View {
 						if ( ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) ) {
 							$tmpArr = preg_split( '/[;,]/', $params['groupnames_import'] );
 							foreach ( $tmpArr as $tmp ) {
-								$group = MainWP_DB::Instance()->getGroupByNameForUser( trim( $tmp ) );
+								$group = MainWP_DB::instance()->get_group_by_name_for_user( trim( $tmp ) );
 								if ( $group ) {
 									if ( ! in_array( $group->id, $groupids ) ) {
 										$groupids[] = $group->id;
@@ -1777,15 +1777,15 @@ class MainWP_Manage_Sites_View {
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::Instance()->addWebsite( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
+						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
 							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>'  );
 						} else {
 							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}
-						do_action( 'mainwp_added_new_site', $id ); // must before getWebsiteById to update team control permisions
-						$website = MainWP_DB::Instance()->getWebsiteById( $id );
+						do_action( 'mainwp_added_new_site', $id ); // must before get_website_by_id to update team control permisions
+						$website = MainWP_DB::instance()->get_website_by_id( $id );
 						MainWP_Sync::syncInformationArray( $website, $information );
 					} else {
 						$error = __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' );

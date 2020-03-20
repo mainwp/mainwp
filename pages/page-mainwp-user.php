@@ -21,9 +21,9 @@ class MainWP_User {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
 		 *
-		 * @see \MainWP_User::renderHeader
+		 * @see \MainWP_User::render_header
 		 */
-		add_action( 'mainwp-pageheader-user', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-user', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the User page footer via the 'mainwp-pagefooter-user' action.
@@ -33,14 +33,14 @@ class MainWP_User {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-user'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
 		 *
-		 * @see \MainWP_User::renderFooter
+		 * @see \MainWP_User::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-user', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-user', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
 				self::get_class_name(),
@@ -51,7 +51,7 @@ class MainWP_User {
 		add_submenu_page(
 			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
 				self::get_class_name(),
-				'renderBulkAdd',
+				'render_bulk_add',
 			)
 		);
 
@@ -80,7 +80,7 @@ class MainWP_User {
 		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Users" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open" style="">
@@ -172,7 +172,7 @@ class MainWP_User {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 		$params = array(
 			'title' => __( 'Users', 'mainwp' ),
 		);
@@ -232,7 +232,7 @@ class MainWP_User {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage = '' ) {
+	public static function render_footer( $shownPage = '' ) {
 		echo '</div>';
 	}
 
@@ -255,7 +255,7 @@ class MainWP_User {
 			}
 		}
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 		?>
 
 		<div id="mainwp-manage-users" class="ui alt segment">
@@ -287,7 +287,7 @@ class MainWP_User {
 				</div>
 				<div class="ui segment" id="mainwp_users_wrap_table">
 					<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-					<?php self::renderTable( true ); ?>
+					<?php self::render_table( true ); ?>
 				</div>
 				<div id="mainwp-update-users-box" class="ui segment">
 					<?php self::renderUpdateUsers(); ?>
@@ -333,7 +333,7 @@ class MainWP_User {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::renderSearchOptions(); ?>
+					<?php self::render_search_options(); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
@@ -343,10 +343,10 @@ class MainWP_User {
 			<div class="ui hidden clearing divider"></div>
 		</div>
 		<?php
-		self::renderFooter( '' );
+		self::render_footer( '' );
 	}
 
-	public static function renderSearchOptions() {
+	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
@@ -509,7 +509,7 @@ class MainWP_User {
 		<?php
 	}
 
-	public static function renderTable( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
+	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
 		?>
 		<table id="mainwp-users-table" class="ui tablet stackable single line table" style="width:100%">
 			<thead>
@@ -529,7 +529,7 @@ class MainWP_User {
 			if ( $cached ) {
 				MainWP_Cache::echo_body( 'Users' );
 			} else {
-				self::renderTableBody( $role, $groups, $sites, $search );
+				self::render_table_body( $role, $groups, $sites, $search );
 			}
 			?>
 			</tbody>
@@ -559,7 +559,7 @@ class MainWP_User {
 		<?php
 	}
 
-	public static function renderTableBody( $role = '', $groups = '', $sites = '', $search = null ) {
+	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) {
 		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new stdClass();
@@ -581,7 +581,7 @@ class MainWP_User {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$search_user_role = array();
-						$website          = MainWP_DB::Instance()->getWebsiteById( $v );
+						$website          = MainWP_DB::instance()->get_website_by_id( $v );
 						$allUsers         = json_decode( $website->users, true );
 						$allUsersCount    = count( $allUsers );
 
@@ -620,7 +620,7 @@ class MainWP_User {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
@@ -665,8 +665,8 @@ class MainWP_User {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -686,12 +686,12 @@ class MainWP_User {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',
@@ -863,7 +863,7 @@ class MainWP_User {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
@@ -912,7 +912,7 @@ class MainWP_User {
 		} elseif ( 'update_user' === $pAction ) {
 			if ( $optimize && isset( $information['users'] ) ) {
 				$websiteValues['users'] = wp_json_encode( $information['users'] );
-				MainWP_DB::Instance()->updateWebsiteValues( $websiteId, $websiteValues );
+				MainWP_DB::instance()->update_website_values( $websiteId, $websiteValues );
 			}
 		}
 
@@ -928,8 +928,8 @@ class MainWP_User {
 		return $information;
 	}
 
-	public static function renderBulkAdd() {
-		self::renderHeader( 'Add' );
+	public static function render_bulk_add() {
+		self::render_header( 'Add' );
 		?>
 
 		<div class="ui alt segment" id="mainwp-add-users">
@@ -1053,7 +1053,7 @@ class MainWP_User {
 		</div>
 
 		<?php
-		self::renderFooter( 'Add' );
+		self::render_footer( 'Add' );
 	}
 
 	public static function renderBulkImportUsers() {
@@ -1062,7 +1062,7 @@ class MainWP_User {
 			return;
 		}
 		?>
-		<?php self::renderHeader( 'Import' ); ?>
+		<?php self::render_header( 'Import' ); ?>
 		<div id="MainWP_Bulk_AddUser">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1070,7 +1070,7 @@ class MainWP_User {
 			</form>
 		</div>
 		<?php
-		self::renderFooter( 'Import' );
+		self::render_footer( 'Import' );
 	}
 
 	public static function renderImportUsers() {
@@ -1167,8 +1167,8 @@ class MainWP_User {
 			if ( 'site' === $_POST['select_by'] ) {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -1187,9 +1187,9 @@ class MainWP_User {
 			} else {
 				foreach ( $selected_groups as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',
@@ -1278,7 +1278,7 @@ class MainWP_User {
 	}
 
 	public static function renderBulkUpload() {
-		self::renderHeader( 'Import' );
+		self::render_header( 'Import' );
 
 		$errors = array();
 		if ( UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
@@ -1385,7 +1385,7 @@ class MainWP_User {
 			<?php
 		}
 
-		self::renderFooter( 'Import' );
+		self::render_footer( 'Import' );
 	}
 
 	public static function doImport() {
@@ -1421,9 +1421,9 @@ class MainWP_User {
 		if ( 'site' === $_POST['select_by'] ) {
 			foreach ( $selected_sites as $url ) {
 				if ( ! empty( $url ) ) {
-					$website = MainWP_DB::Instance()->getWebsitesByUrl( $url );
+					$website = MainWP_DB::instance()->get_websites_by_url( $url );
 					if ( $website ) {
-						$dbwebsites[ $website[0]->id ] = MainWP_Utility::mapSite(
+						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
 							$website[0], array(
 								'id',
 								'url',
@@ -1444,11 +1444,11 @@ class MainWP_User {
 			}
 		} else {
 			foreach ( $selected_groups as $group ) {
-				if ( MainWP_DB::Instance()->getGroupsByName( $group ) ) {
-					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupName( $group ) );
+				if ( MainWP_DB::instance()->get_groups_by_name( $group ) ) {
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_name( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',

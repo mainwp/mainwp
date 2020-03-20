@@ -37,9 +37,9 @@ class MainWP_Manage_Sites {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-sites'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
 		 *
-		 * @see \MainWP_Manage_Sites::renderHeader
+		 * @see \MainWP_Manage_Sites::render_header
 		 */
-		add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Sites page footer via the 'mainwp-pagefooter-sites' action.
@@ -49,9 +49,9 @@ class MainWP_Manage_Sites {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-sites'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
 		 *
-		 * @see \MainWP_Manage_Sites::renderFooter
+		 * @see \MainWP_Manage_Sites::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
 		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) );
@@ -67,8 +67,8 @@ class MainWP_Manage_Sites {
 		return $columns;
 	}
 
-	public static function initMenu() {
-		self::$page = MainWP_Manage_Sites_View::initMenu();
+	public static function init_menu() {
+		self::$page = MainWP_Manage_Sites_View::init_menu();
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
 		if ( isset( $_REQUEST['dashboard'] ) ) {
@@ -117,8 +117,8 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
-		MainWP_Manage_Sites_View::initMenuSubPages( self::$subPages );
+	public static function init_subpages_menu() {
+		MainWP_Manage_Sites_View::init_subpages_menu( self::$subPages );
 	}
 
 	public static function on_load_page() {
@@ -152,15 +152,15 @@ class MainWP_Manage_Sites {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
-		MainWP_Manage_Sites_View::renderHeader( $shownPage, self::$subPages );
+	public static function render_header( $shownPage = '' ) {
+		MainWP_Manage_Sites_View::render_header( $shownPage, self::$subPages );
 	}
 
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
-		MainWP_Manage_Sites_View::renderFooter( $shownPage, self::$subPages );
+	public static function render_footer( $shownPage ) {
+		MainWP_Manage_Sites_View::render_footer( $shownPage, self::$subPages );
 	}
 
 	public static function screen_options( $input ) {
@@ -265,7 +265,7 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function renderNewSite() {
-		$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$referrer_page_check = false;
 		$referrer_page       = wp_get_referer();
 		if ( admin_url( 'admin.php?page=mainwp-setup' ) === $referrer_page ) {
@@ -273,13 +273,13 @@ class MainWP_Manage_Sites {
 		}
 
 		$showpage = 'AddNew';
-		self::renderHeader( $showpage );
+		self::render_header( $showpage );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			$groups = MainWP_DB::Instance()->getGroupsForCurrentUser();
+			$groups = MainWP_DB::instance()->get_groups_for_current_user();
 			if ( ! is_array( $groups ) ) {
 				$groups = array();
 			}
@@ -481,12 +481,12 @@ class MainWP_Manage_Sites {
 		</script>
 			<?php
 		}
-		self::renderFooter( $showpage );
+		self::render_footer( $showpage );
 	}
 
 	public static function renderBulkNewSite() {
 		$showpage = 'BulkAddNew';
-		self::renderHeader( $showpage );
+		self::render_header( $showpage );
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
@@ -541,7 +541,7 @@ class MainWP_Manage_Sites {
 				<?php
 			}
 		}
-		self::renderFooter( $showpage );
+		self::render_footer( $showpage );
 	}
 
 	/**
@@ -569,17 +569,17 @@ class MainWP_Manage_Sites {
 		$backup_result = array();
 
 		// Creating a backup
-		$website   = MainWP_DB::Instance()->getWebsiteById( $siteid );
+		$website   = MainWP_DB::instance()->get_website_by_id( $siteid );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
 		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $type, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
 		$subfolder = str_replace( '%', '', $subfolder );
-		$subfolder = MainWP_Utility::removePreSlashSpaces( $subfolder );
+		$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
-		if ( ! MainWP_System::Instance()->is_single_user() && ( $userid != $website->userid ) ) {
+		if ( ! MainWP_System::instance()->is_single_user() && ( $userid != $website->userid ) ) {
 			throw new MainWP_Exception( 'Undefined error.' );
 		}
 
@@ -590,9 +590,9 @@ class MainWP_Manage_Sites {
 		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
 
 		if ( 'db' === $type ) {
-			$ext = '.sql.' . MainWP_Utility::getCurrentArchiveExtension( $website, $pTask );
+			$ext = '.sql.' . MainWP_Utility::get_current_archive_extension( $website, $pTask );
 		} else {
-			$ext = '.' . MainWP_Utility::getCurrentArchiveExtension( $website, $pTask );
+			$ext = '.' . MainWP_Utility::get_current_archive_extension( $website, $pTask );
 		}
 
 		$file = str_replace( array(
@@ -643,17 +643,17 @@ class MainWP_Manage_Sites {
 		}
 
 		$information        = false;
-		$backupTaskProgress = MainWP_DB::Instance()->getBackupTaskProgress( $taskId, $website->id );
+		$backupTaskProgress = MainWP_DB::instance()->get_backup_task_progress( $taskId, $website->id );
 		if ( empty( $backupTaskProgress ) || ( $backupTaskProgress->dtsFetched < $pTask->last_run ) ) {
 			$start = microtime( true );
 			try {
 				$pid = time();
 
 				if ( empty( $backupTaskProgress ) ) {
-					MainWP_DB::Instance()->addBackupTaskProgress( $taskId, $website->id, array() );
+					MainWP_DB::instance()->add_backup_task_progress( $taskId, $website->id, array() );
 				}
 
-				MainWP_DB::Instance()->updateBackupTaskProgress(
+				MainWP_DB::instance()->update_backup_task_progress(
 					$taskId, $website->id, array(
 						'dtsFetched'             => time(),
 						'fetchResult'            => wp_json_encode( array() ),
@@ -675,23 +675,23 @@ class MainWP_Manage_Sites {
 					'excludecache'          => $excludecache,
 					'excludenonwp'          => $excludenonwp,
 					'excludezip'            => $excludezip,
-					'ext'                   => MainWP_Utility::getCurrentArchiveExtension( $website, $pTask ),
+					'ext'                   => MainWP_Utility::get_current_archive_extension( $website, $pTask ),
 					'file_descriptors_auto' => $maximumFileDescriptorsAuto,
 					'file_descriptors'      => $maximumFileDescriptors,
 					'loadFilesBeforeZip'    => $loadFilesBeforeZip,
 					'pid'                   => $pid,
-					MainWP_Utility::getFileParameter( $website ) => $file,
+					MainWP_Utility::get_file_parameter( $website ) => $file,
 				);
 
-				MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+				MainWP_Logger::instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
 				$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
-				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->getMessageExtra() . ')' );
+				MainWP_Logger::instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
 				// Bigger then 30 seconds means a timeout
 				if ( 30 < ( $stop - $start ) ) {
-					MainWP_DB::Instance()->updateBackupTaskProgress(
+					MainWP_DB::instance()->update_backup_task_progress(
 						$taskId, $website->id, array(
 							'last_error' => wp_json_encode( array(
 								'message'    => $e->getMessage(),
@@ -710,7 +710,7 @@ class MainWP_Manage_Sites {
 				return false;
 			}
 
-			$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 		} //If not fetchResult, we had a timeout.. Retry this!
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
@@ -723,7 +723,7 @@ class MainWP_Manage_Sites {
 			if ( ! empty( $temp ) ) {
 				if ( 'stalled' === $temp['status'] ) {
 					if ( 5 > $backupTaskProgress->attempts ) {
-						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 
 						try {
 							// reinitiate the request!
@@ -734,17 +734,17 @@ class MainWP_Manage_Sites {
 								'excludecache'          => $excludecache,
 								'excludenonwp'          => $excludenonwp,
 								'excludezip'            => $excludezip,
-								'ext'                   => MainWP_Utility::getCurrentArchiveExtension( $website, $pTask ),
+								'ext'                   => MainWP_Utility::get_current_archive_extension( $website, $pTask ),
 								'file_descriptors_auto' => $maximumFileDescriptorsAuto,
 								'file_descriptors'      => $maximumFileDescriptors,
 								'loadFilesBeforeZip'    => $loadFilesBeforeZip,
 								'pid'                   => $backupTaskProgress->pid,
 								'append'                => '1',
-								MainWP_Utility::getFileParameter( $website ) => $temp['file'],
+								MainWP_Utility::get_file_parameter( $website ) => $temp['file'],
 							), false, false, false );
 
 							if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-								MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
+								MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
 
 								return false;
 							}
@@ -752,7 +752,7 @@ class MainWP_Manage_Sites {
 							return false;
 						}
 
-						$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 					} else {
 						throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 					}
@@ -778,11 +778,11 @@ class MainWP_Manage_Sites {
 
 					$information['size'] = $temp['size'];
 
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 				}
 			} else {
 				if ( 5 > $backupTaskProgress->attempts ) {
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 				} else {
 					throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 				}
@@ -800,7 +800,7 @@ class MainWP_Manage_Sites {
 		} elseif ( 'full' === $type && ! $information['full'] ) {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
-			$dir = MainWP_Utility::getMainWPSpecificDir( $website->id );
+			$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
 			@mkdir( $dir, 0777, true );
 
@@ -823,11 +823,11 @@ class MainWP_Manage_Sites {
 						while ( false !== ( $file = readdir( $dh ) ) ) {
 							if ( '.' !== $file && '..' !== $file ) {
 								$theFile = $dir . $file;
-								if ( $information['db'] && MainWP_Utility::isSQLFile( $file ) ) {
+								if ( $information['db'] && MainWP_Utility::is_sql_file( $file ) ) {
 									$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
 								}
 
-								if ( $information['full'] && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+								if ( $information['full'] && MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) ) {
 									$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
 								}
 							}
@@ -853,7 +853,7 @@ class MainWP_Manage_Sites {
 						@unlink( $fullBackup );
 					}
 				}
-				$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
+				$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
 			}
 
 			$localBackupFile = null;
@@ -887,23 +887,23 @@ class MainWP_Manage_Sites {
 						$filename        = str_replace( '%', '', $filename );
 						$localBackupFile = $dir . $filename;
 					}
-					$localBackupFile .= MainWP_Utility::getRealExtension( $information['db'] );
+					$localBackupFile .= MainWP_Utility::get_real_extension( $information['db'] );
 
 					$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
 				} else {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
 				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
-					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
+					MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
 			}
 
 			if ( $information['full'] ) {
-				$realExt         = MainWP_Utility::getRealExtension( $information['full'] );
+				$realExt         = MainWP_Utility::get_real_extension( $information['full'] );
 				$what            = 'full';
 				$regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 				if ( '' === $backupTaskProgress->downloadedFULL ) {
@@ -929,7 +929,7 @@ class MainWP_Manage_Sites {
 
 					$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
 				} else {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
@@ -956,9 +956,9 @@ class MainWP_Manage_Sites {
 						}
 					}
 
-					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
-					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
+					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
 			}
 
@@ -979,7 +979,7 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function backupGetfilesize( $pFile ) {
-		$dir = MainWP_Utility::getMainWPSpecificDir();
+		$dir = MainWP_Utility::get_mainwp_specific_dir();
 
 		if ( stristr( $pFile, $dir ) && file_exists( $pFile ) ) {
 			return @filesize( $pFile );
@@ -1009,11 +1009,11 @@ class MainWP_Manage_Sites {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
-						if ( 'db' === $pType && MainWP_Utility::isSQLFile( $file ) ) {
+						if ( 'db' === $pType && MainWP_Utility::is_sql_file( $file ) ) {
 							$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
 						}
 
-						if ( 'full' === $pType && MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+						if ( 'full' === $pType && MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) ) {
 							$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
 						}
 					}
@@ -1040,32 +1040,32 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
-		MainWP_Utility::endSession();
+		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+		MainWP_Utility::end_session();
 
 		$what = null;
 		if ( 'db' === $pType ) {
-			MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		if ( 'full' === $pType ) {
-			MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Utility::download_to_file( MainWP_Utility::getGetDataAuthed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		return true;
 	}
 
 	public static function backupDeleteFile( $pSiteId, $pFile ) {
-		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
 
 		return true;
 	}
 
 	public static function backupCheckpid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
-		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 
-		MainWP_Utility::endSession();
+		MainWP_Utility::end_session();
 		$information = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
 
 		$status = $information['status'];
@@ -1081,7 +1081,7 @@ class MainWP_Manage_Sites {
 			$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 			$subfolder = str_replace( '%task%', '', $subfolder );
 			$subfolder = str_replace( '%', '', $subfolder );
-			$subfolder = MainWP_Utility::removePreSlashSpaces( $subfolder );
+			$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 			$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
 			$result['subfolder'] = $subfolder;
@@ -1096,16 +1096,16 @@ class MainWP_Manage_Sites {
 				'-',
 			), $websiteCleanUrl );
 
-			$dir = MainWP_Utility::getMainWPSpecificDir( $pSiteId );
+			$dir = MainWP_Utility::get_mainwp_specific_dir( $pSiteId );
 
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
 			if ( 'db' === $type ) {
-				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['file'] );
+				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['file'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
-				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['file'] );
+				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['file'] );
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
@@ -1128,9 +1128,9 @@ class MainWP_Manage_Sites {
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
 				if ( 'db' === $type ) {
-					$localBackupFile .= MainWP_Utility::getRealExtension( $information['file'] );
+					$localBackupFile .= MainWP_Utility::get_real_extension( $information['file'] );
 				} else {
-					$localBackupFile .= MainWP_Utility::getRealExtension( $information['file'] );
+					$localBackupFile .= MainWP_Utility::get_real_extension( $information['file'] );
 				}
 			}
 
@@ -1159,14 +1159,14 @@ class MainWP_Manage_Sites {
 		$backup_result = array();
 
 		// Creating a backup
-		$website   = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
+		$website   = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
 		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $pType, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
 		$subfolder = str_replace( '%', '', $subfolder );
-		$subfolder = MainWP_Utility::removePreSlashSpaces( $subfolder );
+		$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
@@ -1235,15 +1235,15 @@ class MainWP_Manage_Sites {
 
 		// Nomral flow: check site settings & fallback to global
 		if ( false === $pArchiveFormat ) {
-			$archiveFormat = MainWP_Utility::getCurrentArchiveExtension( $website );
+			$archiveFormat = MainWP_Utility::get_current_archive_extension( $website );
 		} //Overriden flow: only fallback to global
 		elseif ( 'global' === $pArchiveFormat ) {
-			$archiveFormat = MainWP_Utility::getCurrentArchiveExtension();
+			$archiveFormat = MainWP_Utility::get_current_archive_extension();
 		} else {
 			$archiveFormat = $pArchiveFormat;
 		}
 
-		MainWP_Utility::endSession();
+		MainWP_Utility::end_session();
 
 		$params = array(
 			'type'                                       => $pType,
@@ -1256,13 +1256,13 @@ class MainWP_Manage_Sites {
 			'file_descriptors_auto'                      => $maximumFileDescriptorsAuto,
 			'file_descriptors'                           => $maximumFileDescriptors,
 			'loadFilesBeforeZip'                         => $loadFilesBeforeZip,
-			MainWP_Utility::getFileParameter( $website ) => $file,
+			MainWP_Utility::get_file_parameter( $website ) => $file,
 			'fileUID'                                    => $pFileNameUID,
 			'pid'                                        => $pid,
 			'append'                                     => ( $append ? 1 : 0 ),
 		);
 
-		MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+		MainWP_Logger::instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
 		$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
@@ -1287,16 +1287,16 @@ class MainWP_Manage_Sites {
 			}
 			$backup_result['subfolder'] = $subfolder;
 
-			$dir = MainWP_Utility::getMainWPSpecificDir( $pSiteId );
+			$dir = MainWP_Utility::get_mainwp_specific_dir( $pSiteId );
 
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
 			if ( 'db' === $pType ) {
-				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['db'] );
+				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['db'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
-				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::getRealExtension( $information['full'] );
+				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['full'] );
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
@@ -1319,9 +1319,9 @@ class MainWP_Manage_Sites {
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
 				if ( 'db' === $pType ) {
-					$localBackupFile .= MainWP_Utility::getRealExtension( $information['db'] );
+					$localBackupFile .= MainWP_Utility::get_real_extension( $information['db'] );
 				} else {
-					$localBackupFile .= MainWP_Utility::getRealExtension( $information['full'] );
+					$localBackupFile .= MainWP_Utility::get_real_extension( $information['full'] );
 				}
 			}
 
@@ -1350,7 +1350,7 @@ class MainWP_Manage_Sites {
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
 
-		$extMetaBoxs = MainWP_System::Instance()->apply_filter( 'mainwp-getmetaboxes', array() );
+		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
@@ -1433,34 +1433,34 @@ class MainWP_Manage_Sites {
 
 	public static function renderUpdates( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
-		self::renderHeader( 'ManageSitesUpdates' );
+		self::render_header( 'ManageSitesUpdates' );
 		MainWP_Manage_Sites_View::renderUpdates();
-		self::renderFooter( 'ManageSitesUpdates' );
+		self::render_footer( 'ManageSitesUpdates' );
 	}
 
 	public static function renderDashboard( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
-		self::renderHeader( 'ManageSitesDashboard' );
+		self::render_header( 'ManageSitesDashboard' );
 		MainWP_Manage_Sites_View::renderDashboard( $website, self::$page );
-		self::renderFooter( 'ManageSitesDashboard' );
+		self::render_footer( 'ManageSitesDashboard' );
 	}
 
 	public static function renderBackupSite( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
-		self::renderHeader( 'ManageSitesBackups' );
+		self::render_header( 'ManageSitesBackups' );
 		MainWP_Manage_Sites_View::renderBackupSite( $website );
-		self::renderFooter( 'ManageSitesBackups' );
+		self::render_footer( 'ManageSitesBackups' );
 	}
 
 	public static function renderScanSite( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
-		self::renderHeader( 'SecurityScan' );
+		self::render_header( 'SecurityScan' );
 		MainWP_Manage_Sites_View::renderScanSite( $website );
-		self::renderFooter( 'SecurityScan' );
+		self::render_footer( 'SecurityScan' );
 	}
 
 	public static function showBackups( &$website ) {
-		$dir = MainWP_Utility::getMainWPSpecificDir( $website->id );
+		$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
 		if ( ! file_exists( $dir . 'index.php' ) ) {
 			@touch( $dir . 'index.php' );
@@ -1473,9 +1473,9 @@ class MainWP_Manage_Sites {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
-						if ( MainWP_Utility::isSQLFile( $file ) ) {
+						if ( MainWP_Utility::is_sql_file( $file ) ) {
 							$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-						} elseif ( MainWP_Utility::isArchive( $file ) ) {
+						} elseif ( MainWP_Utility::is_archive( $file ) ) {
 							$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
 						}
 					}
@@ -1501,7 +1501,7 @@ class MainWP_Manage_Sites {
 			self::$sitesTable->prepare_items( false );
 		}
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
@@ -1552,7 +1552,7 @@ class MainWP_Manage_Sites {
 		</div>
 		<?php
 		self::render_screen_options();
-		self::renderFooter( '' );
+		self::render_footer( '' );
 	}
 
 	public static function renderManageSites() {
@@ -1572,7 +1572,7 @@ class MainWP_Manage_Sites {
 			if ( isset( $_GET['backupid'] ) && MainWP_Utility::ctype_digit( $_GET['backupid'] ) ) {
 				$websiteid = $_GET['backupid'];
 
-				$backupwebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+				$backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 				if ( MainWP_Utility::can_edit_website( $backupwebsite ) ) {
 					self::renderBackupSite( $backupwebsite );
 
@@ -1584,7 +1584,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ) {
 			$websiteid = $_GET['scanid'];
 
-			$scanwebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			$scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $scanwebsite ) ) {
 				self::renderScanSite( $scanwebsite );
 
@@ -1595,7 +1595,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_GET['dashboard'] ) && MainWP_Utility::ctype_digit( $_GET['dashboard'] ) ) {
 			$websiteid = $_GET['dashboard'];
 
-			$dashboardWebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			$dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $dashboardWebsite ) ) {
 				self::renderDashboard( $dashboardWebsite );
 
@@ -1605,7 +1605,7 @@ class MainWP_Manage_Sites {
 
 		if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
 			$websiteid      = $_GET['updateid'];
-			$updatesWebsite = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			$updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $updatesWebsite ) ) {
 				self::renderUpdates( $updatesWebsite );
 				return;
@@ -1615,7 +1615,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 			$websiteid = $_GET['id'];
 
-			$website = MainWP_DB::Instance()->getWebsiteById( $websiteid );
+			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 
 				global $current_user;
@@ -1651,9 +1651,9 @@ class MainWP_Manage_Sites {
 
 						$http_user = $_POST['mainwp_managesites_edit_http_user'];
 						$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
-						$url       = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::removeHttpPrefix( $website->url, true );
+						$url       = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
 
-						MainWP_DB::Instance()->updateWebsite( $websiteid, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'] );
+						MainWP_DB::instance()->update_website( $websiteid, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'] );
 						do_action( 'mainwp_update_site', $websiteid );
 
 						$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
@@ -1679,7 +1679,7 @@ class MainWP_Manage_Sites {
 							$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
 						}
 
-						MainWP_DB::Instance()->updateWebsiteValues( $websiteid, $newValues );
+						MainWP_DB::instance()->update_website_values( $websiteid, $newValues );
 						$updated = true;
 					}
 				}
@@ -1694,13 +1694,13 @@ class MainWP_Manage_Sites {
 		if ( $websiteid ) {
 			MainWP_Utility::set_current_wpid( $websiteid );
 		}
-		self::renderHeader( 'ManageSitesEdit' );
+		self::render_header( 'ManageSitesEdit' );
 		MainWP_Manage_Sites_View::renderEditSite( $websiteid, $updated );
-		self::renderFooter( 'ManageSitesEdit' );
+		self::render_footer( 'ManageSitesEdit' );
 	}
 
 	public static function checkSite() {
-		$website = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['url'] );
+		$website = MainWP_DB::instance()->get_websites_by_url( $_POST['url'] );
 		$ret     = array();
 		if ( MainWP_Utility::can_edit_website( $website ) ) { // Already added to the database - so exists.
 			$ret['response'] = 'ERROR You already added your site to MainWP';
@@ -1733,7 +1733,7 @@ class MainWP_Manage_Sites {
 
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
-				$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
+				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				self::_reconnectSite( $website );
 			} else {
 				throw new Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
@@ -1757,7 +1757,7 @@ class MainWP_Manage_Sites {
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB
-			$website                           = MainWP_DB::Instance()->getWebsitesByUrl( $_POST['managesites_add_wpurl'] );
+			$website                           = MainWP_DB::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::addSite( $website );
 		}
 
@@ -1769,7 +1769,7 @@ class MainWP_Manage_Sites {
 		$ret['response'] = $message;
 		$ret['siteid']   = $site_id;
 
-		if ( 1 === MainWP_DB::Instance()->getWebsitesCount() ) {
+		if ( 1 === MainWP_DB::instance()->get_websites_count() ) {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );
 		}
 
@@ -1789,11 +1789,11 @@ class MainWP_Manage_Sites {
 
 	public static function saveNote() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['websiteid'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$note     = stripslashes($_POST['note']);
 				$esc_note = MainWP_Utility::esc_content( $note );
-				MainWP_DB::Instance()->updateNote( $website->id, $esc_note );
+				MainWP_DB::instance()->update_note( $website->id, $esc_note );
 
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {
@@ -1805,7 +1805,7 @@ class MainWP_Manage_Sites {
 
 	public static function removeSite() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $_POST['id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error = '';
 
@@ -1822,16 +1822,16 @@ class MainWP_Manage_Sites {
 				}
 
 				// delete icon file
-				$favi = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
-					$dirs = MainWP_Utility::getIconsDir();
+					$dirs = MainWP_Utility::get_icons_dir();
 					if ( file_exists( $dirs[0] . $favi ) ) {
 						unlink( $dirs[0] . $favi );
 					}
 				}
 
 				// Remove from DB
-				MainWP_DB::Instance()->removeWebsite( $website->id );
+				MainWP_DB::instance()->remove_website( $website->id );
 				do_action( 'mainwp_delete_site', $website );
 
 				if ( 'NOMAINWP' === $error ) {
@@ -1921,7 +1921,7 @@ class MainWP_Manage_Sites {
 
 	public static function updateChildsiteValue() {
 		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['site_id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $_POST['site_id'] );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error    = '';
 				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';

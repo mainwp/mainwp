@@ -536,7 +536,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_optimization() {
-		$userExtension  = MainWP_DB::Instance()->getUserExtension();
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 
 		if ( ! is_array( $trustedPlugins ) ) {
@@ -573,7 +573,7 @@ class MainWP_Setup_Wizard {
 	}
 
 	public function mwp_setup_optimization_save() {
-		$userExtension  = MainWP_DB::Instance()->getUserExtension();
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -593,7 +593,7 @@ class MainWP_Setup_Wizard {
 
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -601,7 +601,7 @@ class MainWP_Setup_Wizard {
 
 	public function mwp_setup_notification() {
 		$important_notification = get_option( 'mwp_setup_importantNotification', false );
-		$user_emails            = MainWP_Utility::getNotificationEmail();
+		$user_emails            = MainWP_Utility::get_notification_email();
 		$user_emails            = explode( ',', $user_emails );
 		$i                      = 0;
 		?>
@@ -666,7 +666,7 @@ class MainWP_Setup_Wizard {
 		$important_notification = ( ! isset( $_POST['mwp_setup_options_important_notification'] ) ? 0 : 1 );
 		update_option( 'mwp_setup_importantNotification', $important_notification );
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_notification );
-		$userExtension                                  = MainWP_DB::Instance()->getUserExtension();
+		$userExtension                                  = MainWP_DB::instance()->get_user_extension();
 		$userExtension->offlineChecksOnlineNotification = $important_notification;
 
 		$save_emails = array();
@@ -681,7 +681,7 @@ class MainWP_Setup_Wizard {
 		}
 		$save_emails               = implode( ',', $save_emails );
 		$userExtension->user_email = $save_emails;
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}

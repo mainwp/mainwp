@@ -27,7 +27,7 @@ class MainWP_Logger {
 	/**
 	 * @return MainWP_Logger
 	 */
-	public static function Instance() {
+	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Logger();
 		}
@@ -199,7 +199,7 @@ class MainWP_Logger {
 	}
 
 	public static function clearLog() {
-		$logFile = self::Instance()->getLogFile();
+		$logFile = self::instance()->getLogFile();
 		if ( ! @unlink( $logFile, 'r' ) ) {
 			$fh = @fopen( $logFile, 'w' );
 			if ( false === $fh ) {
@@ -211,7 +211,7 @@ class MainWP_Logger {
 	}
 
 	public static function showLog() {
-		$logFile = self::Instance()->getLogFile();
+		$logFile = self::instance()->getLogFile();
 		$fh      = @fopen( $logFile, 'r' );
 		if ( false === $fh ) {
 			return;

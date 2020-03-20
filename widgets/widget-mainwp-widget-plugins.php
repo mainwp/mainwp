@@ -72,8 +72,8 @@ class MainWP_Widget_Plugins {
 			return;
 		}
 
-		$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
-		$websites   = MainWP_DB::Instance()->query( $sql );
+		$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+		$websites   = MainWP_DB::instance()->query( $sql );
 		$allPlugins = array();
 		if ( $websites ) {
 			$website = MainWP_DB::fetch_object( $websites );
@@ -91,27 +91,27 @@ class MainWP_Widget_Plugins {
 			MainWP_DB::free_result( $websites );
 		}
 
-		$actived_plugins = MainWP_Utility::getSubArrayHaving( $allPlugins, 'active', 1 );
+		$actived_plugins = MainWP_Utility::get_sub_array_having( $allPlugins, 'active', 1 );
 		$actived_plugins = MainWP_Utility::sortmulti( $actived_plugins, 'name', 'asc' );
 
-		$inactive_plugins = MainWP_Utility::getSubArrayHaving( $allPlugins, 'active', 0 );
+		$inactive_plugins = MainWP_Utility::get_sub_array_having( $allPlugins, 'active', 0 );
 		$inactive_plugins = MainWP_Utility::sortmulti( $inactive_plugins, 'name', 'asc' );
 
 		$plugins_outdate = array();
 
 		if ( ( count( $allPlugins ) > 0 ) && $website ) {
 
-			$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
+			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
 			if ( ! is_array( $plugins_outdate ) ) {
 				$plugins_outdate = array();
 			}
 
-			$pluginsOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+			$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 			if ( is_array( $pluginsOutdateDismissed ) ) {
 				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
 			}
 
-			$userExtension           = MainWP_DB::Instance()->getUserExtension();
+			$userExtension           = MainWP_DB::instance()->get_user_extension();
 			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 
 			if ( is_array( $decodedDismissedPlugins ) ) {
@@ -265,7 +265,7 @@ class MainWP_Widget_Plugins {
 			die( wp_json_encode( array( 'error' => 'Invalid Request!' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}

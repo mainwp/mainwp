@@ -22,9 +22,9 @@ class MainWP_Post {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
 		 *
-		 * @see \MainWP_Post::renderHeader
+		 * @see \MainWP_Post::render_header
 		 */
-		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
@@ -34,16 +34,16 @@ class MainWP_Post {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-post'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
 		 *
-		 * @see \MainWP_Post::renderFooter
+		 * @see \MainWP_Post::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-post', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-post', array( self::get_class_name(), 'render_footer' ) );
 
 		add_filter( 'admin_post_thumbnail_html', array( self::get_class_name(), 'admin_post_thumbnail_html' ), 10, 3 );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
 				self::get_class_name(),
@@ -57,7 +57,7 @@ class MainWP_Post {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
 					self::get_class_name(),
-					'renderBulkAdd',
+					'render_bulk_add',
 				)
 			);
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
@@ -67,7 +67,7 @@ class MainWP_Post {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
 					self::get_class_name(),
-					'renderBulkEdit',
+					'render_bulk_edit',
 				)
 			);
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
@@ -176,7 +176,7 @@ class MainWP_Post {
 		return $hidden;
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Posts" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open" style="">
@@ -302,7 +302,7 @@ class MainWP_Post {
 
 	public static function ajax_add_meta() {
 
-		MainWP_Post_Handler::Instance()->secure_request( 'mainwp_post_addmeta' );
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_addmeta' );
 
 		$c   = 0;
 		$pid = (int) $_POST['post_id'];
@@ -381,7 +381,7 @@ class MainWP_Post {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '', $post_id = null ) {
+	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
 			'title' => __( 'Posts', 'mainwp' ),
 		);
@@ -437,7 +437,7 @@ class MainWP_Post {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -459,7 +459,7 @@ class MainWP_Post {
 			}
 		}
 
-		self::renderHeader( 'BulkManage' );
+		self::render_header( 'BulkManage' );
 
 		?>
 		<div class="ui alt mainwp-posts segment">
@@ -486,7 +486,7 @@ class MainWP_Post {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp-posts-table-wrapper">
-					<?php self::renderTable( true ); ?>
+					<?php self::render_table( true ); ?>
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
@@ -513,7 +513,7 @@ class MainWP_Post {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::renderSearchOptions(); ?>
+					<?php self::render_search_options(); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
@@ -532,10 +532,10 @@ class MainWP_Post {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
 
-		self::renderFooter( 'BulkManage' );
+		self::render_footer( 'BulkManage' );
 	}
 
-	public static function renderSearchOptions() {
+	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 
@@ -632,7 +632,7 @@ class MainWP_Post {
 		}
 	}
 
-	public static function renderTable( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
+	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
 
 		<div id="mainwp-message-zone"></div>
@@ -675,7 +675,7 @@ class MainWP_Post {
 		if ( $cached ) {
 			MainWP_Cache::echo_body( 'Post' );
 		} else {
-			self::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
+			self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
 		}
 		?>
 			</tbody>
@@ -707,15 +707,15 @@ class MainWP_Post {
 		<?php
 	}
 
-	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
 		MainWP_Cache::init_cache( 'Post' );
 
 		$dbwebsites = array();
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
 							'id',
@@ -735,12 +735,12 @@ class MainWP_Post {
 		if ( '' !== $groups ) {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( '' !== $website->sync_errors ) {
 							continue;
 						}
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -794,7 +794,7 @@ class MainWP_Post {
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_posts', $post_data, array(
 				self::get_class_name(),
-				'PostsSearch_handler',
+				'posts_search_handler',
 			), $output );
 		}
 
@@ -817,7 +817,7 @@ class MainWP_Post {
 		}
 	}
 
-	private static function getStatus( $status ) {
+	private static function get_status( $status ) {
 		if ( 'publish' === $status ) {
 			return 'Published';
 		}
@@ -825,7 +825,7 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
-	public static function PostsSearch_handler( $data, $website, &$output ) {
+	public static function posts_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
@@ -846,7 +846,7 @@ class MainWP_Post {
 				}
 				reset( $posts );
 
-				$connections_ids = MainWPCustomPostTypeDB::Instance()->get_dash_post_ids_from_connections( $website->id, $child_post_ids );
+				$connections_ids = MainWPCustomPostTypeDB::instance()->get_dash_post_ids_from_connections( $website->id, $child_post_ids );
 				if ( ! empty( $connections_ids ) ) {
 					foreach ( $connections_ids as $key ) {
 						$child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;
@@ -859,7 +859,7 @@ class MainWP_Post {
 				if ( isset( $post['dts'] ) ) {
 					$raw_dts = $post['dts'];
 					if ( ! stristr( $post['dts'], '-' ) ) {
-						$post['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $post['dts'] ) );
+						$post['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $post['dts'] ) );
 					}
 				}
 
@@ -928,7 +928,7 @@ class MainWP_Post {
 
 					<td class="date column-date"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
-					<td class="status column-status"><?php echo self::getStatus( $post['status'] ); ?></td>
+					<td class="status column-status"><?php echo self::get_status( $post['status'] ); ?></td>
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
@@ -1580,7 +1580,7 @@ class MainWP_Post {
 					</div>
 					<div class="field" id="add-slug-div">
 						<label><?php esc_html_e( 'Slug', 'mainwp' ); ?></label>
-						<?php MainWP_System::Instance()->metaboxes->add_slug( $post ); ?>
+						<?php MainWP_System::instance()->metaboxes->add_slug( $post ); ?>
 					</div>
 				<?php if ( 'bulkpost' === $post_type ) { ?>
 					<div class="field">
@@ -1590,7 +1590,7 @@ class MainWP_Post {
 					</div>
 					<div class="field">
 						<label><?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
-						<?php MainWP_System::Instance()->metaboxes->add_tags( $post ); ?>
+						<?php MainWP_System::instance()->metaboxes->add_tags( $post ); ?>
 						<em><?php esc_html_e( 'Separate tags with commas', 'mainwp' ); ?></em>
 					</div>
 					<?php } ?>
@@ -1812,10 +1812,10 @@ class MainWP_Post {
 			<div class="ui clearing hidden divider"></div>
 		</div>
 		<?php
-		self::renderFooter( 'BulkAdd' );
+		self::render_footer( 'BulkAdd' );
 	}
 
-	public static function renderBulkAdd() {
+	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 			return;
@@ -1826,7 +1826,7 @@ class MainWP_Post {
 		self::render_addedit( $post_id, 'BulkAdd' );
 	}
 
-	public static function renderBulkEdit() {
+	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
 			return;
@@ -1836,12 +1836,12 @@ class MainWP_Post {
 	}
 
 	public static function render_addedit( $post_id, $what ) {
-		self::renderHeader( $what, $post_id);
+		self::render_header( $what, $post_id);
 		self::render_bulkpost( $post_id, 'bulkpost' );
-		self::renderFooter( $what );
+		self::render_footer( $what );
 	}
 
-	public static function hookPostsSearch_handler( $data, $website, &$output ) {
+	public static function hook_posts_search_handler( $data, $website, &$output ) {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -1851,7 +1851,7 @@ class MainWP_Post {
 		$output->results[ $website->id ] = $posts;
 	}
 
-	public static function getCategories() {
+	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
 			$siteIds          = explode( ',', urldecode( $_REQUEST['sites'] ) );
@@ -1864,7 +1864,7 @@ class MainWP_Post {
 				$siteIdsRequested[] = $siteId;
 			}
 
-			$websites = MainWP_DB::Instance()->getWebsitesByIds( $siteIdsRequested );
+			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
 			$groupIds          = explode( ',', urldecode( $_REQUEST['groups'] ) );
 			$groupIdsRequested = array();
@@ -1877,7 +1877,7 @@ class MainWP_Post {
 				$groupIdsRequested[] = $groupId;
 			}
 
-			$websites = MainWP_DB::Instance()->getWebsitesByGroupIds( $groupIdsRequested );
+			$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
 		}
 
 		$selectedCategories  = array();
@@ -2016,8 +2016,8 @@ class MainWP_Post {
 							if ( 'site' === $selected_by ) {
 								foreach ( $selected_sites as $k ) {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
-										$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-										$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+										$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 											$website,
 											array(
 												'id',
@@ -2036,12 +2036,12 @@ class MainWP_Post {
 							} else {
 								foreach ( $selected_groups as $k ) {
 									if ( MainWP_Utility::ctype_digit( $k ) ) {
-										$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+										$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 										while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 											if ( '' !== $website->sync_errors ) {
 												continue;
 											}
-											$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+											$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 												$website,
 												array(
 													'id',
@@ -2177,7 +2177,7 @@ class MainWP_Post {
 		<?php
 	}
 
-	public static function PostsGetTerms_handler( $data, $website, &$output ) {
+	public static function posts_get_terms_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result                       = $results[1];
 			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) );
@@ -2187,7 +2187,7 @@ class MainWP_Post {
 		}
 	}
 
-	public static function getTerms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
+	public static function get_terms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
 		$output         = new stdClass();
 		$output->errors = array();
 		$output->cats   = array();
@@ -2200,8 +2200,8 @@ class MainWP_Post {
 
 		if ( ! empty( $websiteid ) ) {
 			if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-				$website                    = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-				$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+				$website                    = MainWP_DB::instance()->get_website_by_id( $websiteid );
+				$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 					$website,
 					array(
 						'id',
@@ -2244,7 +2244,7 @@ class MainWP_Post {
 			);
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_terms', $post_data, array(
 				self::get_class_name(),
-				'PostsGetTerms_handler',
+				'posts_get_terms_handler',
 			), $output );
 			foreach ( $dbwebsites as $siteid => $website ) {
 				$cats = array();
@@ -2278,7 +2278,7 @@ class MainWP_Post {
 		echo $ret;
 	}
 
-	public static function getPost() {
+	public static function get_post() {
 		$postId    = $_POST['postId'];
 		$postType  = $_POST['postType'];
 		$websiteId = $_POST['websiteId'];
@@ -2290,7 +2290,7 @@ class MainWP_Post {
 			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
@@ -2314,7 +2314,7 @@ class MainWP_Post {
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else {
-			$ret = self::newPost( $information['my_post'] );
+			$ret = self::new_post( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
 				// to support edit post
 				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
@@ -2324,7 +2324,7 @@ class MainWP_Post {
 		}
 	}
 
-	public static function newPost( $post_data = array() ) {
+	public static function new_post( $post_data = array() ) {
 		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) );
 		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) );
 		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null );
@@ -2332,10 +2332,10 @@ class MainWP_Post {
 		$post_featured_image = base64_decode( $post_data['post_featured_image'] );
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] );
 		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) );
-		return self::createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
+		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
 	}
 
-	public static function createPost( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) {
+	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) {
 		global $current_user;
 
 		if ( ! isset( $new_post['edit_id'] ) ) {
@@ -2365,7 +2365,7 @@ class MainWP_Post {
 				}
 
 				try {
-					$downloadfile = MainWP_Utility::uploadImage( $originalImgUrl );
+					$downloadfile = MainWP_Utility::upload_image( $originalImgUrl );
 					$localUrl     = $downloadfile['url'];
 
 					$linkToReplaceWith = dirname( $localUrl );
@@ -2395,7 +2395,7 @@ class MainWP_Post {
 					foreach ( $post_gallery_images as $gallery ) {
 						if ( isset( $gallery['src'] ) ) {
 							try {
-								$upload = MainWP_Utility::uploadImage( $gallery['src'], $gallery, true );
+								$upload = MainWP_Utility::upload_image( $gallery['src'], $gallery, true );
 								if ( null !== $upload ) {
 									$replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
 								}
@@ -2474,7 +2474,7 @@ class MainWP_Post {
 
 		if ( null !== $post_featured_image ) {
 			try {
-				$upload = MainWP_Utility::uploadImage( $post_featured_image );
+				$upload = MainWP_Utility::upload_image( $post_featured_image );
 
 				if ( null !== $upload ) {
 					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
@@ -2489,7 +2489,7 @@ class MainWP_Post {
 		return $ret;
 	}
 
-	public static function setTerms( $postId, $cat_id, $taxonomy, $websiteIdEnc ) {
+	public static function set_terms( $postId, $cat_id, $taxonomy, $websiteIdEnc ) {
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
 			return;
 		}
@@ -2498,7 +2498,7 @@ class MainWP_Post {
 			return;
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return;
 		}
@@ -2519,14 +2519,14 @@ class MainWP_Post {
 		}
 	}
 
-	public static function insertComments( $postId, $comments, $websiteId ) {
+	public static function insert_comments( $postId, $comments, $websiteId ) {
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
 			return;
 		}
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
 			return;
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return;
 		}

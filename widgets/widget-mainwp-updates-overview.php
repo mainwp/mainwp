@@ -109,17 +109,17 @@ class MainWP_Updates_Overview {
 	public static function renderLastUpdate() {
 		$currentwp = MainWP_Utility::get_current_wpid();
 		if ( ! empty( $currentwp ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $currentwp );
+			$website = MainWP_DB::instance()->get_website_by_id( $currentwp );
 			$dtsSync = $website->dtsSync;
 		} else {
-			$dtsSync = MainWP_DB::Instance()->getFirstSyncedSite();
+			$dtsSync = MainWP_DB::instance()->get_first_synced_site();
 		}
 
 		if ( $dtsSync == 0 ) {
 			// No settings saved!
 			return;
 		} else {
-			esc_html_e( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $dtsSync ) ) . ')';
+			esc_html_e( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $dtsSync ) ) . ')';
 		}
 	}
 
@@ -131,7 +131,7 @@ class MainWP_Updates_Overview {
 	public static function syncSite() {
 		$website = null;
 		if ( isset( $_POST['wp_id'] ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $_POST['wp_id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $_POST['wp_id'] );
 		}
 
 		if ( $website == null ) {
@@ -139,18 +139,18 @@ class MainWP_Updates_Overview {
 		}
 
 		$maxRequestsInThirtySeconds = get_option( 'mainwp_maximumRequests' );
-		MainWP_Utility::endSession();
+		MainWP_Utility::end_session();
 
 		$semLock = '103218';
 
-		MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsSyncStart' => time() ) );
-		MainWP_Utility::endSession();
+		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
+		MainWP_Utility::end_session();
 
 		if ( MainWP_Sync::syncSite( $website ) ) {
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $website->id );
+		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
 		die( wp_json_encode( array( 'error' => $website->sync_errors ) ) );
 	}
@@ -169,7 +169,7 @@ class MainWP_Updates_Overview {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql        = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 			$globalView = false;
 		} else {
 			$staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
@@ -183,11 +183,11 @@ class MainWP_Updates_Overview {
 			}
 			// end support.
 
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
 
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
-		$websites      = MainWP_DB::Instance()->query( $sql );
+		$userExtension = MainWP_DB::instance()->get_user_extension();
+		$websites      = MainWP_DB::instance()->query( $sql );
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
@@ -243,7 +243,7 @@ class MainWP_Updates_Overview {
 			// $pluginsIgnored_perSites = $themesIgnored_perSites = array();
 			$pluginsIgnoredAbandoned_perSites = $themesIgnoredAbandoned_perSites = array();
 
-			$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();
 			}
@@ -268,7 +268,7 @@ class MainWP_Updates_Overview {
 				$theme_upgrades = array();
 			}
 
-			$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+			$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 			if ( is_array( $decodedPremiumUpgrades ) ) {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
@@ -372,18 +372,18 @@ class MainWP_Updates_Overview {
 			// $themesIgnored_perSites  = array_merge( $themesIgnored_perSites, $ignored_themes );
 			// }
 
-			$pluginsIgnoredAbandoned_perSites = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+			$pluginsIgnoredAbandoned_perSites = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 			if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
 				$pluginsIgnoredAbandoned_perSites = array_filter( $pluginsIgnoredAbandoned_perSites );
 			}
 
-			$themesIgnoredAbandoned_perSites = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+			$themesIgnoredAbandoned_perSites = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 			if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
 				$themesIgnoredAbandoned_perSites = array_filter( $themesIgnoredAbandoned_perSites );
 			}
 
-			$plugins_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_info' ), true );
-			$themes_outdate  = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
+			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+			$themes_outdate  = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 
 			if ( is_array( $plugins_outdate ) ) {
 				if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
@@ -445,7 +445,7 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result      = MainWP_DB::Instance()->getLastSyncStatus();
+			$result      = MainWP_DB::instance()->get_last_sync_status();
 			$sync_status = $result['sync_status'];
 			$last_sync   = $last_dtsSync = $result['last_sync'];
 
@@ -461,7 +461,7 @@ class MainWP_Updates_Overview {
 
 		$lastSyncMsg = '';
 		if ( $last_dtsSync ) {
-			$lastSyncMsg = __( 'Last successfully completed synchronization: ', 'mainwp' ) . MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $last_dtsSync ) );
+			$lastSyncMsg = __( 'Last successfully completed synchronization: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_dtsSync ) );
 		}
 
 		$user_can_update_translation = mainwp_current_user_can( 'dashboard', 'update_translations' );
@@ -843,20 +843,20 @@ class MainWP_Updates_Overview {
 
 		$output = array();
 		foreach ( $_POST['sites'] as $siteId ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( ( $website->backup_before_upgrade == 0 ) || ( ( $website->backup_before_upgrade == 2 ) && ( $global_backup_before_upgrade == 0 ) ) ) {
 				continue;
 			}
 
 			if ( ! empty( $primaryBackup ) ) {
-				$lastBackup = MainWP_DB::Instance()->getWebsiteOption( $website, 'primary_lasttime_backup' );
+				$lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
 
 				if ( $lastBackup != -1 ) { // installed backup plugin
 					$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
 				}
 				$output['primary_backup'] = $primaryBackup;
 			} else {
-				$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
+				$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
 				// Check if backup ok
 				$lastBackup = - 1;
 				if ( file_exists( $dir ) ) {
@@ -865,7 +865,7 @@ class MainWP_Updates_Overview {
 						while ( ( $file = readdir( $dh ) ) !== false ) {
 							if ( $file != '.' && $file != '..' ) {
 								$theFile = $dir . $file;
-								if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+								if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
 									$lastBackup = filemtime( $theFile );
 								}
 							}

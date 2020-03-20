@@ -4,7 +4,7 @@
  */
 class MainWP_Extensions_View {
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$page = add_submenu_page(
 			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
 				MainWP_Extensions::get_class_name(),
@@ -15,7 +15,7 @@ class MainWP_Extensions_View {
 		return $page;
 	}
 
-	public static function renderHeader( $shownPage = '', &$extensions = '' ) {
+	public static function render_header( $shownPage = '', &$extensions = '' ) {
 
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
 			$params = array(
@@ -54,7 +54,7 @@ class MainWP_Extensions_View {
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
 
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -156,7 +156,7 @@ class MainWP_Extensions_View {
 						if ( isset( $extensions_data['img'] ) ) {
 							$img_url = $extensions_data['img'];
 						} elseif ( isset( $extension['iconURI'] ) && '' !== $extension['iconURI'] ) {
-							$img_url = MainWP_Utility::removeHttpPrefix( $extension['iconURI'] );
+							$img_url = MainWP_Utility::remove_http_prefix( $extension['iconURI'] );
 						} else {
 							$img_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/placeholder.png';
 						}

@@ -15,7 +15,7 @@ class MainWP_Security_Issues {
 			if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 				return;
 			}
-			$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 		}
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
@@ -228,7 +228,7 @@ class MainWP_Security_Issues {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';
@@ -243,7 +243,7 @@ class MainWP_Security_Issues {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';
@@ -262,7 +262,7 @@ class MainWP_Security_Issues {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
-		$website = MainWP_DB::Instance()->getWebsiteById( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			return '';

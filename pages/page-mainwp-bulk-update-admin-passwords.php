@@ -10,7 +10,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Admin Passwords', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>', 'read', 'UpdateAdminPasswords', array(
 				self::get_class_name(),
@@ -20,7 +20,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		// add_action( 'load-' . $_page, array('MainWP_Bulk_Update_Admin_Passwords', 'on_load_page'));
 	}
 
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -66,8 +66,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				if ( $_POST['select_by'] == 'site' ) { // Get all selected websites
 					foreach ( $selected_sites as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
-							$website                    = MainWP_DB::Instance()->getWebsiteById( $k );
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',
@@ -86,12 +86,12 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				} else { // Get all websites from the selected groups
 					foreach ( $selected_groups as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
-							$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $k ) );
+							$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								if ( $website->sync_errors != '' ) {
 									continue;
 								}
-								$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+								$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 									$website,
 									array(
 										'id',
@@ -125,9 +125,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			}
 		}
 
-		MainWP_User::renderHeader( 'UpdateAdminPasswords' );
+		MainWP_User::render_header( 'UpdateAdminPasswords' );
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' )) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user(false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' )) );
 		?>
 		<?php if ( ! $show_form ) : ?>
 			<div class="ui modal" id="mainwp-reset-admin-passwords-modal">
@@ -221,7 +221,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				</form>
 			</div>
 		<?php
-		MainWP_User::renderFooter( 'UpdateAdminPasswords' );
+		MainWP_User::render_footer( 'UpdateAdminPasswords' );
 	}
 }
 

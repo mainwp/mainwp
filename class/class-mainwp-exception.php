@@ -1,7 +1,7 @@
 <?php
 /**
  * Extends MainWP Exception
- * 
+ *
  * Grabs $extra and stores it in $messageExtra.
  */
 
@@ -19,12 +19,11 @@ class MainWP_Exception extends Exception {
 
 	/**
 	 * Method __construct()
-	 * 
+	 *
 	 * Grab Exception Message.
-	 * 
+	 *
 	 * @param mixed $message
-	 * @param null $extra
-	 * 
+	 * @param null  $extra
 	 */
 	public function __construct( $message, $extra = null ) {
 		parent::__construct( $message );
@@ -33,7 +32,7 @@ class MainWP_Exception extends Exception {
 
 	/**
 	 * Method getMessageExtra()
-	 * 
+	 *
 	 * @return $messageExtra
 	 */
 	public function getMessageExtra() {

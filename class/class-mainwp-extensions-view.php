@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Extentions View
- * 
+ *
  * Renders MainWP Extensions Page.
  */
 
@@ -12,9 +12,9 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Method initMenu()
-	 * 
+	 *
 	 * Add MainWP > Extensions Submenu
-	 * 
+	 *
 	 * @return $page
 	 */
 	public static function initMenu() {
@@ -31,9 +31,9 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Method renderHeader()
-	 * 
-	 * Render page header. 
-	 * 
+	 *
+	 * Render page header.
+	 *
 	 * @param string $shownPage
 	 * @param string $extensions
 	 */
@@ -75,13 +75,13 @@ class MainWP_Extensions_View {
 		MainWP_UI::render_page_navigation( $renderItems );
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
-	
+
 
 	/**
 	 * Method renderFooter()
-	 * 
-	 * Render page footer. 
-	 * 
+	 *
+	 * Render page footer.
+	 *
 	 * @param mixed $shownPage
 	 */
 	public static function renderFooter( $shownPage ) {
@@ -90,7 +90,7 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Method render()
-	 * 
+	 *
 	 * Build Extensions Page.
 	 */
 	public static function render() {
@@ -339,9 +339,9 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Metod getExtensionGroups()
-	 * 
+	 *
 	 * Grab current MainWP Extension Groups.
-	 * 
+	 *
 	 * @return mixed $groups
 	 */
 	public static function getExtensionGroups() {
@@ -359,9 +359,9 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Method getAvailableExtentions()
-	 * 
-	 * Static Arrays of all Available Extensions. 
-	 * 
+	 *
+	 * Static Arrays of all Available Extensions.
+	 *
 	 * @todo Move to MainWP Server via an XML file.
 	 */
 	public static function getAvailableExtensions() {

@@ -8,18 +8,18 @@
 
 /**
  * Class MainWP Error Helper
- * 
+ *
  * @return $error
  */
 class MainWP_Error_Helper {
 
 	/**
 	 * Method get_error_message()
-	 * 
+	 *
 	 * Check for http error and or "nomainwp" error.
-	 * 
+	 *
 	 * @param mixed $pException
-	 * 
+	 *
 	 * @return @error Error message.
 	 */
 	public static function get_error_message( $pException ) {
@@ -36,11 +36,11 @@ class MainWP_Error_Helper {
 
 	/**
 	 * Method get_console_error_message()
-	 * 
+	 *
 	 * Check for http error and or "nomainwp" and or "WPERROR".
-	 * 
+	 *
 	 * @param mixed $pException
-	 * 
+	 *
 	 * @return @error Error message.
 	 */
 	public static function get_console_error_message( $pException ) {

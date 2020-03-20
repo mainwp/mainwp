@@ -1,7 +1,7 @@
 <?php
 /**
  * Search Cache Handler
- * 
+ *
  * Handles all search content.
  */
 
@@ -9,10 +9,10 @@
  * Class MainWP_Cache
  */
 class MainWP_Cache {
-  
+
 	/**
 	 * Method init_session()
-	 * 
+	 *
 	 * Start a Session.
 	 */
 	public static function init_session() {
@@ -23,23 +23,22 @@ class MainWP_Cache {
 
 	/**
 	 * Method init_cache()
-	 * 
+	 *
 	 * Set session variables.
-	 * 
+	 *
 	 * @param mixed $page
-	 * 
 	 */
 	public static function init_cache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
 	}
-  
+
 	/**
 	 * Method add_context()
-	 * 
-	 * Set time & Search Context. 
-	 * 
+	 *
+	 * Set time & Search Context.
+	 *
 	 * @param mixed $page
 	 * @param mixed $context
 	 */
@@ -54,12 +53,12 @@ class MainWP_Cache {
 
 	/**
 	 * Method add_body()
-	 * 
-	 * Set body Session Variable. 
-	 * 
+	 *
+	 * Set body Session Variable.
+	 *
 	 * @param mixed $page
 	 * @param mixed $body
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function add_body( $page, $body ) {
@@ -68,11 +67,11 @@ class MainWP_Cache {
 
 	/**
 	 * Method get_cached_context()
-	 * 
+	 *
 	 * Grab any cached searches.
-	 * 
+	 *
 	 * @param mixed $page
-	 * 
+	 *
 	 * @return mixed $cachedSearch
 	 */
 	public static function get_cached_context( $page ) {
@@ -95,9 +94,9 @@ class MainWP_Cache {
 
 	/**
 	 * Method echo_body()
-	 * 
+	 *
 	 * Grab & echo cached search body.
-	 * 
+	 *
 	 * @param mixed $page
 	 * @return $body
 	 */
@@ -109,9 +108,9 @@ class MainWP_Cache {
 
 	/**
 	 * Method add_result()
-	 * 
+	 *
 	 * Grab Search Results & Store them in Session.
-	 * 
+	 *
 	 * @param mixed $page
 	 * @param mixed $result
 	 */
@@ -121,9 +120,9 @@ class MainWP_Cache {
 
 	/**
 	 * Method get_cached_result()
-	 * 
+	 *
 	 * Grab cached Search Results.
-	 * 
+	 *
 	 * @param mixed $page
 	 */
 	public static function get_cached_result( $page ) {

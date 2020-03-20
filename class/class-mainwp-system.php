@@ -584,9 +584,9 @@ class MainWP_System {
 			}
 		}
 
-		if ( $display_request1 ) {			
+		if ( $display_request1 ) {
 			$this->render_rating_notice_1();
-		} elseif ( $display_request2 ) { 
+		} elseif ( $display_request2 ) {
 			$this->render_rating_notice_2();
 		}
 	}
@@ -607,9 +607,9 @@ class MainWP_System {
 				</div>
 				<i class="close icon mainwp-notice-dismiss" notice="request_reviews1"></i>
 			</div>
-		<?php 
+		<?php
 	}
-	
+
 	public function render_rating_notice_2() {
 		?>
 			<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -2791,7 +2791,7 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
 		}
 
-		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );		
+		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version ); // Load at header.
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );

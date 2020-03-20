@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Bluk Post
- * 
+ *
  * Display custom fields form fields.
  */
 
@@ -12,9 +12,9 @@ class MainWP_Bulk_Post {
 
 	/**
 	 * Method get_class_name()
-	 * 
+	 *
 	 * Get Class Name.
-	 * 
+	 *
 	 * @return object
 	 */
 	public static function get_class_name() {

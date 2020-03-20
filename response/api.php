@@ -1,11 +1,11 @@
 <?php
 /**
  * MainWP Client Live Report Responder
- * 
+ *
  * Legacy Client Reports Extension.
- * 
- * @Depriciated moved to external Extension 
- * @see MainWP-Client-Reports-Extension 
+ *
+ * @Depriciated moved to external Extension
+ * @see MainWP-Client-Reports-Extension
  */
 
 function liveReportsResponderClasses() {

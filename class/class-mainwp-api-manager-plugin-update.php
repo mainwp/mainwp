@@ -29,7 +29,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 	/**
 	 * Method instance()
-	 * 
+	 *
 	 * @static
 	 * @return class instance
 	 */
@@ -49,13 +49,13 @@ class MainWP_Api_Manager_Plugin_Update {
 		// API data
 	}
 
-	
+
 	/**
 	 * Method create_upgrade_api_url()
-	 * 
-	 * @param mixed $args
+	 *
+	 * @param mixed   $args
 	 * @param boolean $bulk_check
-	 * 
+	 *
 	 * @return URL Build URL
 	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
@@ -76,11 +76,11 @@ class MainWP_Api_Manager_Plugin_Update {
 
 	/**
 	 * Method update_check()
-	 * 
+	 *
 	 * Returns plugin information in an array.
-	 * 
+	 *
 	 * @param mixed $plugin
-	 * 
+	 *
 	 * @return mixed Plugin Information
 	 */
 	public function update_check( $plugin ) {
@@ -105,11 +105,11 @@ class MainWP_Api_Manager_Plugin_Update {
 
 	/**
 	 * Methos bulk_update_check()
-	 * 
+	 *
 	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
-	 * 
+	 *
 	 * @param mixed $plugins
-	 * 
+	 *
 	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
 	 */
 	public function bulk_update_check( $plugins ) {
@@ -124,12 +124,12 @@ class MainWP_Api_Manager_Plugin_Update {
 
 	/**
 	 * Method request()
-	 * 
+	 *
 	 * Check $args, if there is a response, an object eists & response is not false.
-	 * 
+	 *
 	 * @param mixed $args
-	 * 
-	 * @return object $response 
+	 *
+	 * @return object $response
 	 */
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';
@@ -144,12 +144,12 @@ class MainWP_Api_Manager_Plugin_Update {
 
 	/**
 	 * Method plugin_information()
-	 * 
+	 *
 	 * Sends and receives data to and from the server API
 	 *
 	 * @access public
 	 * @since  1.0.0
-	 * @param mixed $args
+	 * @param mixed  $args
 	 * @param boolen $bulk_check Check if updating in bulk true|false
 	 * @return object $response
 	 */
@@ -169,10 +169,10 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		if ( $bulk_check ) {
 			$response = wp_remote_retrieve_body( $request );
-//			$response = unserialize( base64_decode( $response ) );
+			// $response = unserialize( base64_decode( $response ) );
 			$response = MainWP_Utility::maybe_unserialyze( $response );
 		} else {
-//			$response = unserialize( wp_remote_retrieve_body( $request ) );
+			// $response = unserialize( wp_remote_retrieve_body( $request ) );
 			$response = MainWP_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
 		}
 

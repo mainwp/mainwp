@@ -1,14 +1,26 @@
 <?php
-
 /**
- * MainWP Security Issues
+ * MainWP Security Issues Page
+ *
+ * Detect, display & fix known Security Issues
  */
+
 class MainWP_Security_Issues {
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * @return string __CLASS__ Class Name
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * @param null $website Child Site ID
+	 */
 	public static function render( $website = null ) {
 
 		if ( empty( $website ) ) {
@@ -224,6 +236,12 @@ class MainWP_Security_Issues {
 		<?php
 	}
 
+
+	/**
+	 * Method Fetch Security Issues
+	 *
+	 * Fetch stored known Child Site Security Issues from DB that were found during Sync.
+	 */
 	public static function fetchSecurityIssues() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
@@ -239,6 +257,11 @@ class MainWP_Security_Issues {
 		return $information;
 	}
 
+	/**
+	 * Method Fix Security Issues
+	 *
+	 * Fix the selected security issue.
+	 */
 	public static function fixSecurityIssue() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
@@ -258,6 +281,11 @@ class MainWP_Security_Issues {
 		return $information;
 	}
 
+	/**
+	 * Method un-Fix Security Issues
+	 *
+	 * Un-Fix the selected security issue.
+	 */
 	public static function unfixSecurityIssue() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';

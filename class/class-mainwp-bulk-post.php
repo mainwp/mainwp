@@ -1,9 +1,22 @@
 <?php
 /**
+ * MainWP Bluk Post
+ *
  * Display custom fields form fields.
+ */
+
+/**
+ * MainWP Bluk Post
  */
 class MainWP_Bulk_Post {
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}

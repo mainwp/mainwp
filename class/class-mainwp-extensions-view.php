@@ -1,9 +1,21 @@
 <?php
 /**
+ * MainWP Extentions View
+ *
+ * Renders MainWP Extensions Page.
+ */
+
+/**
  * MainWP Extensions View
  */
 class MainWP_Extensions_View {
-
+	/**
+	 * Method init_menu()
+	 *
+	 * Add MainWP > Extensions Submenu
+	 *
+	 * @return $page
+	 */
 	public static function init_menu() {
 		$page = add_submenu_page(
 			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
@@ -15,8 +27,15 @@ class MainWP_Extensions_View {
 		return $page;
 	}
 
+	/**
+	 * Method render_header()
+	 *
+	 * Render page header.
+	 *
+	 * @param string $shownPage
+	 * @param string $extensions
+	 */
 	public static function render_header( $shownPage = '', &$extensions = '' ) {
-
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
 			$params = array(
 				'title' => __( 'Extensions', 'mainwp' ),
@@ -54,10 +73,23 @@ class MainWP_Extensions_View {
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
 
+  /**
+	 * Method render_footer()
+	 *
+	 * Render page footer.
+	 *
+	 * @param mixed $shownPage
+	 */
+	
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Build Extensions Page.
+	 */
 	public static function render() {
 
 		$username     = $password         = '';
@@ -301,6 +333,14 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
+
+	/**
+	 * Metod getExtensionGroups()
+	 *
+	 * Grab current MainWP Extension Groups.
+	 *
+	 * @return mixed $groups
+	 */
 	public static function getExtensionGroups() {
 		$groups = array(
 			'backup'         => __( 'Backups', 'mainwp' ),
@@ -314,6 +354,13 @@ class MainWP_Extensions_View {
 		return $groups;
 	}
 
+	/**
+	 * Method getAvailableExtentions()
+	 *
+	 * Static Arrays of all Available Extensions.
+	 *
+	 * @todo Move to MainWP Server via an XML file.
+	 */
 	public static function getAvailableExtensions() {
 		$folder_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/';
 		return array(

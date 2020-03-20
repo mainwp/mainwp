@@ -3,10 +3,25 @@
  * HTTP Error Handler
  *
  * Throw this error when MainWP is not detected
- * due to either an HTTP error
+ * due to either an HTTP error or if MainWP Child Plugin is not found.
+ */
+
+/**
+ * Class MainWP Error Helper
+ *
+ * @return $error
  */
 class MainWP_Error_Helper {
 
+	/**
+	 * Method get_error_message()
+	 *
+	 * Check for http error and or "nomainwp" error.
+	 *
+	 * @param mixed $pException
+	 *
+	 * @return @error Error message.
+	 */
 	public static function get_error_message( $pException ) {
 		$error = $pException->getMessage();
 
@@ -19,6 +34,15 @@ class MainWP_Error_Helper {
 		return $error;
 	}
 
+	/**
+	 * Method get_console_error_message()
+	 *
+	 * Check for http error and or "nomainwp" and or "WPERROR".
+	 *
+	 * @param mixed $pException
+	 *
+	 * @return @error Error message.
+	 */
 	public static function get_console_error_message( $pException ) {
 		$error = $pException->getMessage();
 

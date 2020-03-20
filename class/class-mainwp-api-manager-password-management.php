@@ -4,7 +4,7 @@
  *
  * Encrypts & Decrypts API Passwords.
  *
- * @package MainWP/API_Password_management
+ * @package MainWP/MainWP_API_Passwords_Manager
  */
 
 // Exit if accessed directly.

@@ -73,14 +73,14 @@ class MainWP_Extensions_View {
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
 
-  /**
+	/**
 	 * Method render_footer()
 	 *
 	 * Render page footer.
 	 *
 	 * @param mixed $shownPage
 	 */
-	
+
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}

@@ -595,9 +595,9 @@ class MainWP_Manage_Sites_View {
 		</div>
 
 		<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-			if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-				echo 'style="display: none;"';}
-				?>
+		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
+			echo 'style="display: none;"';}
+		?>
 		>
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum file descriptors fallback value', 'mainwp' ); ?></label>
 			<div class="ten wide column">
@@ -606,9 +606,9 @@ class MainWP_Manage_Sites_View {
 		</div>
 
 		<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-			if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-				echo 'style="display: none;"';}
-				?>
+		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
+			echo 'style="display: none;"';}
+		?>
 		>
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Load files in memory before zipping', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox">

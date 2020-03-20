@@ -10,41 +10,40 @@
  */
 class MainWP_Cache {
 
-	
 	/**
-	 * Method initSession()
+	 * Method init_session()
 	 * 
 	 * Start a Session.
 	 */
-	public static function initSession() {
+	public static function init_session() {
 		if ( '' === session_id() ) {
 			session_start();
 		}
 	}
 
 	/**
-	 * Method initCache()
+	 * Method init_cache()
 	 * 
 	 * Set session variables.
 	 * 
 	 * @param mixed $page
 	 * 
 	 */
-	public static function initCache( $page ) {
+	public static function init_cache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
 	}
 
 	/**
-	 * Method addContext()
+	 * Method add_context()
 	 * 
 	 * Set time & Search Context. 
 	 * 
 	 * @param mixed $page
 	 * @param mixed $context
 	 */
-	public static function addContext( $page, $context ) {
+	public static function add_context( $page, $context ) {
 		if ( ! is_array( $context ) ) {
 			$context = array();
 		}
@@ -54,7 +53,7 @@ class MainWP_Cache {
 	}
 
 	/**
-	 * Method addbody()
+	 * Method add_body()
 	 * 
 	 * Set body Session Variable. 
 	 * 
@@ -63,12 +62,12 @@ class MainWP_Cache {
 	 * 
 	 * @return void
 	 */
-	public static function addBody( $page, $body ) {
+	public static function add_body( $page, $body ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ] .= $body;
 	}
 
 	/**
-	 * Method getCachedContext()
+	 * Method get_cached_context()
 	 * 
 	 * Grab any cached searches.
 	 * 
@@ -76,7 +75,7 @@ class MainWP_Cache {
 	 * 
 	 * @return mixed $cachedSearch
 	 */
-	public static function getCachedContext( $page ) {
+	public static function get_cached_context( $page ) {
 		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
 
 		if ( null != $cachedSearch ) {
@@ -96,39 +95,39 @@ class MainWP_Cache {
 
 
 	/**
-	 * Method echoBody()
+	 * Method echo_body()
 	 * 
 	 * Grab & echo cached search body.
 	 * 
 	 * @param mixed $page
 	 * @return $body
 	 */
-	public static function echoBody( $page ) {
+	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
 			echo $_SESSION[ 'MainWP' . $page . 'Search' ];
 		}
 	}
 
 	/**
-	 * Method addResult()
+	 * Method add_result()
 	 * 
 	 * Grab Search Results & Store them in Session.
 	 * 
 	 * @param mixed $page
 	 * @param mixed $result
 	 */
-	public static function addResult( $page, $result ) {
+	public static function add_result( $page, $result ) {
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
 	}
 
 	/**
-	 * Method getCachedResult()
+	 * Method get_cached_result()
 	 * 
 	 * Grab cached Search Results.
 	 * 
 	 * @param mixed $page
 	 */
-	public static function getCachedResult( $page ) {
+	public static function get_cached_result( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] ) ) {
 			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ];
 		}

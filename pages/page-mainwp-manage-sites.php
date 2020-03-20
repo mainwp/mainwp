@@ -237,7 +237,7 @@ class MainWP_Manage_Sites {
 											<label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
 										</div>
 									</li>
-								<?php
+									<?php
 								}
 								?>
 							</ul>
@@ -281,7 +281,7 @@ class MainWP_Manage_Sites {
 				$groups = array();
 			}
 
-		?>
+			?>
 		<div id="mainwp-add-new-site" class="ui segment">
 
 			<?php if ( ! $websites && $referrer_page_check ) : ?>

@@ -51,9 +51,9 @@ class MainWP_Widget_Themes {
 		$allThemes = array();
 		if ( $websites ) {
 			$website = MainWP_DB::fetch_object( $websites );
-			if ( $website && $website->themes != '' ) {
+			if ( $website && '' !== $website->themes ) {
 				$themes = json_decode( $website->themes, 1 );
-				if ( is_array( $themes ) && count( $themes ) != 0 ) {
+				if ( is_array( $themes ) && 0 != count( $themes ) ) {
 					foreach ( $themes as $theme ) {
 						$allThemes[] = $theme;
 					}
@@ -68,7 +68,7 @@ class MainWP_Widget_Themes {
 		$inactive_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 0 );
 		$inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
-		if ( ( count( $allThemes ) > 0 ) && $website ) {
+		if ( ( 0 < count( $allThemes ) ) && $website ) {
 			$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 			if ( ! is_array( $themes_outdate ) ) {
 				$themes_outdate = array();
@@ -98,19 +98,16 @@ class MainWP_Widget_Themes {
 			</div>
 			<div class="four wide column right aligned">
 				<div class="ui dropdown right mainwp-dropdown-tab">
-						<div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
-						<i class="dropdown icon"></i>
-						<div class="menu">
-							<a class="item" data-tab="active_themes" data-value="active_themes" title="<?php esc_attr_e( 'Active', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Active', 'mainwp' ); ?></a>
-							<a class="item" data-tab="inactive_themes" data-value="inactive_themes" title="<?php esc_attr_e( 'Inactive', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></a>
-						</div>
+					<div class="text"><?php esc_html_e( 'Active', 'mainwp' ); ?></div>
+					<i class="dropdown icon"></i>
+					<div class="menu">
+						<a class="item" data-tab="active_themes" data-value="active_themes" title="<?php esc_attr_e( 'Active', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Active', 'mainwp' ); ?></a>
+						<a class="item" data-tab="inactive_themes" data-value="inactive_themes" title="<?php esc_attr_e( 'Inactive', 'mainwp' ); ?>" href="#"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></a>
+					</div>
 				</div>
 			</div>
 		</div>
-
 		<div class="ui section hidden divider"></div>
-
-		<!-- Active Theme -->
 		<div id="mainwp-widget-active-themes" class="ui tab active" data-tab="active_themes">
 			<div class="ui divided selection list">
 				<?php
@@ -119,14 +116,14 @@ class MainWP_Widget_Themes {
 					$slug = $actived_themes[ $i ]['slug'];
 					?>
 					<div class="item">
-						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags($actived_themes[ $i ]['slug'])); ?>"/>
-						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
+						<input class="themeSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_themes[ $i ]['slug'] ) ); ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
-								<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+							<a href="#" disabled class="button ui mini grey basic" data-position="top right" data-tooltip="<?php esc_attr_e( 'Active theme cannot be deactivated. If you need to activate another theme, go to the list of inactive themes and activate the wanted theme.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 						</div>
 						<div class="middle aligned content">
-								<?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version']); ?>
-							</div>
+							<?php echo esc_html( $actived_themes[ $i ]['name'] . ' ' . $actived_themes[ $i ]['version'] ); ?>
+						</div>
 						<div class="mainwp-row-actions-working">
 							<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait...', 'mainwp' ); ?>
 						</div>
@@ -134,8 +131,6 @@ class MainWP_Widget_Themes {
 				<?php } ?>
 			</div>
 		</div>
-
-		<!-- Inactive Themes List -->
 		<div id="mainwp-widget-inactive-themes" class="ui tab" data-tab="inactive_themes">
 			<div class="ui divided selection list">
 				<?php
@@ -149,15 +144,15 @@ class MainWP_Widget_Themes {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_html_e( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . __( ' theme on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_html_e( 'Delete the ', 'mainwp') . wp_strip_all_tags ( $inactive_themes[ $i ]['name'] ) . __( ' theme from the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme from the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
-								<?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
-							</div>
+							<?php echo esc_html( $inactive_themes[ $i ]['name'] . ' ' . $inactive_themes[ $i ]['version'] ); ?>
+						</div>
 						<div class="mainwp-row-actions-working">
 							<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait...', 'mainwp' ); ?>
 						</div>
@@ -165,10 +160,9 @@ class MainWP_Widget_Themes {
 				<?php } ?>
 			</div>
 		</div>
-
 		<?php
 
-		if ( $pExit == true ) {
+		if ( true === $pExit ) {
 			exit();
 		}
 	}
@@ -205,16 +199,16 @@ class MainWP_Widget_Themes {
 		$websiteIdEnc = $_POST['websiteId'];
 
 		if ( empty( $theme ) ) {
-			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 		$websiteId = $websiteIdEnc;
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
+			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
 
 		try {
@@ -228,8 +222,8 @@ class MainWP_Widget_Themes {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
-			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
+			die( wp_json_encode( array( 'error' => __( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
 		}
 	}
 

@@ -4,8 +4,7 @@
  * 
  * Legacy Client Reports Extension.
  * 
- * @Depriciated moved to external Extension 
- * @see MainWP-Client-Reports-Extension 
+ * @Depriciated moved to external Extension
  */
 
 /**

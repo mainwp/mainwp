@@ -23,9 +23,9 @@ class MainWP_Plugins {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
 		 *
-		 * @see \MainWP_Plugins::renderHeader
+		 * @see \MainWP_Plugins::render_header
 		 */
-		add_action( 'mainwp-pageheader-plugins', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-plugins', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Plugins page footer via the 'mainwp-pagefooter-plugins' action.
@@ -35,14 +35,14 @@ class MainWP_Plugins {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-plugins'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
 		 *
-		 * @see \MainWP_Plugins::renderFooter
+		 * @see \MainWP_Plugins::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-plugins', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-plugins', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
 				self::get_class_name(),
@@ -112,7 +112,7 @@ class MainWP_Plugins {
 		}
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Plugins" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
 			<div class="wp-submenu sub-open" >
@@ -213,7 +213,7 @@ class MainWP_Plugins {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
 			'title' => __( 'Plugins', 'mainwp' ),
@@ -282,7 +282,7 @@ class MainWP_Plugins {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -298,7 +298,7 @@ class MainWP_Plugins {
 			}
 		}
 		$cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
-		self::renderHeader( 'Manage' );
+		self::render_header( 'Manage' );
 		?>
 
 		<div id="mainwp-manage-plugins" class="ui alt segment">
@@ -368,7 +368,7 @@ class MainWP_Plugins {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-						<?php self::renderSearchOptions(); ?>
+						<?php self::render_search_options(); ?>
 					</div>
 					<div class="ui divider"></div>
 					<div class="mainwp-search-submit">
@@ -378,10 +378,10 @@ class MainWP_Plugins {
 			<div style="clear:both"></div>
 		</div>
 		<?php
-		self::renderFooter( 'Manage' );
+		self::render_footer( 'Manage' );
 	}
 
-	public static function renderSearchOptions() {
+	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
@@ -415,7 +415,7 @@ class MainWP_Plugins {
 		}
 	}
 
-	public static function renderTable( $keyword, $status, $groups, $sites ) {
+	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Plugins' );
 
 			$output          = new stdClass();
@@ -426,7 +426,7 @@ class MainWP_Plugins {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website    = MainWP_DB::Instance()->getWebsiteById( $v );
+						$website    = MainWP_DB::instance()->get_website_by_id( $v );
 						$allPlugins = json_decode( $website->plugins, true );
 						$_count     = count( $allPlugins );
 						for ( $i = 0; $i < $_count; $i ++ ) {
@@ -453,7 +453,7 @@ class MainWP_Plugins {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
@@ -487,8 +487,8 @@ class MainWP_Plugins {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -509,12 +509,12 @@ class MainWP_Plugins {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',
@@ -765,7 +765,7 @@ class MainWP_Plugins {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
@@ -789,7 +789,7 @@ class MainWP_Plugins {
 					$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
 				}
 			}
-			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
+			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
 		}
 
 		die( wp_json_encode( array( 'result' => true ) ) );
@@ -803,7 +803,7 @@ class MainWP_Plugins {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
@@ -830,9 +830,9 @@ class MainWP_Plugins {
 	}
 
 	public static function renderInstall() {
-		self::renderHeader( 'Install' );
+		self::render_header( 'Install' );
 		self::renderPluginsTable();
-		self::renderFooter( 'Install' );
+		self::render_footer( 'Install' );
 	}
 
 	public static function renderPluginsTable() {
@@ -949,7 +949,7 @@ class MainWP_Plugins {
 			$cachedAUSearch = $_SESSION['MainWP_PluginsActiveStatus'];
 		}
 
-		self::renderHeader( 'AutoUpdate' );
+		self::render_header( 'AutoUpdate' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
@@ -961,7 +961,7 @@ class MainWP_Plugins {
 				update_option( 'mainwp_pluginAutomaticDailyUpdate', $snPluginAutomaticDailyUpdate );
 			}
 
-			$update_time         = MainWP_Utility::getWebsitesAutomaticUpdateTime();
+			$update_time         = MainWP_Utility::get_websites_automatic_update_time();
 			$lastAutomaticUpdate = $update_time['last'];
 			$nextAutomaticUpdate = $update_time['next'];
 			?>
@@ -1052,7 +1052,7 @@ class MainWP_Plugins {
 			<?php
 			MainWP_UI::render_modal_edit_notes( 'plugin' );
 		}
-		self::renderFooter( 'AutoUpdate' );
+		self::render_footer( 'AutoUpdate' );
 	}
 
 	public static function renderAllActiveTable( $output = null ) {
@@ -1069,7 +1069,7 @@ class MainWP_Plugins {
 			$output->plugins = array();
 
 			if ( 1 == get_option( 'mainwp_optimize' ) ) {
-				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allPlugins = json_decode( $website->plugins, true );
 					$_count     = count( $allPlugins );
@@ -1093,9 +1093,9 @@ class MainWP_Plugins {
 				MainWP_DB::free_result( $websites );
 			} else {
 				$dbwebsites = array();
-				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
 							'id',
@@ -1180,7 +1180,7 @@ class MainWP_Plugins {
 		}
 		asort( $plugins );
 
-		$userExtension         = MainWP_DB::Instance()->getUserExtension();
+		$userExtension         = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
 
@@ -1276,8 +1276,8 @@ class MainWP_Plugins {
 	}
 
 	public static function renderIgnore() {
-		$websites              = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension         = MainWP_DB::Instance()->getUserExtension();
+		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension         = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
 
@@ -1297,7 +1297,7 @@ class MainWP_Plugins {
 				$cnt ++;
 		}
 
-		self::renderHeader( 'Ignore' );
+		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
 			<h3 class="ui header">
@@ -1416,24 +1416,24 @@ class MainWP_Plugins {
 			</table>
 		</div>
 		<?php
-		self::renderFooter( 'Ignore' );
+		self::render_footer( 'Ignore' );
 	}
 
 	public static function renderIgnoredAbandoned() {
-		$websites              = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension         = MainWP_DB::Instance()->getUserExtension();
+		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension         = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
 		$cnt                   = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedDismissedPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+			$tmpDecodedDismissedPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 			if ( ! is_array( $tmpDecodedDismissedPlugins ) || 0 == count( $tmpDecodedDismissedPlugins ) ) {
 				continue;
 			}
 			$cnt ++;
 		}
 
-		self::renderHeader( 'IgnoreAbandoned' );
+		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-plugins" class="ui segment">
 			<h3 class="ui header">
@@ -1501,7 +1501,7 @@ class MainWP_Plugins {
 						MainWP_DB::data_seek( $websites, 0 );
 
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$decodedIgnoredPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'plugins_outdate_dismissed' ), true );
+							$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 							if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
 								continue;
 							}
@@ -1550,11 +1550,11 @@ class MainWP_Plugins {
 		</table>
 	</div>
 		<?php
-		self::renderFooter( 'IgnoreAbandoned' );
+		self::render_footer( 'IgnoreAbandoned' );
 	}
 
 	public static function trustPost() {
-		$userExtension  = MainWP_DB::Instance()->getUserExtension();
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -1582,11 +1582,11 @@ class MainWP_Plugins {
 			}
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
 	public static function trustPlugin( $slug ) {
-		$userExtension  = MainWP_DB::Instance()->getUserExtension();
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -1596,14 +1596,14 @@ class MainWP_Plugins {
 			$trustedPlugins[] = urldecode( $slug );
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
 	public static function checkAutoUpdatePlugin( $slug ) {
 		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
 			return false;
 		}
-			$userExtension  = MainWP_DB::Instance()->getUserExtension();
+			$userExtension  = MainWP_DB::instance()->get_user_extension();
 			$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {
 			return true;
@@ -1615,14 +1615,14 @@ class MainWP_Plugins {
 		$slug                = urldecode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );
 		$esc_note            = MainWP_Utility::esc_content( $note );
-		$userExtension       = MainWP_DB::Instance()->getUserExtension();
+		$userExtension       = MainWP_DB::instance()->get_user_extension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
 		if ( ! is_array( $trustedPluginsNotes ) ) {
 			$trustedPluginsNotes = array();
 		}
 		$trustedPluginsNotes[ $slug ]         = $esc_note;
 		$userExtension->trusted_plugins_notes = wp_json_encode( $trustedPluginsNotes );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
 	/*

@@ -20,9 +20,9 @@ class MainWP_Settings {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
 		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
 		 *
-		 * @see \MainWP_Settings::renderHeader
+		 * @see \MainWP_Settings::render_header
 		 */
-		add_action( 'mainwp-pageheader-settings', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-settings', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
@@ -32,9 +32,9 @@ class MainWP_Settings {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
 		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
 		 *
-		 * @see \MainWP_Settings::renderFooter
+		 * @see \MainWP_Settings::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-settings', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-settings', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 
@@ -45,7 +45,7 @@ class MainWP_Settings {
 		self::exportSites();
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Settings Global options', 'mainwp' ), ' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>', 'read', 'Settings', array(
 				self::get_class_name(),
@@ -100,7 +100,7 @@ class MainWP_Settings {
 		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open" style="">
@@ -199,7 +199,7 @@ class MainWP_Settings {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
 			'title' => __( 'MainWP Settings', 'mainwp' ),
@@ -262,13 +262,13 @@ class MainWP_Settings {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$userExtension = MainWP_DB::instance()->get_user_extension();
 			$save_emails   = array();
 			$user_emails   = $_POST['mainwp_options_email'];
 			if ( is_array( $user_emails ) ) {
@@ -286,7 +286,7 @@ class MainWP_Settings {
 			$userExtension->heatMap   = ( ! isset( $_POST['mainwp_options_footprint_heatmap'] ) ? 1 : 0 );
 			$userExtension->pluginDir = '';
 
-			MainWP_DB::Instance()->updateUserExtension( $userExtension );
+			MainWP_DB::instance()->update_user_extension( $userExtension );
 			if ( MainWP_Utility::is_admin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
@@ -337,7 +337,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
 				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
@@ -360,7 +360,7 @@ class MainWP_Settings {
 						  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter your email address(es) to receive email notifications from your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
 								<div class="mainwp-multi-emails">
 									<?php
-									$user_emails = MainWP_Utility::getNotificationEmail();
+									$user_emails = MainWP_Utility::get_notification_email();
 									$user_emails = explode( ',', $user_emails );
 									$i           = 0;
 									foreach ( $user_emails as $email ) {
@@ -525,7 +525,7 @@ class MainWP_Settings {
 
 						$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
-						$update_time         = MainWP_Utility::getWebsitesAutomaticUpdateTime();
+						$update_time         = MainWP_Utility::get_websites_automatic_update_time();
 						$lastAutomaticUpdate = $update_time['last'];
 						$nextAutomaticUpdate = $update_time['next'];
 
@@ -711,7 +711,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 		<?php
-		self::renderFooter( '' );
+		self::render_footer( '' );
 	}
 
 	public static function showOpensslLibConfig() {
@@ -761,7 +761,7 @@ class MainWP_Settings {
 				}
 			}
 		}
-		self::renderHeader( 'Advanced' );
+		self::render_header( 'Advanced' );
 		?>
 
 		<div id="mainwp-advanced-settings" class="ui segment">
@@ -860,7 +860,7 @@ class MainWP_Settings {
 				</div>
 			</div>
 		<?php
-		self::renderFooter( 'Advanced' );
+		self::render_footer( 'Advanced' );
 	}
 
 	public static function renderMainWPTools() {
@@ -870,7 +870,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		self::renderHeader( 'MainWPTools' );
+		self::render_header( 'MainWPTools' );
 
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
@@ -929,14 +929,14 @@ class MainWP_Settings {
 			</div>
 		<?php
 
-		self::renderFooter( 'MainWPTools' );
+		self::render_footer( 'MainWPTools' );
 	}
 
 	public static function exportSites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
 
-			$sql      = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( true );
-			$websites = MainWP_DB::Instance()->query( $sql );
+			$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( true );
+			$websites = MainWP_DB::instance()->query( $sql );
 
 			if ( ! $websites ) {
 				die( 'Not found sites' );
@@ -951,7 +951,7 @@ class MainWP_Settings {
 				if ( empty( $website ) ) {
 					continue;
 				}
-				$row  = MainWP_Utility::mapSiteArray( $website, $keys );
+				$row  = MainWP_Utility::map_site_array( $website, $keys );
 				$csv .= '"' . implode('","', $row) . '"' . "\r\n"; // PHP_EOL;
 			}
 
@@ -968,7 +968,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		self::renderHeader( 'SettingsClientReportsResponder' );
+		self::render_header( 'SettingsClientReportsResponder' );
 		?>
 		<div id="mainwp-mcrwc-settings" class="ui segment">
 				<?php
@@ -1073,7 +1073,7 @@ class MainWP_Settings {
 			</div>
 
 		<?php
-		self::renderFooter( 'SettingsClientReportsResponder' );
+		self::render_footer( 'SettingsClientReportsResponder' );
 	}
 
 	// Hook the section help content to the Help Sidebar element

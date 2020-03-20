@@ -21,9 +21,9 @@ class MainWP_Themes {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 *
-		 * @see \MainWP_Themes::renderHeader
+		 * @see \MainWP_Themes::render_header
 		 */
-		add_action( 'mainwp-pageheader-themes', array( self::get_class_name(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-themes', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
@@ -33,14 +33,14 @@ class MainWP_Themes {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 *
-		 * @see \MainWP_Themes::renderFooter
+		 * @see \MainWP_Themes::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 
 		$_page = add_submenu_page(
 			'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
@@ -91,7 +91,7 @@ class MainWP_Themes {
 		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Themes" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open">
@@ -194,7 +194,7 @@ class MainWP_Themes {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 		$params = array( 'title' => __( 'Themes', 'mainwp' ) );
 
 		MainWP_UI::render_top_header( $params );
@@ -257,7 +257,7 @@ class MainWP_Themes {
 	/**
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -276,7 +276,7 @@ class MainWP_Themes {
 
 		$cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
-		self::renderHeader( 'Manage' );
+		self::render_header( 'Manage' );
 		?>
 
 		<div id="mainwp-manage-themes" class="ui alt segment">
@@ -344,7 +344,7 @@ class MainWP_Themes {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::renderSearchOptions(); ?>
+					<?php self::render_search_options(); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
@@ -354,10 +354,10 @@ class MainWP_Themes {
 			<div style="clear:both"></div>
 		</div>
 		<?php
-		self::renderFooter( 'Manage' );
+		self::render_footer( 'Manage' );
 	}
 
-	public static function renderSearchOptions() {
+	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
@@ -392,7 +392,7 @@ class MainWP_Themes {
 		}
 	}
 
-	public static function renderTable( $keyword, $status, $groups, $sites ) {
+	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new stdClass();
@@ -403,7 +403,7 @@ class MainWP_Themes {
 			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website   = MainWP_DB::Instance()->getWebsiteById( $v );
+						$website   = MainWP_DB::instance()->get_website_by_id( $v );
 						$allThemes = json_decode( $website->themes, true );
 						$_count    = count( $allThemes );
 						for ( $i = 0; $i < $_count; $i ++ ) {
@@ -431,7 +431,7 @@ class MainWP_Themes {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
@@ -466,8 +466,8 @@ class MainWP_Themes {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -488,12 +488,12 @@ class MainWP_Themes {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
 							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 								$website,
 								array(
 									'id',
@@ -736,7 +736,7 @@ class MainWP_Themes {
 			die( 'FAIL' );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( 'FAIL' );
 		}
@@ -771,7 +771,7 @@ class MainWP_Themes {
 			die( 'FAIL' );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( 'FAIL' );
 		}
@@ -793,7 +793,7 @@ class MainWP_Themes {
 					$decodedIgnoredThemes[ $slug ] = urldecode( $name );
 				}
 			}
-			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
+			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
 		}
 
 		die( wp_json_encode( array( 'result' => true ) ) );
@@ -826,9 +826,9 @@ class MainWP_Themes {
 				'installedThemes' => array(),
 			)
 		);
-		self::renderHeader( 'Install' );
+		self::render_header( 'Install' );
 		self::renderThemesTable();
-		self::renderFooter( 'Install' );
+		self::render_footer( 'Install' );
 	}
 
 	public static function renderThemesTable() {
@@ -1006,7 +1006,7 @@ class MainWP_Themes {
 			$cachedThemesSearch = $_SESSION['SNThemesAllStatus'];
 		}
 
-		self::renderHeader( 'AutoUpdate' );
+		self::render_header( 'AutoUpdate' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
@@ -1019,7 +1019,7 @@ class MainWP_Themes {
 				update_option( 'mainwp_themeAutomaticDailyUpdate', $snThemeAutomaticDailyUpdate );
 			}
 
-			$update_time         = MainWP_Utility::getWebsitesAutomaticUpdateTime();
+			$update_time         = MainWP_Utility::get_websites_automatic_update_time();
 			$lastAutomaticUpdate = $update_time['last'];
 			$nextAutomaticUpdate = $update_time['next'];
 			?>
@@ -1110,7 +1110,7 @@ class MainWP_Themes {
 			<?php
 		}
 		MainWP_UI::render_modal_edit_notes( 'theme' );
-		self::renderFooter( 'AutoUpdate' );
+		self::render_footer( 'AutoUpdate' );
 	}
 
 	public static function renderAllThemesTable( $output = null ) {
@@ -1127,7 +1127,7 @@ class MainWP_Themes {
 			$output->themes = array();
 
 			if ( 1 == get_option( 'mainwp_optimize' ) ) {
-				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
 					$_count    = count( $allThemes );
@@ -1151,9 +1151,9 @@ class MainWP_Themes {
 				MainWP_DB::free_result( $websites );
 			} else {
 				$dbwebsites = array();
-				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite(
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
 							'id',
@@ -1222,7 +1222,7 @@ class MainWP_Themes {
 		}
 		asort( $themes );
 
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$trustedThemes        = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
@@ -1318,8 +1318,8 @@ class MainWP_Themes {
 	}
 
 	public static function renderIgnore() {
-		$websites             = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 
@@ -1339,7 +1339,7 @@ class MainWP_Themes {
 			$cnt ++;
 		}
 
-		self::renderHeader( 'Ignore' );
+		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
 			<h3 class="ui header">
@@ -1456,24 +1456,24 @@ class MainWP_Themes {
 		</table>
 		</div>
 		<?php
-		self::renderFooter( 'Ignore' );
+		self::render_footer( 'Ignore' );
 	}
 
 	public static function renderIgnoredAbandoned() {
-		$websites             = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 		$cnt                  = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 			if ( ! is_array( $tmpDecodedIgnoredThemes ) || 0 == count( $tmpDecodedIgnoredThemes ) ) {
 				continue;
 			}
 			$cnt ++;
 		}
 
-		self::renderHeader( 'IgnoreAbandoned' );
+		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-themes" class="ui segment">
 			<h3 class="ui header">
@@ -1538,7 +1538,7 @@ class MainWP_Themes {
 					<?php
 					MainWP_DB::data_seek( $websites, 0 );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$decodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+						$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 						if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
 							continue;
 						}
@@ -1586,11 +1586,11 @@ class MainWP_Themes {
 			</table>
 		</div>
 		<?php
-		self::renderFooter( 'IgnoreAbandoned' );
+		self::render_footer( 'IgnoreAbandoned' );
 	}
 
 	public static function trustPost() {
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
+		$userExtension = MainWP_DB::instance()->get_user_extension();
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
@@ -1618,21 +1618,21 @@ class MainWP_Themes {
 			}
 		}
 		$userExtension->trusted_themes = wp_json_encode( $trustedThemes );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
 	public static function saveTrustedThemeNote() {
 		$slug               = urldecode( $_POST['slug'] );
 		$note               = stripslashes( $_POST['note'] );
 		$esc_note           = MainWP_Utility::esc_content( $note );
-		$userExtension      = MainWP_DB::Instance()->getUserExtension();
+		$userExtension      = MainWP_DB::instance()->get_user_extension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );
 		if ( ! is_array( $trustedThemesNotes ) ) {
 			$trustedThemesNotes = array();
 		}
 		$trustedThemesNotes[ $slug ]         = $esc_note;
 		$userExtension->trusted_themes_notes = wp_json_encode( $trustedThemesNotes );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
 	/*

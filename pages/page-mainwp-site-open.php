@@ -20,7 +20,7 @@ class MainWP_Site_Open {
 		}
 
 		$id      = intval( $_GET['websiteid'] );
-		$website = MainWP_DB::Instance()->getWebsiteById( $id );
+		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			exit();
@@ -57,7 +57,7 @@ class MainWP_Site_Open {
 		}
 
 		$id      = intval( $_GET['websiteid'] );
-		$website = MainWP_DB::Instance()->getWebsiteById( $id );
+		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			exit();
@@ -82,7 +82,7 @@ class MainWP_Site_Open {
 			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-			$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::getFileParameter( $website ), true );
+			$postdata         = MainWP_Utility::getGetDataAuthed( $website, $file, MainWP_Utility::get_file_parameter( $website ), true );
 			$postdata['size'] = $size;
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">

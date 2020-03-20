@@ -21,7 +21,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	public function column_backup( $item ) {
 
-		$lastBackup = MainWP_DB::Instance()->getWebsiteOption( $item, 'primary_lasttime_backup' );
+		$lastBackup = MainWP_DB::instance()->get_website_option( $item, 'primary_lasttime_backup' );
 
 		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'], $lastBackup );
 
@@ -29,7 +29,7 @@ class MainWP_Manage_Sites_List_Table {
 			return $backupnow_lnk;
 		}
 
-		$dir        = MainWP_Utility::getMainWPSpecificDir( $item['id'] );
+		$dir        = MainWP_Utility::get_mainwp_specific_dir( $item['id'] );
 		$lastbackup = 0;
 		if ( file_exists( $dir ) ) {
 			$dh = opendir( $dir );
@@ -37,7 +37,7 @@ class MainWP_Manage_Sites_List_Table {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
-						if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) ) {
+						if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) ) {
 							if ( filemtime( $theFile ) > $lastbackup ) {
 								$lastbackup = filemtime( $theFile );
 							}
@@ -50,7 +50,7 @@ class MainWP_Manage_Sites_List_Table {
 
 		$output = '';
 		if ( 0 < $lastbackup ) {
-			$output = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $lastbackup ) ) . '<br />';
+			$output = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lastbackup ) ) . '<br />';
 		} else {
 			$output = '<div class="ui red label">Never</div><br/>';
 		}
@@ -245,7 +245,7 @@ class MainWP_Manage_Sites_List_Table {
 							<div class="menu">
 								<div class="item" data-value="-1" ><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 								<?php
-								$groups = MainWP_DB::Instance()->getGroupsForManageSites();
+								$groups = MainWP_DB::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
 									<div class="item" data-value="<?php echo $group->id; ?>" ><?php echo stripslashes( $group->name ); ?></div>
@@ -285,7 +285,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function no_items() {
 		?>
 		<div class="ui center aligned segment">
-		<?php if ( 0 == MainWP_DB::Instance()->getWebsitesCount( null, true ) ) : ?>
+		<?php if ( 0 == MainWP_DB::instance()->get_websites_count( null, true ) ) : ?>
 			<i class="globe massive icon"></i>
 			<div class="ui header">
 				<?php esc_html_e( 'No websites connected to the MainWP Dashboard yet.', 'mainwp' ); ?>
@@ -308,7 +308,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function prepare_items( $optimize = true ) {
 
 		if ( null === $this->userExtension ) {
-			$this->userExtension = MainWP_DB::Instance()->getUserExtension();
+			$this->userExtension = MainWP_DB::instance()->get_user_extension();
 		}
 
 		$orderby = 'wp.url';
@@ -458,13 +458,13 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		}
 
-		$total_websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLSearchWebsitesForCurrentUser( $total_params ) );
+		$total_websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $total_params ) );
 		$totalRecords   = ( $total_websites ? MainWP_DB::num_rows( $total_websites ) : 0 );
 		if ( $total_websites ) {
 			MainWP_DB::free_result( $total_websites );
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLSearchWebsitesForCurrentUser( $params ) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
 		$site_ids = array();
 		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -480,7 +480,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	public function get_available_update_siteids() {
 		$site_ids = array();
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$hasSyncErrors = ( '' !== $website->sync_errors );
@@ -490,7 +490,7 @@ class MainWP_Manage_Sites_List_Table {
 				$total_plugin_upgrades = 0;
 				$total_theme_upgrades  = 0;
 
-				$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+				$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 				if ( $website->is_ignoreCoreUpdates ) {
 					$wp_upgrades = array();
 				}
@@ -509,7 +509,7 @@ class MainWP_Manage_Sites_List_Table {
 					$theme_upgrades = array();
 				}
 
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 						$premiumUpgrade['premium'] = true;
@@ -899,7 +899,7 @@ class MainWP_Manage_Sites_List_Table {
 				$total_plugin_upgrades = 0;
 				$total_theme_upgrades  = 0;
 
-				$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+				$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
 				if ( $website['is_ignoreCoreUpdates'] ) {
 					$wp_upgrades = array();
@@ -921,7 +921,7 @@ class MainWP_Manage_Sites_List_Table {
 					$theme_upgrades = array();
 				}
 
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -1053,9 +1053,9 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'theme_update' === $column_name ) { ?>
 								<span><a class="ui mini compact basic button <?php echo $t_color; ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo $total_theme_upgrades; ?></a></span>
 							<?php } elseif ( 'last_sync' === $column_name ) { ?>
-								<?php echo 0 != $website['dtsSync'] ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website['dtsSync'] ) ) : ''; ?>
+								<?php echo 0 != $website['dtsSync'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; ?>
 							<?php } elseif ( 'last_post' === $column_name ) { ?>
-								<?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website['last_post_gmt'] ) ) : ''; ?>
+								<?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?>
 								<?php
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
@@ -1152,7 +1152,7 @@ class MainWP_Manage_Sites_List_Table {
 		$total_plugin_upgrades = 0;
 		$total_theme_upgrades  = 0;
 
-		$wp_upgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+		$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
 		if ( $website['is_ignoreCoreUpdates'] ) {
 			$wp_upgrades = array();
@@ -1174,7 +1174,7 @@ class MainWP_Manage_Sites_List_Table {
 			$theme_upgrades = array();
 		}
 
-		$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+		$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 
 		if ( is_array( $decodedPremiumUpgrades ) ) {
 			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -1332,9 +1332,9 @@ class MainWP_Manage_Sites_List_Table {
 			<?php } elseif ( 'theme_update' === $column_name ) { ?>
 				<td class="collapsing"><span><a class="ui basic mini compact button <?php echo $t_color; ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo $total_theme_upgrades; ?></a></span></td>
 			<?php } elseif ( 'last_sync' === $column_name ) { ?>
-				<td class="collapsing"><?php echo 0 != $website['dtsSync'] ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website['dtsSync'] ) ) : ''; ?></td>
+				<td class="collapsing"><?php echo 0 != $website['dtsSync'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; ?></td>
 			<?php } elseif ( 'last_post' === $column_name ) { ?>
-				<td class="collapsing"><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website['last_post_gmt'] ) ) : ''; ?></td>
+				<td class="collapsing"><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?></td>
 			<?php } elseif ( 'notes' === $column_name ) { ?>
 				<td class="collapsing center aligned">
 					<?php if ( '' === $website['note'] ) : ?>

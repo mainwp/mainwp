@@ -40,8 +40,8 @@ class MainWP_UI {
 			$selected_groups = array();
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$groups   = MainWP_DB::Instance()->getNotEmptyGroups( null, $enableOfflineSites );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$groups   = MainWP_DB::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension
 		$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' ) || apply_filters( 'mainwp-extension-available-check', 'mainwp-timecapsule-extension' );
@@ -144,7 +144,7 @@ class MainWP_UI {
 
 		<?php
 		if ( $staging_enabled ) :
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>
 			<div class="ui tab" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>" select-by="staging">
 			<div id="mainwp-select-sites-body">
@@ -332,8 +332,8 @@ class MainWP_UI {
 
 	public static function gen_groups_sites_selection() {
 
-		$sql      = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ));
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ));
+		$websites = MainWP_DB::instance()->query( $sql );
 		$g        = isset( $_GET['g'] ) ? intval( $_GET['g'] ) : -1;
 		$s        = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : -1;
 		?>
@@ -342,7 +342,7 @@ class MainWP_UI {
 				<option value="" class="item"><?php esc_html_e( 'All Groups', 'mainwp' ); ?></option>
 				<option <?php echo ( -1 === $g ) ? 'selected' : ''; ?> value="-1" class="item"><?php esc_html_e( 'All Groups', 'mainwp' ); ?></option>
 				<?php
-				$groups = MainWP_DB::Instance()->getGroupsForManageSites();
+				$groups = MainWP_DB::instance()->get_groups_for_manage_sites();
 				foreach ( $groups as $group ) {
 					?>
 					<option class="item" <?php echo ( $g == $group->id ) ? 'selected' : ''; ?> value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></option>
@@ -382,7 +382,7 @@ class MainWP_UI {
 
 
 	public static function render_header_actions() {
-		$sites_count = MainWP_DB::Instance()->getWebsitesCount();
+		$sites_count = MainWP_DB::instance()->get_websites_count();
 		$website_id  = '';
 		ob_start();
 		?>
@@ -486,7 +486,7 @@ class MainWP_UI {
 		<?php
 	}
 
-	public static function renderHeader( $title = '' ) {
+	public static function render_header( $title = '' ) {
 		self::render_top_header( array( 'title' => $title ) );
 		?>
 		<div style="clear:both;"></div>
@@ -494,7 +494,7 @@ class MainWP_UI {
 		<?php
 	}
 
-	public static function renderFooter() {
+	public static function render_footer() {
 		?>
 		</div>
 		</div>

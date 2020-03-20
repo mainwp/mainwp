@@ -207,14 +207,14 @@ class MainWP_Utility {
 			curl_close( $ch );
 		}
 
-		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
+		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
 
 		$host   = parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
 		$ip     = false;
 		$target = false;
 
 		$dnsRecord = @dns_get_record( $host );
-		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [dnsRecord=' . print_r( $dnsRecord, 1 ) . ']' );
+		MainWP_Logger::instance()->debug( ' :: tryVisit :: [dnsRecord=' . print_r( $dnsRecord, 1 ) . ']' );
 		if ( false === $dnsRecord ) {
 			$data = false;
 		} elseif ( is_array( $dnsRecord ) ) {
@@ -500,7 +500,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	public static function getNotificationEmail( $user = null ) {
+	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
 			global $current_user;
 			$user = $current_user;
@@ -514,7 +514,7 @@ class MainWP_Utility {
 			return null;
 		}
 
-		$userExt = MainWP_DB::Instance()->getUserExtension();
+		$userExt = MainWP_DB::instance()->get_user_extension();
 		if ( '' != $userExt->user_email ) {
 			return $userExt->user_email;
 		}
@@ -522,7 +522,7 @@ class MainWP_Utility {
 		return $user->user_email;
 	}
 
-	public static function getPostDataAuthed( &$website, $what, $params = null ) {
+	public static function get_post_data_authed( &$website, $what, $params = null ) {
 		if ( $website && '' != $what ) {
 			$data             = array();
 			$data['user']     = $website->adminname;
@@ -611,7 +611,7 @@ class MainWP_Utility {
 		return rtrim( $url, '&' );
 	}
 
-	public static function getPostDataNotAuthed( $url, $admin, $what, $params = null ) {
+	public static function get_post_data_not_authed( $url, $admin, $what, $params = null ) {
 		if ( '' != $url && '' != $admin && '' != $what ) {
 			$data             = array();
 			$data['user']     = $admin;
@@ -735,7 +735,7 @@ class MainWP_Utility {
 
 				$params['json_result'] = $json_format;
 
-				$postdata = self::getPostDataAuthed( $website, $what, $params );
+				$postdata = self::get_post_data_authed( $website, $what, $params );
 				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 				curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -815,7 +815,7 @@ class MainWP_Utility {
 
 				$identifier   = null;
 				$semLock      = '103218';
-				$identifier   = self::getLockIdentifier( $semLock );
+				$identifier   = self::get_lock_identifier( $semLock );
 				$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
 				if ( 0 < $minimumDelay ) {
 					$minimumDelay = $minimumDelay / 1000;
@@ -825,13 +825,13 @@ class MainWP_Utility {
 					$minimumIPDelay = $minimumIPDelay / 1000;
 				}
 
-				self::endSession();
+				self::end_session();
 				$delay = true;
 				while ( $delay ) {
 					self::lock( $identifier );
 
 					if ( 0 < $minimumDelay ) {
-						$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp();
+						$lastRequest = MainWP_DB::instance()->get_last_request_timestamp();
 						if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 							self::release( $identifier );
 							usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
@@ -840,10 +840,10 @@ class MainWP_Utility {
 					}
 
 					if ( 0 < $minimumIPDelay && null != $website ) {
-						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+						$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 						if ( null != $ip && '' != $ip ) {
-							$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp( $ip );
+							$lastRequest = MainWP_DB::instance()->get_last_request_timestamp( $ip );
 
 							if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
 								self::release( $identifier );
@@ -868,10 +868,10 @@ class MainWP_Utility {
 						$first = false;
 					}
 
-					MainWP_DB::Instance()->closeOpenRequests();
+					MainWP_DB::instance()->close_open_requests();
 
 					if ( 0 < $maximumRequests ) {
-						$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests();
+						$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests();
 						if ( $nrOfOpenRequests >= $maximumRequests ) {
 							self::release( $identifier );
 							usleep( 200000 );
@@ -880,10 +880,10 @@ class MainWP_Utility {
 					}
 
 					if ( 0 < $maximumIPRequests && null != $website ) {
-						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+						$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 						if ( null != $ip && '' != $ip ) {
-							$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests( $ip );
+							$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests( $ip );
 							if ( $nrOfOpenRequests >= $maximumIPRequests ) {
 								self::release( $identifier );
 								usleep( 200000 );
@@ -896,7 +896,7 @@ class MainWP_Utility {
 				}
 
 				if ( null != $website ) {
-					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, null, microtime( true ), null );
+					MainWP_DB::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
 				}
 
 				if ( null != $identifier ) {
@@ -906,7 +906,7 @@ class MainWP_Utility {
 				$data = curl_exec( $ch );
 
 				if ( null != $website ) {
-					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
+					MainWP_DB::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
 				}
 
 				if ( null != $handler ) {
@@ -1000,7 +1000,7 @@ class MainWP_Utility {
 				$params['json_result'] = $json_format;
 			}
 
-			$postdata = self::getPostDataAuthed( $website, $what, $params );
+			$postdata = self::get_post_data_authed( $website, $what, $params );
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
 			curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
 			curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
@@ -1151,20 +1151,20 @@ class MainWP_Utility {
 			}
 
 			if ( is_array( $check_premi_plugins ) && 0 < count( $check_premi_plugins ) ) {
-				if ( self::checkPremiumUpdates( $check_premi_plugins, 'plugin' ) ) {
+				if ( self::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
 					self::try_to_detect_premiums_update( $website, 'plugin' );
 				}
 			}
 
 			if ( is_array( $check_premi_themes ) && 0 < count( $check_premi_themes ) ) {
-				if ( self::checkPremiumUpdates( $check_premi_themes, 'theme' ) ) {
+				if ( self::check_premium_updates( $check_premi_themes, 'theme' ) ) {
 					self::try_to_detect_premiums_update( $website, 'theme' );
 				}
 			}
 
 			if ( 'upgradeplugintheme' === $what ) {
 				if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-					if ( self::checkRequestUpdatePremium( $params['list'], $update_type ) ) {
+					if ( self::check_request_update_premium( $params['list'], $update_type ) ) {
 						self::request_premiums_update( $website, $update_type, $params['list'] );
 						$request_update = true;
 					}
@@ -1197,7 +1197,7 @@ class MainWP_Utility {
 		}
 
 		$params['json_result'] = true;
-		$postdata              = self::getPostDataAuthed( $website, $what, $params );
+		$postdata              = self::get_post_data_authed( $website, $what, $params );
 		$others['function']    = $what;
 
 		$information = array();
@@ -1220,7 +1220,7 @@ class MainWP_Utility {
 				$result          = self::is_website_available( $website );
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
-				MainWP_DB::Instance()->updateWebsiteValues(
+				MainWP_DB::instance()->update_website_values(
 					$website->id, array(
 						'offline_check_result' => $online_detected ? 1 : -1,
 						'offline_checks_last'  => time(),
@@ -1255,52 +1255,11 @@ class MainWP_Utility {
 			$params['json_result'] = true;
 		}
 
-		$postdata = self::getPostDataNotAuthed( $url, $admin, $what, $params );
+		$postdata = self::get_post_data_not_authed( $url, $admin, $what, $params );
 		$website  = null;
 
 		$others['function'] = $what;
 		return self::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
-	}
-
-	public static function fetchUrlClean( $url, $postdata ) {
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
-		$ch = curl_init();
-
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
-
-		if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		}
-
-		$data = curl_exec( $ch );
-		curl_close( $ch );
-		if ( ! $data ) {
-			throw new Exception( 'HTTPERROR' );
-		} else {
-			return $data;
-		}
 	}
 
 	public static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
@@ -1336,12 +1295,12 @@ class MainWP_Utility {
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
 			$semLock      = '103218';
-			$identifier   = self::getLockIdentifier( $semLock );
+			$identifier   = self::get_lock_identifier( $semLock );
 			$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
 			if ( 0 < $minimumDelay ) {
 				$minimumDelay = $minimumDelay / 1000;
@@ -1351,13 +1310,13 @@ class MainWP_Utility {
 				$minimumIPDelay = $minimumIPDelay / 1000;
 			}
 
-			self::endSession();
+			self::end_session();
 			$delay = true;
 			while ( $delay ) {
 				self::lock( $identifier );
 
 				if ( 0 < $minimumDelay ) {
-					$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp();
+					$lastRequest = MainWP_DB::instance()->get_last_request_timestamp();
 					if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 						self::release( $identifier );
 						usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
@@ -1366,10 +1325,10 @@ class MainWP_Utility {
 				}
 
 				if ( 0 < $minimumIPDelay && null != $website ) {
-					$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 					if ( null != $ip && '' !== $ip ) {
-						$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp( $ip );
+						$lastRequest = MainWP_DB::instance()->get_last_request_timestamp( $ip );
 
 						if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
 							self::release( $identifier );
@@ -1394,10 +1353,10 @@ class MainWP_Utility {
 					$first = false;
 				}
 
-				MainWP_DB::Instance()->closeOpenRequests();
+				MainWP_DB::instance()->close_open_requests();
 
 				if ( 0 < $maximumRequests ) {
-					$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests();
+					$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests();
 					if ( $nrOfOpenRequests >= $maximumRequests ) {
 						self::release( $identifier );
 						usleep( 200000 );
@@ -1406,10 +1365,10 @@ class MainWP_Utility {
 				}
 
 				if ( 0 < $maximumIPRequests && null != $website ) {
-					$ip = MainWP_DB::Instance()->getWPIp( $website->id );
+					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 					if ( null != $ip && '' != $ip ) {
-						$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests( $ip );
+						$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests( $ip );
 						if ( $nrOfOpenRequests >= $maximumIPRequests ) {
 							self::release( $identifier );
 							usleep( 200000 );
@@ -1423,7 +1382,7 @@ class MainWP_Utility {
 		}
 
 		if ( null != $website ) {
-			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, null, microtime( true ), null );
+			MainWP_DB::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
 		}
 
 		if ( null != $identifier ) {
@@ -1528,9 +1487,9 @@ class MainWP_Utility {
 			@set_time_limit( $timeout );
 		}
 		@ini_set( 'max_execution_time', $timeout );
-		self::endSession();
+		self::end_session();
 
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Executing handlers' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Executing handlers' );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1568,40 +1527,40 @@ class MainWP_Utility {
 		$ip   = gethostbyname( $host );
 
 		if ( null != $website ) {
-			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
+			MainWP_DB::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
 		}
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r( $postdata, 1 ) . ']' );
 		}
 
 		if ( ( false === $data ) && ( 0 === $http_status ) ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( empty( $data ) && ! empty( $err ) ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = self::get_child_response( base64_decode( $result ) );
 
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 === $http_status && ! empty( $err ) ) {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( $raw_response ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
+			MainWP_Logger::instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
 			return $data;
 		} else {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}
 
-	public static function checkPremiumUpdates( $updates, $type ) {
+	public static function check_premium_updates( $updates, $type ) {
 
 		if ( ! is_array( $updates ) || empty( $updates ) ) {
 			return false;
@@ -1671,7 +1630,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	public static function checkRequestUpdatePremium( $list, $type ) {
+	public static function check_request_update_premium( $list, $type ) {
 
 		$updates = explode( ',', $list );
 
@@ -1734,12 +1693,12 @@ class MainWP_Utility {
 			);
 		}
 
-		MainWP_Logger::Instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
+		MainWP_Logger::instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
 
 		$reponse = wp_remote_get( $request_url, $args );
 		$body    = is_array( $reponse ) && isset( $reponse['body'] ) ? $reponse['body'] : '';
 
-		MainWP_Logger::Instance()->debug( ' :: Response :: ' . $body );
+		MainWP_Logger::instance()->debug( ' :: Response :: ' . $body );
 
 		return $reponse;
 	}
@@ -1775,7 +1734,7 @@ class MainWP_Utility {
 	public static function log( $text ) {
 	}
 
-	public static function downloadToFile( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
+	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 		if ( file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
 			@unlink( $file );
 		}
@@ -1827,7 +1786,7 @@ class MainWP_Utility {
 		fclose( $fp );
 	}
 
-	public static function uploadImage( $img_url, $img_data = array() ) {
+	public static function upload_image( $img_url, $img_data = array() ) {
 		if ( ! is_array( $img_data ) ) {
 			$img_data = array();
 		}
@@ -1871,13 +1830,13 @@ class MainWP_Utility {
 		return null;
 	}
 
-	public static function getBaseDir() {
+	public static function get_base_dir() {
 		$upload_dir = wp_upload_dir();
 
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
 	}
 
-	public static function getIconsDir() {
+	public static function get_icons_dir() {
 		$dirs = self::getMainWPDir();
 		$dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 		$url  = $dirs[1] . 'icons/';
@@ -1904,8 +1863,8 @@ class MainWP_Utility {
 		return array( $dir, $url );
 	}
 
-	public static function getDownloadUrl( $what, $filename ) {
-		$specificDir = self::getMainWPSpecificDir( $what );
+	public static function get_download_url( $what, $filename ) {
+		$specificDir = self::get_mainwp_specific_dir( $what );
 		$mwpDir      = self::getMainWPDir();
 		$mwpDir      = $mwpDir[0];
 		$fullFile    = $specificDir . $filename;
@@ -1913,15 +1872,15 @@ class MainWP_Utility {
 		return admin_url( '?sig=' . md5( filesize( $fullFile ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
 	}
 
-	public static function getMainWPSpecificDir( $dir = null ) {
-		if ( MainWP_System::Instance()->is_single_user() ) {
+	public static function get_mainwp_specific_dir( $dir = null ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
 
-		$hasWPFileSystem = self::getWPFilesystem();
+		$hasWPFileSystem = self::get_wp_file_system();
 
 		global $wp_filesystem;
 
@@ -1956,7 +1915,7 @@ class MainWP_Utility {
 
 	public static function init_cookiesdir() {
 
-			$hasWPFileSystem = self::getWPFilesystem();
+			$hasWPFileSystem = self::get_wp_file_system();
 
 			global $wp_filesystem;
 
@@ -1997,8 +1956,8 @@ class MainWP_Utility {
 		}
 	}
 
-	public static function getMainWPSpecificUrl( $dir ) {
-		if ( MainWP_System::Instance()->is_single_user() ) {
+	public static function get_mainwp_specific_url( $dir ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
@@ -2009,7 +1968,7 @@ class MainWP_Utility {
 		return $dirs[1] . $userid . '/' . $dir . '/';
 	}
 
-	public static function getAlexaRank( $domain ) {
+	public static function get_alexa_rank( $domain ) {
 		$remote_url = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' . trim( $domain );
 		$search_for = '<POPULARITY URL';
 		$part       = '';
@@ -2042,7 +2001,7 @@ class MainWP_Utility {
 		return $str[1];
 	}
 
-	protected static function StrToNum( $Str, $Check, $Magic ) {
+	protected static function str_to_num( $Str, $Check, $Magic ) {
 		$Int32Unit = 4294967296;
 
 		$length = strlen( $Str );
@@ -2062,9 +2021,9 @@ class MainWP_Utility {
 	/*
 	 * Genearate a hash for a url
 	 */
-	protected static function HashURL( $String ) {
-		$Check1 = self::StrToNum( $String, 0x1505, 0x21 );
-		$Check2 = self::StrToNum( $String, 0, 0x1003F );
+	protected static function hash_url( $String ) {
+		$Check1 = self::str_to_num( $String, 0x1505, 0x21 );
+		$Check2 = self::str_to_num( $String, 0, 0x1003F );
 
 		$Check1 >>= 2;
 		$Check1   = ( ( $Check1 >> 4 ) & 0x3FFFFC0 ) | ( $Check1 & 0x3F );
@@ -2080,7 +2039,7 @@ class MainWP_Utility {
 	/*
 	 * genearate a checksum for the hash string
 	 */
-	protected static function CheckHash( $Hashnum ) {
+	protected static function check_hash( $Hashnum ) {
 		$CheckByte = 0;
 		$Flag      = 0;
 
@@ -2112,7 +2071,7 @@ class MainWP_Utility {
 	}
 
 	public static function getpagerank( $url ) {
-		$query = 'http://toolbarqueries.google.com/tbr?client=navclient-auto&ch=' . self::CheckHash( self::HashURL( $url ) ) . '&features=Rank&q=info:' . $url . '&num=100&filter=0';
+		$query = 'http://toolbarqueries.google.com/tbr?client=navclient-auto&ch=' . self::check_hash( self::hash_url( $url ) ) . '&features=Rank&q=info:' . $url . '&num=100&filter=0';
 		$data  = self::file_get_contents_curl( $query );
 		$pos   = strpos( $data, 'Rank_' );
 		if ( false === $pos ) {
@@ -2166,7 +2125,7 @@ class MainWP_Utility {
 		}
 	}
 
-	public static function getGoogleCount( $domain ) {
+	public static function get_google_count( $domain ) {
 		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' .
 		'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
 		$data    = json_decode( $content );
@@ -2187,7 +2146,7 @@ class MainWP_Utility {
 		return intval( $data->responseData->cursor->estimatedResultCount );
 	}
 
-	public static function countRecursive( $array, $levels ) {
+	public static function count_recursive( $array, $levels ) {
 		if ( 0 === $levels ) {
 			return count( $array );
 		}
@@ -2196,7 +2155,7 @@ class MainWP_Utility {
 		$count = 0;
 		foreach ( $array as $value ) {
 			if ( is_array( $value ) && ( 0 < $levels ) ) {
-				$count += self::countRecursive( $value, $levels - 1 );
+				$count += self::count_recursive( $value, $levels - 1 );
 			} else {
 				$count += count( $value );
 			}
@@ -2241,7 +2200,7 @@ class MainWP_Utility {
 		return $sorted;
 	}
 
-	public static function getSubArrayHaving( $array, $index, $value ) {
+	public static function get_sub_array_having( $array, $index, $value ) {
 		$output = array();
 		if ( is_array( $array ) && 0 < count( $array ) ) {
 			foreach ( $array as $arrvalue ) {
@@ -2300,11 +2259,11 @@ class MainWP_Utility {
 		return array( $response['headers'], $response['body'] );
 	}
 
-	public static function trimSlashes( $elem ) {
+	public static function trim_slashes( $elem ) {
 		return trim( $elem, '/' );
 	}
 
-	public static function renderToolTip( $pText, $pUrl = null, $pImage = 'assets/images/info.png', $style = null ) {
+	public static function render_tool_tip( $pText, $pUrl = null, $pImage = 'assets/images/info.png', $style = null ) {
 		$output = '<span class="tooltipcontainer">';
 		if ( null != $pUrl ) {
 			$output .= '<a href="' . esc_url( $pUrl ) . '" target="_blank">';
@@ -2321,7 +2280,7 @@ class MainWP_Utility {
 		echo $output;
 	}
 
-	public static function renderNoteTooltip( $pText, $pImage = '<i class="edit outline icon"></i>' ) {
+	public static function render_note_tool_tip( $pText, $pImage = '<i class="edit outline icon"></i>' ) {
 		$output  = '<span class="tooltipcontainer">';
 		$output .= '<span style="font-size: 14px;" class="tooltip">' . $pImage . '</span>';
 		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
@@ -2355,7 +2314,7 @@ class MainWP_Utility {
 	/**
 	 * @return WP_Filesystem_Base
 	 */
-	public static function getWPFilesystem() {
+	public static function get_wp_file_system() {
 		global $wp_filesystem;
 
 		if ( empty( $wp_filesystem ) ) {
@@ -2383,7 +2342,7 @@ class MainWP_Utility {
 		return preg_replace( '/[\\\\\/\:"\*\?\<\>\|]+/', '', $str );
 	}
 
-	public static function formatEmail( $to, $body, $title = '', $text_format = false ) {
+	public static function format_email( $to, $body, $title = '', $text_format = false ) {
 		$current_year = date( 'Y' );
 		if ( $text_format ) {
 				$mail_send['header'] = '';
@@ -2739,14 +2698,14 @@ EOT;
 		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
 
-	public static function endSession() {
+	public static function end_session() {
 		session_write_close();
 		if ( 0 < ob_get_length() ) {
 			ob_end_flush();
 		}
 	}
 
-	public static function getLockIdentifier( $pLockName ) {
+	public static function get_lock_identifier( $pLockName ) {
 		if ( ( null == $pLockName ) || ( false == $pLockName ) ) {
 			return false;
 		}
@@ -2802,17 +2761,17 @@ EOT;
 		return false;
 	}
 
-	public static function getTimestamp( $timestamp ) {
+	public static function get_timestamp( $timestamp ) {
 		$gmtOffset = get_option( 'gmt_offset' );
 
 		return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
 	}
 
 	public static function date( $format ) {
-		return date( $format, self::getTimestamp( time() ) );
+		return date( $format, self::get_timestamp( time() ) );
 	}
 
-	public static function formatTimestamp( $timestamp ) {
+	public static function format_timestamp( $timestamp ) {
 		return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
 	}
 
@@ -2823,7 +2782,7 @@ EOT;
 		return sprintf( "%.{$decimals}f", $bytes / pow( 1024, $factor ) ) . @$size[ $factor ];
 	}
 
-	public static function mapSite( &$website, $keys ) {
+	public static function map_site( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
@@ -2832,7 +2791,7 @@ EOT;
 		return (object) $outputSite;
 	}
 
-	public static function mapSiteArray( &$website, $keys ) {
+	public static function map_site_array( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
@@ -2846,7 +2805,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->is_single_user() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2860,7 +2819,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->is_single_user() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2874,7 +2833,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->is_single_user() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2916,21 +2875,21 @@ EOT;
 		return $output;
 	}
 
-	public static function getWebsitesAutomaticUpdateTime() {
-		$lastAutomaticUpdate = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
+	public static function get_websites_automatic_update_time() {
+		$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
 
 		if ( 0 === $lastAutomaticUpdate ) {
 			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
-		} elseif ( 0 < MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart() || 0 < MainWP_DB::Instance()->getWebsitesCheckUpdatesCount() ) {
+		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$nextAutomaticUpdate = self::formatTimestamp( self::getTimestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
+			$nextAutomaticUpdate = self::format_timestamp( self::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
 		}
 
 		if ( 0 === $lastAutomaticUpdate ) {
 			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
 		} else {
-			$lastAutomaticUpdate = self::formatTimestamp( self::getTimestamp( $lastAutomaticUpdate ) );
+			$lastAutomaticUpdate = self::format_timestamp( self::get_timestamp( $lastAutomaticUpdate ) );
 		}
 
 		return array(
@@ -3035,7 +2994,7 @@ EOT;
 		return $result;
 	}
 
-	public static function getFileParameter( &$website ) {
+	public static function get_file_parameter( &$website ) {
 		if ( ! isset( $website->version ) || empty( $website->version ) ) {
 			return 'file';
 		}
@@ -3046,7 +3005,7 @@ EOT;
 		return 'file';
 	}
 
-	public static function removePreSlashSpaces( $text ) {
+	public static function remove_preslash_spaces( $text ) {
 		while ( stristr( $text, ' /' ) ) {
 			$text = str_replace( ' /', '/', $text );
 		}
@@ -3054,28 +3013,28 @@ EOT;
 		return $text;
 	}
 
-	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
+	public static function remove_http_prefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
 	}
 
-	public static function removeHttpWWWPrefix( $pUrl ) {
-		$pUrl = self::removeHttpPrefix( $pUrl, true );
+	public static function remove_http_www_prefix( $pUrl ) {
+		$pUrl = self::remove_http_prefix( $pUrl, true );
 		return str_replace( 'www', '', $pUrl );
 	}
 
-	public static function isArchive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
+	public static function is_archive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
 		return preg_match( '/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName );
 	}
 
-	public static function isSQLFile( $pFileName ) {
-		return preg_match( '/(.*).sql$/', $pFileName ) || self::isSQLArchive( $pFileName );
+	public static function is_sql_file( $pFileName ) {
+		return preg_match( '/(.*).sql$/', $pFileName ) || self::is_sql_archive( $pFileName );
 	}
 
-	public static function isSQLArchive( $pFileName ) {
+	public static function is_sql_archive( $pFileName ) {
 		return preg_match( '/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName );
 	}
 
-	public static function getCurrentArchiveExtension( $website = false, $task = false ) {
+	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;
 		if ( false != $task ) {
 			if ( 'global' === $task->archiveFormat ) {
@@ -3095,7 +3054,7 @@ EOT;
 			if ( false === $website ) {
 				$useGlobal = true;
 			} else {
-				$backupSettings = MainWP_DB::Instance()->getWebsiteBackupSettings( $website->id );
+				$backupSettings = MainWP_DB::instance()->get_website_backup_settings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
 				$useGlobal      = ( 'global' === $archiveFormat );
 			}
@@ -3111,7 +3070,7 @@ EOT;
 		return $archiveFormat;
 	}
 
-	public static function getRealExtension( $path ) {
+	public static function get_real_extension( $path ) {
 		$checks = array( '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2' );
 		foreach ( $checks as $check ) {
 			if ( self::ends_with( $path, $check ) ) {
@@ -3183,7 +3142,7 @@ EOT;
 		return true;
 	}
 
-	public static function resetUserCookie( $what, $value = '' ) {
+	public static function reset_user_cookie( $what, $value = '' ) {
 		global $current_user;
 		$user_id = $current_user->ID;
 		if ( $user_id ) {
@@ -3213,12 +3172,12 @@ EOT;
 	}
 
 	public static function get_favico_url( $website ) {
-		$favi    = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
+		$favi    = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 		$faviurl = '';
 
 		if ( ! empty( $favi ) ) {
 			if ( false !== strpos( $favi, 'favi-' . intval( $website->id ) . '-' ) ) {
-				$dirs = self::getIconsDir();
+				$dirs = self::get_icons_dir();
 				if ( file_exists( $dirs[0] . $favi ) ) {
 					$faviurl = $dirs[1] . $favi;
 				} else {
@@ -3228,7 +3187,7 @@ EOT;
 				$faviurl = $favi;
 			} else {
 				$faviurl = $website->url . $favi;
-				$faviurl = self::removeHttpPrefix( $faviurl );
+				$faviurl = self::remove_http_prefix( $faviurl );
 			}
 		}
 		if ( empty( $faviurl ) ) {
@@ -3238,7 +3197,7 @@ EOT;
 		return $faviurl;
 	}
 
-	public static function getCURLSSLVersion( $sslVersion ) {
+	public static function get_curl_ssl_version( $sslVersion ) {
 		switch ( $sslVersion ) {
 			case '1.x':
 				return 1;

@@ -4,9 +4,6 @@
  */
 class MainWP_Meta_Boxes {
 
-	public static function initMetaBoxes() {
-	}
-
 	public function select_sites( $post ) {
 
 		$val            = get_post_meta( $post->ID, '_selected_sites', true );

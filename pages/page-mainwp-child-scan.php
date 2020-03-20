@@ -9,11 +9,11 @@ class MainWP_Child_Scan {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'MainWP Child Scan', 'mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( self::get_class_name(), 'render' ) );
 	}
 
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
 			'title' => __( 'Child Scan', 'mainwp' ),
@@ -25,7 +25,7 @@ class MainWP_Child_Scan {
 					<?php
 	}
 
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		?>
 				</div>
 			</div>
@@ -34,11 +34,11 @@ class MainWP_Child_Scan {
 
 	public static function render() {
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 		?>
 			<a class="button-primary mwp-child-scan" href="#"><?php esc_html_e( 'Scan', 'mainwp' ); ?></a>
 			<?php
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			if ( ! $websites ) {
 				esc_html_e( '<p>No websites to scan.</p>', 'mainwp' );
 			} else {
@@ -68,7 +68,7 @@ class MainWP_Child_Scan {
 			}
 			?>
 			<?php
-			self::renderFooter( '' );
+			self::render_footer( '' );
 	}
 
 	public static function scan() {
@@ -76,7 +76,7 @@ class MainWP_Child_Scan {
 			die( wp_json_encode( array( 'error' => 'Wrong request' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $_POST['childId'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $_POST['childId'] );
 		if ( ! $website ) {
 			die( wp_json_encode( array( 'error' => 'Site not found' ) ) );
 		}

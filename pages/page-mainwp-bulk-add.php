@@ -33,7 +33,7 @@ class MainWP_Bulk_Add {
 				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}
 		} else {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debugForWebsite( $website, 'posting_bulk_handler', '[' . $website->url . '] Result was: [' . $data . ']' );
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}

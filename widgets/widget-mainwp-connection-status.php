@@ -40,12 +40,12 @@ class MainWP_Connection_Status {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
+			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 		} else {
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
 		}
 
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$websites = MainWP_DB::instance()->query( $sql );
 
 		$count_connected = $count_disconnected = 0;
 		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites.
@@ -95,7 +95,7 @@ class MainWP_Connection_Status {
 					$output_md5 = '<div>' . __('MD5 Connection') . '<br /><a href="http://mainwp.com/help/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __('Read More') . '</a></div>';
 				}
 
-				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $website->dtsSync ) ) : '';
+				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : '';
 
 				ob_start();
 
@@ -280,7 +280,7 @@ class MainWP_Connection_Status {
 		<?php else : ?>
 			<?php
 			// Get site by ID $current_wpid.
-			$site = MainWP_DB::Instance()->getWebsiteById( $current_wpid );
+			$site = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 			?>
 			<?php if ( $count_connected > 0 ) : ?>
 				<div class="ui two column stackable grid">

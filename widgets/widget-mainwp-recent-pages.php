@@ -47,12 +47,12 @@ class MainWP_Recent_Pages {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
+			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 		} else {
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
 		}
 
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$websites = MainWP_DB::instance()->query( $sql );
 
 		$allPages = array();
 		if ( $websites ) {
@@ -77,15 +77,15 @@ class MainWP_Recent_Pages {
 			MainWP_DB::free_result( $websites );
 		}
 
-		$recent_pages_published = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'publish' );
+		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
 		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
-		$recent_pages_draft     = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'draft' );
+		$recent_pages_draft     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
 		$recent_pages_draft     = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
-		$recent_pages_pending   = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'pending' );
+		$recent_pages_pending   = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
 		$recent_pages_pending   = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
-		$recent_pages_trash     = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'trash' );
+		$recent_pages_trash     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
 		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
-		$recent_pages_future    = MainWP_Utility::getSubArrayHaving( $allPages, 'status', 'future' );
+		$recent_pages_future    = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
 		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
 
 		// MainWP_UI::renderBeginReadyPopup();
@@ -135,7 +135,7 @@ class MainWP_Recent_Pages {
 					}
 					if ( isset( $recent_pages_published[ $i ]['dts'] ) ) {
 						if ( ! stristr( $recent_pages_published[ $i ]['dts'], '-' ) ) {
-							$recent_pages_published[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_published[ $i ]['dts'] ) );
+							$recent_pages_published[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_published[ $i ]['dts'] ) );
 						}
 					}
 
@@ -200,7 +200,7 @@ class MainWP_Recent_Pages {
 					}
 					if ( isset( $recent_pages_draft[ $i ]['dts'] ) ) {
 						if ( ! stristr( $recent_pages_draft[ $i ]['dts'], '-' ) ) {
-							$recent_pages_draft[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_draft[ $i ]['dts'] ) );
+							$recent_pages_draft[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_draft[ $i ]['dts'] ) );
 						}
 					}
 					$name = wp_strip_all_tags( $recent_pages_draft[ $i ]['website']->name );
@@ -262,7 +262,7 @@ class MainWP_Recent_Pages {
 					}
 					if ( isset( $recent_pages_pending[ $i ]['dts'] ) ) {
 						if ( ! stristr( $recent_pages_pending[ $i ]['dts'], '-' ) ) {
-							$recent_pages_pending[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_pending[ $i ]['dts'] ) );
+							$recent_pages_pending[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_pending[ $i ]['dts'] ) );
 						}
 					}
 					$name = wp_strip_all_tags( $recent_pages_pending[ $i ]['website']->name );
@@ -324,7 +324,7 @@ class MainWP_Recent_Pages {
 					}
 					if ( isset( $recent_pages_future[ $i ]['dts'] ) ) {
 						if ( ! stristr( $recent_pages_future[ $i ]['dts'], '-' ) ) {
-							$recent_pages_future[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_future[ $i ]['dts'] ) );
+							$recent_pages_future[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_future[ $i ]['dts'] ) );
 						}
 					}
 					$name = wp_strip_all_tags( $recent_pages_future[ $i ]['website']->name );
@@ -387,7 +387,7 @@ class MainWP_Recent_Pages {
 					}
 					if ( isset( $recent_pages_trash[ $i ]['dts'] ) ) {
 						if ( ! stristr( $recent_pages_trash[ $i ]['dts'], '-' ) ) {
-							$recent_pages_trash[ $i ]['dts'] = MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $recent_pages_trash[ $i ]['dts'] ) );
+							$recent_pages_trash[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_trash[ $i ]['dts'] ) );
 						}
 					}
 

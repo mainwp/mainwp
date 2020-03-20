@@ -31,12 +31,12 @@ class MainWP_Security_Issues_Widget {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
+			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 		} else {
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
 		}
 
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$websites = MainWP_DB::instance()->query( $sql );
 
 		$total_securityIssues = 0;
 

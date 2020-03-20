@@ -14,7 +14,7 @@ class MainWP_Server_Information {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
+	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
 				self::get_class_name(),
@@ -76,7 +76,7 @@ class MainWP_Server_Information {
 		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-ServerInformation" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open">
@@ -188,7 +188,7 @@ class MainWP_Server_Information {
 		}
 	}
 
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 			$params = array(
 				'title' => __( 'Server Information', 'mainwp' ),
 			);
@@ -241,7 +241,7 @@ class MainWP_Server_Information {
 			echo '<div class="ui segment">';
 	}
 
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
@@ -252,7 +252,7 @@ class MainWP_Server_Information {
 			return;
 		}
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 
 		do_action( 'mainwp_before_server_info_table' );
 
@@ -364,7 +364,7 @@ class MainWP_Server_Information {
 					<tr>
 						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></div></td>
 					</tr>
-					<?php self::renderRow( 'MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, null, self::ERROR ); ?>
+					<?php self::renderRow( 'MySQL Version', '>=', '5.0', 'get_my_sql_version', '', '', null, null, self::ERROR ); ?>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'MySQL Mode', 'mainwp' ); ?></td>
 						<td colspan="2"><?php self::getSQLMode(); ?></td>
@@ -504,7 +504,7 @@ class MainWP_Server_Information {
 
 		do_action( 'mainwp_after_server_info_table' );
 
-		self::renderFooter( '' );
+		self::render_footer( '' );
 	}
 
 	public static function renderQuickSetupSystemCheck() {
@@ -523,7 +523,7 @@ class MainWP_Server_Information {
 				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '5.6', 'getPHPVersion', '', '', null );
 				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'getSSLSupport', '', '', null );
 				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'getCurlSupport', '', '', null );
-				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'getMySQLVersion', '', '', null );
+				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_my_sql_version', '', '', null );
 				?>
 			</tbody>
 		</table>
@@ -589,7 +589,7 @@ class MainWP_Server_Information {
 			return;
 		}
 
-		self::renderHeader( 'ServerInformationCron' );
+		self::render_header( 'ServerInformationCron' );
 
 		$cron_jobs = array(
 			'Check for available updates'            => array( 'mainwp_cron_last_updatescheck', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
@@ -625,8 +625,8 @@ class MainWP_Server_Information {
 						<td><?php echo $cron_job; ?></td>
 						<td><?php echo $hook[1]; ?></td>
 						<td><?php echo $hook[2]; ?></td>
-						<td><?php echo ( false === get_option( $hook[0] ) || 0 == get_option( $hook[0] ) ) ? esc_html_( 'Never', 'mainwp' ) : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( get_option( $hook[0] ) ) ); ?></td>
-						<td><?php echo MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $next_run ) ); ?></td>
+						<td><?php echo ( false === get_option( $hook[0] ) || 0 == get_option( $hook[0] ) ) ? esc_html_( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
+						<td><?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) ); ?></td>
 					</tr>
 					<?php
 				}
@@ -643,7 +643,7 @@ class MainWP_Server_Information {
 
 		do_action( 'mainwp_after_cron_jobs_table' );
 
-		self::renderFooter( 'ServerInformationCron' );
+		self::render_footer( 'ServerInformationCron' );
 	}
 
 	/*
@@ -658,7 +658,7 @@ class MainWP_Server_Information {
 			return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Found', false, self::ERROR );
 		}
 
-		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
@@ -871,8 +871,8 @@ class MainWP_Server_Information {
 		return ini_get( 'post_max_size' );
 	}
 
-	public static function getMySQLVersion() {
-		return MainWP_DB::Instance()->getMySQLVersion();
+	public static function get_my_sql_version() {
+		return MainWP_DB::instance()->get_my_sql_version();
 	}
 
 	public static function getPHPMemoryLimit() {
@@ -1168,7 +1168,7 @@ class MainWP_Server_Information {
 			return;
 		}
 
-		self::renderHeader( 'ErrorLog' );
+		self::render_header( 'ErrorLog' );
 		?>
 		<table class="ui stackable celled table" id="mainwp-error-log-table">
 			<thead>
@@ -1182,7 +1182,7 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 		<?php
-		self::renderFooter( 'ErrorLog' );
+		self::render_footer( 'ErrorLog' );
 	}
 
 	public static function renderErrorLog() {
@@ -1313,7 +1313,7 @@ class MainWP_Server_Information {
 			return;
 		}
 
-		self::renderHeader( 'WPConfig' );
+		self::render_header( 'WPConfig' );
 		?>
 		<div id="mainwp-show-wp-config">
 			<?php
@@ -1348,21 +1348,21 @@ class MainWP_Server_Information {
 			?>
 		</div>
 		<?php
-		self::renderFooter( 'WPConfig' );
+		self::render_footer( 'WPConfig' );
 	}
 
 	public static function renderActionLogs() {
-		self::renderHeader( 'Action logs' );
+		self::render_header( 'Action logs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
 			if ( $_REQUEST['actionlogs_status'] != MainWP_Logger::DISABLED ) {
-				MainWP_Logger::Instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
 			}
 
-			MainWP_Logger::Instance()->log( 'Action logs set to: ' . MainWP_Logger::Instance()->getLogText( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->getLogText( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
 
 			if ( $_REQUEST['actionlogs_status'] == MainWP_Logger::DISABLED ) {
-				MainWP_Logger::Instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST['actionlogs_status'] );
@@ -1431,7 +1431,7 @@ class MainWP_Server_Information {
 			<div style="padding: 1em;"><?php MainWP_Logger::showLog(); ?></div>
 		</div>
 		<?php
-		self::renderFooter( 'Action logs' );
+		self::render_footer( 'Action logs' );
 	}
 
 	public static function renderhtaccess() {
@@ -1442,7 +1442,7 @@ class MainWP_Server_Information {
 			return;
 		}
 
-		self::renderHeader( '.htaccess' );
+		self::render_header( '.htaccess' );
 		?>
 		<div id="mainwp-show-htaccess">
 			<?php
@@ -1458,7 +1458,7 @@ class MainWP_Server_Information {
 			?>
 		</div>
 		<?php
-		self::renderFooter( '.htaccess' );
+		self::render_footer( '.htaccess' );
 	}
 
 	// Check for the disabled php functions.
@@ -1500,12 +1500,12 @@ class MainWP_Server_Information {
 		}
 
 		$options_value = array();
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
+		$userExtension = MainWP_DB::instance()->get_user_extension();
 		foreach ( $mainwp_options as $opt => $label ) {
 			$value = get_option( $opt, false );
 			switch ( $opt ) {
 				case 'mainwp_number_of_child_sites':
-					$value = MainWP_DB::Instance()->getWebsitesCount();
+					$value = MainWP_DB::instance()->get_websites_count();
 					break;
 				case 'mainwp_primaryBackup':
 					$value = __( 'Default MainWP Backups', 'mainwp' );

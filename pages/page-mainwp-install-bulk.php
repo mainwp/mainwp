@@ -26,7 +26,7 @@ class MainWP_Install_Bulk {
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed
 
 				$uploader = new qq2FileUploader( $allowedExtensions, $sizeLimit );
-				$path     = MainWP_Utility::getMainWPSpecificDir( 'bulk' );
+				$path     = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 
 				$result = $uploader->handleUpload( $path, true );
 				// to pass data through iframe you will need to encode all html tags
@@ -121,8 +121,8 @@ class MainWP_Install_Bulk {
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+					$website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
+					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
 							'id',
@@ -137,12 +137,12 @@ class MainWP_Install_Bulk {
 			foreach ( $_POST['selected_groups'] as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $groupid ) );
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
-						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -172,7 +172,7 @@ class MainWP_Install_Bulk {
 	}
 
 	public static function performInstall() {
-		MainWP_Utility::endSession();
+		MainWP_Utility::end_session();
 
 		// Fetch info..
 		$post_data = array(
@@ -196,7 +196,7 @@ class MainWP_Install_Bulk {
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();
-		$websites       = array( MainWP_DB::Instance()->getWebsiteById( $_POST['siteId'] ) );
+		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
 			'InstallPluginTheme_handler',
@@ -216,8 +216,8 @@ class MainWP_Install_Bulk {
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-					$website                         = MainWP_DB::Instance()->getWebsiteById( $websiteid );
-					$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+					$website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
+					$output['sites'][ $website->id ] = MainWP_Utility::map_site(
 						$website,
 						array(
 							'id',
@@ -232,12 +232,12 @@ class MainWP_Install_Bulk {
 			foreach ( $_POST['selected_groups'] as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-					$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $groupid ) );
+					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						if ( $website->sync_errors != '' ) {
 							continue;
 						}
-						$output['sites'][ $website->id ] = MainWP_Utility::mapSite(
+						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
 							$website,
 							array(
 								'id',
@@ -254,7 +254,7 @@ class MainWP_Install_Bulk {
 		$output['urls'] = array();
 
 		foreach ( $_POST['files'] as $file ) {
-			$output['urls'][] = MainWP_Utility::getDownloadUrl( 'bulk', $file );
+			$output['urls'][] = MainWP_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
@@ -264,7 +264,7 @@ class MainWP_Install_Bulk {
 	}
 
 	public static function performUpload() {
-		MainWP_Utility::endSession();
+		MainWP_Utility::end_session();
 
 		// Fetch info..
 		$post_data = array(
@@ -288,7 +288,7 @@ class MainWP_Install_Bulk {
 		$output         = new stdClass();
 		$output->ok     = array();
 		$output->errors = array();
-		$websites       = array( MainWP_DB::Instance()->getWebsiteById( $_POST['siteId'] ) );
+		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Utility::fetchUrlsAuthed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
 			'InstallPluginTheme_handler',
@@ -299,7 +299,7 @@ class MainWP_Install_Bulk {
 	}
 
 	public static function cleanUpload() {
-		$path = MainWP_Utility::getMainWPSpecificDir( 'bulk' );
+		$path = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 		if ( file_exists( $path ) ) {
 			$dh = opendir( $path );
 			if ( $dh ) {
@@ -364,7 +364,7 @@ class qq2UploadedFileXhr {
 			return false;
 		}
 
-		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
@@ -432,10 +432,10 @@ class qq2UploadedFileForm {
 	 * @return boolean TRUE on success
 	 */
 	public function save( $path ) {
-		$wpFileSystem = MainWP_Utility::getWPFilesystem();
+		$wpFileSystem = MainWP_Utility::get_wp_file_system();
 
 		if ( $wpFileSystem != null ) {
-			$path  = str_replace( MainWP_Utility::getBaseDir(), '', $path );
+			$path  = str_replace( MainWP_Utility::get_base_dir(), '', $path );
 			$moved = $wpFileSystem->put_contents( $path, file_get_contents( $_FILES['qqfile']['tmp_name'] ) );
 		} else {
 			$moved = move_uploaded_file( $_FILES['qqfile']['tmp_name'], $path );

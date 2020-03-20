@@ -41,16 +41,16 @@ class MainWP_Site_Info {
 			return;
 		}
 
-		$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid, true );
+		$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, true );
 
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$websites = MainWP_DB::instance()->query( $sql );
 		if ( empty( $websites ) ) {
 			return;
 		}
 
 		$website = MainWP_DB::fetch_object( $websites );
 
-		$website_info = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'site_info' ), true );
+		$website_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
 
 		$child_site_info = array(
 			'wpversion'             => __( 'WordPress Version', 'mainwp' ),

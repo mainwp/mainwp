@@ -29,7 +29,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @synopsis [--list]
 	 */
 	public function sites( $args, $assoc_args ) {
-		$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
+		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		$idLength      = strlen( 'id' );
 		$nameLength    = strlen( 'name' );
 		$urlLength     = strlen( 'url' );
@@ -97,7 +97,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		WP_CLI::line( 'Sync started' );
 		$warnings = 0;
 		$errors   = 0;
@@ -160,7 +160,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			WP_CLI::error( 'Please specify one or more child sites.' );
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		WP_CLI::line( 'Reconnect started' );
 		$warnings = 0;
 		$errors   = 0;
@@ -236,8 +236,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -324,8 +324,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
-			$websites         = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension    = MainWP_DB::Instance()->getUserExtension();
+			$websites         = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension    = MainWP_DB::instance()->get_user_extension();
 			$websites_to_list = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -402,8 +402,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 				$pluginSlugs = explode( ',', $assoc_args['upgrade'] );
 			}
 
-			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension = MainWP_DB::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
@@ -440,7 +440,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' plugins for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
+						MainWP_Updates::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
@@ -496,8 +496,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -584,8 +584,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -663,8 +663,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 				$themeSlugs = explode( ',', $assoc_args['upgrade'] );
 			}
 
-			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension = MainWP_DB::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
@@ -701,7 +701,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' themes for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
+						MainWP_Updates::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );

@@ -33,7 +33,7 @@ class MainWP_Notes {
 			return;
 		}
 
-		$website  = MainWP_DB::Instance()->getWebsiteById( $current_wpid, true );
+		$website  = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 		$note     = html_entity_decode( $website->note ); // to compatible
 		$esc_note = MainWP_Utility::esc_content( $note );
 

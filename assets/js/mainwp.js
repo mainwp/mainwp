@@ -505,7 +505,7 @@ securityIssues_fix = function ( feature ) {
   }
 
   var data = mainwp_secure_data( {
-    action: 'mainwp_securityIssues_fix',
+    action: 'mainwp_security_issues_fix',
     feature: feature,
     id: jQuery( '#securityIssueSite' ).val()
   } );
@@ -548,7 +548,7 @@ jQuery( document ).on( 'click', '.fix-all-site-security-issues', function () {
 
 mainwp_fix_all_security_issues = function ( siteId, refresh ) {
   var data = mainwp_secure_data( {
-    action: 'mainwp_securityIssues_fix',
+    action: 'mainwp_security_issues_fix',
     feature: 'all',
     id: siteId
   } );
@@ -575,7 +575,7 @@ jQuery( document ).on( 'click', '.unfix-all-site-security-issues', function () {
   jQuery( '#mainwp-secuirty-issues-loader' ).show();
 
   var data = mainwp_secure_data( {
-    action: 'mainwp_securityIssues_unfix',
+    action: 'mainwp_security_issues_unfix',
     feature: 'all',
     id: jQuery( jQuery( this ).parents( '.item' )[0] ).attr( 'siteid' )
   } );
@@ -598,7 +598,7 @@ securityIssues_unfix = function ( feature ) {
     jQuery( '#' + feature + '_loading' ).show();
 
     var data = mainwp_secure_data( {
-        action: 'mainwp_securityIssues_unfix',
+        action: 'mainwp_security_issues_unfix',
         feature: feature,
         id: jQuery( '#securityIssueSite' ).val()
     } );
@@ -608,7 +608,7 @@ securityIssues_unfix = function ( feature ) {
 };
 securityIssues_request = function ( websiteId ) {
     var data = mainwp_secure_data( {
-        action: 'mainwp_securityIssues_request',
+        action: 'mainwp_security_issues_request',
         id: websiteId
     } );
     jQuery.post( ajaxurl, data, function ( response ) {

@@ -46,8 +46,8 @@ class MainWP_Widget_Themes {
 			return;
 		}
 
-		$sql       = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
-		$websites  = MainWP_DB::Instance()->query( $sql );
+		$sql       = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+		$websites  = MainWP_DB::instance()->query( $sql );
 		$allThemes = array();
 		if ( $websites ) {
 			$website = MainWP_DB::fetch_object( $websites );
@@ -62,24 +62,24 @@ class MainWP_Widget_Themes {
 			MainWP_DB::free_result( $websites );
 		}
 
-		$actived_themes = MainWP_Utility::getSubArrayHaving( $allThemes, 'active', 1 );
+		$actived_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 1 );
 		$actived_themes = MainWP_Utility::sortmulti( $actived_themes, 'name', 'asc' );
 
-		$inactive_themes = MainWP_Utility::getSubArrayHaving( $allThemes, 'active', 0 );
+		$inactive_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 0 );
 		$inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
 		if ( ( count( $allThemes ) > 0 ) && $website ) {
-			$themes_outdate = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_info' ), true );
+			$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 			if ( ! is_array( $themes_outdate ) ) {
 				$themes_outdate = array();
 			}
 
-			$themesOutdateDismissed = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+			$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 			if ( is_array( $themesOutdateDismissed ) ) {
 				$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
 			}
 
-			$userExtension          = MainWP_DB::Instance()->getUserExtension();
+			$userExtension          = MainWP_DB::instance()->get_user_extension();
 			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
 
 			if ( is_array( $decodedDismissedThemes ) ) {
@@ -212,7 +212,7 @@ class MainWP_Widget_Themes {
 			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}

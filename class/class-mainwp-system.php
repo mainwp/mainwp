@@ -49,7 +49,7 @@ class MainWP_System {
 	 * @static
 	 * @return MainWP_System
 	 */
-	public static function Instance() {
+	public static function instance() {
 		return self::$instance;
 	}
 
@@ -678,7 +678,7 @@ class MainWP_System {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'yes' );
 			$er = $error->get_error_message();
 			if ( ! empty($er) ) {
-				MainWP_Logger::Instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
+				MainWP_Logger::instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
 			}
 		}
 	}
@@ -907,7 +907,7 @@ class MainWP_System {
 	}
 
 	public function mainwp_cronupdatescheck_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: updates check' );
+		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
@@ -967,7 +967,7 @@ class MainWP_System {
 			if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
 				// if update checking is running then continue do that
 				if ( ! $updatecheck_running ) {
-					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated hours interval' );
+					MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated hours interval' );
 					return;
 				}
 			}
@@ -975,7 +975,7 @@ class MainWP_System {
 			// ok go to frequency sync
 			$websites = array();
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) {
-			MainWP_Logger::Instance()->debug( 'CRON :: updates check :: already updated today' );
+			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
 		}
@@ -993,17 +993,17 @@ class MainWP_System {
 		$disable_send_noti = apply_filters( 'mainwp_updatescheck_disable_sendmail', false );
 
 		$websites             = array();
-		$checkupdate_websites = MainWP_DB::Instance()->getWebsitesCheckUpdates( 4 );
+		$checkupdate_websites = MainWP_DB::instance()->get_websites_check_updates( 4 );
 
 		foreach ( $checkupdate_websites as $website ) {
-			if ( ! MainWP_DB::Instance()->backupFullTaskRunning( $website->id ) ) {
+			if ( ! MainWP_DB::instance()->backup_full_task_running( $website->id ) ) {
 				$websites[] = $website;
 			}
 		}
 
-		MainWP_Logger::Instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
-		MainWP_Logger::Instance()->debug( 'CRON :: backup task running :: found ' . ( count( $checkupdate_websites ) - count( $websites ) ) . ' websites' );
-		MainWP_Logger::Instance()->info_update( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
+		MainWP_Logger::instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
+		MainWP_Logger::instance()->debug( 'CRON :: backup task running :: found ' . ( count( $checkupdate_websites ) - count( $websites ) ) . ' websites' );
+		MainWP_Logger::instance()->info_update( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 
 		$userid = null;
 		foreach ( $websites as $website ) {
@@ -1014,7 +1014,7 @@ class MainWP_System {
 				$userid = $website->userid;
 			}
 
-			MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, $websiteValues );
+			MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
 		}
 
 		$text_format = get_option( 'mainwp_daily_digest_plain_text', false );
@@ -1026,8 +1026,8 @@ class MainWP_System {
 		}
 
 		if ( count( $checkupdate_websites ) == 0 ) {
-			$busyCounter = MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart();
-			MainWP_Logger::Instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
+			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
+			MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
 			if ( 0 === $busyCounter ) {
 				if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
@@ -1040,7 +1040,7 @@ class MainWP_System {
 				}
 
 				update_option( 'mainwp_last_synced_all_sites', time() );
-				MainWP_Logger::Instance()->debug( 'CRON :: updates check :: got to the mail part' );
+				MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
 				// Send the email & update all to this time!
 				$mail     = '';
@@ -1179,7 +1179,7 @@ class MainWP_System {
 					}
 				}
 
-				$sitesDisconnect = MainWP_DB::Instance()->getDisconnectedWebsites();
+				$sitesDisconnect = MainWP_DB::instance()->get_disconnected_websites();
 				if ( count( $sitesDisconnect ) != 0 ) {
 					$sendMail   = true;
 					$mail_lines = $this->print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
@@ -1235,7 +1235,7 @@ class MainWP_System {
 					$mail_offline = '';
 					$sitesOffline = array();
 					if ( count( $sitesHttpCheckIds ) > 0 ) {
-						$sitesOffline = MainWP_DB::Instance()->getWebsitesByIds( $sitesHttpCheckIds );
+						$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
 					}
 					if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
 						foreach ( $sitesOffline as $site ) {
@@ -1247,7 +1247,7 @@ class MainWP_System {
 
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
-						MainWP_Logger::Instance()->debug( 'CRON :: http check :: send mail to ' . $email );
+						MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
 						$mail_offline           = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
                                 <ul>
@@ -1257,7 +1257,7 @@ class MainWP_System {
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail(
 							$email, $mail_title = 'MainWP - HTTP response check',
-							MainWP_Utility::formatEmail(
+							MainWP_Utility::format_email(
 								$email, $mail_offline, $mail_title
 							),
 							array(
@@ -1275,7 +1275,7 @@ class MainWP_System {
 				}
 
 				if ( ! $sendMail ) {
-					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: sendMail is false' );
+					MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
 
 					return;
 				}
@@ -1283,7 +1283,7 @@ class MainWP_System {
 				if ( ! $disable_send_noti ) {
 					// Create a nice email to send
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
-					MainWP_Logger::Instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
+					MainWP_Logger::instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
 					if ( false !== $email && '' !== $email ) {
 						if ( $text_format ) {
 							$mail = 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n"
@@ -1298,7 +1298,7 @@ class MainWP_System {
 						}
 						wp_mail(
 							$email, $mail_title = 'Available Updates',
-							MainWP_Utility::formatEmail(
+							MainWP_Utility::format_email(
 								$email, $mail, $mail_title, $text_format
 							),
 							array(
@@ -1315,7 +1315,7 @@ class MainWP_System {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );
 			}
 
-			$userExtension = MainWP_DB::Instance()->getUserExtensionByUserId( $userid );
+			$userExtension = MainWP_DB::instance()->get_user_extension_by_user_id( $userid );
 
 			$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 			if ( ! is_array( $decodedIgnoredPlugins ) ) {
@@ -1377,15 +1377,15 @@ class MainWP_System {
 						'dtsAutomaticSync' => time(),
 					);
 
-					MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, $websiteValues );
+					MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
 
 					continue;
 				}
-				$website = MainWP_DB::Instance()->getWebsiteById( $website->id );
+				$website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
 				/** Check core updates * */
-				$websiteLastCoreUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'last_wp_upgrades' ), true );
-				$websiteCoreUpgrades     = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'wp_upgrades' ), true );
+				$websiteLastCoreUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' ), true );
+				$websiteCoreUpgrades     = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
 				// Run over every update we had last time..
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
@@ -1421,14 +1421,14 @@ class MainWP_System {
 				}
 
 				/** Check plugins * */
-				$websiteLastPlugins = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'last_plugin_upgrades' ), true );
+				$websiteLastPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_plugin_upgrades' ), true );
 				$websitePlugins     = json_decode( $website->plugin_upgrades, true );
 
 				/** Check themes * */
-				$websiteLastThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'last_theme_upgrades' ), true );
+				$websiteLastThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_theme_upgrades' ), true );
 				$websiteThemes     = json_decode( $website->theme_upgrades, true );
 
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'premium_upgrades' ), true );
+				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $slug => $premiumUpgrade ) {
 						if ( 'plugin' === $premiumUpgrade['type'] ) {
@@ -1536,12 +1536,12 @@ class MainWP_System {
 
 				// Loop over last plugins & current plugins, check if we need to update them.
 				$user  = get_userdata( $website->userid );
-				$email = MainWP_Utility::getNotificationEmail( $user );
+				$email = MainWP_Utility::get_notification_email( $user );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_email', $email );
-				MainWP_DB::Instance()->updateWebsiteSyncValues( $website->id, array( 'dtsAutomaticSync' => time() ) );
-				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
-				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
-				MainWP_DB::Instance()->updateWebsiteOption( $website, 'last_theme_upgrades', $website->theme_upgrades );
+				MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsAutomaticSync' => time() ) );
+				MainWP_DB::instance()->update_website_option( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
+				MainWP_DB::instance()->update_website_option( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
+				MainWP_DB::instance()->update_website_option( $website, 'last_theme_upgrades', $website->theme_upgrades );
 
 				// sync site favico one time per day
 				$updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
@@ -1659,7 +1659,7 @@ class MainWP_System {
 						continue;
 					}
 
-					$dir = MainWP_Utility::getMainWPSpecificDir( $siteId );
+					$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
 					$dh  = opendir( $dir );
 					// Check if backup ok
 					$lastBackup = - 1;
@@ -1667,7 +1667,7 @@ class MainWP_System {
 						while ( ( $file = readdir( $dh ) ) !== false ) {
 							if ( '.' !== $file && '..' !== $file ) {
 								$theFile = $dir . $file;
-								if ( MainWP_Utility::isArchive( $file ) && ! MainWP_Utility::isSQLArchive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+								if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
 									$lastBackup = filemtime( $theFile );
 								}
 							}
@@ -1708,7 +1708,7 @@ class MainWP_System {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
 					}
-					MainWP_Logger::Instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
+					MainWP_Logger::instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
 
 					try {
 						MainWP_Utility::fetch_url_authed(
@@ -1778,7 +1778,7 @@ class MainWP_System {
 
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
-			$website = MainWP_DB::Instance()->getWebsiteById( $siteId );
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error = '';
 				try {
@@ -1790,7 +1790,7 @@ class MainWP_System {
 				if ( '' != $error ) {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
-					MainWP_Logger::Instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
+					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
 					$content = MainWP_Utility::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 						$dirs     = MainWP_Utility::getMainWPDir();
@@ -1807,8 +1807,8 @@ class MainWP_System {
 							$filename = 'favi-' . $siteId . '-' . $filename;
 							$size     = file_put_contents( $iconsDir . $filename, $content );
 							if ( $size ) {
-								MainWP_Logger::Instance()->debug( 'Icon size :: ' . $size );
-								MainWP_DB::Instance()->updateWebsiteOption( $website, 'favi_icon', $filename );
+								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
+								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );
 								return array( 'result' => 'success' );
 							} else {
 								return array( 'error' => 'Save icon file failed.' );
@@ -1827,7 +1827,7 @@ class MainWP_System {
 	}
 
 	public function mainwp_cronpingchilds_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: ping childs' );
+		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
 
 		$lastPing = get_option( 'mainwp_cron_last_ping' );
 		if ( false !== $lastPing && ( time() - $lastPing ) < ( 60 * 60 * 23 ) ) {
@@ -1835,7 +1835,7 @@ class MainWP_System {
 		}
 		MainWP_Utility::update_option( 'mainwp_cron_last_ping', time() );
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsites() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites() );
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			try {
 				$url = $website->siteurl;
@@ -1855,7 +1855,7 @@ class MainWP_System {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return;
 		}
-		MainWP_Logger::Instance()->info( 'CRON :: backups continue' );
+		MainWP_Logger::instance()->info( 'CRON :: backups continue' );
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
@@ -1866,20 +1866,20 @@ class MainWP_System {
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
 		// Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
-		$tasks = MainWP_DB::Instance()->getBackupTasksToComplete();
+		$tasks = MainWP_DB::instance()->get_backup_tasks_to_complete();
 
-		MainWP_Logger::Instance()->debug( 'CRON :: backups continue :: Found ' . count( $tasks ) . ' to continue.' );
+		MainWP_Logger::instance()->debug( 'CRON :: backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
 		if ( empty( $tasks ) ) {
 			return;
 		}
 
 		foreach ( $tasks as $task ) {
-			MainWP_Logger::Instance()->debug( 'CRON :: backups continue ::    Task: ' . $task->name );
+			MainWP_Logger::instance()->debug( 'CRON :: backups continue ::    Task: ' . $task->name );
 		}
 
 		foreach ( $tasks as $task ) {
-			$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 			if ( $task->completed < $task->last_run ) {
 				MainWP_Manage_Backups::executeBackupTask( $task, 5, false );
 				break;
@@ -1892,7 +1892,7 @@ class MainWP_System {
 			return;
 		}
 
-		MainWP_Logger::Instance()->info( 'CRON :: backups' );
+		MainWP_Logger::instance()->info( 'CRON :: backups' );
 
 		@ignore_user_abort( true );
 		@set_time_limit( 0 );
@@ -1906,23 +1906,23 @@ class MainWP_System {
 		// Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=cron -O /dev/null 2>&1
 		// this will execute once every day to check to do the scheduled backups
 		$allTasks   = array();
-		$dailyTasks = MainWP_DB::Instance()->getBackupTasksTodoDaily();
+		$dailyTasks = MainWP_DB::instance()->get_backup_tasks_todo_daily();
 		if ( count( $dailyTasks ) > 0 ) {
 			$allTasks = $dailyTasks;
 		}
-		$weeklyTasks = MainWP_DB::Instance()->getBackupTasksTodoWeekly();
+		$weeklyTasks = MainWP_DB::instance()->get_backup_tasks_todo_weekly();
 		if ( count( $weeklyTasks ) > 0 ) {
 			$allTasks = array_merge( $allTasks, $weeklyTasks );
 		}
-		$monthlyTasks = MainWP_DB::Instance()->getBackupTasksTodoMonthly();
+		$monthlyTasks = MainWP_DB::instance()->get_backup_tasks_todo_monthly();
 		if ( count( $monthlyTasks ) > 0 ) {
 			$allTasks = array_merge( $allTasks, $monthlyTasks );
 		}
 
-		MainWP_Logger::Instance()->debug( 'CRON :: backups :: Found ' . count( $allTasks ) . ' to start.' );
+		MainWP_Logger::instance()->debug( 'CRON :: backups :: Found ' . count( $allTasks ) . ' to start.' );
 
 		foreach ( $allTasks as $task ) {
-			MainWP_Logger::Instance()->debug( 'CRON :: backups ::    Task: ' . $task->name );
+			MainWP_Logger::instance()->debug( 'CRON :: backups ::    Task: ' . $task->name );
 		}
 
 		foreach ( $allTasks as $task ) {
@@ -1934,13 +1934,13 @@ class MainWP_System {
 			} elseif ( 'monthly' == $task->schedule ) {
 				$threshold = ( 60 * 60 * 24 * 30 );
 			}
-			$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 			if ( ( time() - $task->last_run ) < $threshold ) {
 				continue;
 			}
 
 			if ( ! MainWP_Manage_Backups::validateBackupTasks( array( $task ) ) ) {
-				$task = MainWP_DB::Instance()->getBackupTaskById( $task->id );
+				$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 			}
 
 			$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
@@ -1949,11 +1949,11 @@ class MainWP_System {
 	}
 
 	public function mainwp_cronstats_action() {
-		MainWP_Logger::Instance()->info( 'CRON :: stats' );
+		MainWP_Logger::instance()->info( 'CRON :: stats' );
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_stats', time() );
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getWebsitesStatsUpdateSQL() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_websites_stats_update_sql() );
 
 		$start = time();
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1962,19 +1962,19 @@ class MainWP_System {
 				break;
 			}
 
-			MainWP_DB::Instance()->updateWebsiteStats( $website->id, time() );
+			MainWP_DB::instance()->update_website_stats( $website->id, time() );
 
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
 				// Try reconnecting
-				MainWP_Logger::Instance()->infoForWebsite( $website, 'reconnect', 'Trying to reconnect' );
+				MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Trying to reconnect' );
 				try {
 					if ( MainWP_Manage_Sites::_reconnectSite( $website ) ) {
 						// Reconnected
-						MainWP_Logger::Instance()->infoForWebsite( $website, 'reconnect', 'Reconnected successfully' );
+						MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {
 					// Still something wrong
-					MainWP_Logger::Instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
+					MainWP_Logger::instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
 				}
 			}
 			sleep( 3 );
@@ -1987,42 +1987,42 @@ class MainWP_System {
 		$this->update_footer(true); // will hide #wpfooter
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
-			MainWP_Post::initMenuSubPages();
+			MainWP_Post::init_subpages_menu();
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'managesites' ) ) {
-			MainWP_Manage_Sites::initMenuSubPages();
+			MainWP_Manage_Sites::init_subpages_menu();
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-			MainWP_Settings::initMenuSubPages();
+			MainWP_Settings::init_subpages_menu();
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
-			MainWP_Extensions::initMenuSubPages();
+			MainWP_Extensions::init_subpages_menu();
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
-			MainWP_Page::initMenuSubPages();
+			MainWP_Page::init_subpages_menu();
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-			MainWP_Themes::initMenuSubPages();
+			MainWP_Themes::init_subpages_menu();
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-			MainWP_Plugins::initMenuSubPages();
+			MainWP_Plugins::init_subpages_menu();
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
-			MainWP_User::initMenuSubPages();
+			MainWP_User::init_subpages_menu();
 		}
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ManageBackups' ) ) {
-				MainWP_Manage_Backups::initMenuSubPages();
+				MainWP_Manage_Backups::init_subpages_menu();
 			}
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-			MainWP_Settings::initMenuSubPages();
+			MainWP_Settings::init_subpages_menu();
 		}
 		do_action( 'mainwp_admin_menu_sub' );
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
-			MainWP_Server_Information::initMenuSubPages();
+			MainWP_Server_Information::init_subpages_menu();
 		}
 
 		if ( self::is_mainwp_pages() ) {
@@ -2248,7 +2248,7 @@ class MainWP_System {
 		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
 			return;
 		}
-		if ( MainWP_DB::Instance()->getWebsitesCount() > 0 ) {
+		if ( MainWP_DB::instance()->get_websites_count() > 0 ) {
 			return;
 		} else {
 			$plugins = get_plugins();
@@ -2310,7 +2310,7 @@ class MainWP_System {
 		}
 
 		add_action( 'mainwp_before_header', array( $this, 'mainwp_warning_notice' ) );
-		MainWP_Post_Handler::Instance()->init();
+		MainWP_Post_Handler::instance()->init();
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
 		// wp_enqueue_script( 'jquery-ui-tooltip' );
 		// wp_enqueue_script( 'jquery-ui-autocomplete' );
@@ -2351,7 +2351,7 @@ class MainWP_System {
 
 		wp_localize_script( 'mainwp', 'mainwpTranslations', $mainwpTranslations );
 
-		$security_nonces = MainWP_Post_Handler::Instance()->getSecurityNonces();
+		$security_nonces = MainWP_Post_Handler::instance()->get_security_nonces();
 		wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
 		wp_enqueue_script( 'thickbox' );
@@ -2478,9 +2478,9 @@ class MainWP_System {
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
-			$userExtension            = MainWP_DB::Instance()->getUserExtension();
+			$userExtension            = MainWP_DB::instance()->get_user_extension();
 			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
-			MainWP_DB::Instance()->updateUserExtension( $userExtension );
+			MainWP_DB::instance()->update_user_extension( $userExtension );
 		}
 
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
@@ -2874,7 +2874,7 @@ class MainWP_System {
 		}
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( $current_wpid ) {
-			$website  = MainWP_DB::Instance()->getWebsiteById( $current_wpid );
+			$website  = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 			$websites = array( $website );
 		} else {
 			$is_staging = 'no';
@@ -2898,7 +2898,7 @@ class MainWP_System {
 					}
 				}
 			}
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
 		}
 
 		ob_start();
@@ -3022,55 +3022,55 @@ class MainWP_System {
 			// Adding the page to manage your added sites/groups
 			// The first page which will display the post area etc..
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
-				MainWP_Updates::initMenu();
+				MainWP_Updates::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'managesites' ) ) {
-				MainWP_Manage_Sites::initMenu();
+				MainWP_Manage_Sites::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
-				MainWP_Post::initMenu();
+				MainWP_Post::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
-				MainWP_Page::initMenu();
+				MainWP_Page::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-				MainWP_Themes::initMenu();
+				MainWP_Themes::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-				MainWP_Plugins::initMenu();
+				MainWP_Plugins::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
-				MainWP_User::initMenu();
+				MainWP_User::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ManageBackups' ) ) {
-				MainWP_Manage_Backups::initMenu();
+				MainWP_Manage_Backups::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
-				MainWP_Bulk_Update_Admin_Passwords::initMenu();
+				MainWP_Bulk_Update_Admin_Passwords::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' ) ) {
-				MainWP_Manage_Groups::initMenu();
+				MainWP_Manage_Groups::init_menu();
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-				MainWP_Settings::initMenu();
+				MainWP_Settings::init_menu();
 			}
-			MainWP_Extensions::initMenu(); // check disable menu item in the function
+			MainWP_Extensions::init_menu(); // check disable menu item in the function
 			do_action( 'mainwp_admin_menu' );
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
-				MainWP_Server_Information::initMenu();
+				MainWP_Server_Information::init_menu();
 			}
 
-			MainWP_About::initMenu();
-			MainWP_Child_Scan::initMenu();
+			MainWP_About::init_menu();
+			MainWP_Child_Scan::init_menu();
 		}
 	}
 
 	// On activation install the database
 	public function activation() {
 		// delete_option( 'mainwp_requests' );
-		MainWP_DB::Instance()->update();
-		MainWP_DB::Instance()->install();
+		MainWP_DB::instance()->update();
+		MainWP_DB::instance()->install();
 
 		// Redirect to settings page
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
@@ -3082,8 +3082,8 @@ class MainWP_System {
 
 	// On update update the database
 	public function update() {
-		MainWP_DB::Instance()->update();
-		MainWP_DB::Instance()->install();
+		MainWP_DB::instance()->update();
+		MainWP_DB::instance()->install();
 	}
 
 	public function apply_filter( $filter, $value = array() ) {

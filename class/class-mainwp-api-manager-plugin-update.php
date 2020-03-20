@@ -1,8 +1,14 @@
 <?php
+/**
+ * MainWP API Manager Update Handler
+ *
+ * This class handles updates for MainWP Extension.
+ */
 
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
-} // Exit if accessed directly
+}
 
 /**
  * MainWP API Manager Update Handler
@@ -15,12 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Plugin_Update {
 
 	/**
-	 * @var The single instance of the class
+	 * @var $_instance The single instance of the class
 	 */
 	protected static $_instance = null;
 
 	/**
-	 * @static
+	 * @static Method instance()
 	 * @return class instance
 	 */
 	public static function instance() {
@@ -31,11 +37,23 @@ class MainWP_Api_Manager_Plugin_Update {
 		return self::$_instance;
 	}
 
+	/**
+	 * Method __construct()
+	 */
 	public function __construct() {
+
 		// API data
 	}
 
-	// Update API URL
+	
+	/**
+	 * Method create_upgrade_api_url()
+	 * 
+	 * @param mixed $args
+	 * @param boolean $bulk_check
+	 * 
+	 * @return URL Build URL
+	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
 		if ( $bulk_check ) {
 			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
@@ -52,6 +70,15 @@ class MainWP_Api_Manager_Plugin_Update {
 		return $upgrade_url . '&' . $query_url; // http_build_query( $args );
 	}
 
+	/**
+	 * Method update_check()
+	 * 
+	 * Returns plugin information in an array.
+	 * 
+	 * @param mixed $plugin
+	 * 
+	 * @return mixed Plugin Information
+	 */
 	public function update_check( $plugin ) {
 
 		$args = array(
@@ -71,6 +98,16 @@ class MainWP_Api_Manager_Plugin_Update {
 		return $this->plugin_information( $args );
 	}
 
+
+	/**
+	 * Methos bulk_update_check()
+	 * 
+	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
+	 * 
+	 * @param mixed $plugins
+	 * 
+	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
+	 */
 	public function bulk_update_check( $plugins ) {
 		$args = array(
 			'request'    => 'bulkupdatecheck',
@@ -80,6 +117,16 @@ class MainWP_Api_Manager_Plugin_Update {
 		return $this->plugin_information( $args, true ); // bulk update check
 	}
 
+
+	/**
+	 * Method request()
+	 * 
+	 * Check $args, if there is a response, an object eists & response is not false.
+	 * 
+	 * @param mixed $args
+	 * 
+	 * @return object $response 
+	 */
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';
 
@@ -92,6 +139,8 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
+	 * Method plugin_information()
+	 * 
 	 * Sends and receives data to and from the server API
 	 *
 	 * @access public

@@ -5,10 +5,10 @@
 class MainWP_Meta_Boxes {
 
 	public function select_sites( $post ) {
-		
-		$val = get_post_meta( $post->ID, '_selected_sites', true );
-		$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
-				
+
+		$val            = get_post_meta( $post->ID, '_selected_sites', true );
+		$selected_sites = MainWP_Utility::maybe_unserialyze( $val );
+
 		if ( '' == $selected_sites ) {
 			$selected_sites = array();
 		}
@@ -16,11 +16,10 @@ class MainWP_Meta_Boxes {
 		if ( isset( $_REQUEST['select'] ) ) {
 			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( $_REQUEST['select'] ) );
 		}
-		
-		$val = get_post_meta( $post->ID, '_selected_groups', true );
-		$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
-			
-		
+
+		$val             = get_post_meta( $post->ID, '_selected_groups', true );
+		$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
+
 		if ( '' == $selected_groups ) {
 			$selected_groups = array();
 		}
@@ -66,7 +65,7 @@ class MainWP_Meta_Boxes {
 				foreach ( $_POST['selected_sites'] as $selected ) {
 					$selected_wp[] = $selected;
 				}
-			}			
+			}
 			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 
 			$selected_group = array();

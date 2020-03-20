@@ -1246,20 +1246,20 @@ class MainWP_Manage_Sites {
 		MainWP_Utility::end_session();
 
 		$params = array(
-			'type'                                       => $pType,
-			'exclude'                                    => $pExclude,
-			'excludebackup'                              => $excludebackup,
-			'excludecache'                               => $excludecache,
-			'excludenonwp'                               => $excludenonwp,
-			'excludezip'                                 => $excludezip,
-			'ext'                                        => $archiveFormat,
-			'file_descriptors_auto'                      => $maximumFileDescriptorsAuto,
-			'file_descriptors'                           => $maximumFileDescriptors,
-			'loadFilesBeforeZip'                         => $loadFilesBeforeZip,
+			'type'                                         => $pType,
+			'exclude'                                      => $pExclude,
+			'excludebackup'                                => $excludebackup,
+			'excludecache'                                 => $excludecache,
+			'excludenonwp'                                 => $excludenonwp,
+			'excludezip'                                   => $excludezip,
+			'ext'                                          => $archiveFormat,
+			'file_descriptors_auto'                        => $maximumFileDescriptorsAuto,
+			'file_descriptors'                             => $maximumFileDescriptors,
+			'loadFilesBeforeZip'                           => $loadFilesBeforeZip,
 			MainWP_Utility::get_file_parameter( $website ) => $file,
-			'fileUID'                                    => $pFileNameUID,
-			'pid'                                        => $pid,
-			'append'                                     => ( $append ? 1 : 0 ),
+			'fileUID'                                      => $pFileNameUID,
+			'pid'                                          => $pid,
+			'append'                                       => ( $append ? 1 : 0 ),
 		);
 
 		MainWP_Logger::instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );

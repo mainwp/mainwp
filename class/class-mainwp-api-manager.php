@@ -15,8 +15,20 @@
  */
 class MainWP_Api_Manager {
 
+	
+	/**
+	 * @var string Upgrade Url
+	 */
 	private $upgrade_url       = 'https://mainwp.com/';
+
+	/**
+	 * @var string Renew License Url
+	 */
 	private $renew_license_url = 'https://mainwp.com/my-account';
+
+	/**
+	 * @var string MainWP Installation Domain Name.
+	 */
 	public $domain             = '';
 
 	/**
@@ -339,6 +351,7 @@ class MainWP_Api_Manager {
 	 * @param mixed $username
 	 * @param mixed $password
 	 * @param mixed $productId
+	 * @param booleen $no_register
 	 * 
 	 * @return mixed Array.
 	 */

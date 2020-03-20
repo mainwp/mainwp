@@ -93,7 +93,7 @@ class MainWP_Recent_Posts {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php _e('Recent Posts', 'mainwp'); ?>
+					<?php esc_html_e('Recent Posts', 'mainwp'); ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -169,7 +169,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php _e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -230,7 +230,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php _e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -291,7 +291,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php _e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -353,7 +353,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php _e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -413,7 +413,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php _e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -521,7 +521,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action' => $pAction,
 					'id'     => $postId,
@@ -563,7 +563,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action'     => $pAction,
 					'id'         => $postId,

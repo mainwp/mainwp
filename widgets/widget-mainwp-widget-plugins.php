@@ -124,7 +124,7 @@ class MainWP_Widget_Plugins {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php _e('Plugins', 'mainwp'); ?>
+					<?php esc_html_e('Plugins', 'mainwp'); ?>
 					<div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -157,7 +157,7 @@ class MainWP_Widget_Plugins {
 				<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 						<div class="right floated pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-								 <a href="#" class="mainwp-plugin-deactivate ui mini button green" data-position="top right" data-tooltip="<?php echo __( 'Deactivate the ', 'mainwp') . esc_html( $actived_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
+								 <a href="#" class="mainwp-plugin-deactivate ui mini button green" data-position="top right" data-tooltip="<?php esc_html_e( 'Deactivate the ', 'mainwp') . esc_html( $actived_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></a>
 							<?php } ?>
 					</div>
 						<div class="middle aligned content">
@@ -188,10 +188,10 @@ class MainWP_Widget_Plugins {
 				<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
 						<div class="right floated content pluginsAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) { ?>
-						  <a href="#" class="mainwp-plugin-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+						  <a href="#" class="mainwp-plugin-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_html_e( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) { ?>
-					<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin from the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+					<a href="#" class="mainwp-plugin-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_html_e( 'Delete the ', 'mainwp') . wp_strip_all_tags( $inactive_plugins[ $i ]['name'] ) . __( ' plugin from the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 				  <?php } ?>
 					</div>
 						<div class="middle aligned content">
@@ -271,7 +271,7 @@ class MainWP_Widget_Plugins {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,

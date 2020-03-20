@@ -4945,8 +4945,8 @@ msgstr "Vous ne pouvez pas éditer ce site"
 
 #: class/class-mainwp-post-handler.php:1589
 #@ mainwp
-msgid "fetchUrlAuthed exception"
-msgstr "Exception fetchUrlAuthed"
+msgid "fetch_url_authed exception"
+msgstr "Exception fetch_url_authed"
 
 #: class/class-mainwp-system.php:402
 #@ mainwp

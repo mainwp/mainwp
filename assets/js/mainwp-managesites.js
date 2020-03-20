@@ -87,6 +87,9 @@ managesites_update_pluginsthemes = function ( pType, websiteIds )
     else
         dashboardActionName = 'upgrade_all_themes';
     
+    var dateObj = new Date();
+    starttimeDashboardAction = dateObj.getTime();
+    countRealItemsUpdated = 0;
     itemsToUpdate = [];
 
     if ( websitesTotal == 0 )
@@ -119,6 +122,7 @@ managesites_update_pluginsthemes_done = function ( pType )
 
     if ( websitesDone == websitesTotal )
     {        
+        couttItemsToUpdate = itemsToUpdate.length;
         updatesoverview_send_twitt_info(dashboardActionName);
         setTimeout( function () {
             bulkManageSitesTaskRunning = false;
@@ -541,6 +545,8 @@ managesites_backupnow_download_file = function ( pSiteId, pSiteName, type, url, 
 };
 
 var dashboardActionName = '';
+var countRealItemsUpdated = 0;
+var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
 managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
@@ -587,7 +593,7 @@ managesites_wordpress_global_upgrade_all = function ( updateSiteIds )
                 } } );
             
             dashboardActionName = 'upgrade_all_wp_core';
-            
+            countRealItemsUpdated = 0;
             managesites_wordpress_upgrade_all_int( pAllWebsiteIds );
 
             managesitesContinueAfterBackup = undefined;

@@ -6,11 +6,11 @@ class MainWP_Utility {
 
 	public static $enabled_wp_seo = null;
 
-	public static function startsWith( $haystack, $needle ) {
+	public static function starts_with( $haystack, $needle ) {
 		return ! strncmp( $haystack, $needle, strlen( $needle ) );
 	}
 
-	public static function endsWith( $haystack, $needle ) {
+	public static function ends_with( $haystack, $needle ) {
 		$length = strlen( $needle );
 		if ( 0 === $length ) {
 			return true;
@@ -19,14 +19,14 @@ class MainWP_Utility {
 		return ( substr( $haystack, - $length ) === $needle );
 	}
 
-	public static function getNiceURL( $pUrl, $showHttp = false ) {
+	public static function get_nice_url( $pUrl, $showHttp = false ) {
 		$url = $pUrl;
 
-		if ( self::startsWith( $url, 'http://' ) ) {
+		if ( self::starts_with( $url, 'http://' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 7 );
 			}
-		} elseif ( self::startsWith( $pUrl, 'https://' ) ) {
+		} elseif ( self::starts_with( $pUrl, 'https://' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 8 );
 			}
@@ -36,7 +36,7 @@ class MainWP_Utility {
 			}
 		}
 
-		if ( self::endsWith( $url, '/' ) ) {
+		if ( self::ends_with( $url, '/' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 0, strlen( $url ) - 1 );
 			}
@@ -47,7 +47,7 @@ class MainWP_Utility {
 		return $url;
 	}
 
-	public static function limitString( $pInput, $pMax = 500 ) {
+	public static function limit_string( $pInput, $pMax = 500 ) {
 		$output = wp_strip_all_tags( $pInput );
 		if ( strlen( $output ) > $pMax ) {
 			$outputCut = substr( $output, 0, $pMax );
@@ -56,7 +56,7 @@ class MainWP_Utility {
 		echo $output;
 	}
 
-	public static function isAdmin() {
+	public static function is_admin() {
 		global $current_user;
 		if ( 0 === $current_user->ID ) {
 			return false;
@@ -69,7 +69,7 @@ class MainWP_Utility {
 		return false;
 	}
 
-	public static function isWebsiteAvailable( $website ) {
+	public static function is_website_available( $website ) {
 		$http_user         = null;
 		$http_pass         = null;
 		$sslVersion        = null;
@@ -86,18 +86,18 @@ class MainWP_Utility {
 			$url = $website;
 		}
 
-		if ( ! self::isDomainValid( $url ) ) {
+		if ( ! self::is_domain_valid( $url ) ) {
 			return false;
 		}
 
-		return self::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 	}
 
-	private static function isDomainValid( $url ) {
+	private static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
 
-	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
+	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -263,7 +263,7 @@ class MainWP_Utility {
 			'host'           => $host,
 			'httpCode'       => $http_status,
 			'error'          => ( '' == $err && false === $data ? 'Invalid host.' : $err ),
-			'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
+			'httpCodeString' => self::get_http_status_error_string( $http_status ),
 		);
 		if ( false !== $ip ) {
 			$out['ip'] = $ip;
@@ -272,7 +272,7 @@ class MainWP_Utility {
 		return $out;
 	}
 
-	protected static function getHttpStatusErrorString( $httpCode ) {
+	protected static function get_http_status_error_string( $httpCode ) {
 		if ( 100 === $httpCode ) {
 			return 'Continue';
 		}
@@ -450,7 +450,7 @@ class MainWP_Utility {
 		switch ( $what ) {
 			case 'backupbuddy':
 				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupbuddy/backupbuddy.php' === strtolower( $plugin['slug'] ) ) ) {
+					if ( ( 'backupbuddy/backupbuddy.php' == strtolower( $plugin['slug'] ) ) ) {
 						if ( $plugin['active'] ) {
 							$installed = true;
 						}
@@ -460,7 +460,7 @@ class MainWP_Utility {
 				break;
 			case 'backupwp':
 				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupwordpress/backupwordpress.php' === $plugin['slug'] ) ) {
+					if ( ( 'backupwordpress/backupwordpress.php' == $plugin['slug'] ) ) {
 						if ( $plugin['active'] ) {
 							$installed = true;
 						}
@@ -480,7 +480,7 @@ class MainWP_Utility {
 				break;
 			case 'updraftplus':
 				foreach ( $plugins as $plugin ) {
-					if ( ( 'updraftplus/updraftplus.php' === $plugin['slug'] ) ) {
+					if ( ( 'updraftplus/updraftplus.php' == $plugin['slug'] ) ) {
 						if ( $plugin['active'] ) {
 							$installed = true;
 						}
@@ -1106,7 +1106,12 @@ class MainWP_Utility {
 		return true;
 	}
 
-	public static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
+	// deprecated, to compatible.
+	public static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null ) {
+		return self::fetch_url_authed( $website, $what, $params = null, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse = null );
+	}
+	
+	public static function fetch_url_authed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								$pRetryFailed = true, $rawResponse = null ) {
 		if ( ! is_array( $params ) ) {
 			$params = array();
@@ -1212,7 +1217,7 @@ class MainWP_Utility {
 		if ( $updating_website ) {
 			do_action( 'mainwp_website_updated', $website, $type, $list, $information );
 			if ( 1 === get_option( 'mainwp_check_http_response', 0 ) ) {
-				$result          = self::isWebsiteAvailable( $website );
+				$result          = self::is_website_available( $website );
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
 				MainWP_DB::Instance()->updateWebsiteValues(
@@ -1240,7 +1245,7 @@ class MainWP_Utility {
 		return $information;
 	}
 
-	public static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false,
+	public static function fetch_url_not_authed( $url, $admin, $what, $params = null, $pForceFetch = false,
 									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		if ( empty( $params ) ) {
 			$params = array();
@@ -1909,7 +1914,7 @@ class MainWP_Utility {
 	}
 
 	public static function getMainWPSpecificDir( $dir = null ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
@@ -1993,7 +1998,7 @@ class MainWP_Utility {
 	}
 
 	public static function getMainWPSpecificUrl( $dir ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
@@ -2841,7 +2846,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2855,7 +2860,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2869,7 +2874,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -3109,7 +3114,7 @@ EOT;
 	public static function getRealExtension( $path ) {
 		$checks = array( '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2' );
 		foreach ( $checks as $check ) {
-			if ( self::endsWith( $path, $check ) ) {
+			if ( self::ends_with( $path, $check ) ) {
 				return $check;
 			}
 		}
@@ -3317,10 +3322,25 @@ EOT;
 	}
 
 	public static function get_child_response( $data ) {
+		// to compatible.
 		if ( is_serialized( $data ) ) {
 			return unserialize( $data, array( 'allowed_classes' => false ) );
 		} else {
 			return json_decode( $data, true );
 		}
+	}
+
+	public static function render_mainwp_nonce() {
+		wp_nonce_field( 'mainwp-admin-nonce' );
+	}
+
+	public static function maybe_unserialyze( $data ) {
+		if ( '' == $data || is_array( $data ) ) {
+			return $data;
+		} else if ( is_serialized( $data )) {
+			return maybe_unserialize( $data );
+		} else {
+			return maybe_unserialize( base64_decode( $data ) );
+		} 			
 	}
 }

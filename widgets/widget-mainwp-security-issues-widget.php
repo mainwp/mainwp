@@ -73,7 +73,7 @@ class MainWP_Security_Issues_Widget {
 				</div>
 			</div>
 			<div class="column right aligned">
-				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php echo __( 'See Details', 'mainwp' ); ?></a>
+				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 				<input type="button" class="fix-all-security-issues ui button green" value="<?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
 			</div>
 		</div>
@@ -88,7 +88,7 @@ class MainWP_Security_Issues_Widget {
 				// continue;
 				// }
 				?>
-				<div class="item" siteid="<?php echo $website->id; ?>">
+				<div class="item" siteid="<?php echo intval($website->id); ?>">
 				<div class="ui three column grid stackable">
 				  <div class="column middle aligned">
 					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr($website->id); ?>"><?php echo stripslashes( $website->name ); ?></a>
@@ -102,7 +102,7 @@ class MainWP_Security_Issues_Widget {
 								</div>
 								<?php
 							} else {
-								echo __( 'No security issues detected.', 'mainwp' );
+								esc_html_e( 'No security issues detected.', 'mainwp' );
 							}
 							?>
 				  </div>

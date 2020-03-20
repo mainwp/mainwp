@@ -62,7 +62,7 @@ class MainWP_Notes {
 				echo $esc_note;
 				?>
 				<div class="ui section hidden divider"></div>
-				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo $website->id; ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
+				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval($website->id); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php
 			}
 			?>

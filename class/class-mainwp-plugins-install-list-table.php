@@ -473,7 +473,9 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		}
 		?>
 		<script type="text/javascript">
-			jQuery( '.card .ui.star.rating' ).rating();
+			jQuery( document ).ready( function() {
+				jQuery( '.card .ui.star.rating' ).rating();
+			} );
 		</script>
 		<?php
 		// Close off the group divs of the last one

@@ -230,7 +230,7 @@ class MainWP_Security_Issues {
 					<th colspan="3">
 						<input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
 						<input type="button" id="securityIssues_refresh" class="ui button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
-						<input type="hidden" id="securityIssueSite" value="<?php echo $website->id; ?>"/>
+						<input type="hidden" id="securityIssueSite" value="<?php echo intval($website->id); ?>"/>
 					</th>
 				</tr>
 			</tfoot>
@@ -254,7 +254,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'security' );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'security' );
 
 		return $information;
 	}
@@ -274,7 +274,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
 			unset( $information['sync'] );
@@ -298,7 +298,7 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
 			unset( $information['sync'] );

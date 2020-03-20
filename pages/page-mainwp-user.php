@@ -243,7 +243,7 @@ class MainWP_User {
 			return;
 		}
 
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
 		$selected_sites = $selected_groups = array();
 
@@ -347,7 +347,7 @@ class MainWP_User {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Users' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 
@@ -397,6 +397,7 @@ class MainWP_User {
 			<div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
 			<div class="ui message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
 			<form id="update_user_profile">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="ui segment">
 					<div class="ui form">
 						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h2>
@@ -526,7 +527,7 @@ class MainWP_User {
 			<tbody id="mainwp-users-list">
 			<?php
 			if ( $cached ) {
-				MainWP_Cache::echoBody( 'Users' );
+				MainWP_Cache::echo_body( 'Users' );
 			} else {
 				self::renderTableBody( $role, $groups, $sites, $search );
 			}
@@ -559,7 +560,7 @@ class MainWP_User {
 	}
 
 	public static function renderTableBody( $role = '', $groups = '', $sites = '', $search = null ) {
-		MainWP_Cache::initCache( 'Users' );
+		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new stdClass();
 		$output->errors = array();
@@ -722,7 +723,7 @@ class MainWP_User {
 			), $output );
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Users', array(
 				'count'   => $output->users,
 				'keyword' => $search,
@@ -741,7 +742,7 @@ class MainWP_User {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Users', $newOutput );
+			MainWP_Cache::add_body( 'Users', $newOutput );
 
 			return;
 		}
@@ -778,7 +779,7 @@ class MainWP_User {
 					<td class="name column-name">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>" />
 					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
 					<div class="row-actions-working">
 						<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait', 'mainwp' ); ?>
@@ -807,7 +808,7 @@ class MainWP_User {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Users', $newOutput );
+			MainWP_Cache::add_body( 'Users', $newOutput );
 			$return ++;
 		}
 
@@ -889,7 +890,7 @@ class MainWP_User {
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'user_action', array(
 					'action'    => $pAction,
 					'id'        => $userId,
@@ -933,6 +934,7 @@ class MainWP_User {
 
 		<div class="ui alt segment" id="mainwp-add-users">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1063,6 +1065,7 @@ class MainWP_User {
 		<?php self::renderHeader( 'Import' ); ?>
 		<div id="MainWP_Bulk_AddUser">
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate" enctype="multipart/form-data">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php echo self::renderImportUsers(); ?>
 			</form>
 		</div>
@@ -1079,6 +1082,7 @@ class MainWP_User {
 				<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 				<div class="ui segment form">
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
 							<div class="ten wide column">
@@ -1230,18 +1234,18 @@ class MainWP_User {
 
 			if ( ! empty( $countSites ) ) {
 				$seconds = ( time() - $startTime );
-				MainWP_Twitter::updateTwitterInfo( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
+				MainWP_Twitter::update_twitter_info( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
 			}
 
-			if ( MainWP_Twitter::enabledTwitterMessages() ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( 'create_new_user' );
+			if ( MainWP_Twitter::enabled_twitter_messages() ) {
+				$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( 'create_new_user', $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( 'create_new_user', $timeid );
 							?>
 							<div class="mainwp-tips ui info message twitter" style="margin:0">
-								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 							</div>
 							<?php
 						}
@@ -1294,7 +1298,7 @@ class MainWP_User {
 
 						$line = trim( $originalLine );
 
-						if ( MainWP_Utility::startsWith( $line, '#' ) ) {
+						if ( MainWP_Utility::starts_with( $line, '#' ) ) {
 							continue;
 						}
 
@@ -1516,7 +1520,7 @@ class MainWP_User {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
 			?>
-			<p><?php echo __( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/" target="_blank">Manage Users</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/create-a-new-user/" target="_blank">Create a New User</a></div>

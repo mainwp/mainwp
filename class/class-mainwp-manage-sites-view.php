@@ -270,7 +270,7 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 		$errors = array();
-		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
+		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
 				$content  = file_get_contents( $tmp_path );
@@ -296,7 +296,7 @@ class MainWP_Manage_Sites_View {
 
 						$line = trim( $originalLine );
 
-						if ( MainWP_Utility::startsWith( $line, '#' ) ) {
+						if ( MainWP_Utility::starts_with( $line, '#' ) ) {
 							continue;
 						}
 
@@ -462,7 +462,7 @@ class MainWP_Manage_Sites_View {
 		}
 
 		?>
-		<h3 class="ui dividing header"><?php echo __( 'Backup Details', 'mainwp' ); ?></h3>
+		<h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
 		<h3 class="header"><?php echo ( '' === $output ) ? esc_html( 'No full backup has been taken yet', 'mainwp' ) : esc_html( 'Last backups from your files', 'mainwp' ); ?></h3>
 		<?php
 		echo $output;
@@ -528,9 +528,9 @@ class MainWP_Manage_Sites_View {
 				<div class="ten wide column">
 				<select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
 					<?php if ( $enableLegacyBackupFeature ) { ?>
-						<option value="" ><?php echo __( 'Native backups', 'mainwp' ); ?></option>
+						<option value="" ><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
 					<?php } else { ?>
-						<option value="" ><?php echo __( 'N/A', 'mainwp' ); ?></option>
+						<option value="" ><?php esc_html_e( 'N/A', 'mainwp' ); ?></option>
 					<?php } ?>
 					<?php
 					foreach ( $primaryBackupMethods as $method ) {
@@ -753,8 +753,8 @@ class MainWP_Manage_Sites_View {
 				<table class="ui stackable single line table" id="mainwp-wordpress-updates-table">
 					<thead>
 						<tr>
-							<th><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th><?php echo __( 'New Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
 							<th class="right aligned"></th>
 						</tr>
 					</thead>
@@ -776,7 +776,7 @@ class MainWP_Manage_Sites_View {
 							<td class="right aligned">
 								<?php if ( $user_can_update_wordpress ) : ?>
 									<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-										<a href="#" data-tooltip="<?php echo __( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+										<a href="#" data-tooltip="<?php esc_html_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 										<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
 									<?php endif; ?>
 								<?php endif; ?>
@@ -787,8 +787,8 @@ class MainWP_Manage_Sites_View {
 					</tbody>
 					<thead>
 						<tr>
-							<th><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th><?php echo __( 'New Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
 							<th class="right aligned"></th>
 						</tr>
 					</thead>
@@ -830,10 +830,10 @@ class MainWP_Manage_Sites_View {
 				<table id="mainwp-updates-plugins-table" class="ui stackable single line table">
 					<thead>
 						<tr>
-							<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Latest', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Trusted', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 							<th class="no-sort"></th>
 						</tr>
 					</thead>
@@ -867,10 +867,10 @@ class MainWP_Manage_Sites_View {
 					</tbody>
 					<tfoot>
 						<tr>
-							<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Latest', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Trusted', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 							<th class="no-sort"></th>
 						</tr>
 					</tfoot>
@@ -914,10 +914,10 @@ class MainWP_Manage_Sites_View {
 				<table id="mainwp-updates-themes-table" class="ui stackable single line table">
 					<thead>
 						<tr>
-							<th><?php echo __( 'Theme', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Latest', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Trusted', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 							<th class="no-sort"></th>
 						</tr>
 					</thead>
@@ -945,10 +945,10 @@ class MainWP_Manage_Sites_View {
 					</tbody>
 					<tfoot>
 						<tr>
-							<th><?php echo __( 'Theme', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Version', 'mainwp' ); ?></th>
-							<th class="no-sort"><?php echo __( 'Latest', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Trusted', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+							<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
 							<th class="no-sort"></th>
 						</tr>
 					</tfoot>
@@ -960,8 +960,8 @@ class MainWP_Manage_Sites_View {
 				<table class="ui stackable single line table" id="mainwp-translations-table">
 					<thead>
 						<tr>
-							<th><?php echo __( 'Translation', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 							<th class="collapsing no-sort"></th>
 						</tr>
 					</thead>
@@ -990,8 +990,8 @@ class MainWP_Manage_Sites_View {
 					</tbody>
 					<tfoot>
 						<tr>
-							<th><?php echo __( 'Translation', 'mainwp' ); ?></th>
-							<th><?php echo __( 'Version', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
+							<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
 							<th class="collapsing no-sort"></th>
 						</tr>
 					</tfoot>
@@ -1020,9 +1020,9 @@ class MainWP_Manage_Sites_View {
 					<thead>
 						<tr>
 							<tr>
-								<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
 								<th class="no-sort"></th>
 							</tr>
 						</tr>
@@ -1055,9 +1055,9 @@ class MainWP_Manage_Sites_View {
 					<tfoot>
 						<tr>
 							<tr>
-								<th><?php echo __( 'Plugin', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
 								<th class="no-sort"></th>
 							</tr>
 						</tr>
@@ -1090,9 +1090,9 @@ class MainWP_Manage_Sites_View {
 					<thead>
 						<tr>
 							<tr>
-								<th><?php echo __( 'Theme', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Version', 'mainwp' ); ?></th>
-								<th><?php echo __( 'Last Update', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+								<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
 								<th class="no-sort"></th>
 							</tr>
 						</tr>
@@ -1200,9 +1200,10 @@ class MainWP_Manage_Sites_View {
 		}
 
 		?>
-			<h3 class="ui dividing header"><?php echo __( 'Backup Options', 'mainwp' ); ?></h3>
+			<h3 class="ui dividing header"><?php esc_html_e( 'Backup Options', 'mainwp' ); ?></h3>
 			<form method="POST" action="" class="ui form">
-				<input type="hidden" name="site_id" id="backup_site_id" value="<?php echo $website->id; ?>"/>
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+				<input type="hidden" name="site_id" id="backup_site_id" value="<?php echo intval($website->id); ?>"/>
 				<input type="hidden" name="backup_site_full_size" id="backup_site_full_size" value="<?php echo esc_attr( $website->totalsize ); ?>"/>
 				<input type="hidden" name="backup_site_db_size" id="backup_site_db_size" value="<?php echo esc_attr( $website->dbsize ); ?>"/>
 
@@ -1277,7 +1278,7 @@ class MainWP_Manage_Sites_View {
 					</div>
 				</div>
 				<div class="mainwp-backup-full-exclude">
-						<h3 class="header"><?php echo __( 'Backup Excludes', 'mainwp' ); ?></h3>
+						<h3 class="header"><?php esc_html_e( 'Backup Excludes', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
 						  <div class="ten wide column ui toggle checkbox">
@@ -1288,7 +1289,7 @@ class MainWP_Manage_Sites_View {
 							<label class="six wide column middle aligned"></label>
 						  <div class="ten wide column ui toggle checkbox">
 								<textarea id="mainwp-kbl-content" disabled></textarea><br />
-								<em><?php echo __( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
+								<em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1301,7 +1302,7 @@ class MainWP_Manage_Sites_View {
 							<label class="six wide column middle aligned"></label>
 						  <div class="ten wide column ui toggle checkbox">
 								<textarea id="mainwp-kcl-content" disabled></textarea><br />
-								<em><?php echo __( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
+								<em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1314,7 +1315,7 @@ class MainWP_Manage_Sites_View {
 							<label class="six wide column middle aligned"></label>
 						  <div class="ten wide column ui toggle checkbox">
 								<textarea id="mainwp-nwl-content" disabled></textarea><br />
-								<em><?php echo __( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
+								<em><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -1403,11 +1404,12 @@ class MainWP_Manage_Sites_View {
 
 		?>
 
-		<div class="ui segment mainwp-edit-site-<?php echo $website->id; ?>" id="mainwp-edit-site">
+		<div class="ui segment mainwp-edit-site-<?php echo intval($website->id); ?>" id="mainwp-edit-site">
 				<?php if ( $updated ) : ?>
 					<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
 				<?php endif; ?>
 			<form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
 						<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
 
@@ -1416,8 +1418,8 @@ class MainWP_Manage_Sites_View {
 				  <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="ui left action input">
 									<select class="ui compact selection dropdown" id="mainwp_managesites_edit_siteurl_protocol" name="mainwp_managesites_edit_siteurl_protocol">
-										<option <?php echo ( MainWP_Utility::startsWith( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
-										<option <?php echo ( MainWP_Utility::startsWith( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
+										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
+										<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 									</select>
 									<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo MainWP_Utility::removeHttpPrefix( $website->url, true ); ?>" />
 								</div>
@@ -1536,7 +1538,7 @@ class MainWP_Manage_Sites_View {
 							<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<select class="ui dropdown" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
 									<option <?php echo ( 0 === $website->ssl_version ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-									<option <?php echo ( 6 === $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+									<option <?php echo ( 6 === $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
 									<option <?php echo ( 1 === $website->ssl_version ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
 									<option <?php echo ( 2 === $website->ssl_version ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
 									<option <?php echo ( 3 === $website->ssl_version ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
@@ -1615,7 +1617,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey  = '-1';
 				}
 
-				$information = MainWP_Utility::fetchUrlNotAuthed( $website->url, $website->adminname, 'register', array(
+				$information = MainWP_Utility::fetch_url_not_authed( $website->url, $website->adminname, 'register', array(
 					'pubkey'   => $pubkey,
 					'server'   => get_admin_url(),
 					'uniqueId' => $website->uniqueId,
@@ -1713,7 +1715,7 @@ class MainWP_Manage_Sites_View {
 				$http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 				$force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-				$information       = MainWP_Utility::fetchUrlNotAuthed( $url, $params['wpadmin'], 'register', array(
+				$information       = MainWP_Utility::fetch_url_not_authed( $url, $params['wpadmin'], 'register', array(
 					'pubkey'     => $pubkey,
 					'server'     => get_admin_url(),
 					'uniqueId'   => $addUniqueId,

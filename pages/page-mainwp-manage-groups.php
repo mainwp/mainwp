@@ -62,8 +62,8 @@ class MainWP_Manage_Groups {
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
 			<div class="item ui checkbox">
-				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" >
-				<label for="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></label>
+				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>" >
+				<label for="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>"><?php echo MainWP_Utility::get_nice_url( $website->url ); ?></label>
 			</div>
 			<?php
 		}
@@ -259,10 +259,10 @@ class MainWP_Manage_Groups {
 
 					var groupId = parentObj.attr( 'group-id' );
 
-					var data = {
+					var data = mainwp_secure_data( {
 						action: 'mainwp_group_getsites',
 						groupId: groupId
-					}
+					} );
 
 		  jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
 					jQuery.post( ajaxurl, data, function ( response ) {

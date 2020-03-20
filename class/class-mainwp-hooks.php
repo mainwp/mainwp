@@ -7,7 +7,7 @@ class MainWP_Hooks {
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( 'MainWP_Utility', 'getMainWPSpecificDir' ), 10, 1 );
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
-		add_filter( 'mainwp_is_multi_user', array( &$this, 'isMultiUser' ) );
+		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2FileUploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( 'MainWP_Install_Bulk', 'prepareInstall' ) );
@@ -230,7 +230,7 @@ class MainWP_Hooks {
 		MainWP_DB::Instance()->updateWebsiteValues( $website->id, $data );
 		if ( null !== $uniqueId ) {
 			try {
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+				$information = MainWP_Utility::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 			} catch ( MainWP_Exception $e ) {
 				$error = $e->getMessage();
 			}
@@ -257,23 +257,23 @@ class MainWP_Hooks {
 	}
 
 	public function cache_getcontext( $page ) {
-		return MainWP_Cache::getCachedContext( $page );
+		return MainWP_Cache::get_cached_context( $page );
 	}
 
 	public function cache_echo_body( $page ) {
-		MainWP_Cache::echoBody( $page );
+		MainWP_Cache::echo_body( $page );
 	}
 
 	public function cache_init( $page ) {
-		MainWP_Cache::initCache( $page );
+		MainWP_Cache::init_cache( $page );
 	}
 
 	public function cache_add_context( $page, $context ) {
-		MainWP_Cache::addContext( $page, $context );
+		MainWP_Cache::add_context( $page, $context );
 	}
 
 	public function cache_add_body( $page, $body ) {
-		MainWP_Cache::addBody( $page, $body );
+		MainWP_Cache::add_body( $page, $body );
 	}
 
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true,
@@ -425,8 +425,8 @@ class MainWP_Hooks {
 	}
 
 
-	public function isMultiUser() {
-		return MainWP_System::Instance()->isMultiUser();
+	public function is_multi_user() {
+		return MainWP_System::Instance()->is_multi_user();
 	}
 
 	public function filter_qq2FileUploader( $allowedExtensions, $sizeLimit ) {
@@ -491,7 +491,7 @@ class MainWP_Hooks {
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
 				$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
-					$information = MainWP_Utility::fetchUrlAuthed(
+					$information = MainWP_Utility::fetch_url_authed(
 						$website, 'upgradeplugintheme', array(
 							'type'   => $type,
 							'list'   => urldecode( implode( ',', $slugs ) ),

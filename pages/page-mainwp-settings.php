@@ -266,7 +266,7 @@ class MainWP_Settings {
 		echo '</div>';
 	}
 
-	public static function handleSettingsPost() {
+	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB::Instance()->getUserExtension();
 			$save_emails   = array();
@@ -287,7 +287,7 @@ class MainWP_Settings {
 			$userExtension->pluginDir = '';
 
 			MainWP_DB::Instance()->updateUserExtension( $userExtension );
-			if ( MainWP_Utility::isAdmin() ) {
+			if ( MainWP_Utility::is_admin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
@@ -345,6 +345,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'Settings' ); ?>" />
 						<h3 class="ui dividing header"><?php esc_html_e( 'Optimization', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
@@ -769,6 +770,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 						<?php
 						if ( self::showOpensslLibConfig() ) {
@@ -782,7 +784,7 @@ class MainWP_Settings {
 							<div class="ui attached message">
 								<div class="header"><?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?></div>
 								<p><?php esc_html_e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></p>
-								<p><?php echo __( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
+								<p><?php esc_html_e( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
 							</div>
 							<div class="ui attached segment" style="border: 1px solid #dadada;">
 								<div class="ui grid field">
@@ -877,6 +879,7 @@ class MainWP_Settings {
 				<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 					<h3 class="ui dividing header"><?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
 					<div class="ui grid field">
@@ -1077,7 +1080,7 @@ class MainWP_Settings {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'Settings' || $_GET['page'] == 'SettingsAdvanced' || $_GET['page'] == 'MainWPTools' || $_GET['page'] == 'SettingsClientReportsResponder' ) ) {
 			?>
-			<p><?php echo __( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
 			</div>

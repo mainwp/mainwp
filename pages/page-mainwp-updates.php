@@ -493,21 +493,21 @@ class MainWP_Updates {
 
 		self::renderHeader( 'UpdatesManage' );
 
-		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
 				'upgrade_all_plugins',
 				'upgrade_all_themes',
 				'upgrade_all_wp_core',
 			);
 			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				$twitters = MainWP_Twitter::get_twitter_notice( $what );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 							if ( ! empty( $sendText ) ) {
 								?>
-								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?></div>
+								<div class="mainwp-tips ui info message twitter" style="margin:0"><i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo $what; ?>" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?></div>
 								<?php
 							}
 						}
@@ -537,6 +537,7 @@ class MainWP_Updates {
 					</div>
 					<div class="right aligned middle aligned column">
 						<form method="post" action="" class="ui mini form">
+							<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 							<div class="inline field">
 								<label for="mainwp_select_options_siteview"><?php esc_html_e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
@@ -700,7 +701,7 @@ class MainWP_Updates {
 													continue;
 												}
 
-												$total_group_wp_updates += 1;
+												$total_group_wp_updates++;
 												?>
 												<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
 													<td>
@@ -2795,7 +2796,7 @@ class MainWP_Updates {
 
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'upgrade' );
+				$information = MainWP_Utility::fetch_url_authed( $website, 'upgrade' );
 
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::Instance()->updateWebsiteOption( $website, 'wp_upgrades', wp_json_encode( array() ) );
@@ -3101,7 +3102,7 @@ class MainWP_Updates {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::Instance()->getWebsiteById( $id );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$information = MainWP_Utility::fetchUrlAuthed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
+				$information = MainWP_Utility::fetch_url_authed( $website, ( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ), array(
 					'type'   => $type,
 					'list'   => urldecode( $list ),
 				), true );

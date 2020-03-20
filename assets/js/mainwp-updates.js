@@ -84,6 +84,8 @@ jQuery( document ).on( 'click', '#updatesoverview-backup-ignore', function () {
 
 var dashboardActionName = '';
 var starttimeDashboardAction = 0;
+var countRealItemsUpdated = 0;
+var couttItemsToUpdate = 0;
 var itemsToUpdate = [];
 
 updatesoverview_update_popup_init = function ( data ) {
@@ -366,6 +368,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
+                countRealItemsUpdated = 0;
                 
                 //Step 3: start updates
                 updatesoverview_translations_upgrade_all_int( undefined, pSitesToUpdate, pSitesTranslationSlugs );
@@ -452,6 +455,7 @@ updatesoverview_translations_upgrade_all = function ( slug, translationName )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_translations';
                 starttimeDashboardAction = dateObj.getTime();
+                countRealItemsUpdated = 0;
                 itemsToUpdate = [];
 
                 //Step 3: start updates
@@ -607,7 +611,8 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                         }
                         
                         if (websitesDone == websitesTotal)
-                        {                            
+                        {          
+                            couttItemsToUpdate = itemsToUpdate.length;
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -642,6 +647,7 @@ updatesoverview_translations_upgrade_int = function ( slug, websiteId, bulkMode,
                         
                         if (websitesDone == websitesTotal)
                         {                            
+                            couttItemsToUpdate = itemsToUpdate.length;
                             updatesoverview_send_twitt_info();
                         }                    
                     }
@@ -780,6 +786,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
+                countRealItemsUpdated = 0;
                 
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int( undefined, pSitesToUpdate, pSitesPluginSlugs );
@@ -866,6 +873,7 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_plugins';
                 starttimeDashboardAction = dateObj.getTime();
+                countRealItemsUpdated = 0;
                 
                 //Step 3: start updates
                 updatesoverview_plugins_upgrade_all_int( pSlug, pSitesToUpdate );
@@ -940,14 +948,14 @@ updatesoverview_send_twitt_info = function() {
         var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
         if (countSec <= mainwpParams.maxSecondsTwit) {
             send = true;
-            var data = {
+            var data = mainwp_secure_data( {
                 action:'mainwp_twitter_dashboard_action',
                 actionName: dashboardActionName,
                 countSites: websitesDone,
                 countSeconds: countSec,
                 countItems: couttItemsToUpdate,
                 countRealItems: countRealItemsUpdated
-            };
+            } );
             jQuery.post(ajaxurl, data, function () {                
             });
         }
@@ -1073,6 +1081,7 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                         
                         if (websitesDone == websitesTotal)
                         {
+                            couttItemsToUpdate = itemsToUpdate.length;
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -1105,6 +1114,7 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                                                 
                         if (websitesDone == websitesTotal)
                         {                            
+                            couttItemsToUpdate = itemsToUpdate.length;
                             updatesoverview_send_twitt_info();
                         }
                     }
@@ -1244,6 +1254,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId )
                 var dateObj = new Date();
                 dashboardActionName = 'upgrade_all_themes';
                 starttimeDashboardAction = dateObj.getTime();
+                countRealItemsUpdated = 0;
                 
                 //Step 3: start updates
                 updatesoverview_themes_upgrade_all_int( undefined, pSitesToUpdate, pSitesPluginSlugs );
@@ -1478,7 +1489,8 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                     }
                                         
                     if (websitesDone == websitesTotal)
-                    {                        
+                    {         
+                        couttItemsToUpdate = itemsToUpdate.length;
                         updatesoverview_send_twitt_info();
                     }
                 }
@@ -1510,7 +1522,8 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
                 }
                 
                 if (websitesDone == websitesTotal)
-                {                    
+                {           
+                    couttItemsToUpdate = itemsToUpdate.length;
                     updatesoverview_send_twitt_info();
                 }
             }
@@ -1751,6 +1764,7 @@ updatesoverview_global_upgrade_all = function ( which )
                     var dateObj = new Date();
                     dashboardActionName = 'upgrade_everything';
                     starttimeDashboardAction = dateObj.getTime();
+                    countRealItemsUpdated = 0;
 
                     //Step 3: start updates
                     updatesoverview_upgrade_all_int( pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs, psitesTranslationSlugs );
@@ -2242,6 +2256,7 @@ updatesoverview_upgrade_int_flow = function ( pWebsiteId, pThemeSlugToUpgrade, p
         
         if (websitesDone == websitesTotal)
         {            
+            couttItemsToUpdate = itemsToUpdate.length;
             updatesoverview_send_twitt_info();
         }
         return false;

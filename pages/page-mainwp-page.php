@@ -288,7 +288,7 @@ class MainWP_Page {
 			return;
 		}
 
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Page' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 
 		$selected_sites = $selected_groups = array();
 		if ( $cachedSearch != null ) {
@@ -366,7 +366,7 @@ class MainWP_Page {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Page' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 		<div class="ui mini form">
@@ -468,10 +468,10 @@ class MainWP_Page {
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
 						?>
-						<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php echo __( 'Links', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php echo __( 'Linked', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php echo __( 'SEO score', 'mainwp' ); ?></span></th>
-						<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php echo __( 'Readability score', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-links"><span title="<?php echo esc_attr__( 'Number of internal links in this page', 'mainwp' ); ?>"><?php esc_html_e( 'Links', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-linked"><span title="<?php echo esc_attr__( 'Number of internal links linking to this page', 'mainwp' ); ?>"><?php esc_html_e( 'Linked', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-score"><span title="<?php echo esc_attr__( 'SEO score', 'mainwp' ); ?>"><?php esc_html_e( 'SEO score', 'mainwp' ); ?></span></th>
+						<th id="mainwp-seo-readability"><span title="<?php echo esc_attr__( 'Readability score', 'mainwp' ); ?>"><?php esc_html_e( 'Readability score', 'mainwp' ); ?></span></th>
 						<?php
 					endif;
 					?>
@@ -482,7 +482,7 @@ class MainWP_Page {
 			<tbody id="mainwp-posts-list">
 				<?php
 				if ( $cached ) {
-					MainWP_Cache::echoBody( 'Page' );
+					MainWP_Cache::echo_body( 'Page' );
 				} else {
 					self::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
 				}
@@ -521,7 +521,7 @@ class MainWP_Page {
 
 	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
-		MainWP_Cache::initCache( 'Page' );
+		MainWP_Cache::init_cache( 'Page' );
 
 		// Fetch all!
 		// Build websites array
@@ -571,7 +571,7 @@ class MainWP_Page {
 			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Page', array(
 				'count'      => $output->pages,
 				'keyword'    => $keyword,
@@ -595,7 +595,7 @@ class MainWP_Page {
 			<?php
 			$newOutput = ob_get_clean();
 			echo $newOutput;
-			MainWP_Cache::addBody( 'Page', $newOutput );
+			MainWP_Cache::add_body( 'Page', $newOutput );
 			return;
 		}
 	}
@@ -694,7 +694,7 @@ class MainWP_Page {
 					};
 					?>
 					<td class="website">
-						<a href="<?php echo $website->url; ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $website->url; ?></a>
+						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
 		  <td class="right aligned">
 						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
@@ -708,13 +708,13 @@ class MainWP_Page {
 				  <a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $page['status'] == 'publish' ) { ?>
-								<a class="item" href="<?php echo $website->url . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+								<a class="item" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 							<?php } ?>
 				<?php if ( $page['status'] == 'trash' ) { ?>
 									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 				<?php } ?>
-						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php echo __( 'Go to WP Admin', 'mainwp' ); ?></a>
+						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							</div>
 						</div>
 					</td>
@@ -722,7 +722,7 @@ class MainWP_Page {
 				<?php
 				$newOutput = ob_get_clean();
 				echo $newOutput;
-				MainWP_Cache::addBody( 'Page', $newOutput );
+				MainWP_Cache::add_body( 'Page', $newOutput );
 				$output->pages++;
 			}
 			unset( $pages );
@@ -818,8 +818,10 @@ class MainWP_Page {
 					$_post = get_post( $id );
 					if ( $_post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );
-						$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
-						$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
+						$val  = get_post_meta( $id, '_selected_sites', true );
+						$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
+						$val = get_post_meta( $id, '_selected_groups', true );
+						$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
 						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) );
 						$post_custom     = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
@@ -965,18 +967,18 @@ class MainWP_Page {
 
 						if ( ! empty( $countSites ) ) {
 							$seconds = ( time() - $startTime );
-							MainWP_Twitter::updateTwitterInfo( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
+							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
-						if ( MainWP_Twitter::enabledTwitterMessages() ) {
-							$twitters = MainWP_Twitter::getTwitterNotice( 'new_page' );
+						if ( MainWP_Twitter::enabled_twitter_messages() ) {
+							$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
 							if ( is_array( $twitters ) ) {
 								foreach ( $twitters as $timeid => $twit_mess ) {
 									if ( ! empty( $twit_mess ) ) {
-										$sendText = MainWP_Twitter::getTwitToSend( 'new_page', $timeid );
+										$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
 										?>
 										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 										</div>
 										<?php
 									}
@@ -1020,7 +1022,7 @@ class MainWP_Page {
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'PageBulkManage' || $_GET['page'] == 'PageBulkAdd' ) ) {
 			?>
-			<p><?php echo __( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/" target="_blank">Manage Pages</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/create-a-new-page/" target="_blank">Create a New Page</a></div>

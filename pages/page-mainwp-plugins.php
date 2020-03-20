@@ -287,7 +287,7 @@ class MainWP_Plugins {
 	}
 
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::getCachedContext( 'Plugins' );
+		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
 		$selected_sites  = array();
 		$selected_groups = array();
 		if ( null != $cachedSearch ) {
@@ -297,7 +297,7 @@ class MainWP_Plugins {
 				$selected_groups = $cachedSearch['groups'];
 			}
 		}
-		$cachedResult = MainWP_Cache::getCachedResult( 'Plugins' );
+		$cachedResult = MainWP_Cache::get_cached_result( 'Plugins' );
 		self::renderHeader( 'Manage' );
 		?>
 
@@ -382,7 +382,7 @@ class MainWP_Plugins {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Plugins' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 		<div class="ui mini form">
@@ -416,7 +416,7 @@ class MainWP_Plugins {
 	}
 
 	public static function renderTable( $keyword, $status, $groups, $sites ) {
-		MainWP_Cache::initCache( 'Plugins' );
+		MainWP_Cache::init_cache( 'Plugins' );
 
 			$output          = new stdClass();
 			$output->errors  = array();
@@ -550,7 +550,7 @@ class MainWP_Plugins {
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ': ' . $error . ' <br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -560,7 +560,7 @@ class MainWP_Plugins {
 			}
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Plugins', array(
 				'keyword' => $keyword,
 				'status'  => $status,
@@ -610,7 +610,7 @@ class MainWP_Plugins {
 				'result'       => $newOutput,
 				'bulk_actions' => $bulkActions,
 			);
-			MainWP_Cache::addResult( 'Plugins', $result );
+			MainWP_Cache::add_result( 'Plugins', $result );
 
 			return $result;
 		}
@@ -716,7 +716,7 @@ class MainWP_Plugins {
 			'bulk_actions' => $bulkActions,
 		);
 
-		MainWP_Cache::addResult( 'Plugins', $result );
+		MainWP_Cache::add_result( 'Plugins', $result );
 		return $result;
 	}
 
@@ -812,7 +812,7 @@ class MainWP_Plugins {
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
 			$plugin      = urldecode( $plugin );
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'plugin_action', array(
 					'action' => $pAction,
 					'plugin' => $plugin,
@@ -887,7 +887,10 @@ class MainWP_Plugins {
 				<?php MainWP_Install_Bulk::renderUpload( 'plugin' ); ?>
 			</div>
 			<div class="mainwp-browse-plugins">
-				<form id="plugin-filter" method="post"><?php self::$pluginsTable->display(); ?></form>
+				<form id="plugin-filter" method="post">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<?php self::$pluginsTable->display(); ?>
+				</form>
 			</div>
 			<?php
 			MainWP_UI::render_modal_install_plugin_theme();
@@ -1123,7 +1126,7 @@ class MainWP_Plugins {
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 
 					}
 					echo '<div class="ui hidden divider"></div>';
@@ -1374,7 +1377,7 @@ class MainWP_Plugins {
 
 							foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 								?>
-							<tr site-id="<?php echo $website->id; ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
+							<tr site-id="<?php echo intval($website->id); ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 								<?php if ( $first ) : ?>
 									<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 									<?php $first = false; ?>

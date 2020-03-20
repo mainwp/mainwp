@@ -7,13 +7,18 @@ class MainWP_UI {
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( $postId ) {
-			$selected_websites = unserialize( base64_decode( get_post_meta( $postId, '_selected_sites', true ) ) );
-			if ( '' === $selected_websites ) {
+			
+			$sites_val = get_post_meta( $postId, '_selected_sites', true );
+			$selected_websites	= MainWP_Utility::maybe_unserialyze( $sites_val );
+			
+			if ( '' == $selected_websites ) {
 				$selected_websites = array();
 			}
 
-			$selected_groups = unserialize( base64_decode( get_post_meta( $postId, '_selected_groups', true ) ) );
-			if ( '' === $selected_groups ) {
+			$groups_val = get_post_meta( $postId, '_selected_groups', true );
+			$selected_groups	= MainWP_Utility::maybe_unserialyze( $groups_val );
+						
+			if ( '' == $selected_groups ) {
 				$selected_groups = array();
 			}
 		}
@@ -111,19 +116,19 @@ class MainWP_UI {
 									}
 								}
 								?>
-				<div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-				  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo $website->id; ?>" value="<?php echo $website->id; ?>" id="selected_sites_<?php echo $website->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
-				  <label for="selected_sites_<?php echo $website->id; ?>">
-								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+				<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+				  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo intval($website->id); ?>" value="<?php echo intval($website->id); ?>" id="selected_sites_<?php echo intval($website->id); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+				  <label for="selected_sites_<?php echo intval($website->id); ?>">
+								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 				  </label>
 				</div>
 								<?php
 							} else {
 								?>
-			  <div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+			  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 				  <input type="checkbox" disabled="disabled"/>
-				  <label for="selected_sites_<?php echo $website->id; ?>">
-								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+				  <label for="selected_sites_<?php echo intval($website->id); ?>">
+								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 				  </label>
 			  </div>
 								<?php
@@ -162,19 +167,19 @@ class MainWP_UI {
 									}
 								}
 								?>
-							  <div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-								  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo $website->id; ?>" value="<?php echo $website->id; ?>" id="selected_sites_<?php echo $website->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
-								  <label for="selected_sites_<?php echo $website->id; ?>">
-									  <?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+							  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+								  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval($website->id); ?>" value="<?php echo intval($website->id); ?>" id="selected_sites_<?php echo intval($website->id); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+								  <label for="selected_sites_<?php echo intval($website->id); ?>">
+									  <?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 								  </label>
 							  </div>
 								<?php
 							} else {
 								?>
-							  <div title="<?php echo $website->url; ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+							  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 								  <input <?php echo $disabled; ?> type="checkbox" disabled="disabled"/>
-								  <label for="selected_sites_<?php echo $website->id; ?>">
-									<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo $website->url; ?></span>
+								  <label for="selected_sites_<?php echo intval($website->id); ?>">
+									<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 								  </label>
 							  </div>
 								<?php
@@ -259,17 +264,17 @@ class MainWP_UI {
 
 		?>
 		<div class="ui segment right wide sidebar" id="mainwp-documentation-sidebar">
-			<div class="ui header"><?php echo __( 'MainWP Documenation', 'mainwp' ); ?></div>
+			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<?php do_action( 'mainwp_help_sidebar_content' ); ?>
 			<div class="ui hidden divider"></div>
 
-			<a href="https://mainwp.com/help/" class="ui big green fluid button"><?php echo __( 'Help Documentation', 'mainwp' ); ?></a>
+			<a href="https://mainwp.com/help/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
 
 			<div class="ui hidden divider"></div>
 
 			<div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
-				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php echo __( 'Still Need Help?', 'mainwp' ); ?></a>
+				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>">
@@ -351,7 +356,7 @@ class MainWP_UI {
 				<?php
 				while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
-					<option value="<?php echo $website->id; ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
+					<option value="<?php echo intval($website->id); ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
 					<?php
 				}
 				?>

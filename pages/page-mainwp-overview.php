@@ -43,7 +43,7 @@ class MainWP_Overview {
 	}
 
 	function on_admin_menu() {
-		if ( MainWP_Utility::isAdmin() ) {
+		if ( MainWP_Utility::is_admin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
 			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(
@@ -217,7 +217,7 @@ class MainWP_Overview {
 
 		<div id="mainwp-dashboard-info-box">
 			<?php
-			if ( empty( $current_wp_id ) && MainWP_Twitter::enabledTwitterMessages() ) {
+			if ( empty( $current_wp_id ) && MainWP_Twitter::enabled_twitter_messages() ) {
 				$filter = array(
 					'upgrade_everything',
 					'upgrade_all_wp_core',
@@ -225,16 +225,16 @@ class MainWP_Overview {
 					'upgrade_all_themes',
 				);
 				foreach ( $filter as $what ) {
-					$twitters = MainWP_Twitter::getTwitterNotice( $what );
+					$twitters = MainWP_Twitter::get_twitter_notice( $what );
 
 					if ( is_array( $twitters ) ) {
 						foreach ( $twitters as $timeid => $twit_mess ) {
 							if ( ! empty( $twit_mess ) ) {
-								$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+								$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 								if ( ! empty( $sendText) ) {
 									?>
 									<div class="mainwp-tips ui info message twitter" style="margin:0">
-										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 									</div>
 									<?php
 								}
@@ -283,9 +283,10 @@ class MainWP_Overview {
 			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
 
 		<div class="ui modal" id="mainwp-overview-screen-options-modal">
-			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="content ui form">
 				<form method="POST" action="">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
 					<?php echo MainWP_UI::render_screen_options( false ); ?>
 			</div>

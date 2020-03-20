@@ -91,7 +91,7 @@ class MainWP_Manage_Sites {
 		add_submenu_page(
 			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
 				MainWP_Site_Open::get_class_name(),
-				'renderRestore',
+				'render_restore',
 			)
 		);
 
@@ -190,18 +190,19 @@ class MainWP_Manage_Sites {
 
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
-			<div class="header"><?php echo __( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 					<div class="scrolling content ui form">
 						<form method="POST" action="" id="manage-sites-screen-options-form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 							<div class="ten wide column">
 										<div class="ui info message">
 											<ul>
-												<li><?php echo __( 'Based on your Dashboard server default large numbers can severely impact page load times.', 'mainwp' ); ?></li>
-												<li><?php echo __( 'Do not add commas for thousands (ex 1000).', 'mainwp' ); ?></li>
-												<li><?php echo __( '-1 to default to All of your Child Sites.', 'mainwp' ); ?></li>
+												<li><?php esc_html_e( 'Based on your Dashboard server default large numbers can severely impact page load times.', 'mainwp' ); ?></li>
+												<li><?php esc_html_e( 'Do not add commas for thousands (ex 1000).', 'mainwp' ); ?></li>
+												<li><?php esc_html_e( '-1 to default to All of your Child Sites.', 'mainwp' ); ?></li>
 											</ul>
 
 										</div>
@@ -246,8 +247,8 @@ class MainWP_Manage_Sites {
 							</div>
 					</div>
 					<div class="actions">
-						<input type="submit" class="ui green button" name="submit" id="submit" value="<?php echo __( 'Save Settings', 'mainwp' ); ?>" />
-						<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+						<input type="submit" class="ui green button" name="submit" id="submit" value="<?php esc_html_e( 'Save Settings', 'mainwp' ); ?>" />
+						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 					</div>
 				</form>
 			</div>
@@ -290,19 +291,19 @@ class MainWP_Manage_Sites {
 			<div id="mainwp-add-site-welcome-message" class="ui inverted dimmer">
 				<div class="ui segment" style="width: 60%;">
 					<div class="ui huge header">
-						<?php echo __( 'Let\'s start connecting your WordPress Sites.', 'mainwp' ); ?>
-						<div class="sub header"><?php echo __( 'What is MainWP and How Works', 'mainwp' ); ?></div>
+						<?php esc_html_e( 'Let\'s start connecting your WordPress Sites.', 'mainwp' ); ?>
+						<div class="sub header"><?php esc_html_e( 'What is MainWP and How Works', 'mainwp' ); ?></div>
 					</div>
-					<p><?php echo __( 'The MainWP Dashboard is a WordPress plugin that utilizes a control dashboard for your managed sites. The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.', 'mainwp' ); ?></p>
+					<p><?php esc_html_e( 'The MainWP Dashboard is a WordPress plugin that utilizes a control dashboard for your managed sites. The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.', 'mainwp' ); ?></p>
 					<div class="ui hidden divider"></div>
 					<img class="ui centered image" src="/wp-content/plugins/mainwp/assets/images/mainwp-demo-infographic.png" alt="How MainWP Works">
 					<div class="ui hidden divider"></div>
 					<div class="ui message">
-						<div class="header"><?php echo __( 'MainWP Dashboard requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect.', 'mainwp' ); ?></div>
-						<?php echo __( 'The MainWP Child plugin is used to securely manage multiple WordPress websites from your MainWP Dashboard. This plugin is to be installed on every WordPress site you want to control from your Dashboard. It allows your Dashboard plugin to safely connect to your website and communicate with it while performing requested actions.', 'mainwp' ); ?>
-						<p><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank" class="ui mini button"><?php echo __( 'How to Install MainWP Child Plugin', 'mainwp' ); ?></a> <a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/" target="_blank" class="ui mini button"><?php echo __( 'How to Connect Child Sites', 'mainwp' ); ?></a></p>
+						<div class="header"><?php esc_html_e( 'MainWP Dashboard requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect.', 'mainwp' ); ?></div>
+						<?php esc_html_e( 'The MainWP Child plugin is used to securely manage multiple WordPress websites from your MainWP Dashboard. This plugin is to be installed on every WordPress site you want to control from your Dashboard. It allows your Dashboard plugin to safely connect to your website and communicate with it while performing requested actions.', 'mainwp' ); ?>
+						<p><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank" class="ui mini button"><?php esc_html_e( 'How to Install MainWP Child Plugin', 'mainwp' ); ?></a> <a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/" target="_blank" class="ui mini button"><?php esc_html_e( 'How to Connect Child Sites', 'mainwp' ); ?></a></p>
 					</div>
-					<div class="ui big cancel green button"><?php echo __( 'OK, Let\'s Start!', 'mainwp' ); ?></div>
+					<div class="ui big cancel green button"><?php esc_html_e( 'OK, Let\'s Start!', 'mainwp' ); ?></div>
 				</div>
 
 			</div>
@@ -322,6 +323,7 @@ class MainWP_Manage_Sites {
 			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
 
 			<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
@@ -405,7 +407,7 @@ class MainWP_Manage_Sites {
 					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
 							<option selected value="auto"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-							<option value="1.2"><?php _e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+							<option value="1.2"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
 							<option value="1.x"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
 							<option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
 							<option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
@@ -489,7 +491,7 @@ class MainWP_Manage_Sites {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] ) {
+			if ( isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 				?>
 				<div class="ui modal" id="mainwp-import-sites-modal">
 					<div class="header"><?php esc_html_e( 'Import Sites', 'mainwp' ); ?></div>
@@ -518,6 +520,7 @@ class MainWP_Manage_Sites {
 				<div class="ui segment" id="mainwp-import-sites">
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
 						  <div class="ten wide column">
@@ -568,7 +571,7 @@ class MainWP_Manage_Sites {
 		// Creating a backup
 		$website   = MainWP_DB::Instance()->getWebsiteById( $siteid );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $type, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
@@ -576,7 +579,7 @@ class MainWP_Manage_Sites {
 		$subfolder = MainWP_Utility::removePreSlashSpaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
-		if ( ! MainWP_System::Instance()->isSingleUser() && ( $userid != $website->userid ) ) {
+		if ( ! MainWP_System::Instance()->is_single_user() && ( $userid != $website->userid ) ) {
 			throw new MainWP_Exception( 'Undefined error.' );
 		}
 
@@ -682,7 +685,7 @@ class MainWP_Manage_Sites {
 
 				MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
-				$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
+				$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
 				MainWP_Logger::Instance()->warningForWebsite( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->getMessageExtra() . ')' );
 				$stop = microtime( true );
@@ -712,7 +715,7 @@ class MainWP_Manage_Sites {
 		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
 				// We had some attempts, check if we have information.
-				$temp = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
+				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
 				// ok.
 			}
@@ -724,7 +727,7 @@ class MainWP_Manage_Sites {
 
 						try {
 							// reinitiate the request!
-							$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', array(
+							$information = MainWP_Utility::fetch_url_authed( $website, 'backup', array(
 								'type'                  => $type,
 								'exclude'               => $exclude,
 								'excludebackup'         => $excludebackup,
@@ -954,7 +957,7 @@ class MainWP_Manage_Sites {
 					}
 
 					MainWP_Utility::downloadToFile( MainWP_Utility::getGetDataAuthed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
-					MainWP_Utility::fetchUrlAuthed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
+					MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
 					$backupTaskProgress = MainWP_DB::Instance()->updateBackupTaskProgress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
 			}
@@ -1054,7 +1057,7 @@ class MainWP_Manage_Sites {
 
 	public static function backupDeleteFile( $pSiteId, $pFile ) {
 		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
-		MainWP_Utility::fetchUrlAuthed( $website, 'delete_backup', array( 'del' => $pFile ) );
+		MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
 
 		return true;
 	}
@@ -1063,7 +1066,7 @@ class MainWP_Manage_Sites {
 		$website = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
 
 		MainWP_Utility::endSession();
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
 
 		$status = $information['status'];
 
@@ -1073,7 +1076,7 @@ class MainWP_Manage_Sites {
 			$result['size'] = $information['size'];
 
 			$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
-			$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+			$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 			$subfolder = str_replace( '%type%', $type, $subfolder );
 			$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 			$subfolder = str_replace( '%task%', '', $subfolder );
@@ -1158,7 +1161,7 @@ class MainWP_Manage_Sites {
 		// Creating a backup
 		$website   = MainWP_DB::Instance()->getWebsiteById( $pSiteId );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
-		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::getNiceURL( $website->url ) ), $subfolder );
+		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
 		$subfolder = str_replace( '%type%', $pType, $subfolder );
 		$subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
 		$subfolder = str_replace( '%task%', '', $subfolder );
@@ -1261,7 +1264,7 @@ class MainWP_Manage_Sites {
 
 		MainWP_Logger::Instance()->debugForWebsite( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
 
-		$information = MainWP_Utility::fetchUrlAuthed( $website, 'backup', $params, false, false, false );
+		$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
@@ -1500,22 +1503,22 @@ class MainWP_Manage_Sites {
 
 		self::renderHeader( '' );
 
-		if ( MainWP_Twitter::enabledTwitterMessages() ) {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
 				'upgrade_all_plugins',
 				'upgrade_all_themes',
 				'upgrade_all_wp_core',
 			);
 			foreach ( $filter as $what ) {
-				$twitters = MainWP_Twitter::getTwitterNotice( $what );
+				$twitters = MainWP_Twitter::get_twitter_notice( $what );
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::getTwitToSend( $what, $timeid );
+							$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
 							if ( ! empty( $sendText ) ) {
 								?>
 								<div class="mainwp-tips ui info message twitter" style="margin:0">
-									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+									<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr($what); ?>" twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 								</div>
 								<?php
 							}
@@ -1529,6 +1532,7 @@ class MainWP_Manage_Sites {
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 			<form method="post" class="mainwp-table-container">
+				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php
 				self::$sitesTable->display( $optimize_for_sites_table );
 				self::$sitesTable->clear_items();
@@ -1706,7 +1710,7 @@ class MainWP_Manage_Sites {
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information    = MainWP_Utility::fetchUrlNotAuthed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
+				$information    = MainWP_Utility::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
 
 				if ( isset( $information['wpversion'] ) ) { // Version found - able to add
 					$ret['response'] = 'OK';
@@ -1809,7 +1813,7 @@ class MainWP_Manage_Sites {
 				// do not deactive child on staging site, it will deactive child plugin of source site
 				if ( ! $website->is_staging ) {
 					try {
-						$information = MainWP_Utility::fetchUrlAuthed( $website, 'deactivate' );
+						$information = MainWP_Utility::fetch_url_authed( $website, 'deactivate' );
 					} catch ( MainWP_Exception $e ) {
 						$error = $e->getMessage();
 					}
@@ -1848,8 +1852,8 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
-	public static function handleSettingsPost() {
-		if ( MainWP_Utility::isAdmin() ) {
+	public static function handle_settings_post() {
+		if ( MainWP_Utility::is_admin() ) {
 			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
@@ -1922,7 +1926,7 @@ class MainWP_Manage_Sites {
 				$error    = '';
 				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';
 				try {
-					$information = MainWP_Utility::fetchUrlAuthed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+					$information = MainWP_Utility::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}
@@ -1944,7 +1948,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
 			if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {
 				?>
-				<p><?php echo __( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
 					<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
@@ -1955,7 +1959,7 @@ class MainWP_Manage_Sites {
 				<?php
 			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
 				?>
-				<p><?php echo __( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
 					<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
@@ -1966,7 +1970,7 @@ class MainWP_Manage_Sites {
 				<?php
 			} else {
 				?>
-				<p><?php echo __( 'If you need help with managing child sites, please review following help documents', 'mainwp' ); ?></p>
+				<p><?php esc_html_e( 'If you need help with managing child sites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://mainwp.com/help/docs/manage-child-sites/" target="_blank">Manage Child Sites</a></div>
 					<div class="item"><a href="https://mainwp.com/help/docs/manage-child-sites/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a></div>

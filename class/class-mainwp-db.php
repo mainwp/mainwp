@@ -395,7 +395,7 @@ class MainWP_DB {
 	}
 
 	public function getFirstSyncedSite( $userId = null ) {
-		if ( ( null == $userId ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userId ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
@@ -478,7 +478,7 @@ class MainWP_DB {
 
 	// Database actions
 	public function getWebsitesCount( $userId = null, $all_access = false ) {
-		if ( ( null == $userId ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userId ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
@@ -598,7 +598,7 @@ class MainWP_DB {
 											   $offset = false, $rowcount = false, $extraWhere = null, $for_manager = false,
 											   $extra_view = array( 'favi_icon' ), $is_staging = 'no' ) {
 		$where = '';
-		if ( MainWP_System::Instance()->isMultiUser() ) {
+		if ( MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
 		}
@@ -675,7 +675,7 @@ class MainWP_DB {
 		}
 
 		$where = '';
-		if ( MainWP_System::Instance()->isMultiUser() ) {
+		if ( MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
 		}
@@ -815,7 +815,7 @@ class MainWP_DB {
 	}
 
 	public function getGroupByNameForUser( $name, $userid = null ) {
-		if ( ( null == $userid ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userid ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
@@ -845,7 +845,7 @@ class MainWP_DB {
 
 	public function getGroupsForManageSites() {
 		$where = ' 1 ';
-		if ( MainWP_System::Instance()->isMultiUser() ) {
+		if ( MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
@@ -862,7 +862,7 @@ class MainWP_DB {
 
 	public function getGroupsForCurrentUser() {
 		$where = ' 1 ';
-		if ( MainWP_System::Instance()->isMultiUser() ) {
+		if ( MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
@@ -882,7 +882,7 @@ class MainWP_DB {
 	}
 
 	public function getGroupsAndCount( $userid = null, $for_manager = false ) {
-		if ( ( null == $userid ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userid ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
@@ -913,7 +913,7 @@ class MainWP_DB {
 	}
 
 	public function getNotEmptyGroups( $userid = null, $enableOfflineSites = true ) {
-		if ( ( null == $userid ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userid ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
@@ -998,7 +998,7 @@ class MainWP_DB {
 	}
 
 	public function getWebsitesByIds( $ids, $userId = null ) {
-		if ( ( null == $userId ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userId ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
@@ -1011,7 +1011,7 @@ class MainWP_DB {
 		if ( empty( $ids ) ) {
 			return array();
 		}
-		if ( ( null == $userId ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userId ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
@@ -1078,7 +1078,7 @@ class MainWP_DB {
 	}
 
 	public function getSQLWebsitesByGroupName( $groupname, $userid = null ) {
-		if ( ( null == $userid ) && MainWP_System::Instance()->isMultiUser() ) {
+		if ( ( null == $userid ) && MainWP_System::Instance()->is_multi_user() ) {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
@@ -1436,7 +1436,7 @@ class MainWP_DB {
 	}
 
 	public function getBackupTasksForUser( $orderBy = 'name' ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			return $this->getBackupTasks( null, $orderBy );
 		}
 
@@ -1647,7 +1647,7 @@ class MainWP_DB {
 
 	public function getUserNotificationEmail( $userid ) {
 		$theUserId = $userid;
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			$theUserId = 0;
 		}
 		$user_email = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT user_email FROM ' . $this->tableName( 'users' ) . ' WHERE userid = %d', $theUserId ) );
@@ -1663,7 +1663,7 @@ class MainWP_DB {
 		global $current_user;
 
 		if ( empty( $current_user ) ) {
-			if ( MainWP_System::Instance()->isSingleUser() ) {
+			if ( MainWP_System::Instance()->is_single_user() ) {
 				$userid = 0;
 			} else {
 				return false;
@@ -1676,7 +1676,7 @@ class MainWP_DB {
 	}
 
 	public function getUserExtensionByUserId( $userid ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::Instance()->is_single_user() ) {
 			$userid = 0;
 		}
 
@@ -1716,7 +1716,7 @@ class MainWP_DB {
 		}
 
 		if ( null == $userid ) {
-			if ( MainWP_System::Instance()->isSingleUser() ) {
+			if ( MainWP_System::Instance()->is_single_user() ) {
 				$userid = '0';
 			} else {
 				global $current_user;

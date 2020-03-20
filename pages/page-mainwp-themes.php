@@ -262,7 +262,7 @@ class MainWP_Themes {
 	}
 
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
 		$selected_sites  = array();
 		$selected_groups = array();
 
@@ -274,7 +274,7 @@ class MainWP_Themes {
 			}
 		}
 
-		$cachedResult = MainWP_Cache::getCachedResult( 'Themes' );
+		$cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
 		self::renderHeader( 'Manage' );
 		?>
@@ -358,7 +358,7 @@ class MainWP_Themes {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 
@@ -393,7 +393,7 @@ class MainWP_Themes {
 	}
 
 	public static function renderTable( $keyword, $status, $groups, $sites ) {
-		MainWP_Cache::initCache( 'Themes' );
+		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new stdClass();
 		$output->errors = array();
@@ -529,7 +529,7 @@ class MainWP_Themes {
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -539,7 +539,7 @@ class MainWP_Themes {
 			}
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Themes', array(
 				'keyword' => $keyword,
 				'status'  => $status,
@@ -586,7 +586,7 @@ class MainWP_Themes {
 				'result'       => $newOutput,
 				'bulk_actions' => $bulkActions,
 			);
-			MainWP_Cache::addResult( 'Themes', $result );
+			MainWP_Cache::add_result( 'Themes', $result );
 
 			return $result;
 		}
@@ -688,7 +688,7 @@ class MainWP_Themes {
 				'bulk_actions' => $bulkActions,
 			);
 
-			MainWP_Cache::addResult( 'Themes', $result );
+			MainWP_Cache::add_result( 'Themes', $result );
 			return $result;
 	}
 
@@ -742,7 +742,7 @@ class MainWP_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,
@@ -868,6 +868,7 @@ class MainWP_Themes {
 					</div>
 					<div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
 					<form id="theme-filter" method="post">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="mainwp-browse-themes content-filterable hide-if-upload"></div>
 						<div class="theme-install-overlay wp-full-overlay expanded"></div>
 					</form>
@@ -1183,7 +1184,7 @@ class MainWP_Themes {
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 					}
 					echo '<div class="ui hidden divider"></div>';
 				}

@@ -447,7 +447,7 @@ class MainWP_Post {
 			return;
 		}
 
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 
 		$selected_sites  = array();
 		$selected_groups = array();
@@ -536,7 +536,7 @@ class MainWP_Post {
 	}
 
 	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Post' );
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 
 		?>
@@ -673,7 +673,7 @@ class MainWP_Post {
 			<tbody id="mainwp-posts-list">
 		<?php
 		if ( $cached ) {
-			MainWP_Cache::echoBody( 'Post' );
+			MainWP_Cache::echo_body( 'Post' );
 		} else {
 			self::renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
 		}
@@ -708,7 +708,7 @@ class MainWP_Post {
 	}
 
 	public static function renderTableBody( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
-		MainWP_Cache::initCache( 'Post' );
+		MainWP_Cache::init_cache( 'Post' );
 
 		$dbwebsites = array();
 		if ( '' !== $sites ) {
@@ -798,7 +798,7 @@ class MainWP_Post {
 			), $output );
 		}
 
-		MainWP_Cache::addContext(
+		MainWP_Cache::add_context(
 			'Post', array(
 				'count'      => $output->posts,
 				'keyword'    => $keyword,
@@ -812,7 +812,7 @@ class MainWP_Post {
 		);
 
 		if ( 0 === $output->posts ) {
-			MainWP_Cache::addBody( 'Post', '' );
+			MainWP_Cache::add_body( 'Post', '' );
 			return;
 		}
 	}
@@ -888,7 +888,7 @@ class MainWP_Post {
 					}
 					?>
 					"/>
-					<input class="websiteId" type="hidden" name="id" value="<?php echo $website->id; ?>"/>
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>"/>
 
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
 
@@ -896,7 +896,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
+							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval($website->id); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
 										 <?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -964,7 +964,7 @@ class MainWP_Post {
 
 								<?php if ( 'publish' === $post['status'] ) : ?>
 									<a class="item post_submitunpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-									<a class="item mainwp-may-hide-referrer" href="<?php echo $website->url . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-may-hide-referrer" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $post['id'] ); ?>" target="_blank" ><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 								<?php endif; ?>
 
 								<?php if ( 'trash' === $post['status'] ) : ?>
@@ -989,7 +989,7 @@ class MainWP_Post {
 				$newOutput = ob_get_clean();
 				echo $newOutput;
 
-				MainWP_Cache::addBody( 'Post', $newOutput );
+				MainWP_Cache::add_body( 'Post', $newOutput );
 				$output->posts ++;
 			}
 			unset( $posts );
@@ -1026,7 +1026,7 @@ class MainWP_Post {
 
 		if ( is_serialized( $entry['meta_value'] ) ) {
 			if ( is_serialized_string( $entry['meta_value'] ) ) {
-				$entry['meta_value'] = maybe_unserialize( $entry['meta_value'] );
+				$entry['meta_value'] = MainWP_Utility::maybe_unserialyze( $entry['meta_value'] );
 			} else {
 				--$count;
 				return '';
@@ -1464,7 +1464,7 @@ class MainWP_Post {
 		}
 
 		if ( ! $post_type_object || $input_type !== $post_type || ( 'bulkpost' !== $post_type && 'bulkpage' !== $post_type ) ) {
-			echo __( 'Invalid post type.', 'mainwp' );
+			esc_html_e( 'Invalid post type.', 'mainwp' );
 			return;
 		}
 
@@ -1586,7 +1586,7 @@ class MainWP_Post {
 					<div class="field">
 						<label><?php esc_html_e( 'Excerpt', 'mainwp' ); ?></label>
 							<textarea rows="1" name="excerpt" id="excerpt"></textarea>
-						<em><?php echo __( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme.', 'mainwp' ); ?></em>
+						<em><?php esc_html_e( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme.', 'mainwp' ); ?></em>
 					</div>
 					<div class="field">
 						<label><?php esc_html_e( 'Tags', 'mainwp' ); ?></label>
@@ -1943,8 +1943,10 @@ class MainWP_Post {
 						$_post = get_post( $id );
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
-							$selected_sites  = unserialize( base64_decode( get_post_meta( $id, '_selected_sites', true ) ) );
-							$selected_groups = unserialize( base64_decode( get_post_meta( $id, '_selected_groups', true ) ) );
+							$val  = get_post_meta( $id, '_selected_sites', true );
+							$selected_sites	= MainWP_Utility::maybe_unserialyze( $val );
+							$val = get_post_meta( $id, '_selected_groups', true );
+							$selected_groups	= MainWP_Utility::maybe_unserialyze( $val );
 
 							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) );
 
@@ -2122,18 +2124,18 @@ class MainWP_Post {
 
 							if ( ! empty( $countSites ) ) {
 								$seconds = ( time() - $startTime );
-								MainWP_Twitter::updateTwitterInfo( 'new_post', $countSites, $seconds, $countRealItems, $startTime, 1 );
+								MainWP_Twitter::update_twitter_info( 'new_post', $countSites, $seconds, $countRealItems, $startTime, 1 );
 							}
 
-							if ( MainWP_Twitter::enabledTwitterMessages() ) {
-								$twitters = MainWP_Twitter::getTwitterNotice( 'new_post' );
+							if ( MainWP_Twitter::enabled_twitter_messages() ) {
+								$twitters = MainWP_Twitter::get_twitter_notice( 'new_post' );
 								if ( is_array( $twitters ) ) {
 									foreach ( $twitters as $timeid => $twit_mess ) {
 										if ( ! empty( $twit_mess ) ) {
-											$sendText = MainWP_Twitter::getTwitToSend( 'new_post', $timeid );
+											$sendText = MainWP_Twitter::get_twit_to_send( 'new_post', $timeid );
 											?>
 										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::genTwitterButton( $sendText ); ?>
+											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
 										</div>
 											<?php
 										}
@@ -2226,11 +2228,11 @@ class MainWP_Post {
 
 		if ( 'bulk' === $prefix ) {
 			$opt           = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
-			$selected_cats = unserialize( base64_decode( $opt ) );
+			$selected_cats = MainWP_Utility::maybe_unserialyze( $opt );
 		} else {
 			$opt = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', $keyword_option );
 			if ( is_array( $opt ) && is_array( $opt[ $prefix ] ) ) {
-				$selected_cats = unserialize( base64_decode( $opt[ $prefix ]['selected_cats'] ) );
+				$selected_cats = MainWP_Utility::maybe_unserialyze( $opt[ $prefix ]['selected_cats'] );
 			}
 		}
 		$selected_cats = is_array( $selected_cats ) ? $selected_cats : array();
@@ -2294,7 +2296,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'post_action', array(
 					'action'     => 'get_edit',
 					'id'         => $postId,
@@ -2314,7 +2316,8 @@ class MainWP_Post {
 		} else {
 			$ret = self::newPost( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
-				update_post_meta( $ret['id'], '_selected_sites', base64_encode( serialize( array( $websiteId ) ) ) );
+				// to support edit post
+				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
 			wp_send_json( $ret );
@@ -2486,10 +2489,6 @@ class MainWP_Post {
 		return $ret;
 	}
 
-	public static function testPost() {
-		do_action( 'mainwp-do-action', 'test_post' );
-	}
-
 	public static function setTerms( $postId, $cat_id, $taxonomy, $websiteIdEnc ) {
 		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
 			return;
@@ -2505,7 +2504,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'set_terms', array(
 					'id'         => base64_encode( $postId ),
 					'terms'      => base64_encode( $cat_id ),
@@ -2532,7 +2531,7 @@ class MainWP_Post {
 			return;
 		}
 		try {
-			MainWP_Utility::fetchUrlAuthed(
+			MainWP_Utility::fetch_url_authed(
 				$website, 'insert_comment', array(
 					'id'         => $postId,
 					'comments'   => base64_encode( serialize( $comments ) ),

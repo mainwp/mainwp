@@ -9,7 +9,7 @@
  * Class MainWP_Cache
  */
 class MainWP_Cache {
-
+  
 	/**
 	 * Method init_session()
 	 * 
@@ -34,7 +34,7 @@ class MainWP_Cache {
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
 	}
-
+  
 	/**
 	 * Method add_context()
 	 * 
@@ -92,7 +92,6 @@ class MainWP_Cache {
 
 		return $cachedSearch;
 	}
-
 
 	/**
 	 * Method echo_body()

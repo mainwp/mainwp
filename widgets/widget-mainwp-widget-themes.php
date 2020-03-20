@@ -92,7 +92,7 @@ class MainWP_Widget_Themes {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php _e('Themes', 'mainwp'); ?>
+					<?php esc_html_e('Themes', 'mainwp'); ?>
 					<div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -149,10 +149,10 @@ class MainWP_Widget_Themes {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated content themesAction">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php echo __( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . __( ' theme on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_html_e( 'Activate the ', 'mainwp') . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . __( ' theme on the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
 							<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php echo __( 'Delete the ', 'mainwp') . wp_strip_all_tags ( $inactive_themes[ $i ]['name'] ) . __( ' theme from the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_html_e( 'Delete the ', 'mainwp') . wp_strip_all_tags ( $inactive_themes[ $i ]['name'] ) . __( ' theme from the child site.', 'mainwp'); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">
@@ -218,7 +218,7 @@ class MainWP_Widget_Themes {
 		}
 
 		try {
-			$information = MainWP_Utility::fetchUrlAuthed(
+			$information = MainWP_Utility::fetch_url_authed(
 				$website, 'theme_action', array(
 					'action' => $pAction,
 					'theme'  => $theme,

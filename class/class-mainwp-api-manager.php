@@ -309,7 +309,7 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->testloginapi(
+		return MainWP_Api_Manager_Key::instance()->test_login_api(
 			array(
 				'username'   => $username,
 				'password'   => $password,
@@ -334,7 +334,7 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->purchasesoftware(
+		return MainWP_Api_Manager_Key::instance()->purchase_software(
 			array(
 				'username'   => $username,
 				'password'   => $password,
@@ -360,7 +360,7 @@ class MainWP_Api_Manager {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->getpurchasedsoftware(
+		return MainWP_Api_Manager_Key::instance()->get_purchased_software(
 			array(
 				'username'   => $username,
 				'password'   => $password,
@@ -405,7 +405,7 @@ class MainWP_Api_Manager {
 					'platform'           => $this->domain,
 				);
 
-				$activate_results            = json_decode( MainWP_Api_Manager_Key::instance()->grabapikey( $args ), true );
+				$activate_results            = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );
 				$options['api_key']          = '';
 				$options['activation_email'] = '';
 				$options['activated_key']    = 'Deactivated';

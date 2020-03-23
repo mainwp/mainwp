@@ -108,7 +108,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
-				if ( MainWP_Sync::syncSite( $website ) ) {
+				if ( MainWP_Sync::sync_site( $website ) ) {
 					WP_CLI::success( '  Sync succeeded' );
 				} else {
 					WP_CLI::warning( '  Sync failed' );
@@ -445,7 +445,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . print_r( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}
@@ -706,7 +706,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . print_r( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}

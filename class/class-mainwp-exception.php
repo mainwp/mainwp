@@ -31,11 +31,11 @@ class MainWP_Exception extends Exception {
 	}
 
 	/**
-	 * Method getMessageExtra()
+	 * Method get_message_extra()
 	 *
 	 * @return $messageExtra
 	 */
-	public function getMessageExtra() {
+	public function get_message_extra() {
 		return $this->messageExtra;
 	}
 

@@ -286,7 +286,7 @@ class MainWP_Server_Information {
 						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Extensions', 'mainwp' ); ?></div></td>
 					</tr>
 				<?php
-				$extensions       = MainWP_Extensions::loadExtensions();
+				$extensions       = MainWP_Extensions::load_extensions();
 				$extensions_slugs = array();
 				if ( 0 == count( $extensions ) ) {
 					echo '<tr><td colspan="4">' . esc_html_( 'No installed extensions', 'mainwp' ) . '</td></tr>';
@@ -472,7 +472,7 @@ class MainWP_Server_Information {
 					<?php self::display_mainwp_options(); ?>
 					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
 					<?php
-					$all_extensions = MainWP_Extensions_View::getAvailableExtensions();
+					$all_extensions = MainWP_Extensions_View::get_available_extensions();
 					$all_plugins    = get_plugins();
 					foreach ( $all_plugins as $slug => $plugin ) {
 						if ( isset( $all_extensions[ dirname( $slug ) ] ) ) {
@@ -569,7 +569,7 @@ class MainWP_Server_Information {
 
 	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
-		$latest  = self::getMainwpVersion();
+		$latest  = self::get_mainwp_version();
 		if ( $current == $latest ) {
 			return '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>';
 		} else {
@@ -1356,20 +1356,20 @@ class MainWP_Server_Information {
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
 			if ( $_REQUEST['actionlogs_status'] != MainWP_Logger::DISABLED ) {
-				MainWP_Logger::instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
-			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->getLogText( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
 
 			if ( $_REQUEST['actionlogs_status'] == MainWP_Logger::DISABLED ) {
-				MainWP_Logger::instance()->setLogPriority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST['actionlogs_status'] );
 		}
 
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
-			MainWP_Logger::clearLog();
+			MainWP_Logger::clear_log();
 		}
 
 		$enabled = get_option( 'mainwp_actionlogs' );
@@ -1428,7 +1428,7 @@ class MainWP_Server_Information {
 					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
 				</form>
 			</div>
-			<div style="padding: 1em;"><?php MainWP_Logger::showLog(); ?></div>
+			<div style="padding: 1em;"><?php MainWP_Logger::show_log(); ?></div>
 		</div>
 		<?php
 		self::render_footer( 'Action logs' );
@@ -1495,7 +1495,7 @@ class MainWP_Server_Information {
 			'mainwp_maximumInstallUpdateRequests'    => __( 'Minimum simultaneous install/update requests', 'mainwp' ),
 		);
 
-		if ( ! MainWP_Extensions::isExtensionAvailable( 'mainwp-comments-extension' ) ) {
+		if ( ! is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
 			unset( $mainwp_options['mainwp_maximumComments'] );
 		}
 

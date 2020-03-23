@@ -236,11 +236,11 @@ class MainWP_Widget_Plugins {
 	}
 
 	/**
-	 * Method deletePlugin()
+	 * Method delete_plugin()
 	 *
 	 * Fire off action delete & display result
 	 */
-	public static function deletePlugin() {
+	public static function delete_plugin() {
 		self::action( 'delete' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been permanently deleted!', 'mainwp' ) ) ) );
 	}

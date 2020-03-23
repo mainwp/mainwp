@@ -36,7 +36,7 @@ class MainWP_Install_Bulk {
 	}
 
 	// Renders the upload sub part
-	public static function renderUpload( $type ) {
+	public static function render_upload( $type ) {
 		$title             = ( $type == 'plugin' ) ? 'Plugins' : 'Themes';
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
 		$cls               = $favorites_enabled ? 'favorites-extension-enabled ' : '';
@@ -81,7 +81,7 @@ class MainWP_Install_Bulk {
 		<?php
 	}
 
-	public static function prepareInstall() {
+	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		if ( ! isset( $_POST['url'] ) ) {
@@ -171,7 +171,7 @@ class MainWP_Install_Bulk {
 		return $post_data;
 	}
 
-	public static function performInstall() {
+	public static function perform_install() {
 		MainWP_Utility::end_session();
 
 		// Fetch info..
@@ -199,14 +199,14 @@ class MainWP_Install_Bulk {
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
-			'InstallPluginTheme_handler',
+			'install_plugin_theme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
 		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
-	public static function prepareUpload() {
+	public static function prepare_upload() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		$output          = array();
@@ -263,7 +263,7 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
-	public static function performUpload() {
+	public static function perform_upload() {
 		MainWP_Utility::end_session();
 
 		// Fetch info..
@@ -291,14 +291,14 @@ class MainWP_Install_Bulk {
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
 			self::get_class_name(),
-			'InstallPluginTheme_handler',
+			'install_plugin_theme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
 		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
-	public static function cleanUpload() {
+	public static function clean_upload() {
 		$path = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 		if ( file_exists( $path ) ) {
 			$dh = opendir( $path );
@@ -315,7 +315,7 @@ class MainWP_Install_Bulk {
 		die( wp_json_encode( array( 'ok' => true ) ) );
 	}
 
-	public static function InstallPluginTheme_handler( $data, $website, &$output ) {
+	public static function install_plugin_theme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );

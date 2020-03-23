@@ -885,7 +885,7 @@ class MainWP_Setup_Wizard {
 
 	public static function ajax_save_extensions_api_login() {
 		MainWP_Cache::init_session();
-		MainWP_Extensions::saveExtensionsApiLogin();
+		MainWP_Extensions::save_extensions_api_login();
 		die();
 	}
 
@@ -909,7 +909,7 @@ class MainWP_Setup_Wizard {
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {
 				$all_available_exts = array();
-				foreach ( MainWP_Extensions_View::getAvailableExtensions() as $ext ) {
+				foreach ( MainWP_Extensions_View::get_available_extensions() as $ext ) {
 					$all_available_exts[ $ext['product_id'] ] = $ext;
 				}
 				$purchased_data = ( isset( $result['purchased_data'] ) && is_array( $result['purchased_data'] ) ) ? $result['purchased_data'] : array();
@@ -964,7 +964,7 @@ class MainWP_Setup_Wizard {
 			die( 0 );
 		}
 
-		$return = MainWP_Extensions::installPlugin( $_POST['download_link'], true );
+		$return = MainWP_Extensions::install_plugin( $_POST['download_link'], true );
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
 
@@ -1008,7 +1008,7 @@ class MainWP_Setup_Wizard {
 		$ext_installed = false;
 		$ext_activated = false;
 
-		$installed_exts = MainWP_Extensions::loadExtensions();
+		$installed_exts = MainWP_Extensions::load_extensions();
 
 		foreach ( $installed_exts as $ext ) {
 			if ( isset( $ext['product_id'] ) && $ext_product_id == $ext['product_id'] ) {

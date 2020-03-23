@@ -368,8 +368,8 @@ class MainWP_Manage_Sites_View {
 
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
-		$working_extensions      = MainWP_Extensions::getExtensions();
-		$available_exts_data     = MainWP_Extensions_View::getAvailableExtensions();
+		$working_extensions      = MainWP_Extensions::get_extensions();
+		$available_exts_data     = MainWP_Extensions_View::get_available_extensions();
 		if ( 0 < count( $working_extensions ) && 0 < count( $sync_extensions_options ) ) {
 			?>
 
@@ -1351,7 +1351,7 @@ class MainWP_Manage_Sites_View {
 			<?php
 			// Hook in MainWP Sucuri Extension
 			if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
-				if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-sucuri-extension' ) ) {
+				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
 					do_action( 'mainwp-sucuriscan-sites', $website );
 				}
 			}
@@ -1360,7 +1360,7 @@ class MainWP_Manage_Sites_View {
 			<?php
 			// Hook in MainWP Wordfence Extension
 			if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
-				if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-wordfence-extension' ) ) {
+				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
 					do_action( 'mainwp-wordfence-sites', $website );
 				}
 			}
@@ -1582,7 +1582,7 @@ class MainWP_Manage_Sites_View {
 		if ( MainWP_Utility::can_edit_website( $website ) ) {
 			try {
 				// Try to refresh stats first;
-				if ( MainWP_Sync::syncSite( $website, true ) ) {
+				if ( MainWP_Sync::sync_site( $website, true ) ) {
 					return true;
 				}
 
@@ -1626,7 +1626,7 @@ class MainWP_Manage_Sites_View {
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
 							)
 						);
-						MainWP_Sync::syncInformationArray( $website, $information );
+						MainWP_Sync::sync_information_array( $website, $information );
 						return true;
 					} else {
 						throw new Exception( __( 'Undefined error!', 'mainwp' ) );
@@ -1634,7 +1634,7 @@ class MainWP_Manage_Sites_View {
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
-					throw new Exception( 'HTTP error' . ( null != $e->getMessageExtra() ? ' - ' . $e->getMessageExtra() : '' ) );
+					throw new Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
 					$error = sprintf( __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to your MainWP Dashboard afterward. If you continue experiencing this issue, check the child site for %1$sknown plugin conflicts%2$s, or check the %3$sMainWP Community%4$s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/t/known-plugin-conflicts/402">', '</a>', '<a href="https://meta.mainwp.com/c/community-support/5">', '</a>' );
 					throw new Exception( $error );
@@ -1771,14 +1771,14 @@ class MainWP_Manage_Sites_View {
 						}
 						do_action( 'mainwp_added_new_site', $id ); // must before get_website_by_id to update team control permisions
 						$website = MainWP_DB::instance()->get_website_by_id( $id );
-						MainWP_Sync::syncInformationArray( $website, $information );
+						MainWP_Sync::sync_information_array( $website, $information );
 					} else {
 						$error = __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
-					$error = 'HTTP error' . ( null != $e->getMessageExtra() ? ' - ' . $e->getMessageExtra() : '' );
+					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
 					$error = __( 'MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.', 'mainwp' );
 				} else {

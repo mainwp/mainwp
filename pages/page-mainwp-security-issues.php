@@ -242,7 +242,7 @@ class MainWP_Security_Issues {
 	 *
 	 * Fetch stored known Child Site Security Issues from DB that were found during Sync.
 	 */
-	public static function fetchSecurityIssues() {
+	public static function fetch_security_issues() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
@@ -262,7 +262,7 @@ class MainWP_Security_Issues {
 	 *
 	 * Fix the selected security issue.
 	 */
-	public static function fixSecurityIssue() {
+	public static function fix_security_issue() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
@@ -274,7 +274,7 @@ class MainWP_Security_Issues {
 
 		$information = MainWP_Utility::fetch_url_authed( $website, 'securityFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
+			MainWP_Sync::sync_information_array( $website, $information['sync'] );
 			unset( $information['sync'] );
 		}
 
@@ -286,7 +286,7 @@ class MainWP_Security_Issues {
 	 *
 	 * Un-Fix the selected security issue.
 	 */
-	public static function unfixSecurityIssue() {
+	public static function unfix_security_issue() {
 		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 			return '';
 		}
@@ -298,7 +298,7 @@ class MainWP_Security_Issues {
 
 		$information = MainWP_Utility::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
+			MainWP_Sync::sync_information_array( $website, $information['sync'] );
 			unset( $information['sync'] );
 		}
 

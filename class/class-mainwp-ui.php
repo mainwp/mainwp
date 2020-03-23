@@ -526,7 +526,7 @@ class MainWP_UI {
 		<?php
 	}
 
-	public static function renderImage( $img, $alt, $class, $height = null ) {
+	public static function render_image( $img, $alt, $class, $height = null ) {
 		?>
 		<img src="<?php echo esc_attr( MAINWP_PLUGIN_URL . 'assets/' . $img ); ?>" class="<?php echo esc_attr( $class ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo esc_attr( null == $height ? '' : 'height="' . $height . '"'  ); ?> />
 		<?php

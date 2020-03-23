@@ -39,7 +39,7 @@ class MainWP_Twitter {
 		}
 	}
 
-	public static function randomWord() {
+	public static function random_word() {
 		$words = array(
 			__( 'Awesome', 'mainwp' ),
 			__( 'Fabulous', 'mainwp' ),
@@ -60,7 +60,7 @@ class MainWP_Twitter {
 		}
 
 		$message    = '';
-		$first_word = self::randomWord();
+		$first_word = self::random_word();
 		switch ( $what ) {
 			case 'upgrade_everything':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );

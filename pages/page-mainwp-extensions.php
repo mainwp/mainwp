@@ -13,7 +13,7 @@ class MainWP_Extensions {
 
 	public static $activation_info = null;
 
-	public static function getPluginSlug( $pSlug ) {
+	public static function get_plugin_slug( $pSlug ) {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
@@ -29,7 +29,7 @@ class MainWP_Extensions {
 		return $pSlug;
 	}
 
-	public static function getSlugs() {
+	public static function get_slugs() {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
@@ -87,7 +87,7 @@ class MainWP_Extensions {
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 
-		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::get_class_name(), 'genApiPassword' ), 10, 3 );
+		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::get_class_name(), 'gen_api_password' ), 10, 3 );
 	}
 
 	public static function init_menu() {
@@ -308,7 +308,7 @@ class MainWP_Extensions {
 		}
 	}
 
-	public static function loadExtensions() {
+	public static function load_extensions() {
 		if ( ! isset( self::$extensions ) ) {
 			self::$extensions = get_option( 'mainwp_extensions' );
 			if ( ! is_array( self::$extensions ) ) {
@@ -320,12 +320,12 @@ class MainWP_Extensions {
 		return self::$extensions;
 	}
 
-	public static function getExtensions( $args = array() ) {
+	public static function get_extensions( $args = array() ) {
 		if ( ! is_array( $args ) ) {
 			$args = array();
 		}
 
-		$extensions = self::loadExtensions();
+		$extensions = self::load_extensions();
 
 		$return = array();
 		foreach ( $extensions as $extension ) {
@@ -349,7 +349,7 @@ class MainWP_Extensions {
 		return $return;
 	}
 
-	public static function getExtensionsPageSlug() {
+	public static function get_extensions_page_slug() {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
@@ -363,7 +363,7 @@ class MainWP_Extensions {
 		return $pageSlugs;
 	}
 
-	public static function genApiPassword( $length = 12, $special_chars = true, $extra_special_chars = false ) {
+	public static function gen_api_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		return MainWP_Api_Manager_Password_Management::generate_password( $length, $special_chars, $extra_special_chars );
 	}
 
@@ -405,30 +405,30 @@ class MainWP_Extensions {
 		<?php
 	}
 
-	public static function initAjaxHandlers() {
-		MainWP_Post_Handler::instance()->add_action( 'mainwp_extension_add_menu', array( self::get_class_name(), 'ajaxAddExtensionMenu' ) );
+	public static function init_ajax_handlers() {
+		MainWP_Post_Handler::instance()->add_action( 'mainwp_extension_add_menu', array( self::get_class_name(), 'ajax_add_extension_menu' ) );
 		MainWP_Post_Handler::instance()->add_action(
 			'mainwp_extension_remove_menu', array(
 				self::get_class_name(),
-				'removeExtensionMenuFromMainWPMenu',
+				'remove_extension_menu_from_mainwp_menu',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
 			'mainwp_extension_activate', array(
 				self::get_class_name(),
-				'activateExtension',
+				'activate_extension',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
 			'mainwp_extension_deactivate', array(
 				self::get_class_name(),
-				'deactivateExtension',
+				'deactivate_extension',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
 			'mainwp_extension_testextensionapilogin', array(
 				self::get_class_name(),
-				'testExtensionsApiLogin',
+				'test_extensions_api_login',
 			)
 		);
 
@@ -436,50 +436,50 @@ class MainWP_Extensions {
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_grabapikey', array(
 					self::get_class_name(),
-					'grabapikeyExtension',
+					'grab_extension_api_key',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_saveextensionapilogin', array(
 					self::get_class_name(),
-					'saveExtensionsApiLogin',
+					'save_extensions_api_login',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_getpurchased', array(
 					self::get_class_name(),
-					'getPurchasedExts',
+					'get_purchased_exts',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_downloadandinstall', array(
 					self::get_class_name(),
-					'downloadAndInstall',
+					'download_and_install',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_bulk_activate', array(
 					self::get_class_name(),
-					'bulkActivate',
+					'bulk_activate',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
 				'mainwp_extension_apisslverifycertificate', array(
 					self::get_class_name(),
-					'saveApiSSLVerify',
+					'save_api_ssl_verify',
 				)
 			);
 		}
 	}
 
 
-	public static function ajaxAddExtensionMenu() {
+	public static function ajax_add_extension_menu() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_add_menu' );
-		 self::addExtensionMenu( $_POST['slug'] );
+		 self::add_extension_menu( $_POST['slug'] );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
-	public static function addExtensionMenu( $slug ) {
+	public static function add_extension_menu( $slug ) {
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
 		if ( ! is_array( $snMenuExtensions ) ) {
 			$snMenuExtensions = array();
@@ -493,7 +493,7 @@ class MainWP_Extensions {
 		return true;
 	}
 
-	public static function activateExtension() {
+	public static function activate_extension() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activate' );
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );
@@ -502,7 +502,7 @@ class MainWP_Extensions {
 		wp_send_json( $result );
 	}
 
-	public static function deactivateExtension() {
+	public static function deactivate_extension() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_deactivate' );
 		$api    = dirname( $_POST['slug'] );
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
@@ -510,7 +510,7 @@ class MainWP_Extensions {
 	}
 
 
-	public static function grabapikeyExtension() {
+	public static function grab_extension_api_key() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_grabapikey' );
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
@@ -519,7 +519,7 @@ class MainWP_Extensions {
 		wp_send_json( $result );
 	}
 
-	public static function saveExtensionsApiLogin() {
+	public static function save_extensions_api_login() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_saveextensionapilogin' );
 		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
 
@@ -587,14 +587,14 @@ class MainWP_Extensions {
 		die( wp_json_encode( $return ) );
 	}
 
-	public static function saveApiSSLVerify() {
+	public static function save_api_ssl_verify() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_apisslverifycertificate' );
 		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', intval( $_POST['api_sslverify'] ) );
 		die( wp_json_encode( array( 'saved' => 1 ) ) );
 	}
 
 
-	public static function testExtensionsApiLogin() {
+	public static function test_extensions_api_login() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_testextensionapilogin' );
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
@@ -636,7 +636,7 @@ class MainWP_Extensions {
 	}
 
 
-	public static function getPurchasedExts() {
+	public static function get_purchased_exts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
@@ -655,7 +655,7 @@ class MainWP_Extensions {
 				$map_extensions_group = array();
 				$free_group           = array();
 
-				foreach ( MainWP_Extensions_View::getAvailableExtensions() as $ext ) {
+				foreach ( MainWP_Extensions_View::get_available_extensions() as $ext ) {
 					$all_available_exts[ $ext['product_id'] ]   = $ext;
 					$map_extensions_group[ $ext['product_id'] ] = current( $ext['group'] );
 					if ( isset( $ext['free'] ) && ! empty( $ext['free'] ) ) {
@@ -663,7 +663,7 @@ class MainWP_Extensions {
 					}
 				}
 
-				self::loadExtensions();
+				self::load_extensions();
 
 				$installed_softwares = array();
 				if ( is_array( self::$extensions ) ) {
@@ -678,7 +678,7 @@ class MainWP_Extensions {
 				$not_purchased_exts = array_diff_key( $all_available_exts, $purchased_data );
 				$installing_exts    = array_diff_key( $purchased_data, $installed_softwares );
 
-				$all_groups = MainWP_Extensions_View::getExtensionGroups();
+				$all_groups = MainWP_Extensions_View::get_extension_groups();
 
 				$grouped_exts = array( 'others' => '' );
 
@@ -816,13 +816,13 @@ class MainWP_Extensions {
 		return $r;
 	}
 
-	public static function noSSLFilterFunction( $r, $url ) {
+	public static function no_ssl_filter_function( $r, $url ) {
 		$r['sslverify'] = false;
 
 		return $r;
 	}
 
-	public static function noSSLFilterExtensionUpgrade( $r, $url ) {
+	public static function no_ssl_filter_extension_upgrade( $r, $url ) {
 		if ( ( false !== strpos( $url, 'am_download_file=' ) ) && ( false !== strpos( $url, 'am_email=' ) ) ) {
 			$r['sslverify'] = false;
 		}
@@ -830,24 +830,24 @@ class MainWP_Extensions {
 		return $r;
 	}
 
-	public static function activateLicense() {
+	public static function activate_license() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activatelicense' );
 		$item_id  = isset( $_POST['product_id']) ? intval( $_POST['product_id'] ) : 0;
 		$response = MainWP_Api_Manager::instance()->grab_license_key_by_id( $item_id  );
 		die( wp_json_encode( $response ) );
 	}
 
-	public static function downloadAndInstall() {
+	public static function download_and_install() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_downloadandinstall' );
 
 		ini_set( 'zlib.output_compression', 'Off' );
 
-		$return = self::installPlugin( $_POST['download_link'] );
+		$return = self::install_plugin( $_POST['download_link'] );
 
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
 
-	public static function installPlugin( $url, $activatePlugin = false ) {
+	public static function install_plugin( $url, $activatePlugin = false ) {
 
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
@@ -867,7 +867,7 @@ class MainWP_Extensions {
 		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 
 		if ( '0' === $ssl_verifyhost || 0 == $ssl_api_verifyhost ) {
-			add_filter( 'http_request_args', array( self::get_class_name(), 'noSSLFilterFunction' ), 99, 2 );
+			add_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99, 2 );
 		}
 
 		add_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
@@ -885,7 +885,7 @@ class MainWP_Extensions {
 		remove_filter( 'http_request_args', array( self::get_class_name(), 'http_request_reject_unsafe_urls' ), 99, 2 );
 
 		if ( '0' === $ssl_verifyhost ) {
-			remove_filter( 'http_request_args', array( self::get_class_name(), 'noSSLFilterFunction' ), 99 );
+			remove_filter( 'http_request_args', array( self::get_class_name(), 'no_ssl_filter_function' ), 99 );
 		}
 
 		$error       = null;
@@ -935,7 +935,7 @@ class MainWP_Extensions {
 		return $return;
 	}
 
-	public static function bulkActivate() {
+	public static function bulk_activate() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_bulk_activate' );
 		$plugins = $_POST['plugins'];
 		if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
@@ -947,7 +947,7 @@ class MainWP_Extensions {
 		die( 'FAILED' );
 	}
 
-	public static function removeExtensionMenuFromMainWPMenu() {
+	public static function remove_extension_menu_from_mainwp_menu() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_remove_menu' );
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
 		if ( ! is_array( $snMenuExtensions ) ) {
@@ -989,8 +989,8 @@ class MainWP_Extensions {
 		MainWP_Extensions_View::render( self::$extensions );
 		echo '</div>';
 	}
-
-	public static function isExtensionAvailable( $pAPI ) {
+	
+	public static function is_extension_available( $pAPI ) {
 		$extensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 		if ( isset( $extensions ) && is_array( $extensions ) ) {
 			foreach ( $extensions as $extension ) {
@@ -1003,7 +1003,7 @@ class MainWP_Extensions {
 		return false;
 	}
 
-	public static function isExtensionEnabled( $pluginFile ) {
+	public static function is_extension_enabled( $pluginFile ) {
 		return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
 	}
 
@@ -1015,20 +1015,17 @@ class MainWP_Extensions {
 		return in_array( $slug, $snMenuExtensions );
 	}
 
-	public static function isExtensionActivated( $plugin_slug ) {
-		$extensions = self::getExtensions( array( 'activated' => true ) );
+	public static function is_extension_activated( $plugin_slug ) {
+		$extensions = self::get_extensions( array( 'activated' => true ) );
 		return isset( $extensions[ $plugin_slug ] ) ? true : false;
 	}
 
-	public static function create_nonce_function() {
-	}
-
-	public static function hookVerify( $pluginFile, $key ) {
+	public static function hook_verify( $pluginFile, $key ) {
 		return ( md5( $pluginFile . '-SNNonceAdder' ) == $key );
 	}
 
-	public static function hookGetDashboardSites( $pluginFile, $key ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_get_dashboard_sites( $pluginFile, $key ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return null;
 		}
 
@@ -1043,16 +1040,16 @@ class MainWP_Extensions {
 		return MainWP_DB::instance()->query( $sql );
 	}
 
-	public static function hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
 		return MainWP_Utility::fetch_urls_authed( $dbwebsites, $what, $params, $handle, $output );
 	}
 
-	public static function hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1079,8 +1076,8 @@ class MainWP_Extensions {
 		'ignored_plugins'  => 'ignored_plugins',
 	);
 
-	public static function hookGetDBSites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1127,8 +1124,8 @@ class MainWP_Extensions {
 	 *
 	 * @return array|bool An array of arrays, the inner-array contains the id/url/name/totalsize of the website. False when something goes wrong.
 	 */
-	public static function hookGetSites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1252,8 +1249,8 @@ class MainWP_Extensions {
 	 *
 	 * @return array|bool An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
 	 */
-	public static function hookGetGroups( $pluginFile, $key, $groupid, $for_manager = false ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_get_groups( $pluginFile, $key, $groupid, $for_manager = false ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1303,12 +1300,12 @@ class MainWP_Extensions {
 		return $output;
 	}
 
-	public static function hookManagerGetExtensions() {
+	public static function hook_manager_get_extensions() {
 		return get_option( 'mainwp_manager_extensions' );
 	}
 
-	public static function hookCloneSite( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1372,7 +1369,7 @@ class MainWP_Extensions {
 				if ( $group_id ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $id );
 					if ( MainWP_Utility::can_edit_website( $website ) ) {
-						MainWP_Sync::syncSite( $website, false, false );
+						MainWP_Sync::sync_site( $website, false, false );
 						$group = MainWP_DB::instance()->get_group_by_id( $group_id );
 						if ( MainWP_Utility::can_edit_group( $group ) ) {
 							MainWP_DB::instance()->update_group_site( $group->id, $id );
@@ -1388,8 +1385,8 @@ class MainWP_Extensions {
 		return false;
 	}
 
-	public static function hookDeleteCloneSite( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+	public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 
@@ -1439,9 +1436,9 @@ class MainWP_Extensions {
 	}
 
 
-	public static function hookAddGroup( $pluginFile, $key, $newName ) {
+	public static function hook_add_group( $pluginFile, $key, $newName ) {
 
-		if ( ! self::hookVerify( $pluginFile, $key ) ) {
+		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;
 		}
 

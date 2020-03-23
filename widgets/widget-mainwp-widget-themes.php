@@ -184,11 +184,11 @@ class MainWP_Widget_Themes {
 	}
 
 	/**
-	 * Method deleteTheme()
+	 * Method delete_theme()
 	 *
 	 * Fire off action deactivate & display result
 	 */
-	public static function deleteTheme() {
+	public static function delete_theme() {
 		self::action( 'delete' );
 		die( wp_json_encode( array( 'result' => __( 'Theme has been permanently deleted!', 'mainwp' ) ) ) );
 	}

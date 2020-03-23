@@ -864,7 +864,7 @@ class MainWP_Themes {
 				<div class="ui segment">
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 					<div class="mainwp-upload-theme">
-						<?php MainWP_Install_Bulk::renderUpload( 'theme' ); ?>
+						<?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
 					</div>
 					<div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
 					<form id="theme-filter" method="post">

@@ -1205,7 +1205,7 @@ class MainWP_Utility {
 		}
 
 		if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-			MainWP_Sync::syncInformationArray( $website, $information['sync'] );
+			MainWP_Sync::sync_information_array( $website, $information['sync'] );
 			unset( $information['sync'] );
 		}
 
@@ -1290,7 +1290,7 @@ class MainWP_Utility {
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
@@ -1484,7 +1484,7 @@ class MainWP_Utility {
 		@ini_set( 'max_execution_time', $timeout );
 		self::end_session();
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Executing handlers' );
+		MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'Executing handlers' );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1527,30 +1527,30 @@ class MainWP_Utility {
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-		MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'post data: [' . print_r( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'post data: [' . print_r( $postdata, 1 ) . ']' );
 		}
 
 		if ( ( false === $data ) && ( 0 === $http_status ) ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( empty( $data ) && ! empty( $err ) ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = self::get_child_response( base64_decode( $result ) );
 
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'information: [OK]' );
+			MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 === $http_status && ! empty( $err ) ) {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( $raw_response ) {
-			MainWP_Logger::instance()->debugForWebsite( $website, '_fetch_url', 'Response: [RAW]' );
+			MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'Response: [RAW]' );
 			return $data;
 		} else {
-			MainWP_Logger::instance()->debugForWebsite( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}

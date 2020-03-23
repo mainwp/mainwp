@@ -44,10 +44,10 @@ class MainWP_Logger {
 			$enabled = self::DISABLED;
 		}
 
-		$this->setLogPriority( $enabled );
+		$this->set_log_priority( $enabled );
 	}
 
-	public function setLogPriority( $pLogPriority ) {
+	public function set_log_priority( $pLogPriority ) {
 		$this->logPriority = $pLogPriority;
 	}
 
@@ -67,7 +67,7 @@ class MainWP_Logger {
 		return $this->log( $pText, self::INFO_UPDATE );
 	}
 
-	public function debugForWebsite( $pWebsite, $pAction, $pMessage ) {
+	public function debug_for_website( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 		}
@@ -75,7 +75,7 @@ class MainWP_Logger {
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 	}
 
-	public function infoForWebsite( $pWebsite, $pAction, $pMessage ) {
+	public function info_for_website( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 		}
@@ -83,7 +83,7 @@ class MainWP_Logger {
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 	}
 
-	public function warningForWebsite( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
+	public function warning_for_website( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			ob_start();
@@ -111,7 +111,7 @@ class MainWP_Logger {
 
 			if ( $logCurrentHandle ) {
 				$time   = date( $this->logDateFormat );
-				$prefix = '[' . $this->getLogText( $pPriority ) . ']';
+				$prefix = '[' . $this->get_log_text( $pPriority ) . ']';
 
 				global $current_user;
 
@@ -177,11 +177,11 @@ class MainWP_Logger {
 		rename( $tmpname, $filename );
 	}
 
-	public function getLogFile() {
+	public function get_log_file() {
 		return $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
 	}
 
-	public function getLogText( $pPriority ) {
+	public function get_log_text( $pPriority ) {
 		switch ( $pPriority ) {
 			case self::DISABLED:
 				return 'DISABLED';
@@ -198,8 +198,8 @@ class MainWP_Logger {
 		}
 	}
 
-	public static function clearLog() {
-		$logFile = self::instance()->getLogFile();
+	public static function clear_log() {
+		$logFile = self::instance()->get_log_file();
 		if ( ! @unlink( $logFile, 'r' ) ) {
 			$fh = @fopen( $logFile, 'w' );
 			if ( false === $fh ) {
@@ -210,8 +210,8 @@ class MainWP_Logger {
 		}
 	}
 
-	public static function showLog() {
-		$logFile = self::instance()->getLogFile();
+	public static function show_log() {
+		$logFile = self::instance()->get_log_file();
 		$fh      = @fopen( $logFile, 'r' );
 		if ( false === $fh ) {
 			return;

@@ -124,11 +124,11 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Method syncSite()
+	 * Method sync_site()
 	 *
 	 * Sync Child Site.
 	 */
-	public static function syncSite() {
+	public static function sync_site() {
 		$website = null;
 		if ( isset( $_POST['wp_id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['wp_id'] );
@@ -146,7 +146,7 @@ class MainWP_Updates_Overview {
 		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
 		MainWP_Utility::end_session();
 
-		if ( MainWP_Sync::syncSite( $website ) ) {
+		if ( MainWP_Sync::sync_site( $website ) ) {
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 

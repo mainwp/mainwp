@@ -71,9 +71,9 @@ class MainWP_About {
 			</h2>
 			<?php
 			if ( 'whatsnew' == $showtab ) {
-				self::renderWhatSNew();
+				self::render_whats_new();
 			} elseif ( 'changelog' == $showtab ) {
-				self::renderMainWPChangelog();
+				self::render_mainwp_change_log();
 			}
 			?>
 			<br/>
@@ -87,7 +87,7 @@ class MainWP_About {
 	 *
 	 * Render the What's new content block
 	 */
-	public static function renderWhatSNew() {
+	public static function render_whats_new() {
 		global $mainWP;
 		?>
 		<br/>
@@ -110,7 +110,7 @@ class MainWP_About {
 	 *
 	 * Render the MainWP Change Log Block
 	 */
-	public static function renderMainWPChangelog() {
+	public static function render_mainwp_change_log() {
 		global $mainWP;
 		?>
 		<br/>

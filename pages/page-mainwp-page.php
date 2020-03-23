@@ -568,7 +568,7 @@ class MainWP_Page {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_pages_data', $post_data );
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'PagesSearch_handler' ), $output );
+			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'pages_search_handler' ), $output );
 		}
 
 		MainWP_Cache::add_context(
@@ -607,7 +607,7 @@ class MainWP_Page {
 		return ucfirst( $status );
 	}
 
-	public static function PagesSearch_handler( $data, $website, &$output ) {
+	public static function pages_search_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
 			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) );

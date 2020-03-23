@@ -10,21 +10,21 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2FileUploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
-		add_action( 'mainwp_prepareinstallplugintheme', array( 'MainWP_Install_Bulk', 'prepareInstall' ) );
-		add_action( 'mainwp_performinstallplugintheme', array( 'MainWP_Install_Bulk', 'performInstall' ) );
+		add_action( 'mainwp_prepareinstallplugintheme', array( 'MainWP_Install_Bulk', 'prepare_install' ) );
+		add_action( 'mainwp_performinstallplugintheme', array( 'MainWP_Install_Bulk', 'perform_install' ) );
 		add_filter( 'mainwp_getwpfilesystem', array( 'MainWP_Utility', 'get_wp_file_system' ) );
 		add_filter( 'mainwp_getspecificurl', array( 'MainWP_Utility', 'get_mainwp_specific_url' ), 10, 1 );
 		add_filter( 'mainwp_getdownloadurl', array( 'MainWP_Utility', 'get_download_url' ), 10, 2 );
 		add_action( 'mainwp_renderToolTip', array( 'MainWP_Utility', 'render_tool_tip' ), 10, 4 );
 		add_action( 'mainwp_renderHeader', array( 'MainWP_UI', 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( 'MainWP_UI', 'render_footer' ), 10, 0 );
-		add_action( 'mainwp_renderImage', array( 'MainWP_UI', 'renderImage' ), 10, 4 );
-		add_action( 'mainwp_notify_user', array( &$this, 'notifyUser' ), 10, 3 );
-		add_action( 'mainwp_activePlugin', array( &$this, 'activePlugin' ), 10, 0 );
-		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactivePlugin' ), 10, 0 );
-		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgradePluginTheme' ), 10, 0 );
-		add_action( 'mainwp_deletePlugin', array( &$this, 'deletePlugin' ), 10, 0 );
-		add_action( 'mainwp_deleteTheme', array( &$this, 'deleteTheme' ), 10, 0 );
+		add_action( 'mainwp_renderImage', array( 'MainWP_UI', 'render_image' ), 10, 4 );
+		add_action( 'mainwp_notify_user', array( &$this, 'notify_user' ), 10, 3 );
+		add_action( 'mainwp_activePlugin', array( &$this, 'active_plugin' ), 10, 0 );
+		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactive_plugin' ), 10, 0 );
+		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
+		add_action( 'mainwp_deletePlugin', array( &$this, 'delete_plugin' ), 10, 0 );
+		add_action( 'mainwp_deleteTheme', array( &$this, 'delete_theme' ), 10, 0 );
 		add_action( 'mainwp_renderBeginModal', array( 'MainWP_UI', 'render_begin_modal' ), 10, 2 );
 		add_action( 'mainwp_renderEndModal', array( 'MainWP_UI', 'render_end_modal' ), 10, 2 );
 
@@ -36,7 +36,7 @@ class MainWP_Hooks {
 		 */
 		add_filter( 'mainwp_getErrorMessage', array( &$this, 'get_error_message' ), 10, 2 );
 		add_filter( 'mainwp_get_error_message', array( &$this, 'get_error_message' ), 10, 2 );
-		add_filter( 'mainwp_getwebsitesbygroupids', array( &$this, 'hookGetWebsitesByGroupIds' ), 10, 2 );
+		add_filter( 'mainwp_getwebsitesbygroupids', array( &$this, 'hook_get_websites_by_group_ids' ), 10, 2 );
 
 		add_filter( 'mainwp_cache_getcontext', array( &$this, 'cache_getcontext' ) );
 		add_action( 'mainwp_cache_echo_body', array( &$this, 'cache_echo_body' ) );
@@ -44,15 +44,15 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_context', array( &$this, 'cache_add_context' ), 10, 2 );
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
-		add_filter( 'mainwp_getmetaboxes', array( &$this, 'getMetaBoxes' ), 10, 0 );
+		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
 			MainWP_Extensions::get_class_name(),
-			'isExtensionAvailable',
+			'is_extension_available',
 		)
 		);
-		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hookDecryptString' ) );
+		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hook_decrypt_string' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
@@ -63,11 +63,11 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_clonesite', array( &$this, 'filter_clone_site' ), 10, 6 );
 		add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
-		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hookAddSubLeftMenu' ), 10, 6 );
+		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'get_website_options' ), 10, 3 );
-		add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hookAddGroup' ), 10, 3 );
-		add_filter( 'mainwp_getallposts', array( &$this, 'hookGetAllPosts' ), 10, 2 );
-		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hookCurrentUserCan' ), 10, 3 );
+		add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hook_add_group' ), 10, 3 );
+		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
+		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 	}
 
 	public function mainwp_log_debug( $pText ) {
@@ -99,7 +99,7 @@ class MainWP_Hooks {
 
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::updateWPSite( $params );
+				$ret['siteid'] = self::update_wp_site( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
 				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
@@ -152,12 +152,12 @@ class MainWP_Hooks {
 	 * @return array
 	 */
 	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
-		return MainWP_Extensions::hookCloneSite( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
+		return MainWP_Extensions::hook_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
 	}
 
 
 	public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
-		return MainWP_Extensions::hookDeleteCloneSite( $pluginFile, $key, $clone_url, $clone_site_id );
+		return MainWP_Extensions::hook_delete_clone_site( $pluginFile, $key, $clone_url, $clone_site_id );
 	}
 
 	/**
@@ -172,14 +172,14 @@ class MainWP_Hooks {
 		$ret = array();
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::updateWPSite( $params );
+				$ret['siteid'] = self::update_wp_site( $params );
 				return $ret;
 			}
 		}
 		return $ret;
 	}
 
-	public function hookAddSubLeftMenu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
+	public function hook_add_sub_left_menu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
 		$item = array(
 			'title'      => $title,
 			'parent_key' => $parent_key,
@@ -189,7 +189,7 @@ class MainWP_Hooks {
 		MainWP_Menu::add_left_menu( $item, $level );
 	}
 
-	public static function updateWPSite( $params ) {
+	public static function update_wp_site( $params ) {
 		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
 			return 0;
 		}
@@ -240,7 +240,7 @@ class MainWP_Hooks {
 	}
 
 	public function get_activate_extension_notice( $pluginFile ) {
-		$active = MainWP_Extensions::isExtensionActivated( $pluginFile );
+		$active = MainWP_Extensions::is_extension_activated( $pluginFile );
 		if ( $active ) {
 			return false;
 		}
@@ -281,7 +281,7 @@ class MainWP_Hooks {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
 	}
 
-	public function notifyUser( $userId, $subject, $content ) {
+	public function notify_user( $userId, $subject, $content ) {
 		wp_mail(
 			MainWP_DB::instance()->get_user_notification_email( $userId ), $subject, $content, array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
@@ -325,7 +325,7 @@ class MainWP_Hooks {
 	 * @param array       $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type
 	 * @return array
 	 */
-	public function hookGetAllPosts( $sites, $post_data = array() ) {
+	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
 		$dbwebsites = array();
 		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
@@ -358,7 +358,7 @@ class MainWP_Hooks {
 		return $output;
 	}
 
-	public function hookCurrentUserCan( $input, $can_type, $which ) {
+	public function hook_current_user_can( $input, $can_type, $which ) {
 
 		if ( function_exists( 'mainwp_current_user_can' ) ) {
 			return mainwp_current_user_can( $can_type, $which );
@@ -433,7 +433,7 @@ class MainWP_Hooks {
 		return new qq2FileUploader( $allowedExtensions, $sizeLimit );
 	}
 
-	public function getMetaBoxes() {
+	public function get_meta_boxes() {
 		return MainWP_System::instance()->metaboxes;
 	}
 
@@ -441,27 +441,27 @@ class MainWP_Hooks {
 		return MainWP_Utility::format_email( $email, $body, $title );
 	}
 
-	public function activePlugin() {
+	public function active_plugin() {
 		MainWP_Plugins::activate_plugins();
 		die();
 	}
 
-	public function deactivePlugin() {
+	public function deactive_plugin() {
 		MainWP_Plugins::deactivate_plugins();
 		die();
 	}
 
-	public function deletePlugin() {
+	public function delete_plugin() {
 		MainWP_Plugins::delete_plugins();
 		die();
 	}
 
-	public function deleteTheme() {
+	public function delete_theme() {
 		MainWP_Themes::delete_themes();
 		die();
 	}
 
-	public function upgradePluginTheme() {
+	public function upgrade_plugin_theme() {
 		try {
 			$websiteId = null;
 			$type      = null;
@@ -511,11 +511,11 @@ class MainWP_Hooks {
 		die();
 	}
 
-	public function hookGetWebsitesByGroupIds( $ids, $userId = null ) {
+	public function hook_get_websites_by_group_ids( $ids, $userId = null ) {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
 	}
 
-	public function hookDecryptString( $enscrypt ) {
+	public function hook_decrypt_string( $enscrypt ) {
 		return MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt );
 	}
 

@@ -97,7 +97,7 @@ class MainWP_System {
 		if ( 0 == $ssl_api_verifyhost ) {
 			add_filter( 'http_request_args', array(
 				MainWP_Extensions::get_class_name(),
-				'noSSLFilterExtensionUpgrade',
+				'no_ssl_filter_extension_upgrade',
 			), 99, 2 );
 		}
 
@@ -186,36 +186,36 @@ class MainWP_System {
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp-activated-sub-check', array( &$this, 'activated_sub_check' ) );
-		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'isExtensionEnabled' ) );
+		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) );
 
 		/**
 		 * This hook allows you to get a list of sites via the 'mainwp-getsites' filter.
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsites
 		 *
-		 * @see \MainWP_Extensions::hookGetSites
+		 * @see \MainWP_Extensions::hook_get_sites
 		 */
-		add_filter( 'mainwp-getsites', array( MainWP_Extensions::get_class_name(), 'hookGetSites' ), 10, 5 );
-		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::get_class_name(), 'hookGetDBSites' ), 10, 5 );
+		add_filter( 'mainwp-getsites', array( MainWP_Extensions::get_class_name(), 'hook_get_sites' ), 10, 5 );
+		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::get_class_name(), 'hook_get_db_sites' ), 10, 5 );
 
 		/**
 		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getgroups
 		 *
-		 * @see \MainWP_Extensions::hookGetGroups
+		 * @see \MainWP_Extensions::hook_get_groups
 		 */
-		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hookGetGroups' ), 10, 4 );
+		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hook_get_groups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
 		add_filter( 'mainwp_getdashboardsites', array(
 			MainWP_Extensions::get_class_name(),
-			'hookGetDashboardSites',
+			'hook_get_dashboard_sites',
 		), 10, 7 );
 		add_filter(
 			'mainwp-manager-getextensions', array(
 				MainWP_Extensions::get_class_name(),
-				'hookManagerGetExtensions',
+				'hook_manager_get_extensions',
 			)
 		);
 
@@ -414,16 +414,16 @@ class MainWP_System {
 	}
 
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
-		return MainWP_Extensions::hookFetchUrlsAuthed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
+		return MainWP_Extensions::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
 	}
 
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
-		return MainWP_Extensions::hookFetchUrlAuthed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
+		return MainWP_Extensions::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
 
 
 	public function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
-		$extensions = MainWP_Extensions::getExtensions();
+		$extensions = MainWP_Extensions::get_extensions();
 		if ( ! isset( $extensions[ $plugin_slug ] ) ) {
 			return;
 		}
@@ -689,7 +689,7 @@ class MainWP_System {
 
 	public function check_update_custom( $transient ) {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
-			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
+			$extensions = MainWP_Extensions::get_extensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
 				$plugin_slug = $_POST['plugin'];
 				// get download pakage url to prevent expire
@@ -746,7 +746,7 @@ class MainWP_System {
 					continue;
 				} //Legacy, to support older versions.
 
-				$plugin_slug = MainWP_Extensions::getPluginSlug( $rslt->slug );
+				$plugin_slug = MainWP_Extensions::get_plugin_slug( $rslt->slug );
 				if ( isset( $transient->checked[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $transient->checked[ $plugin_slug ], '>' ) ) {
 					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
 				}
@@ -788,9 +788,9 @@ class MainWP_System {
 		}
 
 		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
-			$extensions = MainWP_Extensions::getExtensions( array( 'activated' => true ) );
+			$extensions = MainWP_Extensions::get_extensions( array( 'activated' => true ) );
 			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
-				$plugin_slug = MainWP_Extensions::getPluginSlug( $rslt->slug );
+				$plugin_slug = MainWP_Extensions::get_plugin_slug( $rslt->slug );
 				if ( isset( $extensions[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
 				}
@@ -813,7 +813,7 @@ class MainWP_System {
 			return $false;
 		}
 
-		$result   = MainWP_Extensions::getSlugs();
+		$result   = MainWP_Extensions::get_slugs();
 		$am_slugs = $result['am_slugs'];
 
 		if ( '' !== $am_slugs ) {
@@ -822,7 +822,7 @@ class MainWP_System {
 				$info = MainWP_API_Settings::get_plugin_information( $arg->slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
-						$exts_data = MainWP_Extensions_View::getAvailableExtensions();
+						$exts_data = MainWP_Extensions_View::get_available_extensions();
 						if ( isset( $exts_data[ $arg->slug ] ) ) {
 							$ext_info                    = $exts_data[ $arg->slug ];
 							$changelog_link              = rtrim( $ext_info['link'], '/' );
@@ -1372,7 +1372,7 @@ class MainWP_System {
 				}
 
 				// Perform check & update
-				if ( ! MainWP_Sync::syncSite( $website, false, true ) ) {
+				if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
 					$websiteValues = array(
 						'dtsAutomaticSync' => time(),
 					);
@@ -1719,7 +1719,7 @@ class MainWP_System {
 						);
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-							MainWP_Sync::syncInformationArray( $allWebsites[ $websiteId ], $information['sync'] );
+							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
 						// ok
@@ -1745,7 +1745,7 @@ class MainWP_System {
 						);
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-							MainWP_Sync::syncInformationArray( $allWebsites[ $websiteId ], $information['sync'] );
+							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
 						// ok
@@ -1966,15 +1966,15 @@ class MainWP_System {
 
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
 				// Try reconnecting
-				MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Trying to reconnect' );
+				MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Trying to reconnect' );
 				try {
 					if ( MainWP_Manage_Sites::_reconnect_site( $website ) ) {
 						// Reconnected
-						MainWP_Logger::instance()->infoForWebsite( $website, 'reconnect', 'Reconnected successfully' );
+						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {
 					// Still something wrong
-					MainWP_Logger::instance()->warningForWebsite( $website, 'reconnect', $e->getMessage() );
+					MainWP_Logger::instance()->warning_for_website( $website, 'reconnect', $e->getMessage() );
 				}
 			}
 			sleep( 3 );
@@ -2122,7 +2122,7 @@ class MainWP_System {
 		}
 
 		$setup_conf_loc = '';
-		if ( MainWP_Settings::isLocalWindowConfig() ) {
+		if ( MainWP_Settings::is_local_window_config() ) {
 			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
 		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
 			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
@@ -2341,7 +2341,7 @@ class MainWP_System {
 			'time_format'                        => get_option( 'time_format' ),
 			'enabledTwit'                        => MainWP_Twitter::enabled_twitter_messages(),
 			'maxSecondsTwit'                     => MAINWP_TWITTER_MAX_SECONDS,
-			'installedBulkSettingsManager'       => MainWP_Extensions::isExtensionAvailable( 'mainwp-bulk-settings-manager' ) ? 1 : 0,
+			'installedBulkSettingsManager'       => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
 			'maximumSyncRequests'                => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
 			'maximumInstallUpdateRequests'       => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
 		);
@@ -3099,7 +3099,7 @@ class MainWP_System {
 				continue;
 			}
 
-			if ( ! MainWP_Extensions::hookVerify( $output[ $i ]['plugin'], $output[ $i ]['key'] ) ) {
+			if ( ! MainWP_Extensions::hook_verify( $output[ $i ]['plugin'], $output[ $i ]['key'] ) ) {
 				unset( $output[ $i ] );
 				continue;
 			}

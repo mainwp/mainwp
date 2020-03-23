@@ -155,7 +155,7 @@ class MainWP_Api_Manager_Key {
 	 * @param mixed $args Extension Arguments.
 	 * @return mixed $response
 	 */
-	public function grabapikey( $args ) {
+	public function grab_api_key( $args ) {
 
 		$defaults = array(
 			'request' => 'grabapikey',
@@ -195,7 +195,7 @@ class MainWP_Api_Manager_Key {
 	 * @throws mixed Request error codes.
 	 * @return mixed $response
 	 */
-	public function testloginapi( $args ) {
+	public function test_login_api( $args ) {
 
 		$defaults = array(
 			'request' => 'testloginapi',
@@ -217,7 +217,7 @@ class MainWP_Api_Manager_Key {
 			unset( $log['http_response'] );
 		}
 
-		MainWP_Logger::instance()->debug( 'testloginapi:: RESULT :: ' . print_r( $log, true ) );
+		MainWP_Logger::instance()->debug( 'test_login_api:: RESULT :: ' . print_r( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
 			if ( self::$apisslverify == 1 ) {
@@ -248,7 +248,7 @@ class MainWP_Api_Manager_Key {
 	 * @param mixed $args Software Arguments.
 	 * @return mixed $response
 	 */
-	public function getpurchasedsoftware( $args ) {
+	public function get_purchased_software( $args ) {
 
 		$defaults = array(
 			'request' => 'getpurchasedsoftware',
@@ -283,7 +283,7 @@ class MainWP_Api_Manager_Key {
 	 * @param mixed $args Software Arguments.
 	 * @return mixed $response
 	 */
-	public function purchasesoftware( $args ) {
+	public function purchase_software( $args ) {
 		$defaults = array(
 			'request' => 'purchasesoftware',
 		);

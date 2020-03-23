@@ -167,7 +167,7 @@ class MainWP_Extensions_View {
 					</div>
 				</div>
 				<div class="ui four stackable cards" id="mainwp-extensions-list">
-				<?php $available_extensions_data = self::getAvailableExtensions(); ?>
+				<?php $available_extensions_data = self::get_available_extensions(); ?>
 				<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 					<?php foreach ( $extensions as $extension ) : ?>
 						<?php
@@ -175,7 +175,7 @@ class MainWP_Extensions_View {
 							continue;
 						}
 
-						$active          = MainWP_Extensions::isExtensionActivated( $extension['slug'] );
+						$active          = MainWP_Extensions::is_extension_activated( $extension['slug'] );
 						$extensions_data = isset( $available_extensions_data[ dirname( $extension['slug'] ) ] ) ? $available_extensions_data[ dirname( $extension['slug'] ) ] : array();
 						$added_on_menu   = MainWP_Extensions::added_on_menu( $extension['slug'] );
 
@@ -335,13 +335,13 @@ class MainWP_Extensions_View {
 
 
 	/**
-	 * Metod getExtensionGroups()
+	 * Metod get_extension_groups()
 	 *
 	 * Grab current MainWP Extension Groups.
 	 *
 	 * @return mixed $groups
 	 */
-	public static function getExtensionGroups() {
+	public static function get_extension_groups() {
 		$groups = array(
 			'backup'         => __( 'Backups', 'mainwp' ),
 			'content'        => __( 'Content', 'mainwp' ),
@@ -361,7 +361,7 @@ class MainWP_Extensions_View {
 	 *
 	 * @todo Move to MainWP Server via an XML file.
 	 */
-	public static function getAvailableExtensions() {
+	public static function get_available_extensions() {
 		$folder_url = MAINWP_PLUGIN_URL . 'assets/images/extensions/';
 		return array(
 			'advanced-uptime-monitor-extension'      =>

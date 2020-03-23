@@ -884,7 +884,7 @@ class MainWP_Plugins {
 		<div class="ui segment">
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 			<div class="mainwp-upload-plugin" style="display:none;">
-				<?php MainWP_Install_Bulk::renderUpload( 'plugin' ); ?>
+				<?php MainWP_Install_Bulk::render_upload( 'plugin' ); ?>
 			</div>
 			<div class="mainwp-browse-plugins">
 				<form id="plugin-filter" method="post">

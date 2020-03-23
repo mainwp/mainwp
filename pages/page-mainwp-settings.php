@@ -42,7 +42,7 @@ class MainWP_Settings {
 	}
 
 	public static function admin_init() {
-		self::exportSites();
+		self::export_sites();
 	}
 
 	public static function init_menu() {
@@ -57,7 +57,7 @@ class MainWP_Settings {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'MainWP Tools', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>', 'read', 'MainWPTools', array(
 					self::get_class_name(),
-					'renderMainWPTools',
+					'render_mainwp_tools',
 				)
 			);
 		}
@@ -66,7 +66,7 @@ class MainWP_Settings {
 			$_page = add_submenu_page(
 				'mainwp_tab', __( 'Advanced Options', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>', 'read', 'SettingsAdvanced', array(
 					self::get_class_name(),
-					'renderAdvanced',
+					'render_advanced',
 				)
 			);
 		}
@@ -76,7 +76,7 @@ class MainWP_Settings {
 				$_page = add_submenu_page(
 					'mainwp_tab', __( 'Managed Client Reports', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>', 'read', 'SettingsClientReportsResponder', array(
 						self::get_class_name(),
-						'renderReportResponder',
+						'render_report_responder',
 					)
 				);
 			}
@@ -304,7 +304,7 @@ class MainWP_Settings {
 				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : $_POST['mainwp_backup_before_upgrade_days'] );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
 
-				if ( MainWP_Extensions::isExtensionAvailable( 'mainwp-comments-extension' ) ) {
+				if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50  );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
@@ -714,11 +714,11 @@ class MainWP_Settings {
 		self::render_footer( '' );
 	}
 
-	public static function showOpensslLibConfig() {
+	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			return true;
 		} else {
-			if ( self::isLocalWindowConfig() ) {
+			if ( self::is_local_window_config() ) {
 				return false;
 			} else {
 				// if it is not Openssl error but the setting is not empty the still show setting box to change
@@ -727,7 +727,7 @@ class MainWP_Settings {
 		}
 	}
 
-	public static function isLocalWindowConfig() {
+	public static function is_local_window_config() {
 		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
 		if ( $setup_hosting_type == 2 && $setup_system_type == 3 ) {
@@ -736,7 +736,7 @@ class MainWP_Settings {
 		return false;
 	}
 
-	public static function renderAdvanced() {
+	public static function render_advanced() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
@@ -754,7 +754,7 @@ class MainWP_Settings {
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
 				$openssl_loc = trim($_POST['mainwp_openssl_lib_location']);
-				if ( self::isLocalWindowConfig() ) {
+				if ( self::is_local_window_config() ) {
 					MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ) );
 				} else {
 					MainWP_Utility::update_option( 'mainwp_opensslLibLocation', stripslashes( $openssl_loc ) );
@@ -773,8 +773,8 @@ class MainWP_Settings {
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					  <input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 						<?php
-						if ( self::showOpensslLibConfig() ) {
-							if ( self::isLocalWindowConfig() ) {
+						if ( self::show_openssl_lib_config() ) {
+							if ( self::is_local_window_config() ) {
 								$openssl_loc = get_option( 'mwp_setup_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
 							} else {
 								// $openssl_loc = get_option( 'mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
@@ -863,7 +863,7 @@ class MainWP_Settings {
 		self::render_footer( 'Advanced' );
 	}
 
-	public static function renderMainWPTools() {
+	public static function render_mainwp_tools() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
@@ -932,7 +932,7 @@ class MainWP_Settings {
 		self::render_footer( 'MainWPTools' );
 	}
 
-	public static function exportSites() {
+	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
 
 			$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( true );
@@ -962,7 +962,7 @@ class MainWP_Settings {
 		}
 	}
 
-	public static function renderReportResponder() {
+	public static function render_report_responder() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;

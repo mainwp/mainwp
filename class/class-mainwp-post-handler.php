@@ -255,7 +255,7 @@ class MainWP_Post_Handler {
 
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 
-		MainWP_Extensions::initAjaxHandlers();
+		MainWP_Extensions::init_ajax_handlers();
 
 		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); // ok
 	}
@@ -398,7 +398,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
-		MainWP_Widget_Plugins::deletePlugin();
+		MainWP_Widget_Plugins::delete_plugin();
 	}
 
 	/**
@@ -411,7 +411,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );
-		MainWP_Widget_Themes::deleteTheme();
+		MainWP_Widget_Themes::delete_theme();
 	}
 
 	/**
@@ -727,14 +727,14 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_security_issues_request' );
 
 		try {
-			wp_send_json( array( 'result' => MainWP_Security_Issues::fetchSecurityIssues() ) );
+			wp_send_json( array( 'result' => MainWP_Security_Issues::fetch_security_issues() ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -746,14 +746,14 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_security_issues_fix' );
 
 		try {
-			wp_send_json( array( 'result' => MainWP_Security_Issues::fixSecurityIssue() ) );
+			wp_send_json( array( 'result' => MainWP_Security_Issues::fix_security_issue() ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -765,14 +765,14 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_security_issues_unfix' );
 
 		try {
-			wp_send_json( array( 'result' => MainWP_Security_Issues::unfixSecurityIssue() ) );
+			wp_send_json( array( 'result' => MainWP_Security_Issues::unfix_security_issue() ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -829,7 +829,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -859,7 +859,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -882,7 +882,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -905,7 +905,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -928,7 +928,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -990,7 +990,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1050,7 +1050,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1077,7 +1077,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1110,31 +1110,31 @@ class MainWP_Post_Handler {
 	public function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkinstallplugintheme' );
 
-		MainWP_Install_Bulk::prepareInstall();
+		MainWP_Install_Bulk::prepare_install();
 	}
 
 	public function mainwp_installbulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_installbulkinstallplugintheme' );
 
-		MainWP_Install_Bulk::performInstall();
+		MainWP_Install_Bulk::perform_install();
 	}
 
 	public function mainwp_preparebulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkuploadplugintheme' );
 
-		MainWP_Install_Bulk::prepareUpload();
+		MainWP_Install_Bulk::prepare_upload();
 	}
 
 	public function mainwp_installbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_installbulkuploadplugintheme' );
 
-		MainWP_Install_Bulk::performUpload();
+		MainWP_Install_Bulk::perform_upload();
 	}
 
 	public function mainwp_cleanbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_cleanbulkuploadplugintheme' );
 
-		MainWP_Install_Bulk::cleanUpload();
+		MainWP_Install_Bulk::clean_upload();
 	}
 
 	/*
@@ -1231,7 +1231,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1252,7 +1252,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1408,7 +1408,7 @@ class MainWP_Post_Handler {
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismissSyncErrors( false );
-		MainWP_Updates_Overview::syncSite();
+		MainWP_Updates_Overview::sync_site();
 	}
 
 	// Update a specific WP
@@ -1431,7 +1431,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message'    => $e->getMessage(),
-							'extra'      => $e->getMessageExtra(),
+							'extra'      => $e->get_message_extra(),
 						),
 					)
 				)
@@ -1524,7 +1524,7 @@ class MainWP_Post_Handler {
 					array(
 						'error' => array(
 							'message' => $e->getMessage(),
-							'extra'   => $e->getMessageExtra(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)

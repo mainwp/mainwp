@@ -20,6 +20,7 @@
 		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
 		<exclude name="WordPress.Security.NonceVerification"/>
+		<exclude name="WordPress.Security.EscapeOutput"/>
 	</rule>
 
 	<!-- Enforce PSR1 compatible namespaces. -->

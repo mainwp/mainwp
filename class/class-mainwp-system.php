@@ -171,7 +171,7 @@ class MainWP_System {
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'mainwp_cronbackups_continue_action' ) );
 		add_action( 'mainwp_cronupdatescheck_action', array( $this, 'mainwp_cronupdatescheck_action' ) );
 		add_action( 'mainwp_cronpingchilds_action', array( $this, 'mainwp_cronpingchilds_action' ) );
-		
+
 		// phpcs:ignore -- required for dashboard's minutely scheduled jobs
 		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ) );
 

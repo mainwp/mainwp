@@ -129,9 +129,10 @@ class MainWP_Post {
 			'word-count',
 			'media-views',
 			'mainwp',
-		), MAINWP_VERSION );
+		), MAINWP_VERSION, true );
 
 		$_post           = get_post( $post_id );
+		// phpcs:ignore -- required for custom bulk posts/pages and support hooks
 		$GLOBALS['post'] = $_post;
 	}
 

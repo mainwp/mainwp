@@ -1510,12 +1510,12 @@ class MainWP_Server_Information {
 				case 'mainwp_primaryBackup':
 					$value = __( 'Default MainWP Backups', 'mainwp' );
 					break;
-				case 'mainwp_numberdays_Outdate_Plugin_Theme';
-				case 'mainwp_maximumPosts';
-				case 'mainwp_maximumPages';
-				case 'mainwp_maximumComments';
-				case 'mainwp_maximumSyncRequests';
-				case 'mainwp_maximumInstallUpdateRequests';
+				case 'mainwp_numberdays_Outdate_Plugin_Theme':
+				case 'mainwp_maximumPosts':
+				case 'mainwp_maximumPages':
+				case 'mainwp_maximumComments':
+				case 'mainwp_maximumSyncRequests':
+				case 'mainwp_maximumInstallUpdateRequests':
 					break;
 				case 'mainwp_automaticDailyUpdate':
 					if ( 1 == $value ) {

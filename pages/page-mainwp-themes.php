@@ -800,7 +800,7 @@ class MainWP_Themes {
 	}
 
 	public static function render_install() {
-		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION );
+		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION, true );
 		wp_localize_script(
 			'mainwp-theme', '_mainwpThemeSettings',
 			array(

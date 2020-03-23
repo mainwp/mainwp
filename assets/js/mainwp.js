@@ -4261,7 +4261,7 @@ jQuery( document ).ready( function () {
     jQuery( '#backup_btnSubmit' ).on( 'click', function () {
         backup();
     } );
-    jQuery( '#managesite-backup-status-close' ).on( 'click', function ( event )
+    jQuery( '#managesite-backup-status-close' ).on( 'click', function ()
     {
         backupDownloadRunning = false;
         mainwpPopup( '#managesite-backup-status-box' ).close(true);
@@ -4879,7 +4879,7 @@ backup_upload_file_retry_fail = function ( pData, pSiteId, pFile, pRegexFile, pS
  * Utility
  */
 function isUrl( s ) {
-    var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+    var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
     return regexp.test( s );
 }
 function setVisible( what, vis ) {
@@ -5938,11 +5938,11 @@ mainwp_fetch_themes = function () {
     }
 
     var _status = '';
-  var statuses = jQuery( "#mainwp_themes_search_by_status" ).dropdown( "get value" );
-  if ( statuses == null )
-    errors.push( __( 'Please select at least one theme status.' ) );
-    else {
-        status = statuses.join(',');
+    var statuses = jQuery( "#mainwp_themes_search_by_status" ).dropdown( "get value" );
+    if ( statuses == null ) {
+        errors.push( __( 'Please select at least one theme status.' ) );
+    } else {
+        _status = statuses.join(',');
     }
 
     if ( errors.length > 0 ) {
@@ -6422,12 +6422,15 @@ jQuery( document ).on( 'click', '.mainwp-news-tab', function ()
     return false;
 } );
 
+// phpcs:ignore -- required to compatible with some extensions
 function mainwp_setCookie( c_name, value, expiredays )
 {
     var exdate = new Date();
     exdate.setDate( exdate.getDate() + expiredays );
     document.cookie = c_name + "=" + escape( value ) + ( ( expiredays == null ) ? "" : ";expires=" + exdate.toUTCString() );
 }
+
+// phpcs:ignore -- required to compatible with some extensions
 function mainwp_getCookie( c_name )
 {
     if ( document.cookie.length > 0 )
@@ -7260,6 +7263,13 @@ function mainwp_according_table_sorting( pObj ) {
     }
 }
 
+jQuery( document ).ready( function () {
+    jQuery( '.handle-accordion-sorting' ).on( 'click', function() {
+            mainwp_according_table_sorting( this );
+            return false;
+    } );
+} );
+                                
 mainwp_force_destroy_sessions = function () {
   var confirmMsg = __( 'Forces your dashboard to reconnect with your child sites?' );
   mainwp_confirm( confirmMsg, function() {

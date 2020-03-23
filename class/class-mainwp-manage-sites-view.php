@@ -257,13 +257,8 @@ class MainWP_Manage_Sites_View {
 		echo '</div>';
 	}
 
-	public static function renderTestConnection() {
-	}
 
-	public static function renderTestAdvancedOptions() {
-	}
-
-	public static function renderImportSites() {
+	public static function render_import_sites() {
 		?>
 		<div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
 			<div class="ui medium text loader"><?php esc_html_e( 'Importing', 'mainwp' ); ?></div>
@@ -371,10 +366,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	public static function renderNewSite() {
-	}
-
-	public static function renderSyncExtsSettings() {
+	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
 		$working_extensions      = MainWP_Extensions::get_extensions();
 		$available_exts_data     = MainWP_Extensions_View::get_available_extensions();
@@ -439,13 +431,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	public static function renderAdvancedOptions() {
-	}
-
-	public static function renderBulkUpload() {
-	}
-
-	public static function showBackups( &$website, $fullBackups, $dbBackups ) {
+	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_Utility::getMainWPDir();
 		$mwpDir = $mwpDir[0];
 
@@ -479,7 +465,7 @@ class MainWP_Manage_Sites_View {
 		echo $output;
 	}
 
-	public static function renderSettings() {
+	public static function render_settings() {
 
 		$backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
 		$backupOnExternalSources    = get_option( 'mainwp_backupOnExternalSources' );
@@ -639,7 +625,7 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	public static function renderDashboard( &$website, &$page ) {
+	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'individual dashboard', 'mainwp' ) );
 			return;
@@ -651,24 +637,24 @@ class MainWP_Manage_Sites_View {
 				echo '<div class="ui yellow message"><span class="mainwp_conflict" siteid="' . intval( $website->id ) . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work.</span></div>';
 			}
 			global $screen_layout_columns;
-			MainWP_Overview::renderDashboardBody( array( $website ), $page, $screen_layout_columns );
+			MainWP_Overview::render_dashboard_body( array( $website ), $page, $screen_layout_columns );
 			?>
 		</div>
 		<?php
 	}
 
-	public static function renderUpdates() {
+	public static function render_updates() {
 		$website_id   = MainWP_Utility::get_current_wpid();
 		$total_vulner = 0;
 		if ( $website_id ) {
 			$total_vulner = apply_filters( 'mainwp_vulner_getvulner', 0, $website_id );
 		}
 
-		self::renderIndividualUpdates( $website_id );
+		self::render_individual_updates( $website_id );
 	}
 
 
-	public static function renderIndividualUpdates( $id ) {
+	public static function render_individual_updates( $id ) {
 		global $current_user;
 		$userExtension = MainWP_DB::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -1139,7 +1125,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 
-	public static function renderBackupSite( &$website ) {
+	public static function render_backup_site( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
 			mainwp_do_not_have_permissions( __( 'execute backups', 'mainwp' ) );
 			return;
@@ -1162,8 +1148,8 @@ class MainWP_Manage_Sites_View {
 			<div class="mainwp-main-content">
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 			<?php
-			self::renderBackupDetails( $website->id );
-			self::renderBackupOptions( $website->id );
+			self::render_backup_details( $website->id );
+			self::render_backup_options( $website->id );
 			?>
 			</div>
 		</div>
@@ -1182,15 +1168,15 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	public static function renderBackupDetails( $websiteid ) {
+	public static function render_backup_details( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 		if ( empty( $website ) ) {
 			return;
 		}
-		MainWP_Manage_Sites::showBackups( $website );
+		MainWP_Manage_Sites::show_backups( $website );
 	}
 
-	public static function renderBackupOptions( $websiteid ) {
+	public static function render_backup_options( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 
 		if ( empty( $website ) ) {
@@ -1334,7 +1320,7 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	public static function renderScanSite( &$website ) {
+	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
 			return;
@@ -1379,7 +1365,7 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	public static function renderEditSite( $websiteid, $updated ) {
+	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
 			return;
@@ -1639,7 +1625,7 @@ class MainWP_Manage_Sites_View {
 		return false;
 	}
 
-	public static function addSite( $website ) {
+	public static function add_site( $website ) {
 
 		$params['url']               = $_POST['managesites_add_wpurl'];
 		$params['name']              = $_POST['managesites_add_wpname'];
@@ -1657,10 +1643,10 @@ class MainWP_Manage_Sites_View {
 			$params['qsw_page'] = $_POST['qsw_page'];
 		}
 
-		return self::addWPSite( $website, $params );
+		return self::add_wp_site( $website, $params );
 	}
 
-	public static function addWPSite( $website, $params = array() ) {
+	public static function add_wp_site( $website, $params = array() ) {
 		$error   = '';
 		$message = '';
 		$id      = 0;

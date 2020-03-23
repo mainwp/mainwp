@@ -399,7 +399,7 @@ class MainWP_Hooks {
 					}
 				}
 			} else {
-
+				// phpcs:disable -- to support when $wp_filesystem failed
 				if ( ! file_exists( $newdir ) ) {
 					@mkdir( $newdir, 0777, true );
 				}
@@ -418,6 +418,7 @@ class MainWP_Hooks {
 						@fclose( $file );
 					}
 				}
+				// phpcs:enable
 			}
 		}
 

@@ -2,6 +2,8 @@
 /**
  * MainWP Logger
  */
+
+// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file
 class MainWP_Logger {
 
 	const DISABLED    = - 1;
@@ -199,7 +201,7 @@ class MainWP_Logger {
 	}
 
 	public static function clear_log() {
-		$logFile = self::instance()->get_log_file();
+		$logFile = self::instance()->get_log_file();		
 		if ( ! @unlink( $logFile, 'r' ) ) {
 			$fh = @fopen( $logFile, 'w' );
 			if ( false === $fh ) {

@@ -155,8 +155,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		}
-
-		// die( wp_json_encode( $output ) );
+		
 		wp_send_json( $output );
 	}
 

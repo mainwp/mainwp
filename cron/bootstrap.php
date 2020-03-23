@@ -29,6 +29,7 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 		foreach ( $matches as $match ) {
 			$execute = str_ireplace( 'ABSPATH', 'TMPABSPATH', $match[0] );
 			$execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );
+			// phpcs:ignore -- required to support custom wp-config.php file location
 			eval( $execute );
 			if ( file_exists( TMPABSPATH . 'wp-load.php' ) ) {
 				include_once TMPABSPATH . 'wp-load.php';

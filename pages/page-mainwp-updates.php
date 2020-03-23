@@ -2740,11 +2740,7 @@ class MainWP_Updates {
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
 					exclusive: false,
 					duration: 200,
-				} );
-				jQuery( '.handle-accordion-sorting' ).on( 'click', function() {
-					mainwp_according_table_sorting( this );
-					return false;
-				} );
+				} );				
 			} );
 
 			jQuery( document ).on( 'click', '.trigger-all-accordion', function() {

@@ -75,6 +75,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		// $nonmenu_tabs = apply_filters( 'install_plugins_nonmenu_tabs', $nonmenu_tabs );
 		// If a non-valid menu tab has been selected, And it's not a non-menu action.
 		if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
+			// phpcs:ignore -- required for custom bulk install plugins
 			$tab = key( $tabs );
 		}
 

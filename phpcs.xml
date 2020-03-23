@@ -21,6 +21,7 @@
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
 		<exclude name="WordPress.Security.NonceVerification"/>
 		<exclude name="WordPress.Security.EscapeOutput"/>
+		<exclude name="WordPress.PHP.StrictComparisons"/>
 	</rule>
 
 	<!-- Enforce PSR1 compatible namespaces. -->

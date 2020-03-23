@@ -989,7 +989,7 @@ class MainWP_Extensions {
 		MainWP_Extensions_View::render( self::$extensions );
 		echo '</div>';
 	}
-	
+
 	public static function is_extension_available( $pAPI ) {
 		$extensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 		if ( isset( $extensions ) && is_array( $extensions ) ) {

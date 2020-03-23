@@ -23,13 +23,13 @@ class MainWP_Backup_Tasks {
 	}
 
 	/**
-	 * Method getName()
+	 * Method get_name()
 	 *
 	 * Get backup tasks name.
 	 *
 	 * @return string backup tasks
 	 */
-	public static function getName() {
+	public static function get_name() {
 		return __( 'Backup Tasks', 'mainwp' );
 	}
 

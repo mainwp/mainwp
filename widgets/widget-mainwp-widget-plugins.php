@@ -25,10 +25,10 @@ class MainWP_Widget_Plugins {
 	/**
 	 * Method render()
 	 *
-	 * Fire off renderWidget().
+	 * Fire off render_widget().
 	 */
 	public static function render() {
-		self::renderWidget( false, false );
+		self::render_widget( false, false );
 	}
 
 	/**
@@ -59,14 +59,14 @@ class MainWP_Widget_Plugins {
 
 
 	/**
-	 * Method renderWidget()
+	 * Method render_widget()
 	 *
 	 * Build Plugins Widget
 	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit true|false If $pEixt is true then exit.
 	 */
-	public static function renderWidget( $renew, $pExit = true ) {
+	public static function render_widget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;
@@ -205,21 +205,21 @@ class MainWP_Widget_Plugins {
 	}
 
 	/**
-	 * Method activatePlugin()
+	 * Method activate_plugin()
 	 *
 	 * Fire off Action activate & display result
 	 */
-	public static function activatePlugin() {
+	public static function activate_plugin() {
 		self::action( 'activate' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been activated!', 'mainwp' ) ) ) );
 	}
 
 	/**
-	 * Method deactivatePlugin()
+	 * Method deactivate_plugin()
 	 *
 	 * Fire off action deactivate & display result
 	 */
-	public static function deactivatePlugin() {
+	public static function deactivate_plugin() {
 		self::action( 'deactivate' );
 		die( wp_json_encode( array( 'result' => __( 'Plugin has been deactivated!', 'mainwp' ) ) ) );
 	}

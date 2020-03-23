@@ -24,19 +24,19 @@ class MainWP_Connection_Status {
 	/**
 	 * Method render()
 	 *
-	 * @return mixed renderSites()
+	 * @return mixed render_sites()
 	 */
 	public static function render() {
-		self::renderSites();
+		self::render_sites();
 	}
 
 	/**
-	 * Method renderSites()
+	 * Method render_sites()
 	 *
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
 	 */
-	public static function renderSites() {
+	public static function render_sites() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {

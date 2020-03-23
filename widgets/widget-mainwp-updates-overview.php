@@ -80,33 +80,33 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Method getName()
+	 * Method get_name()
 	 *
 	 * Define Widget Title.
 	 */
-	public static function getName() {
+	public static function get_name() {
 		return __( 'Update Overview', 'mainwp' );
 	}
 
 	/**
 	 * Method render()
 	 *
-	 * Check if $_GET['dashboard'] then run renderSites().
+	 * Check if $_GET['dashboard'] then run render_sites().
 	 */
 	public static function render() {
 		$individual = false;
 		if ( isset( $_GET['dashboard'] ) ) {
 			$individual = true;
 		}
-		self::renderSites( false, $individual );
+		self::render_sites( false, $individual );
 	}
 
 	/**
-	 * Method renderLastUpdate()
+	 * Method render_last_update()
 	 *
 	 * Check when the Child Site was last synced.
 	 */
-	public static function renderLastUpdate() {
+	public static function render_last_update() {
 		$currentwp = MainWP_Utility::get_current_wpid();
 		if ( ! empty( $currentwp ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $currentwp );
@@ -156,13 +156,13 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Method renderSites()
+	 * Method render_sites()
 	 *
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
 	 */
-	public static function renderSites( $isUpdatesPage = false ) {
+	public static function render_sites( $isUpdatesPage = false ) {
 
 		$globalView = true;
 		global $current_user;
@@ -807,13 +807,13 @@ class MainWP_Updates_Overview {
 
 
 	/**
-	 * Method dismissSyncErrors()
+	 * Method dismiss_sync_errors()
 	 *
 	 * @param boolean $dismiss true|false.
 	 *
 	 * @return boolean true
 	 */
-	public static function dismissSyncErrors( $dismiss = true ) {
+	public static function dismiss_sync_errors( $dismiss = true ) {
 		global $current_user;
 		update_user_option( $current_user->ID, 'mainwp_syncerrors_dismissed', $dismiss );
 
@@ -827,7 +827,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * @return mixed $output
 	 */
-	public static function checkBackups() {
+	public static function check_backups() {
 		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;

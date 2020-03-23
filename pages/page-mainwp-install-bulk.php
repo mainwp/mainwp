@@ -360,7 +360,7 @@ class qq2UploadedFileXhr {
 		$realSize = stream_copy_to_stream( $input, $temp );
 		fclose( $input );
 
-		if ( $realSize != $this->getSize() ) {
+		if ( $realSize != $this->get_size() ) {
 			return false;
 		}
 
@@ -409,11 +409,11 @@ class qq2UploadedFileXhr {
 		return true;
 	}
 
-	public function getName() {
+	public function get_name() {
 		return $_GET['qqfile'];
 	}
 
-	public function getSize() {
+	public function get_size() {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
 			return (int) $_SERVER['CONTENT_LENGTH'];
 		} else {
@@ -448,11 +448,11 @@ class qq2UploadedFileForm {
 		return true;
 	}
 
-	public function getName() {
+	public function get_name() {
 		return $_FILES['qqfile']['name'];
 	}
 
-	public function getSize() {
+	public function get_size() {
 		return $_FILES['qqfile']['size'];
 	}
 }
@@ -508,7 +508,7 @@ class qq2FileUploader {
 			return array( 'error' => 'No files were uploaded!' );
 		}
 
-		$size = $this->file->getSize();
+		$size = $this->file->get_size();
 
 		if ( $size == 0 ) {
 			return array( 'error' => 'File is empty!' );
@@ -520,7 +520,7 @@ class qq2FileUploader {
 			return array( 'error' => __( 'File is too large, increase post_max_size and/or upload_max_filesize', 'mainwp' ) );
 		}
 
-		$pathinfo = pathinfo( $this->file->getName() );
+		$pathinfo = pathinfo( $this->file->get_name() );
 		$filename = $pathinfo['filename'];
 		// $filename = md5(uniqid());
 		$ext = $pathinfo['extension'];

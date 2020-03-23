@@ -1396,7 +1396,7 @@ class MainWP_Manage_Sites {
 		// Load the Securtiy Issues widget
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
-				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'renderWidget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
+				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
 			}
 		}
 

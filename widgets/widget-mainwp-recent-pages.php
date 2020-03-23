@@ -26,21 +26,21 @@ class MainWP_Recent_Pages {
 	/**
 	 * Method render()
 	 *
-	 * Fire off Method renderSites().
+	 * Fire off Method render_sites().
 	 */
 	public static function render() {
-		self::renderSites( false, false );
+		self::render_sites( false, false );
 	}
 
 	/**
-	 * Method renderSites()
+	 * Method render_sites()
 	 *
 	 * Build the resent pages list.
 	 *
 	 * @param mixed   $renew Site Data.
 	 * @param boolean $pExit true|false If $pExit is true exit.
 	 */
-	public static function renderSites( $renew, $pExit = true ) {
+	public static function render_sites( $renew, $pExit = true ) {
 
 		$recent_number = apply_filters('mainwp_recent_posts_pages_number', 5);
 

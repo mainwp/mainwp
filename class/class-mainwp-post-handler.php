@@ -388,12 +388,12 @@ class MainWP_Post_Handler {
 	 */
 	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
-		MainWP_Widget_Plugins::activatePlugin();
+		MainWP_Widget_Plugins::activate_plugin();
 	}
 
 	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
-		MainWP_Widget_Plugins::deactivatePlugin();
+		MainWP_Widget_Plugins::deactivate_plugin();
 	}
 
 	public function mainwp_widget_plugin_delete() {
@@ -1407,7 +1407,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
-		MainWP_Updates_Overview::dismissSyncErrors( false );
+		MainWP_Updates_Overview::dismiss_sync_errors( false );
 		MainWP_Updates_Overview::sync_site();
 	}
 
@@ -1630,7 +1630,7 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_checkbackups' );
 
 		try {
-			wp_send_json( array( 'result' => MainWP_Updates_Overview::checkBackups() ) );
+			wp_send_json( array( 'result' => MainWP_Updates_Overview::check_backups() ) );
 		} catch ( Exception $e ) {
 			die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
 		}
@@ -1640,7 +1640,7 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_syncerrors_dismiss' );
 
 		try {
-			die( wp_json_encode( array( 'result' => MainWP_Updates_Overview::dismissSyncErrors() ) ) );
+			die( wp_json_encode( array( 'result' => MainWP_Updates_Overview::dismiss_sync_errors() ) ) );
 		} catch ( Exception $e ) {
 			die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
 		}

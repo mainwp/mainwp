@@ -5,7 +5,7 @@
 class MainWP_Manage_Sites_View {
 
 	public static function init_menu() {
-		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::get_class_name(), 'renderManageSites' ) );
+		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::get_class_name(), 'render_manage_sites' ) );
 	}
 
 	public static function init_subpages_menu( &$subPages ) {

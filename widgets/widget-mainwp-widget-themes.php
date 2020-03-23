@@ -25,22 +25,22 @@ class MainWP_Widget_Themes {
 	/**
 	 * Method render()
 	 *
-	 * Fire off renderWidget().
+	 * Fire off render_widget().
 	 */
 	public static function render() {
-		self::renderWidget( false, false );
+		self::render_widget( false, false );
 	}
 
 
 	/**
-	 * Method renderWidget()
+	 * Method render_widget()
 	 *
 	 * Build Themes Widget
 	 *
 	 * @param mixed   $renew
 	 * @param boolean $pExit true|false If $pEixt is true then exit.
 	 */
-	public static function renderWidget( $renew, $pExit = true ) {
+	public static function render_widget( $renew, $pExit = true ) {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;

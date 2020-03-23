@@ -23,11 +23,11 @@ class MainWP_Security_Issues_Widget {
 	}
 
 	/**
-	 * Method renderWidget()
+	 * Method render_widget()
 	 *
 	 * Fetch Child Site issues from db & build widget.
 	 */
-	public static function renderWidget() {
+	public static function render_widget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {

@@ -19,6 +19,7 @@
 		<exclude name="WordPress.Files.FileName"/>
 		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
+		<exclude name="WordPress.Security.NonceVerification"/>
 	</rule>
 
 	<!-- Enforce PSR1 compatible namespaces. -->

@@ -26,7 +26,7 @@ class MainWP_Twitter {
 	}
 
 	public static function enabled_twitter_messages() {
-		if ( !get_option( 'mainwp_hide_twitters_message', 0 ) ) {
+		if ( ! get_option( 'mainwp_hide_twitters_message', 0 ) ) {
 			return true;
 		}
 
@@ -54,17 +54,17 @@ class MainWP_Twitter {
 			__( 'Wow', 'mainwp' ),
 		);
 
-		return $words[rand( 0, 6 )];
+		return $words[ rand( 0, 6 ) ];
 	}
 
 	public static function get_notice( $what, $value ) {
 
-		if ( !is_array( $value ) || empty( $value['sites'] ) || !isset( $value['seconds'] ) ) {
+		if ( ! is_array( $value ) || empty( $value['sites'] ) || ! isset( $value['seconds'] ) ) {
 			return '';
 		}
 
-		$message	 = '';
-		$first_word	 = self::random_word();
+		$message    = '';
+		$first_word = self::random_word();
 		switch ( $what ) {
 			case 'upgrade_everything':
 				$message = _n( sprintf( 'you just updated <strong>%d</strong> site', $value['sites'] ), sprintf( 'you just updated <strong>%d</strong> sites', $value['sites'] ), $value['sites'], 'mainwp' );
@@ -104,12 +104,12 @@ class MainWP_Twitter {
 				break;
 		}
 
-		if ( !empty( $message ) ) {
+		if ( ! empty( $message ) ) {
 			$in_sec = $value['seconds'];
 			if ( $in_sec <= 60 ) {
 				if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
-					$real_updated	 = $value['real_items'];
-					$message		 .= ', ' . _n( sprintf( '<strong>%d</strong> total update', $real_updated ), sprintf( '<strong>%d</strong> total updates', $real_updated ), $real_updated, 'mainwp' );
+					$real_updated = $value['real_items'];
+					$message     .= ', ' . _n( sprintf( '<strong>%d</strong> total update', $real_updated ), sprintf( '<strong>%d</strong> total updates', $real_updated ), $real_updated, 'mainwp' );
 				}
 				$message .= ' ' . _n( sprintf( 'in <strong>%d</strong> second', $real_updated ), sprintf( 'in <strong>%d</strong> seconds', $in_sec ), $in_sec, 'mainwp' );
 			}
@@ -145,7 +145,7 @@ class MainWP_Twitter {
 
 		$filters = self::get_filter();
 
-		if ( !in_array( $what, $filters ) ) {
+		if ( ! in_array( $what, $filters ) ) {
 			return false;
 		}
 
@@ -154,8 +154,8 @@ class MainWP_Twitter {
 			$clear_twit = true;
 		}
 
-		$opt_name	 = 'mainwp_tt_message_' . $what;
-		$user_id	 = get_current_user_id();
+		$opt_name = 'mainwp_tt_message_' . $what;
+		$user_id  = get_current_user_id();
 
 		if ( $clear_twit ) {
 			delete_user_option( $user_id, $opt_name );
@@ -166,9 +166,9 @@ class MainWP_Twitter {
 			// store one twitt info only
 			$data = array(
 				$twId => array(
-					'sites'		 => $countSites,
-					'seconds'	 => $countSec,
-					'items'		 => $countItems,
+					'sites'      => $countSites,
+					'seconds'    => $countSec,
+					'items'      => $countItems,
 					'real_items' => $coutRealItems,
 				),
 			);
@@ -186,7 +186,7 @@ class MainWP_Twitter {
 
 		$filters = self::get_filter();
 
-		if ( !in_array( $what, $filters ) ) {
+		if ( ! in_array( $what, $filters ) ) {
 			return false;
 		}
 
@@ -194,12 +194,12 @@ class MainWP_Twitter {
 
 		$data = get_user_option( $opt_name );
 
-		if ( !is_array( $data ) ) {
+		if ( ! is_array( $data ) ) {
 			$data = array();
 		}
 
-		if ( isset( $data[$twId] ) ) {
-			unset( $data[$twId] );
+		if ( isset( $data[ $twId ] ) ) {
+			unset( $data[ $twId ] );
 			$user_id = get_current_user_id();
 			update_user_option( $user_id, $opt_name, $data );
 		}
@@ -211,29 +211,29 @@ class MainWP_Twitter {
 
 		$filters = self::get_filter();
 
-		if ( !in_array( $what, $filters ) ) {
+		if ( ! in_array( $what, $filters ) ) {
 			return false;
 		}
 
-		$opt_name			 = 'mainwp_tt_message_' . $what;
-		$twitter_messages	 = get_user_option( $opt_name );
+		$opt_name         = 'mainwp_tt_message_' . $what;
+		$twitter_messages = get_user_option( $opt_name );
 
 		$return = array();
 
 		if ( is_array( $twitter_messages ) ) {
-			if ( !empty( $twId ) ) {
-				if ( isset( $twitter_messages[$twId] ) ) {
-					$value	 = $twitter_messages[$twId];
-					$mess	 = self::get_notice( $what, $value );
-					if ( !empty( $mess ) ) {
-						$return[$twId] = $mess;
+			if ( ! empty( $twId ) ) {
+				if ( isset( $twitter_messages[ $twId ] ) ) {
+					$value = $twitter_messages[ $twId ];
+					$mess  = self::get_notice( $what, $value );
+					if ( ! empty( $mess ) ) {
+						$return[ $twId ] = $mess;
 					}
 				}
 			} else {
 				foreach ( $twitter_messages as $time => $value ) {
 					$mess = self::get_notice( $what, $value );
-					if ( !empty( $mess ) ) {
-						$return[$time] = $mess;
+					if ( ! empty( $mess ) ) {
+						$return[ $time ] = $mess;
 					}
 				}
 			}
@@ -246,60 +246,60 @@ class MainWP_Twitter {
 
 		$filters = self::get_filter();
 
-		if ( !in_array( $what, $filters ) ) {
+		if ( ! in_array( $what, $filters ) ) {
 			return '';
 		}
 		// @MyMainWP I just quickly updated 3 plugins on 3 #WordPress sites, 5 total updates in 12 seconds
-		$opt_name			 = 'mainwp_tt_message_' . $what;
-		$twitter_messages	 = get_user_option( $opt_name );
-		if ( is_array( $twitter_messages[$twId] ) && isset( $twitter_messages[$twId] ) ) {
-			$value = $twitter_messages[$twId];
-			if ( is_array( $value ) && !empty( $value['sites'] ) && !empty( $value['seconds'] ) ) {
+		$opt_name         = 'mainwp_tt_message_' . $what;
+		$twitter_messages = get_user_option( $opt_name );
+		if ( is_array( $twitter_messages[ $twId ] ) && isset( $twitter_messages[ $twId ] ) ) {
+			$value = $twitter_messages[ $twId ];
+			if ( is_array( $value ) && ! empty( $value['sites'] ) && ! empty( $value['seconds'] ) ) {
 				$twit = '';
 				switch ( $what ) {
 					case 'upgrade_everything':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly updated %d #WordPress site', 'Thanks to @MyMainWP I just quickly updated %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly updated %d #WordPress site', 'Thanks to @MyMainWP I just quickly updated %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'upgrade_all_wp_core':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly updated %d #WordPress site', 'Thanks to @MyMainWP I just quickly updated %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly updated %d #WordPress site', 'Thanks to @MyMainWP I just quickly updated %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'upgrade_all_plugins':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly updated %d plugin', 'Thanks to @MyMainWP I just quickly updated %d plugins', $value['items'], 'mainwp' ) . ' ' . _n( 'on %d #WordPress site', 'on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['items'], $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly updated %d plugin', 'Thanks to @MyMainWP I just quickly updated %d plugins', $value['items'], 'mainwp' ) . ' ' . _n( 'on %d #WordPress site', 'on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['items'], $value['sites'] );
 						break;
 					case 'upgrade_all_themes':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly updated %d theme', 'Thanks to @MyMainWP I just quickly updated %d themes', $value['items'], 'mainwp' ) . ' ' . _n( 'on %d #WordPress site', 'on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['items'], $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly updated %d theme', 'Thanks to @MyMainWP I just quickly updated %d themes', $value['items'], 'mainwp' ) . ' ' . _n( 'on %d #WordPress site', 'on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['items'], $value['sites'] );
 						break;
 					case 'new_post':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly published a new post on %d #WordPress site', 'Thanks to @MyMainWP I just quickly published a new post on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly published a new post on %d #WordPress site', 'Thanks to @MyMainWP I just quickly published a new post on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'new_page':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress site', 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress site', 'Thanks to @MyMainWP I just quickly published a new page on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'installing_new_plugin':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress site', 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress site', 'Thanks to @MyMainWP I just quickly installed a new plugin on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'installing_new_theme':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly installed a new theme on %d #WordPress site', 'Thanks to @MyMainWP I just quickly installed a new theme on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly installed a new theme on %d #WordPress site', 'Thanks to @MyMainWP I just quickly installed a new theme on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 					case 'create_new_user':
-						$twit	 = _n( 'Thanks to @MyMainWP I just quickly created a new user on %d #WordPress site', 'Thanks to @MyMainWP I just quickly created a new user on %d #WordPress sites', $value['sites'], 'mainwp' );
-						$twit	 = sprintf( $twit, $value['sites'] );
+						$twit = _n( 'Thanks to @MyMainWP I just quickly created a new user on %d #WordPress site', 'Thanks to @MyMainWP I just quickly created a new user on %d #WordPress sites', $value['sites'], 'mainwp' );
+						$twit = sprintf( $twit, $value['sites'] );
 						break;
 				}
-				if ( !empty( $twit ) ) {
+				if ( ! empty( $twit ) ) {
 					$in_sec = $value['seconds'];
 					if ( $in_sec <= 60 ) {
 						if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
-							$real_updated	 = $value['real_items'];
-							$twit			 .= ', ' . sprintf( _n( '%d total update', '%d total updates', $real_updated, 'mainwp' ), $real_updated );
+							$real_updated = $value['real_items'];
+							$twit        .= ', ' . sprintf( _n( '%d total update', '%d total updates', $real_updated, 'mainwp' ), $real_updated );
 						}
 						$twit .= ' ' . sprintf( _n( 'in %d second', 'in %d seconds', $in_sec, 'mainwp' ), $in_sec );
 					}

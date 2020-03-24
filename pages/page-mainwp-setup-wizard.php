@@ -11,9 +11,9 @@ namespace MainWP\Dashboard;
  * Author URI: http://woothemes.com
  */
 
- /**
-  * MainWP Setup Wizard
-  */
+/**
+ * MainWP Setup Wizard
+ */
 class MainWP_Setup_Wizard {
 
 	private $step  = '';

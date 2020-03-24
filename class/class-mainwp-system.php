@@ -3,8 +3,8 @@
 // ini_set( 'display_errors', true );
 // error_reporting( E_ALL | E_STRICT );
 
-@ini_set( 'display_errors', false );
-@error_reporting( 0 );
+ini_set( 'display_errors', false );
+error_reporting( 0 );
 
 define( 'MAINWP_API_VALID', 'VALID' );
 define( 'MAINWP_API_INVALID', 'INVALID' );
@@ -227,7 +227,8 @@ class MainWP_System {
 			7 
 		);
 		add_filter(
-			'mainwp-manager-getextensions', array(
+			'mainwp-manager-getextensions', 
+			array(
 				MainWP_Extensions::get_class_name(),
 				'hook_manager_get_extensions',
 			)
@@ -461,11 +462,11 @@ class MainWP_System {
 
 		?>
 		<style type="text/css">
-			tr[data-plugin="<?php echo esc_attr($plugin_slug); ?>"] {
+			tr[data-plugin="<?php echo esc_attr( $plugin_slug ); ?>"] {
 				box-shadow: none;
 			}
 		</style>
-		<tr class="plugin-update-tr active" slug="<?php echo esc_attr($slug); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
+		<tr class="plugin-update-tr active" slug="<?php echo esc_attr( $slug ); ?>"><td colspan="3" class="plugin-update colspanchange"><div class="update-message api-deactivate">
 					<?php printf( __( 'You have a MainWP Extension that does not have an active API entered.  This means you will not receive updates or support.  Please visit the %1$sExtensions%2$s page and enter your API.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' ); ?>
 					<span class="mainwp-right"><a href="#" class="mainwp-activate-notice-dismiss" ><i class="times circle icon"></i> <?php esc_html_e( 'Dismiss', 'mainwp' ); ?></a></span>
 				</div></td></tr>
@@ -689,7 +690,7 @@ class MainWP_System {
 		if ( is_object( $error ) && empty( $mail_failed ) ) {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'yes' );
 			$er = $error->get_error_message();
-			if ( ! empty($er) ) {
+			if ( ! empty( $er ) ) {
 				MainWP_Logger::instance()->debug( 'Error :: wp_mail :: [error=' . $er . ']' );
 			}
 		}
@@ -921,8 +922,8 @@ class MainWP_System {
 	public function mainwp_cronupdatescheck_action() {
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
-		@ignore_user_abort( true );
-		@set_time_limit( 0 );
+		ignore_user_abort( true );
+		set_time_limit( 0 );
 		add_filter(
 			'admin_memory_limit', 
 			function() {
@@ -934,7 +935,7 @@ class MainWP_System {
 
 		// to check time to run daily
 		$run_timestamp = 0; // 0 hour
-		if ( ! empty($timeDailyUpdate) ) {
+		if ( ! empty( $timeDailyUpdate ) ) {
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( time() < $run_timestamp ) {
 				return;
@@ -1093,9 +1094,9 @@ class MainWP_System {
 
 						$mail_lines  = '';
 						$mail_lines .= $this->print_digest_lines( $pluginsNewUpdate );
-						$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted  );
-						$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate  );
-						$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate  );
+						$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
+						$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate );
+						$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
 
 						if ( $text_format ) {
 							$mail .= 'WordPress Plugin Updates' . "\r\n";
@@ -1135,9 +1136,9 @@ class MainWP_System {
 
 						$mail_lines  = '';
 						$mail_lines .= $this->print_digest_lines( $themesNewUpdate );
-						$mail_lines .= $this->print_digest_lines( $themesToUpdate, $sitesCheckCompleted  );
-						$mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate  );
-						$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate  );
+						$mail_lines .= $this->print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
+						$mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate );
+						$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate );
 
 						if ( $text_format ) {
 							$mail .= 'WordPress Themes Updates' . "\r\n";
@@ -1176,9 +1177,9 @@ class MainWP_System {
 
 						$mail_lines  = '';
 						$mail_lines .= $this->print_digest_lines( $coreNewUpdate );
-						$mail_lines .= $this->print_digest_lines( $coreToUpdate, $sitesCheckCompleted  );
-						$mail_lines .= $this->print_digest_lines( $ignoredCoreNewUpdate  );
-						$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate  );
+						$mail_lines .= $this->print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
+						$mail_lines .= $this->print_digest_lines( $ignoredCoreNewUpdate );
+						$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate );
 
 						if ( $text_format ) {
 							$mail .= 'WordPress Core Updates' . "\r\n";
@@ -1271,9 +1272,12 @@ class MainWP_System {
                                 <div></div>
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail(
-							$email, $mail_title = 'MainWP - HTTP response check',
+							$email, 
+							$mail_title = 'MainWP - HTTP response check',
 							MainWP_Utility::format_email(
-								$email, $mail_offline, $mail_title
+								$email, 
+								$mail_offline, 
+								$mail_title
 							),
 							array(
 								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
@@ -1312,9 +1316,13 @@ class MainWP_System {
                                      <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
 						}
 						wp_mail(
-							$email, $mail_title = 'Available Updates',
+							$email, 
+							$mail_title = 'Available Updates',
 							MainWP_Utility::format_email(
-								$email, $mail, $mail_title, $text_format
+								$email, 
+								$mail, 
+								$mail_title, 
+								$text_format
 							),
 							array(
 								'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
@@ -1733,7 +1741,9 @@ class MainWP_System {
 
 					try {
 						MainWP_Utility::fetch_url_authed(
-							$allWebsites[ $websiteId ], 'upgradeplugintheme', array(
+							$allWebsites[ $websiteId ], 
+							'upgradeplugintheme', 
+							array(
 								'type'   => 'plugin',
 								'list'   => urldecode( implode( ',', $slugs ) ),
 							)
@@ -1759,7 +1769,9 @@ class MainWP_System {
 
 					try {
 						MainWP_Utility::fetch_url_authed(
-							$allWebsites[ $websiteId ], 'upgradeplugintheme', array(
+							$allWebsites[ $websiteId ], 
+							'upgradeplugintheme', 
+							array(
 								'type'   => 'theme',
 								'list'   => urldecode( implode( ',', $slugs ) ),
 							)
@@ -1820,14 +1832,14 @@ class MainWP_System {
 
 						$dirs     = MainWP_Utility::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
-						if ( ! @is_dir( $iconsDir ) ) {
-							@mkdir( $iconsDir, 0777, true );
+						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
+							$wp_filesystem->mkdir( $iconsDir, 0777, true );
 						}
 						if ( $hasWPFileSystem && ! $wp_filesystem->exists( $iconsDir . 'index.php' ) ) {
 							$wp_filesystem->touch( $iconsDir . 'index.php' );
 						}
 						$filename = basename( $information['faviIconUrl'] );
-						$filename = strtok($filename, '?'); // to fix: remove params
+						$filename = strtok( $filename, '?' ); // to fix: remove params
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
 							$size     = file_put_contents( $iconsDir . $filename, $content );
@@ -1882,11 +1894,14 @@ class MainWP_System {
 		}
 		MainWP_Logger::instance()->info( 'CRON :: backups continue' );
 
-		@ignore_user_abort( true );
-		@set_time_limit( 0 );
-		add_filter( 'admin_memory_limit', function() {
-			return '512M';
-		} );
+		ignore_user_abort( true );
+		set_time_limit( 0 );
+		add_filter( 
+			'admin_memory_limit', 
+			function() {
+				return '512M';
+			} 
+		);
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
@@ -1919,11 +1934,14 @@ class MainWP_System {
 
 		MainWP_Logger::instance()->info( 'CRON :: backups' );
 
-		@ignore_user_abort( true );
-		@set_time_limit( 0 );
-		add_filter( 'admin_memory_limit', function() {
-			return '512M';
-		} );
+		ignore_user_abort( true );
+		set_time_limit( 0 );
+		add_filter( 
+			'admin_memory_limit', 
+			function() {
+				return '512M';
+			} 
+		);
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
@@ -2009,7 +2027,7 @@ class MainWP_System {
 
 	public function admin_footer() {
 
-		$this->update_footer(true); // will hide #wpfooter
+		$this->update_footer( true ); // will hide #wpfooter
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
 			MainWP_Post::init_subpages_menu();
@@ -2053,13 +2071,15 @@ class MainWP_System {
 		if ( self::is_mainwp_pages() ) {
 			$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
 			?>
-			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval($disabled_confirm); ?>">
+			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">
 
 			<script type="text/javascript">
-				jQuery( document ).ready( function ()
-				{
-					jQuery( '#adminmenu #collapse-menu' ).hide();
-				} );
+				jQuery( document ).ready( 
+					function ()
+						{
+							jQuery( '#adminmenu #collapse-menu' ).hide();
+						} 
+					);
 			</script>
 
 
@@ -2213,20 +2233,20 @@ class MainWP_System {
 
 	public function readfile_chunked( $filename ) {
 		$chunksize = 1024; // how many bytes per chunk
-		$handle    = @fopen( $filename, 'rb' );
+		$handle    = fopen( $filename, 'rb' );
 		if ( false === $handle ) {
 			return false;
 		}
 
-		while ( ! @feof( $handle ) ) {
-			$buffer = @fread( $handle, $chunksize );
+		while ( ! feof( $handle ) ) {
+			$buffer = fread( $handle, $chunksize );
 			echo $buffer;
 			ob_flush();
 			flush();
 			$buffer = null;
 		}
 
-		return @fclose( $handle );
+		return fclose( $handle );
 	}
 
 	public function parse_init() {
@@ -2281,7 +2301,7 @@ class MainWP_System {
 			return;
 		} else {
 			$plugins = get_plugins();
-			if ( ! is_array($plugins) || count($plugins) <= 4 ) {
+			if ( ! is_array( $plugins ) || count( $plugins ) <= 4 ) {
 				return; // new install
 			}
 		}
@@ -2316,12 +2336,12 @@ class MainWP_System {
 				'activated_key'    => 'Deactivated',
 				'instance_id'      => MainWP_Api_Manager_Password_Management::generate_password( 12, false ),
 			);
-			MainWP_Api_Manager::instance()->set_activation_info($ext_key, $act_info);
+			MainWP_Api_Manager::instance()->set_activation_info( $ext_key, $act_info );
 		}
 	}
 
 	public function deactivate_extention( $ext_key ) {
-		MainWP_Api_Manager::instance()->set_activation_info($ext_key, '');
+		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );
 	}
 
 	public function admin_init() {
@@ -2553,14 +2573,14 @@ class MainWP_System {
 			// to handle parameters
 			// see more redirect_post() in the file wp-admin/includes/post.php
 			$location = apply_filters( 'redirect_post_location', $location, $post_id );
-			wp_safe_redirect($location);
+			wp_safe_redirect( $location );
 			exit();
 		}
 	}
 
 	public function redirect_edit_bulkpost( $location, $post_id ) {
 		if ( $post_id ) {
-			$location = admin_url('admin.php?page=PostBulkEdit&post_id=' . intval($post_id));
+			$location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . intval( $post_id ) );
 		} else {
 			$location = admin_url( 'admin.php?page=PostBulkAdd' );
 		}
@@ -2778,15 +2798,19 @@ class MainWP_System {
 
 	public function init_session() {
 		// to fix issue start session for all requests
-		if ( isset($_GET['page']) && in_array($_GET['page'], array(
-			'PostBulkManage',
-			'PageBulkManage',
-			'PluginsManage',
-			'PluginsAutoUpdate',
-			'ThemesManage',
-			'ThemesAutoUpdate',
-			'UserBulkManage',
-		)) ) {
+		if ( isset( $_GET['page'] ) && in_array( 
+				$_GET['page'], 
+					array(
+					'PostBulkManage',
+					'PageBulkManage',
+					'PluginsManage',
+					'PluginsAutoUpdate',
+					'ThemesManage',
+					'ThemesAutoUpdate',
+					'UserBulkManage',
+				) 
+			) 
+		) {
 			// start session
 			MainWP_Cache::init_session();
 		}
@@ -2951,14 +2975,14 @@ class MainWP_System {
 				$website = $websites[ $i ];
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
-					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval($website->id) . '" />';
+					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval( $website->id ) . '" />';
 				}
 			}
 		} elseif ( false !== $websites ) {
 			while ( $website = MainWP_DB::fetch_object( $websites ) ) {
 				if ( '' == $website->sync_errors ) {
 					$cntr ++;
-					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval($website->id) . '" />';
+					echo '<input type="hidden" name="dashboard_wp_ids[]" class="dashboard_wp_id" value="' . intval( $website->id ) . '" />';
 				}
 			}
 		}

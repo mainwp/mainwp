@@ -9,6 +9,8 @@
  * @package MainWP/Bootstrap
  */
 
+// phpcs:disable -- required to support custom wp-config.php file location
+
 // set php.ini variables.
 @ignore_user_abort( true );
 @set_time_limit( 0 );
@@ -19,7 +21,6 @@ $mem = '512M';
 define( 'DOING_CRON', true );
 $included = false;
 
-// phpcs:disable -- required to support custom wp-config.php file location
 
 if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 	include_once __DIR__ . '/../../../../wp-load.php';

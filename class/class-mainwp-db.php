@@ -4,6 +4,8 @@
  *
  * This file handles all interactions with the DB.
  */
+
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepare -- unprepared SQL ok.
 class MainWP_DB {
 
 	// Config
@@ -1885,3 +1887,4 @@ class MainWP_DB {
 	}
 
 }
+// phpcs:enable

@@ -1,5 +1,5 @@
 <?php
-
+namespace MainWP\Dashboard;
 /**
  * MainWP Overview Page
  */

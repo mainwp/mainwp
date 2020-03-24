@@ -1,5 +1,5 @@
 <?php
-
+namespace MainWP\Dashboard;
 /**
  * MainWP Posts Page
  *
@@ -626,7 +626,7 @@ class MainWP_Post {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
+					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
 				} )
 			</script>
 			<?php
@@ -1094,6 +1094,7 @@ class MainWP_Post {
 			HAVING meta_key NOT LIKE %s
 			ORDER BY meta_key
 			LIMIT %d";
+			// phpcs:ignore -- unprepared SQL ok
 			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) );
 		}
 

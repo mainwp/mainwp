@@ -1,5 +1,7 @@
 <?php
 
+namespace MainWP\Dashboard;
+
 /**
  * MainWP Server Information Page
  */

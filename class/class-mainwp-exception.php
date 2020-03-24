@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 /**
  * Extends MainWP Exception
  *

@@ -1,10 +1,5 @@
 <?php
-
-// ini_set( 'display_errors', true );
-// error_reporting( E_ALL | E_STRICT );
-
-ini_set( 'display_errors', false );
-error_reporting( 0 );
+namespace MainWP\Dashboard;
 
 define( 'MAINWP_API_VALID', 'VALID' );
 define( 'MAINWP_API_INVALID', 'INVALID' );
@@ -315,7 +310,7 @@ class MainWP_System {
 			}
 			$query  = substr( $query, 0, strlen( $query ) - 2 );
 			$query .= ')';
-
+			// phpcs:ignore -- unprepared SQL ok
 			$alloptions_db = $wpdb->get_results( $query );
 			$wpdb->suppress_errors( $suppress );
 			if ( ! is_array( $alloptions ) ) {

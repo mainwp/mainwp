@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 /**
  * MainWP Client Live Reports
  *
@@ -10,6 +11,8 @@
  *
  * @deprecated moved to external Extension
  */
+
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
 class LiveReportResponder {
 
 	public static $instance = null;
@@ -2107,7 +2110,6 @@ PRIMARY KEY  (`id`)  ';
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		error_reporting( 0 );
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $sql as $query ) {
 			dbDelta( $query );
@@ -2847,3 +2849,4 @@ class MainWP_Live_Reports_Utility {
 	}
 
 }
+// phpcs:enable

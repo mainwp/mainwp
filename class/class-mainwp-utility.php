@@ -1,7 +1,9 @@
 <?php
+namespace MainWP\Dashboard;
 /**
  * MainWP Utility
  */
+// phpcs:disable WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions -- to custom curl functions and using PHP filesystem functions
 class MainWP_Utility {
 
 	public static $enabled_wp_seo = null;
@@ -96,8 +98,7 @@ class MainWP_Utility {
 	private static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
-
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom curl usage
+	
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -723,7 +724,7 @@ class MainWP_Utility {
 					}
 
 					if ( file_exists( $cookieFile ) ) {
-						@chmod( $cookieFile, 0644 );
+						chmod( $cookieFile, 0644 );
 						curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 						curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 					}
@@ -986,7 +987,7 @@ class MainWP_Utility {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
-					@chmod( $cookieFile, 0644 );
+					chmod( $cookieFile, 0644 );
 					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -1408,7 +1409,7 @@ class MainWP_Utility {
 			}
 
 			if ( file_exists( $cookieFile ) ) {
-				@chmod( $cookieFile, 0644 );
+				chmod( $cookieFile, 0644 );
 				curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
@@ -1934,7 +1935,7 @@ class MainWP_Utility {
 				$wp_filesystem->touch( $file_index );
 			}
 		} else {
-
+			
 			if ( ! file_exists( $cookieDir ) ) {
 				@mkdir( $cookieDir, 0777, true );
 			}
@@ -2970,7 +2971,7 @@ EOT;
 
 	public static function fix_option( $option_name ) {
 		global $wpdb;
-
+		// phpcs:ignore -- unprepared SQL ok
 		if ( 'yes' === $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
 			$option_value = get_option( $option_name );
 			delete_option( $option_name );

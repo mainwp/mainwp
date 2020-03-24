@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 /*
  * Copyright
  * Plugin: WooCommerce

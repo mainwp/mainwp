@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 /**
  * MainWP Client Live Report Responder
  *
@@ -8,6 +9,7 @@
  * @see MainWP-Client-Reports-Extension
  */
 
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, depredicated
 function live_reports_responder_classes() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';
@@ -369,3 +371,4 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 	}
 }
 
+// phpcs:enable

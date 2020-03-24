@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 /**
  * MainWP Security Issues Page
  *

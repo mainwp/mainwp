@@ -1,5 +1,5 @@
 <?php
-
+namespace MainWP\Dashboard;
 /**
  *  MainWP Plugins Page
  *
@@ -408,7 +408,7 @@ class MainWP_Plugins {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
+					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
 				} );
 			</script>
 			<?php

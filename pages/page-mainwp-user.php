@@ -1,5 +1,5 @@
 <?php
-
+namespace MainWP\Dashboard;
 /**
  * MainWP User Page
  *
@@ -371,7 +371,7 @@ class MainWP_User {
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php esc_html_e( $status ); ?>] );
+				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
 			} );
 			</script>
 			<?php

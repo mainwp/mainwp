@@ -1,4 +1,5 @@
 <?php
+namespace MainWP\Dashboard;
 
 if ( ! defined( 'WP_CLI' ) ) {
 	return;

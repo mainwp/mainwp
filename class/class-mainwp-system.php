@@ -227,7 +227,7 @@ class MainWP_System {
 			7
 		);
 		add_filter(
-			'mainwp-manager-getextensions', 
+			'mainwp-manager-getextensions',
 			array(
 				MainWP_Extensions::get_class_name(),
 				'hook_manager_get_extensions',
@@ -1264,7 +1264,7 @@ class MainWP_System {
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
 						MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-						$mail_offline           = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+						$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
                                 <ul>
                                 ' . $mail_offline . '
@@ -1272,11 +1272,11 @@ class MainWP_System {
                                 <div></div>
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail(
-							$email, 
+							$email,
 							$mail_title = 'MainWP - HTTP response check',
 							MainWP_Utility::format_email(
-								$email, 
-								$mail_offline, 
+								$email,
+								$mail_offline,
 								$mail_title
 							),
 							array(
@@ -1316,12 +1316,12 @@ class MainWP_System {
                                      <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
 						}
 						wp_mail(
-							$email, 
+							$email,
 							$mail_title = 'Available Updates',
 							MainWP_Utility::format_email(
-								$email, 
-								$mail, 
-								$mail_title, 
+								$email,
+								$mail,
+								$mail_title,
 								$text_format
 							),
 							array(
@@ -1741,8 +1741,8 @@ class MainWP_System {
 
 					try {
 						MainWP_Utility::fetch_url_authed(
-							$allWebsites[ $websiteId ], 
-							'upgradeplugintheme', 
+							$allWebsites[ $websiteId ],
+							'upgradeplugintheme',
 							array(
 								'type'   => 'plugin',
 								'list'   => urldecode( implode( ',', $slugs ) ),
@@ -1769,8 +1769,8 @@ class MainWP_System {
 
 					try {
 						MainWP_Utility::fetch_url_authed(
-							$allWebsites[ $websiteId ], 
-							'upgradeplugintheme', 
+							$allWebsites[ $websiteId ],
+							'upgradeplugintheme',
 							array(
 								'type'   => 'theme',
 								'list'   => urldecode( implode( ',', $slugs ) ),
@@ -1896,11 +1896,11 @@ class MainWP_System {
 
 		ignore_user_abort( true );
 		set_time_limit( 0 );
-		add_filter( 
-			'admin_memory_limit', 
+		add_filter(
+			'admin_memory_limit',
 			function() {
 				return '512M';
-			} 
+			}
 		);
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
@@ -1936,11 +1936,11 @@ class MainWP_System {
 
 		ignore_user_abort( true );
 		set_time_limit( 0 );
-		add_filter( 
-			'admin_memory_limit', 
+		add_filter(
+			'admin_memory_limit',
 			function() {
 				return '512M';
-			} 
+			}
 		);
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
@@ -2798,18 +2798,18 @@ class MainWP_System {
 
 	public function init_session() {
 		// to fix issue start session for all requests
-		if ( isset( $_GET['page'] ) && in_array( 
-				$_GET['page'], 
+		if ( isset( $_GET['page'] ) && in_array(
+				$_GET['page'],
 					array(
-					'PostBulkManage',
-					'PageBulkManage',
-					'PluginsManage',
-					'PluginsAutoUpdate',
-					'ThemesManage',
-					'ThemesAutoUpdate',
-					'UserBulkManage',
-				) 
-			) 
+						'PostBulkManage',
+						'PageBulkManage',
+						'PluginsManage',
+						'PluginsAutoUpdate',
+						'ThemesManage',
+						'ThemesAutoUpdate',
+						'UserBulkManage',
+					)
+			)
 		) {
 			// start session
 			MainWP_Cache::init_session();

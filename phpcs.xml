@@ -19,8 +19,14 @@
 		<exclude name="WordPress.Files.FileName"/>
 		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
+		
+		<!-- Disable Nonce verification due to large number of false positives. -->
 		<exclude name="WordPress.Security.NonceVerification"/>
+		
+		<!-- Disable Escaping output check due to large number of false positives. -->
 		<exclude name="WordPress.Security.EscapeOutput"/>
+		
+		<!-- Disable Strict comparison check. Not applicable in the mojority of cases. -->
 		<exclude name="WordPress.PHP.StrictComparisons"/>
 	</rule>
 

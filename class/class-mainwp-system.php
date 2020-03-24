@@ -98,14 +98,14 @@ class MainWP_System {
 
 		$ssl_api_verifyhost = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 		if ( 0 == $ssl_api_verifyhost ) {
-			add_filter( 
-				'http_request_args', 
+			add_filter(
+				'http_request_args',
 				array(
 					MainWP_Extensions::get_class_name(),
 					'no_ssl_filter_extension_upgrade',
-				), 
-				99, 
-				2 
+				),
+				99,
+				2
 			);
 		}
 
@@ -217,14 +217,14 @@ class MainWP_System {
 		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hook_get_groups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
-		add_filter( 
-			'mainwp_getdashboardsites', 
+		add_filter(
+			'mainwp_getdashboardsites',
 			array(
 				MainWP_Extensions::get_class_name(),
 				'hook_get_dashboard_sites',
-			), 
-			10, 
-			7 
+			),
+			10,
+			7
 		);
 		add_filter(
 			'mainwp-manager-getextensions', 
@@ -925,10 +925,10 @@ class MainWP_System {
 		ignore_user_abort( true );
 		set_time_limit( 0 );
 		add_filter(
-			'admin_memory_limit', 
+			'admin_memory_limit',
 			function() {
 				return '512M';
-			} 
+			}
 		);
 
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );

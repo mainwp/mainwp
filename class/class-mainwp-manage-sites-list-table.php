@@ -31,11 +31,11 @@ class MainWP_Manage_Sites_List_Table {
 
 		$dir        = MainWP_Utility::get_mainwp_specific_dir( $item['id'] );
 		$lastbackup = 0;
-		
+
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
-		
+
 		if ( $hasWPFileSystem && $wp_filesystem->exists( $dir ) ) {
 			$dh = opendir( $dir );
 			if ( $dh ) {

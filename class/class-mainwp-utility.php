@@ -96,7 +96,7 @@ class MainWP_Utility {
 	private static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
-	
+
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom curl usage
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
@@ -1102,8 +1102,8 @@ class MainWP_Utility {
 					call_user_func_array( $handler, array( $data, $site, &$output ) );
 				}
 			}
-		}		
-		
+		}
+
 		return true;
 	}
 
@@ -3193,7 +3193,7 @@ EOT;
 		return $faviurl;
 	}
 	// phpcs:enable
-	
+
 	public static function get_curl_ssl_version( $sslVersion ) {
 		switch ( $sslVersion ) {
 			case '1.x':

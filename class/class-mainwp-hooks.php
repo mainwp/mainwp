@@ -132,14 +132,14 @@ class MainWP_Hooks {
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
-		
+
 		if ( $hasWPFileSystem ) {
 			$favi = MainWP_DB::instance()->get_website_option( $site, 'favi_icon', '' );
 			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $site->id . '-' ) ) ) {
-				$dirs = MainWP_Utility::get_icons_dir();			
+				$dirs = MainWP_Utility::get_icons_dir();
 				if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
 					$wp_filesystem->delete( $dirs[0] . $favi );
-				}					
+				}
 			}
 		}
 

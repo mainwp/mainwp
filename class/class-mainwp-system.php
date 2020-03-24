@@ -58,7 +58,7 @@ class MainWP_System {
 		$this->load_all_options();
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
-		
+
 		// If class-mainwp-creport.php exists include it.
 		if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
 			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $this->plugin_slug . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
@@ -462,8 +462,8 @@ class MainWP_System {
 		<?php
 	}
 
-	public function parse_request() {		
-		include_once MAINWP_PLUGIN_DIR . '/response/api.php';		
+	public function parse_request() {
+		include_once MAINWP_PLUGIN_DIR . '/response/api.php';
 	}
 
 	public function localization() {
@@ -1656,8 +1656,8 @@ class MainWP_System {
 				$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 				global $wp_filesystem;
-				
-				if ( $hasWPFileSystem && !empty( $wp_filesystem ) ) {
+
+				if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 					foreach ( $websitesToCheck as $siteId => $bool ) {
 						if ( 0 === $allWebsites[ $siteId ]->backup_before_upgrade ) {
 							$sitesCheckCompleted[ $siteId ] = true;
@@ -1801,10 +1801,10 @@ class MainWP_System {
 					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
 					$content = MainWP_Utility::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
-						
+
 						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 						global $wp_filesystem;
-		
+
 						$dirs     = MainWP_Utility::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 						if ( ! @is_dir( $iconsDir ) ) {
@@ -2225,7 +2225,7 @@ class MainWP_System {
 			if ( stristr( rawurldecode( $_REQUEST['mwpdl'] ), '..' ) ) {
 				return;
 			}
-			
+
 			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 			global $wp_filesystem;

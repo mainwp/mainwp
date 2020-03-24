@@ -1,5 +1,6 @@
 <?php
 namespace MainWP\Dashboard;
+
 /**
  * MainWP Utility
  */
@@ -98,7 +99,7 @@ class MainWP_Utility {
 	private static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
-	
+
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1935,7 +1936,7 @@ class MainWP_Utility {
 				$wp_filesystem->touch( $file_index );
 			}
 		} else {
-			
+
 			if ( ! file_exists( $cookieDir ) ) {
 				@mkdir( $cookieDir, 0777, true );
 			}

@@ -1303,7 +1303,8 @@ class MainWP_Setup_Wizard {
 
 		return $list_contact;
 	}
-
+	
+	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom curl usage
 	private function uptime_robot_fetch( $url, $post_fields = '' ) {
 
 		$url = trim( $url );
@@ -1348,6 +1349,8 @@ class MainWP_Setup_Wizard {
 			return substr( $file_contents, strlen( $json_encap ) - 1, strlen( $file_contents ) - strlen( $json_encap ) );
 		}
 	}
+	
+	// phpcs:enable
 
 	private function mwp_setup_ready_actions() {
 		delete_option( 'mainwp_run_quick_setup' );

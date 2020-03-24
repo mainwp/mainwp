@@ -31,15 +31,20 @@ class MainWP_Manage_Sites_List_Table {
 
 		$dir        = MainWP_Utility::get_mainwp_specific_dir( $item['id'] );
 		$lastbackup = 0;
-		if ( file_exists( $dir ) ) {
+		
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+
+		global $wp_filesystem;
+		
+		if ( $hasWPFileSystem && $wp_filesystem->exists( $dir ) ) {
 			$dh = opendir( $dir );
 			if ( $dh ) {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
 						if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) ) {
-							if ( filemtime( $theFile ) > $lastbackup ) {
-								$lastbackup = filemtime( $theFile );
+							if ( $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
+								$lastbackup = $wp_filesystem->mtime( $theFile );
 							}
 						}
 					}

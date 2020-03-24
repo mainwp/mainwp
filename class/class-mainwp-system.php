@@ -58,8 +58,11 @@ class MainWP_System {
 		$this->load_all_options();
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
-		list ( $t1, $t2 )  = explode( '/', $this->plugin_slug );
-		$this->slug        = str_replace( '.php', '', $t2 );
+		
+		// If class-mainwp-creport.php exists include it.
+		if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
+			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $this->plugin_slug . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
+		}
 
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'; // Version information from WordPress
@@ -459,10 +462,8 @@ class MainWP_System {
 		<?php
 	}
 
-	public function parse_request() {
-		if ( file_exists( MAINWP_PLUGIN_DIR . '/response/api.php' ) ) {
-			include_once MAINWP_PLUGIN_DIR . '/response/api.php';
-		}
+	public function parse_request() {		
+		include_once MAINWP_PLUGIN_DIR . '/response/api.php';		
 	}
 
 	public function localization() {
@@ -810,7 +811,7 @@ class MainWP_System {
 			return $false;
 		}
 
-		if ( $arg->slug === $this->slug ) {
+		if ( $arg->slug === dirname( $this->plugin_slug ) ) {
 			return $false;
 		}
 
@@ -1652,51 +1653,57 @@ class MainWP_System {
 					}
 				}
 
-				foreach ( $websitesToCheck as $siteId => $bool ) {
-					if ( 0 === $allWebsites[ $siteId ]->backup_before_upgrade ) {
-						$sitesCheckCompleted[ $siteId ] = true;
-					}
-					if ( isset( $sitesCheckCompleted[ $siteId ] ) ) {
-						continue;
-					}
+				$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
-					$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
-					$dh  = opendir( $dir );
-					// Check if backup ok
-					$lastBackup = - 1;
-					if ( file_exists( $dir ) && $dh ) {
-						while ( ( $file = readdir( $dh ) ) !== false ) {
-							if ( '.' !== $file && '..' !== $file ) {
-								$theFile = $dir . $file;
-								if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-									$lastBackup = filemtime( $theFile );
+				global $wp_filesystem;
+				
+				if ( $hasWPFileSystem && !empty( $wp_filesystem ) ) {
+					foreach ( $websitesToCheck as $siteId => $bool ) {
+						if ( 0 === $allWebsites[ $siteId ]->backup_before_upgrade ) {
+							$sitesCheckCompleted[ $siteId ] = true;
+						}
+						if ( isset( $sitesCheckCompleted[ $siteId ] ) ) {
+							continue;
+						}
+
+						$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
+						$dh  = opendir( $dir );
+						// Check if backup ok
+						$lastBackup = - 1;
+						if ( $wp_filesystem->exists( $dir ) && $dh ) {
+							while ( ( $file = readdir( $dh ) ) !== false ) {
+								if ( '.' !== $file && '..' !== $file ) {
+									$theFile = $dir . $file;
+									if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
+										$lastBackup = $wp_filesystem->mtime( $theFile );
+									}
 								}
 							}
+							closedir( $dh );
 						}
-						closedir( $dh );
-					}
 
-					$mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-					if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-						$mainwp_backup_before_upgrade_days = 7;
-					}
+						$mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
+						if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
+							$mainwp_backup_before_upgrade_days = 7;
+						}
 
-					$backupRequired = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? true : false );
+						$backupRequired = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? true : false );
 
-					if ( ! $backupRequired ) {
-						$sitesCheckCompleted[ $siteId ] = true;
-						MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
-						continue;
-					}
+						if ( ! $backupRequired ) {
+							$sitesCheckCompleted[ $siteId ] = true;
+							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
+							continue;
+						}
 
-					try {
-						$result = MainWP_Manage_Sites::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-						MainWP_Manage_Sites::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
-						$sitesCheckCompleted[ $siteId ] = true;
-						MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
-					} catch ( Exception $e ) {
-						$sitesCheckCompleted[ $siteId ] = false;
-						MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
+						try {
+							$result = MainWP_Manage_Sites::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
+							MainWP_Manage_Sites::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
+							$sitesCheckCompleted[ $siteId ] = true;
+							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
+						} catch ( Exception $e ) {
+							$sitesCheckCompleted[ $siteId ] = false;
+							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
+						}
 					}
 				}
 			} else {
@@ -1794,13 +1801,17 @@ class MainWP_System {
 					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
 					$content = MainWP_Utility::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
+						
+						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+						global $wp_filesystem;
+		
 						$dirs     = MainWP_Utility::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 						if ( ! @is_dir( $iconsDir ) ) {
 							@mkdir( $iconsDir, 0777, true );
 						}
-						if ( ! file_exists( $iconsDir . 'index.php' ) ) {
-							@touch( $iconsDir . 'index.php' );
+						if ( $hasWPFileSystem && ! $wp_filesystem->exists( $iconsDir . 'index.php' ) ) {
+							$wp_filesystem->touch( $iconsDir . 'index.php' );
 						}
 						$filename = basename( $information['faviIconUrl'] );
 						$filename = strtok($filename, '?'); // to fix: remove params
@@ -2214,8 +2225,12 @@ class MainWP_System {
 			if ( stristr( rawurldecode( $_REQUEST['mwpdl'] ), '..' ) ) {
 				return;
 			}
+			
+			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
-			if ( file_exists( $file ) && md5( filesize( $file ) ) == $_GET['sig'] ) {
+			global $wp_filesystem;
+
+			if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && md5( filesize( $file ) ) == $_GET['sig'] ) {
 				$this->upload_file( $file );
 				exit();
 			}

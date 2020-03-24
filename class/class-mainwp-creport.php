@@ -513,12 +513,18 @@ class MainWP_Live_Reports_Class {
 				$report['footer'] = trim( $_POST['mainwp_creport_report_footer'] );
 			}
 
+			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			global $wp_filesystem;
+			
 			$creport_dir = apply_filters( 'mainwp_getspecificdir', 'client_report/' );
-			if ( ! file_exists( $creport_dir ) ) {
-				@mkdir( $creport_dir, 0777, true );
-			}
-			if ( ! file_exists( $creport_dir . '/index.php' ) ) {
-				@touch( $creport_dir . '/index.php' );
+			
+			if ( $hasWPFileSystem ) {
+				if ( ! $wp_filesystem->exists( $creport_dir ) ) {
+					$wp_filesystem->mkdir( $creport_dir, 0777, true );
+				}
+				if ( ! $wp_filesystem->exists( $creport_dir . '/index.php' ) ) {
+					$wp_filesystem->touch( $creport_dir . '/index.php' );
+				}
 			}
 
 			$attach_files = 'NOTCHANGE';
@@ -656,6 +662,9 @@ class MainWP_Live_Reports_Class {
 	}
 
 	public static function handle_upload_image( $file_input, $dest_dir, $max_height, $max_width = null ) {
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+			
 		$output         = array();
 		$processed_file = '';
 		if ( UPLOAD_ERR_OK == $file_input['error'] ) {
@@ -687,7 +696,7 @@ class MainWP_Live_Reports_Class {
 					$dest_file = dirname( $dest_file ) . '/' . wp_unique_filename( dirname( $dest_file ), basename( $dest_file ) );
 
 					if ( move_uploaded_file( $tmp_file, $dest_file ) ) {
-						if ( file_exists( $dest_file ) ) {
+						if ( $hasWPFileSystem && $wp_filesystem->exists( $dest_file ) ) {
 							list( $width, $height, $type, $attr ) = getimagesize( $dest_file );
 						}
 
@@ -705,7 +714,7 @@ class MainWP_Live_Reports_Class {
 							if ( ! $cropped_file || is_wp_error( $cropped_file ) ) {
 								$output['error'][] = __( 'Can not resize the image.' );
 							} else {
-								@unlink( $dest_file );
+								$wp_filesystem->delete( $dest_file );
 								$processed_file = basename( $cropped_file );
 							}
 						} else {

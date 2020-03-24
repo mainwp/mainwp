@@ -71,10 +71,6 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 	}
 }
 
-// If class-mainwp-creport.php exists include it.
-if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __DIR__ ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
-	include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __DIR__ ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
-}
 
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 

@@ -515,9 +515,9 @@ class MainWP_Live_Reports_Class {
 
 			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 			global $wp_filesystem;
-			
+
 			$creport_dir = apply_filters( 'mainwp_getspecificdir', 'client_report/' );
-			
+
 			if ( $hasWPFileSystem ) {
 				if ( ! $wp_filesystem->exists( $creport_dir ) ) {
 					$wp_filesystem->mkdir( $creport_dir, 0777, true );
@@ -664,7 +664,7 @@ class MainWP_Live_Reports_Class {
 	public static function handle_upload_image( $file_input, $dest_dir, $max_height, $max_width = null ) {
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 		global $wp_filesystem;
-			
+
 		$output         = array();
 		$processed_file = '';
 		if ( UPLOAD_ERR_OK == $file_input['error'] ) {

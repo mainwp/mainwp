@@ -1798,8 +1798,8 @@ class MainWP_DB {
 		/** @var $this ->wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {
 			return false;
-		}		
-		return ( self::$instance->wpdb->dbh instanceof \mysqli );		
+		}
+		return ( self::$instance->wpdb->dbh instanceof \mysqli );
 	}
 
 	public static function ping( $link ) {

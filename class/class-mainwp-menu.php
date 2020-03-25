@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Main Menu
+ * 
+ * Build & Render MainWP Main Menu.
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -6,22 +12,28 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Menu {
 
+	/**
+	 * Method __construct()
+	 * 
+	 * Define MainWP Main Menu Items.
+	 */
 	public function __construct() {
 
-		// use the hook mainwp_main_menu_disable_menu_items to disable menu items
+		// Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
 		global $_mainwp_disable_menus_items;
+
+		// Init disable menu items, default is false.
 		if ( $_mainwp_disable_menus_items === null ) {
-			// init some disable menu items, default is false
 			$_mainwp_disable_menus_items = array(
-				// compatible with old hooks
+				// Compatible with old hooks.
 				'level_1'    => array(
 					'not_set_this_level' => true,
-					// 'mainwp_tab' => false, // not hide this menu
+					// 'mainwp_tab' => false, // Do not hide this menu
 					// 'Extensions'       => false,
 					// 'childsites_menu'  => false,
 				),
 				'level_2'    => array(
-					// 'mainwp_tab' => false,  // not hide this menu
+					// 'mainwp_tab' => false,  // Do not hide this menu
 					'UpdatesManage'      => false,
 					'managesites'        => false,
 					'PostBulkManage'     => false,
@@ -34,12 +46,24 @@ class MainWP_Menu {
 					'Extensions'         => false,
 					'ServerInformation'  => false,
 				),
-				// compatible with old hooks
+				// Compatible with old hooks.
 				'level_3'    => array(),
 			);
 		}
 	}
 
+	/**
+	 * Method init_subpages_left_menu
+	 * 
+	 * Build left menu subpages array.
+	 * 
+	 * @param mixed $subPages
+	 * @param mixed $initSubpage
+	 * @param mixed $parentKey
+	 * @param mixed $slug
+	 * 
+	 * @return array $initSubpage[]
+	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
 		if ( ! is_array( $subPages ) ) {
 			return;
@@ -54,7 +78,7 @@ class MainWP_Menu {
 					'right'      => '',
 				);
 
-				// to support check right to open menu for sometime
+				// To support check right to open menu for sometime.
 				if ( isset( $subPage['item_slug'] ) ) {
 					$_item['item_slug'] = $subPage['item_slug'];
 				}
@@ -64,9 +88,21 @@ class MainWP_Menu {
 		}
 	}
 
+	/**
+	 * Method is_disable_menu_item
+	 * 
+	 * Check if $_mainwp_disable_menus_items contains any menu items to hide.
+	 * 
+	 * @param mixed $level The level the menu item is on.
+	 * @param mixed $item The menu items meta data.
+	 * 
+	 * @return booleen True|False, default is False.
+	 */
 	public static function is_disable_menu_item( $level, $item ) {
 
+		// Grab disable menus array.
 		global $_mainwp_disable_menus_items;
+
 		$_level = 'level_' . $level;
 		if ( is_array( $_mainwp_disable_menus_items ) && isset( $_mainwp_disable_menus_items[ $_level ] ) && isset( $_mainwp_disable_menus_items[ $_level ][ $item ] ) ) {
 			if ( $_mainwp_disable_menus_items[ $_level ][ $item ] ) {
@@ -79,6 +115,16 @@ class MainWP_Menu {
 		return false;
 	}
 
+	/**
+	 * Method add_left_menu
+	 * 
+	 * Build Top Level Menu
+	 * 
+	 * @param array $params Menu Item parameters.
+	 * @param integer $level Menu Item Level
+	 * 
+	 * @return array $mainwp_leftmenu[], $_mainwp_menu_active_slugs[].
+	 */
 	public static function add_left_menu( $params = array(), $level = 1 ) {
 
 		if ( empty( $params ) ) {
@@ -123,6 +169,11 @@ class MainWP_Menu {
 		}
 	}
 
+	/**
+	 * Method render_left_menu
+	 * 
+	 * Build Top Level Main Menu HTML & Render.
+	 */
 	public static function render_left_menu() {
 
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs, $plugin_page;
@@ -267,6 +318,13 @@ class MainWP_Menu {
 		<?php
 	}
 
+	/**
+	 * Method render_sub_item
+	 * 
+	 * Grab all submenu items and attatch to Main Menu.
+	 * 
+	 * @param mixed $parent_key
+	 */
 	public static function render_sub_item( $parent_key ) {
 		if ( empty( $parent_key ) ) {
 			return;

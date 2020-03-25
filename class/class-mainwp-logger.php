@@ -2,7 +2,7 @@
 /**
  * MainWP Logger
  * 
- * For custom read/write logging file
+ * For custom read/write logging file.
  */
 namespace MainWP\Dashboard;
 

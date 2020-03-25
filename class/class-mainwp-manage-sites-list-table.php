@@ -1,4 +1,7 @@
 <?php
+/**
+ * Manage Sites List Table. 
+ */
 namespace MainWP\Dashboard;
 
 /**

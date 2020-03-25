@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP API Manager
  *
@@ -11,6 +9,7 @@ namespace MainWP\Dashboard;
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0
  */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP API Manager

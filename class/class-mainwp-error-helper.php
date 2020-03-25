@@ -1,12 +1,11 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * HTTP Error Handler
  *
  * Throw this error when MainWP is not detected
  * due to either an HTTP error or if MainWP Child Plugin is not found.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP Error Helper

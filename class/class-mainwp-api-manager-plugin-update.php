@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP API Manager Update Handler
  *
@@ -8,6 +6,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP API Manager/Update Handler
  */
+namespace MainWP\Dashboard;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {

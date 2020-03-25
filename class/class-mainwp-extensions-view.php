@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Extentions View
  *
  * Renders MainWP Extensions Page.
  */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Extensions View

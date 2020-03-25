@@ -1,5 +1,6 @@
 <?php
 namespace MainWP\Dashboard;
+
 /**
  * MainWP API Manager Update Handler
  *
@@ -169,7 +170,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		}
 
 		if ( $bulk_check ) {
-			$response = wp_remote_retrieve_body( $request );			
+			$response = wp_remote_retrieve_body( $request );
 			$response = MainWP_Utility::maybe_unserialyze( $response );
 		} else {
 			// $response = unserialize( wp_remote_retrieve_body( $request ) );

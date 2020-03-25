@@ -696,13 +696,13 @@ class MainWP_Utility {
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
 					$params    = apply_filters(
-						'mainwp-pre-posting-posts', 
-						( is_array( $params ) ? $params : array() ), 
+						'mainwp-pre-posting-posts',
+						( is_array( $params ) ? $params : array() ),
 						(object) array(
-								'id'     => $website->id,
-								'url'    => $website->url,
-								'name'   => $website->name,
-							)
+							'id'     => $website->id,
+							'url'    => $website->url,
+							'name'   => $website->name,
+						)
 						);
 				}
 
@@ -961,8 +961,8 @@ class MainWP_Utility {
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {
 				$_new_post = $params['new_post'];
 				$params    = apply_filters(
-					'mainwp-pre-posting-posts', 
-					( is_array( $params ) ? $params : array() ), 
+					'mainwp-pre-posting-posts',
+					( is_array( $params ) ? $params : array() ),
 					(object) array(
 						'id'     => $website->id,
 						'url'    => $website->url,

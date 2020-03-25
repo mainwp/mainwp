@@ -28,6 +28,10 @@
 		
 		<!-- Disable Strict comparison check. Not applicable in the mojority of cases. -->
 		<exclude name="WordPress.PHP.StrictComparisons"/>
+                
+                <!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
+                <exclude name="WordPress.PHP.StrictInArray"/>
+                
 	</rule>
 
 	<!-- Enforce PSR1 compatible namespaces. -->

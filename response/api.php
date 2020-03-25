@@ -94,7 +94,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			live_reports_responder_classes();
-			$report                     = new stdClass();
+			$report                     = new \stdClass();
 			$report->title              = 'Live Reports';
 			$report->date_from          = strtotime( date( 'Y-m-01' ) );
 			$report->date_to            = strtotime( date( 'Y-m-d' ) );
@@ -161,7 +161,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 			$checkifvalidclient = check_if_valid_client( $_POST['email'], $_POST['siteid'] );
 			$allAccess          = isset( $_POST['allAccess'] ) ? $_POST['allAccess'] : false;
 			if ( ( isset( $checkifvalidclient['result'] ) && 'success' == $checkifvalidclient['result'] ) || $allAccess ) {
-				$report                     = new stdClass();
+				$report                     = new \stdClass();
 				$report->title              = 'Live Report';
 				$report->date_from          = $_POST['date_from'];
 				$report->date_to            = $_POST['date_to'];

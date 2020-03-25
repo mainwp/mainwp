@@ -1796,26 +1796,25 @@ class MainWP_DB {
 	// Support old & new versions of WordPress (3.9+)
 	public static function use_mysqli() {
 		/** @var $this ->wpdb wpdb */
-		if ( ! function_exists( 'mysqli_connect' ) ) {
+		if ( ! function_exists( '\mysqli_connect' ) ) {
 			return false;
-		}
-
-		return ( self::$instance->wpdb->dbh instanceof mysqli );
+		}		
+		return ( self::$instance->wpdb->dbh instanceof \mysqli );		
 	}
 
 	public static function ping( $link ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_ping( $link );
+			return \mysqli_ping( $link );
 		} else {
-			return mysql_ping( $link );
+			return \mysql_ping( $link );
 		}
 	}
 
 	public static function _query( $query, $link ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_query( $link, $query );
+			return \mysqli_query( $link, $query );
 		} else {
-			return mysql_query( $query, $link );
+			return \mysql_query( $query, $link );
 		}
 	}
 
@@ -1825,9 +1824,9 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return mysqli_fetch_object( $result );
+			return \mysqli_fetch_object( $result );
 		} else {
-			return mysql_fetch_object( $result );
+			return \mysql_fetch_object( $result );
 		}
 	}
 
@@ -1837,9 +1836,9 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return mysqli_free_result( $result );
+			return \mysqli_free_result( $result );
 		} else {
-			return mysql_free_result( $result );
+			return \mysql_free_result( $result );
 		}
 	}
 
@@ -1849,9 +1848,9 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return mysqli_data_seek( $result, $offset );
+			return \mysqli_data_seek( $result, $offset );
 		} else {
-			return mysql_data_seek( $result, $offset );
+			return \mysql_data_seek( $result, $offset );
 		}
 	}
 
@@ -1861,9 +1860,9 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
+			return \mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
 		} else {
-			return mysql_fetch_array( $result, ( null == $result_type ? MYSQL_BOTH : $result_type ) );
+			return \mysql_fetch_array( $result, ( null == $result_type ? MYSQL_BOTH : $result_type ) );
 		}
 	}
 
@@ -1873,9 +1872,9 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return mysqli_num_rows( $result );
+			return \mysqli_num_rows( $result );
 		} else {
-			return mysql_num_rows( $result );
+			return \mysql_num_rows( $result );
 		}
 	}
 
@@ -1885,7 +1884,7 @@ class MainWP_DB {
 		}
 
 		if ( self::use_mysqli() ) {
-			return ( $result instanceof mysqli_result );
+			return ( $result instanceof \mysqli_result );
 		} else {
 			return is_resource( $result );
 		}

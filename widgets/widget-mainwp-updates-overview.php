@@ -31,7 +31,7 @@ class MainWP_Updates_Overview {
 	 * Add plugins api filter.
 	 */
 	public static function init() {
-		add_filter( 'plugins_api', array( 'MainWP_Updates_Overview', 'plugins_api' ), 10, 3 );
+		add_filter( 'plugins_api', array( __CLASS__, 'plugins_api' ), 10, 3 );
 	}
 
 	/**

@@ -56,7 +56,7 @@ class MainWP_System {
 
 		// If class-mainwp-creport.php exists include it.
 		if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
-			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $this->plugin_slug . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
+			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
 		}
 
 		if ( is_admin() ) {
@@ -250,7 +250,7 @@ class MainWP_System {
 				add_action( 'init', array( $this, 'cron_active' ), PHP_INT_MAX );
 			}
 		}
-		add_action( 'mainwp_admin_footer', array( 'MainWP_UI', 'usersnap_integration' ) );
+		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
 	}
 
 	public function load_all_options() {
@@ -762,7 +762,7 @@ class MainWP_System {
 	}
 
 	public static function map_rslt_obj( $pRslt ) {
-		$obj              = new stdClass();
+		$obj              = new \stdClass();
 		$obj->slug        = $pRslt->slug;
 		$obj->new_version = $pRslt->latest_version;
 		$obj->url         = 'https://mainwp.com/';
@@ -774,7 +774,7 @@ class MainWP_System {
 	private function check_upgrade() {
 		$result = MainWP_API_Settings::check_upgrade();
 		if ( null === $this->upgradeVersionInfo ) {
-			$this->upgradeVersionInfo = new stdClass();
+			$this->upgradeVersionInfo = new \stdClass();
 		}
 		$this->upgradeVersionInfo->updated = time();
 		if ( ! empty( $result ) ) {

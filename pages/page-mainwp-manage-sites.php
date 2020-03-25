@@ -141,7 +141,7 @@ class MainWP_Manage_Sites {
 			return;
 		}
 
-		add_filter( 'mainwp_header_actions_right', array( 'MainWP_Manage_Sites', 'screen_options' ), 10, 2 );
+		add_filter( 'mainwp_header_actions_right', array( MainWP_Manage_Sites::get_class_name(), 'screen_options' ), 10, 2 );
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 	}
 
@@ -1727,7 +1727,7 @@ class MainWP_Manage_Sites {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				self::_reconnect_site( $website );
 			} else {
-				throw new Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
+				throw new \Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
 		} catch ( Exception $e ) {
 			die( 'ERROR ' . $e->getMessage() );

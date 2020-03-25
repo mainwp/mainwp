@@ -193,7 +193,7 @@ class MainWP_Install_Bulk {
 
 		$post_data['url'] = wp_json_encode( $_POST['url'] );
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
@@ -285,7 +285,7 @@ class MainWP_Install_Bulk {
 
 		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
@@ -371,19 +371,19 @@ class qq2UploadedFileXhr {
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 			if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) ) {
 				if ( ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ) ) ) {
-					throw new Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}
 
 			if ( ! is_dir( dirname( dirname( $path ) ) ) ) {
 				if ( ! $wp_filesystem->mkdir( dirname( dirname( $path ) ) ) ) {
-					throw new Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}
 
 			if ( ! is_dir( dirname( $path ) ) ) {
 				if ( ! $wp_filesystem->mkdir( dirname( $path ) ) ) {
-					throw new Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
+					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}
 
@@ -403,7 +403,7 @@ class qq2UploadedFileXhr {
 		}
 
 		if ( ! file_exists( $path ) ) {
-			throw new Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
+			throw new \Exception( 'Unable to save the file to the MainWP upload directory, please check your system configuration.' );
 		}
 
 		return true;
@@ -417,7 +417,7 @@ class qq2UploadedFileXhr {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
 			return (int) $_SERVER['CONTENT_LENGTH'];
 		} else {
-			throw new Exception( 'Getting content length is not supported.' );
+			throw new \Exception( 'Getting content length is not supported.' );
 		}
 	}
 }

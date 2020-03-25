@@ -1594,7 +1594,7 @@ class MainWP_Manage_Sites_View {
 					$err = str_replace( '%2F', '/', $err );
 					$err = str_replace( '%20', ' ', $err );
 					$err = str_replace( '%26', '&', $err );
-					throw new Exception( $err );
+					throw new \Exception( $err );
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						MainWP_DB::instance()->update_website_values(
@@ -1609,19 +1609,19 @@ class MainWP_Manage_Sites_View {
 						MainWP_Sync::sync_information_array( $website, $information );
 						return true;
 					} else {
-						throw new Exception( __( 'Undefined error!', 'mainwp' ) );
+						throw new \Exception( __( 'Undefined error!', 'mainwp' ) );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
-					throw new Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
+					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
 					$error = sprintf( __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to your MainWP Dashboard afterward. If you continue experiencing this issue, check the child site for %1$sknown plugin conflicts%2$s, or check the %3$sMainWP Community%4$s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/t/known-plugin-conflicts/402">', '</a>', '<a href="https://meta.mainwp.com/c/community-support/5">', '</a>' );
-					throw new Exception( $error );
+					throw new \Exception( $error );
 				}
 			}
 		} else {
-			throw new Exception( __( 'This operation is not allowed!', 'mainwp' ) );
+			throw new \Exception( __( 'This operation is not allowed!', 'mainwp' ) );
 		}
 
 		return false;

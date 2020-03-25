@@ -762,7 +762,7 @@ class MainWP_Post {
 			}
 		}
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->posts  = 0;
 
@@ -2064,7 +2064,7 @@ class MainWP_Post {
 								}
 							}
 
-							$output         = new stdClass();
+							$output         = new \stdClass();
 							$output->ok     = array();
 							$output->errors = array();
 							$startTime      = time();
@@ -2191,7 +2191,7 @@ class MainWP_Post {
 	}
 
 	public static function get_terms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->cats   = array();
 		$dbwebsites     = array();

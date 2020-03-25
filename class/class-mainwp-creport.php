@@ -852,7 +852,7 @@ class MainWP_Live_Reports_Class {
 	}
 
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) {
-		$output                  = new stdClass();
+		$output                  = new \stdClass();
 		$output->filtered_header = $report->header;
 		$output->filtered_body   = $report->body;
 		$output->filtered_footer = $report->footer;
@@ -2270,14 +2270,14 @@ PRIMARY KEY  (`id`)  ';
 					if ( 'id' === $index ) {
 						if ( 1 === $token->type && ( ! isset( $return[ $token->id ] ) || empty( $return[ $token->id ] ) ) ) {
 							if ( ! isset( $return[ $token->id ] ) ) {
-								$return[ $token->id ] = new stdClass();
+								$return[ $token->id ] = new \stdClass();
 							}
 							$return[ $token->id ]->token_value = $this->_get_default_token_site( $token->token_name, $site_url );
 						}
 					} else {
 						if ( 1 === $token->type && ( ! isset( $return[ $token->token_name ] ) || empty( $return[ $token->token_name ] ) ) ) {
 							if ( ! isset( $return[ $token->token_name ] ) ) {
-								$return[ $token->token_name ] = new stdClass();
+								$return[ $token->token_name ] = new \stdClass();
 							}
 							$return[ $token->token_name ]->token_value = $this->_get_default_token_site( $token->token_name, $site_url );
 						}

@@ -550,7 +550,7 @@ class MainWP_Page {
 			}
 		}
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->pages  = 0;
 
@@ -907,7 +907,7 @@ class MainWP_Page {
 							}
 						}
 
-						$output         = new stdClass();
+						$output         = new \stdClass();
 						$output->ok     = array();
 						$output->errors = array();
 						$startTime      = time();

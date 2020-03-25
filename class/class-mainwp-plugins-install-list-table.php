@@ -6,7 +6,7 @@ namespace MainWP\Dashboard;
  */
 
 // Include class-wp-list-table.php.
-if ( ! class_exists( 'WP_List_Table' ) ) {
+if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
@@ -18,7 +18,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
  * @since 3.1.0
  * @access private
  */
-class MainWP_Plugins_Install_List_Table extends WP_List_Table {
+class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	public $order   = 'ASC';
 	public $orderby = null;

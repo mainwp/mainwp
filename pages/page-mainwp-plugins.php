@@ -419,7 +419,7 @@ class MainWP_Plugins {
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Plugins' );
 
-			$output          = new stdClass();
+			$output          = new \stdClass();
 			$output->errors  = array();
 			$output->plugins = array();
 
@@ -1065,7 +1065,7 @@ class MainWP_Plugins {
 			$search_status        = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
 			$search_plugin_status = isset( $_POST['plugin_status'] ) ? $_POST['plugin_status'] : 'all';
 
-			$output          = new stdClass();
+			$output          = new \stdClass();
 			$output->errors  = array();
 			$output->plugins = array();
 

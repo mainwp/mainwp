@@ -5,6 +5,7 @@ namespace MainWP\Dashboard;
  * MainWP Extensions Page
  */
 class MainWP_Extensions {
+	
 	public static function get_class_name() {
 		return __CLASS__;
 	}

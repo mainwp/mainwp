@@ -563,7 +563,7 @@ class MainWP_User {
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) {
 		MainWP_Cache::init_cache( 'Users' );
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->users  = 0;
 
@@ -1216,7 +1216,7 @@ class MainWP_User {
 					'new_user'      => base64_encode( serialize( $user_to_add ) ),
 					'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 				);
-				$output         = new stdClass();
+				$output         = new \stdClass();
 				$output->ok     = array();
 				$output->errors = array();
 				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(
@@ -1481,7 +1481,7 @@ class MainWP_User {
 				'new_user'      => base64_encode( serialize( $user_to_add ) ),
 				'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 			);
-			$output         = new stdClass();
+			$output         = new \stdClass();
 			$output->ok     = array();
 			$output->errors = array();
 			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(

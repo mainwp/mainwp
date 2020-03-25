@@ -9,6 +9,17 @@ class MainWP_Utility {
 
 	public static $enabled_wp_seo = null;
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
+	public static function get_class_name() {
+		return __CLASS__;
+	}
+	
 	public static function starts_with( $haystack, $needle ) {
 		return ! strncmp( $haystack, $needle, strlen( $needle ) );
 	}
@@ -107,7 +118,7 @@ class MainWP_Utility {
 
 		$ch = curl_init();
 
-		$proxy = new WP_HTTP_Proxy();
+		$proxy = new \WP_HTTP_Proxy();
 		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -708,7 +719,7 @@ class MainWP_Utility {
 
 				$ch = curl_init();
 
-				$proxy = new WP_HTTP_Proxy();
+				$proxy = new \WP_HTTP_Proxy();
 				if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 					curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 					curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -973,7 +984,7 @@ class MainWP_Utility {
 
 			$ch = curl_init();
 
-			$proxy = new WP_HTTP_Proxy();
+			$proxy = new \WP_HTTP_Proxy();
 			if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 				curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 				curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -1395,7 +1406,7 @@ class MainWP_Utility {
 
 		$ch = curl_init();
 
-		$proxy = new WP_HTTP_Proxy();
+		$proxy = new \WP_HTTP_Proxy();
 		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -1763,7 +1774,7 @@ class MainWP_Utility {
 		}
 		$ch = curl_init( str_replace( ' ', '%20', $url ) );
 
-		$proxy = new WP_HTTP_Proxy();
+		$proxy = new \WP_HTTP_Proxy();
 		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -1797,7 +1808,7 @@ class MainWP_Utility {
 		$temporary_file = download_url( $img_url );
 
 		if ( is_wp_error( $temporary_file ) ) {
-			throw new Exception( 'Error: ' . $temporary_file->get_error_message() );
+			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );
 		} else {
 			$upload_dir     = wp_upload_dir();
 			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
@@ -2097,7 +2108,7 @@ class MainWP_Utility {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
 
-		$proxy = new WP_HTTP_Proxy();
+		$proxy = new \WP_HTTP_Proxy();
 		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
 			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
 			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
@@ -2252,7 +2263,7 @@ class MainWP_Utility {
 
 		if ( is_wp_error( $response ) ) {
 			if ( $throwException ) {
-				throw new Exception( $response->get_error_message() );
+				throw new \Exception( $response->get_error_message() );
 			}
 
 			return '';

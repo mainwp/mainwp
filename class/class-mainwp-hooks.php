@@ -7,28 +7,28 @@ namespace MainWP\Dashboard;
 class MainWP_Hooks {
 
 	public function __construct() {
-		add_filter( 'mainwp_getspecificdir', array( 'MainWP_Utility', 'get_mainwp_specific_dir' ), 10, 1 );
+		add_filter( 'mainwp_getspecificdir', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2FileUploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
-		add_action( 'mainwp_prepareinstallplugintheme', array( 'MainWP_Install_Bulk', 'prepare_install' ) );
-		add_action( 'mainwp_performinstallplugintheme', array( 'MainWP_Install_Bulk', 'perform_install' ) );
-		add_filter( 'mainwp_getwpfilesystem', array( 'MainWP_Utility', 'get_wp_file_system' ) );
-		add_filter( 'mainwp_getspecificurl', array( 'MainWP_Utility', 'get_mainwp_specific_url' ), 10, 1 );
-		add_filter( 'mainwp_getdownloadurl', array( 'MainWP_Utility', 'get_download_url' ), 10, 2 );
-		add_action( 'mainwp_renderToolTip', array( 'MainWP_Utility', 'render_tool_tip' ), 10, 4 );
-		add_action( 'mainwp_renderHeader', array( 'MainWP_UI', 'render_header' ), 10, 2 );
-		add_action( 'mainwp_renderFooter', array( 'MainWP_UI', 'render_footer' ), 10, 0 );
-		add_action( 'mainwp_renderImage', array( 'MainWP_UI', 'render_image' ), 10, 4 );
+		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
+		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
+		add_filter( 'mainwp_getwpfilesystem', array( MainWP_Utility::get_class_name(), 'get_wp_file_system' ) );
+		add_filter( 'mainwp_getspecificurl', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_url' ), 10, 1 );
+		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
+		add_action( 'mainwp_renderToolTip', array( MainWP_Utility::get_class_name(), 'render_tool_tip' ), 10, 4 );
+		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
+		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
+		add_action( 'mainwp_renderImage', array( MainWP_UI::get_class_name(), 'render_image' ), 10, 4 );
 		add_action( 'mainwp_notify_user', array( &$this, 'notify_user' ), 10, 3 );
 		add_action( 'mainwp_activePlugin', array( &$this, 'active_plugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactive_plugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
 		add_action( 'mainwp_deletePlugin', array( &$this, 'delete_plugin' ), 10, 0 );
 		add_action( 'mainwp_deleteTheme', array( &$this, 'delete_theme' ), 10, 0 );
-		add_action( 'mainwp_renderBeginModal', array( 'MainWP_UI', 'render_begin_modal' ), 10, 2 );
-		add_action( 'mainwp_renderEndModal', array( 'MainWP_UI', 'render_end_modal' ), 10, 2 );
+		add_action( 'mainwp_renderBeginModal', array( MainWP_UI::get_class_name(), 'render_begin_modal' ), 10, 2 );
+		add_action( 'mainwp_renderEndModal', array( MainWP_UI::get_class_name(), 'render_end_modal' ), 10, 2 );
 
 		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ) );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
@@ -47,7 +47,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
-		add_filter( 'mainwp_getnotificationemail', array( 'MainWP_Utility', 'get_notification_email' ), 10, 1 );
+		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array(
 			MainWP_Extensions::get_class_name(),
@@ -67,7 +67,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'get_website_options' ), 10, 3 );
-		add_filter( 'mainwp_addgroup', array( 'MainWP_Extensions', 'hook_add_group' ), 10, 3 );
+		add_filter( 'mainwp_addgroup', array( MainWP_Extensions::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 	}
@@ -312,7 +312,7 @@ class MainWP_Hooks {
 		}
 
 		if ( is_numeric( $website ) ) {
-			$obj     = new stdClass();
+			$obj     = new \stdClass();
 			$obj->id = $website;
 			$website = $obj;
 		}
@@ -354,7 +354,7 @@ class MainWP_Hooks {
 
 		$post_data = array_merge( $default_data, $post_data );
 
-		$output          = new stdClass();
+		$output          = new \stdClass();
 		$output->results = array();
 		if ( $dbwebsites ) {
 			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_posts', $post_data, array(

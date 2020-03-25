@@ -227,12 +227,12 @@ class MainWP_Api_Manager_Key {
 				return array( 'retry_action' => 1 );
 			}
 
-			throw new Exception( $request->get_error_message() );
+			throw new \Exception( $request->get_error_message() );
 		}
 
 		$code = wp_remote_retrieve_response_code( $request );
 		if ( $code != 200 ) {
-			throw new Exception( 'Error: code ' . $code );
+			throw new \Exception( 'Error: code ' . $code );
 		}
 
 		$response = wp_remote_retrieve_body( $request );

@@ -396,7 +396,7 @@ class MainWP_Themes {
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Themes' );
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->themes = array();
 
@@ -1123,7 +1123,7 @@ class MainWP_Themes {
 			$search_status       = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
 			$search_theme_status = isset( $_POST['theme_status'] ) ? $_POST['theme_status'] : 'all';
 
-			$output         = new stdClass();
+			$output         = new \stdClass();
 			$output->errors = array();
 			$output->themes = array();
 

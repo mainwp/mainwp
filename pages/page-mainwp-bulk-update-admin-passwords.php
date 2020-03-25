@@ -114,7 +114,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 				if ( count( $dbwebsites ) > 0 ) {
 					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) );
-					$output         = new stdClass();
+					$output         = new \stdClass();
 					$output->ok     = array();
 					$output->errors = array();
 

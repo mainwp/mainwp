@@ -943,7 +943,7 @@ class MainWP_Post_Handler {
 
 		try {
 			if ( ! isset( $_POST['siteId'] ) ) {
-				throw new Exception( __( 'No site selected!', 'mainwp' ) );
+				throw new \Exception( __( 'No site selected!', 'mainwp' ) );
 			}
 			$siteId      = $_POST['siteId'];
 			$fileName    = $_POST['fileName'];
@@ -952,7 +952,7 @@ class MainWP_Post_Handler {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( ! $website ) {
-				throw new Exception( __( 'No site selected!', 'mainwp' ) );
+				throw new \Exception( __( 'No site selected!', 'mainwp' ) );
 			}
 
 			MainWP_Utility::end_session();
@@ -966,7 +966,7 @@ class MainWP_Post_Handler {
 			);
 
 			if ( ! isset( $result['size'] ) ) {
-				throw new Exception( __( 'Invalid response!', 'mainwp' ) );
+				throw new \Exception( __( 'Invalid response!', 'mainwp' ) );
 			}
 
 			if ( MainWP_Utility::ctype_digit( $result['size'] ) ) {

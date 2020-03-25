@@ -51,7 +51,7 @@ class MainWP_API_Settings {
 					$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks );
 					if ( is_array( $results ) && 0 < count( $results ) ) {
 						foreach ( $results as $slug => $response ) {
-							$rslt                 = new stdClass();
+							$rslt                 = new \stdClass();
 							$rslt->slug           = $slug;
 							$rslt->latest_version = $response->new_version;
 							$rslt->download_url   = $response->package;
@@ -90,7 +90,7 @@ class MainWP_API_Settings {
 					$args['software_version'] = $ext['software_version'];
 					$response                 = MainWP_Api_Manager::instance()->update_check( $args );
 					if ( ! empty( $response ) ) {
-						$rslt                 = new stdClass();
+						$rslt                 = new \stdClass();
 						$rslt->slug           = $ext['api'];
 						$rslt->latest_version = $response->new_version;
 						$rslt->download_url   = $response->package;

@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * Search Cache Handler
  *
  * Handles all search content.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Cache

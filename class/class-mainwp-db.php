@@ -1,13 +1,16 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Database Controller
  *
  * This file handles all interactions with the DB.
  */
+namespace MainWP\Dashboard;
 
-// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok.
+/**
+ * Class MainWP_DB
+ *
+ * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok.
+ */
 class MainWP_DB {
 
 	// Config

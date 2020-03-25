@@ -1,12 +1,11 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
- * MainWP Api Manager Key Handler.
+ * MainWP Api Manager Key Handsler.
  *
  * This class handles user authentication with MainWP.com License Servers
- * and provides the ability to grab license Keys automatically.
+ * and provides the ability to grab license keys automatically.
  */
+namespace MainWP\Dashboard;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {

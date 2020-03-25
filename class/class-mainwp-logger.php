@@ -1,11 +1,16 @@
 <?php
+/**
+ * MainWP Logger
+ *
+ * For custom read/write logging file.
+ */
 namespace MainWP\Dashboard;
 
 /**
  * MainWP Logger
+ *
+ *  phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file
  */
-
-// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file
 class MainWP_Logger {
 
 	const DISABLED    = - 1;
@@ -20,16 +25,34 @@ class MainWP_Logger {
 	const INFO_COLOR    = 'gray';
 	const WARNING_COLOR = 'red';
 
+
+	/** @var string Log file prefix. */
 	private $logFileNamePrefix = 'mainwp';
+
+	/** @var string Log file suffix. */
 	private $logFileNameSuffix = '.log';
-	private $logMaxMB          = 0.5;
-	private $logDateFormat     = 'Y-m-d H:i:s';
-	private $logDirectory      = null;
-	private $logPriority       = self::DISABLED;
-	private static $instance   = null;
+
+	/** @var integer Log file max size. */
+	private $logMaxMB = 0.5;
+
+	/** @var string Log file date format. */
+	private $logDateFormat = 'Y-m-d H:i:s';
+
+	/** @var string Log file output directory. */
+	private $logDirectory = null;
+
+	/** @var string Log file priority. */
+	private $logPriority = self::DISABLED;
+
+	/** @var mixed Log file Instance. */
+	private static $instance = null;
 
 	/**
-	 * @return MainWP_Logger
+	 * Method instance()
+	 *
+	 * Returns new MainWP_Logger instance.
+	 *
+	 * @return self MainWP_Logger
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -39,6 +62,11 @@ class MainWP_Logger {
 		return self::$instance;
 	}
 
+	/**
+	 * Method __construct()
+	 *
+	 * @return void
+	 */
 	private function __construct() {
 		$this->logDirectory = MainWP_Utility::get_mainwp_dir();
 		$this->logDirectory = $this->logDirectory[0];
@@ -51,26 +79,81 @@ class MainWP_Logger {
 		$this->set_log_priority( $enabled );
 	}
 
+	/**
+	 * Method set_log_priority()
+	 *
+	 * Sets the Log Priority.
+	 *
+	 * @param mixed $pLogPriority
+	 */
 	public function set_log_priority( $pLogPriority ) {
 		$this->logPriority = $pLogPriority;
 	}
 
+	/**
+	 * Method debug()
+	 *
+	 * Grab debug.
+	 *
+	 * @param mixed $pText
+	 *
+	 * @return mixed Debug info.
+	 */
 	public function debug( $pText ) {
 		return $this->log( $pText, self::DEBUG );
 	}
 
+	/**
+	 * Method info()
+	 *
+	 * Grab info.
+	 *
+	 * @param mixed $pText
+	 *
+	 * @return mixed Log Info.
+	 */
 	public function info( $pText ) {
 		return $this->log( $pText, self::INFO );
 	}
 
+	/**
+	 * Method warning()
+	 *
+	 * Grab warning information.
+	 *
+	 * @param mixed $pText
+	 *
+	 * @return mixed Warning info.
+	 */
 	public function warning( $pText ) {
 		return $this->log( $pText, self::WARNING );
 	}
 
+	/**
+	 * Method info_update()
+	 *
+	 * Grab Info Update
+	 *
+	 * @param mixed $pText
+	 *
+	 * @return mixed Log Info Update.
+	 */
 	public function info_update( $pText ) {
 		return $this->log( $pText, self::INFO_UPDATE );
 	}
 
+
+	/**
+	 * Method debug_for_website()
+	 *
+	 * Grab Website debug and info.
+	 *
+	 * @param mixed $pWebsite
+	 * @param mixed $pAction
+	 * @param mixed $pMessage
+	 *
+	 * @return mixed Website debug info.
+	 */
 	public function debug_for_website( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
@@ -79,6 +162,17 @@ class MainWP_Logger {
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
 	}
 
+	/**
+	 * Method infor_for_website()
+	 *
+	 * Grab Website Info.
+	 *
+	 * @param mixed $pWebsite
+	 * @param mixed $pAction
+	 * @param mixed $pMessage
+	 *
+	 * @return mixed Website Info.
+	 */
 	public function info_for_website( $pWebsite, $pAction, $pMessage ) {
 		if ( empty( $pWebsite ) ) {
 			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::INFO );
@@ -87,6 +181,18 @@ class MainWP_Logger {
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
 	}
 
+	/**
+	 * Method warning_for_website()
+	 *
+	 * Grab Website Warnings.
+	 *
+	 * @param mixed   $pWebsite
+	 * @param mixed   $pAction
+	 * @param mixed   $pMessage
+	 * @param boolean $addStackTrace
+	 *
+	 * @return mixed Website Warnings.
+	 */
 	public function warning_for_website( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
@@ -101,6 +207,17 @@ class MainWP_Logger {
 		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
 	}
 
+
+	/**
+	 * Method log()
+	 *
+	 * Create Log File.
+	 *
+	 * @param mixed $pText
+	 * @param mixed $pPriority
+	 *
+	 * @return booleen True|False Default is False.
+	 */
 	public function log( $pText, $pPriority ) {
 
 		$do_log = false;
@@ -170,6 +287,14 @@ class MainWP_Logger {
 		return false;
 	}
 
+	/**
+	 * Method prepend()
+	 *
+	 * Prepend content to log file.
+	 *
+	 * @param mixed $string
+	 * @param mixed $filename
+	 */
 	public function prepend( $string, $filename ) {
 		$context = stream_context_create();
 		$fp      = fopen( $filename, 'r', 1, $context );
@@ -181,10 +306,26 @@ class MainWP_Logger {
 		rename( $tmpname, $filename );
 	}
 
+	/**
+	 * Method get_log_file()
+	 *
+	 * Grab Log File.
+	 *
+	 * @return mixed Log File.
+	 */
 	public function get_log_file() {
 		return $this->logDirectory . $this->logFileNamePrefix . $this->logFileNameSuffix;
 	}
 
+	/**
+	 * Method get_log_text()
+	 *
+	 * Grab what type of log entry.
+	 *
+	 * @param mixed $pPriority
+	 *
+	 * @return string LOG -OR- DISABLED|DEBUG|INFO|WARNING|INFO UPDATE
+	 */
 	public function get_log_text( $pPriority ) {
 		switch ( $pPriority ) {
 			case self::DISABLED:
@@ -202,6 +343,11 @@ class MainWP_Logger {
 		}
 	}
 
+	/**
+	 * Method clear_log()
+	 *
+	 * Clear the log file.
+	 */
 	public static function clear_log() {
 		$logFile = self::instance()->get_log_file();
 		if ( ! @unlink( $logFile, 'r' ) ) {
@@ -214,6 +360,11 @@ class MainWP_Logger {
 		}
 	}
 
+	/**
+	 * Method show_log()
+	 *
+	 * Grab log file and build output to screen.
+	 */
 	public static function show_log() {
 		$logFile = self::instance()->get_log_file();
 		$fh      = @fopen( $logFile, 'r' );

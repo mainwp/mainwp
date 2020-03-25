@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Bluk Post
  *
  * Display custom fields form fields.
  */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Bluk Post

@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * Extends MainWP Exception
  *
  * Grabs $extra and stores it in $messageExtra.
  */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP_Exception

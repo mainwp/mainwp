@@ -1,19 +1,17 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Client Live Reports
  *
  * Legacy Client Reports Extension.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class LiveReportResponder
  *
- * @deprecated moved to external Extension
+ * @deprecated moved to external Extension.
+ *  phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
  */
-
-// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
 class LiveReportResponder {
 
 	public static $instance = null;

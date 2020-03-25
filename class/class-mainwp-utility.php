@@ -19,7 +19,7 @@ class MainWP_Utility {
 	public static function get_class_name() {
 		return __CLASS__;
 	}
-	
+
 	public static function starts_with( $haystack, $needle ) {
 		return ! strncmp( $haystack, $needle, strlen( $needle ) );
 	}

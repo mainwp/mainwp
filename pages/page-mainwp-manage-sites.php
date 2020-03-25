@@ -141,7 +141,7 @@ class MainWP_Manage_Sites {
 			return;
 		}
 
-		add_filter( 'mainwp_header_actions_right', array( MainWP_Manage_Sites::get_class_name(), 'screen_options' ), 10, 2 );
+		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 	}
 

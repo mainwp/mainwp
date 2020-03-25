@@ -475,7 +475,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
-		
+
 		$site_ids = array();
 		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
 			$site_ids[] = $site->id;
@@ -483,7 +483,7 @@ class MainWP_Manage_Sites_List_Table {
 		do_action( 'mainwp-sitestable-prepared-items', $websites, $site_ids );
 
 		MainWP_DB::data_seek( $websites, 0 );
-		
+
 		$this->items        = $websites;
 		$this->_total_items = $totalRecords;
 	}

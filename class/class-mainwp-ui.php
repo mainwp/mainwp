@@ -15,8 +15,8 @@ class MainWP_UI {
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
-	}	
-	
+	}
+
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( $postId ) {

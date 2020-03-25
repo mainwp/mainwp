@@ -35,8 +35,8 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 	 * @return require_once $autoload_path;
 	 */
 	function mainwp_autoload( $class_name ) {
-		
-		if ( 0 === strpos( $class_name, "MainWP\Dashboard" ) ) {			
+
+		if ( 0 === strpos( $class_name, 'MainWP\Dashboard' ) ) {
 			$class_name = substr( $class_name, 17 ); // remove the namespace prefix: MainWP\Dashboard\.
 		}
 
@@ -105,7 +105,7 @@ if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && '
 }
 
 // Fix a conflict with SecuPress plugin.
-if ( ! $mainwp_is_secupress_scanning ) {	
+if ( ! $mainwp_is_secupress_scanning ) {
 	$mainWP = new MainWP\Dashboard\MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
 	register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 	register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );

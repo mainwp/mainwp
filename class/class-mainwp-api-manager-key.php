@@ -1,7 +1,7 @@
-<?php 
+<?php
 /**
  * MainWP Api Manager Key Handsler.
- * 
+ *
  * This class handles user authentication with MainWP.com License Servers
  * and provides the ability to grab license keys automatically.
  */

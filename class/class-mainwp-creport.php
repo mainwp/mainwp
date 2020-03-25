@@ -10,7 +10,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- * 	phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
+ *  phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
  */
 class LiveReportResponder {
 

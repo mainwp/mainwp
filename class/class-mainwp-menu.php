@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Main Menu
- * 
+ *
  * Build & Render MainWP Main Menu.
  */
 
@@ -14,7 +14,7 @@ class MainWP_Menu {
 
 	/**
 	 * Method __construct()
-	 * 
+	 *
 	 * Define MainWP Main Menu Items.
 	 */
 	public function __construct() {
@@ -54,14 +54,14 @@ class MainWP_Menu {
 
 	/**
 	 * Method init_subpages_left_menu
-	 * 
+	 *
 	 * Build left menu subpages array.
-	 * 
+	 *
 	 * @param mixed $subPages
 	 * @param mixed $initSubpage
 	 * @param mixed $parentKey
 	 * @param mixed $slug
-	 * 
+	 *
 	 * @return array $initSubpage[]
 	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
@@ -90,12 +90,12 @@ class MainWP_Menu {
 
 	/**
 	 * Method is_disable_menu_item
-	 * 
+	 *
 	 * Check if $_mainwp_disable_menus_items contains any menu items to hide.
-	 * 
+	 *
 	 * @param mixed $level The level the menu item is on.
 	 * @param mixed $item The menu items meta data.
-	 * 
+	 *
 	 * @return booleen True|False, default is False.
 	 */
 	public static function is_disable_menu_item( $level, $item ) {
@@ -117,12 +117,12 @@ class MainWP_Menu {
 
 	/**
 	 * Method add_left_menu
-	 * 
+	 *
 	 * Build Top Level Menu
-	 * 
-	 * @param array $params Menu Item parameters.
+	 *
+	 * @param array   $params Menu Item parameters.
 	 * @param integer $level Menu Item Level
-	 * 
+	 *
 	 * @return array $mainwp_leftmenu[], $_mainwp_menu_active_slugs[].
 	 */
 	public static function add_left_menu( $params = array(), $level = 1 ) {
@@ -171,7 +171,7 @@ class MainWP_Menu {
 
 	/**
 	 * Method render_left_menu
-	 * 
+	 *
 	 * Build Top Level Main Menu HTML & Render.
 	 */
 	public static function render_left_menu() {
@@ -320,9 +320,9 @@ class MainWP_Menu {
 
 	/**
 	 * Method render_sub_item
-	 * 
+	 *
 	 * Grab all submenu items and attatch to Main Menu.
-	 * 
+	 *
 	 * @param mixed $parent_key
 	 */
 	public static function render_sub_item( $parent_key ) {

@@ -8,7 +8,7 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_DB
- * 
+ *
  * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok.
  */
 class MainWP_DB {

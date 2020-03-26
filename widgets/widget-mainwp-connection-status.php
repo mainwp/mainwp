@@ -104,7 +104,7 @@ class MainWP_Connection_Status {
 				if ( $j == $ALL ) {
 					?>
 
-				<div class="item mainwp_wp_sync" site_id="<?php echo intval($website->id); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+					<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
 						<div class="six wide column middle aligned">
 							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
@@ -124,11 +124,11 @@ class MainWP_Connection_Status {
 						echo $output_md5;
 					} elseif ( $hasSyncErrors ) {
 						?>
-				<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo intval($website->id); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" class="mainwp-updates-overview-reconnect-site ui button mini green basic" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>." data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 						<?php
 					} else {
 						?>
-								<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval($website->id); ?>" onClick="updatesoverview_wp_sync('<?php echo intval($website->id); ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync('<?php echo intval( $website->id ); ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php
 					}
 					?>
@@ -136,7 +136,7 @@ class MainWP_Connection_Status {
 					</div>
 				</div>
 			<?php } elseif ( $j == $UP ) { ?>
-				<div class="item mainwp_wp_sync" site_id="<?php echo intval($website->id); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+					<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
 						<div class="six wide column middle aligned">
 							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
@@ -156,7 +156,7 @@ class MainWP_Connection_Status {
 						echo $output_md5;
 					} else {
 						?>
-					<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval($website->id); ?>" onClick="updatesoverview_wp_sync('<?php echo intval($website->id); ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" class="ui button mini green" siteid="<?php echo intval( $website->id ); ?>" onClick="updatesoverview_wp_sync('<?php echo intval( $website->id ); ?>')" data-tooltip="Sync <?php echo stripslashes( $website->name ); ?> data." data-inverted=""><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php
 					}
 					?>
@@ -164,7 +164,7 @@ class MainWP_Connection_Status {
 					</div>
 				</div>
 		<?php } else { ?>
-				<div class="item mainwp_wp_sync" site_id="<?php echo intval($website->id); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+					<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 					<div class="ui grid">
 						<div class="six wide column middle aligned">
 							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>

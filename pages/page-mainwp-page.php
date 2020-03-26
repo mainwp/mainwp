@@ -64,7 +64,7 @@ class MainWP_Page {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-page', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
-				if ( isset($subPage['no_page']) && $subPage['no_page'] ) {
+				if ( isset( $subPage['no_page'] ) && $subPage['no_page'] ) {
 					continue;
 				}
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Page' . $subPage['slug'] ) ) {
@@ -79,13 +79,13 @@ class MainWP_Page {
 
 	public static function on_load_add_edit() {
 
-		if ( isset($_GET['page']) && $_GET['page'] == 'PageBulkAdd' ) {
+		if ( isset( $_GET['page'] ) && $_GET['page'] == 'PageBulkAdd' ) {
 			global $_mainwp_default_post_to_edit;
 			$post_type                    = 'bulkpage';
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset($_GET['post_id']) ? intval ($_GET['post_id']) : 0;
+			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
 		}
 
 		if ( ! $post_id ) {
@@ -115,7 +115,7 @@ class MainWP_Page {
 									continue;
 								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Page' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=Page' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -225,7 +225,7 @@ class MainWP_Page {
 		$params = array(
 			'title' => __( 'Pages', 'mainwp' ),
 		);
-		MainWP_UI::render_top_header($params);
+		MainWP_UI::render_top_header( $params );
 
 		$renderItems = array();
 
@@ -377,7 +377,8 @@ class MainWP_Page {
 							<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text" value="
 																			  <?php
 																				if ( $cachedSearch != null ) {
-																					echo esc_attr($cachedSearch['keyword']); }
+																					echo esc_attr( $cachedSearch['keyword'] );
+																				}
 																				?>
 																				"/>
 						</div>
@@ -405,8 +406,9 @@ class MainWP_Page {
 				  <i class="calendar icon"></i>
 					<input type="text" placeholder="Date" id="mainwp_page_search_by_dtsstart" value="
 					<?php
-					if ( $cachedSearch != null ) {
-						echo esc_attr($cachedSearch['dtsstart']); }
+					if ( $cachedSearch != null ) {						
+						echo esc_attr( $cachedSearch['dtsstart'] );					
+					}
 					?>
 					"/>
 				</div>
@@ -419,7 +421,8 @@ class MainWP_Page {
 				<input type="text" placeholder="Date" id="mainwp_page_search_by_dtsstop" value="
 				<?php
 				if ( $cachedSearch != null ) {
-					echo esc_attr($cachedSearch['dtsstop']); }
+					echo esc_attr( $cachedSearch['dtsstop'] );
+				}
 				?>
 				"/>
 			  </div>
@@ -433,8 +436,8 @@ class MainWP_Page {
 			</div>
 		</div>
 		<?php
-		if ( is_array($statuses) && count($statuses) > 0 ) {
-			$status = implode("','", $statuses);
+		if ( is_array( $statuses ) && count( $statuses ) > 0 ) {
+			$status	 = implode( "','", $statuses );
 			$status = "'" . $status . "'";
 			?>
 			<script type="text/javascript">
@@ -613,8 +616,8 @@ class MainWP_Page {
 			$result = $results[1];
 			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
-			if ( is_array($pages) && isset($pages['error']) ) {
-				$output->errors[ $website->id ] = $pages['error'];
+			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
+				$output->errors[$website->id] = $pages['error'];
 				return;
 			}
 
@@ -636,7 +639,7 @@ class MainWP_Page {
 				<tr>
 					<td  class="check-column"><span class="ui checkbox"><input type="checkbox" name="page[]" value="1"></span></td>
 					<td class="page-title  column-title">
-						<input class="pageId" type="hidden" name="id" value="<?php echo intval($page['id']); ?>"/>
+						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|
 						<?php
 						if ( $page['status'] == 'trash' ) {
@@ -647,31 +650,31 @@ class MainWP_Page {
 						}
 						?>
 						"/>
-						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr($website->id); ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 
 						<strong>
-							<abbr title="<?php echo esc_html($page['title']); ?>">
+							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( $page['status'] != 'trash' ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr($website->id); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); ?>" target="_blank" title="Edit '<?php echo esc_html($page['title']); ?>'?"><?php echo esc_html($page['title']); ?></a>
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
-									<?php echo esc_html($page['title']); ?>
+								<?php echo esc_html( $page['title'] ); ?>
 								<?php } ?>
 							</abbr>
 						</strong>
 
 					</td>
 					<td class="author column-author">
-						<?php echo esc_html($page['author']); ?>
+							<?php echo esc_html( $page['author'] ); ?>
 					</td>
 					<td class="comments">
 						<div class="page-com-count-wrapper">
 							<a href="#" title="0 pending" class="post-com-count">
-								<span class="comment-count"><abbr title="<?php echo esc_attr($page['comment_count']); ?>"><?php echo esc_html($page['comment_count']); ?></abbr></span>
+								<span class="comment-count"><abbr title="<?php echo esc_attr( $page['comment_count'] ); ?>"><?php echo esc_html( $page['comment_count'] ); ?></abbr></span>
 							</a>
 						</div>
 					</td>
 					<td class="date">
-						<abbr raw_value="<?php echo esc_attr($raw_dts); ?>" title="<?php echo esc_attr($page['dts']); ?>"><?php echo esc_html($page['dts']); ?></abbr>
+						<abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
 					</td>
 					<td class="status"><?php echo self::get_status( $page['status'] ); ?>
 					</td>
@@ -709,11 +712,11 @@ class MainWP_Page {
 				  <a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $page['status'] == 'publish' ) { ?>
-								<a class="item" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval($page['id']); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
-							<?php } ?>
+							<a class="item" href="<?php echo esc_html( $website->url ) . ( substr( $website->url, -1 ) != '/' ? '/' : '' ) . '?p=' . intval( $page['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+				<?php } ?>
 				<?php if ( $page['status'] == 'trash' ) { ?>
-									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
-									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
+							<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
+							<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 				<?php } ?>
 						<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
 							</div>
@@ -764,7 +767,7 @@ class MainWP_Page {
 		}
 		global $_mainwp_default_post_to_edit;
 		$post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
-		self::render_addedit($post_id, 'BulkAdd');
+		self::render_addedit( $post_id, 'BulkAdd' );
 	}
 
 	public static function render_bulk_edit() {
@@ -773,8 +776,8 @@ class MainWP_Page {
 			return;
 		}
 
-		$post_id = isset($_GET['post_id']) ? intval ($_GET['post_id']) : 0;
-		self::render_addedit($post_id, 'BulkEdit');
+		$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
+		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
 	public static function render_addedit( $post_id, $what ) {

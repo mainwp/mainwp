@@ -890,7 +890,7 @@ class MainWP_Post {
 					}
 					?>
 					"/>
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>"/>
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
 
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
 
@@ -898,7 +898,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-							  <a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval($website->id); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
 										 <?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php

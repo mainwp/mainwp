@@ -800,12 +800,15 @@ class MainWP_Manage_Sites {
 		} elseif ( 'full' === $type && ! $information['full'] ) {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
+			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			global $wp_filesystem;
+		
 			$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
-			@mkdir( $dir, 0777, true );
+			$wp_filesystem->mkdir( $dir, 0777, true );
 
-			if ( ! file_exists( $dir . 'index.php' ) ) {
-				@touch( $dir . 'index.php' );
+			if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+				$wp_filesystem->touch( $dir . 'index.php' );
 			}
 
 			// Clean old backups from our system
@@ -817,7 +820,7 @@ class MainWP_Manage_Sites {
 			if ( 1 !== $backupTaskProgress->removedFiles ) {
 				$dbBackups   = array();
 				$fullBackups = array();
-				if ( file_exists( $dir ) ) {
+				if ( $wp_filesystem->exists( $dir ) ) {
 					$dh = opendir( $dir );
 					if ( $dh ) {
 						while ( false !== ( $file = readdir( $dh ) ) ) {
@@ -989,10 +992,13 @@ class MainWP_Manage_Sites {
 	}
 
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+			
 		$dir = dirname( $pFile ) . '/';
-		@mkdir( $dir, 0777, true );
-		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+		$wp_filesystem->mkdir( $dir, 0777, true );
+		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 		// Clean old backups from our system
 		$maxBackups = get_option( 'mainwp_backupsOnServer' );

@@ -124,7 +124,7 @@ class MainWP_Manage_Backups {
 							}
 							?>
 							<a href="<?php echo admin_url( 'admin.php?page=ManageBackups' . $subPage['slug'] ); ?>"
-							   class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
+							   class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 							<?php
 						}
 					}
@@ -164,7 +164,7 @@ class MainWP_Manage_Backups {
 				),
 			);
 
-			MainWP_Menu::init_subpages_left_menu($subPages, $init_sub_subleftmenu, 'ManageBackups', 'ManageBackups');
+			MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageBackups', 'ManageBackups' );
 
 			foreach ( $init_sub_subleftmenu as $item ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
@@ -184,7 +184,7 @@ class MainWP_Manage_Backups {
 			'title' => __( 'Backups', 'mainwp' ),
 		);
 
-		MainWP_UI::render_top_header($params);
+		MainWP_UI::render_top_header( $params );
 
 		$renderItems = array();
 
@@ -222,7 +222,7 @@ class MainWP_Manage_Backups {
 				}
 
 				$item           = array();
-				$item['title']  = esc_html($subPage['title']);
+				$item['title']	 = esc_html( $subPage['title'] );
 				$item['href']   = 'admin.php?page=ManageBackups' . $subPage['slug'];
 				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
 				$renderItems[]  = $item;
@@ -408,7 +408,7 @@ class MainWP_Manage_Backups {
 					);
 
 					if ( ! $can_trigger ) {
-						unset($columns['trigger']);
+						unset( $columns['trigger'] );
 					}
 
 					foreach ( $backup_items as $item ) {
@@ -576,7 +576,7 @@ class MainWP_Manage_Backups {
 			<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 			<form method="POST" action="" class="ui form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-				<input type="hidden" name="mainwp_managebackups_edit_id" id="mainwp_managebackups_edit_id" value="<?php echo esc_attr($task->id); ?>"/>
+				<input type="hidden" name="mainwp_managebackups_edit_id" id="mainwp_managebackups_edit_id" value="<?php echo esc_attr( $task->id ); ?>"/>
 				<?php
 				self::renderNewEdit( $task );
 				?>
@@ -933,7 +933,7 @@ class MainWP_Manage_Backups {
 		$maximumFileDescriptorsOverride = $_POST['maximumFileDescriptorsOverride'] == 1;
 		$maximumFileDescriptorsAuto     = $_POST['maximumFileDescriptorsAuto'] == 1;
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
-		$loadFilesBeforeZip             = isset($_POST['loadFilesBeforeZip'] ) ? 1 : 0;
+		$loadFilesBeforeZip				 = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
 		$task = MainWP_DB::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
 
@@ -1272,7 +1272,7 @@ class MainWP_Manage_Backups {
 			if ( count( $excludedBackupFiles ) > 0 ) {
 				echo '<div id="excludedBackupFiles" style="display:none">';
 				foreach ( $excludedBackupFiles as $excludedBackupFile ) {
-					echo esc_html($excludedBackupFile) . "\n";
+					echo esc_html( $excludedBackupFile ) . "\n";
 				}
 				echo '</div>';
 			}
@@ -1280,7 +1280,7 @@ class MainWP_Manage_Backups {
 			if ( count( $excludedCacheFiles ) > 0 ) {
 				echo '<div id="excludedCacheFiles" style="display:none">';
 				foreach ( $excludedCacheFiles as $excludedCacheFile ) {
-					echo esc_html($excludedCacheFile) . "\n";
+					echo esc_html( $excludedCacheFile ) . "\n";
 				}
 				echo '</div>';
 			}

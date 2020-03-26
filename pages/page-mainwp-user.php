@@ -249,9 +249,9 @@ class MainWP_User {
 		$selected_sites = $selected_groups = array();
 
 		if ( null != $cachedSearch ) {
-			if ( is_array($cachedSearch['sites'] ) ) {
+			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
-			} elseif ( is_array($cachedSearch['groups'] ) ) {
+			} elseif ( is_array( $cachedSearch['groups'] ) ) {
 				$selected_groups = $cachedSearch['groups'];
 			}
 		}
@@ -648,7 +648,7 @@ class MainWP_User {
 								}
 
 								if ( $check_users_role ) {
-									if ( ! in_array($user['id'], $search_user_role) ) {
+									if ( !in_array( $user['id'], $search_user_role ) ) {
 										continue;
 									}
 								}
@@ -780,7 +780,7 @@ class MainWP_User {
 					<td class="name column-name">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval($website->id); ?>" />
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>" />
 					<?php echo ! empty( $user['display_name'] ) ? esc_html( $user['display_name'] ) : '&nbsp;'; ?>
 					<div class="row-actions-working">
 						<i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Please wait', 'mainwp' ); ?>
@@ -883,8 +883,8 @@ class MainWP_User {
 				}
 			}
 
-			if ( ! empty($pass) ) {
-				$extra['pass1'] = $extra['pass2'] = $pass;
+			if ( !empty( $pass ) ) {
+				$extra['pass1']	 = $extra['pass2']	 = $pass;
 			}
 		}
 

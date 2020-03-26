@@ -614,7 +614,7 @@ class MainWP_Post_Handler {
 		$this->secure_request( 'mainwp_widgets_order' );
 		$user = wp_get_current_user();
 		if ( $user ) {
-			update_user_option($user->ID, 'mainwp_widgets_sorted_' . $_POST['page'], ( isset($_POST['order']) ? $_POST['order'] : '' ), true);
+			update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $_POST['page'], ( isset( $_POST['order'] ) ? $_POST['order'] : '' ), true );
 			die( 'ok' );
 		}
 		die( -1 );
@@ -688,7 +688,7 @@ class MainWP_Post_Handler {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
 							$sendText = MainWP_Twitter::get_twit_to_send( $_POST['actionName'], $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr($_POST['actionName']) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$html		 .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $_POST['actionName'] ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -824,7 +824,7 @@ class MainWP_Post_Handler {
 			}
 
 			$ret = array( 'result' => MainWP_Manage_Sites::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) );
-			wp_send_json($ret);
+			wp_send_json( $ret );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -853,7 +853,7 @@ class MainWP_Post_Handler {
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 			$excludedFolder = implode( ',', $excludedFolder );
 
-			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset($_POST['maximumFileDescriptorsOverride']) && 1 === $_POST['maximumFileDescriptorsOverride'] ), ( 1 === $_POST['maximumFileDescriptorsAuto'] ), ( isset($_POST['maximumFileDescriptors']) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( 1 === $_POST['append'] ) ) );
+			$result = MainWP_Manage_Sites::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 === $_POST['maximumFileDescriptorsOverride'] ), ( 1 === $_POST['maximumFileDescriptorsAuto'] ), ( isset( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( 1 === $_POST['append'] ) ) );
 			wp_send_json( array( 'result' => $result ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -1367,7 +1367,7 @@ class MainWP_Post_Handler {
 		}
 
 		if ( null != $name ) {
-			$rslt['sitename'] = esc_html($name);
+			$rslt['sitename'] = esc_html( $name );
 		}
 
 		wp_send_json( $rslt );
@@ -1443,7 +1443,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_upgrade_plugintheme() {
 
-		if ( ! isset($_POST['type'] ) ) {
+		if ( !isset( $_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );
 		}
 
@@ -1472,12 +1472,12 @@ class MainWP_Post_Handler {
 
 			if ( $chunk_support ) {
 				$max_update = apply_filters('mainwp_update_plugintheme_max', false, $websiteId );
-				if ( empty($max_update) ) {
+				if ( empty( $max_update ) ) {
 					$chunk_support = false; // there is not hook so disable chunk update support
 				}
 			}
 			if ( $chunk_support ) {
-				if ( isset($_POST['chunk_slugs']) ) {
+				if ( isset( $_POST['chunk_slugs'] ) ) {
 					$slugs = $_POST['chunk_slugs'];  // chunk slugs send so use this
 				} else {
 					$slugs = MainWP_Updates::get_plugin_theme_slugs( $websiteId, $_POST['type'] );
@@ -1498,10 +1498,10 @@ class MainWP_Post_Handler {
 		if ( $chunk_support ) {
 			// calculate update slugs here
 			if ( $max_update ) {
-				$slugs        = explode(',', $slugs);
-				$chunk_slugs  = array_slice($slugs, $max_update);
-				$update_slugs = array_diff($slugs, $chunk_slugs);
-				$slugs        = implode(',', $update_slugs);
+				$slugs			 = explode( ',', $slugs );
+				$chunk_slugs	 = array_slice( $slugs, $max_update );
+				$update_slugs	 = array_diff( $slugs, $chunk_slugs );
+				$slugs			 = implode( ',', $update_slugs );
 			}
 		}
 
@@ -1737,7 +1737,7 @@ class MainWP_Post_Handler {
 		die(
 			wp_json_encode(
 				array(
-					'httpcode' => esc_html($http_code),
+					'httpcode'	 => esc_html( $http_code ),
 					'status'   => $check_result ? 1 : 0,
 				)
 			)

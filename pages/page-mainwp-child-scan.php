@@ -19,8 +19,8 @@ class MainWP_Child_Scan {
 		$params = array(
 			'title' => __( 'Child Scan', 'mainwp' ),
 		);
-		MainWP_UI::render_top_header($params);
-		?>
+		MainWP_UI::render_top_header( $params );
+?>
 			<div class="wrap">
 				<div id="mainwp_wrap-inside">
 					<?php
@@ -57,7 +57,7 @@ class MainWP_Child_Scan {
 						}
 
 						if ( $website->sync_errors == '' ) {
-							echo '<tr siteid="' . intval($website->id) . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
+							echo '<tr siteid="' . intval( $website->id ) . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
 						} else {
 							echo '<tr><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td>Sync errors</td></tr>';
 						}

@@ -93,7 +93,7 @@ class MainWP_Backup_Tasks {
 					?>
 					<div class="ui grid mainwp-recent">
 						<div class="eight wide column">
-							<strong><a href="admin.php?page=ManageBackups&id=<?php echo esc_attr($task->id); ?>"><?php echo stripslashes( $task->name ); ?></a></strong><br />
+							<strong><a href="admin.php?page=ManageBackups&id=<?php echo esc_attr( $task->id ); ?>"><?php echo stripslashes( $task->name ); ?></a></strong><br />
 							<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ( $task->type == 'db' ? __( 'Database backup', 'mainwp' ) : __( 'Full backup', 'mainwp' ) ); ?>)</span>
 						</div>
 						<div class="two wide column">

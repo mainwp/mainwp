@@ -90,10 +90,10 @@ class MainWP_Security_Issues_Widget {
 				// continue;
 				// }
 				?>
-				<div class="item" siteid="<?php echo intval($website->id); ?>">
+				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
 				  <div class="column middle aligned">
-					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr($website->id); ?>"><?php echo stripslashes( $website->name ); ?></a>
+					  <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
 				  </div>
 				  <div class="column middle aligned">
 							<?php
@@ -109,7 +109,7 @@ class MainWP_Security_Issues_Widget {
 							?>
 				  </div>
 				  <div class="column right aligned">
-							<a href="admin.php?page=managesites&scanid=<?php echo esc_attr($website->id); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
+					  <a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
 					  <?php if ( $website->securityIssues == 0 ) { ?>
 					  <input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } else { ?>

@@ -130,17 +130,17 @@ class MainWP_UI {
 								}
 								?>
 				<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-				  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo intval($website->id); ?>" value="<?php echo intval($website->id); ?>" id="selected_sites_<?php echo intval($website->id); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
-				  <label for="selected_sites_<?php echo intval($website->id); ?>">
-								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
-				  </label>
+					<input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+					<label for="selected_sites_<?php echo intval( $website->id ); ?>">
+											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
+					</label>
 				</div>
 								<?php
 							} else {
 								?>
 			  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 				  <input type="checkbox" disabled="disabled"/>
-				  <label for="selected_sites_<?php echo intval($website->id); ?>">
+				  <label for="selected_sites_<?php echo intval( $website->id ); ?>">
 								<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 				  </label>
 			  </div>
@@ -181,8 +181,8 @@ class MainWP_UI {
 								}
 								?>
 							  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-								  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval($website->id); ?>" value="<?php echo intval($website->id); ?>" id="selected_sites_<?php echo intval($website->id); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
-								  <label for="selected_sites_<?php echo intval($website->id); ?>">
+								  <input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+								  <label for="selected_sites_<?php echo intval( $website->id ); ?>">
 									  <?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 								  </label>
 							  </div>
@@ -191,7 +191,7 @@ class MainWP_UI {
 								?>
 							  <div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 								  <input <?php echo $disabled; ?> type="checkbox" disabled="disabled"/>
-								  <label for="selected_sites_<?php echo intval($website->id); ?>">
+								  <label for="selected_sites_<?php echo intval( $website->id ); ?>">
 									<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 								  </label>
 							  </div>
@@ -369,7 +369,7 @@ class MainWP_UI {
 				<?php
 				while ( $websites && ( $website   = MainWP_DB::fetch_object( $websites ) ) ) {
 					?>
-					<option value="<?php echo intval($website->id); ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
+					<option value="<?php echo intval( $website->id ); ?>" <?php echo ( $s == $website->id ) ? 'selected' : ''; ?> class="item" ><?php echo stripslashes( $website->name ); ?></option>
 					<?php
 				}
 				?>
@@ -578,7 +578,7 @@ class MainWP_UI {
 
 		foreach ( array_keys( $mainwp_widget_boxes[ $page ] ) as $a_context ) {
 			foreach ( array( 'high', 'core', 'default', 'low' ) as $a_priority ) {
-				if ( ! isset($mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]) ) {
+				if ( !isset( $mainwp_widget_boxes[$page][$a_context][$a_priority][$id] ) ) {
 					continue;
 				}
 
@@ -588,7 +588,7 @@ class MainWP_UI {
 				}
 
 				// If no priority given and id already present, use existing priority.
-				if ( empty($priority) ) {
+				if ( empty( $priority ) ) {
 					$priority = $a_priority;
 					/*
 					* Else, if we're adding to the sorted priority, we don't know the title
@@ -677,7 +677,7 @@ class MainWP_UI {
 						echo '<div class="column grid-item" id="widget-' . esc_html( $box['id'] ) . '">' . "\n";
 						echo '<div class="ui segment mainwp-widget" >' . "\n";
 
-						call_user_func($box['callback'], $object, $box);
+						call_user_func( $box['callback'], $object, $box );
 
 						echo "</div>\n";
 						echo "</div>\n";

@@ -130,9 +130,8 @@ class MainWP_Settings {
 								continue;
 							}
 							?>
-							<a href="<?php echo admin_url( 'admin.php?page=Settings' . $subPage['slug'] ); ?>"
-							   class="mainwp-submenu"><?php echo esc_html($subPage['title']); ?></a>
-							   <?php
+							<a href="<?php echo admin_url( 'admin.php?page=Settings' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
+							<?php
 						}
 					}
 					?>
@@ -312,10 +311,10 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $_POST['mainwp_timeDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST['mainwp_frequencyDailyUpdate'] ) );
 
-				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval($_POST['mainwp_sidebarPosition']) : 1 );
+				$val	 = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 				$user = wp_get_current_user();
 				if ( $user ) {
-					update_user_option($user->ID, 'mainwp_sidebarPosition', $val, true);
+					update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
 				}
 
 				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', MainWP_Utility::ctype_digit( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365  );
@@ -626,8 +625,8 @@ class MainWP_Settings {
 										selected<?php } ?>><?php esc_html_e( 'Disabled', 'mainwp' ); ?></option>
 								</select>
 								<div class="ui hidden divider"></div>
-								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html($lastAutomaticUpdate); ?></div>
-								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html($nextAutomaticUpdate); ?></div>
+								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
+								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -754,7 +753,7 @@ class MainWP_Settings {
 			MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0  );
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
-				$openssl_loc = trim($_POST['mainwp_openssl_lib_location']);
+				$openssl_loc = trim( $_POST['mainwp_openssl_lib_location'] );
 				if ( self::is_local_window_config() ) {
 					MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ) );
 				} else {
@@ -982,7 +981,7 @@ class MainWP_Settings {
 							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
 						} else {
 							$siteurl = stripslashes( $_POST['live_reponder_site_url'] );
-							if ( ! empty($siteurl) && substr( $siteurl, - 1 ) != '/' ) {
+							if ( !empty( $siteurl ) && substr( $siteurl, - 1 ) != '/' ) {
 								$siteurl = $siteurl . '/';
 							}
 							update_option( 'live-report-responder-siteurl', $siteurl );

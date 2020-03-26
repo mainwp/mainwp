@@ -154,7 +154,7 @@ class MainWP_Menu {
 
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 
-		$title = esc_html($title);
+		$title = esc_html( $title );
 
 		if ( 1 == $level ) {
 			$mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
@@ -200,7 +200,7 @@ class MainWP_Menu {
 							$title    = wptexturize( $item[0] );
 							$item_key = $item[1];
 							$href     = $item[2];
-							$item_id  = isset($item[3]) ? $item[3] : '';
+							$item_id	 = isset( $item[3] ) ? $item[3] : '';
 
 							$has_sub = true;
 							if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
@@ -218,7 +218,7 @@ class MainWP_Menu {
 								}
 							}
 
-							$id_attr = ! empty($item_id) ? 'id="' . esc_html($item_id) . '"' : '';
+							$id_attr = !empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
 							if ( $has_sub ) {
 								echo '<div ' . $id_attr . " class=\"item $active_item\">";
@@ -247,21 +247,20 @@ class MainWP_Menu {
 					);
 
 					$go_back_link = apply_filters('mainwp_go_back_wpadmin_link', $link );
-					if ( is_array($go_back_link) ) {
-						if ( isset($go_back_link['url']) ) {
+					if ( is_array( $go_back_link ) ) {
+						if ( isset( $go_back_link['url'] ) ) {
 							$link['url'] = $go_back_link['url'];
 						}
-						if ( isset($go_back_link['text']) ) {
+						if ( isset( $go_back_link['text'] ) ) {
 							$link['text'] = $go_back_link['text'];
 						}
-						if ( isset($go_back_link['tip']) ) {
+						if ( isset( $go_back_link['tip'] ) ) {
 							$link['tip'] = $go_back_link['tip'];
 						}
 					}
-
 					?>
 					 <div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
-						 <a href="<?php echo esc_html($link['url']); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html($link['tip']); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html($link['text']); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
+						 <a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
 					 </div>
 					<div class="hamburger">
 						<span class="hamburger-bun"></span>
@@ -349,7 +348,7 @@ class MainWP_Menu {
 			}
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_can( $right_group, $right ) ) ) {
 				?>
-			<a class="item" href="<?php echo esc_url($href); ?>"><?php echo esc_html($title); ?></a>
+			<a class="item" href="<?php echo esc_url( $href ); ?>"><?php echo esc_html( $title ); ?></a>
 				<?php
 			}
 		}

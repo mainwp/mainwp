@@ -56,7 +56,7 @@ class MainWP_Notes {
 					<i class="info circle icon"></i>
 					<div class="content">
 						<?php esc_html_e( 'No saved notes!', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval($website->id) . '">' . __( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
+						<div class="sub header"><?php esc_html_e( 'No saved notes for the child site. ', 'mainwp' ); ?><?php echo '<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-' . intval( $website->id ) . '">' . __( 'Click here to add a note.', 'mainwp' ) . '</a>'; ?></div>
 					</div>
 				</h2>
 				<?php
@@ -64,12 +64,12 @@ class MainWP_Notes {
 				echo $esc_note;
 				?>
 				<div class="ui section hidden divider"></div>
-				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval($website->id); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
+				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php
 			}
 			?>
 		</div>
-		<span style="display: none" id="mainwp-notes-<?php echo intval($current_wpid); ?>-note"><?php echo $esc_note; ?></span>
+		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo $esc_note; ?></span>
 		<?php
 		MainWP_UI::render_modal_edit_notes();
 	}

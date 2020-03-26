@@ -230,7 +230,7 @@ class MainWP_Security_Issues {
 					<th colspan="3">
 						<input type="button" id="securityIssues_fixAll" class="ui green button right floated" value="<?php esc_html_e( 'Fix All', 'mainwp' ); ?>"/>
 						<input type="button" id="securityIssues_refresh" class="ui button" value="<?php esc_html_e( 'Refresh', 'mainwp' ); ?>"/>
-						<input type="hidden" id="securityIssueSite" value="<?php echo intval($website->id); ?>"/>
+						<input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
 					</th>
 				</tr>
 			</tfoot>

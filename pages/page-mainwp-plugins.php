@@ -1378,7 +1378,7 @@ class MainWP_Plugins {
 
 							foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
 								?>
-							<tr site-id="<?php echo intval($website->id); ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
+								<tr site-id="<?php echo intval( $website->id ); ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
 								<?php if ( $first ) : ?>
 									<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 									<?php $first = false; ?>

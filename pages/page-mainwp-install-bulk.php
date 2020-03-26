@@ -162,8 +162,8 @@ class MainWP_Install_Bulk {
 
 	public static function addition_post_data( &$post_data = array() ) {
 		$clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
-		if ( isset($post_data['url']) && false !== strpos( $post_data['url'], 'mwpdl') && false !== strpos( $post_data['url'], 'sig') ) {
-			if ( is_array($clear_and_lock_opts) && isset($clear_and_lock_opts['wpadmin_user']) && ! empty($clear_and_lock_opts['wpadmin_user']) && isset($clear_and_lock_opts['wpadmin_passwd']) && ! empty($clear_and_lock_opts['wpadmin_passwd']) ) {
+		if ( isset( $post_data['url'] ) && false !== strpos( $post_data['url'], 'mwpdl' ) && false !== strpos( $post_data['url'], 'sig' ) ) {
+			if ( is_array( $clear_and_lock_opts ) && isset( $clear_and_lock_opts['wpadmin_user'] ) && !empty( $clear_and_lock_opts['wpadmin_user'] ) && isset( $clear_and_lock_opts['wpadmin_passwd'] ) && !empty( $clear_and_lock_opts['wpadmin_passwd'] ) ) {
 				$post_data['wpadmin_user']   = $clear_and_lock_opts['wpadmin_user'];
 				$post_data['wpadmin_passwd'] = $clear_and_lock_opts['wpadmin_passwd'];
 			}
@@ -324,7 +324,7 @@ class MainWP_Install_Bulk {
 				$output->ok[ $website->id ] = array( $website->name );
 			} elseif ( isset( $information['error'] ) ) {
 				$error = $information['error'];
-				if ( isset($information['error_code']) && 'folder_exists' == $information['error_code'] ) {
+				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
 					$error = __( 'Already installed', 'mainwp' );
 				}
 				$output->errors[ $website->id ] = array( $website->name, $error );
@@ -391,7 +391,7 @@ class qq2UploadedFileXhr {
 			$wp_filesystem->put_contents( $path, stream_get_contents( $temp ) );
 		} else {
 			if ( ! is_dir( dirname( $path ) ) ) {
-				@mkdir( dirname( $path ), 0777, true );
+				mkdir( dirname( $path ), 0777, true );
 			}
 
 			$target = fopen( $path, 'w' );
@@ -479,17 +479,17 @@ class qq2FileUploader {
 	}
 
 	private function toBytes( $str ) {
-		$val  = trim( $str );
-		$last = strtolower( $str[ strlen( $str ) - 1 ] );
+		$val	 = trim( $str );
+		$last	 = strtolower( $str[strlen( $str ) - 1] );
 		switch ( $last ) {
 			case 'g':
-				$val = substr($str, 0, strlen( $str ) - 1) * 1024 * 1024 * 1024;
+				$val = substr( $str, 0, strlen( $str ) - 1 ) * 1024 * 1024 * 1024;
 				break;
 			case 'm':
-				$val = substr($str, 0, strlen( $str ) - 1) * 1024 * 1024;
+				$val = substr( $str, 0, strlen( $str ) - 1 ) * 1024 * 1024;
 				break;
 			case 'k':
-				$val = substr($str, 0, strlen( $str ) - 1) * 1024;
+				$val = substr( $str, 0, strlen( $str ) - 1 ) * 1024;
 				break;
 		}
 

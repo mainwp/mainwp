@@ -1702,7 +1702,7 @@ class MainWP_Utility {
 
 		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass ),
+				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ),
 			);
 		}
 
@@ -1748,27 +1748,31 @@ class MainWP_Utility {
 	}
 
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
-		if ( file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
-			@unlink( $file );
+		
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+		
+		if ( $wp_filesystem->exists( $file ) && ( ( false === $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
+			$wp_filesystem->delete( $file );
 		}
 
-		if ( ! file_exists( @dirname( $file ) ) ) {
-			@mkdir( @dirname( $file ), 0777, true );
+		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
+			$wp_filesystem->mkdir( dirname( $file ), 0777, true );
 		}
 
-		if ( ! file_exists( @dirname( $file ) ) ) {
+		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
 			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
 		}
 
-		if ( ! @is_writable( @dirname( $file ) ) ) {
+		if ( ! is_writable( @dirname( $file ) ) ) {
 			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
 		}
 
 		$fp    = fopen( $file, 'a' );
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		if ( false !== $size ) {
-			if ( file_exists( $file ) ) {
-				$size = @filesize( $file );
+			if ( $wp_filesystem->exists( $file ) ) {
+				$size = $wp_filesystem->size( $file );
 				$url .= '&foffset=' . $size;
 			}
 		}
@@ -1850,27 +1854,33 @@ class MainWP_Utility {
 	}
 
 	public static function get_icons_dir() {
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+		
 		$dirs = self::get_mainwp_dir();
 		$dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 		$url  = $dirs[1] . 'icons/';
-		if ( ! file_exists( $dir ) ) {
-			@mkdir( $dir, 0777, true );
+		if ( ! $wp_filesystem->exists( $dir ) ) {
+			$wp_filesystem->mkdir( $dir, 0777, true );
 		}
-		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 		return array( $dir, $url );
 	}
 
 	public static function get_mainwp_dir() {
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+		
 		$upload_dir = wp_upload_dir();
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
 		$url        = $upload_dir['baseurl'] . '/mainwp/';
-		if ( ! file_exists( $dir ) ) {
-			@mkdir( $dir, 0777, true );
+		if ( ! $wp_filesystem->exists( $dir ) ) {
+			$wp_filesystem->mkdir( $dir, 0777, true );
 		}
-		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 
 		return array( $dir, $url );

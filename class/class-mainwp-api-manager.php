@@ -108,7 +108,7 @@ class MainWP_Api_Manager {
 	 * @return mixed
 	 */
 	public function get_activation_info( $ext_key ) {
-		if ( empty($ext_key) ) {
+		if ( empty( $ext_key ) ) {
 			return array();
 		}
 
@@ -127,7 +127,7 @@ class MainWP_Api_Manager {
 	 */
 	public function set_activation_info( $ext_key, $info ) {
 
-		if ( empty($ext_key) ) {
+		if ( empty( $ext_key ) ) {
 			return false;
 		}
 

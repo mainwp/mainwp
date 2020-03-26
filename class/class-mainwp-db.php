@@ -313,13 +313,13 @@ class MainWP_DB {
                          (SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
                          (SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
 
-		if ( is_array($extra) ) {
-			foreach ( $extra as $field ) {
-				if ( empty($field) ) {
+		if ( is_array( $extra ) ) {
+			foreach( $extra as $field ){
+				if ( empty( $field ) ) {
 					continue;
 				}
-				$view .= ', ';
-				$view .= '(SELECT ' . $this->escape($field) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape($field) . ' WHERE  ' . $this->escape($field) . '.wpid = intwp.id AND ' . $this->escape($field) . '.name = "' . $this->escape($field) . '" LIMIT 1) AS ' . $this->escape($field);
+				$view	 .= ', ';
+				$view	 .= '(SELECT ' . $this->escape( $field ) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape( $field ) . ' WHERE  ' . $this->escape( $field ) . '.wpid = intwp.id AND ' . $this->escape( $field ) . '.name = "' . $this->escape( $field ) . '" LIMIT 1) AS ' . $this->escape( $field );
 			}
 		}
 
@@ -1325,7 +1325,7 @@ class MainWP_DB {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				// update admin
-				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags($name) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
+				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
 				// remove groups
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
@@ -1714,9 +1714,9 @@ class MainWP_DB {
 
 	public function update_user_extension( $userExtension ) {
 
-		if ( is_object($userExtension) ) {
+		if ( is_object( $userExtension ) ) {
 			$userid = $userExtension->userid;
-		} elseif ( is_array($userExtension) ) {
+		} elseif ( is_array( $userExtension ) ) {
 			$userid = $userExtension['userid']; // fix for some
 		} else {
 			$userid = null;

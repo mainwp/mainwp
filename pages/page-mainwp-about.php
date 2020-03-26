@@ -116,7 +116,7 @@ class MainWP_About {
 		global $mainWP;
 		?>
 		<br/>
-		<h3><?php echo esc_html($mainWP->get_version()); ?>&nbsp;<?php esc_html_e( 'Changelog', 'mainwp' ); ?></h3>
+		<h3><?php echo esc_html( $mainWP->get_version() ); ?>&nbsp;<?php esc_html_e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
 			<li>Fixed: an issue with sorting posts and pages by the publish date</li>

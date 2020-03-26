@@ -1,12 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Backup Tasks
  *
  * Displays the MainWP > Backups Page ( Legacy ).
  */
-
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Backup_Tasks

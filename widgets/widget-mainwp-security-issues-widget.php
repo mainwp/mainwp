@@ -1,12 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Security Widget
  *
  * Displays detected security issues on Child Sites.
  */
-
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Security_Issues_Widget

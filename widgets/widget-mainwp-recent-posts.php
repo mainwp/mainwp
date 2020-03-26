@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Recent Posts Widget
  *
@@ -8,6 +6,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP/Widget_Recent_Posts
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Recent_Posts

@@ -802,7 +802,7 @@ class MainWP_Manage_Sites {
 		} elseif ( isset( $information['db'] ) ) {
 			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 			global $wp_filesystem;
-		
+
 			$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
 			$wp_filesystem->mkdir( $dir, 0777, true );
@@ -994,7 +994,7 @@ class MainWP_Manage_Sites {
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 		global $wp_filesystem;
-			
+
 		$dir = dirname( $pFile ) . '/';
 		$wp_filesystem->mkdir( $dir, 0777, true );
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {

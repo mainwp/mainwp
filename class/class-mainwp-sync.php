@@ -231,8 +231,8 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugins'] ) ) {
-			$websiteValues['plugins']	 = MainWP_Utility::safe_json_encode( $information['plugins'] );
-			$done						 = true;
+			$websiteValues['plugins'] = MainWP_Utility::safe_json_encode( $information['plugins'] );
+			$done                     = true;
 		}
 
 		if ( isset( $information['users'] ) ) {

@@ -1203,8 +1203,8 @@ class MainWP_Live_Reports_Class {
 		$section_tokens = array();
 		$section        = '';
 		if ( preg_match_all( '/\[\/?section\.[^\]]+\]/is', $content, $matches ) ) {
-			$section_tokens                   = $matches[0];
-			$str_tmp                          = str_replace( array( '[', ']' ), '', $section_tokens[0] );
+			$section_tokens                     = $matches[0];
+			$str_tmp                            = str_replace( array( '[', ']' ), '', $section_tokens[0] );
 			list( $context, $action, $section ) = explode( '.', $str_tmp );
 		}
 		$content = str_replace( $section_tokens, '', $content );

@@ -200,7 +200,7 @@ class MainWP_Menu {
 							$title    = wptexturize( $item[0] );
 							$item_key = $item[1];
 							$href     = $item[2];
-							$item_id	 = isset( $item[3] ) ? $item[3] : '';
+							$item_id  = isset( $item[3] ) ? $item[3] : '';
 
 							$has_sub = true;
 							if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
@@ -218,7 +218,7 @@ class MainWP_Menu {
 								}
 							}
 
-							$id_attr = !empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
+							$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
 							if ( $has_sub ) {
 								echo '<div ' . $id_attr . " class=\"item $active_item\">";

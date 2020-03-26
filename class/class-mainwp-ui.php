@@ -578,7 +578,7 @@ class MainWP_UI {
 
 		foreach ( array_keys( $mainwp_widget_boxes[ $page ] ) as $a_context ) {
 			foreach ( array( 'high', 'core', 'default', 'low' ) as $a_priority ) {
-				if ( !isset( $mainwp_widget_boxes[$page][$a_context][$a_priority][$id] ) ) {
+				if ( ! isset( $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) ) {
 					continue;
 				}
 

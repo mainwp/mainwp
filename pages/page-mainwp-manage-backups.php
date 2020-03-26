@@ -222,7 +222,7 @@ class MainWP_Manage_Backups {
 				}
 
 				$item           = array();
-				$item['title']	 = esc_html( $subPage['title'] );
+				$item['title']  = esc_html( $subPage['title'] );
 				$item['href']   = 'admin.php?page=ManageBackups' . $subPage['slug'];
 				$item['active'] = ( $subPage['slug'] == $shownPage ) ? true : false;
 				$renderItems[]  = $item;
@@ -933,7 +933,7 @@ class MainWP_Manage_Backups {
 		$maximumFileDescriptorsOverride = $_POST['maximumFileDescriptorsOverride'] == 1;
 		$maximumFileDescriptorsAuto     = $_POST['maximumFileDescriptorsAuto'] == 1;
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
-		$loadFilesBeforeZip				 = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
+		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
 		$task = MainWP_DB::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
 

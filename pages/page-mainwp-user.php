@@ -648,7 +648,7 @@ class MainWP_User {
 								}
 
 								if ( $check_users_role ) {
-									if ( !in_array( $user['id'], $search_user_role ) ) {
+									if ( ! in_array( $user['id'], $search_user_role ) ) {
 										continue;
 									}
 								}
@@ -883,8 +883,8 @@ class MainWP_User {
 				}
 			}
 
-			if ( !empty( $pass ) ) {
-				$extra['pass1']	 = $extra['pass2']	 = $pass;
+			if ( ! empty( $pass ) ) {
+				$extra['pass1'] = $extra['pass2']   = $pass;
 			}
 		}
 

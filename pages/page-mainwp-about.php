@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP About Page
  *
@@ -8,6 +6,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP/About
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_About

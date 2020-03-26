@@ -688,7 +688,7 @@ class MainWP_Post_Handler {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
 							$sendText = MainWP_Twitter::get_twit_to_send( $_POST['actionName'], $timeid );
-							$html		 .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $_POST['actionName'] ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $_POST['actionName'] ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -1443,7 +1443,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_upgrade_plugintheme() {
 
-		if ( !isset( $_POST['type'] ) ) {
+		if ( ! isset( $_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );
 		}
 
@@ -1498,10 +1498,10 @@ class MainWP_Post_Handler {
 		if ( $chunk_support ) {
 			// calculate update slugs here
 			if ( $max_update ) {
-				$slugs			 = explode( ',', $slugs );
-				$chunk_slugs	 = array_slice( $slugs, $max_update );
-				$update_slugs	 = array_diff( $slugs, $chunk_slugs );
-				$slugs			 = implode( ',', $update_slugs );
+				$slugs        = explode( ',', $slugs );
+				$chunk_slugs  = array_slice( $slugs, $max_update );
+				$update_slugs = array_diff( $slugs, $chunk_slugs );
+				$slugs        = implode( ',', $update_slugs );
 			}
 		}
 
@@ -1737,7 +1737,7 @@ class MainWP_Post_Handler {
 		die(
 			wp_json_encode(
 				array(
-					'httpcode'	 => esc_html( $http_code ),
+					'httpcode' => esc_html( $http_code ),
 					'status'   => $check_result ? 1 : 0,
 				)
 			)

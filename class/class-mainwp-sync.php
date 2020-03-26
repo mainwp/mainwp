@@ -1,4 +1,9 @@
 <?php
+/**
+ * MainWP Sync Handler
+ *
+ * Handle all syncing between MainWP & Child Site Network.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,6 +11,15 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Sync {
 
+	/**
+	 * Method sync_site()
+	 *
+	 * @param mixed   $pWebsite Null|userid.
+	 * @param boolean $pForceFetch Check if a fourced Sync.
+	 * @param boolean $pAllowDisconnect Check if allowed to disconect.
+	 *
+	 * @return array sync_information_array
+	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
 		if ( $pWebsite == null ) {
 			return false;
@@ -81,8 +95,21 @@ class MainWP_Sync {
 		}
 	}
 
-	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1,
-											  $error = false, $pAllowDisconnect = true ) {
+	/**
+	 * Method sync_information_array()
+	 *
+	 * Grab all Child Site Information.
+	 *
+	 * @param mixed   $pWebsite
+	 * @param mixed   $information Filter mainwp_before_save_sync_result
+	 * @param string  $sync_errors Check for Sync Errors.
+	 * @param integer $offline_check_result Check if offline.
+	 * @param boolean $error True|False.
+	 * @param boolean $pAllowDisconnect True|False.
+	 *
+	 * @return mixed do_action( 'mainwp-site-synced', $pWebsite, $information ).
+	 */
+	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1, $error = false, $pAllowDisconnect = true ) {
 		$emptyArray        = wp_json_encode( array() );
 		$websiteValues     = array(
 			'directories'            => $emptyArray,
@@ -204,8 +231,8 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugins'] ) ) {
-			$websiteValues['plugins']	 = MainWP_Utility::safe_json_encode( $information['plugins'] );
-			$done						 = true;
+			$websiteValues['plugins'] = MainWP_Utility::safe_json_encode( $information['plugins'] );
+			$done                     = true;
 		}
 
 		if ( isset( $information['users'] ) ) {

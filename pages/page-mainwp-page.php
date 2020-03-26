@@ -406,8 +406,8 @@ class MainWP_Page {
 				  <i class="calendar icon"></i>
 					<input type="text" placeholder="Date" id="mainwp_page_search_by_dtsstart" value="
 					<?php
-					if ( $cachedSearch != null ) {						
-						echo esc_attr( $cachedSearch['dtsstart'] );					
+					if ( $cachedSearch != null ) {
+						echo esc_attr( $cachedSearch['dtsstart'] );
 					}
 					?>
 					"/>
@@ -437,7 +437,7 @@ class MainWP_Page {
 		</div>
 		<?php
 		if ( is_array( $statuses ) && count( $statuses ) > 0 ) {
-			$status	 = implode( "','", $statuses );
+			$status = implode( "','", $statuses );
 			$status = "'" . $status . "'";
 			?>
 			<script type="text/javascript">
@@ -617,7 +617,7 @@ class MainWP_Page {
 			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
-				$output->errors[$website->id] = $pages['error'];
+				$output->errors[ $website->id ] = $pages['error'];
 				return;
 			}
 
@@ -657,7 +657,7 @@ class MainWP_Page {
 								<?php if ( $page['status'] != 'trash' ) { ?>
 									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
-								<?php echo esc_html( $page['title'] ); ?>
+									<?php echo esc_html( $page['title'] ); ?>
 								<?php } ?>
 							</abbr>
 						</strong>

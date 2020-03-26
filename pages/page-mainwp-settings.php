@@ -311,7 +311,7 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $_POST['mainwp_timeDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST['mainwp_frequencyDailyUpdate'] ) );
 
-				$val	 = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
+				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 				$user = wp_get_current_user();
 				if ( $user ) {
 					update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
@@ -981,7 +981,7 @@ class MainWP_Settings {
 							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
 						} else {
 							$siteurl = stripslashes( $_POST['live_reponder_site_url'] );
-							if ( !empty( $siteurl ) && substr( $siteurl, - 1 ) != '/' ) {
+							if ( ! empty( $siteurl ) && substr( $siteurl, - 1 ) != '/' ) {
 								$siteurl = $siteurl . '/';
 							}
 							update_option( 'live-report-responder-siteurl', $siteurl );

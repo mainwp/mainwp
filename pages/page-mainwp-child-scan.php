@@ -20,7 +20,7 @@ class MainWP_Child_Scan {
 			'title' => __( 'Child Scan', 'mainwp' ),
 		);
 		MainWP_UI::render_top_header( $params );
-?>
+		?>
 			<div class="wrap">
 				<div id="mainwp_wrap-inside">
 					<?php

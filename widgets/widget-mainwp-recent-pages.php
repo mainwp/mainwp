@@ -146,25 +146,25 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[$i]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[$i]['website']->id ); ?>"/>
+							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_published[$i]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[$i]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_published[$i]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 							</div>
 							<div class="four wide column middle aligned">
-							<?php echo esc_html( $recent_pages_published[$i]['dts'] ); ?>
+							<?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?>
 						</div>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_published[$i]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
 							</div>
 							<div class="two wide column right aligned">
 								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[$i]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[$i]['id'] ) . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[ $i ]['id'] ) . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#" ><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="<?php echo esc_url( $recent_pages_published[$i]['website']->url ) . ( substr( $recent_pages_published[$i]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[$i]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[$i]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+										<a class="item" href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ) . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-viewall" href="admin.php?page=PageBulkManage" ><?php esc_html_e( 'View all', 'mainwp' ); ?></a>
 									</div>
 							</div>
@@ -209,16 +209,16 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[$i]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[$i]['website']->id ); ?>"/>
+							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_draft[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[$i]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[$i]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo htmlentities( $recent_pages_draft[$i]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_draft[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo htmlentities( $recent_pages_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 							</div>
 							<div class="four wide column middle aligned">
-							<?php echo esc_html( $recent_pages_draft[$i]['dts'] ); ?>
+							<?php echo esc_html( $recent_pages_draft[ $i ]['dts'] ); ?>
 						</div>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_draft[$i]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_draft[ $i ]['website']->url ); ?>" target="_blank" class="mainwp-may-hide-referrer" ><?php echo $name; ?></a>
 							</div>
 							<div class="two wide column right aligned">
 								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
@@ -271,8 +271,8 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[$i]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[$i]['website']->id ); ?>"/>
+							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_pending[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
 								<a href="<?php echo esc_url( $recent_pages_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 							</div>
@@ -333,25 +333,25 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[$i]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[$i]['website']->id ); ?>"/>
+							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[$i]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[$i]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_future[$i]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 							</div>
 							<div class="four wide column middle aligned">
-							<?php echo esc_html( $recent_pages_future[$i]['dts'] ); ?>
+							<?php echo esc_html( $recent_pages_future[ $i ]['dts'] ); ?>
 						</div>
 							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_future[$i]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
+								<a href="<?php echo esc_url( $recent_pages_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
 							</div>
 							<div class="two wide column right aligned">
 								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 									<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_future[$i]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_pages_future[$i]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_pages_future[ $i ]['id'] . '&action=edit' ); ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_future[$i]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_pages_future[$i]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo esc_attr( $recent_pages_future[$i]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_future[ $i ]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_pages_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank" title="Preview '<?php echo esc_attr( $recent_pages_future[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-viewall" href="admin.php?page=PostBulkManage"><?php esc_html_e( 'View all', 'mainwp' ); ?></a>
 									</div>
 							</div>
@@ -397,13 +397,13 @@ class MainWP_Recent_Pages {
 					?>
 					<div class="item">
 						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[$i]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[$i]['website']->id ); ?>"/>
+							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['id'] ); ?>"/>
+							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_trash[ $i ]['website']->id ); ?>"/>
 							<div class="six wide column middle aligned">
-								<?php echo esc_html( $recent_pages_trash[$i]['title'] ); ?>
+								<?php echo esc_html( $recent_pages_trash[ $i ]['title'] ); ?>
 							</div>
 							<div class="four wide column middle aligned">
-								<?php echo esc_html( $recent_pages_trash[$i]['dts'] ); ?>
+								<?php echo esc_html( $recent_pages_trash[ $i ]['dts'] ); ?>
 						</div>
 							<div class="four wide column middle aligned">
 							<?php echo $name; ?>

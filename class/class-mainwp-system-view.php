@@ -1,13 +1,33 @@
 <?php
+/**
+ * MainWP Translations
+ *
+ * Array of Translatable stings.
+ */
 namespace MainWP\Dashboard;
 
 /**
  * MainWP Translations
  */
 class MainWP_System_View {
-
+	
+	/**
+	 * Method get_mainwp_translations()
+	 * Build Translations Array.
+	 * 
+	 * @return array $mainwpTranslations.
+	 */
 	public static function get_mainwp_translations() {
 
+		/**
+		 * Method mainwpAddTranslation()
+		 * 
+		 * Grab info needed to build array and strip chartacters "/[^A-Za-z0-9_]/".
+		 * 
+		 * @param mixed $pArray Array of tranlatable text.
+		 * @param mixed $pKey Key for each array enty.
+		 * @param mixed $pText Text for each array entry.
+		 */
 		function mainwpAddTranslation( &$pArray, $pKey, $pText ) {
 			if ( ! is_array( $pArray ) ) {
 				$pArray = array();

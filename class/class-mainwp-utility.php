@@ -1749,7 +1749,7 @@ class MainWP_Utility {
 
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 		
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
 		
 		if ( $wp_filesystem->exists( $file ) && ( ( false === $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
@@ -1854,7 +1854,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_icons_dir() {
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
 		
 		$dirs = self::get_mainwp_dir();
@@ -1870,7 +1870,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_mainwp_dir() {
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
 		
 		$upload_dir = wp_upload_dir();

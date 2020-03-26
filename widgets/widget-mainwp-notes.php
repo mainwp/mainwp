@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Notes Widget
  *
  * Display current Child Site Notes.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Notes

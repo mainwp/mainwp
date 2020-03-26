@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Updates Overview Widget
  *
@@ -8,6 +6,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP/Updates_Overview
  */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Updates Overview

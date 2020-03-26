@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Site Info Widget
  *
  * Build the Child Site Info Widget.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Site_Info

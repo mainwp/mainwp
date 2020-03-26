@@ -1,11 +1,10 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Connection Status
  *
  * Build the Connection Status Widget.
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Connection_Status

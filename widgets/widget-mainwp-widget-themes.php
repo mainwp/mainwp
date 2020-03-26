@@ -1,6 +1,4 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP Themes Widget
  *
@@ -8,6 +6,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP/Plugins
  */
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Widget_Themes

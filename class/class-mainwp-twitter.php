@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Twitter Bragger
- * 
+ *
  * Each time a Child Site is updated, build a Tweet to be sent out to brag
  * that MainWP was used and how fast it was.
  */
@@ -26,7 +26,7 @@ class MainWP_Twitter {
 
 	/**
 	 * Method get_filter()
-	 * 
+	 *
 	 * @return array Filter List.
 	 */
 	public static function get_filter() {
@@ -45,9 +45,9 @@ class MainWP_Twitter {
 
 	/**
 	 * Method enabled_twitter_messages()
-	 * 
-	 * Check if Twitter Bragger should be hidden or not. 
-	 * 
+	 *
+	 * Check if Twitter Bragger should be hidden or not.
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function enabled_twitter_messages() {
@@ -60,8 +60,8 @@ class MainWP_Twitter {
 
 	/**
 	 * Method clear_all_twitter_messages()
-	 * 
-	 * Clear the twitter messages for current user. 
+	 *
+	 * Clear the twitter messages for current user.
 	 */
 	public static function clear_all_twitter_messages() {
 		$filters = self::get_filter();
@@ -75,9 +75,9 @@ class MainWP_Twitter {
 
 	/**
 	 * Method random_word()
-	 * 
+	 *
 	 * Array of random words to use in each tweet.
-	 * 
+	 *
 	 * @return string $words
 	 */
 	public static function random_word() {
@@ -96,12 +96,12 @@ class MainWP_Twitter {
 
 	/**
 	 * Method get_notice()
-	 * 
+	 *
 	 * Build Twitter message based on what action was performed.
-	 * 
+	 *
 	 * @param mixed $what
-	 * @param mixed $value 
-	 * 
+	 * @param mixed $value
+	 *
 	 * @return mixed $message.
 	 */
 	public static function get_notice( $what, $value ) {
@@ -168,12 +168,12 @@ class MainWP_Twitter {
 
 	/**
 	 * Method gen_twitter_button()
-	 * 
+	 *
 	 * Build Twitter Brag button.
-	 * 
-	 * @param mixed $content
+	 *
+	 * @param mixed   $content
 	 * @param boolean $echo
-	 * 
+	 *
 	 * @return mixed $return Button HTML
 	 */
 	public static function gen_twitter_button( $content, $echo = true ) {
@@ -196,16 +196,16 @@ class MainWP_Twitter {
 
 	/**
 	 * Method update_twitter_info()
-	 * 
+	 *
 	 * Build Twitter message to be sent.
-	 * 
-	 * @param mixed  $what What task was performed.
+	 *
+	 * @param mixed   $what What task was performed.
 	 * @param integer $countSites Number of Sites updated.
-	 * @param integer $countSec Second it took to update. 
+	 * @param integer $countSec Second it took to update.
 	 * @param integer $coutRealItems Number of items updated.
 	 * @param integer $twId Twitter ID
 	 * @param integer $countItems Total number of Items together.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function update_twitter_info( $what, $countSites = 0, $countSec = 0, $coutRealItems = 0, $twId = 0, $countItems = 1 ) {
@@ -251,10 +251,10 @@ class MainWP_Twitter {
 
 	/**
 	 * Method clear_twitter_info
-	 * 
-	 * @param mixed  $what What task was performed.
+	 *
+	 * @param mixed   $what What task was performed.
 	 * @param integer $twId Twitter ID.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function clear_twitter_info( $what, $twId = 0 ) {
@@ -285,14 +285,14 @@ class MainWP_Twitter {
 		return true;
 	}
 
-	/** 
+	/**
 	 * Method get_twitter_notice()
-	 * 
+	 *
 	 * Grab Twitter message that was built.
-	 * 
-	 * @param mixed $what What task was performed.
+	 *
+	 * @param mixed   $what What task was performed.
 	 * @param integer $twId Twitter ID.
-	 * 
+	 *
 	 * @return mixed $return[ $time ] = $mess.
 	 */
 	public static function get_twitter_notice( $what, $twId = 0 ) {
@@ -332,12 +332,12 @@ class MainWP_Twitter {
 
 	/**
 	 * Method get_twit_to_send()
-	 * 
+	 *
 	 * Example @MyMainWP I just quickly updated 3 plugins on 3 #WordPress sites, 5 total updates in 12 seconds.
-	 * 
-	 * @param mixed $what What task was performed.
+	 *
+	 * @param mixed   $what What task was performed.
 	 * @param integer $twId Twitter ID.
-	 * 
+	 *
 	 * @return string Tweet to send.
 	 */
 	public static function get_twit_to_send( $what, $twId = 0 ) {

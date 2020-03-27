@@ -1088,7 +1088,7 @@ class MainWP_Extensions {
 
 		if ( is_array( $options ) ) {
 			foreach ( $options as $option_name => $value ) {
-				if ( ( frue === $value ) && isset( self::$possible_options[ $option_name ] ) ) {
+				if ( ( true == $value ) && isset( self::$possible_options[ $option_name ] ) ) {
 					$data[] = self::$possible_options[ $option_name ];
 				}
 			}
@@ -1421,11 +1421,15 @@ class MainWP_Extensions {
 				return false;
 			}
 
+			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+
+			global $wp_filesystem;
+		
 			$favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
 			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
 				$dirs = MainWP_Utility::get_icons_dir();
-				if ( file_exists( $dirs[0] . $favi ) ) {
-					unlink( $dirs[0] . $favi );
+				if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
+					$wp_filesystem->delete( $dirs[0] . $favi );
 				}
 			}
 

@@ -1295,7 +1295,8 @@ class MainWP_Server_Information {
 			$new_lines  = array_slice( $split_data, 0, - 1 );
 			$lines      = array_merge( $lines, $new_lines );
 			$leftover   = $split_data[ count( $split_data ) - 1 ];
-		} while ( count( $lines ) < $line_count && ftell( $fh ) != 0 );
+			$count = count( $lines );
+		} while ( $count < $line_count && ftell( $fh ) != 0 );
 
 		if ( 0 == ftell( $fh ) ) {
 			$lines[] = $leftover;

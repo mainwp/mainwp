@@ -502,7 +502,7 @@ class MainWP_Manage_Backups {
 		$out = '<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
           <i class="ellipsis horizontal icon"></i>
           <div class="menu">
-            <div class="header">' . esc_html( 'Backup Actions', 'mainwp' ) . '</div>
+            <div class="header">' . esc_html_e( 'Backup Actions', 'mainwp' ) . '</div>
                 <div class="divider"></div>';
 		foreach ( $actions as $action => $link ) {
 			$out .= $link;

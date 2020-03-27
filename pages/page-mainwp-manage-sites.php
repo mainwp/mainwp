@@ -845,7 +845,7 @@ class MainWP_Manage_Sites {
 				foreach ( $dbBackups as $key => $dbBackup ) {
 					$cnt ++;
 					if ( $cnt >= $maxBackups ) {
-						@unlink( $dbBackup );
+						$wp_filesystem->delete( $dbBackup );
 					}
 				}
 
@@ -853,7 +853,7 @@ class MainWP_Manage_Sites {
 				foreach ( $fullBackups as $key => $fullBackup ) {
 					$cnt ++;
 					if ( $cnt >= $maxBackups ) {
-						@unlink( $fullBackup );
+						$wp_filesystem->delete( $fullBackup );
 					}
 				}
 				$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
@@ -1034,7 +1034,7 @@ class MainWP_Manage_Sites {
 		foreach ( $dbBackups as $key => $dbBackup ) {
 			$cnt ++;
 			if ( $cnt >= $maxBackups ) {
-				@unlink( $dbBackup );
+				$wp_filesystem->delete( $dbBackup );
 			}
 		}
 
@@ -1042,7 +1042,7 @@ class MainWP_Manage_Sites {
 		foreach ( $fullBackups as $key => $fullBackup ) {
 			$cnt ++;
 			if ( $cnt >= $maxBackups ) {
-				@unlink( $fullBackup );
+				$wp_filesystem->delete( $fullBackup );
 			}
 		}
 
@@ -1821,9 +1821,14 @@ class MainWP_Manage_Sites {
 				// delete icon file
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
+					
+					$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+
+					global $wp_filesystem;
+					
 					$dirs = MainWP_Utility::get_icons_dir();
-					if ( file_exists( $dirs[0] . $favi ) ) {
-						unlink( $dirs[0] . $favi );
+					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
+						$wp_filesystem->delete( $dirs[0] . $favi );
 					}
 				}
 

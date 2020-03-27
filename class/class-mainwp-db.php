@@ -39,7 +39,7 @@ class MainWP_DB {
 	}
 
 	// Constructor
-	function __construct() {
+	public function __construct() {
 		/** @var $this ->wpdb wpdb */
 		global $wpdb;
 

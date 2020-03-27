@@ -2201,7 +2201,7 @@ PRIMARY KEY  (`id`)  ';
 		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE `id`=%d ', $value );
 		} elseif ( 'token_name' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . " WHERE `token_name` = %s ", $value );
+			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE `token_name` = %s ', $value );
 		}
 
 		$token = null;

@@ -1840,10 +1840,10 @@ class MainWP_Utility {
 				);
 			}
 		}
-		
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+
+		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
-			
+
 		if ( $wp_filesystem->exists( $temporary_file ) ) {
 			$wp_filesystem->delete( $temporary_file );
 		}

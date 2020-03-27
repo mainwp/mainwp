@@ -362,17 +362,6 @@ class MainWP_Updates_Overview {
 				}
 			}
 
-			// $ignored_plugins = json_decode( $website->ignored_plugins, true );
-			// $ignored_themes  = json_decode( $website->ignored_themes, true );
-			// if ( is_array( $ignored_plugins ) ) {
-			// $ignored_plugins         = array_filter( $ignored_plugins );
-			// $pluginsIgnored_perSites = array_merge( $pluginsIgnored_perSites, $ignored_plugins );
-			// }
-			// if ( is_array( $ignored_themes ) ) {
-			// $ignored_themes          = array_filter( $ignored_themes );
-			// $themesIgnored_perSites  = array_merge( $themesIgnored_perSites, $ignored_themes );
-			// }
-
 			$pluginsIgnoredAbandoned_perSites = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
 			if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
 				$pluginsIgnoredAbandoned_perSites = array_filter( $pluginsIgnoredAbandoned_perSites );
@@ -828,8 +817,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * @return mixed $output
 	 */
-	public static function check_backups() {
-		// if (get_option('mainwp_backup_before_upgrade') != 1) return true;
+	public static function check_backups() {		
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}

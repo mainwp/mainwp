@@ -653,9 +653,7 @@ class MainWP_System {
 		}
 
 		$deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
-
-		if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {
-			// delete_transient( 'mainwp_transient_deactivated_incomtible_exts' );
+		if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {			
 			?>
 			<div class='notice notice-error my-dismiss-notice is-dismissible'>
 				<p><?php echo esc_html__( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
@@ -2668,8 +2666,6 @@ class MainWP_System {
 		do_action( 'mainwp_save_bulkpage', $post_id );
 
 		if ( $pid == $post_id ) {
-			// fixed by submitbox_misc_actions
-			// $wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post_id ) );
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
 			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
@@ -2708,11 +2704,9 @@ class MainWP_System {
 				'custom-fields',
 				'comments',
 				'revisions',
-			),
-			// 'taxonomies' => array('category', 'post_tag', 'page-category'),
+			),			
 			'public'                 => true,
-			'show_ui'                => true,
-			// 'show_in_menu' => 'index.php',
+			'show_ui'                => true,			
 			'show_in_nav_menus'      => false,
 			'publicly_queryable'     => $queryable,
 			'exclude_from_search'    => true,
@@ -2760,11 +2754,9 @@ class MainWP_System {
 				'custom-fields',
 				'comments',
 				'revisions',
-			),
-			// 'taxonomies' => array('category', 'post_tag', 'page-category'),
+			),			
 			'public'                 => true,
-			'show_ui'                => true,
-			// 'show_in_menu' => 'index.php',
+			'show_ui'                => true,			
 			'show_in_nav_menus'      => false,
 			'publicly_queryable'     => $queryable,
 			'exclude_from_search'    => true,
@@ -3110,8 +3102,7 @@ class MainWP_System {
 	}
 
 	// On activation install the database
-	public function activation() {
-		// delete_option( 'mainwp_requests' );
+	public function activation() {		
 		MainWP_DB::instance()->update();
 		MainWP_DB::instance()->install();
 

@@ -1864,7 +1864,6 @@ class MainWP_Post_Handler {
 			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
-		// die( wp_json_encode( $information ) );
 		wp_send_json( $information );
 	}
 

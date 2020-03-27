@@ -712,8 +712,7 @@ class MainWP_Manage_Sites {
 			}
 
 			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
-		} //If not fetchResult, we had a timeout.. Retry this!
-		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
+		} elseif ( empty( $backupTaskProgress->fetchResult ) ) { //If not fetchResult, we had a timeout.. Retry this!
 			try {
 				// We had some attempts, check if we have information.
 				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
@@ -1229,8 +1228,7 @@ class MainWP_Manage_Sites {
 			} else {
 				$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 			}
-		} //Overriden flow: only fallback to global
-		elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) {
+		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { //Overriden flow: only fallback to global			
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {

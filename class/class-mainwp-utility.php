@@ -3325,8 +3325,10 @@ EOT;
 		if ( '' == $data || is_array( $data ) ) {
 			return $data;
 		} elseif ( is_serialized( $data ) ) {
+			// phpcs:ignore -- for compatible
 			return maybe_unserialize( $data );
 		} else {
+			// phpcs:ignore -- for compatible
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}

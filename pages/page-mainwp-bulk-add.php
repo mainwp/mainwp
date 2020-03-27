@@ -1,8 +1,13 @@
 <?php
+/**
+ * MainWP Bulk Add Handler
+ * 
+ * Handles Bulk addition of Pages, Posts, User Import, User Addition & Admin Users Password.
+ */
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Bulk Add Handler
+ * MainWP Bulk Add
  *
  * @used-by MainWP_Page::BulkAddPage
  * @used-by MainWP_Post::BulkAddPost
@@ -11,10 +16,25 @@ namespace MainWP\Dashboard;
  * @used-by MainWP_Bulk_Update_Admin_Passwords::BulkAddUser
  */
 class MainWP_Bulk_Add {
+
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method posting_bulk_handler()
+	 * 
+	 * @param mixed $data
+	 * @param mixed $website
+	 * @param mixed $output
+	 * 
+	 * @return mixed $output
+	 */
 	public static function posting_bulk_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];

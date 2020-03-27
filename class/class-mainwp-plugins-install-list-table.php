@@ -1,9 +1,8 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * Plugin Installer List Table class.
  */
+namespace MainWP\Dashboard;
 
 // Include class-wp-list-table.php.
 if ( ! class_exists( '\WP_List_Table' ) ) {
@@ -20,21 +19,32 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
  */
 class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
+	/** @var string Direction ASC|DESC */
 	public $order   = 'ASC';
+
+	/** @var int 0|1. */
 	public $orderby = null;
+
+	/** @var array Groups Array. */
 	public $groups  = array();
+
+	/** @var mixed Error messages. */
 	private $error;
 
 	/**
-	 *
-	 * @return bool
+	 * Method ajax_user_can()
+	 * 
+	 * Chck if the current user has the WP ability "install_plugins".
+	 * 
+	 * @return boolean True|False.
 	 */
 	public function ajax_user_can() {
 		return current_user_can( 'install_plugins' );
 	}
 
 	/**
-	 *
+	 * Method prepair_items()
+	 * 
 	 * @global array  $tabs
 	 * @global string $tab
 	 * @global int    $paged
@@ -53,7 +63,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		$per_page = 40;
 
-		// These are the tabs which are shown on the page
+		// These are the tabs which are shown on the page.
 		$tabs = array();
 
 		if ( 'search' == $tab ) {
@@ -169,7 +179,9 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	}
 
 	/**
-	 * @access public
+	 * Method no_items()
+	 * 
+	 * Check for errors.
 	 */
 	public function no_items() {
 		if ( isset( $this->error ) ) {
@@ -181,6 +193,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	}
 
 	/**
+	 * Method dislpay()
+	 * 
 	 * Override the parent display() so we can provide a different container.
 	 */
 	public function display() {
@@ -200,6 +214,15 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		<?php
 	}
 
+	/**
+	 * Method display_tablenav()
+	 * 
+	 * Displays the table Navigation. 
+	 * 
+	 * @param mixed $which 
+	 * 
+	 * @return mixed wp_referer_field();
+	 */
 	protected function display_tablenav( $which ) {
 
 		if ( $GLOBALS['tab'] === 'featured' ) {
@@ -214,6 +237,15 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		}
 	}
 
+	/**
+	 * Method pagination()
+	 * 
+	 * Build the pagination menu.
+	 * 
+	 * @param mixed $which
+	 * 
+	 * @return mixed Pagination HTML
+	 */
 	protected function pagination( $which ) {
 		if ( empty( $this->_pagination_args ) ) {
 			return;
@@ -323,12 +355,24 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	}
 
 	/**
-	 * @return array
+	 * Method get_columns()
+	 * 
+	 * Get the collumns to display.
+	 * 
+	 * @return array List of collumns to display.
 	 */
 	public function get_columns() {
 		return array();
 	}
 
+	/**
+	 * Method order_callback()
+	 * 
+	 * @param mixed $plugin_a
+	 * @param mixed $plugin_b
+	 * 
+	 * @return int 0|1 Default 0.
+	 */
 	private function order_callback( $plugin_a, $plugin_b ) {
 		$orderby = $this->orderby;
 		if ( ! isset( $plugin_a->$orderby, $plugin_b->$orderby ) ) {
@@ -350,7 +394,11 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	}
 
 	/**
-	 * @global string $wp_version
+	 * Method display_rows()
+	 * 
+	 * Build Plugin Cards.
+	 * 
+	 * @return mixed Plugin cards.
 	 */
 	public function display_rows() {
 		$plugins_allowedtags = array(
@@ -396,13 +444,13 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					$group_name = $plugin['group'];
 				}
 
-				// Starting a new group, close off the divs of the last one
+				// Starting a new group, close off the divs of the last one.
 				if ( ! empty( $group ) ) {
 					echo '</div></div>';
 				}
 
 				echo '<div class="plugin-group"><h3>' . esc_html( $group_name ) . '</h3>';
-				// needs an extra wrapping div for nth-child selectors to work
+				// Needs an extra wrapping div for nth-child selectors to work.
 				echo '<div class="plugin-items">';
 
 				$group = $plugin['group'];

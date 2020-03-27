@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Child Scan
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,14 +9,33 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Child_Scan {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method init_menu()
+	 * 
+	 * Add Users Sub Menu "MainWP Child Scan".
+	 * 
+	 * @return string MainWP Child Scan.
+	 */
 	public static function init_menu() {
 		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'MainWP Child Scan', 'mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( self::get_class_name(), 'render' ) );
 	}
 
+	/**
+	 * Method render_header()
+	 * 
+	 * Render Page Header.
+	 * 
+	 * @param string $shownPage
+	 */
 	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
@@ -26,6 +48,13 @@ class MainWP_Child_Scan {
 					<?php
 	}
 
+	/**
+	 * Method render_footer()
+	 * 
+	 * Rnder Page Footer.
+	 * 
+	 * @param mixed $shownPage
+	 */
 	public static function render_footer( $shownPage ) {
 		?>
 				</div>
@@ -33,6 +62,11 @@ class MainWP_Child_Scan {
 			<?php
 	}
 
+	/**
+	 * Method render()
+	 * 
+	 * Render Page html content.
+	 */
 	public static function render() {
 
 		self::render_header( '' );
@@ -72,6 +106,9 @@ class MainWP_Child_Scan {
 			self::render_footer( '' );
 	}
 
+	/**
+	 * Method scan()
+	 */
 	public static function scan() {
 		if ( ! isset( $_POST['childId'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Wrong request' ) ) );

@@ -817,7 +817,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * @return mixed $output
 	 */
-	public static function check_backups() {		
+	public static function check_backups() {
 		if ( ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}

@@ -500,7 +500,7 @@ class QQ2_File_Uploader {
 	 * Returns array('success'=>true) or array('error'=>'error message')
 	 */
 	public function handleUpload( $uploadDirectory, $replaceOldFile = false ) {
-		
+
 		if ( ! $this->file ) {
 			return array( 'error' => 'No files were uploaded!' );
 		}

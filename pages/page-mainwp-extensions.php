@@ -1424,7 +1424,7 @@ class MainWP_Extensions {
 			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 			global $wp_filesystem;
-		
+
 			$favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
 			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
 				$dirs = MainWP_Utility::get_icons_dir();

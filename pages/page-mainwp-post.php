@@ -204,7 +204,7 @@ class MainWP_Post {
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'icon'       => '<i class="file alternate icon"></i>',
-			), 
+			),
 			1
 		);
 
@@ -355,13 +355,13 @@ class MainWP_Post {
 				}
 			}
 
-			$data = self::_list_meta_row( 
+			$data = self::_list_meta_row(
 				array(
 					'meta_key'   => $key,
 					'meta_value' => $value,
 					'meta_id'    => $mid,
-				), 
-				$c 
+				),
+				$c
 			);
 		}
 
@@ -783,14 +783,14 @@ class MainWP_Post {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
-			MainWP_Utility::fetch_urls_authed( 
-				$dbwebsites, 
-				'get_all_posts', 
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'get_all_posts',
 				$post_data, array(
 					self::get_class_name(),
 					'posts_search_handler',
-				), 
-				$output 
+				),
+				$output
 			);
 		}
 
@@ -1281,7 +1281,7 @@ class MainWP_Post {
 		if ( 0 < (int) $tab_index ) {
 			$tab_index_attribute = " tabindex=\"$tab_index\"";
 		}
-		
+
 		$post_date = ( $for_post ) ? $post->post_date : get_comment()->comment_date;
 		$jj        = ( $edit ) ? mysql2date( 'd', $post_date, false ) : current_time( 'd' );
 		$mm        = ( $edit ) ? mysql2date( 'm', $post_date, false ) : current_time( 'm' );
@@ -2073,14 +2073,14 @@ class MainWP_Post {
 									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
 									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
 								);
-								MainWP_Utility::fetch_urls_authed( 
-									$dbwebsites, 
-									'newpost', 
+								MainWP_Utility::fetch_urls_authed(
+									$dbwebsites,
+									'newpost',
 									$post_data, array(
-									MainWP_Bulk_Add::get_class_name(),
+										MainWP_Bulk_Add::get_class_name(),
 										'posting_bulk_handler',
-									), 
-									$output 
+									),
+									$output
 								);
 							}
 
@@ -2244,15 +2244,15 @@ class MainWP_Post {
 			$post_data = array(
 				'taxonomy' => base64_encode( $opt ),
 			);
-			MainWP_Utility::fetch_urls_authed( 
-				$dbwebsites, 
-				'get_terms', 
-				$post_data, 
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'get_terms',
+				$post_data,
 				array(
 					self::get_class_name(),
 					'posts_get_terms_handler',
-				), 
-				$output 
+				),
+				$output
 			);
 			foreach ( $dbwebsites as $siteid => $website ) {
 				$cats = array();

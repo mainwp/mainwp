@@ -301,7 +301,7 @@ class MainWP_Install_Bulk {
 	public static function clean_upload() {
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 		global $wp_filesystem;
-		
+
 		$path = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 		if ( $wp_filesystem->exists( $path ) ) {
 			$dh = opendir( $path );

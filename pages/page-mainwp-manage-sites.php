@@ -1821,11 +1821,11 @@ class MainWP_Manage_Sites {
 				// delete icon file
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
-					
+
 					$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 
 					global $wp_filesystem;
-					
+
 					$dirs = MainWP_Utility::get_icons_dir();
 					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
 						$wp_filesystem->delete( $dirs[0] . $favi );

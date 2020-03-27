@@ -809,11 +809,11 @@ class MainWP_Manage_Backups {
 						<textarea id="excluded_folders_list">
 						<?php
 							$excluded = ( isset( $task ) ? $task->exclude : '' );
-							if ( '' != $excluded ) {
-								$excluded = explode( ',', $excluded );
-								echo implode( "/\n", $excluded ) . "/\n";
-							}
-							?>
+						if ( '' != $excluded ) {
+							$excluded = explode( ',', $excluded );
+							echo implode( "/\n", $excluded ) . "/\n";
+						}
+						?>
 						</textarea>
 					</div>
 				</div>

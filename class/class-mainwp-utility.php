@@ -1748,7 +1748,7 @@ class MainWP_Utility {
 	}
 
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
-		
+
 		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
 

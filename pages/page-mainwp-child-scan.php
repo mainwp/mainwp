@@ -20,9 +20,9 @@ class MainWP_Child_Scan {
 
 	/**
 	 * Method init_menu()
-	 * 
+	 *
 	 * Add Users Sub Menu "MainWP Child Scan".
-	 * 
+	 *
 	 * @return string MainWP Child Scan.
 	 */
 	public static function init_menu() {
@@ -31,9 +31,9 @@ class MainWP_Child_Scan {
 
 	/**
 	 * Method render_header()
-	 * 
+	 *
 	 * Render Page Header.
-	 * 
+	 *
 	 * @param string $shownPage
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -50,9 +50,9 @@ class MainWP_Child_Scan {
 
 	/**
 	 * Method render_footer()
-	 * 
+	 *
 	 * Rnder Page Footer.
-	 * 
+	 *
 	 * @param mixed $shownPage
 	 */
 	public static function render_footer( $shownPage ) {
@@ -64,7 +64,7 @@ class MainWP_Child_Scan {
 
 	/**
 	 * Method render()
-	 * 
+	 *
 	 * Render Page html content.
 	 */
 	public static function render() {

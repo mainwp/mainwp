@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Utility Helper
- * 
+ *
  * Custom curl functions and PHP filesystem functions.
  */
 namespace MainWP\Dashboard;
@@ -26,12 +26,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method starts_with()
-	 * 
-	 * Start of Stack Trace. 
-	 * 
+	 *
+	 * Start of Stack Trace.
+	 *
 	 * @param mixed $haystack
 	 * @param mixed $needle
-	 * 
+	 *
 	 * @return mixed Needle in the Haystack.
 	 */
 	public static function starts_with( $haystack, $needle ) {
@@ -40,12 +40,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method ends_with()
-	 * 
+	 *
 	 * End of Stack Trace.
-	 * 
+	 *
 	 * @param mixed $haystack
 	 * @param mixed $needle
-	 * 
+	 *
 	 * @return mixed True|substr( $haystack, - $length ) === $needle.
 	 */
 	public static function ends_with( $haystack, $needle ) {
@@ -59,12 +59,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method get_nice_url()
-	 * 
+	 *
 	 * Grab url.
-	 * 
-	 * @param mixed $pUrl
+	 *
+	 * @param mixed   $pUrl
 	 * @param boolean $showHttp
-	 * 
+	 *
 	 * @return string $url.
 	 */
 	public static function get_nice_url( $pUrl, $showHttp = false ) {
@@ -94,15 +94,15 @@ class MainWP_Utility {
 
 		return $url;
 	}
-	
+
 	/**
 	 * Method limit_string()
-	 * 
+	 *
 	 * Set maximum string legth for output.
-	 * 
-	 * @param mixed $pInput
+	 *
+	 * @param mixed   $pInput
 	 * @param integer $pMax
-	 * 
+	 *
 	 * @return string $output
 	 */
 	public static function limit_string( $pInput, $pMax = 500 ) {
@@ -116,9 +116,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method is_admin()
-	 * 
+	 *
 	 * Check if current user is an administrator.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function is_admin() {
@@ -136,11 +136,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method is_website_available()
-	 * 
+	 *
 	 * Check if the Website returns and http errors.
-	 * 
+	 *
 	 * @param array $website Child Site information.
-	 * 
+	 *
 	 * @return mixed False|try_visit().
 	 */
 	public static function is_website_available( $website ) {
@@ -169,9 +169,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method is_domain_valid()
-	 * 
+	 *
 	 * Check $url against FILTER_VALIDATE_URL.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	private static function is_domain_valid( $url ) {
@@ -180,17 +180,17 @@ class MainWP_Utility {
 
 	/**
 	 * Method try_visit()
-	 * 
-	 * Try connecting to Child Site via cURL. 
-	 * 
-	 * @param mixed $url Child Site URL.
+	 *
+	 * Try connecting to Child Site via cURL.
+	 *
+	 * @param mixed             $url Child Site URL.
 	 * @param boolean True|null $verifyCertificate Option to check SSL Certificate. Default = null.
-	 * @param string $http_user HTTPAuth Username. Default = null.
-	 * @param string $http_pass HTTPAuth Password. Default = null.
-	 * @param integer $sslVersion Child Site SSL Version.
+	 * @param string            $http_user HTTPAuth Username. Default = null.
+	 * @param string            $http_pass HTTPAuth Password. Default = null.
+	 * @param integer           $sslVersion Child Site SSL Version.
 	 * @param boolean True|null $forceUseIPv4 Option to fource IP4. Default = null.
-	 * 
-	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message. 
+	 *
+	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
@@ -366,14 +366,14 @@ class MainWP_Utility {
 
 		return $out;
 	}
-	
+
 	/**
 	 * Method get_http_status_error_string()
-	 * 
+	 *
 	 * Grab HTTP Error code 100 - 505 & convert to String representation of error.
-	 * 
+	 *
 	 * @param int $httpCode Returned HTTP Code from CURL.
-	 * 
+	 *
 	 * @return mixed null|Error String.
 	 */
 	protected static function get_http_status_error_string( $httpCode ) {
@@ -503,14 +503,14 @@ class MainWP_Utility {
 
 		return null;
 	}
-	
+
 	/**
 	 * Method check_ignored_http_code()
-	 * 
+	 *
 	 * Check if http error code is being ignored.
-	 * 
+	 *
 	 * @param mixed $value http error code.
-	 * 
+	 *
 	 * @return bolean True|False.
 	 */
 	static function check_ignored_http_code( $value ) {
@@ -534,11 +534,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method utf8ize()
-	 * 
+	 *
 	 * Convert content into utf8 encoding.
-	 * 
+	 *
 	 * @param mixed $mixed
-	 * 
+	 *
 	 * @return mixed $mixed
 	 */
 	public static function utf8ize( $mixed ) {
@@ -556,10 +556,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method safe_json_encode()
-	 * @param mixed $value String to encode.
+	 *
+	 * @param mixed   $value String to encode.
 	 * @param integer $options Options for encoding.
-	 * @param integer $depth Depth to encode to. 
-	 * 
+	 * @param integer $depth Depth to encode to.
+	 *
 	 * @return mixed $encoded Encoded String.
 	 */
 	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
@@ -572,12 +573,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method activated_primary_backup_plugin()
-	 * 
+	 *
 	 * Chek which primary backup plugin is being used.
-	 * 
+	 *
 	 * @param mixed $what
 	 * @param mixed $website Website array of information.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function activated_primary_backup_plugin( $what, $website ) {
@@ -634,9 +635,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method get_primary_backup()
-	 * 
+	 *
 	 * Check if using Legacy Backup Solution.
-	 * 
+	 *
 	 * @return mixed False|$enable_legacy_backup.
 	 */
 	public static function get_primary_backup() {
@@ -649,12 +650,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method get_notification_email()
-	 * 
-	 * Check if user wants to recieve MainWP Notification Emails. 
-	 * 
+	 *
+	 * Check if user wants to recieve MainWP Notification Emails.
+	 *
 	 * @param null $user User Email Address.
-	 * 
-	 * @return mixed null|User Email Address. 
+	 *
+	 * @return mixed null|User Email Address.
 	 */
 	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
@@ -680,11 +681,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method  get_post_data_authed()
-	 * 
-	 * @param mixed $website Array of Child Site Info. 
+	 *
+	 * @param mixed $website Array of Child Site Info.
 	 * @param mixed $what
-	 * @param null $params
-	 * 
+	 * @param null  $params
+	 *
 	 * @return void
 	 */
 	public static function get_post_data_authed( &$website, $what, $params = null ) {

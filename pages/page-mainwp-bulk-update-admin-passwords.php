@@ -1,8 +1,8 @@
 <?php
 /**
  * Bulk Update Admin Passwords.
- * 
- * Handles bulk updating of Administrator Passwords. 
+ *
+ * Handles bulk updating of Administrator Passwords.
  */
 namespace MainWP\Dashboard;
 
@@ -24,9 +24,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 	/**
 	 * Method init_menu()
-	 * 
+	 *
 	 * Add Users Sub Menu "Admin Passwords".
-	 * 
+	 *
 	 * @return string $_page Admin Passwords HTML.
 	 */
 	public static function init_menu() {
@@ -41,9 +41,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 	/**
 	 * Method render_footer()
-	 * 
+	 *
 	 * Close <div>.
-	 * 
+	 *
 	 * @param $shownPage Page that is shown.
 	 */
 	public static function render_footer( $shownPage ) {
@@ -52,7 +52,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 	/**
 	 * Method render()
-	 * 
+	 *
 	 * Render Admin Passwords Page.
 	 */
 	public static function render() {

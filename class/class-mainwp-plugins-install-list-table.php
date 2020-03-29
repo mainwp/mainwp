@@ -20,22 +20,22 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
 class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/** @var string Direction ASC|DESC */
-	public $order   = 'ASC';
+	public $order = 'ASC';
 
 	/** @var int 0|1. */
 	public $orderby = null;
 
 	/** @var array Groups Array. */
-	public $groups  = array();
+	public $groups = array();
 
 	/** @var mixed Error messages. */
 	private $error;
 
 	/**
 	 * Method ajax_user_can()
-	 * 
+	 *
 	 * Chck if the current user has the WP ability "install_plugins".
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public function ajax_user_can() {
@@ -44,7 +44,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method prepair_items()
-	 * 
+	 *
 	 * @global array  $tabs
 	 * @global string $tab
 	 * @global int    $paged
@@ -180,7 +180,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method no_items()
-	 * 
+	 *
 	 * Check for errors.
 	 */
 	public function no_items() {
@@ -194,7 +194,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method dislpay()
-	 * 
+	 *
 	 * Override the parent display() so we can provide a different container.
 	 */
 	public function display() {
@@ -216,11 +216,11 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method display_tablenav()
-	 * 
-	 * Displays the table Navigation. 
-	 * 
-	 * @param mixed $which 
-	 * 
+	 *
+	 * Displays the table Navigation.
+	 *
+	 * @param mixed $which
+	 *
 	 * @return mixed wp_referer_field();
 	 */
 	protected function display_tablenav( $which ) {
@@ -239,11 +239,11 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method pagination()
-	 * 
+	 *
 	 * Build the pagination menu.
-	 * 
+	 *
 	 * @param mixed $which
-	 * 
+	 *
 	 * @return mixed Pagination HTML
 	 */
 	protected function pagination( $which ) {
@@ -356,9 +356,9 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method get_columns()
-	 * 
+	 *
 	 * Get the collumns to display.
-	 * 
+	 *
 	 * @return array List of collumns to display.
 	 */
 	public function get_columns() {
@@ -367,10 +367,10 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method order_callback()
-	 * 
+	 *
 	 * @param mixed $plugin_a
 	 * @param mixed $plugin_b
-	 * 
+	 *
 	 * @return int 0|1 Default 0.
 	 */
 	private function order_callback( $plugin_a, $plugin_b ) {
@@ -395,9 +395,9 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 	/**
 	 * Method display_rows()
-	 * 
+	 *
 	 * Build Plugin Cards.
-	 * 
+	 *
 	 * @return mixed Plugin cards.
 	 */
 	public function display_rows() {

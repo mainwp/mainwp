@@ -29,8 +29,8 @@ class MainWP_Utility {
 	 * 
 	 * Start of Stack Trace. 
 	 * 
-	 * @param mixed $haystack
-	 * @param mixed $needle
+	 * @param mixed $haystack The full stack.
+	 * @param mixed $needle The function that is throwing the error.
 	 * 
 	 * @return mixed Needle in the Haystack.
 	 */
@@ -575,7 +575,7 @@ class MainWP_Utility {
 	 * 
 	 * Chek which primary backup plugin is being used.
 	 * 
-	 * @param mixed $what
+	 * @param mixed $what Which backup plugin is being use.
 	 * @param mixed $website Website array of information.
 	 * 
 	 * @return boolean True|False.

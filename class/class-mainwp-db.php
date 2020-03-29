@@ -9,7 +9,7 @@ namespace MainWP\Dashboard;
 /**
  * Class MainWP_DB
  *
- * phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok.
+ * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
  */
 class MainWP_DB {
 
@@ -39,7 +39,7 @@ class MainWP_DB {
 	}
 
 	// Constructor
-	function __construct() {
+	public function __construct() {
 		/** @var $this ->wpdb wpdb */
 		global $wpdb;
 
@@ -1889,6 +1889,5 @@ class MainWP_DB {
 			return is_resource( $result );
 		}
 	}
-
+	// phpcs:enable
 }
-// phpcs:enable

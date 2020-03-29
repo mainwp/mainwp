@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Bulk Add Handler
- * 
+ *
  * Handles Bulk addition of Pages, Posts, User Import, User Addition & Admin Users Password.
  */
 namespace MainWP\Dashboard;
@@ -28,11 +28,11 @@ class MainWP_Bulk_Add {
 
 	/**
 	 * Method posting_bulk_handler()
-	 * 
+	 *
 	 * @param mixed $data
 	 * @param mixed $website
 	 * @param mixed $output
-	 * 
+	 *
 	 * @return mixed $output
 	 */
 	public static function posting_bulk_handler( $data, $website, &$output ) {

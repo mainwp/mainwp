@@ -45,32 +45,17 @@ class MainWP_Post {
 	}
 
 	public static function init_menu() {
-		$_page = add_submenu_page(
-			'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array(
-				self::get_class_name(),
-				'render',
-			)
-		);
+		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
 		add_filter( 'manage_' . $_page . '_columns', array( self::get_class_name(), 'get_manage_columns' ) );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-			$_page = add_submenu_page(
-				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array(
-					self::get_class_name(),
-					'render_bulk_add',
-				)
-			);
+			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( self::get_class_name(), 'render_bulk_add' ) );
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-			$_page = add_submenu_page(
-				'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array(
-					self::get_class_name(),
-					'render_bulk_edit',
-				)
-			);
+			$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
 			add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 		}
 
@@ -110,7 +95,7 @@ class MainWP_Post {
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		} else {
-			$post_id = isset( $_GET['post_id'] ) ? intval ( $_GET['post_id'] ) : 0;
+			$post_id = isset( $_GET['post_id'] ) ? intval( $_GET['post_id'] ) : 0;
 		}
 
 		if ( ! $post_id ) {
@@ -219,7 +204,8 @@ class MainWP_Post {
 				'slug'       => 'PostBulkManage',
 				'href'       => 'admin.php?page=PostBulkManage',
 				'icon'       => '<i class="file alternate icon"></i>',
-			), 1
+			),
+			1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -369,11 +355,14 @@ class MainWP_Post {
 				}
 			}
 
-			$data = self::_list_meta_row( array(
-				'meta_key'   => $key,
-				'meta_value' => $value,
-				'meta_id'    => $mid,
-			), $c );
+			$data = self::_list_meta_row(
+				array(
+					'meta_key'   => $key,
+					'meta_value' => $value,
+					'meta_id'    => $mid,
+				),
+				$c
+			);
 		}
 
 		wp_send_json( array( 'result' => $data ) );
@@ -794,10 +783,15 @@ class MainWP_Post {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_posts', $post_data, array(
-				self::get_class_name(),
-				'posts_search_handler',
-			), $output );
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'get_all_posts',
+				$post_data, array(
+					self::get_class_name(),
+					'posts_search_handler',
+				),
+				$output
+			);
 		}
 
 		MainWP_Cache::add_context(
@@ -934,7 +928,8 @@ class MainWP_Post {
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
-						$count_seo_links   = $count_seo_linked     = null;
+						$count_seo_links   = null;
+						$count_seo_linked  = null;
 						$seo_score         = '';
 						$readability_score = '';
 						if ( isset( $post['seo_data'] ) ) {
@@ -1287,20 +1282,19 @@ class MainWP_Post {
 			$tab_index_attribute = " tabindex=\"$tab_index\"";
 		}
 
-		$time_adj  = current_time( 'timestamp' );
-		$post_date = ( $for_post ) ? $_post->post_date : get_comment()->comment_date;
-		$jj        = ( $edit ) ? mysql2date( 'd', $post_date, false ) : gmdate( 'd', $time_adj );
-		$mm        = ( $edit ) ? mysql2date( 'm', $post_date, false ) : gmdate( 'm', $time_adj );
-		$aa        = ( $edit ) ? mysql2date( 'Y', $post_date, false ) : gmdate( 'Y', $time_adj );
-		$hh        = ( $edit ) ? mysql2date( 'H', $post_date, false ) : gmdate( 'H', $time_adj );
-		$mn        = ( $edit ) ? mysql2date( 'i', $post_date, false ) : gmdate( 'i', $time_adj );
-		$ss        = ( $edit ) ? mysql2date( 's', $post_date, false ) : gmdate( 's', $time_adj );
+		$post_date = ( $for_post ) ? $post->post_date : get_comment()->comment_date;
+		$jj        = ( $edit ) ? mysql2date( 'd', $post_date, false ) : current_time( 'd' );
+		$mm        = ( $edit ) ? mysql2date( 'm', $post_date, false ) : current_time( 'm' );
+		$aa        = ( $edit ) ? mysql2date( 'Y', $post_date, false ) : current_time( 'Y' );
+		$hh        = ( $edit ) ? mysql2date( 'H', $post_date, false ) : current_time( 'H' );
+		$mn        = ( $edit ) ? mysql2date( 'i', $post_date, false ) : current_time( 'i' );
+		$ss        = ( $edit ) ? mysql2date( 's', $post_date, false ) : current_time( 's' );
 
-		$cur_jj = gmdate( 'd', $time_adj );
-		$cur_mm = gmdate( 'm', $time_adj );
-		$cur_aa = gmdate( 'Y', $time_adj );
-		$cur_hh = gmdate( 'H', $time_adj );
-		$cur_mn = gmdate( 'i', $time_adj );
+		$cur_jj = current_time( 'd' );
+		$cur_mm = current_time( 'm' );
+		$cur_aa = current_time( 'Y' );
+		$cur_hh = current_time( 'H' );
+		$cur_mn = current_time( 'i' );
 
 		$month = '<label><span class="screen-reader-text">' . __( 'Month', 'mainwp' ) . '</span><select ' . ( $multi ? '' : 'id="mm" ' ) . 'name="mm"' . $tab_index_attribute . ">\n";
 
@@ -2079,10 +2073,15 @@ class MainWP_Post {
 									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
 									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
 								);
-								MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array(
-									MainWP_Bulk_Add::get_class_name(),
-									'posting_bulk_handler',
-								), $output );
+								MainWP_Utility::fetch_urls_authed(
+									$dbwebsites,
+									'newpost',
+									$post_data, array(
+										MainWP_Bulk_Add::get_class_name(),
+										'posting_bulk_handler',
+									),
+									$output
+								);
 							}
 
 							$failed_posts = array();
@@ -2245,10 +2244,16 @@ class MainWP_Post {
 			$post_data = array(
 				'taxonomy' => base64_encode( $opt ),
 			);
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_terms', $post_data, array(
-				self::get_class_name(),
-				'posts_get_terms_handler',
-			), $output );
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'get_terms',
+				$post_data,
+				array(
+					self::get_class_name(),
+					'posts_get_terms_handler',
+				),
+				$output
+			);
 			foreach ( $dbwebsites as $siteid => $website ) {
 				$cats = array();
 				if ( is_array( $selected_cats[ $siteid ] ) ) {

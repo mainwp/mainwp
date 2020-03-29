@@ -21,9 +21,9 @@ class MainWP_API_Settings {
 
 	/**
 	 * Method check_upgrade()
-	 * 
+	 *
 	 * Check if Extension has an update.
-	 * 
+	 *
 	 * @return array $output List of results.
 	 */
 	public static function check_upgrade() {
@@ -88,11 +88,11 @@ class MainWP_API_Settings {
 
 	/**
 	 * Method get_upgrade_information()
-	 * 
-	 * Check extension information for an update. 
-	 * 
+	 *
+	 * Check extension information for an update.
+	 *
 	 * @param mixed $pSlug Extension Slug.
-	 * 
+	 *
 	 * @return array $rslt List of results.
 	 */
 	public static function get_upgrade_information( $pSlug ) {
@@ -132,12 +132,12 @@ class MainWP_API_Settings {
 
 	/**
 	 * Method get_plugin_information()
-	 * 
+	 *
 	 * Grab extention Information.
-	 * 
+	 *
 	 * @param mixed $pSlug Extension Slug.
-	 * 
-	 * @return array $rslt List of results. 
+	 *
+	 * @return array $rslt List of results.
 	 */
 	public static function get_plugin_information( $pSlug ) {
 		$extensions = MainWP_Extensions::load_extensions();

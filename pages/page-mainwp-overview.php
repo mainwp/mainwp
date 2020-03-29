@@ -35,7 +35,7 @@ class MainWP_Overview {
 		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) );
 	}
 
-	function on_screen_layout_columns( $columns, $screen ) {
+	public function on_screen_layout_columns( $columns, $screen ) {
 		if ( $screen == $this->dashBoard ) {
 			$columns[ $this->dashBoard ] = 3;
 		}
@@ -43,7 +43,7 @@ class MainWP_Overview {
 		return $columns;
 	}
 
-	function on_admin_menu() {
+	public function on_admin_menu() {
 		if ( MainWP_Utility::is_admin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
@@ -184,7 +184,7 @@ class MainWP_Overview {
 		}
 	}
 
-	function on_show_page() {
+	public function on_show_page() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 			return;

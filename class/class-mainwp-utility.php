@@ -503,7 +503,7 @@ class MainWP_Utility {
 
 		return null;
 	}
-  
+
 	/**
 	 * Method check_ignored_http_code()
 	 *

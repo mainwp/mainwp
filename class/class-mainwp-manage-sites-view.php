@@ -407,7 +407,7 @@ class MainWP_Manage_Sites_View {
 				$html .= '<h4>' . $ext_name . '</h4>';
 				if ( isset( $sync_info['plugin_slug'] ) && ! empty( $sync_info['plugin_slug'] ) ) {
 					$html .= '<div class="sync-install-plugin" slug="' . esc_attr( dirname( $sync_info['plugin_slug'] ) ) . '" plugin_name="' . esc_attr( $sync_info['plugin_name'] ) . '">';
-					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( __( 'Install %s plugin' ), esc_html( $sync_info['plugin_name'] ) ) ) . '</label></div> ';
+					$html .= '<div class="ui checkbox"><input type="checkbox" class="chk-sync-install-plugin" /> <label>' . esc_html( sprintf( __( 'Install %1$s plugin', 'mainwp' ), esc_html( $sync_info['plugin_name'] ) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny" style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
 					if ( ! isset( $sync_info['no_setting'] ) || empty( $sync_info['no_setting'] ) ) {
@@ -421,7 +421,7 @@ class MainWP_Manage_Sites_View {
 					}
 				} else {
 					$html .= '<div class="sync-global-options options-row">';
-					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( __( 'Apply global %s options' ), trim( $ext_name ) ) ) . '</label></div> ';
+					$html .= '<div class="ui checkbox"><input type="checkbox" /> <label>' . esc_html( sprintf( __( 'Apply global %1$s options' ), trim( $ext_name ) ) ) . '</label></div> ';
 					$html .= '<i class="ui active inline loader tiny"  style="display: none"></i> <span class="status"></span>';
 					$html .= '</div>';
 				}
@@ -1743,7 +1743,7 @@ class MainWP_Manage_Sites_View {
 						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>'  );
+							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>'  );
 						} else {
 							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}

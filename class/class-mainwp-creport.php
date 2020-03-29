@@ -10,7 +10,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- *  phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, deprecated
+ *  phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - deprecated
  */
 class LiveReportResponder {
 
@@ -640,7 +640,6 @@ class MainWP_Live_Reports_Class {
 			foreach ( $tmp_files as $i => $tmp_file ) {
 				if ( ( UPLOAD_ERR_OK == $file_input['error'][ $i ] ) && is_uploaded_file( $tmp_file ) ) {
 					$file_size = $file_input['size'][ $i ];
-					// = $file_input['type'][$i];
 					$file_name = $file_input['name'][ $i ];
 					$file_ext  = strtolower( end( explode( '.', $file_name ) ) );
 					if ( ( $file_size > 5 * 1024 * 1024 ) ) {
@@ -2003,12 +2002,12 @@ class LiveReportResponder_DB {
 	// Support old & new versions of WordPress (3.9+)
 	public static function use_mysqli() {
 		/** @var $wpdb wpdb */
-		if ( ! function_exists( 'mysqli_connect' ) ) {
+		if ( ! function_exists( '\mysqli_connect' ) ) {
 			return false;
 		}
 
 		global $wpdb;
-		return ( $wpdb->dbh instanceof mysqli );
+		return ( $wpdb->dbh instanceof \mysqli );
 	}
 
 	// Installs new DB
@@ -2201,7 +2200,7 @@ PRIMARY KEY  (`id`)  ';
 		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE `id`=%d ', $value );
 		} elseif ( 'token_name' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . " WHERE `token_name` = '%s' ", $value );
+			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE `token_name` = %s ', $value );
 		}
 
 		$token = null;
@@ -2716,55 +2715,55 @@ PRIMARY KEY  (`id`)  ';
 
 	public static function _query( $query, $link ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_query( $link, $query );
+			return \mysqli_query( $link, $query );
 		} else {
-			return mysql_query( $query, $link );
+			return \mysql_query( $query, $link );
 		}
 	}
 
 	public static function fetch_object( $result ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_fetch_object( $result );
+			return \mysqli_fetch_object( $result );
 		} else {
-			return mysql_fetch_object( $result );
+			return \mysql_fetch_object( $result );
 		}
 	}
 
 	public static function free_result( $result ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_free_result( $result );
+			return \mysqli_free_result( $result );
 		} else {
-			return mysql_free_result( $result );
+			return \mysql_free_result( $result );
 		}
 	}
 
 	public static function data_seek( $result, $offset ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_data_seek( $result, $offset );
+			return \mysqli_data_seek( $result, $offset );
 		} else {
-			return mysql_data_seek( $result, $offset );
+			return \mysql_data_seek( $result, $offset );
 		}
 	}
 
 	public static function fetch_array( $result, $result_type = null ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
+			return \mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
 		} else {
-			return mysql_fetch_array( $result, ( null == $result_type ? MYSQL_BOTH : $result_type ) );
+			return \mysql_fetch_array( $result, ( null == $result_type ? MYSQL_BOTH : $result_type ) );
 		}
 	}
 
 	public static function num_rows( $result ) {
 		if ( self::use_mysqli() ) {
-			return mysqli_num_rows( $result );
+			return \mysqli_num_rows( $result );
 		} else {
-			return mysql_num_rows( $result );
+			return \mysql_num_rows( $result );
 		}
 	}
 
 	public static function is_result( $result ) {
 		if ( self::use_mysqli() ) {
-			return ( $result instanceof mysqli_result );
+			return ( $result instanceof \mysqli_result );
 		} else {
 			return is_resource( $result );
 		}

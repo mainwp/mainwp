@@ -712,8 +712,7 @@ class MainWP_Manage_Sites {
 			}
 
 			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
-		} //If not fetchResult, we had a timeout.. Retry this!
-		elseif ( empty( $backupTaskProgress->fetchResult ) ) {
+		} elseif ( empty( $backupTaskProgress->fetchResult ) ) { // If not fetchResult, we had a timeout.. Retry this!
 			try {
 				// We had some attempts, check if we have information.
 				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
@@ -845,7 +844,7 @@ class MainWP_Manage_Sites {
 				foreach ( $dbBackups as $key => $dbBackup ) {
 					$cnt ++;
 					if ( $cnt >= $maxBackups ) {
-						@unlink( $dbBackup );
+						$wp_filesystem->delete( $dbBackup );
 					}
 				}
 
@@ -853,7 +852,7 @@ class MainWP_Manage_Sites {
 				foreach ( $fullBackups as $key => $fullBackup ) {
 					$cnt ++;
 					if ( $cnt >= $maxBackups ) {
-						@unlink( $fullBackup );
+						$wp_filesystem->delete( $fullBackup );
 					}
 				}
 				$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
@@ -1034,7 +1033,7 @@ class MainWP_Manage_Sites {
 		foreach ( $dbBackups as $key => $dbBackup ) {
 			$cnt ++;
 			if ( $cnt >= $maxBackups ) {
-				@unlink( $dbBackup );
+				$wp_filesystem->delete( $dbBackup );
 			}
 		}
 
@@ -1042,7 +1041,7 @@ class MainWP_Manage_Sites {
 		foreach ( $fullBackups as $key => $fullBackup ) {
 			$cnt ++;
 			if ( $cnt >= $maxBackups ) {
-				@unlink( $fullBackup );
+				$wp_filesystem->delete( $fullBackup );
 			}
 		}
 
@@ -1229,8 +1228,7 @@ class MainWP_Manage_Sites {
 			} else {
 				$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 			}
-		} //Overriden flow: only fallback to global
-		elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) {
+		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overriden flow: only fallback to global
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
@@ -1821,9 +1819,14 @@ class MainWP_Manage_Sites {
 				// delete icon file
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
+
+					$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+
+					global $wp_filesystem;
+
 					$dirs = MainWP_Utility::get_icons_dir();
-					if ( file_exists( $dirs[0] . $favi ) ) {
-						unlink( $dirs[0] . $favi );
+					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
+						$wp_filesystem->delete( $dirs[0] . $favi );
 					}
 				}
 

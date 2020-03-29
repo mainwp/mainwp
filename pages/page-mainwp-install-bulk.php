@@ -26,7 +26,7 @@ class MainWP_Install_Bulk {
 				// max file size in bytes
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed
 
-				$uploader = new qq2FileUploader( $allowedExtensions, $sizeLimit );
+				$uploader = new QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
 				$path     = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 
 				$result = $uploader->handleUpload( $path, true );
@@ -202,7 +202,6 @@ class MainWP_Install_Bulk {
 			'install_plugin_theme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
-		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -259,7 +258,6 @@ class MainWP_Install_Bulk {
 		$output['urls'] = implode( '||', $output['urls'] );
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
 
-		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
@@ -294,18 +292,20 @@ class MainWP_Install_Bulk {
 			'install_plugin_theme_handler',
 		), $output, null, array( 'upgrade' => true ) );
 
-		// die( wp_json_encode( $output ) );
 		wp_send_json( $output );
 	}
 
 	public static function clean_upload() {
+		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		global $wp_filesystem;
+
 		$path = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
-		if ( file_exists( $path ) ) {
+		if ( $wp_filesystem->exists( $path ) ) {
 			$dh = opendir( $path );
 			if ( $dh ) {
 				while ( ( $file = readdir( $dh ) ) !== false ) {
 					if ( $file != '.' && $file != '..' ) {
-						@unlink( $path . $file );
+						$wp_filesystem->delete( $path . $file );
 					}
 				}
 				closedir( $dh );
@@ -348,7 +348,7 @@ class MainWP_Install_Bulk {
 /**
  * Handle file uploads via XMLHttpRequest
  */
-class qq2UploadedFileXhr {
+class QQ2_Uploaded_File_Xhr {
 	/**
 	 * Save the file to the specified path
 	 *
@@ -425,7 +425,7 @@ class qq2UploadedFileXhr {
 /**
  * Handle file uploads via regular form post (uses the $_FILES array)
  */
-class qq2UploadedFileForm {
+class QQ2_Uploaded_File_Form {
 	/**
 	 * Save the file to the specified path
 	 *
@@ -458,7 +458,7 @@ class qq2UploadedFileForm {
 }
 
 
-class qq2FileUploader {
+class QQ2_File_Uploader {
 	private $allowedExtensions = array();
 	private $sizeLimit         = 8388608;
 	private $file;
@@ -470,9 +470,9 @@ class qq2FileUploader {
 		$this->sizeLimit         = $sizeLimit;
 
 		if ( isset( $_GET['qqfile'] ) ) {
-			$this->file = new qq2UploadedFileXhr();
+			$this->file = new QQ2_Uploaded_File_Xhr();
 		} elseif ( isset( $_FILES['qqfile'] ) ) {
-			$this->file = new qq2UploadedFileForm();
+			$this->file = new QQ2_Uploaded_File_Form();
 		} else {
 			$this->file = false;
 		}
@@ -500,9 +500,6 @@ class qq2FileUploader {
 	 * Returns array('success'=>true) or array('error'=>'error message')
 	 */
 	public function handleUpload( $uploadDirectory, $replaceOldFile = false ) {
-		// if (!is_writable($uploadDirectory)){
-		// return array('error' => "Server error. Upload directory isn't writable.");
-		// }
 
 		if ( ! $this->file ) {
 			return array( 'error' => 'No files were uploaded!' );

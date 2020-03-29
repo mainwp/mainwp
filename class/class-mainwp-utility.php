@@ -503,7 +503,7 @@ class MainWP_Utility {
 
 		return null;
 	}
-
+  
 	/**
 	 * Method check_ignored_http_code()
 	 *
@@ -513,7 +513,7 @@ class MainWP_Utility {
 	 *
 	 * @return bolean True|False.
 	 */
-	static function check_ignored_http_code( $value ) {
+	public static function check_ignored_http_code( $value ) {
 		if ( 200 === $value ) {
 			return true;
 		}
@@ -792,7 +792,7 @@ class MainWP_Utility {
 		return null;
 	}
 
-	static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
+	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}
@@ -1992,8 +1992,12 @@ class MainWP_Utility {
 				);
 			}
 		}
-		if ( file_exists( $temporary_file ) ) {
-			unlink( $temporary_file );
+
+		$hasWPFileSystem = self::get_wp_file_system();
+		global $wp_filesystem;
+
+		if ( $wp_filesystem->exists( $temporary_file ) ) {
+			$wp_filesystem->delete( $temporary_file );
 		}
 
 		return null;
@@ -3153,7 +3157,7 @@ EOT;
 		if ( 'yes' === $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
 			$option_value = get_option( $option_name );
 			delete_option( $option_name );
-			add_option( $option_name, $option_value, null, 'no' );
+			add_option( $option_name, $option_value, '', 'no' );
 		}
 	}
 
@@ -3473,8 +3477,10 @@ EOT;
 		if ( '' == $data || is_array( $data ) ) {
 			return $data;
 		} elseif ( is_serialized( $data ) ) {
+			// phpcs:ignore -- for compatible
 			return maybe_unserialize( $data );
 		} else {
+			// phpcs:ignore -- for compatible
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}

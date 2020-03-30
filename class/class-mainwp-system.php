@@ -1624,8 +1624,8 @@ class MainWP_System {
 							continue;
 						}
 
-						$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
-						$dh  = opendir( $dir );
+						$dir        = MainWP_Utility::get_mainwp_specific_dir( $siteId );
+						$dh         = opendir( $dir );
 						$lastBackup = - 1;
 						if ( $wp_filesystem->exists( $dir ) && $dh ) {
 							while ( ( $file = readdir( $dh ) ) !== false ) {

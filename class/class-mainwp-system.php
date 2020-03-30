@@ -5,7 +5,7 @@ namespace MainWP\Dashboard;
 define( 'MAINWP_API_VALID', 'VALID' );
 define( 'MAINWP_API_INVALID', 'INVALID' );
 
-define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 ); // seconds
+define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 );
 
 const MAINWP_VIEW_PER_SITE         = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
@@ -14,7 +14,10 @@ const MAINWP_VIEW_PER_GROUP        = 2;
 class MainWP_System {
 
 	public static $version = '4.0.7.2';
-	// Singleton
+
+	/**
+	 * Singleton.
+	 */
 	private static $instance    = null;
 	private $upgradeVersionInfo = null;
 	public $metaboxes;
@@ -54,13 +57,12 @@ class MainWP_System {
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
-		// If class-mainwp-creport.php exists include it.
 		if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
 			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
 		}
 
 		if ( is_admin() ) {
-			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php'; // Version information from WordPress
+			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
 			$pluginData            = get_plugin_data( $mainwp_plugin_file );
 			$this->current_version = $pluginData['Version'];
 			$currentVersion        = get_option( 'mainwp_plugin_version' );
@@ -107,67 +109,41 @@ class MainWP_System {
 		MainWP_Extensions::init();
 		add_action( 'parse_request', array( &$this, 'parse_request' ) );
 		add_action( 'init', array( &$this, 'localization' ) );
-
-		// define the alternative API for updating checking
 		add_filter( 'site_transient_update_plugins', array( &$this, 'check_update_custom' ) );
-
-		// Define the alternative response for information checking
 		add_filter( 'pre_set_site_transient_update_plugins', array( &$this, 'pre_check_update_custom' ) );
 		add_filter( 'plugins_api', array( &$this, 'check_info' ), 10, 3 );
 
 		$this->metaboxes = new MainWP_Meta_Boxes();
 
-		MainWP_Overview::get(); // init main dashboard
+		MainWP_Overview::get();
 
 		MainWP_Manage_Sites::init();
-		new MainWP_Hooks(); // Init the hooks
-		new MainWP_Menu(); // Init custom menu
-		//
-		// Change menu & widgets
+		new MainWP_Hooks();
+		new MainWP_Menu();
+
 		add_action( 'admin_menu', array( &$this, 'new_menus' ) );
-
-		// Change footer
 		add_filter( 'admin_footer', array( &$this, 'admin_footer' ), 15 );
-
-		// Add js
 		add_action( 'admin_head', array( &$this, 'admin_head' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts' ) );
-
-		// Add body class
 		add_action( 'admin_body_class', array( &$this, 'admin_body_class' ) );
-
 		add_action( 'admin_post_mainwp_editpost', array( &$this, 'handle_edit_bulkpost' ) );
-
-		// Handle the bulkpost
 		add_action( 'save_post', array( &$this, 'save_bulkpost' ) );
 		add_action( 'save_post', array( &$this, 'save_bulkpage' ) );
-
-		// Add meta boxes for the bulkpost
-		add_action( 'admin_init', array( &$this, 'admin_init' ), 20 ); // $priority = 20 probably to fix conflict with post smtp overwrite wp mail function
-		// Create the post types for bulkpost/...
+		add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
 		add_action( 'init', array( &$this, 'create_post_type' ) );
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
-
 		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
-
-		// Remove the pages from the menu which I use in AJAX
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
-
-		// Add custom error messages
 		add_filter( 'post_updated_messages', array( &$this, 'post_updated_messages' ) );
-
 		add_action( 'login_form', array( &$this, 'login_form' ) );
-
-		// add_filter( 'print_admin_styles', array( &$this, 'print_admin_styles' ) );
 		add_action( 'admin_print_styles', array( &$this, 'admin_print_styles' ) );
 
 		MainWP_Install_Bulk::init();
 
 		do_action( 'mainwp_cronload_action' );
 
-		// Cron every 5 minutes
 		add_action( 'mainwp_cronstats_action', array( $this, 'mainwp_cronstats_action' ) );
 		add_action( 'mainwp_cronbackups_action', array( $this, 'mainwp_cronbackups_action' ) );
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'mainwp_cronbackups_continue_action' ) );
@@ -182,8 +158,6 @@ class MainWP_System {
 		add_action( 'mainwp_before_header', array( &$this, 'admin_notices' ) );
 		add_action( 'admin_notices', array( &$this, 'wp_admin_notices' ) );
 		add_action( 'wp_mail_failed', array( &$this, 'wp_mail_failed' ) );
-
-		// to fix layout
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
 
@@ -244,7 +218,6 @@ class MainWP_System {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MainWP_WP_CLI_Command::init();
 		}
-		// WP-Cron
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			if ( isset( $_GET['mainwp_run'] ) && ! empty( $_GET['mainwp_run'] ) ) {
 				add_action( 'init', array( $this, 'cron_active' ), PHP_INT_MAX );
@@ -337,7 +310,7 @@ class MainWP_System {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 		$sched     = wp_next_scheduled( 'mainwp_cronstats_action' );
-		if ( $sched == false ) {
+		if ( false == $sched ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
 			}
@@ -349,7 +322,7 @@ class MainWP_System {
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
-			if ( $sched == false ) {
+			if ( false == $sched ) {
 				if ( $useWPCron ) {
 					wp_schedule_event( time(), 'hourly', 'mainwp_cronbackups_action' );
 				}
@@ -359,7 +332,7 @@ class MainWP_System {
 				}
 			}
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
-			if ( $sched == false ) {
+			if ( false == $sched ) {
 				if ( $useWPCron ) {
 					wp_schedule_event( time(), '5minutely', 'mainwp_cronbackups_continue_action' );
 				}
@@ -383,7 +356,7 @@ class MainWP_System {
 			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
 		}
 		$sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' );
-		if ( $sched == false ) {
+		if ( false == $sched ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), 'daily', 'mainwp_cronpingchilds_action' );
 			}
@@ -564,7 +537,7 @@ class MainWP_System {
 			if ( 'forever' == $current_options['request_reviews1'] ) {
 				$display_request1 = false;
 			} else {
-				$days             = intval( $current_options['request_reviews1'] );   // 15 or 30
+				$days             = intval( $current_options['request_reviews1'] );
 				$start_time       = $current_options['request_reviews1_starttime'];
 				$display_request1 = ( ( time() - $start_time ) > $days * 24 * 3600 ) ? true : false;
 			}
@@ -578,7 +551,7 @@ class MainWP_System {
 			if ( 'forever' == $current_options['request_reviews2'] ) {
 				$display_request2 = false;
 			} else {
-				$days             = intval( $current_options['request_reviews2'] );   // 15
+				$days             = intval( $current_options['request_reviews2'] );
 				$start_time       = $current_options['request_reviews2_starttime'];
 				$display_request2 = ( ( time() - $start_time ) > $days * 24 * 3600 ) ? true : false;
 			}
@@ -664,11 +637,11 @@ class MainWP_System {
 
 	public function get_cron_schedules( $schedules ) {
 		$schedules['5minutely'] = array(
-			'interval'   => 5 * 60, // 5minutes in seconds
+			'interval'   => 5 * 60,
 			'display'    => __( 'Once every 5 minutes', 'mainwp' ),
 		);
 		$schedules['minutely']  = array(
-			'interval'   => 1 * 60, // 1minute in seconds
+			'interval'   => 1 * 60,
 			'display'    => __( 'Once every minute', 'mainwp' ),
 		);
 
@@ -695,7 +668,6 @@ class MainWP_System {
 			$extensions = MainWP_Extensions::get_extensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
 				$plugin_slug = $_POST['plugin'];
-				// get download pakage url to prevent expire
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
 					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 						return $transient;
@@ -747,7 +719,7 @@ class MainWP_System {
 			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
 				if ( ! isset( $rslt->slug ) ) {
 					continue;
-				} //Legacy, to support older versions.
+				}
 
 				$plugin_slug = MainWP_Extensions::get_plugin_slug( $rslt->slug );
 				if ( isset( $transient->checked[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $transient->checked[ $plugin_slug ], '>' ) ) {
@@ -786,7 +758,7 @@ class MainWP_System {
 			return $transient;
 		}
 
-		if ( ( null == $this->upgradeVersionInfo ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {  // one minute before recheck to prevent check update information to many times
+		if ( ( null == $this->upgradeVersionInfo ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
 			$this->check_upgrade();
 		}
 
@@ -812,7 +784,7 @@ class MainWP_System {
 			return $false;
 		}
 
-		if ( $arg->slug === dirname( $this->plugin_slug ) ) {
+		if ( dirname( $this->plugin_slug ) === $arg->slug ) {
 			return $false;
 		}
 
@@ -906,7 +878,7 @@ class MainWP_System {
 		if ( $_mins < 0 || $_mins > 59 ) {
 			$_mins = 0;
 		}
-		return $_hour * 60 + $_mins; // mins
+		return $_hour * 60 + $_mins;
 	}
 
 	public function mainwp_cronupdatescheck_action() {
@@ -922,9 +894,7 @@ class MainWP_System {
 		);
 
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
-
-		// to check time to run daily
-		$run_timestamp = 0; // 0 hour
+		$run_timestamp   = 0;
 		if ( ! empty( $timeDailyUpdate ) ) {
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( time() < $run_timestamp ) {
@@ -940,19 +910,17 @@ class MainWP_System {
 			$frequencyDailyUpdate = 1;
 		}
 
-		$period_of_time = $run_timestamp ? self::get_period_of_time_from_hh_mm( $timeDailyUpdate ) : 0; // mins
-		// to valid period of time
+		$period_of_time = $run_timestamp ? self::get_period_of_time_from_hh_mm( $timeDailyUpdate ) : 0;
+
 		if ( $period_of_time > 24 * 60 ) {
 			$period_of_time = 0;
 		}
 
 		$enableFrequencyAutomaticUpdate = false;
-		// to check frequency to run daily
-		// if the $period_of_time value is not valid then frequency run will avoid, automatic update will run one time per day as default
+
 		if ( $period_of_time > 0 ) {
-			$mins_between = ( 24 * 60 - $period_of_time ) / $frequencyDailyUpdate; // mins
+			$mins_between = ( 24 * 60 - $period_of_time ) / $frequencyDailyUpdate;
 			if ( time() < $lasttimeAutomaticUpdate + $mins_between * 60 ) {
-				// if update checking is running then continue do that
 				if ( ! $updatecheck_running ) {
 					return;
 				}
@@ -971,14 +939,12 @@ class MainWP_System {
 
 		if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
 			if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
-				// if update checking is running then continue do that
 				if ( ! $updatecheck_running ) {
 					MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated hours interval' );
 					return;
 				}
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
-			// ok go to frequency sync
 			$websites = array();
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) {
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
@@ -991,7 +957,7 @@ class MainWP_System {
 			if ( ! empty( $send_noti_at ) ) {
 				$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at );
 				if ( time() < $send_timestamp ) {
-					return; // send notification later
+					return;
 				}
 			}
 		}
@@ -1037,18 +1003,15 @@ class MainWP_System {
 			if ( 0 === $busyCounter ) {
 				if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
-					return; // to check time before send notification
+					return;
 				}
-
-				// set checking to done, so will check for other settings to run
 				if ( $updatecheck_running ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
 				}
-
 				update_option( 'mainwp_last_synced_all_sites', time() );
+
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
-				// Send the email & update all to this time!
 				$mail     = '';
 				$sendMail = false;
 
@@ -1290,7 +1253,6 @@ class MainWP_System {
 				}
 
 				if ( ! $disable_send_noti ) {
-					// Create a nice email to send
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					MainWP_Logger::instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
 					if ( false !== $email && '' !== $email ) {
@@ -1384,7 +1346,6 @@ class MainWP_System {
 					$websiteDecodedIgnoredThemes = array();
 				}
 
-				// Perform check & update
 				if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
 					$websiteValues = array(
 						'dtsAutomaticSync' => time(),
@@ -1400,7 +1361,6 @@ class MainWP_System {
 				$websiteLastCoreUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' ), true );
 				$websiteCoreUpgrades     = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
-				// Run over every update we had last time..
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
 
 					if ( $text_format ) {
@@ -1412,13 +1372,11 @@ class MainWP_System {
 					}
 
 					$newUpdate = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
-					// to fix
 					if ( ! $website->is_ignoreCoreUpdates ) {
 						if ( 1 === $website->automatic_update ) {
 							if ( $newUpdate ) {
 								$coreNewUpdate[] = array( $website->id, $infoNewTxt, $infoTrustedText );
 							} else {
-								// Check ignore ? $ignoredCoreToUpdate
 								$coreToUpdateNow[]           = $website->id;
 								$allWebsites[ $website->id ] = $website;
 								$coreToUpdate[]              = array( $website->id, $infoTxt, $infoTrustedText );
@@ -1458,7 +1416,6 @@ class MainWP_System {
 					}
 				}
 
-				// Run over every update we had last time..
 				foreach ( $websitePlugins as $pluginSlug => $pluginInfo ) {
 					if ( isset( $decodedIgnoredPlugins[ $pluginSlug ] ) || isset( $websiteDecodedIgnoredPlugins[ $pluginSlug ] ) ) {
 						continue;
@@ -1487,9 +1444,7 @@ class MainWP_System {
 						}
 					}
 					$newUpdate = ! ( isset( $websiteLastPlugins[ $pluginSlug ] ) && ( $pluginInfo['Version'] == $websiteLastPlugins[ $pluginSlug ]['Version'] ) && ( $pluginInfo['update']['new_version'] == $websiteLastPlugins[ $pluginSlug ]['update']['new_version'] ) );
-					// update this..
 					if ( in_array( $pluginSlug, $trustedPlugins ) ) {
-						// Trusted
 						if ( $newUpdate ) {
 							$pluginsNewUpdate[] = array( $website->id, $infoNewTxt, $infoTrustedText );
 						} else {
@@ -1498,7 +1453,6 @@ class MainWP_System {
 							$pluginsToUpdate[]                    = array( $website->id, $infoTxt, $infoTrustedText );
 						}
 					} else {
-						// Not trusted
 						if ( $newUpdate ) {
 							$notTrustedPluginsNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
 						} else {
@@ -1507,7 +1461,6 @@ class MainWP_System {
 					}
 				}
 
-				// Run over every update we had last time..
 				foreach ( $websiteThemes as $themeSlug => $themeInfo ) {
 					if ( isset( $decodedIgnoredThemes[ $themeSlug ] ) || isset( $websiteDecodedIgnoredThemes[ $themeSlug ] ) ) {
 						continue;
@@ -1525,9 +1478,7 @@ class MainWP_System {
 					}
 
 					$newUpdate = ! ( isset( $websiteLastThemes[ $themeSlug ] ) && ( $themeInfo['Version'] == $websiteLastThemes[ $themeSlug ]['Version'] ) && ( $themeInfo['update']['new_version'] == $websiteLastThemes[ $themeSlug ]['update']['new_version'] ) );
-					// update this..
 					if ( in_array( $themeSlug, $trustedThemes ) ) {
-						// Trusted
 						if ( $newUpdate ) {
 							$themesNewUpdate[] = array( $website->id, $infoNewTxt, $infoTrustedText );
 						} else {
@@ -1536,7 +1487,6 @@ class MainWP_System {
 							$themesToUpdate[]                    = array( $website->id, $infoTxt, $infoTrustedText );
 						}
 					} else {
-						// Not trusted
 						if ( $newUpdate ) {
 							$notTrustedThemesNewUpdate[] = array( $website->id, $infoNewTxt, $infoNotTrustedText );
 						} else {
@@ -1547,7 +1497,6 @@ class MainWP_System {
 
 				do_action( 'mainwp_daily_digest_action', $website, $text_format );
 
-				// Loop over last plugins & current plugins, check if we need to update them.
 				$user  = get_userdata( $website->userid );
 				$email = MainWP_Utility::get_notification_email( $user );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_email', $email );
@@ -1556,7 +1505,6 @@ class MainWP_System {
 				MainWP_DB::instance()->update_website_option( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::instance()->update_website_option( $website, 'last_theme_upgrades', $website->theme_upgrades );
 
-				// sync site favico one time per day
 				$updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
 				if ( ! is_array( $updatescheckSitesIcon ) ) {
 					$updatescheckSitesIcon = array();
@@ -1637,7 +1585,6 @@ class MainWP_System {
 				return;
 			}
 
-			// Check if backups are required!
 			if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && get_option( 'mainwp_backup_before_upgrade' ) == 1 ) {
 				$sitesCheckCompleted = get_option( 'mainwp_automaticUpdate_backupChecks' );
 				if ( ! is_array( $sitesCheckCompleted ) ) {
@@ -1679,7 +1626,6 @@ class MainWP_System {
 
 						$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
 						$dh  = opendir( $dir );
-						// Check if backup ok
 						$lastBackup = - 1;
 						if ( $wp_filesystem->exists( $dir ) && $dh ) {
 							while ( ( $file = readdir( $dh ) ) !== false ) {
@@ -1722,7 +1668,6 @@ class MainWP_System {
 			}
 
 			if ( 1 === $plugin_automaticDailyUpdate ) {
-				// Update plugins
 				foreach ( $pluginsToUpdateNow as $websiteId => $slugs ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
@@ -1743,7 +1688,7 @@ class MainWP_System {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-						// ok
+
 					}
 				}
 			} else {
@@ -1751,7 +1696,6 @@ class MainWP_System {
 			}
 
 			if ( 1 === $theme_automaticDailyUpdate ) {
-				// Update themes
 				foreach ( $themesToUpdateNow as $websiteId => $slugs ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
@@ -1771,7 +1715,7 @@ class MainWP_System {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-						// ok
+
 					}
 				}
 			} else {
@@ -1779,7 +1723,6 @@ class MainWP_System {
 			}
 
 			if ( 1 === $mainwpAutomaticDailyUpdate ) {
-				// Update core
 				foreach ( $coreToUpdateNow as $websiteId ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
@@ -1788,7 +1731,7 @@ class MainWP_System {
 					try {
 						MainWP_Utility::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( Exception $e ) {
-						// ok
+
 					}
 				}
 			} else {
@@ -1829,7 +1772,7 @@ class MainWP_System {
 							$wp_filesystem->touch( $iconsDir . 'index.php' );
 						}
 						$filename = basename( $information['faviIconUrl'] );
-						$filename = strtok( $filename, '?' ); // to fix: remove params
+						$filename = strtok( $filename, '?' );
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
 							$size     = file_put_contents( $iconsDir . $filename, $content );
@@ -1872,7 +1815,7 @@ class MainWP_System {
 
 				wp_remote_get( $url . 'wp-cron.php' );
 			} catch ( Exception $e ) {
-				// ok
+
 			}
 		}
 		MainWP_DB::free_result( $websites );
@@ -1895,7 +1838,6 @@ class MainWP_System {
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
-		// Fetch all tasks where complete < last & last checkup is more then 1minute ago! & last is more then 1 minute ago!
 		$tasks = MainWP_DB::instance()->get_backup_tasks_to_complete();
 
 		MainWP_Logger::instance()->debug( 'CRON :: backups continue :: Found ' . count( $tasks ) . ' to continue.' );
@@ -1935,9 +1877,6 @@ class MainWP_System {
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
-		// Do cronjobs!
-		// Config this in crontab: 0 0 * * * wget -q http://mainwp.com/wp-admin/?do=cron -O /dev/null 2>&1
-		// this will execute once every day to check to do the scheduled backups
 		$allTasks   = array();
 		$dailyTasks = MainWP_DB::instance()->get_backup_tasks_todo_daily();
 		if ( count( $dailyTasks ) > 0 ) {
@@ -1991,22 +1930,18 @@ class MainWP_System {
 		$start = time();
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ( $start - time() ) > ( 60 * 60 * 2 ) ) {
-				// two hours passed, next cron will start!
 				break;
 			}
 
 			MainWP_DB::instance()->update_website_stats( $website->id, time() );
 
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
-				// Try reconnecting
 				MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Trying to reconnect' );
 				try {
 					if ( MainWP_Manage_Sites::_reconnect_site( $website ) ) {
-						// Reconnected
 						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {
-					// Still something wrong
 					MainWP_Logger::instance()->warning_for_website( $website, 'reconnect', $e->getMessage() );
 				}
 			}
@@ -2017,7 +1952,7 @@ class MainWP_System {
 
 	public function admin_footer() {
 
-		$this->update_footer( true ); // will hide #wpfooter
+		$this->update_footer( true );
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
 			MainWP_Post::init_subpages_menu();
@@ -2102,7 +2037,7 @@ class MainWP_System {
 
 		global $_mainwp_disable_menus_items;
 
-		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items ); // to support developer to debug
+		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );
 	}
 
 	public function print_admin_styles( $value = true ) {
@@ -2119,7 +2054,7 @@ class MainWP_System {
 		if ( ! self::is_mainwp_pages() ) {
 			?>
 				html.wp-toolbar{
-					padding-top: 32px !important; /* reset to default WP value */
+					padding-top: 32px !important;
 				}
 			<?php
 		} else {
@@ -2169,7 +2104,6 @@ class MainWP_System {
 
 		global $_mainwp_disable_menus_items;
 
-		// deprecate hook from 4.0
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_disablemenuitems', $_mainwp_disable_menus_items );
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
@@ -2183,7 +2117,6 @@ class MainWP_System {
 					return true;
 				}
 
-				// To fix bug run from wp cli
 				if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					return true;
 				}
@@ -2222,7 +2155,7 @@ class MainWP_System {
 	}
 
 	public function readfile_chunked( $filename ) {
-		$chunksize = 1024; // how many bytes per chunk
+		$chunksize = 1024;
 		$handle    = fopen( $filename, 'rb' );
 		if ( false === $handle ) {
 			return false;
@@ -2292,7 +2225,7 @@ class MainWP_System {
 		} else {
 			$plugins = get_plugins();
 			if ( ! is_array( $plugins ) || count( $plugins ) <= 4 ) {
-				return; // new install
+				return;
 			}
 		}
 		?>
@@ -2349,9 +2282,6 @@ class MainWP_System {
 		add_action( 'mainwp_before_header', array( $this, 'mainwp_warning_notice' ) );
 		MainWP_Post_Handler::instance()->init();
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
-		// wp_enqueue_script( 'jquery-ui-tooltip' );
-		// wp_enqueue_script( 'jquery-ui-autocomplete' );
-		// wp_enqueue_script( 'jquery-ui-progressbar' );
 		if ( $use_wp_datepicker ) {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
@@ -2396,7 +2326,6 @@ class MainWP_System {
 		wp_enqueue_style( 'thickbox' );
 
 		if ( isset( $_GET['page'] ) && ( 'mainwp_tab' === $_GET['page'] || ( 'managesites' === $_GET['page'] ) && isset( $_GET['dashboard'] ) ) ) {
-			// draggabilly grid layout library
 			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
 		}
@@ -2417,7 +2346,6 @@ class MainWP_System {
 			return;
 		}
 
-		// redirect on first install
 		$quick_setup = get_option( 'mainwp_run_quick_setup', false );
 		if ( 'yes' === $quick_setup ) {
 			wp_safe_redirect( admin_url( 'admin.php?page=mainwp-setup' ) );
@@ -2447,9 +2375,8 @@ class MainWP_System {
 		}
 
 		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
-		// if open /wp-admin/ path then check to redirect to mainwp overview
 		if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
-			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) { // to fix
+			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 				die();
 			}
@@ -2551,15 +2478,11 @@ class MainWP_System {
 			$post_id = (int) $_POST['post_ID'];
 		}
 
-		// verify this came from the our screen and with proper authorization.
 		if ( $post_id && isset( $_POST['select_sites_nonce'] ) && wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
-			// see more 'editpost' in the file wp-admin/post.php
 			check_admin_referer( 'update-post_' . $post_id );
-			edit_post(); // WP core function
+			edit_post();
 
 			$location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $post_id . '&message=1' );
-			// to handle parameters
-			// see more redirect_post() in the file wp-admin/includes/post.php
 			$location = apply_filters( 'redirect_post_location', $location, $post_id );
 			wp_safe_redirect( $location );
 			exit();
@@ -2602,8 +2525,6 @@ class MainWP_System {
 			return;
 		}
 
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -2612,7 +2533,6 @@ class MainWP_System {
 			return;
 		}
 
-		// Read extra metabox
 		$pid = $this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
@@ -2623,10 +2543,7 @@ class MainWP_System {
 		if ( $pid == $post_id ) {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpost' ), 10, 2 );
 		} else {
-			// to support external redirect for example post dripper extension,
-			// that will do not go to posting process
 			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
-			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
 			die();
 		}
@@ -2648,8 +2565,6 @@ class MainWP_System {
 			return;
 		}
 
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -2658,7 +2573,6 @@ class MainWP_System {
 			return;
 		}
 
-		// Read extra metabox
 		$pid = $this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
 		MainWP_Page::add_status_handle( $post_id );
@@ -2669,7 +2583,6 @@ class MainWP_System {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
 			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
-			// Redirect to handle page! (to actually post the messages)
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1' );
 			die();
 		}
@@ -2779,7 +2692,6 @@ class MainWP_System {
 	}
 
 	public function init_session() {
-		// to fix issue start session for all requests
 		if ( isset( $_GET['page'] ) && in_array(
 		$_GET['page'],
 		array(
@@ -2793,7 +2705,6 @@ class MainWP_System {
 		)
 		)
 		) {
-			// start session
 			MainWP_Cache::init_session();
 		}
 	}
@@ -2814,7 +2725,7 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, false );
-			wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, false ); // load at header to compatible.
+			wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
@@ -2840,7 +2751,6 @@ class MainWP_System {
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
 
-		// to faster a bit
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
@@ -2870,14 +2780,14 @@ class MainWP_System {
 
 	public function admin_head() {
 		?>
-		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>"</script>		
+		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>"</script>
 		<?php
 	}
 
 	public function admin_body_class( $class_string ) {
 		if ( self::is_mainwp_pages() ) {
 			$class_string .= ' mainwp-ui mainwp-ui-page ';
-			$class_string .= ' mainwp-ui-leftmenu ';  // to enable MainWP custom menu
+			$class_string .= ' mainwp-ui-leftmenu ';
 		}
 		return $class_string;
 	}
@@ -2885,9 +2795,9 @@ class MainWP_System {
 	public function admin_menu() {
 		global $menu;
 		foreach ( $menu as $k => $item ) {
-			if ( 'edit.php?post_type=bulkpost' === $item[2] ) { // Remove bulkpost
+			if ( 'edit.php?post_type=bulkpost' === $item[2] ) {
 				unset( $menu[ $k ] );
-			} elseif ( 'edit.php?post_type=bulkpage' === $item[2] ) { // Remove bulkpost
+			} elseif ( 'edit.php?post_type=bulkpage' === $item[2] ) {
 				unset( $menu[ $k ] );
 			}
 		}
@@ -2903,7 +2813,6 @@ class MainWP_System {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
 		}
-		// avoid for better performance
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}
@@ -2914,7 +2823,6 @@ class MainWP_System {
 		} else {
 			$is_staging = 'no';
 			if ( isset( $_GET['page'] ) ) {
-				// for manage sites page
 				if ( ( 'managesites' == $_GET['page'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['do'] ) && ! isset( $_GET['dashboard'] ) ) {
 					$filter_group = get_option( 'mainwp_managesites_filter_group' );
 					if ( $filter_group ) {
@@ -2923,7 +2831,7 @@ class MainWP_System {
 							$is_staging = 'yes';
 						}
 					}
-				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) { // for Updates and Overview page
+				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) {
 					$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;
 					if ( $staging_enabled ) {
 						$staging_view = get_user_option( 'mainwp_staging_options_updates_view' ) == 'staging' ? true : false;
@@ -2968,8 +2876,8 @@ class MainWP_System {
 			}
 		}
 
-		// to support processes at mainwp footer
 		do_action( 'mainwp_admin_footer' );
+
 		?>
 		<div class="ui longer modal" id="mainwp-sync-sites-modal">
 			<div class="header"><?php esc_html_e( 'Data Synchronization', 'mainwp' ); ?></div>
@@ -3054,8 +2962,6 @@ class MainWP_System {
 
 	public function new_menus() {
 		if ( MainWP_Utility::is_admin() ) {
-			// Adding the page to manage your added sites/groups
-			// The first page which will display the post area etc..
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
 				MainWP_Updates::init_menu();
 			}
@@ -3089,7 +2995,7 @@ class MainWP_System {
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
 				MainWP_Settings::init_menu();
 			}
-			MainWP_Extensions::init_menu(); // check disable menu item in the function
+			MainWP_Extensions::init_menu();
 			do_action( 'mainwp_admin_menu' );
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
@@ -3101,20 +3007,17 @@ class MainWP_System {
 		}
 	}
 
-	// On activation install the database
 	public function activation() {
 		MainWP_DB::instance()->update();
 		MainWP_DB::instance()->install();
 
-		// Redirect to settings page
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
 	}
 
 	public function deactivation() {
-		update_option( 'mainwp_extensions_all_activation_cached', '' ); // clear cached of all activations to reload for next loading
+		update_option( 'mainwp_extensions_all_activation_cached', '' );
 	}
 
-	// On update update the database
 	public function update() {
 		MainWP_DB::instance()->update();
 		MainWP_DB::instance()->install();

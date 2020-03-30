@@ -24,9 +24,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Plugin_Update {
 
 	/**
-	 * @var $_instance The single instance of the class
+	 * @var $instance The single instance of the class
 	 */
-	protected static $_instance = null;
+	protected static $instance = null;
 
 	/**
 	 * Method instance()
@@ -35,11 +35,11 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @return class instance
 	 */
 	public static function instance() {
-		if ( is_null( self::$_instance ) ) {
-			self::$_instance = new self();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
 		}
 
-		return self::$_instance;
+		return self::$instance;
 	}
 
 	/**

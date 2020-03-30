@@ -26,13 +26,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Key {
 
 	/**
-	 * $_instance
+	 * $instance
 	 *
-	 * Set initial $_instance value.
+	 * Set initial $instance value.
 	 *
 	 * @var null
 	 */
-	protected static $_instance = null;
+	protected static $instance = null;
 
 	/**
 	 * $apisslverify
@@ -48,15 +48,15 @@ class MainWP_Api_Manager_Key {
 	 *
 	 * Create a new Self Instance.
 	 *
-	 * @return mixed self::$_instance
+	 * @return mixed self::$instance
 	 */
 	public static function instance() {
 
-		if ( is_null( self::$_instance ) ) {
-			self::$_instance = new self();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
 		}
 
-		return self::$_instance;
+		return self::$instance;
 	}
 
 	/**

@@ -12,8 +12,7 @@ class MainWP_Manage_Sites_List_Table {
 	protected $userExtension = null;
 	public $items;
 	public $_total_items;
-	protected $_pagination_args = array();
-
+	
 	protected $_column_headers;
 
 	public function __construct() {

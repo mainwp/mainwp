@@ -438,7 +438,7 @@ class MainWP_Hooks {
 	}
 
 	public function filter_qq2FileUploader( $allowedExtensions, $sizeLimit ) {
-		return new QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
+		return new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
 	}
 
 	public function get_meta_boxes() {

@@ -265,10 +265,10 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		$page_links = array();
 
-		$disable_first = false; 
-                $disable_last = false;
-                $disable_prev = false; 
-                $disable_next = false;
+		$disable_first        = false;
+				$disable_last = false;
+				$disable_prev = false;
+				$disable_next = false;
 
 		if ( $current == 1 ) {
 			$disable_first = true;

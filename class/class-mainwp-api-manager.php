@@ -412,15 +412,15 @@ class MainWP_Api_Manager {
 				$options['activated_key']    = 'Deactivated';
 
 				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( $activate_results['activated'] == true ) && ! empty( $activate_results['api_key'] ) ) {
-					$return['result']               = 'SUCCESS';
-					$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
-					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
-					$options['api_key']             = $activate_results['api_key'];
-                                        $return['api_key']              = $activate_results['api_key'];
-					$options['activation_email']    = $activate_results['activation_email'];
-                                        $return['activation_email']  = $activate_results['activation_email'];
-					$options['activated_key']       = 'Activated';
-					$options['deactivate_checkbox'] = 'off';
+					$return['result']                      = 'SUCCESS';
+					$mess                                  = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
+					$return['message']                     = __( 'Extension activated. ', 'mainwp' ) . $mess;
+					$options['api_key']                    = $activate_results['api_key'];
+										$return['api_key'] = $activate_results['api_key'];
+					$options['activation_email']           = $activate_results['activation_email'];
+										$return['activation_email'] = $activate_results['activation_email'];
+					$options['activated_key']                       = 'Activated';
+					$options['deactivate_checkbox']                 = 'off';
 				} else {
 
 					if ( $activate_results == false ) {

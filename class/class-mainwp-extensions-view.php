@@ -93,9 +93,9 @@ class MainWP_Extensions_View {
 	 */
 	public static function render() {
 
-		$username     = '';
-                $password = '';
-		$checked_save = false;
+		$username         = '';
+				$password = '';
+		$checked_save     = false;
 		if ( true === get_option( 'mainwp_extensions_api_save_login' ) ) {
 			$enscrypt_u   = get_option( 'mainwp_extensions_api_username' );
 			$enscrypt_p   = get_option( 'mainwp_extensions_api_password' );

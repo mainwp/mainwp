@@ -4,6 +4,7 @@
  *
  * Display current Child Site Notes.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -30,18 +31,17 @@ class MainWP_Notes {
 	public static function render() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
-		if ( ! MainWP_Utility::ctype_digit( $current_wpid ) ) {
+		if ( !MainWP_Utility::ctype_digit( $current_wpid ) ) {
 			return;
 		}
 
-		$website  = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
-		$note     = html_entity_decode( $website->note ); // to compatible
-		$esc_note = MainWP_Utility::esc_content( $note );
-
+		$website	 = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
+		$note		 = html_entity_decode( $website->note ); // to compatible
+		$esc_note	 = MainWP_Utility::esc_content( $note );
 		?>
 
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e('Notes', 'mainwp'); ?>
+			<?php esc_html_e( 'Notes', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
 		</h3>
 

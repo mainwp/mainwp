@@ -48,7 +48,8 @@ class MainWP_Connection_Status {
 
 		$websites = MainWP_DB::instance()->query( $sql );
 
-		$count_connected = $count_disconnected = 0;
+		$count_connected = 0;
+                $count_disconnected = 0;
 		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites.
 		$SYNCERRORS = 0;
 		$DOWN       = 1;

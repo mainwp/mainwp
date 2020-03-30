@@ -14,21 +14,21 @@ class MainWP_Manage_Groups {
 		add_submenu_page(
 			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
 				self::get_class_name(),
-				'renderAllGroups',
+				'render_all_groups',
 			)
 		);
 	}
 
-	public static function getGroupListContent() {
+	public static function get_group_list_content() {
 
 		$groups = MainWP_DB::instance()->get_groups_and_count();
 
 		foreach ( $groups as $group ) {
-			self::createGroupItem( $group );
+			self::create_group_item( $group );
 		}
 	}
 
-	private static function createGroupItem( $group ) {
+	private static function create_group_item( $group ) {
 		?>
 		<tr group-id="<?php echo esc_attr( $group->id ); ?>" class="mainwp-group-row">
 			<td>
@@ -50,14 +50,14 @@ class MainWP_Manage_Groups {
 		<tr id="mainwp-group-<?php echo esc_attr( $group->id ); ?>-sites" class="mainwp-group-sites-row">
 			<td colspan="3">
 				<div class="ui list">
-					<?php echo self::getWebsiteListContent(); ?>
+					<?php echo self::get_website_list_content(); ?>
 				</div>
 			</td>
 		</tr>
 		<?php
 	}
 
-	public static function getWebsiteListContent() {
+	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -71,7 +71,7 @@ class MainWP_Manage_Groups {
 		MainWP_DB::free_result( $websites );
 	}
 
-	public static function renderAllGroups() {
+	public static function render_all_groups() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage groups', 'mainwp' ) );
 
@@ -95,7 +95,7 @@ class MainWP_Manage_Groups {
 				  </tr>
 				</thead>
 				<tbody>
-					<?php echo self::getGroupListContent(); ?>
+					<?php echo self::get_group_list_content(); ?>
 					<tr class="managegroups-group-add" style="display:none;">
 						<td>
 							<span class="ui mini input fluid"><input type="text" placeholder="<?php esc_attr_e( 'Group name', 'mainwp' ); ?>" value="" /></span>
@@ -317,7 +317,7 @@ class MainWP_Manage_Groups {
 		<?php
 	}
 
-	public static function renameGroup() {
+	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
@@ -326,7 +326,7 @@ class MainWP_Manage_Groups {
 					$name = $group->name;
 				}
 
-				$name = self::checkGroupName( $name, $group->id );
+				$name = self::check_group_name( $name, $group->id );
 				// update group
 				$nr = MainWP_DB::instance()->update_group( $group->id, $name );
 
@@ -337,7 +337,7 @@ class MainWP_Manage_Groups {
 		}
 	}
 
-	public static function deleteGroup() {
+	public static function delete_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
@@ -352,7 +352,7 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
-	public static function checkGroupName( $groupName, $groupId = null ) {
+	public static function check_group_name( $groupName, $groupId = null ) {
 		if ( $groupName == '' ) {
 			$groupName = __( 'New group', 'mainwp' );
 		}
@@ -381,16 +381,16 @@ class MainWP_Manage_Groups {
 	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, self::checkGroupName( $_POST['newName'] ) );
+			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, self::check_group_name( $_POST['newName'] ) );
 			do_action( 'mainwp_added_new_group', $groupId );
 			$group = MainWP_DB::instance()->get_group_by_id( $groupId );
-			self::createGroupItem( $group );
+			self::create_group_item( $group );
 			die();
 		}
 		die( wp_json_encode( array( 'error' => 1 ) ) );
 	}
 
-	public static function getSites() {
+	public static function get_sites() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {

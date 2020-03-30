@@ -61,9 +61,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
 		if ( $bulk_check ) {
-			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
 		} else {
-			$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+			$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
 		}
 
 		$query_url = '';

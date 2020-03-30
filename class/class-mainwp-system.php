@@ -1911,7 +1911,7 @@ class MainWP_System {
 		foreach ( $tasks as $task ) {
 			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 			if ( $task->completed < $task->last_run ) {
-				MainWP_Manage_Backups::executeBackupTask( $task, 5, false );
+				MainWP_Manage_Backups::execute_backup_task( $task, 5, false );
 				break;
 			}
 		}
@@ -1972,12 +1972,12 @@ class MainWP_System {
 				continue;
 			}
 
-			if ( ! MainWP_Manage_Backups::validateBackupTasks( array( $task ) ) ) {
+			if ( ! MainWP_Manage_Backups::validate_backup_tasks( array( $task ) ) ) {
 				$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
 			}
 
 			$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
-			MainWP_Manage_Backups::executeBackupTask( $task, ( 0 !== $chunkedBackupTasks ? 5 : 0 ) );
+			MainWP_Manage_Backups::execute_backup_task( $task, ( 0 !== $chunkedBackupTasks ? 5 : 0 ) );
 		}
 	}
 

@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- *  phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - deprecated
+ *  phpcs:disable Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - deprecated
  */
 class LiveReportResponder {
 
@@ -310,8 +310,8 @@ class MainWP_Live_Reports_Class {
 			return 0;
 		}
 
-		$start_today = strtotime( date( 'Y-m-d' ) . ' 00:00:00' );
-		$end_today   = strtotime( date( 'Y-m-d' ) . ' 23:59:59' );
+		$start_today = strtotime( gmdate( 'Y-m-d' ) . ' 00:00:00' );
+		$end_today   = strtotime( gmdate( 'Y-m-d' ) . ' 23:59:59' );
 
 		$next_report_date_to = 0;
 
@@ -367,11 +367,11 @@ class MainWP_Live_Reports_Class {
 	}
 
 	public static function calc_next_schedule_send_date( $recurring_date, $lastSend, $monthSteps ) {
-		$day_to_send     = date( 'd', $recurring_date );
-		$month_last_send = date( 'm', $lastSend );
-		$year_last_send  = date( 'Y', $lastSend );
+		$day_to_send     = gmdate( 'd', $recurring_date );
+		$month_last_send = gmdate( 'm', $lastSend );
+		$year_last_send  = gmdate( 'Y', $lastSend );
 
-		$day_in_month = date( 't' );
+		$day_in_month = gmdate( 't' );
 		if ( $day_to_send > $day_in_month ) {
 			$day_to_send = $day_in_month;
 		}
@@ -419,7 +419,7 @@ class MainWP_Live_Reports_Class {
 
 			if ( 0 === $end_time ) {
 				$current  = time();
-				$end_time = mktime( 0, 0, 0, date( 'm', $current ), date( 'd', $current ), date( 'Y', $current ) );
+				$end_time = mktime( 0, 0, 0, gmdate( 'm', $current ), gmdate( 'd', $current ), gmdate( 'Y', $current ) );
 			}
 
 			if ( ( 0 !== $start_time && 0 !== $end_time ) && ( $start_time > $end_time ) ) {
@@ -498,7 +498,7 @@ class MainWP_Live_Reports_Class {
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_date'] ) ) {
 				$rec_date                 = trim( $_POST['mainwp_creport_schedule_date'] );
-				$report['recurring_date'] = ! empty( $rec_date ) ? strtotime( $rec_date . ' ' . date( 'H:i:s' ) ) : 0;
+				$report['recurring_date'] = ! empty( $rec_date ) ? strtotime( $rec_date . ' ' . gmdate( 'H:i:s' ) ) : 0;
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_send_email'] ) ) {
 				$report['schedule_send_email'] = trim( $_POST['mainwp_creport_schedule_send_email'] );
@@ -1392,8 +1392,8 @@ class MainWP_Live_Reports_Class {
 				$output['ga.visits.maximum'] = $maximum_value . ' (' . $maximum_value_date . ')';
 			}
 
-			$output['ga.startdate'] = date( 'd.m.Y', $start_date );
-			$output['ga.enddate']   = date( 'd.m.Y', $end_date );
+			$output['ga.startdate'] = gmdate( 'd.m.Y', $start_date );
+			$output['ga.enddate']   = gmdate( 'd.m.Y', $end_date );
 
 		}
 		self::$buffer[ $uniq ] = $output;

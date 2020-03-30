@@ -96,8 +96,8 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			live_reports_responder_classes();
 			$report                     = new \stdClass();
 			$report->title              = 'Live Reports';
-			$report->date_from          = strtotime( date( 'Y-m-01' ) );
-			$report->date_to            = strtotime( date( 'Y-m-d' ) );
+			$report->date_from          = strtotime( gmdate( 'Y-m-01' ) );
+			$report->date_to            = strtotime( gmdate( 'Y-m-d' ) );
 			$report->client             = '';
 			$report->client_id          = 0;
 			$report->fname              = '';

@@ -92,7 +92,7 @@ class MainWP_Api_Manager_Key {
 		}
 
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -130,7 +130,7 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?wc-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?wc-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -168,7 +168,7 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -206,7 +206,7 @@ class MainWP_Api_Manager_Key {
 		$args['password'] = stripslashes( $args['password'] );
 
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -261,7 +261,7 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -294,7 +294,7 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->getUpgradeUrl() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,

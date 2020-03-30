@@ -291,7 +291,8 @@ class MainWP_Page {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 
-		$selected_sites = $selected_groups = array();
+		$selected_sites = array();
+                $selected_groups = array();
 		if ( $cachedSearch != null ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
 				$selected_sites = $cachedSearch['sites'];
@@ -680,8 +681,10 @@ class MainWP_Page {
 					</td>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) {
-						$count_seo_links = $count_seo_linked     = null;
-						$seo_score       = $readability_score    = '';
+						$count_seo_links = null;
+                                                $count_seo_linked     = null;
+						$seo_score       = '';
+                                                $readability_score    = '';
 						if ( isset( $page['seo_data'] ) ) {
 							$seo_data          = $page['seo_data'];
 							$count_seo_links   = esc_html( $seo_data['count_seo_links'] );

@@ -940,11 +940,11 @@ class MainWP_Manage_Sites {
 					if ( file_exists( $localBackupFile ) ) {
 						$time = @filemtime( $localBackupFile );
 
-						$minutes = date( 'i', time() );
-						$seconds = date( 's', time() );
+						$minutes = gmdate( 'i', time() );
+						$seconds = gmdate( 's', time() );
 
-						$file_minutes = date( 'i', $time );
-						$file_seconds = date( 's', $time );
+						$file_minutes = gmdate( 'i', $time );
+						$file_seconds = gmdate( 's', $time );
 
 						$minuteDiff = $minutes - $file_minutes;
 						if ( 59 === $minuteDiff ) {

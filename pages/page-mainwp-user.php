@@ -246,7 +246,8 @@ class MainWP_User {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
-		$selected_sites = $selected_groups = array();
+		$selected_sites = array();
+                $selected_groups = array();
 
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
@@ -884,7 +885,8 @@ class MainWP_User {
 			}
 
 			if ( ! empty( $pass ) ) {
-				$extra['pass1'] = $extra['pass2']   = $pass;
+				$extra['pass1'] = $pass;
+                                $extra['pass2']   = $pass;
 			}
 		}
 
@@ -1225,7 +1227,8 @@ class MainWP_User {
 				), $output );
 			}
 
-			$countSites = $countRealItems = 0;
+			$countSites = 0;
+                        $countRealItems = 0;
 			foreach ( $dbwebsites as $website ) {
 				if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 					$countSites ++;
@@ -1490,7 +1493,8 @@ class MainWP_User {
 			), $output );
 		}
 
-		$ret['ok_list'] = $ret['error_list'] = array();
+		$ret['ok_list'] = array();
+                $ret['error_list'] = array();
 		foreach ( $dbwebsites as $website ) {
 			if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 				$ret['ok_list'][] = 'New user(s) created: ' . esc_html( stripslashes( $website->name ) );

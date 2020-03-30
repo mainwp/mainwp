@@ -95,7 +95,7 @@ class MainWP_Api_Manager {
 	 *
 	 * Grabs the correct upgrade url.
 	 */
-	public function getUpgradeUrl() {
+	public function get_upgrade_url() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
 		return $url;
 	}
@@ -415,8 +415,10 @@ class MainWP_Api_Manager {
 					$return['result']               = 'SUCCESS';
 					$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
 					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
-					$options['api_key']             = $return['api_key']              = $activate_results['api_key'];
-					$options['activation_email']    = $return['activation_email']         = $activate_results['activation_email'];
+					$options['api_key']             = $activate_results['api_key'];
+                                        $return['api_key']              = $activate_results['api_key'];
+					$options['activation_email']    = $activate_results['activation_email'];
+                                        $return['activation_email']  = $activate_results['activation_email'];
 					$options['activated_key']       = 'Activated';
 					$options['deactivate_checkbox'] = 'off';
 				} else {

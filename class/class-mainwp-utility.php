@@ -967,7 +967,8 @@ class MainWP_Utility {
 				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 					@set_time_limit( $timeout );
 				}
-				@ini_set( 'max_execution_time', $timeout );
+                                
+                                set_time_limit( $timeout );
 
 				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
 				$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
@@ -1210,7 +1211,8 @@ class MainWP_Utility {
 			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
 			}
-			@ini_set( 'max_execution_time', $timeout );
+                        
+			set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
 				@curl_multi_add_handle( $mh, $ch );
@@ -1651,7 +1653,9 @@ class MainWP_Utility {
 		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 			@set_time_limit( $timeout );
 		}
-		@ini_set( 'max_execution_time', $timeout );
+		
+                set_time_limit( $timeout );
+                
 		self::end_session();
 
 		MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'Executing handlers' );
@@ -2522,7 +2526,7 @@ class MainWP_Utility {
 	}
 
 	public static function format_email( $to, $body, $title = '', $text_format = false ) {
-		$current_year = date( 'Y' );
+		$current_year = gmdate( 'Y' );
 		if ( $text_format ) {
 				$mail_send['header'] = '';
 

@@ -3,6 +3,7 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Post Handler
+ * 
  */
 class MainWP_Post_Handler {
 
@@ -1146,13 +1147,13 @@ class MainWP_Post_Handler {
 	public function mainwp_group_rename() {
 		$this->secure_request( 'mainwp_group_rename' );
 
-		MainWP_Manage_Groups::renameGroup();
+		MainWP_Manage_Groups::rename_group();
 	}
 
 	public function mainwp_group_delete() {
 		$this->secure_request( 'mainwp_group_delete' );
 
-		MainWP_Manage_Groups::deleteGroup();
+		MainWP_Manage_Groups::delete_group();
 	}
 
 	public function mainwp_group_add() {
@@ -1164,7 +1165,7 @@ class MainWP_Post_Handler {
 	public function mainwp_group_getsites() {
 		$this->secure_request( 'mainwp_group_getsites' );
 
-		die( MainWP_Manage_Groups::getSites() );
+		die( MainWP_Manage_Groups::get_sites() );
 	}
 
 	public function mainwp_group_updategroup() {
@@ -1181,33 +1182,33 @@ class MainWP_Post_Handler {
 	public function mainwp_addbackup() {
 		$this->secure_request( 'mainwp_addbackup' );
 
-		MainWP_Manage_Backups::addBackup();
+		MainWP_Manage_Backups::add_backup();
 	}
 
 	// Update task
 	public function mainwp_updatebackup() {
 		$this->secure_request( 'mainwp_updatebackup' );
 
-		MainWP_Manage_Backups::updateBackup();
+		MainWP_Manage_Backups::update_backup();
 	}
 
 	// Remove a task from MainWP
 	public function mainwp_removebackup() {
 		$this->secure_request( 'mainwp_removebackup' );
 
-		MainWP_Manage_Backups::removeBackup();
+		MainWP_Manage_Backups::remove_backup();
 	}
 
 	public function mainwp_resumebackup() {
 		$this->secure_request( 'mainwp_resumebackup' );
 
-		MainWP_Manage_Backups::resumeBackup();
+		MainWP_Manage_Backups::resume_backup();
 	}
 
 	public function mainwp_pausebackup() {
 		$this->secure_request( 'mainwp_pausebackup' );
 
-		MainWP_Manage_Backups::pauseBackup();
+		MainWP_Manage_Backups::pause_backup();
 	}
 
 	public function mainwp_backuptask_get_sites() {
@@ -1215,7 +1216,7 @@ class MainWP_Post_Handler {
 
 		$taskID = $_POST['task_id'];
 
-		wp_send_json( array( 'result' => MainWP_Manage_Backups::getBackupTaskSites( $taskID ) ) );
+		wp_send_json( array( 'result' => MainWP_Manage_Backups::get_backup_task_sites( $taskID ) ) );
 	}
 
 	public function mainwp_backuptask_run_site() {

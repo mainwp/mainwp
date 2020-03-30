@@ -1450,7 +1450,7 @@ class MainWP_Extensions {
 
 		global $current_user;
 		if ( ! empty( $newName ) ) {
-			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::checkGroupName( $newName ) );
+			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ) );
 			do_action( 'mainwp_added_new_group', $groupId );
 			return $groupId;
 		}

@@ -29,7 +29,7 @@ class MainWP_Install_Bulk {
 				$uploader = new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
 				$path     = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 
-				$result = $uploader->handleUpload( $path, true );
+				$result = $uploader->handle_upload( $path, true );
 				// to pass data through iframe you will need to encode all html tags
 				die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) );
 			}

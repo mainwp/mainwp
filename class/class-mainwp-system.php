@@ -653,7 +653,7 @@ class MainWP_System {
 		}
 
 		$deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
-		if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {			
+		if ( $deactivated_exts && is_array( $deactivated_exts ) && count( $deactivated_exts ) > 0 ) {
 			?>
 			<div class='notice notice-error my-dismiss-notice is-dismissible'>
 				<p><?php echo esc_html__( 'MainWP Dashboard 4.0 or newer requires Extensions 4.0 or newer. MainWP will automatically deactivate older versions of MainWP Extensions in order to prevent compatibility problems.', 'mainwp' ); ?></p>
@@ -2704,9 +2704,9 @@ class MainWP_System {
 				'custom-fields',
 				'comments',
 				'revisions',
-			),			
+			),
 			'public'                 => true,
-			'show_ui'                => true,			
+			'show_ui'                => true,
 			'show_in_nav_menus'      => false,
 			'publicly_queryable'     => $queryable,
 			'exclude_from_search'    => true,
@@ -2754,9 +2754,9 @@ class MainWP_System {
 				'custom-fields',
 				'comments',
 				'revisions',
-			),			
+			),
 			'public'                 => true,
-			'show_ui'                => true,			
+			'show_ui'                => true,
 			'show_in_nav_menus'      => false,
 			'publicly_queryable'     => $queryable,
 			'exclude_from_search'    => true,
@@ -3102,7 +3102,7 @@ class MainWP_System {
 	}
 
 	// On activation install the database
-	public function activation() {		
+	public function activation() {
 		MainWP_DB::instance()->update();
 		MainWP_DB::instance()->install();
 

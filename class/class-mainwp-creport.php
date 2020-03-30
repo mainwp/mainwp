@@ -639,7 +639,7 @@ class MainWP_Live_Reports_Class {
 		if ( is_array( $tmp_files ) ) {
 			foreach ( $tmp_files as $i => $tmp_file ) {
 				if ( ( UPLOAD_ERR_OK == $file_input['error'][ $i ] ) && is_uploaded_file( $tmp_file ) ) {
-					$file_size = $file_input['size'][ $i ];					
+					$file_size = $file_input['size'][ $i ];
 					$file_name = $file_input['name'][ $i ];
 					$file_ext  = strtolower( end( explode( '.', $file_name ) ) );
 					if ( ( $file_size > 5 * 1024 * 1024 ) ) {

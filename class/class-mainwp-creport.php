@@ -400,8 +400,8 @@ class MainWP_Live_Reports_Class {
 				$report['title'] = $title;
 			}
 
-			$start_time  = 0;
-			$end_time    = 0;
+			$start_time = 0;
+			$end_time   = 0;
 
 			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
 				$start_date = trim( $_POST['mwp_creport_date_from'] );
@@ -970,8 +970,8 @@ class MainWP_Live_Reports_Class {
 			$filtered_footer                    = $result['filtered_content'];
 			unset( $result );
 
-			$sections_data                      = array();
-			$other_tokens_data                  = array();
+			$sections_data     = array();
+			$other_tokens_data = array();
 
 			$information = self::fetch_stream_data( $website, $report, $sections, $other_tokens );
 
@@ -1184,7 +1184,7 @@ class MainWP_Live_Reports_Class {
 		$filtered_content = str_replace( $client_tokens, $replace_values, $content );
 		$content          = str_replace( $client_tokens, $replace_values, $content );
 
-		$sections         = array();
+		$sections = array();
 		if ( preg_match_all( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', $content, $matches ) ) {
 			$_count = count( $matches[1] );
 			for ( $i = 0; $i < $_count; $i++ ) {
@@ -2804,13 +2804,13 @@ class MainWP_Live_Reports_Utility {
 
 	public static function sec2hms( $sec, $padHours = false ) {
 
-		$hms = '';
-		$hours = intval( intval( $sec ) / 3600 );
-		$hms .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
+		$hms     = '';
+		$hours   = intval( intval( $sec ) / 3600 );
+		$hms    .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
 		$minutes = intval( ( $sec / 60 ) % 60 );
-		$hms .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
+		$hms    .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
 		$seconds = intval( $sec % 60 );
-		$hms .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
+		$hms    .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
 
 		return $hms;
 	}

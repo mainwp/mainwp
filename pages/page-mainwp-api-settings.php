@@ -1,18 +1,31 @@
 <?php
+/**
+ * This page handles listing install MainWP Extensions
+ * and activating / deactivating license keys
+ */
 namespace MainWP\Dashboard;
 
 /**
  * MainWP API Settings Page
- *
- * This page handles listing install MainWP Extensions
- * and activating / deactivating license keys
  */
 class MainWP_API_Settings {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method check_upgrade()
+	 *
+	 * Check if Extension has an update.
+	 *
+	 * @return array $output List of results.
+	 */
 	public static function check_upgrade() {
 
 		$extensions = MainWP_Extensions::load_extensions();
@@ -73,6 +86,15 @@ class MainWP_API_Settings {
 		return $output;
 	}
 
+	/**
+	 * Method get_upgrade_information()
+	 *
+	 * Check extension information for an update.
+	 *
+	 * @param mixed $pSlug Extension Slug.
+	 *
+	 * @return array $rslt List of results.
+	 */
 	public static function get_upgrade_information( $pSlug ) {
 
 		$extensions = MainWP_Extensions::load_extensions();
@@ -108,6 +130,15 @@ class MainWP_API_Settings {
 		return $rslt;
 	}
 
+	/**
+	 * Method get_plugin_information()
+	 *
+	 * Grab extention Information.
+	 *
+	 * @param mixed $pSlug Extension Slug.
+	 *
+	 * @return array $rslt List of results.
+	 */
 	public static function get_plugin_information( $pSlug ) {
 		$extensions = MainWP_Extensions::load_extensions();
 		$rslt       = null;

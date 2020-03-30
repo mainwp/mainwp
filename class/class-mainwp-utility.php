@@ -26,12 +26,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method starts_with()
-	 * 
-	 * Start of Stack Trace. 
-	 * 
+	 *
+	 * Start of Stack Trace.
+	 *
 	 * @param mixed $haystack The full stack.
 	 * @param mixed $needle The function that is throwing the error.
-	 * 
+	 *
 	 * @return mixed Needle in the Haystack.
 	 */
 	public static function starts_with( $haystack, $needle ) {
@@ -575,7 +575,7 @@ class MainWP_Utility {
 	 * Method activated_primary_backup_plugin()
 	 *
 	 * Chek which primary backup plugin is being used.
-	 * 
+	 *
 	 * @param mixed $what Which backup plugin is being use.
 	 * @param mixed $website Website array of information.
 	 *

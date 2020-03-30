@@ -967,8 +967,8 @@ class MainWP_Utility {
 				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 					@set_time_limit( $timeout );
 				}
-                                
-                                set_time_limit( $timeout );
+
+								set_time_limit( $timeout );
 
 				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
 				$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
@@ -1211,7 +1211,7 @@ class MainWP_Utility {
 			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 				@set_time_limit( $timeout );
 			}
-                        
+
 			set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1653,9 +1653,9 @@ class MainWP_Utility {
 		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
 			@set_time_limit( $timeout );
 		}
-		
-                set_time_limit( $timeout );
-                
+
+				set_time_limit( $timeout );
+
 		self::end_session();
 
 		MainWP_Logger::instance()->debug_for_website( $website, '_fetch_url', 'Executing handlers' );

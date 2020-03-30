@@ -242,8 +242,8 @@ class MainWP_Updates_Overview {
 			}
 
 			// $pluginsIgnored_perSites = $themesIgnored_perSites = array();
-			$pluginsIgnoredAbandoned_perSites = array();
-                        $themesIgnoredAbandoned_perSites = array();
+			$pluginsIgnoredAbandoned_perSites            = array();
+						$themesIgnoredAbandoned_perSites = array();
 
 			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
@@ -420,10 +420,10 @@ class MainWP_Updates_Overview {
 		$trusted_icon = '<i class="check circle outline icon"></i> ';
 
 		// the hook using to set maximum number of plugins/themes for huge number of updates.
-		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update   = '';
-                $continue_update_slug = '';
-                $continue_class = '';          
+		$limit_updates_all            = apply_filters( 'mainwp_limit_updates_all', 0 );
+		$continue_update              = '';
+				$continue_update_slug = '';
+				$continue_class       = '';
 		if ( $limit_updates_all > 0 ) {
 			if ( isset( $_GET['continue_update'] ) && $_GET['continue_update'] != '' ) {
 				$continue_update = $_GET['continue_update'];
@@ -438,10 +438,10 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result      = MainWP_DB::instance()->get_last_sync_status();
-			$sync_status = $result['sync_status'];
-			$last_sync   = $result['last_sync'];
-                        $last_dtsSync = $result['last_sync'];
+			$result                   = MainWP_DB::instance()->get_last_sync_status();
+			$sync_status              = $result['sync_status'];
+			$last_sync                = $result['last_sync'];
+						$last_dtsSync = $result['last_sync'];
 
 			if ( $sync_status === 'all_synced' ) {
 				$now           = time();

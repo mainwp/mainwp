@@ -3,7 +3,6 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Post Handler
- * 
  */
 class MainWP_Post_Handler {
 

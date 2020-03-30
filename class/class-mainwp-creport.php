@@ -4,6 +4,7 @@
  *
  * Legacy Client Reports Extension.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -198,7 +199,6 @@ class MainWP_Live_Reports_Class {
 			$backup_status = 'failed';
 		}
 
-		// save results to child site stream
 		$post_data = array(
 			'mwp_action'     => 'save_backup_stream',
 			'size'           => $backup_size,
@@ -281,7 +281,6 @@ class MainWP_Live_Reports_Class {
 
 		global $mainWPCReportExtensionActivator;
 
-		// save results to child site stream
 		$post_data = array(
 			'mwp_action'     => 'save_backup_stream',
 			'size'           => 'N/A',
@@ -326,7 +325,6 @@ class MainWP_Live_Reports_Class {
 			}
 		}
 
-		// need to calc next send report date
 		if ( 0 === $next_report_date_to ) {
 			if ( 'daily' === $schedule ) {
 				$next_report_date_to = $scheduleLastSend + 24 * 3600;
@@ -389,7 +387,8 @@ class MainWP_Live_Reports_Class {
 
 	public static function save_report() {
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
-			$messages             = $errors                   = array();
+			$messages             = array();
+			$errors               = array();
 			$report               = array();
 			$current_attach_files = '';
 			if ( isset( $_REQUEST['id'] ) && ! empty( $_REQUEST['id'] ) ) {
@@ -397,11 +396,13 @@ class MainWP_Live_Reports_Class {
 				$current_attach_files = $report['attach_files'];
 			}
 			$title = isset( $_POST['mwp_creport_title'] ) ? trim( $_POST['mwp_creport_title'] ) : '';
-			if ( $title != '' ) {
+			if ( '' != $title ) {
 				$report['title'] = $title;
 			}
 
-			$start_time = $end_time     = 0;
+			$start_time  = 0;
+			$end_time    = 0;
+
 			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
 				$start_date = trim( $_POST['mwp_creport_date_from'] );
 				if ( '' != $start_date ) {
@@ -428,7 +429,7 @@ class MainWP_Live_Reports_Class {
 			}
 
 			$report['date_from'] = $start_time;
-			$report['date_to']   = $end_time + 24 * 3600 - 1;  // end of day
+			$report['date_to']   = $end_time + 24 * 3600 - 1;
 
 			if ( isset( $_POST['mwp_creport_client'] ) ) {
 				$report['client'] = trim( $_POST['mwp_creport_client'] );
@@ -557,7 +558,9 @@ class MainWP_Live_Reports_Class {
 				$report['attach_files'] = $attach_files;
 			}
 
-			$selected_sites = $selected_groups = array();
+			$selected_sites  = array();
+			$selected_groups = array();
+
 			if ( isset( $_POST['select_by'] ) ) {
 				if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
 					foreach ( $_POST['selected_sites'] as $selected ) {
@@ -946,25 +949,29 @@ class MainWP_Live_Reports_Class {
 			}
 
 			$found_tokens                       = $result['sections']['section_token'];
-			self::$buffer['sections']['header'] = $sections['header']                     = $result['sections'];
+			self::$buffer['sections']['header'] = $result['sections'];
+			$sections['header']                 = $result['sections'];
 			$other_tokens['header']             = $result['other_tokens'];
 			$filtered_header                    = $result['filtered_content'];
 			unset( $result );
 
 			$result                           = self::parse_report_content( $report_body, $replace_tokens_values, $allowed_tokens );
-			self::$buffer['sections']['body'] = $sections['body']                       = $result['sections'];
+			self::$buffer['sections']['body'] = $result['sections'];
+			$sections['body']                 = $result['sections'];
 			$other_tokens['body']             = $result['other_tokens'];
 			$filtered_body                    = $result['filtered_content'];
 			unset( $result );
 
 			$result = self::parse_report_content( $report_footer, $replace_tokens_values, $allowed_tokens );
 
-			self::$buffer['sections']['footer'] = $sections['footer']                     = $result['sections'];
+			self::$buffer['sections']['footer'] = $result['sections'];
+			$sections['footer']                 = $result['sections'];
 			$other_tokens['footer']             = $result['other_tokens'];
 			$filtered_footer                    = $result['filtered_content'];
 			unset( $result );
 
-			$sections_data = $other_tokens_data                        = array();
+			$sections_data                      = array();
+			$other_tokens_data                  = array();
 
 			$information = self::fetch_stream_data( $website, $report, $sections, $other_tokens );
 
@@ -999,7 +1006,8 @@ class MainWP_Live_Reports_Class {
 			}
 
 			if ( is_array( $information ) && ! isset( $information['error'] ) ) {
-				self::$buffer['sections_data'] = $sections_data                    = isset( $information['sections_data'] ) ? $information['sections_data'] : array();
+				self::$buffer['sections_data'] = isset( $information['sections_data'] ) ? $information['sections_data'] : array();
+				$sections_data                 = isset( $information['sections_data'] ) ? $information['sections_data'] : array();
 				$other_tokens_data             = isset( $information['other_tokens_data'] ) ? $information['other_tokens_data'] : array();
 			} else {
 				self::$buffer = array();
@@ -1007,7 +1015,10 @@ class MainWP_Live_Reports_Class {
 			}
 			unset( $information );
 
-			self::$count_sec_header = self::$count_sec_body     = self::$count_sec_footer   = 0;
+			self::$count_sec_header = 0;
+			self::$count_sec_body   = 0;
+			self::$count_sec_footer = 0;
+
 			if ( isset( $sections_data['header'] ) && is_array( $sections_data['header'] ) && 0 < count( $sections_data['header'] ) ) {
 				$filtered_header = preg_replace_callback( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', array( 'MainWP_Live_Reports_Class', 'section_mark_header' ), $filtered_header );
 			}
@@ -1021,7 +1032,8 @@ class MainWP_Live_Reports_Class {
 			}
 
 			if ( isset( $other_tokens_data['header'] ) && is_array( $other_tokens_data['header'] ) && 0 < count( $other_tokens_data['header'] ) ) {
-				$search = $replace = array();
+				$search  = array();
+				$replace = array();
 				foreach ( $other_tokens_data['header'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['header'] ) ) {
 						$search[]  = $token;
@@ -1032,7 +1044,8 @@ class MainWP_Live_Reports_Class {
 			}
 
 			if ( isset( $other_tokens_data['body'] ) && is_array( $other_tokens_data['body'] ) && 0 < count( $other_tokens_data['body'] ) ) {
-				$search = $replace = array();
+				$search  = array();
+				$replace = array();
 				foreach ( $other_tokens_data['body'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['body'] ) ) {
 						$search[]  = $token;
@@ -1043,7 +1056,8 @@ class MainWP_Live_Reports_Class {
 			}
 
 			if ( isset( $other_tokens_data['footer'] ) && is_array( $other_tokens_data['footer'] ) && 0 < count( $other_tokens_data['footer'] ) ) {
-				$search = $replace = array();
+				$search  = array();
+				$replace = array();
 				foreach ( $other_tokens_data['footer'] as $token => $value ) {
 					if ( in_array( $token, $other_tokens['footer'] ) ) {
 						$search[]  = $token;
@@ -1141,7 +1155,6 @@ class MainWP_Live_Reports_Class {
 			$scan_result['status']   = count( $status ) > 0 ? implode( ', ', $status ) : __( 'Verified Clear', 'mainwp-client-reports-extension' );
 			$scan_result['webtrust'] = $blacklisted ? __( 'Site Blacklisted', 'mainwp-client-reports-extension' ) : __( 'Trusted', 'mainwp-client-reports-extension' );
 		}
-		// save results to child site stream
 		$post_data = array(
 			'mwp_action'     => 'save_sucuri_stream',
 			'result'         => base64_encode( serialize( $scan_result ) ),
@@ -1159,7 +1172,7 @@ class MainWP_Live_Reports_Class {
 		foreach ( $replace_tokens as $token => $value ) {
 			$content = str_replace( $token, $value, $content );
 		}
-		$content = str_replace( $tokens, array(), $content ); // clear others tokens
+		$content = str_replace( $tokens, array(), $content );
 		return $content;
 	}
 
@@ -1168,7 +1181,9 @@ class MainWP_Live_Reports_Class {
 		$client_tokens  = array_keys( $replaceTokensValues );
 		$replace_values = array_values( $replaceTokensValues );
 
-		$filtered_content = $content          = str_replace( $client_tokens, $replace_values, $content );
+		$filtered_content = str_replace( $client_tokens, $replace_values, $content );
+		$content          = str_replace( $client_tokens, $replace_values, $content );
+
 		$sections         = array();
 		if ( preg_match_all( '/(\[section\.[^\]]+\])(.*?)(\[\/section\.[^\]]+\])/is', $content, $matches ) ) {
 			$_count = count( $matches[1] );
@@ -1239,8 +1254,8 @@ class MainWP_Live_Reports_Class {
 			'ga.bounce.rate'     => 'N/A',
 			'ga.new.visits'      => 'N/A',
 			'ga.avg.time'        => 'N/A',
-			'ga.visits.chart'    => 'N/A', // enym new
-			'ga.visits.maximum'  => 'N/A', // enym new
+			'ga.visits.chart'    => 'N/A',
+			'ga.visits.maximum'  => 'N/A',
 		);
 		if ( ! empty( $result ) && is_array( $result ) ) {
 			if ( isset( $result['stats_int'] ) ) {
@@ -1253,15 +1268,10 @@ class MainWP_Live_Reports_Class {
 				$output['ga.avg.time']    = ( isset( $values['aggregates'] ) && isset( $values['aggregates']['ga:avgSessionDuration'] ) ) ? self::format_stats_values( $values['aggregates']['ga:avgSessionDuration'], false, false, true ) : 'N/A';
 			}
 
-			// ===============================================================
-			// enym new   requires change in mainWPGA.class.php in Ga extension [send pure graph data in array]
-			// help: http://charts.streitenberger.net/#
-			// if (isset($result['stats_graph'])) {
 			if ( $chart && isset( $result['stats_graphdata'] ) ) {
-				// INTERVALL chxr=1,1,COUNTALLVALUES
+
 				$intervalls = '1,1,' . count( $result['stats_graphdata'] );
 
-				// MAX DIMENSIONS chds=0,HIGHEST*2
 				foreach ( $result['stats_graphdata'] as $k => $v ) {
 					if ( $v['1'] > $maximum_value ) {
 						$maximum_value      = $v['1'];
@@ -1272,14 +1282,12 @@ class MainWP_Live_Reports_Class {
 				$vertical_max = ceil( $maximum_value * 1.3 );
 				$dimensions   = '0,' . $vertical_max;
 
-				// DATA chd=t:1,2,3,4,5,6,7,8,9,10,11,12,13,14|
 				$graph_values = '';
 				foreach ( $result['stats_graphdata'] as $arr ) {
 					$graph_values .= $arr['1'] . ',';
 				}
 				$graph_values = trim( $graph_values, ',' );
 
-				// AXISLEGEND chd=t:1.1|2.1|3.1 ...
 				$graph_dates = '';
 
 				$step = 1;
@@ -1393,7 +1401,6 @@ class MainWP_Live_Reports_Class {
 	}
 
 	public static function piwik_data( $site_id, $start_date, $end_date ) {
-		// fix bug cron job
 		if ( null === self::$enabled_piwik ) {
 			self::$enabled_piwik = apply_filters( 'mainwp-extension-available-check', 'mainwp-piwik-extension' );
 		}
@@ -1458,7 +1465,6 @@ class MainWP_Live_Reports_Class {
 
 	public static function woocomstatus_data( $site_id, $start_date, $end_date ) {
 
-		// fix bug cron job
 		if ( null === self::$enabled_woocomstatus ) {
 			self::$enabled_woocomstatus = apply_filters( 'mainwp-extension-available-check', 'mainwp-woocommerce-status-extension' );
 		}
@@ -1497,7 +1503,6 @@ class MainWP_Live_Reports_Class {
 
 	public static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
 
-		// fix bug cron job
 		if ( null === self::$enabled_pagespeed ) {
 			self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' );
 		}
@@ -1522,7 +1527,6 @@ class MainWP_Live_Reports_Class {
 
 	public static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
 
-		// fix bug cron job
 		if ( null === self::$enabled_brokenlinks ) {
 			self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
 		}
@@ -1624,7 +1628,7 @@ class MainWP_Live_Reports_Class {
 				$input_name = 'creport_token_' . str_replace( array( '.', ' ', '-' ), '_', $token->token_name );
 				?>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned">[<?php esc_html_e( stripslashes( $token->token_name ) ); ?>]</label>
+					<label class="six wide column middle aligned">[<?php echo esc_html( stripslashes( $token->token_name ) ); ?>]</label>
 					<div class="ui six wide column">
 						<div class="ui left labeled input">
 							<input type="text"  name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $token_value ); ?>" />
@@ -1681,10 +1685,9 @@ class LiveReportResponder_DB {
 
 	private $mainwp_wpcreport_db_version = '5.6';
 	private $table_prefix;
-	// Singleton
+
 	private static $instance = null;
 
-	// Constructor
 	public function __construct() {
 		global $wpdb;
 		$this->table_prefix      = $wpdb->prefix . 'mainwp_';
@@ -1999,7 +2002,6 @@ class LiveReportResponder_DB {
 		return $this->table_prefix . $suffix;
 	}
 
-	// Support old & new versions of WordPress (3.9+)
 	public static function use_mysqli() {
 		/** @var $wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {
@@ -2010,7 +2012,6 @@ class LiveReportResponder_DB {
 		return ( $wpdb->dbh instanceof \mysqli );
 	}
 
-	// Installs new DB
 	public function install() {
 		global $wpdb;
 		$currentVersion = get_site_option( 'mainwp_wpcreport_db_version' );
@@ -2260,11 +2261,9 @@ PRIMARY KEY  (`id`)  ';
 				}
 			}
 		}
-		// get default token value if empty
 		$tokens = $this->get_tokens();
 		if ( is_array( $tokens ) ) {
 			foreach ( $tokens as $token ) {
-				// check default tokens if it is empty
 				if ( is_object( $token ) ) {
 					if ( 'id' === $index ) {
 						if ( 1 === $token->type && ( ! isset( $return[ $token->id ] ) || empty( $return[ $token->id ] ) ) ) {
@@ -2426,7 +2425,6 @@ PRIMARY KEY  (`id`)  ';
 				if ( ! empty( $client ) ) {
 					$client_id = $client->clientid;
 				} else {
-					// create client if not found client with the email
 					$update_client = array(
 						'client'     => '',
 						'name'       => isset( $report['name'] ) ? $report['name'] : '',
@@ -2439,7 +2437,7 @@ PRIMARY KEY  (`id`)  ';
 					}
 				}
 			}
-			// to fix bug not save report client
+
 			if ( empty( $client_id ) && ! empty( $report['client_id'] ) ) {
 				$client_id = $report['client_id'];
 			}
@@ -2806,33 +2804,14 @@ class MainWP_Live_Reports_Utility {
 
 	public static function sec2hms( $sec, $padHours = false ) {
 
-		// start with a blank string
 		$hms = '';
-
-		// do the hours first: there are 3600 seconds in an hour, so if we divide
-		// the total number of seconds by 3600 and throw away the remainder, we're
-		// left with the number of hours in those seconds
 		$hours = intval( intval( $sec ) / 3600 );
-
-		// add hours to $hms (with a leading 0 if asked for)
 		$hms .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
-
-		// dividing the total seconds by 60 will give us the number of minutes
-		// in total, but we're interested in *minutes past the hour* and to get
-		// this, we have to divide by 60 again and then use the remainder
 		$minutes = intval( ( $sec / 60 ) % 60 );
-
-		// add minutes to $hms (with a leading 0 if needed)
 		$hms .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
-
-		// seconds past the minute are found by dividing the total number of seconds
-		// by 60 and using the remainder
 		$seconds = intval( $sec % 60 );
-
-		// add seconds to $hms (with a leading 0 if needed)
 		$hms .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
 
-		// done!
 		return $hms;
 	}
 

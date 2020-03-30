@@ -276,7 +276,7 @@ class MainWP_Page {
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
-		echo "</div>";
+		echo '</div>';
 	}
 
 	public static function render() {

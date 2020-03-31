@@ -90,7 +90,7 @@ class MainWP_Install_Bulk {
 					'plugin_information',
 					array(
 						'slug'   => $_POST['slug'],
-						'fields' => array( 'sections' => false )
+						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
 			} else {
@@ -98,7 +98,7 @@ class MainWP_Install_Bulk {
 					'theme_information',
 					array(
 						'slug'   => $_POST['slug'],
-						'fields' => array( 'sections' => false )
+						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
 			}
@@ -204,7 +204,7 @@ class MainWP_Install_Bulk {
 			$post_data,
 			array(
 				self::get_class_name(),
-				'install_plugin_theme_handler'
+				'install_plugin_theme_handler',
 			),
 			$output,
 			null,
@@ -302,7 +302,7 @@ class MainWP_Install_Bulk {
 			$post_data,
 			array(
 				self::get_class_name(),
-				'install_plugin_theme_handler'
+				'install_plugin_theme_handler',
 			),
 			$output,
 			null,

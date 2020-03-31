@@ -19,7 +19,7 @@ class MainWP_Manage_Groups {
 			'ManageGroups',
 			array(
 				self::get_class_name(),
-				'render_all_groups'
+				'render_all_groups',
 			)
 		);
 	}

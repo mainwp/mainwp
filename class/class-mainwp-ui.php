@@ -130,21 +130,21 @@ class MainWP_UI {
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>
 									</div>
-								<?php
-							} else {
-								?>
+									<?php
+								} else {
+									?>
 								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 									<input type="checkbox" disabled="disabled"/>
 									<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 										<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 									</label>
 								</div>
-								<?php
+									<?php
+								}
 							}
-						}
-						MainWP_DB::free_result( $websites );
+							MainWP_DB::free_result( $websites );
 					endif;
-					?>
+						?>
 				</div>
 			</div>
 		</div>
@@ -193,7 +193,7 @@ class MainWP_UI {
 							}
 							MainWP_DB::free_result( $websites );
 						endif;
-					?>
+						?>
 				</div>
 			</div>
 		</div>
@@ -317,7 +317,7 @@ class MainWP_UI {
 					<?php if ( 'managesites' === $which ) : ?>
 						<?php do_action( 'mainwp_managesites_tabletop' ); ?>
 					<?php else : ?>
-					<?php do_action( 'mainwp_subheader_actions' ); ?>
+						<?php do_action( 'mainwp_subheader_actions' ); ?>
 				<?php endif; ?>
 			</div>
 			<?php

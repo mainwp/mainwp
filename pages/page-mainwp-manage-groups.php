@@ -12,7 +12,12 @@ class MainWP_Manage_Groups {
 
 	public static function init_menu() {
 		add_submenu_page(
-			'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
+			'mainwp_tab',
+			__( 'Groups', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>',
+			'read',
+			'ManageGroups',
+			array(
 				self::get_class_name(),
 				'render_all_groups',
 			)
@@ -33,10 +38,10 @@ class MainWP_Manage_Groups {
 		<tr group-id="<?php echo esc_attr( $group->id ); ?>" class="mainwp-group-row">
 			<td>
 				<span class="ui text">
-					<?php esc_html_e( stripslashes( $group->name ) ); ?>
+					<?php echo esc_html( stripslashes( $group->name ) ); ?>
 				</span>
 				<span class="ui mini input fluid" style="display:none;">
-					<input type="text" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" value="<?php esc_attr_e( $group->name ); ?>" />
+					<input type="text" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" value="<?php echo esc_attr( $group->name ); ?>" />
 				</span>
 			</td>
 			<td></td>
@@ -84,15 +89,15 @@ class MainWP_Manage_Groups {
 		<div id="mainwp-manage-groups" class="ui segment">
 
 			<div id="mainwp-message-zone" style="display: none;">
-				 <div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
+				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
 			</div>
 			<table id="mainwp-groups-table" class="ui table">
-			  <thead>
-				<tr>
+				<thead>
+					<tr>
 						<th colspan="3">
 							<?php esc_html_e( 'Groups', 'mainwp' ); ?>
 						</th>
-				  </tr>
+					</tr>
 				</thead>
 				<tbody>
 					<?php echo self::get_group_list_content(); ?>
@@ -108,13 +113,13 @@ class MainWP_Manage_Groups {
 					</tr>
 				</tbody>
 				<tfoot class="full-width">
-				<tr>
-				  <th colspan="3">
+					<tr>
+						<th colspan="3">
 							<input type="button" value="<?php esc_attr_e( 'Save Selection', 'mainwp' ); ?>" class="managegroups-saveAll ui right floated green button" style="display:none" />
 							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php esc_html_e( 'Create New Group', 'mainwp' ); ?></a>
-				  </th>
-				</tr>
-			  </tfoot>
+						</th>
+					</tr>
+				</tfoot>
 			</table>
 
 		</div>
@@ -124,7 +129,7 @@ class MainWP_Manage_Groups {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 
-		jQuery( document ).on( 'click', '.managegroups-rename', function () {
+				jQuery( document ).on( 'click', '.managegroups-rename', function () {
 					var parentObj = jQuery( this ).closest( 'tr' );
 					parentObj.find( '.text' ).hide();
 					parentObj.find( '.input' ).show();
@@ -134,7 +139,7 @@ class MainWP_Manage_Groups {
 					return false;
 				} );
 
-		jQuery( document ).on( 'click', '.managegroups-save', function () {
+				jQuery( document ).on( 'click', '.managegroups-save', function () {
 					var parentObj = jQuery( this ).closest( 'tr' );
 					var groupId = parentObj.attr( 'group-id' );
 					var newName = parentObj.find( '.input input' ).val();
@@ -171,7 +176,7 @@ class MainWP_Manage_Groups {
 					var me = this;
 					var confirmed = function() {
 						var parentObj = jQuery( me ).closest( 'tr' );
-						 parentObj.addClass( 'negative' );
+						parentObj.addClass( 'negative' );
 						var groupId = parentObj.attr( 'group-id' );
 
 						var data = mainwp_secure_data( {
@@ -244,7 +249,7 @@ class MainWP_Manage_Groups {
 					jQuery('.mainwp-group-row').removeClass('active'); // remove all active.
 					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row.
 
-		  if ( curActive ) {
+					if ( curActive ) {
 						parentObj.removeClass('active');
 						parentObj.next('.mainwp-group-sites-row').removeClass('active');
 					} else {
@@ -252,10 +257,10 @@ class MainWP_Manage_Groups {
 						parentObj.next('.mainwp-group-sites-row').addClass('active');
 					}
 
-		  if ( jQuery( '.mainwp-group-row.active' ).length > 0 ) {
-			jQuery( '.managegroups-saveAll' ).show();
+					if ( jQuery( '.mainwp-group-row.active' ).length > 0 ) {
+						jQuery( '.managegroups-saveAll' ).show();
 					} else {
-			jQuery( '.managegroups-saveAll' ).hide();
+						jQuery( '.managegroups-saveAll' ).hide();
 					}
 
 					var groupId = parentObj.attr( 'group-id' );
@@ -265,7 +270,7 @@ class MainWP_Manage_Groups {
 						groupId: groupId
 					} );
 
-		  jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
+					jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
 					jQuery.post( ajaxurl, data, function ( response ) {
 						jQuery('.managegroups-saveAll').removeAttr("disabled");
 
@@ -322,7 +327,7 @@ class MainWP_Manage_Groups {
 			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
 				$name = $_POST['newName'];
-				if ( $name == '' ) {
+				if ( '' == $name ) {
 					$name = $group->name;
 				}
 
@@ -353,7 +358,7 @@ class MainWP_Manage_Groups {
 	}
 
 	public static function check_group_name( $groupName, $groupId = null ) {
-		if ( $groupName == '' ) {
+		if ( '' == $groupName ) {
 			$groupName = __( 'New group', 'mainwp' );
 		}
 
@@ -365,8 +370,8 @@ class MainWP_Manage_Groups {
 		}
 
 		$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName );
-		while ( $group && ( ( $groupId == null ) || ( $group->id != $groupId ) ) ) {
-			if ( $cnt == null ) {
+		while ( $group && ( ( null == $groupId ) || ( $group->id != $groupId ) ) ) {
+			if ( null == $cnt ) {
 				$cnt = 1;
 			} else {
 				$cnt ++;
@@ -375,7 +380,7 @@ class MainWP_Manage_Groups {
 			$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName . ' (' . $cnt . ')' );
 		}
 
-		return $groupName . ( $cnt == null ? '' : ' (' . $cnt . ')' );
+		return $groupName . ( null == $cnt ? '' : ' (' . $cnt . ')' );
 	}
 
 	public static function add_group() {

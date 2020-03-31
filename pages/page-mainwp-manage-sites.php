@@ -85,13 +85,23 @@ class MainWP_Manage_Sites {
 			}
 		}
 		add_submenu_page(
-			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteOpen', array(
+			'mainwp_tab',
+			__( 'Sites', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>',
+			'read',
+			'SiteOpen',
+			array(
 				MainWP_Site_Open::get_class_name(),
 				'render',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Sites', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>', 'read', 'SiteRestore', array(
+			'mainwp_tab',
+			__( 'Sites', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Sites', 'mainwp' ) . '</div>',
+			'read',
+			'SiteRestore',
+			array(
 				MainWP_Site_Open::get_class_name(),
 				'render_restore',
 			)
@@ -588,7 +598,11 @@ class MainWP_Manage_Sites {
 		if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 			$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 		}
-		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
+		$websiteCleanUrl = str_replace(
+			array( 'http://', 'https://', '/' ),
+			array( '', '', '-' ),
+			$websiteCleanUrl
+		);
 
 		if ( 'db' === $type ) {
 			$ext = '.sql.' . MainWP_Utility::get_current_archive_extension( $website, $pTask );
@@ -596,19 +610,23 @@ class MainWP_Manage_Sites {
 			$ext = '.' . MainWP_Utility::get_current_archive_extension( $website, $pTask );
 		}
 
-		$file = str_replace( array(
-			'%sitename%',
-			'%url%',
-			'%date%',
-			'%time%',
-			'%type%',
-		), array(
-			MainWP_Utility::sanitize( $website->name ),
-			$websiteCleanUrl,
-			MainWP_Utility::date( 'm-d-Y' ),
-			MainWP_Utility::date( 'G\hi\ms\s' ),
-			$type,
-		), $pFilename );
+		$file = str_replace(
+			array(
+				'%sitename%',
+				'%url%',
+				'%date%',
+				'%time%',
+				'%type%',
+			),
+			array(
+				MainWP_Utility::sanitize( $website->name ),
+				$websiteCleanUrl,
+				MainWP_Utility::date( 'm-d-Y' ),
+				MainWP_Utility::date( 'G\hi\ms\s' ),
+				$type,
+			),
+			$pFilename
+		);
 		$file = str_replace( '%', '', $file );
 		$file = MainWP_Utility::normalize_filename( $file );
 
@@ -655,7 +673,9 @@ class MainWP_Manage_Sites {
 				}
 
 				MainWP_DB::instance()->update_backup_task_progress(
-					$taskId, $website->id, array(
+					$taskId,
+					$website->id,
+					array(
 						'dtsFetched'             => time(),
 						'fetchResult'            => wp_json_encode( array() ),
 						'downloadedDB'           => '',
@@ -693,11 +713,15 @@ class MainWP_Manage_Sites {
 				// Bigger then 30 seconds means a timeout.
 				if ( 30 < ( $stop - $start ) ) {
 					MainWP_DB::instance()->update_backup_task_progress(
-						$taskId, $website->id, array(
-							'last_error' => wp_json_encode( array(
-								'message'    => $e->getMessage(),
-								'extra'      => $e->get_message_extra(),
-							) ),
+						$taskId,
+						$website->id,
+						array(
+							'last_error' => wp_json_encode(
+								array(
+									'message'    => $e->getMessage(),
+									'extra'      => $e->get_message_extra(),
+								)
+							),
 						)
 					);
 
@@ -712,12 +736,11 @@ class MainWP_Manage_Sites {
 			}
 
 			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
-		} elseif ( empty( $backupTaskProgress->fetchResult ) ) { // If not fetchResult, we had a timeout.. Retry this!
+		} elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
-				// We had some attempts, check if we have information.
 				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
-				// ok.
+
 			}
 
 			if ( ! empty( $temp ) ) {
@@ -726,22 +749,28 @@ class MainWP_Manage_Sites {
 						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 
 						try {
-							// reinitiate the request!
-							$information = MainWP_Utility::fetch_url_authed( $website, 'backup', array(
-								'type'                  => $type,
-								'exclude'               => $exclude,
-								'excludebackup'         => $excludebackup,
-								'excludecache'          => $excludecache,
-								'excludenonwp'          => $excludenonwp,
-								'excludezip'            => $excludezip,
-								'ext'                   => MainWP_Utility::get_current_archive_extension( $website, $pTask ),
-								'file_descriptors_auto' => $maximumFileDescriptorsAuto,
-								'file_descriptors'      => $maximumFileDescriptors,
-								'loadFilesBeforeZip'    => $loadFilesBeforeZip,
-								'pid'                   => $backupTaskProgress->pid,
-								'append'                => '1',
-								MainWP_Utility::get_file_parameter( $website ) => $temp['file'],
-							), false, false, false );
+							$information = MainWP_Utility::fetch_url_authed(
+								$website,
+								'backup',
+								array(
+									'type'               => $type,
+									'exclude'            => $exclude,
+									'excludebackup'      => $excludebackup,
+									'excludecache'       => $excludecache,
+									'excludenonwp'       => $excludenonwp,
+									'excludezip'         => $excludezip,
+									'ext'                => MainWP_Utility::get_current_archive_extension( $website, $pTask ),
+									'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+									'file_descriptors'   => $maximumFileDescriptors,
+									'loadFilesBeforeZip' => $loadFilesBeforeZip,
+									'pid'                => $backupTaskProgress->pid,
+									'append'             => '1',
+									MainWP_Utility::get_file_parameter( $website ) => $temp['file'],
+								),
+								false,
+								false,
+								false
+							);
 
 							if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
 								MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
@@ -873,19 +902,23 @@ class MainWP_Manage_Sites {
 					$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
 					if ( null != $pFilename ) {
-						$filename        = str_replace( array(
-							'%sitename%',
-							'%url%',
-							'%date%',
-							'%time%',
-							'%type%',
-						), array(
-							MainWP_Utility::sanitize( $website->name ),
-							$websiteCleanUrl,
-							$fm_date,
-							$fm_time,
-							$what,
-						), $pFilename );
+						$filename        = str_replace(
+							array(
+								'%sitename%',
+								'%url%',
+								'%date%',
+								'%time%',
+								'%type%',
+							),
+							array(
+								MainWP_Utility::sanitize( $website->name ),
+								$websiteCleanUrl,
+								$fm_date,
+								$fm_time,
+								$what,
+							),
+							$pFilename
+						);
 						$filename        = str_replace( '%', '', $filename );
 						$localBackupFile = $dir . $filename;
 					}
@@ -912,19 +945,23 @@ class MainWP_Manage_Sites {
 					$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
 					if ( null != $pFilename ) {
-						$filename        = str_replace( array(
-							'%sitename%',
-							'%url%',
-							'%date%',
-							'%time%',
-							'%type%',
-						), array(
-							MainWP_Utility::sanitize( $website->name ),
-							$websiteCleanUrl,
-							$fm_date,
-							$fm_time,
-							$what,
-						), $pFilename );
+						$filename        = str_replace(
+							array(
+								'%sitename%',
+								'%url%',
+								'%date%',
+								'%time%',
+								'%type%',
+							),
+							array(
+								MainWP_Utility::sanitize( $website->name ),
+								$websiteCleanUrl,
+								$fm_date,
+								$fm_time,
+								$what,
+							),
+							$pFilename
+						);
 						$filename        = str_replace( '%', '', $filename );
 						$localBackupFile = $dir . $filename . $realExt;
 					}
@@ -1095,11 +1132,15 @@ class MainWP_Manage_Sites {
 			if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 				$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 			}
-			$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array(
-				'',
-				'',
-				'-',
-			), $websiteCleanUrl );
+			$websiteCleanUrl = str_replace(
+				array( 'http://', 'https://', '/' ),
+				array(
+					'',
+					'',
+					'-',
+				),
+				$websiteCleanUrl
+			);
 
 			$dir = MainWP_Utility::get_mainwp_specific_dir( $pSiteId );
 
@@ -1115,19 +1156,23 @@ class MainWP_Manage_Sites {
 			}
 
 			if ( null != $pFilename ) {
-				$filename        = str_replace( array(
-					'%sitename%',
-					'%url%',
-					'%date%',
-					'%time%',
-					'%type%',
-				), array(
-					MainWP_Utility::sanitize( $website->name ),
-					$websiteCleanUrl,
-					$fm_date,
-					$fm_time,
-					$type,
-				), $pFilename );
+				$filename        = str_replace(
+					array(
+						'%sitename%',
+						'%url%',
+						'%date%',
+						'%time%',
+						'%type%',
+					),
+					array(
+						MainWP_Utility::sanitize( $website->name ),
+						$websiteCleanUrl,
+						$fm_date,
+						$fm_time,
+						$type,
+					),
+					$pFilename
+				);
 				$filename        = str_replace( '%', '', $filename );
 				$localBackupFile = $dir . $filename;
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
@@ -1163,7 +1208,6 @@ class MainWP_Manage_Sites {
 
 		$backup_result = array();
 
-		// Creating a backup.
 		$website   = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
 		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
@@ -1182,9 +1226,12 @@ class MainWP_Manage_Sites {
 		if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
 			$websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
 		}
-		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
+		$websiteCleanUrl = str_replace(
+			array( 'http://', 'https://', '/' ),
+			array( '', '', '-' ),
+			$websiteCleanUrl
+		);
 
-		// Normal flow: use website & fallback to global.
 		if ( false === $pMaximumFileDescriptorsOverride ) {
 			if ( 1 === $website->maximumFileDescriptorsOverride ) {
 				$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
@@ -1203,19 +1250,23 @@ class MainWP_Manage_Sites {
 			$maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
 		}
 
-		$file = str_replace( array(
-			'%sitename%',
-			'%url%',
-			'%date%',
-			'%time%',
-			'%type%',
-		), array(
-			MainWP_Utility::sanitize( $website->name ),
-			$websiteCleanUrl,
-			MainWP_Utility::date( 'm-d-Y' ),
-			MainWP_Utility::date( 'G\hi\ms\s' ),
-			$pType,
-		), $pFilename );
+		$file = str_replace(
+			array(
+				'%sitename%',
+				'%url%',
+				'%date%',
+				'%time%',
+				'%type%',
+			),
+			array(
+				MainWP_Utility::sanitize( $website->name ),
+				$websiteCleanUrl,
+				MainWP_Utility::date( 'm-d-Y' ),
+				MainWP_Utility::date( 'G\hi\ms\s' ),
+				$pType,
+			),
+			$pFilename
+		);
 		$file = str_replace( '%', '', $file );
 		$file = MainWP_Utility::normalize_filename( $file );
 
@@ -1302,19 +1353,23 @@ class MainWP_Manage_Sites {
 			}
 
 			if ( null != $pFilename ) {
-				$filename        = str_replace( array(
-					'%sitename%',
-					'%url%',
-					'%date%',
-					'%time%',
-					'%type%',
-				), array(
-					MainWP_Utility::sanitize( $website->name ),
-					$websiteCleanUrl,
-					$fm_date,
-					$fm_time,
-					$pType,
-				), $pFilename );
+				$filename        = str_replace(
+					array(
+						'%sitename%',
+						'%url%',
+						'%date%',
+						'%time%',
+						'%type%',
+					),
+					array(
+						MainWP_Utility::sanitize( $website->name ),
+						$websiteCleanUrl,
+						$fm_date,
+						$fm_time,
+						$pType,
+					),
+					$pFilename
+				);
 				$filename        = str_replace( '%', '', $filename );
 				$localBackupFile = $dir . $filename;
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );

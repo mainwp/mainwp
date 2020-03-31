@@ -20,8 +20,7 @@ class MainWP_Install_Bulk {
 	// Handles the uploading of a file.
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
-			if ( $_REQUEST['mainwp_do'] == 'MainWP_Install_Bulk-uploadfile' ) {
-				// list of valid extensions, ex. "jpeg", "xml", "bmp".
+			if ( 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
@@ -38,10 +37,10 @@ class MainWP_Install_Bulk {
 
 	// Renders the upload sub part.
 	public static function render_upload( $type ) {
-		$title             = ( $type == 'plugin' ) ? 'Plugins' : 'Themes';
+		$title             = ( 'plugin' == $type ) ? 'Plugins' : 'Themes';
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
 		$cls               = $favorites_enabled ? 'favorites-extension-enabled ' : '';
-		$cls              .= ( $type == 'plugin' ) ? 'qq-upload-plugins' : '';
+		$cls              .= ( 'plugin' == $type ) ? 'qq-upload-plugins' : '';
 		?>
 		<div class="ui secondary center aligned padded segment">
 			<h2 class="ui icon header">
@@ -66,7 +65,7 @@ class MainWP_Install_Bulk {
 							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type ); // support mainwp favorites extension.
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
-							if ( $extraOptions != '' ) {
+							if ( '' != $extraOptions ) {
 								echo wp_strip_all_tags( $extraOptions ) . ',';
 							}
 							?>
@@ -86,16 +85,18 @@ class MainWP_Install_Bulk {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		if ( ! isset( $_POST['url'] ) ) {
-			if ( $_POST['type'] == 'plugin' ) {
+			if ( 'plugin' == $_POST['type'] ) {
 				$api = plugins_api(
-					'plugin_information', array(
+					'plugin_information',
+					array(
 						'slug'   => $_POST['slug'],
 						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
 			} else {
 				$api = themes_api(
-					'theme_information', array(
+					'theme_information',
+					array(
 						'slug'   => $_POST['slug'],
 						'fields' => array( 'sections' => false ),
 					)
@@ -117,7 +118,7 @@ class MainWP_Install_Bulk {
 		$output['url']   = $url;
 		$output['sites'] = array();
 
-		if ( $_POST['selected_by'] == 'site' ) {
+		if ( 'site' == $_POST['selected_by'] ) {
 			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
@@ -140,7 +141,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( $website->sync_errors != '' ) {
+						if ( '' != $website->sync_errors ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -178,10 +179,10 @@ class MainWP_Install_Bulk {
 		$post_data = array(
 			'type' => $_POST['type'],
 		);
-		if ( $_POST['activatePlugin'] == 'true' ) {
+		if ( 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( $_POST['overwrite'] == 'true' ) {
+		if ( 'true' == $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -197,10 +198,18 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
-			self::get_class_name(),
-			'install_plugin_theme_handler',
-		), $output, null, array( 'upgrade' => true ) );
+		MainWP_Utility::fetch_urls_authed(
+			$websites,
+			'installplugintheme',
+			$post_data,
+			array(
+				self::get_class_name(),
+				'install_plugin_theme_handler',
+			),
+			$output,
+			null,
+			array( 'upgrade' => true )
+		);
 
 		wp_send_json( $output );
 	}
@@ -210,7 +219,7 @@ class MainWP_Install_Bulk {
 
 		$output          = array();
 		$output['sites'] = array();
-		if ( $_POST['selected_by'] == 'site' ) {
+		if ( 'site' == $_POST['selected_by'] ) {
 			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
@@ -233,7 +242,7 @@ class MainWP_Install_Bulk {
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						if ( $website->sync_errors != '' ) {
+						if ( '' != $website->sync_errors ) {
 							continue;
 						}
 						$output['sites'][ $website->id ] = MainWP_Utility::map_site(
@@ -268,10 +277,10 @@ class MainWP_Install_Bulk {
 		$post_data = array(
 			'type' => $_POST['type'],
 		);
-		if ( $_POST['activatePlugin'] == 'true' ) {
+		if ( 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( $_POST['overwrite'] == 'true' ) {
+		if ( 'true' == $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -287,10 +296,18 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetch_urls_authed( $websites, 'installplugintheme', $post_data, array(
-			self::get_class_name(),
-			'install_plugin_theme_handler',
-		), $output, null, array( 'upgrade' => true ) );
+		MainWP_Utility::fetch_urls_authed(
+			$websites,
+			'installplugintheme',
+			$post_data,
+			array(
+				self::get_class_name(),
+				'install_plugin_theme_handler',
+			),
+			$output,
+			null,
+			array( 'upgrade' => true )
+		);
 
 		wp_send_json( $output );
 	}
@@ -303,8 +320,8 @@ class MainWP_Install_Bulk {
 		if ( $wp_filesystem->exists( $path ) ) {
 			$dh = opendir( $path );
 			if ( $dh ) {
-				while ( ( $file = readdir( $dh ) ) !== false ) {
-					if ( $file != '.' && $file != '..' ) {
+				while ( false !== ( $file = readdir( $dh ) ) ) {
+					if ( '.' != $file && '..' != $file ) {
 						$wp_filesystem->delete( $path . $file );
 					}
 				}
@@ -320,7 +337,7 @@ class MainWP_Install_Bulk {
 			$result      = $results[1];
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
-			if ( isset( $information['installation'] ) && $information['installation'] == 'SUCCESS' ) {
+			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ] = array( $website->name );
 			} elseif ( isset( $information['error'] ) ) {
 				$error = $information['error'];

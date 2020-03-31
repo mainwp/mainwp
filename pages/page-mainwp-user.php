@@ -43,21 +43,36 @@ class MainWP_User {
 
 	public static function init_menu() {
 		add_submenu_page(
-			'mainwp_tab', __( 'Users', 'mainwp' ), '<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>', 'read', 'UserBulkManage', array(
+			'mainwp_tab',
+			__( 'Users', 'mainwp' ),
+			'<span id="mainwp-Users">' . __( 'Users', 'mainwp' ) . '</span>',
+			'read',
+			'UserBulkManage',
+			array(
 				self::get_class_name(),
 				'render',
 			)
 		);
 
 		add_submenu_page(
-			'mainwp_tab', __( 'Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>', 'read', 'UserBulkAdd', array(
+			'mainwp_tab',
+			__( 'Users', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Add New', 'mainwp' ) . '</div>',
+			'read',
+			'UserBulkAdd',
+			array(
 				self::get_class_name(),
 				'render_bulk_add',
 			)
 		);
 
 		add_submenu_page(
-			'mainwp_tab', __( 'Import Users', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>', 'read', 'BulkImportUsers', array(
+			'mainwp_tab',
+			__( 'Import Users', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Import Users', 'mainwp' ) . '</div>',
+			'read',
+			'BulkImportUsers',
+			array(
 				self::get_class_name(),
 				'render_bulk_import_users',
 			)
@@ -126,7 +141,8 @@ class MainWP_User {
 				'href'       => 'admin.php?page=UserBulkManage',
 				'icon'       => '<i class="user icon"></i>',
 				'desc'       => 'Manage users on your child sites',
-			), 1
+			),
+			1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -608,7 +624,7 @@ class MainWP_User {
 							}
 
 							if ( $check_users_role ) {
-								if ( ! in_array( $user['id'], $search_user_role) ) {
+								if ( ! in_array( $user['id'], $search_user_role ) ) {
 									continue;
 								}
 							}
@@ -719,14 +735,21 @@ class MainWP_User {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'search_users', $post_data, array(
-				self::get_class_name(),
-				'users_search_handler',
-			), $output );
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'search_users',
+				$post_data,
+				array(
+					self::get_class_name(),
+					'users_search_handler',
+				),
+				$output
+			);
 		}
 
 		MainWP_Cache::add_context(
-			'Users', array(
+			'Users',
+			array(
 				'count'   => $output->users,
 				'keyword' => $search,
 				'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
@@ -876,7 +899,7 @@ class MainWP_User {
 
 		if ( 'update_user' === $pAction ) {
 			$user_data = $_POST['user_data'];
-			parse_str( $user_data, $extra);
+			parse_str( $user_data, $extra );
 			if ( $website->adminname == $userName ) {
 
 				if ( is_array( $extra ) && isset( $extra['role'] ) ) {
@@ -894,7 +917,9 @@ class MainWP_User {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'user_action', array(
+				$website,
+				'user_action',
+				array(
 					'action'    => $pAction,
 					'id'        => $userId,
 					'extra'     => $extra,
@@ -1221,14 +1246,20 @@ class MainWP_User {
 				$output         = new \stdClass();
 				$output->ok     = array();
 				$output->errors = array();
-				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(
-					MainWP_Bulk_Add::get_class_name(),
-					'posting_bulk_handler',
-				), $output );
+				MainWP_Utility::fetch_urls_authed(
+					$dbwebsites,
+					'newuser',
+					$post_data,
+					array(
+						MainWP_Bulk_Add::get_class_name(),
+						'posting_bulk_handler',
+					),
+					$output
+				);
 			}
 
-			$countSites                 = 0;
-						$countRealItems = 0;
+			$countSites     = 0;
+			$countRealItems = 0;
 			foreach ( $dbwebsites as $website ) {
 				if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 					$countSites ++;
@@ -1428,7 +1459,8 @@ class MainWP_User {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );
 					if ( $website ) {
 						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
-							$website[0], array(
+							$website[0],
+							array(
 								'id',
 								'url',
 								'name',
@@ -1487,14 +1519,20 @@ class MainWP_User {
 			$output         = new \stdClass();
 			$output->ok     = array();
 			$output->errors = array();
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newuser', $post_data, array(
-				MainWP_Bulk_Add::get_class_name(),
-				'posting_bulk_handler',
-			), $output );
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'newuser',
+				$post_data,
+				array(
+					MainWP_Bulk_Add::get_class_name(),
+					'posting_bulk_handler',
+				),
+				$output
+			);
 		}
 
-		$ret['ok_list']            = array();
-				$ret['error_list'] = array();
+		$ret['ok_list']    = array();
+		$ret['error_list'] = array();
 		foreach ( $dbwebsites as $website ) {
 			if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 				$ret['ok_list'][] = 'New user(s) created: ' . esc_html( stripslashes( $website->name ) );

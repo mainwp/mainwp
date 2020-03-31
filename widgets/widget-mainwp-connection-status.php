@@ -184,7 +184,7 @@ class MainWP_Connection_Status {
 							echo $output_md5;
 						} else {
 							?>
-						    <a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+							<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 					<?php } ?>
 						</div>
 					</div>

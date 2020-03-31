@@ -41,7 +41,7 @@ class MainWP_Backup_Tasks {
 	public static function render() {
 
 		$tasks = MainWP_DB::instance()->get_backup_tasks_for_user();
-		
+
 		?>
 		<h3><?php esc_html_e('Backup tasks', 'mainwp'); ?></h3>
 		<?php
@@ -118,7 +118,6 @@ class MainWP_Backup_Tasks {
 			</div>
 			<?php
 		}
-
 	}
 
 }

@@ -877,7 +877,7 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			wp_send_json( MainWP_Manage_Sites::backup_check_pid( $_POST[ 'site_id' ], $_POST[ 'pid' ], $_POST[ 'type' ], ( isset( $_POST[ 'subfolder' ] ) ? $_POST[ 'subfolder' ] : '' ), $_POST[ 'filename' ] ) );
+			wp_send_json( MainWP_Manage_Sites::backup_check_pid( $_POST['site_id'], $_POST['pid'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'] ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(

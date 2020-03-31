@@ -47,14 +47,27 @@ class MainWP_Overview {
 		if ( MainWP_Utility::is_admin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
-			$this->dashBoard = add_menu_page( 'MainWP', 'MainWP', 'read', 'mainwp_tab', array(
-				$this,
-				'on_show_page',
-			), MAINWP_PLUGIN_URL . 'assets/images/mainwpicon.png', '2.00001' );
+			$this->dashBoard = add_menu_page(
+				'MainWP',
+				'MainWP',
+				'read',
+				'mainwp_tab',
+				array(
+					$this,
+					'on_show_page',
+				),
+				MAINWP_PLUGIN_URL . 'assets/images/mainwpicon.png',
+				'2.00001'
+			);
 
 			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 				add_submenu_page(
-					'mainwp_tab', 'MainWP', __( 'Overview', 'mainwp' ), 'read', 'mainwp_tab', array(
+					'mainwp_tab',
+					'MainWP',
+					__( 'Overview', 'mainwp' ),
+					'read',
+					'mainwp_tab',
+					array(
 						$this,
 						'on_show_page',
 					)
@@ -79,7 +92,8 @@ class MainWP_Overview {
 				'slug'       => 'mainwp_tab',
 				'href'       => 'admin.php?page=mainwp_tab',
 				'icon'       => '<i class="tachometer alternate icon"></i>',
-			), 1
+			),
+			1
 		);
 	}
 
@@ -115,7 +129,7 @@ class MainWP_Overview {
 		 */
 
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
-		self::$enable_widgets = array_merge(self::$enable_widgets, $values);
+		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
 		/*
 		 * Load the Updates Overview widget
@@ -232,7 +246,7 @@ class MainWP_Overview {
 						foreach ( $twitters as $timeid => $twit_mess ) {
 							if ( ! empty( $twit_mess ) ) {
 								$sendText = MainWP_Twitter::get_twit_to_send( $what, $timeid );
-								if ( ! empty( $sendText) ) {
+								if ( ! empty( $sendText ) ) {
 									?>
 									<div class="mainwp-tips ui info message twitter" style="margin:0">
 										<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="<?php echo esc_attr( $what ); ?>"twit-id="<?php echo esc_attr( $timeid ); ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
@@ -270,15 +284,15 @@ class MainWP_Overview {
 		?>
 			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
 		<div class="column" id="mainwp-grid-left" widget-context="left">
-		  <?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ); ?>
+			<?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ); ?>
 		</div>
-		<?php if ( $overviewColumns == 3 ) : ?>
+		<?php if ( 3 == $overviewColumns ) : ?>
 		<div class="column" id="mainwp-grid-middle" widget-context="middle">
 			<?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ); ?>
 		</div>
 		<?php endif; ?>
 		<div class="column" id="mainwp-grid-right" widget-context="right">
-		  <?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ); ?>
+			<?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ); ?>
 		</div>
 			</div>
 			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
@@ -306,9 +320,9 @@ class MainWP_Overview {
 			<?php
 			if ( 3 == $overviewColumns ) {
 				?>
-				 document.getElementById( 'mainwp-grid-middle' ), <?php }; ?> document.getElementById( 'mainwp-grid-right' )], {
+				document.getElementById( 'mainwp-grid-middle' ), <?php }; ?> document.getElementById( 'mainwp-grid-right' )], {
 				moves: function ( el, container, handle ) {
-				  return handle.classList.contains( 'handle-drag' );
+					return handle.classList.contains( 'handle-drag' );
 				}
 			} );
 

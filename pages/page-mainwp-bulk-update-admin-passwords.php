@@ -4,6 +4,7 @@
  *
  * Handles bulk updating of Administrator Passwords.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -31,9 +32,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 */
 	public static function init_menu() {
 		add_submenu_page(
-			'mainwp_tab', __( 'Admin Passwords', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>', 'read', 'UpdateAdminPasswords', array(
+			'mainwp_tab',
+			__( 'Admin Passwords', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>',
+			'read',
+			'UpdateAdminPasswords',
+			array(
 				self::get_class_name(),
-				'render',
+				'render'
 			)
 		);
 	}
@@ -74,14 +80,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						$selected_groups[] = $selected;
 					}
 				}
-				if ( ( $_POST['select_by'] == 'group' && count( $selected_groups ) == 0 ) || ( $_POST['select_by'] == 'site' && count( $selected_sites ) == 0 ) ) {
+				if ( ( 'group' == $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' == $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
 					$errors[] = __( 'Please select the sites or groups where you want to change the administrator password.', 'mainwp' );
 				}
 			} else {
 				$errors[] = __( 'Please select whether you want to change the administrator password for specific sites or groups.', 'mainwp' );
 			}
 
-			if ( ! isset( $_POST['password'] ) || $_POST['password'] == '' ) {
+			if ( ! isset( $_POST['password'] ) || '' == $_POST['password'] ) {
 				$errors[] = __( 'Please enter the password.', 'mainwp' );
 			}
 
@@ -93,7 +99,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				);
 
 				$dbwebsites = array();
-				if ( $_POST['select_by'] == 'site' ) { // Get all selected websites.
+				if ( 'site' == $_POST['select_by'] ) { // Get all selected websites.
 					foreach ( $selected_sites as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$website                    = MainWP_DB::instance()->get_website_by_id( $k );
@@ -118,7 +124,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-								if ( $website->sync_errors != '' ) {
+								if ( '' != $website->sync_errors ) {
 									continue;
 								}
 								$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -147,22 +153,28 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					$output->ok     = array();
 					$output->errors = array();
 
-					MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newadminpassword', $post_data, array(
-						MainWP_Bulk_Add::get_class_name(),
-						'posting_bulk_handler',
-					), $output );
+					MainWP_Utility::fetch_urls_authed(
+						$dbwebsites,
+						'newadminpassword',
+						$post_data,
+						array(
+							MainWP_Bulk_Add::get_class_name(),
+							'posting_bulk_handler'
+						),
+						$output
+					);
 				}
 			}
 		}
 
 		MainWP_User::render_header( 'UpdateAdminPasswords' );
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user(false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' )) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
 		?>
 		<?php if ( ! $show_form ) : ?>
 			<div class="ui modal" id="mainwp-reset-admin-passwords-modal">
 				<div class="header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
-		<div class="scrolling content">
+				<div class="scrolling content">
 					<div class="ui relaxed divided list">
 						<?php foreach ( $dbwebsites as $website ) : ?>
 							<div class="item">
@@ -170,19 +182,19 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<span class="right floated content">
 									<?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
 								</span>
-					</div>
+							</div>
 						<?php endforeach; ?>
+					</div>
 				</div>
-			</div>
-		<div class="actions">
+				<div class="actions">
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
-	  </div>
+			</div>
 			<script type="text/javascript">
 				jQuery( '#mainwp-reset-admin-passwords-modal' ).modal( 'show' );
 			</script>
 		<?php endif; ?>
-		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
+			<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
@@ -196,31 +208,31 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									<th><?php esc_html_e( 'Admin Username', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Admin Name', 'mainwp' ); ?></th>
 									<th><?php esc_html_e( 'Admin Email', 'mainwp' ); ?></th>
-				</tr>
+								</tr>
 							</thead>
 							<tbody>
 								<?php while ( $websites && $website = MainWP_DB::fetch_object( $websites ) ) : ?>
-				<tr>
+									<tr>
 									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
 									<td><?php echo esc_html( $website->adminname ); ?></td>
 									<td><?php echo esc_html( $website->admin_nicename ); ?></td>
 									<td><?php echo esc_html( $website->admin_useremail ); ?></td>
-				</tr>
+								</tr>
 								<?php endwhile; ?>
 								<?php MainWP_DB::free_result( $websites ); ?>
 							</tbody>
-			</table>
+						</table>
 						<script type="text/javascript">
 						jQuery( document ).ready( function () {
-						  jQuery( '#mainwp-admin-users-table' ).DataTable( {
-							"colReorder" : true,
-							"stateSave":  true,
-							"pagingType": "full_numbers",
-							"order": [],
-							"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-						  } );
+							jQuery( '#mainwp-admin-users-table' ).DataTable( {
+								"colReorder" : true,
+								"stateSave":  true,
+								"pagingType": "full_numbers",
+								"order": [],
+								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+							} );
 						} );
-					  </script>
+						</script>
 					</div>
 					<div class="mainwp-side-content mainwp-no-padding">
 						<div class="mainwp-select-sites">
@@ -236,10 +248,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									<div class="ui fluid input">
 										<input class="hidden" value=" "/>
 										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( 24 ) ); ?>">
-				  </div>
+									</div>
 									<br />
 									<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
-				  </div>
+								</div>
 							</div>
 						</div>
 						<div class="ui divider"></div>

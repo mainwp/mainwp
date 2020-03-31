@@ -1034,7 +1034,7 @@ class MainWP_Manage_Sites_View {
 								<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 									<?php if ( $user_can_ignore_unignore_updates ) { ?>
 									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-								  <?php } ?>
+								<?php } ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>

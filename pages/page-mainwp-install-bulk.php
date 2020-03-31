@@ -21,7 +21,7 @@ class MainWP_Install_Bulk {
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
 			if ( $_REQUEST['mainwp_do'] == 'MainWP_Install_Bulk-uploadfile' ) {
-				// list of valid extensions, ex. array("jpeg", "xml", "bmp").
+				// list of valid extensions, ex. "jpeg", "xml", "bmp".
 				$allowedExtensions = array( 'zip' ); // Only zip allowed.
 				// max file size in bytes.
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.

@@ -23,7 +23,7 @@ function check_live_reporting_access( $siteurl ) {
 }
 
 function live_reports_responder_secure_connection( $siteurl = null, $securitykey = null, $signature = null, $action = null,
-											   $timestamp = null, $pubkey = null ) {
+											$timestamp = null, $pubkey = null ) {
 	if ( ( $siteurl == null ) || ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
 		return array( 'error' => 'Invalid request.' );
 	}

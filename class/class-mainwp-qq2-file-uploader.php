@@ -67,8 +67,7 @@ class MainWP_QQ2_File_Uploader {
 		}
 
 		$pathinfo = pathinfo( $this->file->get_name() );
-		$filename = $pathinfo['filename'];
-		// $filename = md5(uniqid());
+		$filename = $pathinfo['filename'];		
 		$ext = $pathinfo['extension'];
 
 		if ( $this->allowedExtensions && ! in_array( strtolower( $ext ), $this->allowedExtensions ) ) {
@@ -80,7 +79,7 @@ class MainWP_QQ2_File_Uploader {
 		if ( ! $replaceOldFile ) {
 			// don't overwrite previous files that were uploaded
 			while ( file_exists( $uploadDirectory . $filename . '.' . $ext ) ) {
-				$filename .= rand( 10, 99 );
+				$filename .= wp_rand( 10, 99 );
 			}
 		}
 

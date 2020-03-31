@@ -219,9 +219,8 @@ class MainWP_Updates_Overview {
 				$currentSite = $website;
 			}
 
-			// $pluginsIgnored_perSites = $themesIgnored_perSites = array();
 			$pluginsIgnoredAbandoned_perSites            = array();
-						$themesIgnoredAbandoned_perSites = array();
+			$themesIgnoredAbandoned_perSites = array();
 
 			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
@@ -457,10 +456,10 @@ class MainWP_Updates_Overview {
 							<div class="ui large statistic horizontal">
 								<div class="value">
 								<?php echo $total_upgrades; ?>
-							  </div>
+							</div>
 							  <div class="label">
 								<?php esc_html_e('Total Updates', 'mainwp'); ?>
-							  </div>
+							</div>
 							</div>
 						</div>
 						<div class="column middle aligned">
@@ -471,7 +470,7 @@ class MainWP_Updates_Overview {
 							if ( $total_upgrades == 0 ) {
 								echo 'disabled'; } else {
 								?>
-								 onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
+								onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
 						</div>
@@ -485,13 +484,13 @@ class MainWP_Updates_Overview {
 			<div class="two column row">
 				<div class="column">
 					<div class="ui horizontal statistic">
-					  <div class="value">
+					<div class="value">
 						<?php echo $total_wp_upgrades; ?>
-					  </div>
+					</div>
 					  <div class="label">
 					<?php esc_html_e('WordPress Updates', 'mainwp'); ?>
-					  </div>
-					  </div>
+					</div>
+					</div>
 				</div>
 				<div class="right aligned column">
 				<?php
@@ -519,9 +518,9 @@ class MainWP_Updates_Overview {
 			<div class="two column row">
 								<div class="column">
 					<div class="ui horizontal statistic">
-									  <div class="value">
+									<div class="value">
 										<?php echo $total_plugin_upgrades; ?>
-									  </div>
+									</div>
 										<div class="label">
 							<?php esc_html_e('Plugin Updates', 'mainwp'); ?>
 										</div>
@@ -539,9 +538,9 @@ class MainWP_Updates_Overview {
 
 						if ( $total_plugin_upgrades == 0 ) {
 							?>
-								   <a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+								<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 									<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-							   <?php
+							<?php
 						} else {
 
 							?>
@@ -582,7 +581,7 @@ class MainWP_Updates_Overview {
 						?>
 								<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 								<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-						   <?php
+						<?php
 					} else {
 
 						?>
@@ -590,7 +589,7 @@ class MainWP_Updates_Overview {
 							<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
-					   endif;
+					endif;
 				?>
 					</div>
 				</div>
@@ -642,7 +641,7 @@ class MainWP_Updates_Overview {
 		<div class="ui hidden divider"></div>
 		<div class="ui horizontal divider"><?php esc_html_e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
-		
+
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
@@ -712,7 +711,7 @@ class MainWP_Updates_Overview {
 			</div>
 
 			<div id="wp_plugin_upgrades">
-				 <?php
+				<?php
 					if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
 						foreach ( $all_plugins_updates as $item ) {
 							?>
@@ -724,7 +723,7 @@ class MainWP_Updates_Overview {
 			</div>
 			<div id="wp_theme_upgrades">
 
-				 <?php
+				<?php
 					if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
 						foreach ( $all_themes_updates as $item ) {
 							?>

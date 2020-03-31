@@ -11,9 +11,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	protected $userExtension = null;
 	public $items;
-	public $_total_items;
+	public $total_items;
 
-	protected $_column_headers;
+	protected $column_headers;
 
 	public function __construct() {
 		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
@@ -271,11 +271,11 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
-						  </div>
+						</div>
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
-		  </div>
+		</div>
 		</div>
 
 		<script type="text/javascript">
@@ -484,7 +484,7 @@ class MainWP_Manage_Sites_List_Table {
 		MainWP_DB::data_seek( $websites, 0 );
 
 		$this->items        = $websites;
-		$this->_total_items = $totalRecords;
+		$this->total_items = $totalRecords;
 	}
 
 	public function get_available_update_siteids() {
@@ -620,11 +620,11 @@ class MainWP_Manage_Sites_List_Table {
 				<tr>
 					<?php $this->print_column_headers( $optimize, false ); ?>
 				</tr>
-	  </tfoot>
+	</tfoot>
 	</table>
 	<div id="mainwp-loading-sites" style="display: none;">
 	<div class="ui active inverted dimmer">
-	  <div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
+	<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
 	</div>
 	</div>
 
@@ -826,9 +826,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	protected function get_column_info() {
 
-		if ( isset( $this->_column_headers ) && is_array( $this->_column_headers ) ) {
+		if ( isset( $this->column_headers ) && is_array( $this->column_headers ) ) {
 			$column_headers = array( array(), array(), array(), $this->get_default_primary_column_name() );
-			foreach ( $this->_column_headers as $key => $value ) {
+			foreach ( $this->column_headers as $key => $value ) {
 				$column_headers[ $key ] = $value;
 			}
 
@@ -856,9 +856,9 @@ class MainWP_Manage_Sites_List_Table {
 		}
 
 		$primary               = $this->get_default_primary_column_name();
-		$this->_column_headers = array( $columns, $sortable, $primary );
+		$this->column_headers = array( $columns, $sortable, $primary );
 
-		return $this->_column_headers;
+		return $this->column_headers;
 	}
 
 
@@ -1112,8 +1112,8 @@ class MainWP_Manage_Sites_List_Table {
 		}
 		return array(
 			'data'            => $all_rows,
-			'recordsTotal'    => $this->_total_items,
-			'recordsFiltered' => $this->_total_items,
+			'recordsTotal'    => $this->total_items,
+			'recordsFiltered' => $this->total_items,
 			'rowsInfo'        => $info_rows,
 		);
 	}

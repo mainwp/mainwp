@@ -31,7 +31,9 @@
                 
                 <!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
                 <exclude name="WordPress.PHP.StrictInArray"/>
-                
+		
+		<!-- Disable Misuse of WP internationalization function check. -->               
+                <exclude name="WordPress.WP.I18n"/>                
 	</rule>
 
 	<!-- Enforce PSR1 compatible namespaces. -->

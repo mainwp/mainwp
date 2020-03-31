@@ -71,8 +71,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		}
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
-		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );
-		// $tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' ); // not used.
+		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );		
 		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta'] = _x( 'Beta Testing', 'Plugin Installer' );
 		}
@@ -488,14 +487,14 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			<div class="card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 				<?php do_action( 'mainwp_install_plugin_card_top' ); ?>
 			<div class="content">
-			  <a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
-			  <div class="header">
+			<a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
+			<div class="header">
 				<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
 					</div>
-			  <div class="meta">
+			<div class="meta">
 						<?php echo $author; // html content. ?>
 					</div>
-			  <div class="description">
+			<div class="description">
 				<?php echo wp_strip_all_tags( $description ); // html content. ?>
 				</div>
 					</div>
@@ -516,8 +515,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					<div class="extra content">
 						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button thickbox open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
 						<div class="ui radio checkbox right floated">
-						  <input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class ( $plugin['slug'] ); ?>">
-						  <label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
+						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class ( $plugin['slug'] ); ?>">
+						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
 						</div>
 					</div>
 				<?php do_action( 'mainwp_install_plugin_card_bottom', $plugin ); ?>

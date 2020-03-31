@@ -91,7 +91,7 @@ class MainWP_Twitter {
 			__( 'Wow', 'mainwp' ),
 		);
 
-		return $words[ rand( 0, 6 ) ];
+		return $words[ wp_rand( 0, 6 ) ];
 	}
 
 	/**

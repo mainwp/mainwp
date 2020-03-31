@@ -443,8 +443,7 @@ class MainWP_Setup_Wizard {
 					<option value="1"
 					<?php
 					if ( ( false == $managePlanning ) || ( 1 == $managePlanning ) ) {
-						?>
- selected<?php } ?>><?php esc_html_e( 'Less than 50 websites', 'mainwp' ); ?></option>
+						?> selected<?php } ?>><?php esc_html_e( 'Less than 50 websites', 'mainwp' ); ?></option>
 					<option value="2"
 					<?php
 					if ( 2 == $managePlanning ) {
@@ -954,7 +953,7 @@ class MainWP_Setup_Wizard {
 		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
 		$api        = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
 		$result     = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
-		 wp_send_json( $result );
+		wp_send_json( $result );
 	}
 
 	public function mwp_setup_install_extension() {

@@ -72,7 +72,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		}
 		$query_url = rtrim( $query_url, '&' );
 
-		return $upgrade_url . '&' . $query_url; // http_build_query( $args );
+		return $upgrade_url . '&' . $query_url;
 	}
 
 	/**

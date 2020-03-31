@@ -153,7 +153,7 @@ class MainWP_Extensions_View {
 						</div>
 						<script type="text/javascript">
 						jQuery( document ).ready( function () {
-						  jQuery( '.ui.search' ).search( {
+						jQuery( '.ui.search' ).search( {
 							source: [
 								<?php
 								if ( isset( $extensions ) && is_array( $extensions ) ) {
@@ -162,8 +162,8 @@ class MainWP_Extensions_View {
 									}
 								}
 								?>
-						  ]
-						  } );
+						]
+						} );
 						} );
 						</script>
 					</div>

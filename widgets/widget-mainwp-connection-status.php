@@ -116,7 +116,7 @@ class MainWP_Connection_Status {
 							<a href="<?php echo esc_html( $website->url ); ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site front page', 'mainwp' ); ?>" data-inverted=""><i class="external alternate icon"></i></a>
 						</div>
 						<div class="four wide column middle aligned">
-			  <span><?php echo esc_attr( $lastSyncTime ); ?></span>
+			<span><?php echo esc_attr( $lastSyncTime ); ?></span>
 						</div>
 						<div class="four wide column middle aligned right aligned reconnect-wrapper">
 					<?php

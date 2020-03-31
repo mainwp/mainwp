@@ -549,7 +549,7 @@ class MainWP_Updates {
 							</div>
 						</form>
 					</div>
-			  </div>
+			</div>
 			</div>
 	</div>
 	<div class="ui segment" id="mainwp-manage-updates">
@@ -627,7 +627,7 @@ class MainWP_Updates {
 					"info" : false,
 					"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
 					"language" : { "emptyTable": "No HTTP issues detected." }
-			  } );
+			} );
 				</script>
 			</div>
 			<div class="ui hidden clearing divider"></div>
@@ -829,7 +829,7 @@ class MainWP_Updates {
 				<?php
 				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
-			  <!-- Per Site -->
+			<!-- Per Site -->
 				<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
 					<thead>
 						<tr>

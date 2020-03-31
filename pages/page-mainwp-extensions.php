@@ -841,7 +841,7 @@ class MainWP_Extensions {
 
 	public static function download_and_install() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_downloadandinstall' );
-
+		// phpcs:ignore -- custom setting to install plugin
 		ini_set( 'zlib.output_compression', 'Off' );
 
 		$return = self::install_plugin( $_POST['download_link'] );

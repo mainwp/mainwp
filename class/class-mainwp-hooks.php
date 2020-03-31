@@ -10,7 +10,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
-		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2FileUploader' ), 10, 2 );
+		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
@@ -437,7 +437,7 @@ class MainWP_Hooks {
 		return MainWP_System::instance()->is_multi_user();
 	}
 
-	public function filter_qq2FileUploader( $allowedExtensions, $sizeLimit ) {
+	public function filter_qq2_file_uploader( $allowedExtensions, $sizeLimit ) {
 		return new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
 	}
 

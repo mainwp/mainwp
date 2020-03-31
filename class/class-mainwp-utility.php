@@ -3,6 +3,8 @@
  * MainWP Utility Helper
  *
  * Custom curl functions and PHP filesystem functions.
+ * 
+ * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions. 
  */
 
 namespace MainWP\Dashboard;
@@ -675,7 +677,7 @@ class MainWP_Utility {
 			$data             = array();
 			$data['user']     = $website->adminname;
 			$data['function'] = $what;
-			$data['nonce']    = rand( 0, 9999 );
+			$data['nonce']    = wp_rand( 0, 9999 );
 			if ( null != $params ) {
 				$data = array_merge( $data, $params );
 			}
@@ -714,7 +716,7 @@ class MainWP_Utility {
 	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
-			$nonce = rand( 0, 9999 );
+			$nonce = wp_rand( 0, 9999 );
 			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$nossl = 0;
 				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) );
@@ -945,12 +947,8 @@ class MainWP_Utility {
 					}
 				}
 
-				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-					@set_time_limit( $timeout );
-				}
-
-								set_time_limit( $timeout );
+				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );				
+				set_time_limit( $timeout );
 
 				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
 				$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
@@ -1189,11 +1187,7 @@ class MainWP_Utility {
 
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
-			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-				@set_time_limit( $timeout );
-			}
-
+			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );			
 			set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1631,12 +1625,8 @@ class MainWP_Utility {
 		}
 
 		$timeout = 20 * 60 * 60;
-		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-			@set_time_limit( $timeout );
-		}
-
-				set_time_limit( $timeout );
+		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );		
+		set_time_limit( $timeout );
 
 		self::end_session();
 
@@ -2513,7 +2503,7 @@ class MainWP_Utility {
 				$mail_send['header'] = '';
 
 				$mail_send['body']   = $title . "\r\n\r\n" .
-									  $body . "\r\n\r\n";
+									$body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
 										'Documentation: https://mainwp.com/help/' . "\r\n" .
@@ -3440,7 +3430,7 @@ EOT;
 
 		for ( $i = 0; $i < $length; $i++ ) {
 
-			$randomString .= $characters[ rand( 0, $charactersLength - 1 ) ];
+			$randomString .= $characters[ wp_rand( 0, $charactersLength - 1 ) ];
 		}
 
 		return $randomString;

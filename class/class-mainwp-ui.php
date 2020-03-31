@@ -230,7 +230,7 @@ class MainWP_UI {
 
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
-		  jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+			jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
 		} );
 		</script>
 

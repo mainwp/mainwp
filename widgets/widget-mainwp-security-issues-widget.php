@@ -83,7 +83,7 @@ class MainWP_Security_Issues_Widget {
 		<div id="mainwp-security-issues-widget-list" class="ui middle aligned divided selection list" style="display: none;">
 			<?php
 			MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {				
+			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				?>
 				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">

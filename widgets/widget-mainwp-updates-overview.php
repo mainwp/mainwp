@@ -192,7 +192,6 @@ class MainWP_Updates_Overview {
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
-
 		$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
 
@@ -200,11 +199,10 @@ class MainWP_Updates_Overview {
 		$total_plugin_upgrades      = 0;
 		$total_translation_upgrades = 0;
 		$total_theme_upgrades       = 0;
-		
+
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
-		
 		$all_wp_updates           = array();
 		$all_plugins_updates      = array();
 		$all_themes_updates       = array();

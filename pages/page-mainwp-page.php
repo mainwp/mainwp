@@ -40,7 +40,7 @@ class MainWP_Page {
 		 */
 		add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'render_footer' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
 	}
 
 	public static function init_menu() {
@@ -54,7 +54,7 @@ class MainWP_Page {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Edit Page', 'mainwp' ) . '</div>', 'read', 'PageBulkEdit', array( self::get_class_name(), 'render_bulk_edit' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_add_edit' ) );
 
-		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards
+		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards.
 
 		/**
 		 * This hook allows you to add extra sub pages to the Page page via the 'mainwp-getsubpages-page' filter.

@@ -28,7 +28,7 @@ class MainWP_Exception extends Exception {
 	 */
 	public function __construct( $message, $extra = null ) {
 		parent::__construct( $message );
-		$this->messageExtra = esc_html( $extra ); // more secure
+		$this->messageExtra = esc_html( $extra ); // add more secure.
 	}
 
 	/**

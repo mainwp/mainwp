@@ -57,7 +57,7 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
 		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) );
 
-		// Hook the Help Sidebar content
+		// Hook the Help Sidebar content.
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
@@ -569,7 +569,7 @@ class MainWP_Manage_Sites {
 
 		$backup_result = array();
 
-		// Creating a backup
+		// Creating a backup.
 		$website   = MainWP_DB::instance()->get_website_by_id( $siteid );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
 		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
@@ -690,7 +690,7 @@ class MainWP_Manage_Sites {
 			} catch ( MainWP_Exception $e ) {
 				MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->get_message_extra() . ')' );
 				$stop = microtime( true );
-				// Bigger then 30 seconds means a timeout
+				// Bigger then 30 seconds means a timeout.
 				if ( 30 < ( $stop - $start ) ) {
 					MainWP_DB::instance()->update_backup_task_progress(
 						$taskId, $website->id, array(
@@ -810,7 +810,7 @@ class MainWP_Manage_Sites {
 				$wp_filesystem->touch( $dir . 'index.php' );
 			}
 
-			// Clean old backups from our system
+			// Clean old backups from our system.
 			$maxBackups = get_option( 'mainwp_backupsOnServer' );
 			if ( false === $maxBackups ) {
 				$maxBackups = 1;
@@ -953,7 +953,7 @@ class MainWP_Manage_Sites {
 						$secondsdiff = ( $minuteDiff * 60 ) + $seconds - $file_seconds;
 
 						if ( 60 > $secondsdiff ) {
-							// still downloading..
+							// still downloading.
 							return false;
 						}
 					}
@@ -999,7 +999,7 @@ class MainWP_Manage_Sites {
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 			$wp_filesystem->touch( $dir . 'index.php' );
 		}
-		// Clean old backups from our system
+		// Clean old backups from our system.
 		$maxBackups = get_option( 'mainwp_backupsOnServer' );
 		if ( false === $maxBackups ) {
 			$maxBackups = 1;
@@ -1163,7 +1163,7 @@ class MainWP_Manage_Sites {
 
 		$backup_result = array();
 
-		// Creating a backup
+		// Creating a backup.
 		$website   = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		$subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
 		$subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
@@ -1184,7 +1184,7 @@ class MainWP_Manage_Sites {
 		}
 		$websiteCleanUrl = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $websiteCleanUrl );
 
-		// Normal flow: use website & fallback to global
+		// Normal flow: use website & fallback to global.
 		if ( false === $pMaximumFileDescriptorsOverride ) {
 			if ( 1 === $website->maximumFileDescriptorsOverride ) {
 				$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
@@ -1219,7 +1219,7 @@ class MainWP_Manage_Sites {
 		$file = str_replace( '%', '', $file );
 		$file = MainWP_Utility::normalize_filename( $file );
 
-		// Normal flow: check site settings & fallback to global
+		// Normal flow: check site settings & fallback to global.
 		if ( false === $pLoadFilesBeforeZip ) {
 			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
 			if ( 1 === $loadFilesBeforeZip ) {
@@ -1228,14 +1228,14 @@ class MainWP_Manage_Sites {
 			} else {
 				$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 			}
-		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overriden flow: only fallback to global
+		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overriden flow: only fallback to global.
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
 			$loadFilesBeforeZip = ( 2 === $pLoadFilesBeforeZip );
 		}
 
-		// Nomral flow: check site settings & fallback to global
+		// Nomral flow: check site settings & fallback to global.
 		if ( false === $pArchiveFormat ) {
 			$archiveFormat = MainWP_Utility::get_current_archive_extension( $website );
 		} elseif ( 'global' === $pArchiveFormat ) {
@@ -1335,7 +1335,7 @@ class MainWP_Manage_Sites {
 		}
 	}
 
-	// add individual meta boxes
+	// add individual meta boxes.
 	public static function on_load_page_dashboard() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -1360,57 +1360,57 @@ class MainWP_Manage_Sites {
 		}
 
 		$values = self::$enable_widgets;
-		// hook to support enable/disable overview widgets
+		// hook to support enable/disable overview widgets.
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, $dashboard_siteid );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		// Load the Updates Overview widget
+		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
 			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), self::$page, 'left', __( 'Updates Overview', 'mainwp' ) );
 		}
 
-		// Load the Recent Posts widget
+		// Load the Recent Posts widget.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
 				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
-		// Load the Recent Pages widget
+		// Load the Recent Pages widget.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
-		// Load the Pluins widget
+		// Load the Pluins widget.
 		if ( self::$enable_widgets['plugins'] ) {
 			MainWP_UI::add_widget_box( 'plugins', array( MainWP_Widget_Plugins::get_class_name(), 'render' ), self::$page, 'left', __( 'Plugins', 'mainwp' ) );
 		}
 
-		// Load the Themes widget
+		// Load the Themes widget.
 		if ( self::$enable_widgets['themes'] ) {
 			MainWP_UI::add_widget_box( 'themes', array( MainWP_Widget_Themes::get_class_name(), 'render' ), self::$page, 'left', __( 'Themes', 'mainwp' ) );
 		}
 
-		// Load the Connection Status widget
+		// Load the Connection Status widget.
 		if ( self::$enable_widgets['connection_status'] ) {
 			MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), self::$page, 'left', __( 'Connection Status', 'mainwp' ) );
 		}
 
-		// Load the Securtiy Issues widget
+		// Load the Securtiy Issues widget.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
 			}
 		}
 
-		// Load the Notes widget
+		// Load the Notes widget.
 		if ( self::$enable_widgets['notes'] ) {
 			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
 		}
 
-		// Load the Site Info widget
+		// Load the Site Info widget.
 		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'right', __( 'Child site info', 'mainwp' ) );
 
 		$i = 0;
@@ -1619,7 +1619,7 @@ class MainWP_Manage_Sites {
 				// Edit website!
 				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 					if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
-						// update site
+						// update site.
 						$groupids   = array();
 						$groupnames = array();
 						$tmpArr     = array();
@@ -1627,7 +1627,7 @@ class MainWP_Manage_Sites {
 							$groupids = explode( ',', $_POST['mainwp_managesites_edit_addgroups'] );
 						}
 
-						// to fix update staging site
+						// to fix update staging site.
 						if ( $website->is_staging ) {
 							$stag_gid = get_option( 'mainwp_stagingsites_group_id' );
 							if ( $stag_gid ) {
@@ -1706,7 +1706,7 @@ class MainWP_Manage_Sites {
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information    = MainWP_Utility::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name
+				$information    = MainWP_Utility::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';
@@ -1751,7 +1751,7 @@ class MainWP_Manage_Sites {
 		$site_id = 0;
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
-			// Check if already in DB
+			// Check if already in DB.
 			$website                           = MainWP_DB::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
 		}
@@ -1816,7 +1816,7 @@ class MainWP_Manage_Sites {
 					$information['removed'] = true;
 				}
 
-				// delete icon file
+				// delete icon file.
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
 
@@ -1830,7 +1830,7 @@ class MainWP_Manage_Sites {
 					}
 				}
 
-				// Remove from DB
+				// Remove from DB.
 				MainWP_DB::instance()->remove_website( $website->id );
 				do_action( 'mainwp_delete_site', $website );
 
@@ -1872,7 +1872,7 @@ class MainWP_Manage_Sites {
 				$updated_enableLegacyBackup = false;
 
 				if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
-					if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method
+					if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method.
 						MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', 0 );
 						MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
 						MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
@@ -1943,7 +1943,7 @@ class MainWP_Manage_Sites {
 		die( wp_json_encode( array( 'error' => 'NO_SIDE_ID' ) ) );
 	}
 
-	// Hook the section help content to the Help Sidebar element
+	// Hook the section help content to the Help Sidebar element.
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
 			if ( isset( $_GET['do'] ) && 'new' === $_GET['do'] ) {

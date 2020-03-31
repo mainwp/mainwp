@@ -1284,30 +1284,30 @@ class MainWP_Manage_Backups {
 	private static function add_excluded_backups( &$files, &$arr ) {
 		$newExcludes = array();
 
-		// Backup buddy
+		// Backup buddy.
 		$newExcludes[] = 'wp-content/uploads/backupbuddy_backups';
 		$newExcludes[] = 'wp-content/uploads/backupbuddy_temp';
 		$newExcludes[] = 'wp-content/uploads/pb_backupbuddy';
 
-		// ManageWP
+		// ManageWP.
 		$newExcludes[] = 'wp-content/managewp';
 
-		// InfiniteWP
+		// InfiniteWP.
 		$newExcludes[] = 'wp-content/infinitewp';
 
-		// WordPress Backup to Dropbox
+		// WordPress Backup to Dropbox.
 		$newExcludes[] = 'wp-content/backups';
 
-		// BackWPUp
+		// BackWPUp.
 		$newExcludes[] = 'wp-content/uploads/backwpup*';
 
-		// WP Complete Backup
+		// WP Complete Backup.
 		$newExcludes[] = 'wp-content/plugins/wp-complete-backup/storage';
 
-		// Online Backup for WordPress
+		// Online Backup for WordPress.
 		$newExcludes[] = 'wp-content/backups';
 
-		// XCloner
+		// XCloner.
 		$newExcludes[] = 'administrator/backups';
 
 		foreach ( $newExcludes as $newExclude ) {
@@ -1364,7 +1364,7 @@ class MainWP_Manage_Backups {
 	private static function add_excluded_cache( &$files, &$arr ) {
 		$newExcludes = array();
 
-		// W3 Total Cache
+		// W3 Total Cache.
 		$newExcludes[] = 'wp-content/w3tc-cache';
 		$newExcludes[] = 'wp-content/w3tc';
 		$newExcludes[] = 'wp-content/cache/config';
@@ -1372,19 +1372,19 @@ class MainWP_Manage_Backups {
 		$newExcludes[] = 'wp-content/cache/page_enhanced';
 		$newExcludes[] = 'wp-content/cache/tmp';
 
-		// WP Super Cache
+		// WP Super Cache.
 		$newExcludes[] = 'wp-content/cache/supercache';
 
-		// Quick Cache
+		// Quick Cache.
 		$newExcludes[] = 'wp-content/cache/quick-cache';
 
-		// Hyper Cache
+		// Hyper Cache.
 		$newExcludes[] = 'wp-content/hyper-cache/cache';
 
-		// WP Fastest Cache
+		// WP Fastest Cache.
 		$newExcludes[] = 'wp-content/cache/all';
 
-		// WP-Rocket
+		// WP-Rocket.
 		$newExcludes[] = 'wp-content/cache/wp-rocket';
 
 		foreach ( $newExcludes as $newExclude ) {

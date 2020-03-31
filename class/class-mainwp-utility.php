@@ -4,6 +4,7 @@
  *
  * Custom curl functions and PHP filesystem functions.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -93,25 +94,6 @@ class MainWP_Utility {
 		}
 
 		return $url;
-	}
-
-	/**
-	 * Method limit_string()
-	 *
-	 * Set maximum string legth for output.
-	 *
-	 * @param mixed   $pInput
-	 * @param integer $pMax
-	 *
-	 * @return string $output
-	 */
-	public static function limit_string( $pInput, $pMax = 500 ) {
-		$output = wp_strip_all_tags( $pInput );
-		if ( strlen( $output ) > $pMax ) {
-			$outputCut = substr( $output, 0, $pMax );
-			$output    = substr( $outputCut, 0, strrpos( $outputCut, ' ' ) ) . '...';
-		}
-		echo $output;
 	}
 
 	/**
@@ -3157,7 +3139,7 @@ EOT;
 
 	public static function fix_option( $option_name ) {
 		global $wpdb;
-		// phpcs:ignore -- unprepared SQL ok
+		// phpcs:ignore -- unprepared SQL ok.
 		if ( 'yes' === $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
 			$option_value = get_option( $option_name );
 			delete_option( $option_name );
@@ -3379,7 +3361,7 @@ EOT;
 
 		return $faviurl;
 	}
-	// phpcs:enable
+	// phpcs:enable --!
 
 	public static function get_curl_ssl_version( $sslVersion ) {
 		switch ( $sslVersion ) {
@@ -3481,10 +3463,10 @@ EOT;
 		if ( '' == $data || is_array( $data ) ) {
 			return $data;
 		} elseif ( is_serialized( $data ) ) {
-			// phpcs:ignore -- for compatible
+			// phpcs:ignore -- for compatible.
 			return maybe_unserialize( $data );
 		} else {
-			// phpcs:ignore -- for compatible
+			// phpcs:ignore -- for compatible.
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}

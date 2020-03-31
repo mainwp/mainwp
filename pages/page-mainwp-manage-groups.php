@@ -241,8 +241,8 @@ class MainWP_Manage_Groups {
 					var parentObj = jQuery( this ).closest( '.mainwp-group-row' );
 					var curActive = parentObj.hasClass('active') ? true : false;
 
-					jQuery('.mainwp-group-row').removeClass('active'); // remove all active
-					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row
+					jQuery('.mainwp-group-row').removeClass('active'); // remove all active.
+					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row.
 
 		  if ( curActive ) {
 						parentObj.removeClass('active');
@@ -327,10 +327,10 @@ class MainWP_Manage_Groups {
 				}
 
 				$name = self::check_group_name( $name, $group->id );
-				// update group
+				// update group.
 				$nr = MainWP_DB::instance()->update_group( $group->id, $name );
 
-				// Reload group
+				// Reload group.
 				$group = MainWP_DB::instance()->get_group_by_id( $group->id );
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
@@ -341,7 +341,7 @@ class MainWP_Manage_Groups {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				// Remove from DB
+				// Remove from DB.
 				$nr = MainWP_DB::instance()->removegroup( $group->id );
 
 				if ( $nr > 0 ) {

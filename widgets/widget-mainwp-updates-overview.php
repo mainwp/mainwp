@@ -192,14 +192,6 @@ class MainWP_Updates_Overview {
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
-		// $total_themesIgnored = $total_pluginsIgnored = 0;
-
-		// if ( $globalView ) {
-		// $decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
-		// $decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
-		// $total_pluginsIgnored = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) : 0;
-		// $total_themesIgnored = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) : 0;
-		// }
 
 		$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
@@ -208,25 +200,11 @@ class MainWP_Updates_Overview {
 		$total_plugin_upgrades      = 0;
 		$total_translation_upgrades = 0;
 		$total_theme_upgrades       = 0;
-		// $total_sync_errors = 0;
-		// $total_uptodate = 0;
-		// $total_offline = 0;
+		
 		$total_plugins_outdate = 0;
 		$total_themes_outdate  = 0;
 
-		// $allTranslations = array();
-		// $translationsInfo = array();
-		// $allPlugins = array();
-		// $pluginsInfo = array();
-		// $allThemes = array();
-		// $themesInfo = array();
-
-		// $allPluginsOutdate = array();
-		// $pluginsOutdateInfo = array();
-
-		// $allThemesOutdate = array();
-		// $themesOutdateInfo = array();
-
+		
 		$all_wp_updates           = array();
 		$all_plugins_updates      = array();
 		$all_themes_updates       = array();
@@ -850,7 +828,7 @@ class MainWP_Updates_Overview {
 				$output['primary_backup'] = $primaryBackup;
 			} else {
 				$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
-				// Check if backup ok
+				// Check if backup ok.
 				$lastBackup = - 1;
 				if ( file_exists( $dir ) ) {
 					$dh = opendir( $dir );

@@ -39,7 +39,7 @@ class MainWP_Settings {
 
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
 	}
 
 	public static function admin_init() {
@@ -150,7 +150,7 @@ class MainWP_Settings {
 				'href'       => 'admin.php?page=Settings',
 				'icon'       => '<i class="cogs icon"></i>',
 			), 1
-		); // level 1
+		); // level 1.
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -692,7 +692,7 @@ class MainWP_Settings {
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Days without of a full backup tolerance', 'mainwp' ); ?></label>
 						  <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the number of days without of backup tolerance.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-								<input type="text" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr($mainwp_backup_before_upgrade_days); ?>" />
+						      <input type="text" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
 							</div>
 						</div>
 						<?php } ?>
@@ -721,7 +721,7 @@ class MainWP_Settings {
 			if ( self::is_local_window_config() ) {
 				return false;
 			} else {
-				// if it is not Openssl error but the setting is not empty the still show setting box to change
+				// if it is not Openssl error but the setting is not empty the still show setting box to change.
 				return get_option( 'mainwp_opensslLibLocation' ) != '' ? true : false;
 			}
 		}
@@ -1076,7 +1076,7 @@ class MainWP_Settings {
 		self::render_footer( 'SettingsClientReportsResponder' );
 	}
 
-	// Hook the section help content to the Help Sidebar element
+	// Hook the section help content to the Help Sidebar element.
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( $_GET['page'] == 'Settings' || $_GET['page'] == 'SettingsAdvanced' || $_GET['page'] == 'MainWPTools' || $_GET['page'] == 'SettingsClientReportsResponder' ) ) {
 			?>

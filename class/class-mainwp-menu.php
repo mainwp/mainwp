@@ -28,12 +28,12 @@ class MainWP_Menu {
 				// Compatible with old hooks.
 				'level_1'    => array(
 					'not_set_this_level' => true,
-					// 'mainwp_tab' => false, // Do not hide this menu
+					// 'mainwp_tab' => false, // Do not hide this menu.
 					// 'Extensions'       => false,
 					// 'childsites_menu'  => false,
 				),
 				'level_2'    => array(
-					// 'mainwp_tab' => false,  // Do not hide this menu
+					// 'mainwp_tab' => false,  // Do not hide this menu.
 					'UpdatesManage'      => false,
 					'managesites'        => false,
 					'PostBulkManage'     => false,
@@ -138,12 +138,12 @@ class MainWP_Menu {
 		$title = $params['title'];
 
 		if ( 1 === $level ) {
-			$parent_key = 'mainwp_tab'; // forced value
+			$parent_key = 'mainwp_tab'; // forced value.
 		} else {
 			if ( isset( $params['parent_key'] ) ) {
 				$parent_key = $params['parent_key'];
 			} else {
-				$parent_key = 'mainwp_tab'; // forced value
+				$parent_key = 'mainwp_tab'; // forced value.
 			}
 		}
 
@@ -159,12 +159,12 @@ class MainWP_Menu {
 		if ( 1 == $level ) {
 			$mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
 			if ( ! empty( $slug ) ) {
-				$_mainwp_menu_active_slugs[ $slug ] = $slug; // to get active menu
+				$_mainwp_menu_active_slugs[ $slug ] = $slug; // to get active menu.
 			}
 		} elseif ( 2 == $level ) {
 			$mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id );
 			if ( ! empty( $slug ) ) {
-				$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu
+				$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu.
 			}
 		}
 	}
@@ -208,7 +208,7 @@ class MainWP_Menu {
 							}
 							$active_item = '';
 							$set_actived = false;
-							// to fix active menu
+							// to fix active menu.
 							if ( ! $set_actived ) {
 								if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
 									if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
@@ -273,16 +273,16 @@ class MainWP_Menu {
 		</div>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					// click on menu with-sub icon
+					// click on menu with-sub icon.
 					jQuery( '.mainwp-nav-menu a.title.with-sub .icon' ).on( "click", function ( event ) {
 						var pr = jQuery( this ).closest( '.item' );
 						var title = jQuery( this ).closest( '.title' );
 						var active = jQuery( title ).hasClass( 'active' );
 
-						// remove current active
+						// remove current active.
 						mainwp_menu_collapse();
 
-						// if current menu item are not active then set it active
+						// if current menu item are not active then set it active.
 						if ( !active ) {
 							jQuery( title ).addClass( 'active' );
 							jQuery( pr ).find('.content.menu').addClass( 'active' );
@@ -295,10 +295,10 @@ class MainWP_Menu {
 						var pr = jQuery( this ).closest( '.item' );
 						var active = jQuery( this ).hasClass( 'active' );
 
-						// remove current active
+						// remove current active.
 						mainwp_menu_collapse();
 
-						// set active before go to the page
+						// set active before go to the page.
 						if ( !active ) {
 							jQuery( this ).addClass( 'active' );
 							jQuery( pr ).find('.content.menu').addClass( 'active' );
@@ -307,7 +307,7 @@ class MainWP_Menu {
 					} );
 
 					mainwp_menu_collapse = function() {
-						// remove current active
+						// remove current active.
 						jQuery( '.mainwp-nav-menu a.title.active').removeClass('active');
 						jQuery( '.mainwp-nav-menu .menu .item').removeClass('active');
 						jQuery( '.mainwp-nav-menu .content.menu.active').removeClass('active');

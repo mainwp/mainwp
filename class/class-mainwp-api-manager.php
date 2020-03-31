@@ -232,7 +232,7 @@ class MainWP_Api_Manager {
 	 * @return booleen True|False.
 	 */
 	private function replace_license_key( $args ) {
-		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation
+		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation.
 
 		if ( $reset == true ) {
 			return true;
@@ -524,7 +524,7 @@ class MainWP_Api_Manager {
 			case 'subscription_expired':
 				$return = __( 'Your membership has expired. Reactivate your membership to install MainWP extensions.', 'mainwp' );
 				break;
-			default: // download_revoked
+			default: // download_revoked.
 				$return = sprintf( __( 'Download permission for %1$s has been revoked possibly due to a license key or membership expiring. You can reactivate or purchase a license key from your account <a href="%2$s" target="_blank">dashboard</a>.', 'mainwp' ), $software_title, $this->renew_license_url );
 				break;
 		}
@@ -563,4 +563,4 @@ class MainWP_Api_Manager {
 
 }
 
-// End of class
+// End of class.

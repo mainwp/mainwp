@@ -150,7 +150,7 @@ class MainWP_System {
 		add_action( 'mainwp_cronupdatescheck_action', array( $this, 'mainwp_cronupdatescheck_action' ) );
 		add_action( 'mainwp_cronpingchilds_action', array( $this, 'mainwp_cronpingchilds_action' ) );
 
-		// phpcs:ignore -- required for dashboard's minutely scheduled jobs
+		// phpcs:ignore -- required for dashboard's minutely scheduled jobs.
 		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ) );
 
 		$this->init_cron();
@@ -282,7 +282,7 @@ class MainWP_System {
 			}
 			$query  = substr( $query, 0, strlen( $query ) - 2 );
 			$query .= ')';
-			// phpcs:ignore -- unprepared SQL ok
+			// phpcs:ignore -- unprepared SQL ok.
 			$alloptions_db	 = $wpdb->get_results( $query );
 			$wpdb->suppress_errors( $suppress );
 			if ( ! is_array( $alloptions ) ) {
@@ -2739,7 +2739,7 @@ class MainWP_System {
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-js-popup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-popup.js', array(), $this->current_version, true );
-		// phpcs:ignore -- fileuploader scripts need to load at header
+		// phpcs:ignore -- fileuploader scripts need to load at header.
 		wp_enqueue_script( 'mainwp-fileuploader', MAINWP_PLUGIN_URL . 'assets/js/fileuploader.js', array(), $this->current_version );
 		wp_enqueue_script( 'mainwp-date', MAINWP_PLUGIN_URL . 'assets/js/date.js', array(), $this->current_version, true );
 		wp_enqueue_script( 'mainwp-filesaver', MAINWP_PLUGIN_URL . 'assets/js/FileSaver.js', array(), $this->current_version, true );

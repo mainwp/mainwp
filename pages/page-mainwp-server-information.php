@@ -677,7 +677,7 @@ class MainWP_Server_Information {
 		return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
 	}
 
-	// Print the directory check row
+	// Print the directory check row.
 	public static function render_directory_row( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
 		?>
 		<tr>
@@ -730,7 +730,7 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	// Check if the Dashboard site is Multisite setup
+	// Check if the Dashboard site is Multisite setup.
 	public static function check_if_multisite() {
 		$isMultisite = ! is_multisite() ? true : false;
 
@@ -1258,17 +1258,17 @@ class MainWP_Server_Information {
 	public static function last_lines( $path, $line_count, $block_size = 512 ) {
 		$lines = array();
 
-		// we will always have a fragment of a non-complete line
+		// we will always have a fragment of a non-complete line.
 		// keep this in here till we have our next entire line.
 		$leftover = '';
 
 		$fh = fopen( $path, 'r' );
-		// go to the end of the file
+		// go to the end of the file.
 		fseek( $fh, 0, SEEK_END );
 
 		do {
-			// need to know whether we can actually go back
-			// $block_size bytes
+			// need to know whether we can actually go back.
+			// $block_size bytes.
 			$can_read = $block_size;
 
 			if ( ftell( $fh ) <= $block_size ) {
@@ -1279,8 +1279,8 @@ class MainWP_Server_Information {
 				break;
 			}
 
-			// go back as many bytes as we can
-			// read them to $data and then move the file pointer
+			// go back as many bytes as we can.
+			// read them to $data and then move the file pointer.
 			// back to where we were.
 			fseek( $fh, - $can_read, SEEK_CUR );
 			$data  = fread( $fh, $can_read );

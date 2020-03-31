@@ -13,11 +13,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB {
 
-	// Config
+	// Config.
 	private $mainwp_db_version = '8.15';
-	// Private
+	// Private.
 	private $table_prefix;
-	// Singleton
+	// Singleton.
 	/** @var $instance MainWP_DB */
 	private static $instance = null;
 
@@ -58,7 +58,7 @@ class MainWP_DB {
 		return ( null == $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
 	}
 
-	// Installs new DB
+	// Installs new DB.
 	public function install() {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
@@ -483,7 +483,7 @@ class MainWP_DB {
 		return $this->wpdb->get_var( $qry );
 	}
 
-	// Database actions
+	// Database actions.
 	public function get_websites_count( $userId = null, $all_access = false ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;
@@ -626,7 +626,7 @@ class MainWP_DB {
 			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
 		}
 
-		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax
+		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
             FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -686,7 +686,7 @@ class MainWP_DB {
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
 		}
 
-		// for searching
+		// for searching.
 		if ( null !== $search_site && '' !== $search_site ) {
 			$where .= ' AND (wp.name LIKE "%' . $search_site . '%" OR wp.url LIKE  "%' . $search_site . '%") ';
 		}
@@ -711,7 +711,7 @@ class MainWP_DB {
 			$where_group = ' AND wpgroup.groupid = ' . $group_id;
 		}
 
-		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax
+		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
@@ -747,7 +747,7 @@ class MainWP_DB {
 			$site_table_alias = $this->table_name( 'wp' );
 		}
 
-		// check to filter the staging sites
+		// check to filter the staging sites.
 		$where_staging = ' AND ' . $site_table_alias . '.is_staging = 0 ';
 		if ( 'no' === $is_staging ) {
 			$where_staging = ' AND ' . $site_table_alias . '.is_staging = 0 ';
@@ -756,15 +756,15 @@ class MainWP_DB {
 		} elseif ( 'nocheckstaging' === $is_staging ) {
 			$where_staging = '';
 		}
-		// end staging filter
+		// end staging filter.
 
 		$_where = $where_staging;
-		// To fix bug run from cron job
+		// To fix bug run from cron job.
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return $_where;
 		}
 
-		// To fix bug run from wp cli
+		// To fix bug run from wp cli.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			return $_where;
 		}
@@ -785,7 +785,7 @@ class MainWP_DB {
 	}
 
 	public function get_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
-		// To fix bug run from cron job
+		// To fix bug run from cron job.
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return '';
 		}
@@ -794,7 +794,7 @@ class MainWP_DB {
 			$group_table_alias = $this->table_name( 'group' );
 		}
 
-		// check to filter the staging group
+		// check to filter the staging group.
 		$where_staging_group = '';
 		$staging_group       = get_option( 'mainwp_stagingsites_group_id' );
 		if ( $staging_group ) {
@@ -804,7 +804,7 @@ class MainWP_DB {
 			}
 		}
 
-		// end staging filter
+		// end staging filter.
 		$_where = $where_staging_group;
 
 		$allowed_groups = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
@@ -1228,7 +1228,7 @@ class MainWP_DB {
 						$groupids[] = $this->wpdb->insert_id;
 					}
 				}
-				// add groupids
+				// add groupids.
 				foreach ( $groupids as $groupid ) {
 					$this->wpdb->insert(
 						$this->table_name( 'wp_group' ), array(
@@ -1323,18 +1323,18 @@ class MainWP_DB {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				// update admin
+				// update admin.
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
-				// remove groups
+				// remove groups.
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
-				// Remove GA stats
+				// Remove GA stats.
 				$showErrors = $this->wpdb->hide_errors();
 				do_action( 'mainwp_ga_delete_site', $websiteid );
 				if ( $showErrors ) {
 					$this->wpdb->show_errors();
 				}
-				// add groups with groupnames
+				// add groups with groupnames.
 				foreach ( $groupnames as $groupname ) {
 					if ( $this->wpdb->insert( $this->table_name( 'group' ), array(
 						'userid' => $userid,
@@ -1363,7 +1363,7 @@ class MainWP_DB {
 
 	public function update_group( $groupid, $groupname ) {
 		if ( MainWP_Utility::ctype_digit( $groupid ) ) {
-			// update groupname
+			// update groupname.
 			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'group' ) . ' SET name=%s WHERE id=%d', $this->escape( $groupname ), $groupid ) );
 
 			return true;
@@ -1787,7 +1787,7 @@ class MainWP_DB {
 		}
 	}
 
-	// Support old & new versions of WordPress (3.9+)
+	// Support old & new versions of WordPress (3.9+).
 	public static function use_mysqli() {
 		/** @var $this ->wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {

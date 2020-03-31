@@ -55,7 +55,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	public function prepare_items() {
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		global $tab; // , $paged, $type, $term;
+		global $tab; // required.
 
 		wp_reset_vars( array( 'tab' ) );
 
@@ -72,7 +72,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );
-		// $tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' );
+		// $tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' ); // not used.
 		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta'] = _x( 'Beta Testing', 'Plugin Installer' );
 		}
@@ -87,7 +87,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		// $nonmenu_tabs = apply_filters( 'install_plugins_nonmenu_tabs', $nonmenu_tabs );
 		// If a non-valid menu tab has been selected, And it's not a non-menu action.
 		if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
-			// phpcs:ignore -- required for custom bulk install plugins
+			// phpcs:ignore -- required for custom bulk install plugins.
 			$tab = key( $tabs );
 		}
 
@@ -198,8 +198,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 * Override the parent display() so we can provide a different container.
 	 */
 	public function display() {
-		?>
-		<?php // $this->display_tablenav('top'); ?>
+		?>		
 		<div id="mainwp-install-plugins-container" class="ui stackable four cards">
 				<?php $this->display_rows_or_placeholder(); ?>
 			</div>
@@ -436,7 +435,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				$plugin = (array) $plugin;
 			}
 
-			// Display the group heading if there is one
+			// Display the group heading if there is one.
 			if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) {
 				if ( isset( $this->groups[ $plugin['group'] ] ) ) {
 					$group_name = $this->groups[ $plugin['group'] ];
@@ -494,10 +493,10 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
 					</div>
 			  <div class="meta">
-						<?php echo $author; // html content ?>
+						<?php echo $author; // html content. ?>
 					</div>
 			  <div class="description">
-				<?php echo wp_strip_all_tags( $description ); // html content ?>
+				<?php echo wp_strip_all_tags( $description ); // html content. ?>
 				</div>
 					</div>
 				<div class="extra content">
@@ -532,7 +531,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			} );
 		</script>
 		<?php
-		// Close off the group divs of the last one
+		// Close off the group divs of the last one.
 		if ( ! empty( $group ) ) {
 			echo '</div></div>';
 		}

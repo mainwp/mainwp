@@ -47,7 +47,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 */
 	public function __construct() {
 
-		// API data
+		// API data.
 	}
 
 
@@ -99,7 +99,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			'extra'              => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
 		);
 
-		// Check for a plugin update
+		// Check for a plugin update.
 		return $this->plugin_information( $args );
 	}
 
@@ -119,7 +119,7 @@ class MainWP_Api_Manager_Plugin_Update {
 			'domain'     => MainWP_Api_Manager::instance()->get_domain(),
 			'extensions' => base64_encode( serialize( $plugins ) ),
 		);
-		return $this->plugin_information( $args, true ); // bulk update check
+		return $this->plugin_information( $args, true ); // bulk update check.
 	}
 
 
@@ -137,7 +137,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		$response = $this->plugin_information( $args );
 
-		// If everything is okay return the $response
+		// If everything is okay return the response.
 		if ( isset( $response ) && is_object( $response ) && $response !== false ) {
 			return $response;
 		}
@@ -171,8 +171,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		if ( $bulk_check ) {
 			$response = wp_remote_retrieve_body( $request );
 			$response = MainWP_Utility::maybe_unserialyze( $response );
-		} else {
-			// $response = unserialize( wp_remote_retrieve_body( $request ) );
+		} else {			
 			$response = MainWP_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
 		}
 
@@ -197,4 +196,4 @@ class MainWP_Api_Manager_Plugin_Update {
 
 }
 
-// End of class
+// End of class.

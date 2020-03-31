@@ -30,13 +30,12 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * @return string $_page Admin Passwords HTML.
 	 */
 	public static function init_menu() {
-		$_page = add_submenu_page(
+		add_submenu_page(
 			'mainwp_tab', __( 'Admin Passwords', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Admin Passwords', 'mainwp' ) . '</div>', 'read', 'UpdateAdminPasswords', array(
 				self::get_class_name(),
 				'render',
 			)
 		);
-		// add_action( 'load-' . $_page, array('MainWP_Bulk_Update_Admin_Passwords', 'on_load_page'));
 	}
 
 	/**
@@ -94,7 +93,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				);
 
 				$dbwebsites = array();
-				if ( $_POST['select_by'] == 'site' ) { // Get all selected websites
+				if ( $_POST['select_by'] == 'site' ) { // Get all selected websites.
 					foreach ( $selected_sites as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$website                    = MainWP_DB::instance()->get_website_by_id( $k );
@@ -114,7 +113,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							);
 						}
 					}
-				} else { // Get all websites from the selected groups
+				} else { // Get all websites from the selected groups.
 					foreach ( $selected_groups as $k ) {
 						if ( MainWP_Utility::ctype_digit( $k ) ) {
 							$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );

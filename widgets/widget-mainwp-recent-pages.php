@@ -88,8 +88,6 @@ class MainWP_Recent_Pages {
 		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
 		$recent_pages_future    = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
 		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
-
-		// MainWP_UI::renderBeginReadyPopup();
 		?>
 
 		<div class="ui grid">

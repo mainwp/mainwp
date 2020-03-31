@@ -233,7 +233,7 @@ class MainWP_Twitter {
 			if ( empty( $countSec ) ) {
 				$countSec = 1;
 			}
-			// store one twitt info only
+			// store one twitt info only.
 			$data = array(
 				$twId => array(
 					'sites'      => $countSites,

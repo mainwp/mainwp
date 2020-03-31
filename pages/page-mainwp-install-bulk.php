@@ -12,31 +12,31 @@ class MainWP_Install_Bulk {
 		return __CLASS__;
 	}
 
-	// Has to be called in System constructor - adds handling for the main page
+	// Has to be called in System constructor - adds handling for the main page.
 	public static function init() {
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 	}
 
-	// Handles the uploading of a file
+	// Handles the uploading of a file.
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
 			if ( $_REQUEST['mainwp_do'] == 'MainWP_Install_Bulk-uploadfile' ) {
-				// list of valid extensions, ex. array("jpeg", "xml", "bmp")
-				$allowedExtensions = array( 'zip' ); // Only zip allowed
-				// max file size in bytes
-				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed
+				// list of valid extensions, ex. array("jpeg", "xml", "bmp").
+				$allowedExtensions = array( 'zip' ); // Only zip allowed.
+				// max file size in bytes.
+				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
 
 				$uploader = new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
 				$path     = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
 
 				$result = $uploader->handle_upload( $path, true );
-				// to pass data through iframe you will need to encode all html tags
+				// to pass data through iframe you will need to encode all html tags.
 				die( htmlspecialchars( wp_json_encode( $result ), ENT_NOQUOTES ) );
 			}
 		}
 	}
 
-	// Renders the upload sub part
+	// Renders the upload sub part.
 	public static function render_upload( $type ) {
 		$title             = ( $type == 'plugin' ) ? 'Plugins' : 'Themes';
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
@@ -63,7 +63,7 @@ class MainWP_Install_Bulk {
 							element: document.getElementById( 'mainwp-file-uploader' ),
 							action: location.href,
 							<?php
-							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type ); // support mainwp favorites extension
+							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type ); // support mainwp favorites extension.
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
 							if ( $extraOptions != '' ) {
@@ -74,8 +74,8 @@ class MainWP_Install_Bulk {
 						} );
 					}
 
-					// in your app create uploader as soon as the DOM is ready
-					// don't wait for the window to load
+					// in your app create uploader as soon as the DOM is ready.
+					// don't wait for the window to load.
 					createUploader();
 				</script>
 			</div>
@@ -118,7 +118,7 @@ class MainWP_Install_Bulk {
 		$output['sites'] = array();
 
 		if ( $_POST['selected_by'] == 'site' ) {
-			// Get sites
+			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -134,7 +134,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
-			// Get sites from group
+			// Get sites from group.
 			foreach ( $_POST['selected_groups'] as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
@@ -185,10 +185,10 @@ class MainWP_Install_Bulk {
 			$post_data['overwrite'] = true;
 		}
 
-		// deprecated from 3.5.6
+		// deprecated from 3.5.6.
 		self::addition_post_data( $post_data );
 
-		// hook to support addition data: wpadmin_user, wpadmin_passwd
+		// hook to support addition data: wpadmin_user, wpadmin_passwd.
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
 		$post_data['url'] = wp_json_encode( $_POST['url'] );
@@ -211,7 +211,7 @@ class MainWP_Install_Bulk {
 		$output          = array();
 		$output['sites'] = array();
 		if ( $_POST['selected_by'] == 'site' ) {
-			// Get sites
+			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -227,7 +227,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
-			// Get sites from group
+			// Get sites from group.
 			foreach ( $_POST['selected_groups'] as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
@@ -264,7 +264,7 @@ class MainWP_Install_Bulk {
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
 
-		// Fetch info..
+		// Fetch info.
 		$post_data = array(
 			'type' => $_POST['type'],
 		);
@@ -275,10 +275,10 @@ class MainWP_Install_Bulk {
 			$post_data['overwrite'] = true;
 		}
 
-		// deprecated from 3.5.6
+		// deprecated from 3.5.6.
 		self::addition_post_data( $post_data );
 
-		// hook to support addition data: wpadmin_user, wpadmin_passwd
+		// hook to support addition data: wpadmin_user, wpadmin_passwd.
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
 		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );

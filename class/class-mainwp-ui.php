@@ -56,7 +56,7 @@ class MainWP_UI {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$groups   = MainWP_DB::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
-		// support staging extension
+		// support staging extension.
 		$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' ) || apply_filters( 'mainwp-extension-available-check', 'mainwp-timecapsule-extension' );
 
 		$edit_site_id = false;
@@ -68,7 +68,7 @@ class MainWP_UI {
 		if ( $edit_site_id ) {
 			$show_group = false;
 		}
-		// to fix layout with multi sites selector
+		// to fix layout with multi sites selector.
 		$tab_id = rand();
 		?>
 
@@ -545,8 +545,8 @@ class MainWP_UI {
 		<?php
 	}
 
-	// customize WordPress add_meta_box() function
-	// param $context: lef, right
+	// customize WordPress add_meta_box() function.
+	// param $context: lef, right.
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) {
 		global $mainwp_widget_boxes;
 
@@ -582,7 +582,7 @@ class MainWP_UI {
 					continue;
 				}
 
-				// If box previously deleted, don't add
+				// If box previously deleted, don't add.
 				if ( false === $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
 					return;
 				}
@@ -624,7 +624,7 @@ class MainWP_UI {
 		);
 	}
 
-	// customize WordPress do_meta_boxes() function
+	// customize WordPress do_meta_boxes() function.
 	public static function do_widget_boxes( $screen, $context = null, $object = '' ) {
 		global $mainwp_widget_boxes;
 		static $already_sorted = false;
@@ -645,7 +645,7 @@ class MainWP_UI {
 			$context = 'right';
 		}
 		$sorted = get_user_option( 'mainwp_widgets_sorted_' . $page );
-		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose
+		// Grab the ones the user has manually sorted. Pull them out of their previous context/priority and into the one the user chose.
 		if ( ! $already_sorted && $sorted ) {
 			foreach ( explode( ',', $sorted ) as $val ) {
 				list( $widget_context, $id ) = explode( ':', $val );
@@ -669,7 +669,7 @@ class MainWP_UI {
 							continue;
 						}
 
-						// to avoid hidden widgets
+						// to avoid hidden widgets.
 						if ( in_array( $box['id'], $hide_widgets ) ) {
 							continue;
 						}

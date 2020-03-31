@@ -118,7 +118,7 @@ class MainWP_Post {
 		), MAINWP_VERSION, true );
 
 		$_post = get_post( $post_id );
-		// phpcs:ignore -- required for custom bulk posts/pages and support hooks
+		// phpcs:ignore -- required for custom bulk posts/pages and support hooks.
 		$GLOBALS['post'] = $_post;
 	}
 
@@ -1090,7 +1090,7 @@ class MainWP_Post {
 			HAVING meta_key NOT LIKE %s
 			ORDER BY meta_key
 			LIMIT %d";
-			// phpcs:ignore -- unprepared SQL ok
+			// phpcs:ignore -- unprepared SQL ok.
 			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) );
 		}
 
@@ -2324,7 +2324,7 @@ class MainWP_Post {
 		} else {
 			$ret = self::new_post( $information['my_post'] );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
-				// to support edit post
+				// to support edit post.
 				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
@@ -2391,7 +2391,7 @@ class MainWP_Post {
 						$new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
 					}
 				} catch ( Exception $e ) {
-					// ok
+					// ok.
 				}
 			}
 		}
@@ -2408,7 +2408,7 @@ class MainWP_Post {
 									$replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
 								}
 							} catch ( Exception $e ) {
-								// ok
+								// ok.
 							}
 						}
 					}
@@ -2488,7 +2488,7 @@ class MainWP_Post {
 					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
 				}
 			} catch ( Exception $e ) {
-				// ok
+				// ok.
 			}
 		}
 

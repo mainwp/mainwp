@@ -129,7 +129,7 @@ class MainWP_Child_Scan {
 			$usersfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 
 			if ( ! $usersfound ) {
-				// fallback to plugin search
+				// fallback to plugin search.
 				$post_data = array(
 					'keyword' => 'WordPress admin security',
 				);

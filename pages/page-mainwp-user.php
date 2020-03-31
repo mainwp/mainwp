@@ -735,7 +735,7 @@ class MainWP_User {
 			)
 		);
 
-		// Sort if required
+		// Sort if required.
 
 		if ( 0 == $output->users ) {
 			ob_start();

@@ -1334,7 +1334,7 @@ class MainWP_Manage_Sites_View {
 			<h3 class="ui dividing header"><?php esc_html_e( 'Basic Security Check', 'mainwp' ); ?></h3>
 
 			<?php
-			// Recnder security check issues
+			// Recnder security check issues.
 			$websiteid = isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ? $_GET['scanid'] : null;
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
@@ -1346,7 +1346,7 @@ class MainWP_Manage_Sites_View {
 			?>
 
 			<?php
-			// Hook in MainWP Sucuri Extension
+			// Hook in MainWP Sucuri Extension.
 			if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
 					do_action( 'mainwp-sucuriscan-sites', $website );
@@ -1355,7 +1355,7 @@ class MainWP_Manage_Sites_View {
 			?>
 
 			<?php
-			// Hook in MainWP Wordfence Extension
+			// Hook in MainWP Wordfence Extension.
 			if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
 					do_action( 'mainwp-wordfence-sites', $website );

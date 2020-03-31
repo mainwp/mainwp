@@ -138,7 +138,7 @@ class MainWP_Api_Manager_Key {
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
+			// Request failed.
 			return false;
 		}
 
@@ -176,7 +176,7 @@ class MainWP_Api_Manager_Key {
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
+			// Request failed.
 			return false;
 		}
 
@@ -269,7 +269,7 @@ class MainWP_Api_Manager_Key {
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
+			// Request failed.
 			return false;
 		}
 
@@ -302,7 +302,7 @@ class MainWP_Api_Manager_Key {
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
-			// Request failed
+			// Request failed.
 			return false;
 		}
 

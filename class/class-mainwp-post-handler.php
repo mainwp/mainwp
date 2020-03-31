@@ -20,7 +20,7 @@ class MainWP_Post_Handler {
 	}
 
 	public function init() {
-		// Page: ManageBackups
+		// Page: ManageBackups.
 		$this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
 		if ( mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
 			$this->add_action( 'mainwp_updatebackup', array( &$this, 'mainwp_updatebackup' ) );
@@ -31,14 +31,14 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
 		$this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
 
-		$this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) ); // ok
+		$this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) ); // ok.
 
 		if ( mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
 			$this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
 		}
 		$this->add_action( 'mainwp_backup_upload_file', array( &$this, 'mainwp_backup_upload_file' ) );
 
-		// Page: ManageSites
+		// Page: ManageSites.
 		$this->add_action( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->add_action( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
 		$this->add_action( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
@@ -52,22 +52,22 @@ class MainWP_Post_Handler {
 
 		$this->add_action( 'mainwp_removesite', array( &$this, 'mainwp_removesite' ) );
 		$this->add_action( 'mainwp_notes_save', array( &$this, 'mainwp_notes_save' ) );
-		$this->add_action( 'mainwp_reconnectwp', array( &$this, 'mainwp_reconnectwp' ) ); // ok
-		$this->add_action( 'mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) ); // ok
-		// Page: ManageGroups
+		$this->add_action( 'mainwp_reconnectwp', array( &$this, 'mainwp_reconnectwp' ) ); // ok.
+		$this->add_action( 'mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) ); // ok.
+		// Page: ManageGroups.
 		$this->add_action( 'mainwp_group_rename', array( &$this, 'mainwp_group_rename' ) );
-		$this->add_action( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) ); // ok
+		$this->add_action( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) ); // ok.
 		$this->add_action( 'mainwp_group_add', array( &$this, 'mainwp_group_add' ) );
-		$this->add_action( 'mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) ); // ok
+		$this->add_action( 'mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) ); // ok.
 		$this->add_action( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
 
-		// Page: InstallPlugins/Themes
+		// Page: InstallPlugins/Themes.
 		$this->add_action(
 			'mainwp_preparebulkinstallplugintheme', array(
 				&$this,
 				'mainwp_preparebulkinstallplugintheme',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_installbulkinstallplugintheme', array(
 				&$this,
@@ -79,7 +79,7 @@ class MainWP_Post_Handler {
 				&$this,
 				'mainwp_preparebulkuploadplugintheme',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_installbulkuploadplugintheme', array(
 				&$this,
@@ -88,52 +88,52 @@ class MainWP_Post_Handler {
 		);
 		$this->add_action( 'mainwp_cleanbulkuploadplugintheme', array( &$this, 'mainwp_cleanbulkuploadplugintheme' ) );
 
-		// Page: BulkAddUser
+		// Page: BulkAddUser.
 		$this->add_action( 'mainwp_bulkadduser', array( &$this, 'mainwp_bulkadduser' ) );
 		$this->add_action( 'mainwp_importuser', array( &$this, 'mainwp_importuser' ) );
 
-		// Widget: RightNow
+		// Widget: RightNow.
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 		$this->add_action( 'mainwp_upgradewp', array( &$this, 'mainwp_upgradewp' ) );
 		$this->add_action( 'mainwp_upgradeplugintheme', array( &$this, 'mainwp_upgrade_plugintheme' ) );
-		$this->add_action( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); // ok
-		$this->add_action( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); // ok
-		$this->add_action( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); // ok
+		$this->add_action( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); // ok.
+		$this->add_action( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); // ok.
+		$this->add_action( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); // ok.
 		$this->add_action(
 			'mainwp_unignorepluginsthemes', array(
 				&$this,
 				'mainwp_unignorepluginsthemes',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_unignoreabandonedplugintheme', array(
 				&$this,
 				'mainwp_unignoreabandonedplugintheme',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_unignoreabandonedpluginsthemes', array(
 				&$this,
 				'mainwp_unignoreabandonedpluginsthemes',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_dismissoutdateplugintheme', array(
 				&$this,
 				'mainwp_dismissoutdateplugintheme',
 			)
-		); // ok
+		); // ok.
 		$this->add_action(
 			'mainwp_dismissoutdatepluginsthemes', array(
 				&$this,
 				'mainwp_dismissoutdatepluginsthemes',
 			)
-		); // ok
+		); // ok.
 		$this->add_action( 'mainwp_trust_plugin', array( &$this, 'mainwp_trust_plugin' ) );
 		$this->add_action( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
 		$this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
 		$this->add_action( 'mainwp_syncerrors_dismiss', array( &$this, 'mainwp_syncerrors_dismiss' ) );
-		// Page: backup
+		// Page: backup.
 		if ( mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
 			$this->add_action( 'mainwp_backup_run_site', array( &$this, 'mainwp_backup_run_site' ) );
 		}
@@ -149,10 +149,10 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
 
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
-			// Page: SecurityIssues
-			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) ); // ok
-			$this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) ); // ok
-			$this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) ); // ok
+			// Page: SecurityIssues.
+			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) ); // ok.
+			$this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) ); // ok.
+			$this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) ); // ok.
 		}
 
 		$this->add_action( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
@@ -168,9 +168,9 @@ class MainWP_Post_Handler {
 				&$this,
 				'mainwp_twitter_dashboard_action',
 			)
-		); // ok
+		); // ok.
 
-		// Page: Recent Posts
+		// Page: Recent Posts.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
 			$this->add_action( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
 			$this->add_action( 'mainwp_post_publish', array( &$this, 'mainwp_post_publish' ) );
@@ -180,7 +180,7 @@ class MainWP_Post_Handler {
 			$this->add_action( 'mainwp_post_approve', array( &$this, 'mainwp_post_approve' ) );
 		}
 		$this->add_action( 'mainwp_post_addmeta', array( MainWP_Post::get_class_name(), 'ajax_add_meta' ) );
-		// Page: Pages
+		// Page: Pages.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			$this->add_action( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
 			$this->add_action( 'mainwp_page_publish', array( &$this, 'mainwp_page_publish' ) );
@@ -188,23 +188,23 @@ class MainWP_Post_Handler {
 			$this->add_action( 'mainwp_page_delete', array( &$this, 'mainwp_page_delete' ) );
 			$this->add_action( 'mainwp_page_restore', array( &$this, 'mainwp_page_restore' ) );
 		}
-		// Page: Users
+		// Page: Users.
 		$this->add_action( 'mainwp_user_delete', array( &$this, 'mainwp_user_delete' ) );
 		$this->add_action( 'mainwp_user_edit', array( &$this, 'mainwp_user_edit' ) );
 		$this->add_action( 'mainwp_user_update_password', array( &$this, 'mainwp_user_update_password' ) );
 		$this->add_action( 'mainwp_user_update_user', array( &$this, 'mainwp_user_update_user' ) );
 
-		// Page: Posts
-		$this->add_action( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); // ok
-		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); // ok
+		// Page: Posts.
+		$this->add_action( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); // ok.
+		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); // ok.
 		$this->add_action( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 
-		// Page: Pages
-		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); // ok
-		// Page: User
+		// Page: Pages.
+		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); // ok.
+		// Page: User.
 		$this->add_action( 'mainwp_users_search', array( &$this, 'mainwp_users_search' ) );
 
-		// Page: Themes
+		// Page: Themes.
 		$this->add_action( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
 		$this->add_action( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
 		if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) {
@@ -218,7 +218,7 @@ class MainWP_Post_Handler {
 			$this->add_action( 'mainwp_theme_ignore_updates', array( &$this, 'mainwp_theme_ignore_updates' ) );
 		}
 
-		// Page: Plugins
+		// Page: Plugins.
 		$this->add_action( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
 		$this->add_action( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
 
@@ -235,12 +235,12 @@ class MainWP_Post_Handler {
 		}
 		$this->add_action( 'mainwp_trusted_plugin_notes_save', array( &$this, 'mainwp_trusted_plugin_notes_save' ) );
 
-		// Widget: Plugins
+		// Widget: Plugins.
 		$this->add_action( 'mainwp_widget_plugin_activate', array( &$this, 'mainwp_widget_plugin_activate' ) );
 		$this->add_action( 'mainwp_widget_plugin_deactivate', array( &$this, 'mainwp_widget_plugin_deactivate' ) );
 		$this->add_action( 'mainwp_widget_plugin_delete', array( &$this, 'mainwp_widget_plugin_delete' ) );
 
-		// Widget: Themes
+		// Widget: Themes.
 		$this->add_action( 'mainwp_widget_theme_activate', array( &$this, 'mainwp_widget_theme_activate' ) );
 		$this->add_action( 'mainwp_widget_theme_delete', array( &$this, 'mainwp_widget_theme_delete' ) );
 
@@ -259,7 +259,7 @@ class MainWP_Post_Handler {
 
 		MainWP_Extensions::init_ajax_handlers();
 
-		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); // ok
+		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); // ok.
 	}
 
 	public function mainwp_childscan() {
@@ -270,7 +270,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	// Hide the installation warning
+	// Hide the installation warning.
 	public function mainwp_installation_warning_hide() {
 		$this->secure_request( 'mainwp_installation_warning_hide' );
 
@@ -443,7 +443,7 @@ class MainWP_Post_Handler {
 
 	public function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
-		MainWP_Post::get_post(); // to edit
+		MainWP_Post::get_post(); // to edit.
 		die();
 	}
 
@@ -561,7 +561,7 @@ class MainWP_Post_Handler {
 		MainWP_Page::restore();
 	}
 
-	// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
+	// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
@@ -877,7 +877,7 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			wp_send_json( MainWP_Manage_Sites::backup_check_pid( $_POST['site_id'], $_POST['pid'], $_POST['type'], ( isset($_POST['subfolder']) ? $_POST['subfolder'] : '' ), $_POST['filename'] )  );
+			wp_send_json( MainWP_Manage_Sites::backup_check_pid( $_POST[ 'site_id' ], $_POST[ 'pid' ], $_POST[ 'type' ], ( isset( $_POST[ 'subfolder' ] ) ? $_POST[ 'subfolder' ] : '' ), $_POST[ 'filename' ] ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -1026,7 +1026,7 @@ class MainWP_Post_Handler {
 					)
 				);
 			} else {
-				if ( $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes
+				if ( $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
 					die(
 						wp_json_encode(
 							array(
@@ -1177,21 +1177,21 @@ class MainWP_Post_Handler {
 	 * Page: ManageBackups
 	 */
 
-	// Add task to the database
+	// Add task to the database.
 	public function mainwp_addbackup() {
 		$this->secure_request( 'mainwp_addbackup' );
 
 		MainWP_Manage_Backups::add_backup();
 	}
 
-	// Update task
+	// Update task.
 	public function mainwp_updatebackup() {
 		$this->secure_request( 'mainwp_updatebackup' );
 
 		MainWP_Manage_Backups::update_backup();
 	}
 
-	// Remove a task from MainWP
+	// Remove a task from MainWP.
 	public function mainwp_removebackup() {
 		$this->secure_request( 'mainwp_removebackup' );
 
@@ -1266,7 +1266,7 @@ class MainWP_Post_Handler {
 	 * Page: ManageSites
 	 */
 
-	// Check if WP can be added
+	// Check if WP can be added.
 	public function mainwp_checkwp() {
 		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
 			MainWP_Manage_Sites::check_site();
@@ -1275,7 +1275,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
-	// Add WP to the database
+	// Add WP to the database.
 	public function mainwp_addwp() {
 		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
 			MainWP_Manage_Sites::add_site();
@@ -1373,7 +1373,7 @@ class MainWP_Post_Handler {
 		wp_send_json( $rslt );
 	}
 
-	// Remove a website from MainWP
+	// Remove a website from MainWP.
 	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
@@ -1384,7 +1384,7 @@ class MainWP_Post_Handler {
 		MainWP_Manage_Sites::remove_site();
 	}
 
-	// Save note
+	// Save note.
 	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );
 
@@ -1413,7 +1413,7 @@ class MainWP_Post_Handler {
 		MainWP_Updates_Overview::sync_site();
 	}
 
-	// Update a specific WP
+	// Update a specific WP.
 	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
@@ -1426,7 +1426,7 @@ class MainWP_Post_Handler {
 			if ( isset( $_POST['id'] ) ) {
 				$id = $_POST['id'];
 			}
-			die( wp_json_encode( array( 'result' => MainWP_Updates::upgrade_site( $id ) ) ) ); // ok
+			die( wp_json_encode( array( 'result' => MainWP_Updates::upgrade_site( $id ) ) ) ); // ok.
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -1461,7 +1461,7 @@ class MainWP_Post_Handler {
 
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
 
-		// at the moment: support chunk update for manage sites page only
+		// at the moment: support chunk update for manage sites page only.
 		$chunk_support = isset( $_POST['chunk_support'] ) && $_POST['chunk_support'] ? true : false;
 		$max_update    = 0;
 		$websiteId     = null;
@@ -1473,12 +1473,12 @@ class MainWP_Post_Handler {
 			if ( $chunk_support ) {
 				$max_update = apply_filters('mainwp_update_plugintheme_max', false, $websiteId );
 				if ( empty( $max_update ) ) {
-					$chunk_support = false; // there is not hook so disable chunk update support
+					$chunk_support = false; // there is not hook so disable chunk update support.
 				}
 			}
 			if ( $chunk_support ) {
 				if ( isset( $_POST['chunk_slugs'] ) ) {
-					$slugs = $_POST['chunk_slugs'];  // chunk slugs send so use this
+					$slugs = $_POST['chunk_slugs'];  // chunk slugs send so use this.
 				} else {
 					$slugs = MainWP_Updates::get_plugin_theme_slugs( $websiteId, $_POST['type'] );
 				}
@@ -1496,7 +1496,7 @@ class MainWP_Post_Handler {
 		$chunk_slugs = array();
 
 		if ( $chunk_support ) {
-			// calculate update slugs here
+			// calculate update slugs here.
 			if ( $max_update ) {
 				$slugs        = explode( ',', $slugs );
 				$chunk_slugs  = array_slice( $slugs, $max_update );
@@ -1549,7 +1549,7 @@ class MainWP_Post_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates::unignore_abandoned_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok
+		die( wp_json_encode( array( 'result' => MainWP_Updates::unignore_abandoned_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok.
 	}
 
 	public function mainwp_unignoreabandonedpluginsthemes() {

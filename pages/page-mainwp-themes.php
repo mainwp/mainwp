@@ -1,4 +1,7 @@
 <?php
+/**
+ * This File handles the Themes SubPage. 
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -7,12 +10,24 @@ namespace MainWP\Dashboard;
  * @uses MainWP_Install_Bulk
  */
 class MainWP_Themes {
+
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var $subPages Array of SubPages.
+	 */
 	public static $subPages;
-
+	
+	/**
+	 * Fire on the initialization of WordPress.
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Themes page header via the 'mainwp-pageheader-themes' action.
@@ -37,10 +52,13 @@ class MainWP_Themes {
 		 * @see \MainWP_Themes::render_footer
 		 */
 		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'render_footer' ) );
-
+		
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/**
+	 * Initiate the MainWP Themes SubMenu Page.
+	 */
 	public static function init_menu() {
 
 		$_page = add_submenu_page(
@@ -117,6 +135,9 @@ class MainWP_Themes {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/**
+	 * Themes Subpage Menu HTML Content.
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Themes" class="mainwp-submenu-wrapper">
@@ -158,6 +179,11 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * Build arrays for each SubPage Menu Block.
+	 * 
+	 * @param array $subPages Array of SubPages.
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -219,6 +245,8 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Render Themes SubPage Header.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -282,12 +310,16 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Close the page container.
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/** 
+	 * Render the Theme SubPage content.
+	 */
 	public static function render() {
 		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
 		$selected_sites  = array();
@@ -384,6 +416,9 @@ class MainWP_Themes {
 		self::render_footer( 'Manage' );
 	}
 
+	/**
+	 * Render the Search Options Meta Box. 
+	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
@@ -418,7 +453,17 @@ class MainWP_Themes {
 			<?php
 		}
 	}
-
+	
+	/**
+	 * Render the Child Sites Bulk action & Sidebar Meta boxes. 
+	 * 
+	 * @param mixed $keyword
+	 * @param mixed $status
+	 * @param mixed $groups
+	 * @param mixed $sites
+	 * 
+	 * @return mixed $result Errors|HTML
+	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Themes' );
 
@@ -719,7 +764,16 @@ class MainWP_Themes {
 			MainWP_Cache::add_result( 'Themes', $result );
 			return $result;
 	}
-
+	
+	/**
+	 * Theme Search Handler.
+	 * 
+	 * @param mixed $data
+	 * @param mixed $website
+	 * @param mixed $output
+	 * 
+	 * @return mixed Exception|Theme
+	 */
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -746,16 +800,30 @@ class MainWP_Themes {
 		}
 	}
 
+	/**
+	 * Activate the selected theme.
+	 */
 	public static function activate_theme() {
 		self::action( 'activate', $_POST['theme'] );
 		die( 'SUCCESS' );
 	}
 
+	/**
+	 * Delete the selected theme.
+	 */
 	public static function delete_themes() {
 		self::action( 'delete', implode( '||', $_POST['themes'] ) );
 		die( 'SUCCESS' );
 	}
 
+	/**
+	 * Checks to see if Theme exists, current user can edit settings, check for any errors.
+	 * 
+	 * @param mixed $pAction Action to perform.
+	 * @param mixed $theme Theme to perform action on.
+	 * 
+	 * @return boolean True|Fail This will either return 'True' or 'FAIL'.
+	 */
 	public static function action( $pAction, $theme ) {
 		$websiteIdEnc = $_POST['websiteId'];
 
@@ -793,6 +861,9 @@ class MainWP_Themes {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
+	/**
+	 * Check to see if Theme is on the Ignore List.
+	 */
 	public static function ignore_updates() {
 		$websiteIdEnc = $_POST['websiteId'];
 
@@ -829,6 +900,7 @@ class MainWP_Themes {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
+	/** Render the Install Themes Tab. */
 	public static function render_install() {
 		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION, true );
 		wp_localize_script(
@@ -862,6 +934,7 @@ class MainWP_Themes {
 		self::render_footer( 'Install' );
 	}
 
+	/** Redner the Themes table for the Install Themes Tab. */
 	public static function render_themes_table() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
 			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
@@ -1026,10 +1099,12 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/** Perform a Theme Search on the WP Theme Repository. */
 	public static function perform_search() {
 		MainWP_Install_Bulk::perform_search( self::get_class_name(), 'Themes' );
 	}
 
+	/** Render the Themes Auto Update Tab. */
 	public static function render_auto_update() {
 
 		$cachedThemesSearch = null;
@@ -1144,6 +1219,11 @@ class MainWP_Themes {
 		self::render_footer( 'AutoUpdate' );
 	}
 
+	/**
+	 * Render the All Themes Table.
+	 * 
+	 * @param null $output
+	 */
 	public static function render_all_themes_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
@@ -1348,6 +1428,7 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/** Render the Themes Ignored Updates Tab. */
 	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
@@ -1490,6 +1571,7 @@ class MainWP_Themes {
 		self::render_footer( 'Ignore' );
 	}
 
+	/** Render the Themes Ignored/Abandoned Tab */
 	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
@@ -1620,6 +1702,7 @@ class MainWP_Themes {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
+	/** This is the Bulk Method to Trust A Theme. */
 	public static function trust_post() {
 		$userExtension = MainWP_DB::instance()->get_user_extension();
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
@@ -1652,6 +1735,7 @@ class MainWP_Themes {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
+	/** This Method Saves a Trusted theme note. */
 	public static function save_trusted_theme_note() {
 		$slug               = urldecode( $_POST['slug'] );
 		$note               = stripslashes( $_POST['note'] );
@@ -1666,9 +1750,7 @@ class MainWP_Themes {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
-	/*
-	 * Hook the section help content to the Help Sidebar element
-	 */
+	/** Hook the section help content to the Help Sidebar element */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'ThemesManage' === $_GET['page'] || 'ThemesInstall' === $_GET['page'] || 'ThemesAutoUpdate' === $_GET['page'] || 'ThemesIgnore' === $_GET['page'] || 'ThemesIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>

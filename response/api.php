@@ -1,12 +1,11 @@
 <?php
 namespace MainWP\Dashboard;
-
 /**
  * MainWP Client Live Report Responder
  *
  * Legacy Client Reports Extension.
  *
- * @Depriciated moved to external Extension
+ * @deprecated moved to external Extension ( unprepared SQL ok )
  * @see MainWP-Client-Reports-Extension
  */
 

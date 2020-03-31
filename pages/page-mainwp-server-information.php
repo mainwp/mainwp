@@ -18,14 +18,24 @@ class MainWP_Server_Information {
 
 	public static function init_menu() {
 		add_submenu_page(
-			'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
+			'mainwp_tab',
+			__( 'Server Information', 'mainwp' ),
+			' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>',
+			'read',
+			'ServerInformation',
+			array(
 				self::get_class_name(),
 				'render',
 			)
 		);
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
 			add_submenu_page(
-				'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
+				'mainwp_tab',
+				__( 'Cron Schedules', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>',
+				'read',
+				'ServerInformationCron',
+				array(
 					self::get_class_name(),
 					'render_cron',
 				)
@@ -34,7 +44,12 @@ class MainWP_Server_Information {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
 			add_submenu_page(
-				'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
+				'mainwp_tab',
+				__( 'Error Log', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>',
+				'read',
+				'ErrorLog',
+				array(
 					self::get_class_name(),
 					'render_error_log_page',
 				)
@@ -42,7 +57,12 @@ class MainWP_Server_Information {
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
 			add_submenu_page(
-				'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
+				'mainwp_tab',
+				__( 'WP-Config File', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>',
+				'read',
+				'WPConfig',
+				array(
 					self::get_class_name(),
 					'render_wp_config',
 				)
@@ -51,7 +71,12 @@ class MainWP_Server_Information {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
 			if ( self::is_apache_server_software() ) {
 				add_submenu_page(
-					'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
+					'mainwp_tab',
+					__( '.htaccess File', 'mainwp' ),
+					'<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>',
+					'read',
+					'.htaccess',
+					array(
 						self::get_class_name(),
 						'render_htaccess',
 					)
@@ -60,7 +85,12 @@ class MainWP_Server_Information {
 		}
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
 			add_submenu_page(
-				'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
+				'mainwp_tab',
+				__( 'Action logs', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>',
+				'read',
+				'ActionLogs',
+				array(
 					self::get_class_name(),
 					'render_action_logs',
 				)
@@ -131,7 +161,8 @@ class MainWP_Server_Information {
 				'slug'       => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
 				'icon'       => '<i class="server icon"></i>',
-			), 1
+			),
+			1
 		);
 
 		global $_mainwp_menu_active_slugs;
@@ -333,10 +364,19 @@ class MainWP_Server_Information {
 					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
 						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
-						self::render_row( 'cURL SSL Version', '>=', array(
-							'version_number' => 0x009080cf,
-							'version'        => 'OpenSSL/0.9.8l',
-						), 'get_curl_ssl_version', '', '', null, 'curlssl' );
+						self::render_row(
+							'cURL SSL Version',
+							'>=',
+							array(
+								'version_number' => 0x009080cf,
+								'version'        => 'OpenSSL/0.9.8l',
+							),
+							'get_curl_ssl_version',
+							'',
+							'',
+							null,
+							'curlssl'
+						);
 					}
 					?>
 					<tr>
@@ -551,7 +591,8 @@ class MainWP_Server_Information {
 		}
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 		$api = plugins_api(
-			'plugin_information', array(
+			'plugin_information',
+			array(
 				'slug'       => 'mainwp',
 				'fields'     => array( 'sections' => false ),
 				'timeout'    => 60,
@@ -648,7 +689,7 @@ class MainWP_Server_Information {
 		self::render_footer( 'ServerInformationCron' );
 	}
 
-	/*
+	/**
 	 * Check if the ../wp-content/uploads/mainwp/ directory is writable
 	 */
 
@@ -677,7 +718,9 @@ class MainWP_Server_Information {
 		return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
 	}
 
-	// Print the directory check row.
+	/**
+	 * Print the directory check row.
+	 */
 	public static function render_directory_row( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
 		?>
 		<tr>
@@ -730,7 +773,6 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	// Check if the Dashboard site is Multisite setup.
 	public static function check_if_multisite() {
 		$isMultisite = ! is_multisite() ? true : false;
 
@@ -739,11 +781,18 @@ class MainWP_Server_Information {
 
 	public static function check_curl_ssl_info() {
 		$isSupport = ( self::get_curl_support() && self::get_ssl_support() ) ? true : false;
-		$checkCURL = version_compare( self::get_curl_version(), '7.18.1', '>=' );
-		$checkSSL  = self::curlssl_compare( array(
-			'version_number' => 0x009080cf,
-			'version'        => 'OpenSSL/0.9.8l',
-		), '>=' );
+		$checkCURL = version_compare(
+			self::get_curl_version(),
+			'7.18.1',
+			'>='
+		);
+		$checkSSL  = self::curlssl_compare(
+			array(
+				'version_number' => 0x009080cf,
+				'version'        => 'OpenSSL/0.9.8l',
+			),
+			'>='
+		);
 
 		return $isSupport && $checkSSL && $checkCURL;
 	}
@@ -1256,19 +1305,13 @@ class MainWP_Server_Information {
 	}
 
 	public static function last_lines( $path, $line_count, $block_size = 512 ) {
-		$lines = array();
-
-		// we will always have a fragment of a non-complete line.
-		// keep this in here till we have our next entire line.
+		$lines    = array();
 		$leftover = '';
+		$fh       = fopen( $path, 'r' );
 
-		$fh = fopen( $path, 'r' );
-		// go to the end of the file.
 		fseek( $fh, 0, SEEK_END );
 
 		do {
-			// need to know whether we can actually go back.
-			// $block_size bytes.
 			$can_read = $block_size;
 
 			if ( ftell( $fh ) <= $block_size ) {
@@ -1279,18 +1322,11 @@ class MainWP_Server_Information {
 				break;
 			}
 
-			// go back as many bytes as we can.
-			// read them to $data and then move the file pointer.
-			// back to where we were.
 			fseek( $fh, - $can_read, SEEK_CUR );
 			$data  = fread( $fh, $can_read );
 			$data .= $leftover;
 			fseek( $fh, - $can_read, SEEK_CUR );
 
-			// split lines by \n. Then reverse them,
-			// now the last line is most likely not a complete
-			// line which is why we do not directly add it, but
-			// append it to the data read the next time.
 			$split_data = array_reverse( explode( "\n", $data ) );
 			$new_lines  = array_slice( $split_data, 0, - 1 );
 			$lines      = array_merge( $lines, $new_lines );
@@ -1304,7 +1340,6 @@ class MainWP_Server_Information {
 
 		fclose( $fh );
 
-		// Usually, we will read too many lines, correct that here.
 		return array_slice( $lines, 0, $line_count );
 	}
 
@@ -1358,13 +1393,13 @@ class MainWP_Server_Information {
 		self::render_header( 'Action logs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
-			if ( $_REQUEST['actionlogs_status'] != MainWP_Logger::DISABLED ) {
+			if ( MainWP_Logger::DISABLED != $_REQUEST['actionlogs_status'] ) {
 				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
 			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
 
-			if ( $_REQUEST['actionlogs_status'] == MainWP_Logger::DISABLED ) {
+			if ( MainWP_Logger::DISABLED == $_REQUEST['actionlogs_status'] ) {
 				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
@@ -1388,47 +1423,23 @@ class MainWP_Server_Information {
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					Status:
 					<select name="actionlogs_status">
-						<option value="<?php echo MainWP_Logger::DISABLED; ?>"
-												<?php
-												if ( MainWP_Logger::DISABLED == $enabled ) :
-													echo 'selected';
-		endif;
-												?>
-		>Disabled
+						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Disabled', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::WARNING; ?>"
-												<?php
-												if ( MainWP_Logger::WARNING == $enabled ) :
-													echo 'selected';
-						endif;
-												?>
-						>Warning
+						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Warning', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::INFO; ?>"
-												<?php
-												if ( MainWP_Logger::INFO == $enabled ) :
-													echo 'selected';
-								endif;
-												?>
-								>Info
+						<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Info', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::DEBUG; ?>"
-												<?php
-												if ( MainWP_Logger::DEBUG == $enabled ) :
-													echo 'selected';
-								endif;
-												?>
-								>Debug
+						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
-						 <option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>"
-												<?php
-												if ( MainWP_Logger::INFO_UPDATE == $enabled ) :
-													echo 'selected';
-							endif;
-												?>
-							>Info Update
+						<option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php echo ( MainWP_Logger::INFO_UPDATE == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Info Update', 'mainwp' ); ?>
 						</option>
-					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
+					</select>
+					<input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
 				</form>
 			</div>
 			<div style="padding: 1em;"><?php MainWP_Logger::show_log(); ?></div>

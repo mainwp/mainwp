@@ -39,7 +39,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			'UpdateAdminPasswords',
 			array(
 				self::get_class_name(),
-				'render'
+				'render',
 			)
 		);
 	}
@@ -159,7 +159,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						$post_data,
 						array(
 							MainWP_Bulk_Add::get_class_name(),
-							'posting_bulk_handler'
+							'posting_bulk_handler',
 						),
 						$output
 					);

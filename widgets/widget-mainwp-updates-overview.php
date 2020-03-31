@@ -217,8 +217,8 @@ class MainWP_Updates_Overview {
 				$currentSite = $website;
 			}
 
-			$pluginsIgnoredAbandoned_perSites            = array();
-			$themesIgnoredAbandoned_perSites = array();
+			$pluginsIgnoredAbandoned_perSites = array();
+			$themesIgnoredAbandoned_perSites  = array();
 
 			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
@@ -710,26 +710,26 @@ class MainWP_Updates_Overview {
 
 			<div id="wp_plugin_upgrades">
 				<?php
-					if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
-						foreach ( $all_plugins_updates as $item ) {
-							?>
+				if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
+					foreach ( $all_plugins_updates as $item ) {
+						?>
 						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" plugin_slug="<?php echo esc_html( $item['plugin_slug'] ); ?>" ></div>
 							<?php
-						}
 					}
-					?>
+				}
+				?>
 			</div>
 			<div id="wp_theme_upgrades">
 
 				<?php
-					if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
-						foreach ( $all_themes_updates as $item ) {
-							?>
+				if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
+					foreach ( $all_themes_updates as $item ) {
+						?>
 						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" theme_slug="<?php echo esc_html( $item['theme_slug'] ); ?>" ></div>
 							<?php
-						}
 					}
-					?>
+				}
+				?>
 
 			</div>
 			<?php if ( $mainwp_show_language_updates == 1 ) : ?>

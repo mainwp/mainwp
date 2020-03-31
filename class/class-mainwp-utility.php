@@ -3,8 +3,8 @@
  * MainWP Utility Helper
  *
  * Custom curl functions and PHP filesystem functions.
- * 
- * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions. 
+ *
+ * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
  */
 
 namespace MainWP\Dashboard;
@@ -947,7 +947,7 @@ class MainWP_Utility {
 					}
 				}
 
-				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );				
+				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 				set_time_limit( $timeout );
 
 				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
@@ -1187,7 +1187,7 @@ class MainWP_Utility {
 
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
-			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );			
+			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 			set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1625,7 +1625,7 @@ class MainWP_Utility {
 		}
 
 		$timeout = 20 * 60 * 60;
-		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );		
+		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 		set_time_limit( $timeout );
 
 		self::end_session();

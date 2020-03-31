@@ -60,7 +60,12 @@ class MainWP_Post {
 		}
 
 		add_submenu_page(
-			'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array(
+			'mainwp_tab',
+			'Posting new bulkpost',
+			'<div class="mainwp-hidden">' . __( 'Posts', 'mainwp' ) . '</div>',
+			'read',
+			'PostingBulkPost',
+			array(
 				self::get_class_name(),
 				'posting',
 			)
@@ -109,13 +114,19 @@ class MainWP_Post {
 
 		wp_enqueue_media( array( 'post' => $post_id ) );
 
-		wp_enqueue_script( 'mainwp-post', MAINWP_PLUGIN_URL . 'assets/js/mainwp-post.js', array(
-			'jquery',
-			'postbox',
-			'word-count',
-			'media-views',
-			'mainwp',
-		), MAINWP_VERSION, true );
+		wp_enqueue_script(
+			'mainwp-post',
+			MAINWP_PLUGIN_URL . 'assets/js/mainwp-post.js',
+			array(
+				'jquery',
+				'postbox',
+				'word-count',
+				'media-views',
+				'mainwp',
+			),
+			MAINWP_VERSION,
+			true
+		);
 
 		$_post = get_post( $post_id );
 		// phpcs:ignore -- required for custom bulk posts/pages and support hooks.
@@ -559,12 +570,12 @@ class MainWP_Post {
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
 								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="
-																  <?php
-																	if ( null != $cachedSearch ) {
-																		echo esc_attr( $cachedSearch['dtsstart'] );
-																	}
-																	?>
-																	"/>
+								<?php
+								if ( null != $cachedSearch ) {
+									echo esc_attr( $cachedSearch['dtsstart'] );
+								}
+								?>
+								"/>
 							</div>
 						</div>
 					</div>
@@ -573,12 +584,12 @@ class MainWP_Post {
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
 								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="
-																  <?php
-																	if ( null != $cachedSearch ) {
-																		echo esc_attr( $cachedSearch['dtsstop'] );
-																	}
-																	?>
-																	"/>
+								<?php
+								if ( null != $cachedSearch ) {
+									echo esc_attr( $cachedSearch['dtsstop'] );
+								}
+								?>
+								"/>
 							</div>
 						</div>
 					</div>
@@ -786,7 +797,8 @@ class MainWP_Post {
 			MainWP_Utility::fetch_urls_authed(
 				$dbwebsites,
 				'get_all_posts',
-				$post_data, array(
+				$post_data,
+				array(
 					self::get_class_name(),
 					'posts_search_handler',
 				),
@@ -795,7 +807,8 @@ class MainWP_Post {
 		}
 
 		MainWP_Cache::add_context(
-			'Post', array(
+			'Post',
+			array(
 				'count'      => $output->posts,
 				'keyword'    => $keyword,
 				'dtsstart'   => $dtsstart,
@@ -893,11 +906,11 @@ class MainWP_Post {
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
 									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
-										 <?php echo esc_html( $post['title'] ); ?>
+										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
 							} else {
-								 echo esc_html( $post['title'] );
+								echo esc_html( $post['title'] );
 							}
 							?>
 							</abbr>
@@ -1223,7 +1236,8 @@ class MainWP_Post {
 
 				$set_thumbnail_link = '<p class="hide-if-no-js"><div class="field"><a href="%s" id="set-post-thumbnail"%s class="thickbox">%s</a></div></p>';
 				$content            = '<div class="ui setment">';
-				$content           .= sprintf( $set_thumbnail_link,
+				$content           .= sprintf(
+					$set_thumbnail_link,
 					esc_url( $upload_iframe_src ),
 					' aria-describedby="set-post-thumbnail-desc"',
 					$thumbnail_html
@@ -1236,7 +1250,8 @@ class MainWP_Post {
 
 		if ( ! $thumb_ok ) {
 			$set_thumbnail_link = '<p class="hide-if-no-js"><div class="field"><a href="%s" class="ui button fluid mini" id="set-post-thumbnail"%s class="thickbox">%s</a></div></p>';
-			$content            = sprintf( $set_thumbnail_link,
+			$content            = sprintf(
+				$set_thumbnail_link,
 				esc_url( $upload_iframe_src ),
 				'',
 				esc_html( $post_type_object->labels->set_featured_image )
@@ -1504,7 +1519,7 @@ class MainWP_Post {
 				<input type="hidden" id="originalaction" name="originalaction" value="<?php echo esc_attr( $form_action ); ?>" />
 				<input type="hidden" id="post_author" name="post_author" value="<?php echo esc_attr( $post->post_author ); ?>" />
 				<input type="hidden" id="post_type" name="post_type" value="<?php echo esc_attr( $post_type ); ?>" />
-				<input type="hidden" id="original_post_status" name="original_post_status" value="<?php echo esc_attr( $post->post_status); ?>" />
+				<input type="hidden" id="original_post_status" name="original_post_status" value="<?php echo esc_attr( $post->post_status ); ?>" />
 				<input type="hidden" id="referredby" name="referredby" value="<?php echo $referer ? esc_url( $referer ) : ''; ?>" />
 				<?php
 				if ( 'draft' !== get_post_status( $post ) ) {
@@ -1719,7 +1734,7 @@ class MainWP_Post {
 							</select>
 						</div>
 
-						 <?php
+						<?php
 							if ( 'private' === $post->post_status ) {
 								$post->post_password = '';
 								$visibility          = 'private';
@@ -1833,7 +1848,7 @@ class MainWP_Post {
 	}
 
 	public static function render_addedit( $post_id, $what ) {
-		self::render_header( $what, $post_id);
+		self::render_header( $what, $post_id );
 		self::render_bulkpost( $post_id, 'bulkpost' );
 		self::render_footer( $what );
 	}
@@ -2076,7 +2091,8 @@ class MainWP_Post {
 								MainWP_Utility::fetch_urls_authed(
 									$dbwebsites,
 									'newpost',
-									$post_data, array(
+									$post_data,
+									array(
 										MainWP_Bulk_Add::get_class_name(),
 										'posting_bulk_handler',
 									),
@@ -2305,7 +2321,9 @@ class MainWP_Post {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'post_action', array(
+				$website,
+				'post_action',
+				array(
 					'action'     => 'get_edit',
 					'id'         => $postId,
 					'post_type'  => $postType,
@@ -2379,10 +2397,10 @@ class MainWP_Post {
 					$linkToReplaceWith = dirname( $localUrl );
 					if ( '' !== $hrefLink ) {
 						$server     = get_option( 'mainwp_child_server' );
-						$serverHost = parse_url( $server, PHP_URL_HOST );
+						$serverHost = wp_parse_url( $server, PHP_URL_HOST );
 						if ( ! empty( $serverHost ) && false !== strpos( $hrefLink, $serverHost ) ) {
 							$serverHref               = 'href="' . $serverHost;
-							$replaceServerHref        = 'href="' . parse_url( $localUrl, PHP_URL_SCHEME ) . '://' . parse_url( $localUrl, PHP_URL_HOST );
+							$replaceServerHref        = 'href="' . wp_parse_url( $localUrl, PHP_URL_SCHEME ) . '://' . wp_parse_url( $localUrl, PHP_URL_HOST );
 							$new_post['post_content'] = str_replace( $serverHref, $replaceServerHref, $new_post['post_content'] );
 						}
 					}
@@ -2513,7 +2531,9 @@ class MainWP_Post {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'set_terms', array(
+				$website,
+				'set_terms',
+				array(
 					'id'         => base64_encode( $postId ),
 					'terms'      => base64_encode( $cat_id ),
 					'taxonomy'   => base64_encode( $taxonomy ),
@@ -2540,7 +2560,9 @@ class MainWP_Post {
 		}
 		try {
 			MainWP_Utility::fetch_url_authed(
-				$website, 'insert_comment', array(
+				$website,
+				'insert_comment',
+				array(
 					'id'         => $postId,
 					'comments'   => base64_encode( serialize( $comments ) ),
 				)

@@ -44,32 +44,57 @@ class MainWP_Themes {
 	public static function init_menu() {
 
 		$_page = add_submenu_page(
-			'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>',
+			'read',
+			'ThemesManage',
+			array(
 				self::get_class_name(),
 				'render',
 			)
 		);
 
 		add_submenu_page(
-			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesInstall',
+			array(
 				self::get_class_name(),
 				'render_install',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesAutoUpdate',
+			array(
 				self::get_class_name(),
 				'render_auto_update',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesIgnore',
+			array(
 				self::get_class_name(),
 				'render_ignore',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesIgnoredAbandoned',
+			array(
 				self::get_class_name(),
 				'render_ignored_abandoned',
 			)
@@ -141,7 +166,8 @@ class MainWP_Themes {
 				'slug'       => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesManage',
 				'icon'       => '<i class="paint brush icon"></i>',
-			), 1
+			),
+			1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -541,7 +567,8 @@ class MainWP_Themes {
 		}
 
 		MainWP_Cache::add_context(
-			'Themes', array(
+			'Themes',
+			array(
 				'keyword' => $keyword,
 				'status'  => $status,
 				'sites'   => ( '' !== $sites ) ? $sites : '',
@@ -744,7 +771,9 @@ class MainWP_Themes {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'theme_action', array(
+				$website,
+				'theme_action',
+				array(
 					'action' => $pAction,
 					'theme'  => $theme,
 				)
@@ -803,14 +832,15 @@ class MainWP_Themes {
 	public static function render_install() {
 		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION, true );
 		wp_localize_script(
-			'mainwp-theme', '_mainwpThemeSettings',
+			'mainwp-theme',
+			'_mainwpThemeSettings',
 			array(
 				'themes'          => false,
 				'settings'        => array(
 					'isInstall'     => true,
 					'canInstall'    => false,
 					'installURI'    => null,
-					'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH ),
+					'adminUrl'      => wp_parse_url( self_admin_url(), PHP_URL_PATH ),
 				),
 				'l10n'            => array(
 					'addNew'            => __( 'Add new theme' ),
@@ -1308,10 +1338,10 @@ class MainWP_Themes {
 				jQuery( '#mainwp-all-active-themes-table' ).DataTable( {
 					"colReorder" : true,
 					"stateSave":  true,
-				  "paging":   false,
-				  "ordering": true,
-				  "columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-				  "order": [ [ 2, "asc" ] ]
+					"paging":   false,
+					"ordering": true,
+					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
+					"order": [ [ 2, "asc" ] ]
 				} );
 			} );
 		</script>

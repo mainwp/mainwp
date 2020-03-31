@@ -45,14 +45,24 @@ class MainWP_Plugins {
 
 	public static function init_menu() {
 		$_page = add_submenu_page(
-			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>', 'read', 'PluginsManage', array(
+			'mainwp_tab',
+			__( 'Plugins', 'mainwp' ),
+			'<span id="mainwp-Plugins">' . __( 'Plugins', 'mainwp' ) . '</span>',
+			'read',
+			'PluginsManage',
+			array(
 				self::get_class_name(),
 				'render',
 			)
 		);
 		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
 			$page = add_submenu_page(
-				'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>', 'read', 'PluginsInstall', array(
+				'mainwp_tab',
+				__( 'Plugins', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Install ', 'mainwp' ) . '</div>',
+				'read',
+				'PluginsInstall',
+				array(
 					self::get_class_name(),
 					'render_install',
 				)
@@ -62,19 +72,34 @@ class MainWP_Plugins {
 		}
 
 		add_submenu_page(
-			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'PluginsAutoUpdate', array(
+			'mainwp_tab',
+			__( 'Plugins', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>',
+			'read',
+			'PluginsAutoUpdate',
+			array(
 				self::get_class_name(),
 				'render_auto_update',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'PluginsIgnore', array(
+			'mainwp_tab',
+			__( 'Plugins', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>',
+			'read',
+			'PluginsIgnore',
+			array(
 				self::get_class_name(),
 				'render_ignore',
 			)
 		);
 		add_submenu_page(
-			'mainwp_tab', __( 'Plugins', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'PluginsIgnoredAbandoned', array(
+			'mainwp_tab',
+			__( 'Plugins', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>',
+			'read',
+			'PluginsIgnoredAbandoned',
+			array(
 				self::get_class_name(),
 				'render_ignored_abandoned',
 			)
@@ -96,7 +121,7 @@ class MainWP_Plugins {
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Plugins' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
-		self::init_left_menu(self::$subPages);
+		self::init_left_menu( self::$subPages );
 	}
 
 	public static function load_page() {
@@ -160,7 +185,8 @@ class MainWP_Plugins {
 				'slug'        => 'PluginsManage',
 				'href'        => 'admin.php?page=PluginsManage',
 				'icon'        => '<i class="plug icon"></i>',
-			), 1
+			),
+			1
 		);
 
 		$init_sub_subleftmenu = array(
@@ -434,7 +460,7 @@ class MainWP_Plugins {
 							$plugin = $allPlugins[ $i ];
 
 							if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-								if ( $plugin['active'] != ( ( 'active' === $status ) ? 1 : 0 ) ) {
+								if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
 										continue;
 								}
 							}
@@ -465,7 +491,7 @@ class MainWP_Plugins {
 								$plugin = $allPlugins[ $i ];
 
 								if ( ( 'active' === $status ) || ( 'inactive' === $status ) ) {
-									if ( $plugin['active'] != ( ( 'active' === $status ) ? 1 : 0 ) ) {
+									if ( ( ( 'active' === $status ) ? 1 : 0 ) != $plugin['active'] ) {
 										continue;
 									}
 								}
@@ -562,7 +588,8 @@ class MainWP_Plugins {
 		}
 
 		MainWP_Cache::add_context(
-			'Plugins', array(
+			'Plugins',
+			array(
 				'keyword' => $keyword,
 				'status'  => $status,
 				'sites'   => ( '' !== $sites ) ? $sites : '',
@@ -814,7 +841,9 @@ class MainWP_Plugins {
 			$plugin      = implode( '||', $_POST['plugins'] );
 			$plugin      = urldecode( $plugin );
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'plugin_action', array(
+				$website,
+				'plugin_action',
+				array(
 					'action' => $pAction,
 					'plugin' => $plugin,
 				)

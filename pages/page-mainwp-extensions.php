@@ -225,7 +225,7 @@ class MainWP_Extensions {
 
 			$all_extensions[] = $extension;
 			if ( ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug ) ||
-				 mainwp_current_user_can( 'extension', dirname( $slug ) )
+				mainwp_current_user_can( 'extension', dirname( $slug ) )
 			) {
 				self::$extensions[] = $extension;
 				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
@@ -269,10 +269,14 @@ class MainWP_Extensions {
 
 	public static function polish_ext_name( $extension ) {
 		if ( isset( $extension['mainwp'] ) && $extension['mainwp'] ) {
-			$menu_name = str_replace( array(
-				'Extension',
-				'MainWP',
-			), '', $extension['name'] );
+			$menu_name = str_replace(
+				array(
+					'Extension',
+					'MainWP',
+				),
+				'',
+				$extension['name']
+			);
 			$menu_name = trim( $menu_name );
 		} else {
 			$menu_name = $extension['name'];
@@ -291,7 +295,8 @@ class MainWP_Extensions {
 					'href'              => 'admin.php?page=Extensions',
 					'icon'              => '<i class="plug icon"></i>',
 					'id'                => 'menu-item-extensions',
-				), 1
+				),
+				1
 			);
 
 			if ( 0 < count( $extPages ) ) {
@@ -408,27 +413,37 @@ class MainWP_Extensions {
 	}
 
 	public static function init_ajax_handlers() {
-		MainWP_Post_Handler::instance()->add_action( 'mainwp_extension_add_menu', array( self::get_class_name(), 'ajax_add_extension_menu' ) );
 		MainWP_Post_Handler::instance()->add_action(
-			'mainwp_extension_remove_menu', array(
+			'mainwp_extension_add_menu',
+			array(
+				self::get_class_name(),
+				'ajax_add_extension_menu'
+			)
+		);
+		MainWP_Post_Handler::instance()->add_action(
+			'mainwp_extension_remove_menu',
+			array(
 				self::get_class_name(),
 				'remove_extension_menu_from_mainwp_menu',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
-			'mainwp_extension_activate', array(
+			'mainwp_extension_activate',
+			array(
 				self::get_class_name(),
 				'activate_extension',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
-			'mainwp_extension_deactivate', array(
+			'mainwp_extension_deactivate',
+			array(
 				self::get_class_name(),
 				'deactivate_extension',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(
-			'mainwp_extension_testextensionapilogin', array(
+			'mainwp_extension_testextensionapilogin',
+			array(
 				self::get_class_name(),
 				'test_extensions_api_login',
 			)
@@ -436,37 +451,43 @@ class MainWP_Extensions {
 
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_grabapikey', array(
+				'mainwp_extension_grabapikey',
+				array(
 					self::get_class_name(),
 					'grab_extension_api_key',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_saveextensionapilogin', array(
+				'mainwp_extension_saveextensionapilogin',
+				array(
 					self::get_class_name(),
 					'save_extensions_api_login',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_getpurchased', array(
+				'mainwp_extension_getpurchased',
+				array(
 					self::get_class_name(),
 					'get_purchased_exts',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_downloadandinstall', array(
+				'mainwp_extension_downloadandinstall',
+				array(
 					self::get_class_name(),
 					'download_and_install',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_bulk_activate', array(
+				'mainwp_extension_bulk_activate',
+				array(
 					self::get_class_name(),
 					'bulk_activate',
 				)
 			);
 			MainWP_Post_Handler::instance()->add_action(
-				'mainwp_extension_apisslverifycertificate', array(
+				'mainwp_extension_apisslverifycertificate',
+				array(
 					self::get_class_name(),
 					'save_api_ssl_verify',
 				)
@@ -477,7 +498,7 @@ class MainWP_Extensions {
 
 	public static function ajax_add_extension_menu() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_add_menu' );
-		 self::add_extension_menu( $_POST['slug'] );
+		self::add_extension_menu( $_POST['slug'] );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
@@ -834,8 +855,8 @@ class MainWP_Extensions {
 
 	public static function activate_license() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activatelicense' );
-		$item_id  = isset( $_POST['product_id']) ? intval( $_POST['product_id'] ) : 0;
-		$response = MainWP_Api_Manager::instance()->grab_license_key_by_id( $item_id  );
+		$item_id  = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
+		$response = MainWP_Api_Manager::instance()->grab_license_key_by_id( $item_id );
 		die( wp_json_encode( $response ) );
 	}
 
@@ -1184,7 +1205,7 @@ class MainWP_Extensions {
 					foreach ( $slugs as $slug ) {
 						$slug        = wp_json_encode( $slug );
 						$slug        = trim( $slug, '"' );
-						$slug        = str_replace ( '\\', '.', $slug );
+						$slug        = str_replace( '\\', '.', $slug );
 						$extraWhere .= ' wp.plugins REGEXP "' . $slug . '" OR';
 					}
 					$extraWhere = trim( rtrim( $extraWhere, 'OR' ) );
@@ -1340,7 +1361,8 @@ class MainWP_Extensions {
 				if ( $clone_site && $clone_site->is_staging ) {
 					if ( $force_update ) {
 						MainWP_DB::instance()->update_website_values(
-							$clone_site->id, array(
+							$clone_site->id,
+							array(
 								'adminname'          => $website->adminname,
 								'pubkey'             => $website->pubkey,
 								'privkey'            => $website->privkey,

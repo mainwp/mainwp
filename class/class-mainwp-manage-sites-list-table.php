@@ -483,7 +483,7 @@ class MainWP_Manage_Sites_List_Table {
 
 		MainWP_DB::data_seek( $websites, 0 );
 
-		$this->items        = $websites;
+		$this->items       = $websites;
 		$this->total_items = $totalRecords;
 	}
 
@@ -855,7 +855,7 @@ class MainWP_Manage_Sites_List_Table {
 			$sortable[ $id ] = $data;
 		}
 
-		$primary               = $this->get_default_primary_column_name();
+		$primary              = $this->get_default_primary_column_name();
 		$this->column_headers = array( $columns, $sortable, $primary );
 
 		return $this->column_headers;

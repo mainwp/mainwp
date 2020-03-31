@@ -1735,21 +1735,21 @@ class MainWP_Post {
 						</div>
 
 						<?php
-							if ( 'private' === $post->post_status ) {
-								$post->post_password = '';
-								$visibility          = 'private';
-								$visibility_trans    = __( 'Private', 'mainwp' );
-							} elseif ( ! empty( $post->post_password ) ) {
-								$visibility       = 'password';
-								$visibility_trans = __( 'Password protected', 'mainwp' );
-							} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
-								$visibility       = 'public';
-								$visibility_trans = __( 'Public, Sticky', 'mainwp' );
-							} else {
-								$visibility       = 'public';
-								$visibility_trans = __( 'Public', 'mainwp' );
-							}
-							?>
+						if ( 'private' === $post->post_status ) {
+							$post->post_password = '';
+							$visibility          = 'private';
+							$visibility_trans    = __( 'Private', 'mainwp' );
+						} elseif ( ! empty( $post->post_password ) ) {
+							$visibility       = 'password';
+							$visibility_trans = __( 'Password protected', 'mainwp' );
+						} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
+							$visibility       = 'public';
+							$visibility_trans = __( 'Public, Sticky', 'mainwp' );
+						} else {
+							$visibility       = 'public';
+							$visibility_trans = __( 'Public', 'mainwp' );
+						}
+						?>
 
 						<div class="grouped fields">
 							<label><?php esc_html_e( 'Visibility', 'mainwp' ); ?></label>

@@ -417,7 +417,7 @@ class MainWP_Extensions {
 			'mainwp_extension_add_menu',
 			array(
 				self::get_class_name(),
-				'ajax_add_extension_menu'
+				'ajax_add_extension_menu',
 			)
 		);
 		MainWP_Post_Handler::instance()->add_action(

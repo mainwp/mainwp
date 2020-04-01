@@ -2326,11 +2326,15 @@ PRIMARY KEY  (`id`)  ';
 			return false;
 		}
 
-		if ( $wpdb->insert( $this->table_name( 'client_report_site_token' ), array(
-			'token_id'       => $token_id,
-			'token_value'    => $token_value,
-			'site_url'       => $site_url,
-		) ) ) {
+		if ( $wpdb->insert(
+				$this->table_name( 'client_report_site_token' ),
+				array(
+					'token_id'       => $token_id,
+					'token_value'    => $token_value,
+					'site_url'       => $site_url,
+				)
+			)
+		) {
 			return $this->get_tokens_by( 'id', $token_id, $site_url );
 		}
 
@@ -2352,9 +2356,10 @@ PRIMARY KEY  (`id`)  ';
 
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'UPDATE ' . $this->table_name( 'client_report_site_token' ) . '
-				SET `token_value` = %s
-				WHERE `token_id` = %d AND site_url = %s', $this->escape( $token_value ), intval( $token_id ), $this->escape( $site_url )
+				'UPDATE ' . $this->table_name( 'client_report_site_token' ) . 'SET `token_value` = %s WHERE `token_id` = %d AND site_url = %s',
+				$this->escape( $token_value ),
+				intval( $token_id ),
+				$this->escape( $site_url )
 			)
 		);
 
@@ -2520,27 +2525,27 @@ PRIMARY KEY  (`id`)  ';
 
 		$sql = '';
 		if ( 'id' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
-			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
-			. ' ON rp.client_id = c.clientid '
-			. ' WHERE `id`=%d ' . $_order_by, $value );
+			$sql = $wpdb->prepare(
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `id`=%d ' . $_order_by,
+				$value
+			);
 		} if ( 'client' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
-			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
-			. ' ON rp.client_id = c.clientid '
-			. ' WHERE `client_id` = %d ' . $_order_by, $value );
+			$sql = $wpdb->prepare(
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `client_id` = %d ' . $_order_by,
+				$value
+			);
 			return $wpdb->get_results( $sql, $output );
 		} if ( 'site' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
-			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
-			. ' ON rp.client_id = c.clientid '
-			. ' WHERE `selected_site` = %d ' . $_order_by, $value );
+			$sql = $wpdb->prepare(
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `selected_site` = %d ' . $_order_by,
+				$value
+			);
 			return $wpdb->get_results( $sql, $output );
 		} if ( 'title' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
-			. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
-			. ' ON rp.client_id = c.clientid '
-			. ' WHERE `title` = %s ' . $_order_by, $value );
+			$sql = $wpdb->prepare(
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `title` = %s ' . $_order_by,
+				$value
+			);
 			return $wpdb->get_results( $sql, $output );
 		} elseif ( 'all' === $by ) {
 			$sql = 'SELECT * FROM ' . $this->table_name( 'client_report' ) . ' rp '
@@ -2601,14 +2606,20 @@ PRIMARY KEY  (`id`)  ';
 
 		$sql = '';
 		if ( 'clientid' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
-			. ' WHERE `clientid` =%d ', $value );
+			$sql = $wpdb->prepare(
+				'SELECT * FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE `clientid` =%d ',
+				$value
+			);
 		} elseif ( 'client' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
-			. ' WHERE `client` = %s ', $value );
+			$sql = $wpdb->prepare(
+				'SELECT * FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE `client` = %s ',
+				$value
+			);
 		} elseif ( 'email' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_client' )
-			. ' WHERE `email` = %s ', $value );
+			$sql = $wpdb->prepare(
+				'SELECT * FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE `email` = %s ',
+				$value
+			);
 		}
 
 		if ( ! empty( $sql ) ) {
@@ -2637,8 +2648,10 @@ PRIMARY KEY  (`id`)  ';
 
 	public function get_formats( $type = null ) {
 		global $wpdb;
-		return $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
-		. ' WHERE `type` =%s ORDER BY title', $type );
+		return $wpdb->prepare(
+			'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE `type` =%s ORDER BY title',
+			$type
+		);
 	}
 
 	public function get_format_by( $by, $value, $type = null ) {
@@ -2648,11 +2661,16 @@ PRIMARY KEY  (`id`)  ';
 		}
 		$sql = '';
 		if ( 'id' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
-			. ' WHERE `id` =%d ', $value );
+			$sql = $wpdb->prepare(
+				'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE `id` =%d ',
+				$value
+			);
 		} elseif ( 'title' === $by ) {
-			$sql = $wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'client_report_format' )
-			. ' WHERE `title` =%s AND type = %s', $value, $type );
+			$sql = $wpdb->prepare(
+				'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE `title` =%s AND type = %s',
+				$value,
+				$type
+			);
 		}
 		if ( ! empty( $sql ) ) {
 			return $wpdb->get_row( $sql );

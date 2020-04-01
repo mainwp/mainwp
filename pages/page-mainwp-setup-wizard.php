@@ -444,7 +444,7 @@ class MainWP_Setup_Wizard {
 					<?php
 					if ( ( false == $managePlanning ) || ( 1 == $managePlanning ) ) {
 						?>
-						 selected<?php } ?>><?php esc_html_e( 'Less than 50 websites', 'mainwp' ); ?></option>
+						selected<?php } ?>><?php esc_html_e( 'Less than 50 websites', 'mainwp' ); ?></option>
 					<option value="2"
 					<?php
 					if ( 2 == $managePlanning ) {

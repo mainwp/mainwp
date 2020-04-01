@@ -71,7 +71,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		}
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
-		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );		
+		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );
 		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta'] = _x( 'Beta Testing', 'Plugin Installer' );
 		}

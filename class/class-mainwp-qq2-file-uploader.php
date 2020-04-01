@@ -67,8 +67,8 @@ class MainWP_QQ2_File_Uploader {
 		}
 
 		$pathinfo = pathinfo( $this->file->get_name() );
-		$filename = $pathinfo['filename'];		
-		$ext = $pathinfo['extension'];
+		$filename = $pathinfo['filename'];
+		$ext      = $pathinfo['extension'];
 
 		if ( $this->allowedExtensions && ! in_array( strtolower( $ext ), $this->allowedExtensions ) ) {
 			$these = implode( ', ', $this->allowedExtensions );

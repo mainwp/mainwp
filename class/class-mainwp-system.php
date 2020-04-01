@@ -11,7 +11,7 @@ const MAINWP_VIEW_PER_SITE         = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
 const MAINWP_VIEW_PER_GROUP        = 2;
 
-// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file
+// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
 
 class MainWP_System {
 
@@ -354,7 +354,7 @@ class MainWP_System {
 			}
 		}
 		$sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' );
-		if ( $sched != false ) {
+		if ( false != $sched ) {
 			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
 		}
 		$sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' );
@@ -1690,7 +1690,7 @@ class MainWP_System {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-
+						// ok.
 					}
 				}
 			} else {
@@ -1717,7 +1717,7 @@ class MainWP_System {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
 					} catch ( Exception $e ) {
-
+						// ok.
 					}
 				}
 			} else {
@@ -1733,7 +1733,7 @@ class MainWP_System {
 					try {
 						MainWP_Utility::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( Exception $e ) {
-
+						// ok.
 					}
 				}
 			} else {
@@ -1817,7 +1817,7 @@ class MainWP_System {
 
 				wp_remote_get( $url . 'wp-cron.php' );
 			} catch ( Exception $e ) {
-
+				// ok.
 			}
 		}
 		MainWP_DB::free_result( $websites );

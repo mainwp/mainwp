@@ -31,7 +31,7 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
 		$this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
 
-		$this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) ); // ok.
+		$this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
 
 		if ( mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
 			$this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
@@ -52,40 +52,21 @@ class MainWP_Post_Handler {
 
 		$this->add_action( 'mainwp_removesite', array( &$this, 'mainwp_removesite' ) );
 		$this->add_action( 'mainwp_notes_save', array( &$this, 'mainwp_notes_save' ) );
-		$this->add_action( 'mainwp_reconnectwp', array( &$this, 'mainwp_reconnectwp' ) ); // ok.
-		$this->add_action( 'mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) ); // ok.
+		$this->add_action( 'mainwp_reconnectwp', array( &$this, 'mainwp_reconnectwp' ) );
+		$this->add_action( 'mainwp_updatechildsite_value', array( &$this, 'mainwp_updatechildsite_value' ) );
+
 		// Page: ManageGroups.
 		$this->add_action( 'mainwp_group_rename', array( &$this, 'mainwp_group_rename' ) );
-		$this->add_action( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) ); // ok.
+		$this->add_action( 'mainwp_group_delete', array( &$this, 'mainwp_group_delete' ) );
 		$this->add_action( 'mainwp_group_add', array( &$this, 'mainwp_group_add' ) );
-		$this->add_action( 'mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) ); // ok.
+		$this->add_action( 'mainwp_group_getsites', array( &$this, 'mainwp_group_getsites' ) );
 		$this->add_action( 'mainwp_group_updategroup', array( &$this, 'mainwp_group_updategroup' ) );
 
 		// Page: InstallPlugins/Themes.
-		$this->add_action(
-			'mainwp_preparebulkinstallplugintheme', array(
-				&$this,
-				'mainwp_preparebulkinstallplugintheme',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_installbulkinstallplugintheme', array(
-				&$this,
-				'mainwp_installbulkinstallplugintheme',
-			)
-		);
-		$this->add_action(
-			'mainwp_preparebulkuploadplugintheme', array(
-				&$this,
-				'mainwp_preparebulkuploadplugintheme',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_installbulkuploadplugintheme', array(
-				&$this,
-				'mainwp_installbulkuploadplugintheme',
-			)
-		);
+		$this->add_action( 'mainwp_preparebulkinstallplugintheme', array( &$this, 'mainwp_preparebulkinstallplugintheme' ) );
+		$this->add_action( 'mainwp_installbulkinstallplugintheme', array( &$this, 'mainwp_installbulkinstallplugintheme' ) );
+		$this->add_action( 'mainwp_preparebulkuploadplugintheme', array( &$this, 'mainwp_preparebulkuploadplugintheme' ) );
+		$this->add_action( 'mainwp_installbulkuploadplugintheme', array( &$this, 'mainwp_installbulkuploadplugintheme' ) );
 		$this->add_action( 'mainwp_cleanbulkuploadplugintheme', array( &$this, 'mainwp_cleanbulkuploadplugintheme' ) );
 
 		// Page: BulkAddUser.
@@ -96,39 +77,14 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 		$this->add_action( 'mainwp_upgradewp', array( &$this, 'mainwp_upgradewp' ) );
 		$this->add_action( 'mainwp_upgradeplugintheme', array( &$this, 'mainwp_upgrade_plugintheme' ) );
-		$this->add_action( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) ); // ok.
-		$this->add_action( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) ); // ok.
-		$this->add_action( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) ); // ok.
-		$this->add_action(
-			'mainwp_unignorepluginsthemes', array(
-				&$this,
-				'mainwp_unignorepluginsthemes',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_unignoreabandonedplugintheme', array(
-				&$this,
-				'mainwp_unignoreabandonedplugintheme',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_unignoreabandonedpluginsthemes', array(
-				&$this,
-				'mainwp_unignoreabandonedpluginsthemes',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_dismissoutdateplugintheme', array(
-				&$this,
-				'mainwp_dismissoutdateplugintheme',
-			)
-		); // ok.
-		$this->add_action(
-			'mainwp_dismissoutdatepluginsthemes', array(
-				&$this,
-				'mainwp_dismissoutdatepluginsthemes',
-			)
-		); // ok.
+		$this->add_action( 'mainwp_ignoreplugintheme', array( &$this, 'mainwp_ignoreplugintheme' ) );
+		$this->add_action( 'mainwp_unignoreplugintheme', array( &$this, 'mainwp_unignoreplugintheme' ) );
+		$this->add_action( 'mainwp_ignorepluginsthemes', array( &$this, 'mainwp_ignorepluginsthemes' ) );
+		$this->add_action( 'mainwp_unignorepluginsthemes', array( &$this, 'mainwp_unignorepluginsthemes' ) );
+		$this->add_action( 'mainwp_unignoreabandonedplugintheme', array( &$this, 'mainwp_unignoreabandonedplugintheme' ) );
+		$this->add_action( 'mainwp_unignoreabandonedpluginsthemes', array( &$this, 'mainwp_unignoreabandonedpluginsthemes' ) );
+		$this->add_action( 'mainwp_dismissoutdateplugintheme', array( &$this, 'mainwp_dismissoutdateplugintheme' ) );
+		$this->add_action( 'mainwp_dismissoutdatepluginsthemes', array( &$this, 'mainwp_dismissoutdatepluginsthemes' ) );
 		$this->add_action( 'mainwp_trust_plugin', array( &$this, 'mainwp_trust_plugin' ) );
 		$this->add_action( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
 		$this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
@@ -150,9 +106,9 @@ class MainWP_Post_Handler {
 
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			// Page: SecurityIssues.
-			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) ); // ok.
-			$this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) ); // ok.
-			$this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) ); // ok.
+			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) );
+			$this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) );
+			$this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) );
 		}
 
 		$this->add_action( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
@@ -163,12 +119,7 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_widgets_order', array( &$this, 'ajax_widgets_order' ) );
 		$this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
 
-		$this->add_action(
-			'mainwp_twitter_dashboard_action', array(
-				&$this,
-				'mainwp_twitter_dashboard_action',
-			)
-		); // ok.
+		$this->add_action( 'mainwp_twitter_dashboard_action', array( &$this, 'mainwp_twitter_dashboard_action' ) );
 
 		// Page: Recent Posts.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
@@ -195,12 +146,12 @@ class MainWP_Post_Handler {
 		$this->add_action( 'mainwp_user_update_user', array( &$this, 'mainwp_user_update_user' ) );
 
 		// Page: Posts.
-		$this->add_action( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) ); // ok.
-		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) ); // ok.
+		$this->add_action( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) );
+		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) );
 		$this->add_action( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 
 		// Page: Pages.
-		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) ); // ok.
+		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) );
 		// Page: User.
 		$this->add_action( 'mainwp_users_search', array( &$this, 'mainwp_users_search' ) );
 
@@ -259,7 +210,7 @@ class MainWP_Post_Handler {
 
 		MainWP_Extensions::init_ajax_handlers();
 
-		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) ); // ok.
+		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) );
 	}
 
 	public function mainwp_childscan() {
@@ -425,7 +376,7 @@ class MainWP_Post_Handler {
 		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? $_POST['post_type'] : 'post' );
 
 		if ( isset( $_POST['maximum'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50  );
+			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 
 		MainWP_Cache::init_session();
@@ -453,7 +404,7 @@ class MainWP_Post_Handler {
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
 		if ( isset( $_POST['maximum'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50  );
+			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 
 		MainWP_Cache::init_session();
@@ -799,7 +750,7 @@ class MainWP_Post_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed( $website, 'disconnect');
+			$information = MainWP_Utility::fetch_url_authed( $website, 'disconnect' );
 		} catch ( Exception $e ) {
 			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
@@ -958,7 +909,9 @@ class MainWP_Post_Handler {
 			MainWP_Utility::end_session();
 			// Send request to the childsite!
 			$result = MainWP_Utility::fetch_url_authed(
-				$website, 'createBackupPoll', array(
+				$website,
+				'createBackupPoll',
+				array(
 					'fileName'       => $fileName,
 					'fileNameUID'    => $fileNameUID,
 					'type'           => $type,
@@ -1071,7 +1024,7 @@ class MainWP_Post_Handler {
 			} elseif ( isset( $array[ $_POST['unique'] ]['finished'] ) ) {
 				throw new MainWP_Exception( __( 'finished...', 'maiwnp' ) );
 			} else {
-				wp_send_json( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) )  );
+				wp_send_json( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) ) );
 			}
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -1471,7 +1424,7 @@ class MainWP_Post_Handler {
 			$websiteId = $_POST['websiteId'];
 
 			if ( $chunk_support ) {
-				$max_update = apply_filters('mainwp_update_plugintheme_max', false, $websiteId );
+				$max_update = apply_filters( 'mainwp_update_plugintheme_max', false, $websiteId );
 				if ( empty( $max_update ) ) {
 					$chunk_support = false; // there is not hook so disable chunk update support.
 				}
@@ -1728,7 +1681,8 @@ class MainWP_Post_Handler {
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$check_result = MainWP_Utility::check_ignored_http_code( $http_code );
 		MainWP_DB::instance()->update_website_values(
-			$website->id, array(
+			$website->id,
+			array(
 				'offline_check_result'   => $check_result ? '1' : '-1',
 				'offline_checks_last'    => time(),
 				'http_response_code'     => $http_code,
@@ -1850,13 +1804,15 @@ class MainWP_Post_Handler {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'settings_tools', array(
+				$website,
+				'settings_tools',
+				array(
 					'action' => 'force_destroy_sessions',
 				)
 			);
 			global $mainWP;
 			if ( ( '2.0.22' === $mainWP->get_version() ) || ( '2.0.23' === $mainWP->get_version() ) ) {
-				if ( get_option( 'mainwp_fixed_security_2022' ) != 1 ) {
+				if ( 1 != get_option( 'mainwp_fixed_security_2022' ) ) {
 					update_option( 'mainwp_fixed_security_2022', 1 );
 				}
 			}

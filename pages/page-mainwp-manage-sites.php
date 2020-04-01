@@ -740,7 +740,7 @@ class MainWP_Manage_Sites {
 			try {
 				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
-
+				// ok!
 			}
 
 			if ( ! empty( $temp ) ) {
@@ -1784,7 +1784,7 @@ class MainWP_Manage_Sites {
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-				self::reconnect_web_site( $website );
+				self::m_reconnect_site( $website );
 			} else {
 				throw new \Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
@@ -1795,8 +1795,8 @@ class MainWP_Manage_Sites {
 		die( __( 'Site has been reconnected successfully!', 'mainwp' ) );
 	}
 
-	public static function reconnect_web_site( $website ) {
-		return MainWP_Manage_Sites_View::reconnect_web_site( $website );
+	public static function m_reconnect_site( $website ) {
+		return MainWP_Manage_Sites_View::m_reconnect_site( $website );
 	}
 
 	public static function add_site() {

@@ -158,7 +158,6 @@ class MainWP_Meta_Boxes {
 	}
 
 	public function add_categories_handle( $post_id, $post_type ) {
-
 		/*
 		 * verify this came from the our screen and with proper authorization.
 		 */

@@ -163,8 +163,7 @@ class MainWP_System {
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
 
-		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
-		add_filter( 'mainwp-activated-sub-check', array( &$this, 'activated_sub_check' ) );
+		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );		
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) );
 
 		/**
@@ -450,10 +449,6 @@ class MainWP_System {
 
 	public function activated_check() {
 		return $this->get_version();
-	}
-
-	public function activated_sub_check() {
-		return array( 'result' => MAINWP_API_VALID );
 	}
 
 	public function mainwp_4_update_notice() {
@@ -1940,7 +1935,7 @@ class MainWP_System {
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
 				MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Trying to reconnect' );
 				try {
-					if ( MainWP_Manage_Sites::reconnect_web_site( $website ) ) {
+					if ( MainWP_Manage_Sites::m_reconnect_site( $website ) ) {
 						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {

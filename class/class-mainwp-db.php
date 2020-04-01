@@ -862,7 +862,7 @@ class MainWP_DB {
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
 		$with_staging    = 'yes';
-		$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' ) || apply_filters( 'mainwp-extension-available-check', 'mainwp-timecapsule-extension' );
+		$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
 
 		if ( ! $staging_enabled ) {
 			$with_staging = 'no';

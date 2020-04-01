@@ -57,7 +57,7 @@ class MainWP_UI {
 		$groups   = MainWP_DB::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension.
-		$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' ) || apply_filters( 'mainwp-extension-available-check', 'mainwp-timecapsule-extension' );
+		$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
 
 		$edit_site_id = false;
 		if ( $postId ) {

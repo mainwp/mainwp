@@ -151,13 +151,13 @@ class MainWP_Live_Reports_Class {
 			}
 		}
 
-		self::$enabled_piwik        = apply_filters( 'mainwp-extension-available-check', 'mainwp-piwik-extension' );
-		self::$enabled_sucuri       = apply_filters( 'mainwp-extension-available-check', 'mainwp-sucuri-extension' );
-		self::$enabled_ga           = apply_filters( 'mainwp-extension-available-check', 'mainwp-google-analytics-extension' );
-		self::$enabled_aum          = apply_filters( 'mainwp-extension-available-check', 'advanced-uptime-monitor-extension' );
-		self::$enabled_woocomstatus = apply_filters( 'mainwp-extension-available-check', 'mainwp-woocommerce-status-extension' );
-		self::$enabled_pagespeed    = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' );
-		self::$enabled_brokenlinks  = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
+		self::$enabled_piwik        = is_plugin_active( 'mainwp-piwik-extension/mainwp-piwik-extension.php' ) ? true : false;
+		self::$enabled_sucuri       = is_plugin_active( 'mainwp-sucuri-extension/mainwp-piwik-extension.php' ) ? true : false;
+		self::$enabled_ga           = is_plugin_active( 'mainwp-google-analytics-extension/mainwp-google-analytics-extension.php' ) ? true : false;
+		self::$enabled_aum          = is_plugin_active( 'advanced-uptime-monitor-extension/advanced-uptime-monitor-extension.php' ) ? true : false;
+		self::$enabled_woocomstatus = is_plugin_active( 'mainwp-woocommerce-status-extension/mainwp-woocommerce-status-extension.php' ) ? true : false;
+		self::$enabled_pagespeed    = is_plugin_active( 'mainwp-page-speed-extension/mainwp-page-speed-extension.php' ) ? true : false;
+		self::$enabled_brokenlinks  = is_plugin_active( 'mainwp-broken-links-checker-extension/mainwp-broken-links-checker-extension.php' ) ? true : false;
 	}
 
 	public function managesite_backup( $website, $args, $information ) {
@@ -1231,7 +1231,7 @@ class MainWP_Live_Reports_Class {
 	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
 
 		if ( null === self::$enabled_ga ) {
-			self::$enabled_ga = apply_filters( 'mainwp-extension-available-check', 'mainwp-google-analytics-extension' );
+			self::$enabled_ga = is_plugin_active( 'mainwp-google-analytics-extension/mainwp-google-analytics-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_ga ) {
@@ -1402,7 +1402,7 @@ class MainWP_Live_Reports_Class {
 
 	public static function piwik_data( $site_id, $start_date, $end_date ) {
 		if ( null === self::$enabled_piwik ) {
-			self::$enabled_piwik = apply_filters( 'mainwp-extension-available-check', 'mainwp-piwik-extension' );
+			self::$enabled_piwik = is_plugin_active( 'mainwp-piwik-extension/mainwp-piwik-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_piwik ) {
@@ -1433,7 +1433,7 @@ class MainWP_Live_Reports_Class {
 	public static function aum_data( $site_id, $start_date, $end_date ) {
 
 		if ( null === self::$enabled_aum ) {
-			self::$enabled_aum = apply_filters( 'mainwp-extension-available-check', 'advanced-uptime-monitor-extension' );
+			self::$enabled_aum = is_plugin_active( 'advanced-uptime-monitor-extension/advanced-uptime-monitor-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_aum ) {
@@ -1466,7 +1466,7 @@ class MainWP_Live_Reports_Class {
 	public static function woocomstatus_data( $site_id, $start_date, $end_date ) {
 
 		if ( null === self::$enabled_woocomstatus ) {
-			self::$enabled_woocomstatus = apply_filters( 'mainwp-extension-available-check', 'mainwp-woocommerce-status-extension' );
+			self::$enabled_woocomstatus = is_plugin_active( 'mainwp-woocommerce-status-extension/mainwp-woocommerce-status-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_woocomstatus ) {
@@ -1504,7 +1504,7 @@ class MainWP_Live_Reports_Class {
 	public static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
 
 		if ( null === self::$enabled_pagespeed ) {
-			self::$enabled_pagespeed = apply_filters( 'mainwp-extension-available-check', 'mainwp-page-speed-extension' );
+			self::$enabled_pagespeed = is_plugin_active( 'mainwp-page-speed-extension/mainwp-page-speed-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_pagespeed ) {
@@ -1528,7 +1528,7 @@ class MainWP_Live_Reports_Class {
 	public static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
 
 		if ( null === self::$enabled_brokenlinks ) {
-			self::$enabled_brokenlinks = apply_filters( 'mainwp-extension-available-check', 'mainwp-broken-links-checker-extension' );
+			self::$enabled_brokenlinks = is_plugin_active( 'mainwp-broken-links-checker-extension/mainwp-broken-links-checker-extension.php' ) ? true : false;
 		}
 
 		if ( ! self::$enabled_brokenlinks ) {
@@ -2526,24 +2526,24 @@ PRIMARY KEY  (`id`)  ';
 		$sql = '';
 		if ( 'id' === $by ) {
 			$sql = $wpdb->prepare(
-				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `id`=%d ' . $_order_by,
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp  LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c  ON rp.client_id = c.clientid  WHERE `id`=%d ' . $_order_by,
 				$value
 			);
 		} if ( 'client' === $by ) {
 			$sql = $wpdb->prepare(
-				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `client_id` = %d ' . $_order_by,
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp  LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c  ON rp.client_id = c.clientid  WHERE `client_id` = %d ' . $_order_by,
 				$value
 			);
 			return $wpdb->get_results( $sql, $output );
 		} if ( 'site' === $by ) {
 			$sql = $wpdb->prepare(
-				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `selected_site` = %d ' . $_order_by,
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp  LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ON rp.client_id = c.clientid WHERE `selected_site` = %d ' . $_order_by,
 				$value
 			);
 			return $wpdb->get_results( $sql, $output );
 		} if ( 'title' === $by ) {
 			$sql = $wpdb->prepare(
-				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp ' . ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c ' . ' ON rp.client_id = c.clientid ' . ' WHERE `title` = %s ' . $_order_by,
+				'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp  LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c  ON rp.client_id = c.clientid  WHERE `title` = %s ' . $_order_by,
 				$value
 			);
 			return $wpdb->get_results( $sql, $output );

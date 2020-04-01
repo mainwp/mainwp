@@ -2282,7 +2282,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_google_count( $domain ) {
-		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' . 'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {

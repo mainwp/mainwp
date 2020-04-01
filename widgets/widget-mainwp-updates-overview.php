@@ -173,7 +173,7 @@ class MainWP_Updates_Overview {
 			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 			$globalView = false;
 		} else {
-			$staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
+			$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php') || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php');
 			// To support staging extension.
 			$is_staging = 'no';
 			if ( $staging_enabled ) {

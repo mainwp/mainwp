@@ -1364,7 +1364,7 @@ class MainWP_Utility {
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
 				MainWP_DB::instance()->update_website_values(
-					$website->id, 
+					$website->id,
 					array(
 						'offline_check_result' => $online_detected ? 1 : -1,
 						'offline_checks_last'  => time(),

@@ -47,7 +47,8 @@ class MainWP_Updates {
 				'slug'              => 'UpdatesManage',
 				'href'              => 'admin.php?page=UpdatesManage',
 				'icon'              => '<i class="sync icon"></i>',
-			), 1
+			), 
+			1
 		);
 	}
 
@@ -2310,7 +2311,7 @@ class MainWP_Updates {
 						?>
 						<tr class="title">
 							<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name']  ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $pluginsOutdateInfo[ $slug ]['Name']  ); ?></a></td>
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $pluginsOutdateInfo[ $slug ]['Name'] ); ?></a></td>
 							<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
 							<td class="right aligned">
 								<?php if ( $user_can_ignore_unignore_updates ) { ?>

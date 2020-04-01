@@ -843,13 +843,13 @@ class MainWP_Utility {
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
 					$params    = apply_filters(
-						'mainwp-pre-posting-posts',
-						( is_array( $params ) ? $params : array() ),
-						(object) array(
-							'id'     => $website->id,
-							'url'    => $website->url,
-							'name'   => $website->name,
-						)
+							'mainwp-pre-posting-posts',
+							( is_array( $params ) ? $params : array() ),
+							(object) array(
+								'id'     => $website->id,
+								'url'    => $website->url,
+								'name'   => $website->name,
+							)
 						);
 				}
 
@@ -1364,7 +1364,8 @@ class MainWP_Utility {
 				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 				$online_detected = self::check_ignored_http_code( $http_code );
 				MainWP_DB::instance()->update_website_values(
-					$website->id, array(
+					$website->id, 
+					array(
 						'offline_check_result' => $online_detected ? 1 : -1,
 						'offline_checks_last'  => time(),
 						'http_response_code'   => $http_code,
@@ -2281,8 +2282,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_google_count( $domain ) {
-		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' .
-		'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' . 'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {

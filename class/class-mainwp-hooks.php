@@ -50,11 +50,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
-		add_filter( 'mainwp-extension-available-check', array(
-			MainWP_Extensions::get_class_name(),
-			'is_extension_available',
-		)
-		);
+		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions::get_class_name(), 'is_extension_available', ) );
 		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hook_decrypt_string' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
@@ -291,7 +287,10 @@ class MainWP_Hooks {
 
 	public function notify_user( $userId, $subject, $content ) {
 		wp_mail(
-			MainWP_DB::instance()->get_user_notification_email( $userId ), $subject, $content, array(
+			MainWP_DB::instance()->get_user_notification_email( $userId ),
+			$subject,
+			$content,
+			array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
 				'content-type: text/html',
 			)
@@ -358,10 +357,17 @@ class MainWP_Hooks {
 		$output          = new \stdClass();
 		$output->results = array();
 		if ( $dbwebsites ) {
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_posts', $post_data, array(
-				MainWP_Post::get_class_name(),
-				'hook_posts_search_handler',
-			), $output, $is_external_hook = true );
+			MainWP_Utility::fetch_urls_authed(
+				$dbwebsites,
+				'get_all_posts',
+				$post_data,
+				array(
+					MainWP_Post::get_class_name(),
+					'hook_posts_search_handler',
+				),
+				$output,
+				$is_external_hook = true
+			);
 		}
 		return $output;
 	}
@@ -399,11 +405,11 @@ class MainWP_Hooks {
 						$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
 					}
 					if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						$wp_filesystem->delete( trailingslashit( $newdir  ) . '.htaccess' );
+						$wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
 					}
 				} else {
 					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						$wp_filesystem->put_contents( trailingslashit( $newdir  ) . '.htaccess', 'deny from all' );
+						$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', 'deny from all' );
 					}
 				}
 			} else {
@@ -501,7 +507,9 @@ class MainWP_Hooks {
 				$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
 					$information = MainWP_Utility::fetch_url_authed(
-						$website, 'upgradeplugintheme', array(
+						$website,
+						'upgradeplugintheme',
+						array(
 							'type'   => $type,
 							'list'   => urldecode( implode( ',', $slugs ) ),
 						)

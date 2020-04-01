@@ -1217,11 +1217,11 @@ class MainWP_DB {
 
 				foreach ( $groupnames as $groupname ) {
 					if ( $this->wpdb->insert(
-							$this->table_name( 'group' ),
-							array(
-								'userid' => $userid,
-								'name'   => $this->escape( htmlspecialchars( $groupname ) ),
-							)
+						$this->table_name( 'group' ),
+						array(
+							'userid' => $userid,
+							'name'   => $this->escape( htmlspecialchars( $groupname ) ),
+						)
 						)
 					) {
 						$groupids[] = $this->wpdb->insert_id;
@@ -1262,12 +1262,12 @@ class MainWP_DB {
 	public function add_group( $userid, $name ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			if ( $this->wpdb->insert(
-					$this->table_name( 'group' ),
-					array(
-						'userid' => $userid,
-						'name'   => $this->escape( $name ),
-					)
+				$this->table_name( 'group' ),
+				array(
+					'userid' => $userid,
+					'name'   => $this->escape( $name ),
 				)
+			)
 			) {
 				return $this->wpdb->insert_id;
 			}
@@ -1341,12 +1341,12 @@ class MainWP_DB {
 				// add groups with groupnames.
 				foreach ( $groupnames as $groupname ) {
 					if ( $this->wpdb->insert(
-							$this->table_name( 'group' ),
-							array(
-								'userid' => $userid,
-								'name'   => $this->escape( $groupname ),
-							)
+						$this->table_name( 'group' ),
+						array(
+							'userid' => $userid,
+							'name'   => $this->escape( $groupname ),
 						)
+					)
 					) {
 						$groupids[] = $this->wpdb->insert_id;
 					}

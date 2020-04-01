@@ -47,7 +47,7 @@ class MainWP_Updates {
 				'slug'              => 'UpdatesManage',
 				'href'              => 'admin.php?page=UpdatesManage',
 				'icon'              => '<i class="sync icon"></i>',
-			), 
+			),
 			1
 		);
 	}

@@ -1219,7 +1219,7 @@ class MainWP_System {
 					$email = get_option( 'mainwp_updatescheck_mail_email' );
 					if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
 						MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-						$mail_offline = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+						$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
                                 <div></div>
                                 <ul>
                                 ' . $mail_offline . '
@@ -1228,7 +1228,7 @@ class MainWP_System {
                                 <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 						wp_mail(
 							$email,
-							$mail_title   = 'MainWP - HTTP response check',
+							$mail_title = 'MainWP - HTTP response check',
 							MainWP_Utility::format_email(
 								$email,
 								$mail_offline,

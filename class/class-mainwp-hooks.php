@@ -50,7 +50,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
-		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions::get_class_name(), 'is_extension_available', ) );
+		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions::get_class_name(), 'is_extension_available' ) );
 		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hook_decrypt_string' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );

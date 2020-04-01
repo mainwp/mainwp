@@ -536,7 +536,7 @@ class MainWP_DB {
 				array(
 					'wpid'   => $website->id,
 					'name'   => $option,
-					'value'  => $value
+					'value'  => $value,
 				)
 			);
 		} else {
@@ -545,7 +545,7 @@ class MainWP_DB {
 				array( 'value' => $value ),
 				array(
 					'wpid'   => $website->id,
-					'name'   => $option
+					'name'   => $option,
 				)
 			);
 		}
@@ -1211,7 +1211,7 @@ class MainWP_DB {
 					$this->table_name( 'wp_settings_backup' ),
 					array(
 						'wpid'           => $websiteid,
-						'archiveFormat'  => 'global'
+						'archiveFormat'  => 'global',
 					)
 				);
 
@@ -1233,7 +1233,7 @@ class MainWP_DB {
 						$this->table_name( 'wp_group' ),
 						array(
 							'wpid'       => $websiteid,
-							'groupid'    => $groupid
+							'groupid'    => $groupid,
 						)
 					);
 				}
@@ -1250,7 +1250,7 @@ class MainWP_DB {
 			$this->table_name( 'wp_group' ),
 			array(
 				'wpid'    => $websiteId,
-				'groupid' => $groupId
+				'groupid' => $groupId,
 			)
 		);
 	}
@@ -1265,7 +1265,7 @@ class MainWP_DB {
 					$this->table_name( 'group' ),
 					array(
 						'userid' => $userid,
-						'name'   => $this->escape( $name )
+						'name'   => $this->escape( $name ),
 					)
 				)
 			) {
@@ -1635,7 +1635,7 @@ class MainWP_DB {
 	public function update_website_stats( $websiteid, $statsUpdated ) {
 		return $this->wpdb->update(
 			$this->table_name( 'wp' ),
-			array( 'statsUpdate' => $statsUpdated, ),
+			array( 'statsUpdate' => $statsUpdated ),
 			array( 'id' => $websiteid )
 		);
 	}

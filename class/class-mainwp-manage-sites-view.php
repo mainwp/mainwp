@@ -1616,9 +1616,12 @@ class MainWP_Manage_Sites_View {
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						MainWP_DB::instance()->update_website_values(
-							$website->id, array(
-								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
-								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+							$website->id,
+							array(
+								// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+								'pubkey'   => base64_encode( $pubkey ),
+								// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+								'privkey'  => base64_encode( $privkey ),
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),

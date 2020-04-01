@@ -188,20 +188,20 @@ class MainWP_System {
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
 		add_filter(
-                        'mainwp_getdashboardsites',
-                        array(
-                                MainWP_Extensions::get_class_name(),
-                                'hook_get_dashboard_sites',
-                        ),
-                        10,
-                        7
+						'mainwp_getdashboardsites',
+						array(
+							MainWP_Extensions::get_class_name(),
+							'hook_get_dashboard_sites',
+						),
+						10,
+						7
 		);
 		add_filter(
-                        'mainwp-manager-getextensions',
-                        array(
-                                MainWP_Extensions::get_class_name(),
-                                'hook_manager_get_extensions',
-                        )
+						'mainwp-manager-getextensions',
+						array(
+							MainWP_Extensions::get_class_name(),
+							'hook_manager_get_extensions',
+						)
 		);
 
 		do_action( 'mainwp-activated' );

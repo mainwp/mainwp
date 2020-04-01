@@ -6,6 +6,7 @@
  *
  * @package MainWP/About
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -30,6 +31,7 @@ class MainWP_About {
 	 * init
 	 */
 	public static function init() {
+		
 	}
 
 	/**
@@ -40,8 +42,8 @@ class MainWP_About {
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
-				self::get_class_name(),
-				'render',
+			self::get_class_name(),
+			'render',
 			)
 		);
 	}

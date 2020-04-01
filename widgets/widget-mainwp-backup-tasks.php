@@ -50,8 +50,8 @@ class MainWP_Backup_Tasks {
 		} else {
 			?>
 			<div class="mainwp-row-top" style="text-align: right; margin-bottom: 1em;">
-				 <a href="admin.php?page=ManageBackups" class="button" ><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
-					 <?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
+				<a href="admin.php?page=ManageBackups" class="button" ><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
 					&nbsp;&nbsp;<a href="admin.php?page=ManageBackupsAddNew" class="button-primary" ><?php esc_html_e( 'Add new task', 'mainwp' ); ?></a>
 				<?php } ?>
 			</div>

@@ -455,7 +455,7 @@ class MainWP_Updates_Overview {
 								<div class="value">
 								<?php echo $total_upgrades; ?>
 							</div>
-							  <div class="label">
+							<div class="label">
 								<?php esc_html_e('Total Updates', 'mainwp'); ?>
 							</div>
 							</div>
@@ -485,7 +485,7 @@ class MainWP_Updates_Overview {
 					<div class="value">
 						<?php echo $total_wp_upgrades; ?>
 					</div>
-					  <div class="label">
+					<div class="label">
 					<?php esc_html_e('WordPress Updates', 'mainwp'); ?>
 					</div>
 					</div>

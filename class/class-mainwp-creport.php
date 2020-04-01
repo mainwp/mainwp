@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- *  phpcs:disable Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - deprecated
+ *  phpcs:disable PSR1.Classes.ClassDeclaration, Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
  */
 class LiveReportResponder {
 

@@ -87,10 +87,10 @@ class MainWP_Security_Issues_Widget {
 				?>
 				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
-				  <div class="column middle aligned">
-					  <a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-				  </div>
-				  <div class="column middle aligned">
+				<div class="column middle aligned">
+					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+				</div>
+				<div class="column middle aligned">
 							<?php
 							if ( $website->securityIssues > 0 ) {
 								?>
@@ -102,15 +102,15 @@ class MainWP_Security_Issues_Widget {
 								esc_html_e( 'No security issues detected.', 'mainwp' );
 							}
 							?>
-				  </div>
-				  <div class="column right aligned">
-					  <a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
-					  <?php if ( $website->securityIssues == 0 ) { ?>
-					  <input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
+				</div>
+				<div class="column right aligned">
+					<a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
+					<?php if ( $website->securityIssues == 0 ) { ?>
+					<input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } else { ?>
-					  <input type="button" class="fix-all-site-security-issues ui button green mini" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to fix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
+					<input type="button" class="fix-all-site-security-issues ui button green mini" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to fix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } ?>
-				  </div>
+				</div>
 				</div>
 				</div>
 			<?php } ?>

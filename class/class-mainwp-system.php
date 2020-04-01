@@ -11,6 +11,8 @@ const MAINWP_VIEW_PER_SITE         = 1;
 const MAINWP_VIEW_PER_PLUGIN_THEME = 0;
 const MAINWP_VIEW_PER_GROUP        = 2;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file
+
 class MainWP_System {
 
 	public static $version = '4.0.7.2';

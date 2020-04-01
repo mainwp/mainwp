@@ -229,7 +229,7 @@ class MainWP_Connection_Status {
 						</div>
 				</div>
 			</div>
-			
+
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {					
 					jQuery('#widget-connect-status-dropdown-selector').dropdown({
@@ -247,7 +247,7 @@ class MainWP_Connection_Status {
 					}					
 				} );
 			</script>
-			
+
 			<?php } ?>
 		</div>
 
@@ -288,8 +288,8 @@ class MainWP_Connection_Status {
 				<div class="ui two column stackable grid">
 					<div class="column left aligned">
 						<h2 class="ui header">
-						  <i class="green check icon"></i>
-						  <div class="content"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
+						<i class="green check icon"></i>
+						<div class="content"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 						</h2>
 					</div>
 					<div class="column right aligned">
@@ -302,8 +302,8 @@ class MainWP_Connection_Status {
 				<div class="ui two column stackable grid mainwp_wp_sync" site_id="<?php echo $site->id; ?>">
 					<div class="column left aligned">
 						<h2 class="ui header">
-						  <i class="red unlink icon"></i>
-						  <div class="content"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
+						<i class="red unlink icon"></i>
+						<div class="content"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 						</h2>
 					</div>
 					<div class="column right aligned">

@@ -89,7 +89,7 @@ class MainWP_QQ2_File_Uploader {
 			} else {
 				return array(
 					'error' => __( 'Could not save uploaded file!', 'mainwp' ) .
-							   __( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
+							__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
 				);
 			}
 		} catch ( Exception $e ) {

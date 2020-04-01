@@ -38,14 +38,14 @@ class MainWP_Security_Issues {
 		?>
 
 		<table class="ui table" id="mainwp-security-issues-table">
-		  <thead>
+		<thead>
 				<tr>
 					<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></th>
 					<th class="collapsing"><?php esc_html_e( '', 'mainwp' ); ?></th>
 				</tr>
-		  </thead>
-		  <tbody>
+		</thead>
+		<tbody>
 				<tr>
 					<td>
 						<span id="listing_loading"><i class="notched circle big loading icon"></i></span>
@@ -180,7 +180,7 @@ class MainWP_Security_Issues {
 						<span id="registered_versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
 					</td>
 				</tr>
-				 <?php
+				<?php
 					$is_wpengine = false;
 					if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
 						$is_wpengine = true;
@@ -224,7 +224,7 @@ class MainWP_Security_Issues {
 					</td>
 					<td></td>
 				</tr>
-		  </tbody>
+		</tbody>
 			<tfoot class="full-width">
 				<tr>
 					<th colspan="3">

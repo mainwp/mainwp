@@ -229,7 +229,7 @@ class MainWP_Recent_Pages {
 							</div>
 						</div>
 						</div>
-						 <div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
+						<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>

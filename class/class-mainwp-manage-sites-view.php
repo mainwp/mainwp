@@ -7,7 +7,14 @@ namespace MainWP\Dashboard;
 class MainWP_Manage_Sites_View {
 
 	public static function init_menu() {
-		return add_submenu_page( 'mainwp_tab', __( 'Sites', 'mainwp' ), '<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>', 'read', 'managesites', array( MainWP_Manage_Sites::get_class_name(), 'render_manage_sites' ) );
+		return add_submenu_page(
+			'mainwp_tab',
+			__( 'Sites', 'mainwp' ),
+			'<span id="mainwp-Sites">' . __( 'Sites', 'mainwp' ) . '</span>',
+			'read',
+			'managesites',
+			array( MainWP_Manage_Sites::get_class_name(), 'render_manage_sites' )
+		);
 	}
 
 	public static function init_subpages_menu( &$subPages ) {
@@ -57,7 +64,8 @@ class MainWP_Manage_Sites_View {
 				'slug'       => 'managesites',
 				'href'       => 'admin.php?page=managesites',
 				'icon'       => '<i class="globe icon"></i>',
-			), 1
+			),
+			1
 		);
 
 		$items_menu = array(
@@ -105,7 +113,7 @@ class MainWP_Manage_Sites_View {
 					continue;
 				}
 			}
-			MainWP_Menu::add_left_menu( $item, 2);
+			MainWP_Menu::add_left_menu( $item, 2 );
 		}
 	}
 
@@ -443,7 +451,7 @@ class MainWP_Manage_Sites_View {
 			$output      .= '<div class="ui grid field">';
 			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
 			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
-			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>';
+			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
 			$output      .= '</div>';
 			$output      .= '</div>';
 		}
@@ -826,7 +834,7 @@ class MainWP_Manage_Sites_View {
 					</thead>
 					<tbody class="plugins-bulk-updates" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 					<?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
-						<?php $plugin_name = urlencode( $slug ); ?>
+						<?php $plugin_name = rawurlencode( $slug ); ?>
 						<tr plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? esc_attr( $plugin_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
 							<td>
 								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
@@ -843,7 +851,7 @@ class MainWP_Manage_Sites_View {
 							<td><?php echo ( in_array( $slug, $trustedPlugins, true ) ? $trusted_label : $not_trusted_label ); ?></td>
 							<td class="right aligned">
 								<?php if ( $user_can_ignore_unignore_updates ) : ?>
-									<a href="#" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+									<a href="#" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 								<?php endif; ?>
 								<?php if ( $user_can_update_plugins ) : ?>
 									<a href="#" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo esc_attr( $website->id ); ?>, '<?php echo $plugin_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
@@ -910,7 +918,7 @@ class MainWP_Manage_Sites_View {
 					</thead>
 					<tbody class="themes-bulk-updates" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 						<?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
-							<?php $theme_name = urlencode( $slug ); ?>
+							<?php $theme_name = rawurlencode( $slug ); ?>
 							<tr theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? esc_attr( $theme_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
 								<td>
 									<?php echo esc_html( $theme_upgrade['Name'] ); ?>
@@ -921,7 +929,7 @@ class MainWP_Manage_Sites_View {
 								<td><?php echo ( in_array( $slug, $trustedThemes, true ) ? $trusted_label : $not_trusted_label ); ?></td>
 								<td class="right aligned">
 									<?php if ( $user_can_ignore_unignore_updates ) : ?>
-										<a href="#" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+										<a href="#" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 									<?php endif; ?>
 									<?php if ( $user_can_update_themes ) : ?>
 										<a href="#" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo esc_attr( $website->id ); ?>, '<?php echo $theme_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
@@ -1017,7 +1025,7 @@ class MainWP_Manage_Sites_View {
 					<tbody id="wp_plugins_outdate_<?php echo esc_attr( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 						<?php foreach ( $plugins_outdate as $slug => $plugin_outdate ) : ?>
 							<?php
-							$plugin_name              = urlencode( $slug );
+							$plugin_name              = rawurlencode( $slug );
 							$now                      = new \DateTime();
 							$last_updated             = $plugin_outdate['last_updated'];
 							$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
@@ -1033,7 +1041,7 @@ class MainWP_Manage_Sites_View {
 								<td><?php echo $outdate_notice; ?></td>
 								<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
 									<?php if ( $user_can_ignore_unignore_updates ) { ?>
-									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo urlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 								<?php } ?>
 								</td>
 							</tr>
@@ -1086,7 +1094,7 @@ class MainWP_Manage_Sites_View {
 					<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 						<?php foreach ( $themes_outdate as $slug => $theme_outdate ) : ?>
 							<?php
-							$theme_name              = urlencode( $slug );
+							$theme_name              = rawurlencode( $slug );
 							$now                     = new \DateTime();
 							$last_updated            = $theme_outdate['last_updated'];
 							$theme_last_updated_date = new \DateTime( '@' . $last_updated );
@@ -1102,7 +1110,7 @@ class MainWP_Manage_Sites_View {
 								<td><?php echo $outdate_notice; ?></td>
 								<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
 									<?php if ( $user_can_ignore_unignore_updates ) { ?>
-									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo urlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
 									<?php } ?>
 								</td>
 							</tr>
@@ -1583,11 +1591,21 @@ class MainWP_Manage_Sites_View {
 					$pubkey  = '-1';
 				}
 
-				$information = MainWP_Utility::fetch_url_not_authed( $website->url, $website->adminname, 'register', array(
-					'pubkey'   => $pubkey,
-					'server'   => get_admin_url(),
-					'uniqueId' => $website->uniqueId,
-				), true, $website->verify_certificate, $website->http_user, $website->http_pass, $website->ssl_version );
+				$information = MainWP_Utility::fetch_url_not_authed(
+					$website->url,
+					$website->adminname,
+					'register',
+					array(
+						'pubkey'   => $pubkey,
+						'server'   => get_admin_url(),
+						'uniqueId' => $website->uniqueId,
+					),
+					true,
+					$website->verify_certificate,
+					$website->http_user,
+					$website->http_pass,
+					$website->ssl_version
+				);
 
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
 					$err = rawurlencode( urldecode( $information['error'] ) );
@@ -1599,8 +1617,8 @@ class MainWP_Manage_Sites_View {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						MainWP_DB::instance()->update_website_values(
 							$website->id, array(
-								'pubkey'   => base64_encode( $pubkey ),
-								'privkey'  => base64_encode( $privkey ),
+								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
@@ -1679,11 +1697,21 @@ class MainWP_Manage_Sites_View {
 				$http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 				$force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-				$information       = MainWP_Utility::fetch_url_not_authed( $url, $params['wpadmin'], 'register', array(
-					'pubkey'     => $pubkey,
-					'server'     => get_admin_url(),
-					'uniqueId'   => $addUniqueId,
-				), false, $verifyCertificate, $http_user, $http_pass, $sslVersion, array( 'force_use_ipv4' => $force_use_ipv4 )
+				$information       = MainWP_Utility::fetch_url_not_authed(
+					$url,
+					$params['wpadmin'],
+					'register',
+					array(
+						'pubkey'     => $pubkey,
+						'server'     => get_admin_url(),
+						'uniqueId'   => $addUniqueId,
+					),
+					false,
+					$verifyCertificate,
+					$http_user,
+					$http_pass,
+					$sslVersion,
+					array( 'force_use_ipv4' => $force_use_ipv4 )
 				);
 
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
@@ -1740,10 +1768,10 @@ class MainWP_Manage_Sites_View {
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion );
+						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
-							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>'  );
+							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>' );
 						} else {
 							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}

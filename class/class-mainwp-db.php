@@ -38,7 +38,7 @@ class MainWP_DB {
 		return self::$instance;
 	}
 
-	// Constructor
+	// Constructor.
 	public function __construct() {
 		/** @var $this ->wpdb wpdb */
 		global $wpdb;
@@ -1344,7 +1344,7 @@ class MainWP_DB {
 						$groupids[] = $this->wpdb->insert_id;
 					}
 				}
-				// add groupids
+				// add groupids.
 				foreach ( $groupids as $groupid ) {
 					$this->wpdb->insert(
 						$this->table_name( 'wp_group' ), array(
@@ -1770,7 +1770,7 @@ class MainWP_DB {
 			return false;
 		}
 
-		$result = self::_query( $sql, $this->wpdb->dbh );
+		$result = self::m_query( $sql, $this->wpdb->dbh );
 
 		if ( ! $result || ( 0 == self::num_rows( $result ) ) ) {
 			return false;
@@ -1804,7 +1804,7 @@ class MainWP_DB {
 		}
 	}
 
-	public static function _query( $query, $link ) {
+	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_query( $link, $query );
 		} else {

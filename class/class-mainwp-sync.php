@@ -342,7 +342,7 @@ class MainWP_Sync {
 		MainWP_DB::instance()->update_website_sync_values( $pWebsite->id, $websiteSyncValues );
 		MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
 
-		// Sync action
+		// Sync action.
 		if ( ! $error ) {
 			do_action( 'mainwp-site-synced', $pWebsite, $information );
 		}

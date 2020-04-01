@@ -77,7 +77,7 @@ class MainWP_QQ2_File_Uploader {
 		}
 
 		if ( ! $replaceOldFile ) {
-			// don't overwrite previous files that were uploaded
+			// don't overwrite previous files that were uploaded.
 			while ( file_exists( $uploadDirectory . $filename . '.' . $ext ) ) {
 				$filename .= wp_rand( 10, 99 );
 			}

@@ -2270,14 +2270,14 @@ PRIMARY KEY  (`id`)  ';
 							if ( ! isset( $return[ $token->id ] ) ) {
 								$return[ $token->id ] = new \stdClass();
 							}
-							$return[ $token->id ]->token_value = $this->_get_default_token_site( $token->token_name, $site_url );
+							$return[ $token->id ]->token_value = $this->get_default_token_site( $token->token_name, $site_url );
 						}
 					} else {
 						if ( 1 === $token->type && ( ! isset( $return[ $token->token_name ] ) || empty( $return[ $token->token_name ] ) ) ) {
 							if ( ! isset( $return[ $token->token_name ] ) ) {
 								$return[ $token->token_name ] = new \stdClass();
 							}
-							$return[ $token->token_name ]->token_value = $this->_get_default_token_site( $token->token_name, $site_url );
+							$return[ $token->token_name ]->token_value = $this->get_default_token_site( $token->token_name, $site_url );
 						}
 					}
 				}
@@ -2286,7 +2286,7 @@ PRIMARY KEY  (`id`)  ';
 		return $return;
 	}
 
-	public function _get_default_token_site( $token_name, $site_url ) {
+	public function get_default_token_site( $token_name, $site_url ) {
 		$website = apply_filters( 'mainwp_getwebsitesbyurl', $site_url );
 		if ( empty( $this->default_tokens[ $token_name ] ) || ! $website ) {
 			return false;
@@ -2703,7 +2703,7 @@ PRIMARY KEY  (`id`)  ';
 		}
 		/** @var $wpdb wpdb */
 		global $wpdb;
-		$result = self::_query( $sql, $wpdb->dbh );
+		$result = self::m_query( $sql, $wpdb->dbh );
 
 		if ( ! $result || ( 0 === self::num_rows( $result ) ) ) {
 			return false;
@@ -2711,7 +2711,7 @@ PRIMARY KEY  (`id`)  ';
 		return $result;
 	}
 
-	public static function _query( $query, $link ) {
+	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_query( $link, $query );
 		} else {

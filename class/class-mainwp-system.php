@@ -1940,7 +1940,7 @@ class MainWP_System {
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
 				MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Trying to reconnect' );
 				try {
-					if ( MainWP_Manage_Sites::_reconnect_site( $website ) ) {
+					if ( MainWP_Manage_Sites::reconnect_web_site( $website ) ) {
 						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {

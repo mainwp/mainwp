@@ -123,8 +123,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 			case 'featured':
 				$args['fields']['group'] = true;
-				$this->orderby           = 'group';
-				// No break!
+				$this->orderby           = 'group';				
 			case 'popular':
 			case 'new':
 			case 'beta':

@@ -565,6 +565,7 @@ class MainWP_UI {
 				// If no priority given and id already present, use existing priority.
 				if ( empty( $priority ) ) {
 					$priority = $a_priority;
+					
 					/*
 					* Else, if we're adding to the sorted priority, we don't know the title
 					* or callback. Grab them from the previously added context/priority.

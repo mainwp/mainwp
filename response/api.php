@@ -62,8 +62,8 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 		return array( 'error' => 'Invalid security ID.' );
 	}
 
-	// to fix conflict with divi theme
-	define('DOING_CRON', true); // to fix conflict issue with the team control extension
+	// to fix conflict with divi theme.
+	define('DOING_CRON', true); // to fix conflict issue with the team control extension.
 
 	return true;
 }

@@ -33,6 +33,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ) );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
+		
 		/*
 		 *  @deprecated 4.0.7. Please use `mainwp_get_error_message`.
 		 */

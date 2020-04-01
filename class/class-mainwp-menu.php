@@ -28,12 +28,9 @@ class MainWP_Menu {
 				// Compatible with old hooks.
 				'level_1'    => array(
 					'not_set_this_level' => true,
-					// 'mainwp_tab' => false, // Do not hide this menu.
-					// 'Extensions'       => false,
-					// 'childsites_menu'  => false,
 				),
 				'level_2'    => array(
-					// 'mainwp_tab' => false,  // Do not hide this menu.
+					// 'mainwp_tab' - Do not hide this menu.
 					'UpdatesManage'      => false,
 					'managesites'        => false,
 					'PostBulkManage'     => false,

@@ -258,7 +258,7 @@ class MainWP_Updates_Overview {
 
 							$premiumUpgrade = array_filter( $premiumUpgrade );
 							if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-								$plugin_upgrades[ $crrSlug ] = array(); // to fix warning
+								$plugin_upgrades[ $crrSlug ] = array(); // to fix warning.
 							}
 
 							$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
@@ -819,7 +819,7 @@ class MainWP_Updates_Overview {
 			if ( ! empty( $primaryBackup ) ) {
 				$lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
 
-				if ( $lastBackup != -1 ) { // installed backup plugin
+				if ( $lastBackup != -1 ) { // installed backup plugin.
 					$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
 				}
 				$output['primary_backup'] = $primaryBackup;

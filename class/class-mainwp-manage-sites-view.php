@@ -1561,7 +1561,7 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 	}
-	public static function _reconnect_site( $website ) {
+	public static function reconnect_web_site( $website ) {
 		if ( MainWP_Utility::can_edit_website( $website ) ) {
 			try {
 				if ( MainWP_Sync::sync_site( $website, true ) ) {

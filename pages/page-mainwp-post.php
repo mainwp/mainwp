@@ -256,7 +256,7 @@ class MainWP_Post {
 			return $content;
 		}
 
-		return self::_wp_post_thumbnail_html( $thumbnail_id, $post_id );
+		return self::wp_post_thumbnail_html( $thumbnail_id, $post_id );
 	}
 
 	/**
@@ -322,7 +322,7 @@ class MainWP_Post {
 			$pid  = (int) $meta->post_id;
 			$meta = get_object_vars( $meta );
 
-			$data = self::_list_meta_row( $meta, $c );
+			$data = self::list_meta_row( $meta, $c );
 
 		} elseif ( isset( $_POST['delete_meta'] ) && 'yes' === $_POST['delete_meta'] ) {
 			$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
@@ -366,7 +366,7 @@ class MainWP_Post {
 				}
 			}
 
-			$data = self::_list_meta_row(
+			$data = self::list_meta_row(
 				array(
 					'meta_key'   => $key,
 					'meta_value' => $value,
@@ -1020,7 +1020,7 @@ class MainWP_Post {
 	 * @param int   $count
 	 * @return string
 	 */
-	public static function _list_meta_row( $entry, &$count ) {
+	public static function list_meta_row( $entry, &$count ) {
 		static $update_nonce = '';
 
 		if ( is_protected_meta( $entry['meta_key'], 'post' ) ) {
@@ -1176,7 +1176,7 @@ class MainWP_Post {
 			$count = 0;
 			if ( $metadata ) {
 				foreach ( $metadata as $entry ) {
-					echo self::_list_meta_row( $entry, $count );
+					echo self::list_meta_row( $entry, $count );
 				}
 			}
 
@@ -1197,7 +1197,7 @@ class MainWP_Post {
 	 * @param mixed $pos The post ID or object associated with the thumbnail, defaults to global $post.
 	 * @return string html
 	 */
-	public static function _wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
+	public static function wp_post_thumbnail_html( $thumbnail_id = null, $pos = null ) {
 
 		$_wp_additional_image_sizes = wp_get_additional_image_sizes();
 
@@ -1279,7 +1279,7 @@ class MainWP_Post {
 
 	public static function post_thumbnail_meta_box( $pos ) {
 		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
-		echo self::_wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
+		echo self::wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
 	}
 
 	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {

@@ -451,7 +451,7 @@ class MainWP_Manage_Sites_View {
 			$output      .= '<div class="ui grid field">';
 			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
 			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
-			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
 			$output      .= '</div>';
 			$output      .= '</div>';
 		}
@@ -1618,10 +1618,8 @@ class MainWP_Manage_Sites_View {
 						MainWP_DB::instance()->update_website_values(
 							$website->id,
 							array(
-								// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
-								'pubkey'   => base64_encode( $pubkey ),
-								// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
-								'privkey'  => base64_encode( $privkey ),
+								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
+								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
@@ -1771,7 +1769,7 @@ class MainWP_Manage_Sites_View {
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions. base64_encode() function is used for benign reasons.
+						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
 							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>' );

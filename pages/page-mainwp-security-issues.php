@@ -182,10 +182,10 @@ class MainWP_Security_Issues {
 				</tr>
 				<?php
 					$is_wpengine = false;
-					if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
-						$is_wpengine = true;
-					}
-					?>
+				if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
+					$is_wpengine = true;
+				}
+				?>
 				<tr>
 					<td>
 						<span id="readme_loading"><i class="notched circle big loading icon"></i></span>

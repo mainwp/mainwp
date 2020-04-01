@@ -914,7 +914,7 @@ class MainWP_Post_Handler {
 				array(
 					'fileName'       => $fileName,
 					'fileNameUID'    => $fileNameUID,
-					'type'           => $type
+					'type'           => $type,
 				)
 			);
 
@@ -1685,7 +1685,7 @@ class MainWP_Post_Handler {
 			array(
 				'offline_check_result'   => $check_result ? '1' : '-1',
 				'offline_checks_last'    => time(),
-				'http_response_code'     => $http_code
+				'http_response_code'     => $http_code,
 			)
 		);
 		die(

@@ -879,9 +879,8 @@ class MainWP_System {
 	}
 
 	
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public function mainwp_cronupdatescheck_action() {
-		
-		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 		
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
@@ -1740,9 +1739,9 @@ class MainWP_System {
 			}
 
 			do_action( 'mainwp_cronupdatecheck_action', $pluginsNewUpdate, $pluginsToUpdate, $pluginsToUpdateNow, $themesNewUpdate, $themesToUpdate, $themesToUpdateNow, $coreNewUpdate, $coreToUpdate, $coreToUpdateNow );
-		}
-		// phpcs:enable
+		}		
 	}
+	// phpcs:enable
 
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -2443,7 +2442,7 @@ class MainWP_System {
 			}
 		}
 
-		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
+		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			$userExtension            = MainWP_DB::instance()->get_user_extension();
 			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
 			MainWP_DB::instance()->update_user_extension( $userExtension );

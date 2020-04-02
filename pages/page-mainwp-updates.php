@@ -76,9 +76,8 @@ class MainWP_Updates {
 		echo '</div>';
 	}
 
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public static function render() {
-		
-		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 		
 		global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -2794,8 +2793,8 @@ class MainWP_Updates {
 		<?php
 		self::render_footer();
 		
-		// phpcs:enable -- Generic.Metrics.CyclomaticComplexity
 	}
+	// phpcs:enable -- Generic.Metrics.CyclomaticComplexity
 
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {

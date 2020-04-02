@@ -554,13 +554,12 @@ class MainWP_Manage_Sites {
 		}
 		self::render_footer( $showpage );
 	}
-
+	
 	/**
 	 * @throws MainWP_Exception
 	 */
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
-		
-		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 		
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
@@ -1017,9 +1016,9 @@ class MainWP_Manage_Sites {
 			throw new MainWP_Exception( 'Database backup failed due to an undefined error.' );
 		}
 
-		return $backup_result;
-		// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
+		return $backup_result;		
 	}
+	// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
 
 	public static function backup_get_file_size( $pFile ) {
 		$dir = MainWP_Utility::get_mainwp_specific_dir();

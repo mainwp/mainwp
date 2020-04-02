@@ -163,9 +163,8 @@ class MainWP_Updates_Overview {
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
 	 */
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public static function render_sites( $isUpdatesPage = false ) {
-		
-		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 		
 		$globalView = true;
 		global $current_user;
@@ -773,9 +772,9 @@ class MainWP_Updates_Overview {
 			</div>
 
 			<?php
-			MainWP_DB::free_result( $websites );			
-			// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
+			MainWP_DB::free_result( $websites );						
 	}
+	// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
 
 
 	/**

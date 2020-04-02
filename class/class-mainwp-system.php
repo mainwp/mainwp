@@ -878,8 +878,8 @@ class MainWP_System {
 		return $_hour * 60 + $_mins;
 	}
 
-	
-	
+
+
 	public function mainwp_cronupdatescheck_action() {
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
@@ -1739,9 +1739,9 @@ class MainWP_System {
 			}
 
 			do_action( 'mainwp_cronupdatecheck_action', $pluginsNewUpdate, $pluginsToUpdate, $pluginsToUpdateNow, $themesNewUpdate, $themesToUpdate, $themesToUpdateNow, $coreNewUpdate, $coreToUpdate, $coreToUpdateNow );
-		}		
+		}
 	}
-	
+
 
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {

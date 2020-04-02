@@ -560,7 +560,7 @@ class MainWP_Manage_Sites {
 	 */
 	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
-		
+
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}

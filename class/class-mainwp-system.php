@@ -881,7 +881,7 @@ class MainWP_System {
 	
 	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
 	public function mainwp_cronupdatescheck_action() {
-		
+
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
 		ignore_user_abort( true );

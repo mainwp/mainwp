@@ -163,7 +163,7 @@ class MainWP_System {
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
 
-		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );		
+		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) );
 
 		/**

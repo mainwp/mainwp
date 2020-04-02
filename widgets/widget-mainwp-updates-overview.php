@@ -398,10 +398,10 @@ class MainWP_Updates_Overview {
 		$trusted_icon = '<i class="check circle outline icon"></i> ';
 
 		// the hook using to set maximum number of plugins/themes for huge number of updates.
-		$limit_updates_all            = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update              = '';
-		$continue_update_slug         = '';
-		$continue_class               = '';
+		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
+		$continue_update      = '';
+		$continue_update_slug = '';
+		$continue_class       = '';
 		if ( $limit_updates_all > 0 ) {
 			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
 				$continue_update = $_GET['continue_update'];

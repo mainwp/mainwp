@@ -6,6 +6,7 @@
  *
  * @package MainWP/Plugins
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -93,7 +94,7 @@ class MainWP_Widget_Themes {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e('Themes', 'mainwp'); ?>
+					<?php esc_html_e( 'Themes', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -214,7 +215,9 @@ class MainWP_Widget_Themes {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'theme_action', array(
+				$website,
+				'theme_action',
+				array(
 					'action' => $pAction,
 					'theme'  => $theme,
 				)

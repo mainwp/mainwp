@@ -4,6 +4,7 @@
  *
  * Build the Child Site Info Widget.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -66,14 +67,14 @@ class MainWP_Site_Info {
 		?>
 
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e('Site Info', 'mainwp'); ?>
+			<?php esc_html_e( 'Site Info', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
 		</h3>
 
 		<div class="ui section hidden divider"></div>
 
 		<div class="mainwp-widget-site-info">
-			<?php do_action( 'mainwp_site_info_widget_top'); ?>
+			<?php do_action( 'mainwp_site_info_widget_top' ); ?>
 			<?php
 			if ( ! is_array( $website_info ) || ! isset( $website_info['wpversion'] ) ) {
 				?>
@@ -87,18 +88,18 @@ class MainWP_Site_Info {
 				<?php
 			} else {
 
-				$website_info['group'] = ( $website->wpgroups == '' ? 'None' : $website->wpgroups );
+				$website_info['group'] = ( '' == $website->wpgroups ? 'None' : $website->wpgroups );
 
 				?>
 			<table class="ui celled striped table">
 				<tbody>
-				<?php do_action( 'mainwp_site_info_table_top'); ?>
+				<?php do_action( 'mainwp_site_info_table_top' ); ?>
 				<?php
 				foreach ( $child_site_info as $index => $title ) {
-						$val = '';
+					$val = '';
 					if ( isset( $website_info[ $index ] ) ) {
-						if ( $index == 'debug_mode' ) {
-							$val = $website_info[ $index ] == 1 ? 'Enabled' : 'Disabled';
+						if ( 'debug_mode' == $index ) {
+							$val = 1 == $website_info[ $index ] ? 'Enabled' : 'Disabled';
 						} else {
 							$val = $website_info[ $index ];
 						}
@@ -109,11 +110,11 @@ class MainWP_Site_Info {
 						<td><?php echo esc_html( $val ); ?></td>
 						</tr>
 				<?php } ?>
-				<?php do_action( 'mainwp_site_info_table_bottom'); ?>
+				<?php do_action( 'mainwp_site_info_table_bottom' ); ?>
 				</tbody>
 			</table>
 			<?php } ?>
-			<?php do_action( 'mainwp_site_info_widget_bottom'); ?>
+			<?php do_action( 'mainwp_site_info_widget_bottom' ); ?>
 		</div>
 		<?php
 		MainWP_DB::free_result( $websites );

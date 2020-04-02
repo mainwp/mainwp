@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Settings page
+ *
+ * This page is used to manage MainWP Dashboard settings
+ *
+ * @package MainWP/Settings
+ */
+
 namespace MainWP\Dashboard;
 
 /**

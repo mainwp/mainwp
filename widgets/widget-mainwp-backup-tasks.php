@@ -4,6 +4,7 @@
  *
  * Displays the MainWP > Backups Page ( Legacy ).
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -43,7 +44,7 @@ class MainWP_Backup_Tasks {
 		$tasks = MainWP_DB::instance()->get_backup_tasks_for_user();
 
 		?>
-		<h3><?php esc_html_e('Backup tasks', 'mainwp'); ?></h3>
+		<h3><?php esc_html_e( 'Backup tasks', 'mainwp' ); ?></h3>
 		<?php
 		if ( count( $tasks ) == 0 ) {
 			echo 'You have no scheduled backup tasks. <a href="admin.php?page=ManageBackupsAddNew">Go create one!</a>';
@@ -74,7 +75,7 @@ class MainWP_Backup_Tasks {
 				<?php
 				foreach ( $tasks as $task ) {
 					$sites = array();
-					if ( $task->groups != '' ) {
+					if ( '' != $task->groups ) {
 						$groups = explode( ',', $task->groups );
 						foreach ( $groups as $groupid ) {
 							$group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
@@ -85,22 +86,22 @@ class MainWP_Backup_Tasks {
 								$sites[] = $group_site->id;
 							}
 						}
-					} elseif ( $task->sites != '' ) {
+					} elseif ( '' != $task->sites ) {
 						$sites = explode( ',', $task->sites );
 					}
 					?>
 					<div class="ui grid mainwp-recent">
 						<div class="eight wide column">
 							<strong><a href="admin.php?page=ManageBackups&id=<?php echo esc_attr( $task->id ); ?>"><?php echo stripslashes( $task->name ); ?></a></strong><br />
-							<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ( $task->type == 'db' ? __( 'Database backup', 'mainwp' ) : __( 'Full backup', 'mainwp' ) ); ?>)</span>
+							<span style="font-size: 11px">(<?php echo strtoupper( $task->schedule ); ?> - <?php echo ( 'db' == $task->type ? __( 'Database backup', 'mainwp' ) : __( 'Full backup', 'mainwp' ) ); ?>)</span>
 						</div>
 						<div class="two wide column">
 							<?php
-							if ( $task->paused == 1 ) {
+							if ( 1 == $task->paused ) {
 								echo ( '<span title="Paused"  style="background: #999; padding: .3em 1em; color: white; border-radius: 15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;">' . count( $sites ) . '</span>' );
-							} elseif ( count( $sites ) == 0 ) {
+							} elseif ( 0 == count( $sites ) ) {
 								echo ( '<span title="0 Scheduled Websites" style="background: #c80000; padding: .3em 1em; color: white; border-radius: 15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;">0</span>' );
-							} elseif ( $task->last_run != 0 && $task->completed < $task->last_run ) {
+							} elseif ( 0 != $task->last_run && $task->completed < $task->last_run ) {
 								echo ( '<span title="Backup in Progress" class="mainwp-blink-me" style="padding: .3em 1em; color: white; border-radius: 15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;">' . count( $sites ) . '</span>' );
 							} else {
 								echo ( '<span title="Scheduled Websites" style="background: #7fb100; padding: .3em 1em; color: white; border-radius: 15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;">' . count( $sites ) . '</span>' );
@@ -108,8 +109,8 @@ class MainWP_Backup_Tasks {
 							?>
 						</div>
 						<div class="six wide column">
-							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?><br />
-							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( $task->last_run == 0 ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( $task->schedule == 'daily' ? ( 60 * 60 * 24 ) : ( $task->schedule == 'weekly' ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?>
+							<strong><?php esc_html_e( 'LAST RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?><br />
+							<strong><?php esc_html_e( 'NEXT RUN: ', 'mainwp' ); ?></strong>&nbsp;<?php echo ( 0 == $task->last_run ? __( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' == $task->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' == $task->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $task->last_run ) ) ); ?>
 						</div>
 					</div>
 					<?php

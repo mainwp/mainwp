@@ -2389,9 +2389,9 @@ class MainWP_System {
 			include_once ABSPATH . WPINC . '/pluggable.php';
 		}
 
-		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {		
+		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
 			$this->handle_mainwp_tools_settings();
-			$this->handle_manage_sites_screen_settings();			
+			$this->handle_manage_sites_screen_settings();
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
@@ -2410,7 +2410,7 @@ class MainWP_System {
 				}
 				wp_safe_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
 				exit();
-			} 
+			}
 		}
 	}
 
@@ -2451,7 +2451,7 @@ class MainWP_System {
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
 		}
 	}
-	
+
 	public function handle_manage_sites_screen_settings() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
 			$hide_cols = array();

@@ -3780,30 +3780,34 @@ mainwp_import_users = function () {
     jQuery.post( ajaxurl, data, function ( response_data ) {
             if ( response_data.error != undefined )
                 return;
-
-            var line_num = response_data.line_number;
-            var okList = response_data.ok_list;
-            var errorList = response_data.error_list;
-            if ( okList != undefined )
-                for ( var i = 0; i < okList.length; i++ ) {
-                    import_user_count_created_users++;
-                    jQuery( '#import_user_import_logging .log' ).append( '[' + line_num + ']>> ' + okList[i] + '\n' );
-                }
-
-            if ( errorList != undefined )
-                for ( var i = 0; i < errorList.length; i++ ) {
-                    import_user_count_create_fails++;
-                    jQuery( '#import_user_import_logging .log' ).append( '[' + line_num + ']>> ' + errorList[i] + '\n' );
-                }
-
-            if ( response_data.failed_logging != '' && response_data.failed_logging != undefined ) {
-                jQuery( '#import_user_import_failed_rows' ).append( '<span>' + response_data.failed_logging + '</span>' );
-            }
-            jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+			
+			mainwp_import_users_response( response_data );            
+			
             mainwp_import_users();
     }, 'json' );
 };
 
+mainwp_import_users_response = function( response_data ) {
+		var line_num = response_data.line_number;
+		var okList = response_data.ok_list;
+		var errorList = response_data.error_list;
+		if ( okList != undefined )
+			for ( var i = 0; i < okList.length; i++ ) {
+				import_user_count_created_users++;
+				jQuery( '#import_user_import_logging .log' ).append( '[' + line_num + ']>> ' + okList[i] + '\n' );
+			}
+
+		if ( errorList != undefined )
+			for ( var i = 0; i < errorList.length; i++ ) {
+				import_user_count_create_fails++;
+				jQuery( '#import_user_import_logging .log' ).append( '[' + line_num + ']>> ' + errorList[i] + '\n' );
+			}
+
+		if ( response_data.failed_logging != '' && response_data.failed_logging != undefined ) {
+			jQuery( '#import_user_import_failed_rows' ).append( '<span>' + response_data.failed_logging + '</span>' );
+		}
+		jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+}
 
 
 /**

@@ -1,4 +1,9 @@
 <?php
+/**
+ * This file handles the requested Child Sites, 
+ * and then displays the "Redirecting..." screen.
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -6,10 +11,20 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Site_Open {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * This method chekcs to see if the current user is allow to acess the
+	 * Child Site, then grabs the websiteid, location, openurl & passes it onto
+	 * either open_site_location or open_site methods.
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'WP-Admin on child sites', 'mainwp' ) );
@@ -38,7 +53,14 @@ class MainWP_Site_Open {
 			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
 		}
 	}
-
+	
+	/**
+	 * This method opens the requested Child Site Admin.
+	 * 
+	 * @param mixed $website Website ID.
+	 * @param mixed $location Website Location.
+	 * @param null $pNewWindow Open in new window. 
+	 */
 	public static function open_site( $website, $location, $pNewWindow = null ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
@@ -52,6 +74,9 @@ class MainWP_Site_Open {
 		<?php
 	}
 
+	/**
+	 * This renders the method open_site _restore()
+	 */
 	public static function render_restore() {
 		if ( ! isset( $_GET['websiteid'] ) ) {
 			exit();
@@ -72,6 +97,13 @@ class MainWP_Site_Open {
 		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
 	}
 
+	/**
+	 * This opens the site restore.
+	 * 
+	 * @param mixed $website Website ID.
+	 * @param mixed $file Restore File.
+	 * @param mixed $size Post data size.
+	 */
 	public static function open_site_restore( $website, $file, $size ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">
@@ -98,6 +130,12 @@ class MainWP_Site_Open {
 		<?php
 	}
 
+	/**
+	 * This opens the site location.
+	 * 
+	 * @param mixed $website Website ID. 
+	 * @param mixed $open_location Website URL.
+	 */
 	public static function open_site_location( $website, $open_location ) {
 		?>
 		<div class="ui segment" style="padding: 25rem">

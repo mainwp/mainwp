@@ -6,12 +6,22 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Settings {
 
+	
+	/**
+	 * Get Class Name
+	 *
+	 * @return __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var array $subPages Array used to store extra Sub pages.
+	 */
 	public static $subPages;
 
+	/** Instantiate Hooks for the Settings Page. */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Settings page header via the 'mainwp-pageheader-settings' action.
@@ -42,10 +52,12 @@ class MainWP_Settings {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/** Run the export_sites method that exports the Child Sites .csv file */
 	public static function admin_init() {
 		self::export_sites();
 	}
 
+	/** Instantiate the Settings Menu  */
 	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab',
@@ -121,6 +133,7 @@ class MainWP_Settings {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/** Instantiate Settings SubPages Menu */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
@@ -160,7 +173,15 @@ class MainWP_Settings {
 		</div>
 		<?php
 	}
+	
 
+	/**
+	 * Instantiate left menu
+	 * 
+	 * Settings Page & SubPage link data.
+	 * 
+	 * @param array $subPages SubPages Array.
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -218,6 +239,8 @@ class MainWP_Settings {
 	}
 
 	/**
+	 * Render Page Header.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -277,8 +300,6 @@ class MainWP_Settings {
 
 		MainWP_UI::render_page_navigation( $renderItems );
 	}
-
-
 
 	/**
 	 * @param string $shownPage The page slug shown at this moment.
@@ -861,6 +882,7 @@ class MainWP_Settings {
 		self::render_footer( 'MainWPTools' );
 	}
 
+	/** Export Child Sites and save as .csv file */
 	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
 

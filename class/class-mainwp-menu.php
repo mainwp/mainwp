@@ -57,12 +57,12 @@ class MainWP_Menu {
 	 *
 	 * Build left menu subpages array.
 	 *
-	 * @param mixed $subPages
-	 * @param mixed $initSubpage
-	 * @param mixed $parentKey
-	 * @param mixed $slug
+	 * @param array $subPages Array of SubPages.
+	 * @param array $initSubpage Initial SubPage Array.
+	 * @param string $parentKey Parent Menu Slug.
+	 * @param mixed $slug SubPage Slug.
 	 *
-	 * @return array $initSubpage[]
+	 * @return array $initSubpage[] Final SubPages Array.
 	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
 		if ( ! is_array( $subPages ) ) {

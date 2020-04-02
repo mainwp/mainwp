@@ -878,11 +878,11 @@ class MainWP_System {
 		return $_hour * 60 + $_mins;
 	}
 
-	
+
 	public function mainwp_cronupdatescheck_action() {
-		
+
 		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
-		
+
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
 		ignore_user_abort( true );

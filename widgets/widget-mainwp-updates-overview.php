@@ -164,9 +164,9 @@ class MainWP_Updates_Overview {
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
 	 */
 	public static function render_sites( $isUpdatesPage = false ) {
-		
+
 		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
-		
+
 		$globalView = true;
 		global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -773,7 +773,7 @@ class MainWP_Updates_Overview {
 			</div>
 
 			<?php
-			MainWP_DB::free_result( $websites );			
+			MainWP_DB::free_result( $websites );
 			// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
 	}
 

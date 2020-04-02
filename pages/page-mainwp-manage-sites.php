@@ -559,9 +559,9 @@ class MainWP_Manage_Sites {
 	 * @throws MainWP_Exception
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
-		
+
 		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
-		
+
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}

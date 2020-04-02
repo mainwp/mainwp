@@ -36,6 +36,12 @@
                 <exclude name="WordPress.WP.I18n"/>                
 	</rule>
 
+	<rule ref="Generic.Metrics.CyclomaticComplexity.MaxExceeded">
+        <properties>
+            <property name="complexity" value="100" />
+        </properties>
+    </rule>
+	
 	<!-- Enforce PSR1 compatible namespaces. -->
 	<rule ref="PSR1.Classes.ClassDeclaration"/>
 

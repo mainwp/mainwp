@@ -75,8 +75,7 @@ class MainWP_Updates {
 	public static function render_footer() {
 		echo '</div>';
 	}
-
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
+	
 	public static function render() {
 
 		global $current_user;
@@ -2793,7 +2792,7 @@ class MainWP_Updates {
 		<?php
 		self::render_footer();
 	}
-	// phpcs:enable -- Generic.Metrics.CyclomaticComplexity
+	
 
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {

@@ -163,8 +163,7 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 */
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
+	 */	
 	public static function render_sites( $isUpdatesPage = false ) {
 
 		$globalView = true;
@@ -774,8 +773,7 @@ class MainWP_Updates_Overview {
 
 			<?php
 			MainWP_DB::free_result( $websites );						
-	}
-	// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
+	}	
 
 
 	/**

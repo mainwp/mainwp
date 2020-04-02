@@ -879,7 +879,7 @@ class MainWP_System {
 	}
 
 	
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
+	
 	public function mainwp_cronupdatescheck_action() {
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
@@ -1741,7 +1741,7 @@ class MainWP_System {
 			do_action( 'mainwp_cronupdatecheck_action', $pluginsNewUpdate, $pluginsToUpdate, $pluginsToUpdateNow, $themesNewUpdate, $themesToUpdate, $themesToUpdateNow, $coreNewUpdate, $coreToUpdate, $coreToUpdateNow );
 		}		
 	}
-	// phpcs:enable
+	
 
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {

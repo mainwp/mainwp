@@ -1,4 +1,7 @@
 <?php
+/**
+ * This class handles building the Settings Page & all SubPages.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -302,12 +305,24 @@ class MainWP_Settings {
 	}
 
 	/**
+	 * Close the HTML container.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method handle_settings_post().
+	 * 
+	 * This class handles the $_POST of Settings Options.
+	 * 
+	 * @uses MainWP_DB::instance()
+	 * @uses MainWP_Utility::update_option()
+	 * 
+	 * @return boolean True|False Posts On True.
+	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB::instance()->get_user_extension();
@@ -373,6 +388,7 @@ class MainWP_Settings {
 		return false;
 	}
 
+	/** Render the MainWP Settings Page. */
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -666,6 +682,11 @@ class MainWP_Settings {
 		self::render_footer( '' );
 	}
 
+	/**
+	 * Returns false or the location of the OpenSSL Lib File.
+	 * 
+	 * @return mixed false|opensslLibLocation 
+	 */
 	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			return true;
@@ -678,6 +699,11 @@ class MainWP_Settings {
 		}
 	}
 
+	/**
+	 * Check MainWP Installation Hosting Type & System Type.
+	 * 
+	 * @return boolean true|false
+	 */
 	public static function is_local_window_config() {
 		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
@@ -687,6 +713,7 @@ class MainWP_Settings {
 		return false;
 	}
 
+	/** Render Advanced Options Subpage */
 	public static function render_advanced() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -813,6 +840,7 @@ class MainWP_Settings {
 		self::render_footer( 'Advanced' );
 	}
 
+	/** Render MainWP Tools SubPage */
 	public static function render_mainwp_tools() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -913,6 +941,7 @@ class MainWP_Settings {
 		}
 	}
 
+	/** Render CLient Reports Responder */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );

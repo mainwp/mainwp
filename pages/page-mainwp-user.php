@@ -4,7 +4,7 @@
  *
  * This page is used to Manage Users on child sites
  *
- * @package MainWP/Users
+ * @package MainWP/User
  */
 
 namespace MainWP\Dashboard;

@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Themes Page
+ *
+ * This page is used to Manage Themes on child sites
+ *
+ * @package MainWP/Themes
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -723,7 +731,7 @@ class MainWP_Themes {
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			unset( $results );
 			if ( isset( $themes['error'] ) ) {
 				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $themes['error'], $website->url ) );
@@ -1301,9 +1309,9 @@ class MainWP_Themes {
 
 				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
-					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
+					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
-					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
+					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
 					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 					<td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -1388,12 +1396,12 @@ class MainWP_Themes {
 				<tbody id="globally-ignored-themes-list">
 					<?php if ( $ignoredThemes ) : ?>
 						<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
-						<tr theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo urlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -1447,7 +1455,7 @@ class MainWP_Themes {
 
 					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
 						?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<?php if ( $first ) : ?>
 								<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php $first = false; ?>
@@ -1458,7 +1466,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -1522,12 +1530,12 @@ class MainWP_Themes {
 			<tbody id="globally-ignored-themes-list">
 				<?php if ( $ignoredThemes ) : ?>
 					<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
-					<tr theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+					<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>
 						<td class="right aligned">
 						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo urlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						</td>
 					</tr>
@@ -1577,7 +1585,7 @@ class MainWP_Themes {
 						$first = true;
 						foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
 							?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<?php if ( $first ) : ?>
 							<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
 								<?php $first = false; ?>
@@ -1588,7 +1596,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>

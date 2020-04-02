@@ -9,7 +9,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Settings {
 
-	
+
 	/**
 	 * Get Class Name
 	 *
@@ -176,13 +176,13 @@ class MainWP_Settings {
 		</div>
 		<?php
 	}
-	
+
 
 	/**
 	 * Instantiate left menu
-	 * 
+	 *
 	 * Settings Page & SubPage link data.
-	 * 
+	 *
 	 * @param array $subPages SubPages Array.
 	 */
 	public static function init_left_menu( $subPages = array() ) {
@@ -243,7 +243,7 @@ class MainWP_Settings {
 
 	/**
 	 * Render Page Header.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -306,7 +306,7 @@ class MainWP_Settings {
 
 	/**
 	 * Close the HTML container.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
@@ -315,12 +315,12 @@ class MainWP_Settings {
 
 	/**
 	 * Method handle_settings_post().
-	 * 
+	 *
 	 * This class handles the $_POST of Settings Options.
-	 * 
+	 *
 	 * @uses MainWP_DB::instance()
 	 * @uses MainWP_Utility::update_option()
-	 * 
+	 *
 	 * @return boolean True|False Posts On True.
 	 */
 	public static function handle_settings_post() {
@@ -684,8 +684,8 @@ class MainWP_Settings {
 
 	/**
 	 * Returns false or the location of the OpenSSL Lib File.
-	 * 
-	 * @return mixed false|opensslLibLocation 
+	 *
+	 * @return mixed false|opensslLibLocation
 	 */
 	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
@@ -701,7 +701,7 @@ class MainWP_Settings {
 
 	/**
 	 * Check MainWP Installation Hosting Type & System Type.
-	 * 
+	 *
 	 * @return boolean true|false
 	 */
 	public static function is_local_window_config() {

@@ -1,6 +1,6 @@
 <?php
 /**
- * This File handles the Themes SubPage. 
+ * This File handles the Themes SubPage.
  */
 namespace MainWP\Dashboard;
 
@@ -24,7 +24,7 @@ class MainWP_Themes {
 	 * @var $subPages Array of SubPages.
 	 */
 	public static $subPages;
-	
+
 	/**
 	 * Fire on the initialization of WordPress.
 	 */
@@ -52,7 +52,7 @@ class MainWP_Themes {
 		 * @see \MainWP_Themes::render_footer
 		 */
 		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'render_footer' ) );
-		
+
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
@@ -181,7 +181,7 @@ class MainWP_Themes {
 
 	/**
 	 * Build arrays for each SubPage Menu Block.
-	 * 
+	 *
 	 * @param array $subPages Array of SubPages.
 	 */
 	public static function init_left_menu( $subPages = array() ) {
@@ -246,7 +246,7 @@ class MainWP_Themes {
 
 	/**
 	 * Render Themes SubPage Header.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -311,13 +311,14 @@ class MainWP_Themes {
 
 	/**
 	 * Close the page container.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
-	/** 
+	/**
 	 * Render the Theme SubPage content.
 	 */
 	public static function render() {
@@ -417,7 +418,7 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Render the Search Options Meta Box. 
+	 * Render the Search Options Meta Box.
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
@@ -453,15 +454,15 @@ class MainWP_Themes {
 			<?php
 		}
 	}
-	
+
 	/**
-	 * Render the Child Sites Bulk action & Sidebar Meta boxes. 
-	 * 
+	 * Render the Child Sites Bulk action & Sidebar Meta boxes.
+	 *
 	 * @param mixed $keyword
 	 * @param mixed $status
 	 * @param mixed $groups
 	 * @param mixed $sites
-	 * 
+	 *
 	 * @return mixed $result Errors|HTML
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) {
@@ -764,14 +765,14 @@ class MainWP_Themes {
 			MainWP_Cache::add_result( 'Themes', $result );
 			return $result;
 	}
-	
+
 	/**
 	 * Theme Search Handler.
-	 * 
+	 *
 	 * @param mixed $data
 	 * @param mixed $website
 	 * @param mixed $output
-	 * 
+	 *
 	 * @return mixed Exception|Theme
 	 */
 	public static function themes_search_handler( $data, $website, &$output ) {
@@ -818,10 +819,10 @@ class MainWP_Themes {
 
 	/**
 	 * Checks to see if Theme exists, current user can edit settings, check for any errors.
-	 * 
+	 *
 	 * @param mixed $pAction Action to perform.
 	 * @param mixed $theme Theme to perform action on.
-	 * 
+	 *
 	 * @return boolean True|Fail This will either return 'True' or 'FAIL'.
 	 */
 	public static function action( $pAction, $theme ) {
@@ -1221,7 +1222,7 @@ class MainWP_Themes {
 
 	/**
 	 * Render the All Themes Table.
-	 * 
+	 *
 	 * @param null $output
 	 */
 	public static function render_all_themes_table( $output = null ) {

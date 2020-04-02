@@ -1,6 +1,6 @@
 <?php
 /**
- * This file handles the requested Child Sites, 
+ * This file handles the requested Child Sites,
  * and then displays the "Redirecting..." screen.
  */
 
@@ -53,13 +53,13 @@ class MainWP_Site_Open {
 			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
 		}
 	}
-	
+
 	/**
 	 * This method opens the requested Child Site Admin.
-	 * 
+	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $location Website Location.
-	 * @param null $pNewWindow Open in new window. 
+	 * @param null  $pNewWindow Open in new window.
 	 */
 	public static function open_site( $website, $location, $pNewWindow = null ) {
 		?>
@@ -99,7 +99,7 @@ class MainWP_Site_Open {
 
 	/**
 	 * This opens the site restore.
-	 * 
+	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $file Restore File.
 	 * @param mixed $size Post data size.
@@ -132,8 +132,8 @@ class MainWP_Site_Open {
 
 	/**
 	 * This opens the site location.
-	 * 
-	 * @param mixed $website Website ID. 
+	 *
+	 * @param mixed $website Website ID.
 	 * @param mixed $open_location Website URL.
 	 */
 	public static function open_site_location( $website, $open_location ) {

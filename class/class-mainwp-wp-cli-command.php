@@ -1,15 +1,15 @@
 <?php
 /**
  * MainWP-CLI
- * 
- * This file extends the WP-CLI and provides a set of SubCommands to Control your 
+ *
+ * This file extends the WP-CLI and provides a set of SubCommands to Control your
  * Child Sites that are added to the MainWP Dashboard.
- * 
+ *
  * @todo: allow to add or remove child sites
  */
 namespace MainWP\Dashboard;
 
-// Exit if access directly. 
+// Exit if access directly.
 if ( ! defined( 'WP_CLI' ) ) {
 	return;
 }
@@ -21,8 +21,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 	/**
 	 * Method init()
-	 * 
-	 * Initiate the MainWP CLI after all Plugins have loaded. 
+	 *
+	 * Initiate the MainWP CLI after all Plugins have loaded.
 	 */
 	public static function init() {
 		add_action( 'plugins_loaded', array( 'MainWP_WP_CLI_Command', 'init_wpcli_commands' ), 99999 );
@@ -30,7 +30,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 	/**
 	 * Method init_wpcli_commands
-	 * 
+	 *
 	 * Adds the MainWP WP CLI Commands via WP_CLI::add_command
 	 */
 	public static function init_wpcli_commands() {
@@ -46,8 +46,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *  : Get a list of all child sites
 	 *
 	 * ## Synopsis [--list]
-	 * 
-	 * @param mixed $args 
+	 *
+	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
 	public function sites( $args, $assoc_args ) {
@@ -101,8 +101,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp sync --all
 	 *
 	 * ## Synopsis [<websiteid>] [--all]
-	 * 
-	 * @param mixed $args 
+	 *
+	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
 	public function sync( $args, $assoc_args ) {
@@ -167,8 +167,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp reconnect 2,5
 	 *
 	 * ## Synopsis [<websiteid>]
-	 * 
-	 * @param mixed $args 
+	 *
+	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
 	public function reconnect( $args, $assoc_args ) {
@@ -249,8 +249,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp plugin 2,5 --upgrade=mainwpchild
 	 *
 	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
-	 * 
-	 * @param mixed $args 
+	 *
+	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
 	public function plugin( $args, $assoc_args ) {
@@ -512,8 +512,8 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp theme 2,5 --upgrade=twentysixteen
 	 *
 	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
-	 * 
-	 * @param mixed $args 
+	 *
+	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
 	public function theme( $args, $assoc_args ) {

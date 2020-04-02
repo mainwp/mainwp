@@ -9,6 +9,7 @@
  * @copyright   Copyright (c) Todd Lahman LLC
  * @since 1.0.0
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -132,7 +133,7 @@ class MainWP_Api_Manager {
 		}
 
 		// Clear cached of all activations to reload for next loading.
-		update_option('mainwp_extensions_all_activation_cached', '');
+		update_option( 'mainwp_extensions_all_activation_cached', '' );
 
 		return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
 	}
@@ -157,7 +158,7 @@ class MainWP_Api_Manager {
 		$current_activation_email = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
 		$activation_status        = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
 
-		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $api_email == '' || $current_api_key != $api_key ) {
+		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || '' == $api_email || $current_api_key != $api_key ) {
 			if ( $current_api_key != $api_key ) {
 				$reset = $this->replace_license_key(
 					array(
@@ -186,7 +187,7 @@ class MainWP_Api_Manager {
 
 			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
 
-			if ( $activate_results['activated'] == true ) {
+			if ( true == $activate_results['activated'] ) {
 				$return['result']               = 'SUCCESS';
 				$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
 				$return['message']              = __( 'The extension has been activated. ', 'mainwp' ) . $mess;
@@ -196,9 +197,9 @@ class MainWP_Api_Manager {
 				$options['deactivate_checkbox'] = 'off';
 			}
 
-			if ( $activate_results == false ) {
+			if ( false == $activate_results ) {
 				$apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-				if ( $apisslverify == 1 ) {
+				if ( 1 == $apisslverify ) {
 					MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 					$return['retry_action'] = 1;
 				} else {
@@ -234,7 +235,7 @@ class MainWP_Api_Manager {
 	private function replace_license_key( $args ) {
 		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation.
 
-		if ( $reset == true ) {
+		if ( true == $reset ) {
 			return true;
 		}
 	}
@@ -259,7 +260,7 @@ class MainWP_Api_Manager {
 
 		$return = array();
 
-		if ( $activation_status == 'Activated' && $current_api_key != '' && $current_activation_email != '' ) {
+		if ( 'Activated' == $activation_status && '' != $current_api_key && '' != $current_activation_email ) {
 			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate(
 				array(
 					'email'          => $current_activation_email,
@@ -271,7 +272,7 @@ class MainWP_Api_Manager {
 			); // reset license key activation.
 
 			$activate_results = json_decode( $activate_results, true );
-			if ( $activate_results['deactivated'] == true || ( isset( $activate_results['activated'] ) && $activate_results['activated'] == 'inactive' ) ) {
+			if ( true == $activate_results['deactivated'] || ( isset( $activate_results['activated'] ) && 'inactive' == $activate_results['activated'] ) ) {
 				$options['api_key']              = '';
 				$options['activation_email']     = '';
 				$options['activated_key']        = 'Deactivated';
@@ -290,7 +291,7 @@ class MainWP_Api_Manager {
 			return $return;
 		}
 		// to fix: clear cached of all activations to reload for next loading.
-		update_option('mainwp_extensions_all_activation_cached', '');
+		update_option( 'mainwp_extensions_all_activation_cached', '' );
 		return array( 'result' => 'SUCCESS' );
 	}
 
@@ -393,9 +394,9 @@ class MainWP_Api_Manager {
 		$api_key   = isset( $options['api_key'] ) ? $options['api_key'] : '';
 		$api_email = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
 
-		if ( $activation_status == 'Deactivated' || $activation_status == '' || $api_key == '' || $api_email == '' ) {
+		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || '' == $api_email ) {
 			$return = array();
-			if ( $username != '' && $password != '' ) {
+			if ( '' != $username && '' != $password ) {
 
 				$args = array(
 					'username'           => $username,
@@ -411,7 +412,7 @@ class MainWP_Api_Manager {
 				$options['activation_email'] = '';
 				$options['activated_key']    = 'Deactivated';
 
-				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( $activate_results['activated'] == true ) && ! empty( $activate_results['api_key'] ) ) {
+				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( true == $activate_results['activated'] ) && ! empty( $activate_results['api_key'] ) ) {
 					$return['result']                      = 'SUCCESS';
 					$mess                                  = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
 					$return['message']                     = __( 'Extension activated. ', 'mainwp' ) . $mess;
@@ -423,7 +424,7 @@ class MainWP_Api_Manager {
 					$options['deactivate_checkbox']                 = 'off';
 				} else {
 
-					if ( $activate_results == false ) {
+					if ( false == $activate_results ) {
 						$return['error'] = __( 'Connection with the API license server could not be established. Please, try again later.', 'mainwp' );
 					} elseif ( isset( $activate_results['error'] ) ) {
 						$return['error'] = $activate_results['error'];

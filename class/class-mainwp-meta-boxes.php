@@ -34,7 +34,6 @@ class MainWP_Meta_Boxes {
 	}
 
 	public function select_sites_handle( $post_id, $post_type ) {
-
 		/*
 		 * verify this came from the our screen and with proper authorization.
 		 */
@@ -159,7 +158,6 @@ class MainWP_Meta_Boxes {
 	}
 
 	public function add_categories_handle( $post_id, $post_type ) {
-
 		/*
 		 * verify this came from the our screen and with proper authorization.
 		 */
@@ -228,7 +226,6 @@ class MainWP_Meta_Boxes {
 	}
 
 	private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
-
 		/*
 		 * verify this came from the our screen and with proper authorization.
 		 */

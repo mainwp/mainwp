@@ -2781,9 +2781,6 @@ mainwp_siteview_onchange = function(me) {
 
 jQuery( document ).ready( function ()
 {
-//    jQuery( '#mainwp_select_options_siteview' ).change( function () {
-//        jQuery( this ).closest( "form" ).submit();
-//    } );
     if ( jQuery( '#updatesoverview_limit_updates_all' ).length > 0 && jQuery( '#updatesoverview_limit_updates_all' ).val() > 0 ) {
         limitUpdateAll = jQuery( '#updatesoverview_limit_updates_all' ).val();
         if ( jQuery( '.updatesoverview_continue_update_me' ).length > 0 ) {

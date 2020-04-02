@@ -36,7 +36,7 @@ class MainWP_Notes {
 		}
 
 		$website  = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
-		$note     = html_entity_decode( $website->note ); // to compatible.
+		$note     = html_entity_decode( $website->note );
 		$esc_note = MainWP_Utility::esc_content( $note );
 		?>
 
@@ -49,7 +49,7 @@ class MainWP_Notes {
 
 		<div>
 			<?php
-			if ( $website->note == '' ) {
+			if ( '' == $website->note ) {
 				?>
 				<h2 class="ui icon header">
 					<i class="info circle icon"></i>

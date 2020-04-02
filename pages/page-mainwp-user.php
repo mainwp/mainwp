@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Users Page
+ *
+ * This page is used to Manage Users on child sites
+ *
+ * @package MainWP/User
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -843,7 +851,7 @@ class MainWP_User {
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			unset( $results );
 			$output->users += self::users_search_handler_renderer( $users, $website );
 			unset( $users );
@@ -1240,7 +1248,7 @@ class MainWP_User {
 			$startTime = time();
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
-					'new_user'      => base64_encode( serialize( $user_to_add ) ),
+					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 					'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 				);
 				$output         = new \stdClass();
@@ -1513,7 +1521,7 @@ class MainWP_User {
 
 		if ( 0 < count( $dbwebsites ) ) {
 			$post_data      = array(
-				'new_user'      => base64_encode( serialize( $user_to_add ) ),
+				'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 			);
 			$output         = new \stdClass();

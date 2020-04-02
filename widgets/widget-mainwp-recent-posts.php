@@ -6,6 +6,7 @@
  *
  * @package MainWP/Widget_Recent_Posts
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -58,12 +59,12 @@ class MainWP_Recent_Posts {
 		$allPosts = array();
 		if ( $websites ) {
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( $website->recent_posts == '' ) {
+				if ( '' == $website->recent_posts ) {
 					continue;
 				}
 
 				$posts = json_decode( $website->recent_posts, 1 );
-				if ( count( $posts ) == 0 ) {
+				if ( 0 == count( $posts ) ) {
 					continue;
 				}
 				foreach ( $posts as $post ) {
@@ -94,7 +95,7 @@ class MainWP_Recent_Posts {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e('Recent Posts', 'mainwp'); ?>
+					<?php esc_html_e( 'Recent Posts', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -118,7 +119,7 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_published ui tab active" data-tab="published">
 				<?php
-				if ( count( $recent_posts_published ) == 0 ) {
+				if ( 0 == count( $recent_posts_published ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -133,7 +134,7 @@ class MainWP_Recent_Posts {
 			<?php
 			$_count = count( $recent_posts_published );
 			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( $recent_posts_published[ $i ]['title'] == '' ) ) {
+				if ( ! isset( $recent_posts_published[ $i ]['title'] ) || ( '' == $recent_posts_published[ $i ]['title'] ) ) {
 					$recent_posts_published[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_published[ $i ]['dts'] ) ) {
@@ -163,14 +164,14 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $recent_posts_published[ $i ]['website']->id; ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_published[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( substr( $recent_posts_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+										<a class="item" href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ) . ( '/' != substr( $recent_posts_published[ $i ]['website']->url, - 1 ) ? '/' : '' ) . '?p=' . esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -182,7 +183,7 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_draft ui tab" data-tab="draft">
 				<?php
-				if ( count( $recent_posts_draft ) == 0 ) {
+				if ( 0 == count( $recent_posts_draft ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -197,7 +198,7 @@ class MainWP_Recent_Posts {
 			<?php
 			$_count = count( $recent_posts_draft );
 			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( $recent_posts_draft[ $i ]['title'] == '' ) ) {
+				if ( ! isset( $recent_posts_draft[ $i ]['title'] ) || ( '' == $recent_posts_draft[ $i ]['title'] ) ) {
 					$recent_posts_draft[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_draft[ $i ]['dts'] ) ) {
@@ -225,13 +226,13 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_draft[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_draft[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -243,7 +244,7 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
 				<?php
-				if ( count( $recent_posts_pending ) == 0 ) {
+				if ( 0 == count( $recent_posts_pending ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -258,7 +259,7 @@ class MainWP_Recent_Posts {
 			<?php
 			$_count = count( $recent_posts_pending );
 			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( $recent_posts_pending[ $i ]['title'] == '' ) ) {
+				if ( ! isset( $recent_posts_pending[ $i ]['title'] ) || ( '' == $recent_posts_pending[ $i ]['title'] ) ) {
 					$recent_posts_pending[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_pending[ $i ]['dts'] ) ) {
@@ -286,13 +287,13 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_pending[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_pending[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -304,7 +305,7 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_future ui tab" data-tab="future">
 				<?php
-				if ( count( $recent_posts_future ) == 0 ) {
+				if ( 0 == count( $recent_posts_future ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -319,7 +320,7 @@ class MainWP_Recent_Posts {
 			<?php
 			$_count = count( $recent_posts_future );
 			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( $recent_posts_future[ $i ]['title'] == '' ) ) {
+				if ( ! isset( $recent_posts_future[ $i ]['title'] ) || ( '' == $recent_posts_future[ $i ]['title'] ) ) {
 					$recent_posts_future[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_future[ $i ]['dts'] ) ) {
@@ -347,9 +348,9 @@ class MainWP_Recent_Posts {
 								<i class="ellipsis horizontal icon"></i>
 									<div class="menu">
 										<a class="item mainwp-post-publish" href="#"><?php esc_html_e( 'Publish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . $recent_posts_future[ $i ]['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 										<a class="item mainwp-post-trash" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
+										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_posts_future[ $i ]['website']->id ); ?>&newWindow=yes&openUrl=yes&location=<?php echo base64_encode( '?p=' . $recent_posts_future[ $i ]['id'] . '&preview=true' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank"><?php esc_html_e( 'Preview', 'mainwp' ); ?></a>
 									</div>
 							</div>
 						</div>
@@ -366,7 +367,7 @@ class MainWP_Recent_Posts {
 
 			<div class="recent_posts_trash ui tab" data-tab="trash">
 				<?php
-				if ( count( $recent_posts_trash ) == 0 ) {
+				if ( 0 == count( $recent_posts_trash ) ) {
 					?>
 				<h2 class="ui icon header">
 					<i class="folder open outline icon"></i>
@@ -381,7 +382,7 @@ class MainWP_Recent_Posts {
 			<?php
 			$_count = count( $recent_posts_trash );
 			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-				if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( $recent_posts_trash[ $i ]['title'] == '' ) ) {
+				if ( ! isset( $recent_posts_trash[ $i ]['title'] ) || ( '' == $recent_posts_trash[ $i ]['title'] ) ) {
 					$recent_posts_trash[ $i ]['title'] = '(No Title)';
 				}
 				if ( isset( $recent_posts_trash[ $i ]['dts'] ) ) {
@@ -414,7 +415,7 @@ class MainWP_Recent_Posts {
 							</div>
 						</div>
 					</div>
-					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e('Please wait...', 'mainwp' ); ?></div>
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 					</div>
 				<?php } ?>
 			</div>
@@ -432,7 +433,7 @@ class MainWP_Recent_Posts {
 			</div>
 		</div>
 		<?php
-		if ( $pExit == true ) {
+		if ( true == $pExit ) {
 			exit();
 		}
 	}
@@ -523,7 +524,9 @@ class MainWP_Recent_Posts {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'post_action', array(
+				$website,
+				'post_action',
+				array(
 					'action' => $pAction,
 					'id'     => $postId,
 				)
@@ -532,7 +535,7 @@ class MainWP_Recent_Posts {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
 
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
 		}
 	}
@@ -565,7 +568,9 @@ class MainWP_Recent_Posts {
 
 		try {
 			$information = MainWP_Utility::fetch_url_authed(
-				$website, 'post_action', array(
+				$website,
+				'post_action',
+				array(
 					'action'     => $pAction,
 					'id'         => $postId,
 					'post_data'  => $post_data,
@@ -574,7 +579,7 @@ class MainWP_Recent_Posts {
 		} catch ( MainWP_Exception $e ) {
 			die( 'FAIL' );
 		}
-		if ( ! isset( $information['status'] ) || ( $information['status'] != 'SUCCESS' ) ) {
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
 			die( 'FAIL' );
 		}
 	}

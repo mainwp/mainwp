@@ -1,7 +1,13 @@
 <?php
 /**
- * This class handles building the Settings Page & all SubPages.
+ * MainWP Settings page
+ *
+ * This Class handles building/Managing the 
+ * Settings MainWP DashboardPage & all SubPages.
+ *
+ * @package MainWP/Settings
  */
+
 namespace MainWP\Dashboard;
 
 /**

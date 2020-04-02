@@ -28,12 +28,9 @@ class MainWP_Menu {
 				// Compatible with old hooks.
 				'level_1'    => array(
 					'not_set_this_level' => true,
-					// 'mainwp_tab' => false, // Do not hide this menu.
-					// 'Extensions'       => false,
-					// 'childsites_menu'  => false,
 				),
 				'level_2'    => array(
-					// 'mainwp_tab' => false,  // Do not hide this menu.
+					// 'mainwp_tab' - Do not hide this menu.
 					'UpdatesManage'      => false,
 					'managesites'        => false,
 					'PostBulkManage'     => false,
@@ -259,15 +256,15 @@ class MainWP_Menu {
 						}
 					}
 					?>
-					 <div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
-						 <a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
-					 </div>
+					<div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
+						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
+					</div>
 					<div class="hamburger">
 						<span class="hamburger-bun"></span>
 						<span class="hamburger-patty"></span>
 						<span class="hamburger-bun"></span>
-					 </div>
-				 </div>
+					</div>
+				</div>
 					<?php do_action( 'after_mainwp_menu' ); ?>
 			</div>
 		</div>

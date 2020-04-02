@@ -1,8 +1,10 @@
 <?php
+
 /**
  * This page handles listing install MainWP Extensions
  * and activating / deactivating license keys
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -74,7 +76,7 @@ class MainWP_API_Settings {
 							if ( isset( $response->errors ) ) {
 								$rslt->error = $response->errors;
 							}
-								$output[ $slug ] = $rslt;
+							$output[ $slug ] = $rslt;
 						}
 					}
 					$count       = 0;

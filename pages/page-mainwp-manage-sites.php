@@ -559,6 +559,7 @@ class MainWP_Manage_Sites {
 	 * @throws MainWP_Exception
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
+
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
@@ -740,7 +741,7 @@ class MainWP_Manage_Sites {
 			try {
 				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
-
+				// ok!
 			}
 
 			if ( ! empty( $temp ) ) {
@@ -1784,7 +1785,7 @@ class MainWP_Manage_Sites {
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-				self::_reconnect_site( $website );
+				self::m_reconnect_site( $website );
 			} else {
 				throw new \Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
@@ -1795,8 +1796,8 @@ class MainWP_Manage_Sites {
 		die( __( 'Site has been reconnected successfully!', 'mainwp' ) );
 	}
 
-	public static function _reconnect_site( $website ) {
-		return MainWP_Manage_Sites_View::_reconnect_site( $website );
+	public static function m_reconnect_site( $website ) {
+		return MainWP_Manage_Sites_View::m_reconnect_site( $website );
 	}
 
 	public static function add_site() {
@@ -1860,7 +1861,7 @@ class MainWP_Manage_Sites {
 				$error = '';
 
 				// deactive child plugin on live site only,
-				// do not deactive child on staging site, it will deactive child plugin of source site
+				// do not deactive child on staging site, it will deactive child plugin of source site.
 				if ( ! $website->is_staging ) {
 					try {
 						$information = MainWP_Utility::fetch_url_authed( $website, 'deactivate' );

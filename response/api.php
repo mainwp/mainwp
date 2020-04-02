@@ -24,7 +24,7 @@ function check_live_reporting_access( $siteurl ) {
 
 function live_reports_responder_secure_connection( $siteurl = null, $securitykey = null, $signature = null, $action = null,
 											$timestamp = null, $pubkey = null ) {
-	if ( ( $siteurl == null ) || ( $signature == null ) || ( $action == null ) || ( $timestamp == null ) ) {
+	if ( ( null == $siteurl ) || ( null == $signature ) || ( null == $action ) || ( null == $timestamp ) ) {
 		return array( 'error' => 'Invalid request.' );
 	}
 
@@ -38,7 +38,7 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 	}
 
 	$current_key = get_option( 'live-report-responder-pubkey' );
-	if ( ( $pubkey !== null ) ) {
+	if ( ( null !== $pubkey ) ) {
 		if ( ! empty( $current_key ) ) {
 			return array( 'error' => 'The dashboard is already connected, release the connection on the dashboard please.' );
 		}
@@ -51,19 +51,18 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 		return array( 'error' => 'The dashboard is not connected, please reconnect to establish a secure connection.' );
 	}
 
-	$auth = openssl_verify( $action . $securitykey . $timestamp, base64_decode( $signature ), base64_decode( $current_key ) );
+	$auth = openssl_verify( $action . $securitykey . $timestamp, base64_decode( $signature ), base64_decode( $current_key ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 	if ( 0 === $auth ) {
 		return array( 'error' => 'An error occured while verifying the secure signature.' );
 	} elseif ( -1 === $auth ) {
 		return array( 'error' => 'Authentication failed, please reconnect the dashboard.' );
 	}
 
-	if ( ( get_option( 'live-reports-responder-security-id' ) == 'on' ) && ( get_option( 'live-reports-responder-security-code' ) !== base64_decode( $securitykey ) ) ) {
+	if ( ( 'on' == get_option( 'live-reports-responder-security-id' ) ) && ( get_option( 'live-reports-responder-security-code' ) !== base64_decode( $securitykey ) ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		return array( 'error' => 'Invalid security ID.' );
 	}
 
-	// to fix conflict with divi theme
-	define('DOING_CRON', true); // to fix conflict issue with the team control extension
+	define( 'DOING_CRON', true );
 
 	return true;
 }
@@ -90,7 +89,7 @@ function check_if_valid_client( $email, $siteid ) {
 
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displaycontent' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
-	if ( $secureconnection === true ) {
+	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			live_reports_responder_classes();
@@ -113,7 +112,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			$report->body               = '';
 			$report->footer             = '';
 			$report->type               = 0;
-			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			$report->sites              = $sites;
 			$report->groups             = '';
 			$report->schedule_nextsend  = 0;
@@ -154,7 +153,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 }
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
-	if ( $secureconnection === true ) {
+	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			live_reports_responder_classes();
@@ -180,7 +179,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->body               = '';
 				$report->footer             = '';
 				$report->type               = 0;
-				$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) );
+				$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
@@ -282,7 +281,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 }
 if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
-	if ( $secureconnection === true ) {
+	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			live_reports_responder_classes();
@@ -334,7 +333,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 }
 if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null, isset( $_POST['pubkey'] ) ? $_POST['pubkey'] : null );
-	if ( $secureconnection === true ) {
+	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			echo wp_json_encode(

@@ -6,6 +6,7 @@
  *
  * @package MainWP/Updates_Overview
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -72,7 +73,7 @@ class MainWP_Updates_Overview {
 				$name = $_REQUEST['name'];
 			}
 
-			$res = new WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( $url == '' ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
+			$res = new WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
 		}
@@ -116,7 +117,7 @@ class MainWP_Updates_Overview {
 			$dtsSync = MainWP_DB::instance()->get_first_synced_site();
 		}
 
-		if ( $dtsSync == 0 ) {
+		if ( 0 == $dtsSync ) {
 			// No settings saved!
 			return;
 		} else {
@@ -135,7 +136,7 @@ class MainWP_Updates_Overview {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['wp_id'] );
 		}
 
-		if ( $website == null ) {
+		if ( null == $website ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
 		}
 
@@ -173,12 +174,12 @@ class MainWP_Updates_Overview {
 			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 			$globalView = false;
 		} else {
-			$staging_enabled = apply_filters('mainwp-extension-available-check', 'mainwp-staging-extension') || apply_filters('mainwp-extension-available-check', 'mainwp-timecapsule-extension');
+			$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
 			// To support staging extension.
 			$is_staging = 'no';
 			if ( $staging_enabled ) {
 				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
-				if ( $staging_updates_view == 'staging' ) {
+				if ( 'staging' == $staging_updates_view ) {
 					$is_staging = 'yes';
 				}
 			}
@@ -250,7 +251,7 @@ class MainWP_Updates_Overview {
 				foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 					$premiumUpgrade['premium'] = true;
 
-					if ( $premiumUpgrade['type'] == 'plugin' ) {
+					if ( 'plugin' == $premiumUpgrade['type'] ) {
 						if ( ! is_array( $plugin_upgrades ) ) {
 							$plugin_upgrades = array();
 						}
@@ -258,12 +259,12 @@ class MainWP_Updates_Overview {
 
 							$premiumUpgrade = array_filter( $premiumUpgrade );
 							if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-								$plugin_upgrades[ $crrSlug ] = array(); // to fix warning
+								$plugin_upgrades[ $crrSlug ] = array(); // to fix warning.
 							}
 
 							$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
 						}
-					} elseif ( $premiumUpgrade['type'] == 'theme' ) {
+					} elseif ( 'theme' == $premiumUpgrade['type'] ) {
 						if ( ! is_array( $theme_upgrades ) ) {
 							$theme_upgrades = array();
 						}
@@ -395,15 +396,15 @@ class MainWP_Updates_Overview {
 		$trusted_icon = '<i class="check circle outline icon"></i> ';
 
 		// the hook using to set maximum number of plugins/themes for huge number of updates.
-		$limit_updates_all            = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update              = '';
-				$continue_update_slug = '';
-				$continue_class       = '';
+		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
+		$continue_update      = '';
+		$continue_update_slug = '';
+		$continue_class       = '';
 		if ( $limit_updates_all > 0 ) {
-			if ( isset( $_GET['continue_update'] ) && $_GET['continue_update'] != '' ) {
+			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
 				$continue_update = $_GET['continue_update'];
-				if ( $continue_update == 'plugins_upgrade_all' || $continue_update == 'themes_upgrade_all' || $continue_update == 'translations_upgrade_all' ) {
-					if ( isset( $_GET['slug'] ) && $_GET['slug'] != '' ) {
+				if ( 'plugins_upgrade_all' == $continue_update || 'themes_upgrade_all' == $continue_update || 'translations_upgrade_all' == $continue_update ) {
+					if ( isset( $_GET['slug'] ) && '' != $_GET['slug'] ) {
 						$continue_update_slug = $_GET['slug'];
 					}
 				}
@@ -418,10 +419,10 @@ class MainWP_Updates_Overview {
 			$last_sync                = $result['last_sync'];
 						$last_dtsSync = $result['last_sync'];
 
-			if ( $sync_status === 'all_synced' ) {
+			if ( 'all_synced' === $sync_status ) {
 				$now           = time();
-				$last_sync_all = get_option('mainwp_last_synced_all_sites', 0);
-				if ( $last_sync_all == 0 ) {
+				$last_sync_all = get_option( 'mainwp_last_synced_all_sites', 0 );
+				if ( 0 == $last_sync_all ) {
 					$last_sync_all = $last_sync;
 				}
 				$last_dtsSync = $last_sync_all;
@@ -455,20 +456,20 @@ class MainWP_Updates_Overview {
 								<div class="value">
 								<?php echo $total_upgrades; ?>
 							</div>
-							  <div class="label">
-								<?php esc_html_e('Total Updates', 'mainwp'); ?>
+							<div class="label">
+								<?php esc_html_e( 'Total Updates', 'mainwp' ); ?>
 							</div>
 							</div>
 						</div>
 						<div class="column middle aligned">
 				<?php if ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) : ?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
-							<a href="#" 
+							<a href="#"
 							<?php
-							if ( $total_upgrades == 0 ) {
+							if ( 0 == $total_upgrades ) {
 								echo 'disabled'; } else {
 								?>
-								onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
+								onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
 						</div>
@@ -485,8 +486,8 @@ class MainWP_Updates_Overview {
 					<div class="value">
 						<?php echo $total_wp_upgrades; ?>
 					</div>
-					  <div class="label">
-					<?php esc_html_e('WordPress Updates', 'mainwp'); ?>
+					<div class="label">
+					<?php esc_html_e( 'WordPress Updates', 'mainwp' ); ?>
 					</div>
 					</div>
 				</div>
@@ -499,8 +500,8 @@ class MainWP_Updates_Overview {
 						$detail_wp_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=wordpress-updates';
 					}
 					?>
-					<?php if ( $total_wp_upgrades > 0 ) : ?>
-						<?php $continue_class = ( $continue_update == 'wpcore_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : ''; ?>
+					<?php if ( 0 < $total_wp_upgrades ) : ?>
+						<?php $continue_class = ( 'wpcore_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : ''; ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php else : ?>
@@ -520,21 +521,21 @@ class MainWP_Updates_Overview {
 										<?php echo $total_plugin_upgrades; ?>
 									</div>
 										<div class="label">
-							<?php esc_html_e('Plugin Updates', 'mainwp'); ?>
+							<?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?>
 										</div>
 										</div>
 									</div>
 				<div class="right aligned column">
 					<?php
 					if ( $user_can_update_plugins ) :
-							$continue_class = ( $continue_update == 'plugins_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : '';
+							$continue_class = ( 'plugins_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 						if ( $globalView ) {
 							$detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
 						} else {
 							$detail_plugins_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=plugins-updates';
 						}
 
-						if ( $total_plugin_upgrades == 0 ) {
+						if ( 0 == $total_plugin_upgrades ) {
 							?>
 								<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 									<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -560,14 +561,14 @@ class MainWP_Updates_Overview {
 							<?php echo $total_theme_upgrades; ?>
 							</div>
 						<div class="label">
-							<?php esc_html_e('Theme Updates', 'mainwp'); ?>
+							<?php esc_html_e( 'Theme Updates', 'mainwp' ); ?>
 						</div>
 							</div>
 						</div>
 				<div class="right aligned column">
 				<?php
 				if ( $user_can_update_themes ) :
-						$continue_class = ( $continue_update == 'themes_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : '';
+						$continue_class = ( 'themes_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 
 					if ( $globalView ) {
 						$detail_themes_up = 'admin.php?page=UpdatesManage&tab=themes-updates';
@@ -575,7 +576,7 @@ class MainWP_Updates_Overview {
 						$detail_themes_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
 					}
 
-					if ( $total_theme_upgrades == 0 ) {
+					if ( 0 == $total_theme_upgrades ) {
 						?>
 								<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 								<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -593,7 +594,7 @@ class MainWP_Updates_Overview {
 				</div>
 					</div>
 
-		<?php if ( $mainwp_show_language_updates == 1 ) : ?>
+		<?php if ( 1 == $mainwp_show_language_updates ) : ?>
 		<div class="ui grid">
 			<div class="two column row">
 						<div class="column">
@@ -602,7 +603,7 @@ class MainWP_Updates_Overview {
 							<?php echo $total_translation_upgrades; ?>
 						</div>
 						<div class="label">
-							<?php esc_html_e('Translation Updates', 'mainwp'); ?>
+							<?php esc_html_e( 'Translation Updates', 'mainwp' ); ?>
 								</div>
 						</div>
 					</div>
@@ -610,14 +611,14 @@ class MainWP_Updates_Overview {
 				<?php
 				if ( $user_can_update_translation ) :
 
-					$continue_class = ( $continue_update == 'translations_global_upgrade_all' ) ? 'updatesoverview_continue_update_me' : '';
+					$continue_class = ( 'translations_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 					if ( $globalView ) {
 						$detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';
 					} else {
 						$detail_trans_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
 					}
 
-					if ( $total_translation_upgrades == 0 ) {
+					if ( 0 == $total_translation_upgrades ) {
 						?>
 						<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -701,7 +702,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
 					foreach ( $all_wp_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" ></div>
 						<?php
 					}
 				}
@@ -713,7 +714,7 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
 					foreach ( $all_plugins_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" plugin_slug="<?php echo esc_html( $item['plugin_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" ></div>
 							<?php
 					}
 				}
@@ -725,21 +726,21 @@ class MainWP_Updates_Overview {
 				if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
 					foreach ( $all_themes_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" theme_slug="<?php echo esc_html( $item['theme_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" ></div>
 							<?php
 					}
 				}
 				?>
 
 			</div>
-			<?php if ( $mainwp_show_language_updates == 1 ) : ?>
+			<?php if ( 1 == $mainwp_show_language_updates ) : ?>
 			<div id="wp_translation_upgrades">
 
 				<?php
 				if ( $user_can_update_translation && $total_translation_upgrades > 0 ) {
 					foreach ( $all_translations_updates as $item ) {
 						?>
-						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_html( $item['name'] ); ?>" translation_slug="<?php echo esc_html( $item['translation_slug'] ); ?>" ></div>
+						<div updated="0" site_id="<?php echo $item['id']; ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" ></div>
 						<?php
 					}
 				}
@@ -812,14 +813,14 @@ class MainWP_Updates_Overview {
 		$output = array();
 		foreach ( $_POST['sites'] as $siteId ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( ( $website->backup_before_upgrade == 0 ) || ( ( $website->backup_before_upgrade == 2 ) && ( $global_backup_before_upgrade == 0 ) ) ) {
+			if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
 				continue;
 			}
 
 			if ( ! empty( $primaryBackup ) ) {
 				$lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
 
-				if ( $lastBackup != -1 ) { // installed backup plugin
+				if ( -1 != $lastBackup ) { // installed backup plugin.
 					$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
 				}
 				$output['primary_backup'] = $primaryBackup;
@@ -830,8 +831,8 @@ class MainWP_Updates_Overview {
 				if ( file_exists( $dir ) ) {
 					$dh = opendir( $dir );
 					if ( $dh ) {
-						while ( ( $file = readdir( $dh ) ) !== false ) {
-							if ( $file != '.' && $file != '..' ) {
+						while ( false !== ( $file = readdir( $dh ) ) ) {
+							if ( '.' != $file && '..' != $file ) {
 								$theFile = $dir . $file;
 								if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
 									$lastBackup = filemtime( $theFile );

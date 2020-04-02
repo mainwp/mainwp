@@ -6,6 +6,7 @@
  *
  * @package MainWP/About
  */
+
 namespace MainWP\Dashboard;
 
 /**

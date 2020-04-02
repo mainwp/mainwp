@@ -4,6 +4,7 @@
  *
  * This file handles all interactions with the DB.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -38,7 +39,7 @@ class MainWP_DB {
 		return self::$instance;
 	}
 
-	// Constructor
+	// Constructor.
 	public function __construct() {
 		/** @var $this ->wpdb wpdb */
 		global $wpdb;
@@ -360,7 +361,8 @@ class MainWP_DB {
 					$exists = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid = %d', $rslt['id'] ), ARRAY_A );
 					if ( empty( $exists ) ) {
 						$this->wpdb->insert(
-							$this->table_name( 'wp_sync' ), array(
+							$this->table_name( 'wp_sync' ),
+							array(
 								'wpid'           => $rslt['id'],
 								$wpSyncColumn    => $rslt[ $wpSyncColumn ],
 							)
@@ -519,7 +521,8 @@ class MainWP_DB {
 		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
 		if ( 0 < count( $rslt ) ) {
 			$this->wpdb->delete(
-				$this->table_name( 'wp_options' ), array(
+				$this->table_name( 'wp_options' ),
+				array(
 					'wpid'   => $website->id,
 					'name'   => $this->escape( $option ),
 				)
@@ -529,7 +532,8 @@ class MainWP_DB {
 
 		if ( 0 === count( $rslt ) ) {
 			$this->wpdb->insert(
-				$this->table_name( 'wp_options' ), array(
+				$this->table_name( 'wp_options' ),
+				array(
 					'wpid'   => $website->id,
 					'name'   => $option,
 					'value'  => $value,
@@ -537,7 +541,9 @@ class MainWP_DB {
 			);
 		} else {
 			$this->wpdb->update(
-				$this->table_name( 'wp_options' ), array( 'value' => $value ), array(
+				$this->table_name( 'wp_options' ),
+				array( 'value' => $value ),
+				array(
 					'wpid'   => $website->id,
 					'name'   => $option,
 				)
@@ -856,13 +862,14 @@ class MainWP_DB {
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
 		$with_staging    = 'yes';
-		$staging_enabled = apply_filters( 'mainwp-extension-available-check', 'mainwp-staging-extension' ) || apply_filters( 'mainwp-extension-available-check', 'mainwp-timecapsule-extension' );
+		$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
 
 		if ( ! $staging_enabled ) {
 			$with_staging = 'no';
 		}
 
-		$where .= $this->get_where_allow_groups('', $with_staging );
+		$where .= $this->get_where_allow_groups( '', $with_staging );
+
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
 
@@ -879,9 +886,13 @@ class MainWP_DB {
 
 	public function get_groups_by_website_id( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-			return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' gr
-                JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid
-                WHERE wpgr.wpid = %d ORDER BY name', $websiteid ), OBJECT_K );
+			return $this->wpdb->get_results(
+				$this->wpdb->prepare(
+					'SELECT * FROM ' . $this->table_name( 'group' ) . ' gr JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid WHERE wpgr.wpid = %d ORDER BY name',
+					$websiteid
+				),
+				OBJECT_K
+			);
 		}
 
 		return null;
@@ -903,19 +914,11 @@ class MainWP_DB {
 			$where .= $this->get_where_allow_groups( 'gr' );
 		}
 
-		return $this->wpdb->get_results( 'SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites
-                FROM ' . $this->table_name( 'group' ) . ' gr
-                LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid
-                WHERE 1 ' . $where . '
-                GROUP BY gr.id
-                ORDER BY gr.name', OBJECT_K );
+		return $this->wpdb->get_results( 'SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM ' . $this->table_name( 'group' ) . ' gr LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid WHERE 1 ' . $where . ' GROUP BY gr.id ORDER BY gr.name', OBJECT_K );
 	}
 
 	public function get_groups_by_name( $name ) {
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT gr.*
-            FROM ' . $this->table_name( 'group' ) . ' gr
-            WHERE gr.name = %s', $this->escape( $name ) ),
-						OBJECT_K );
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT gr.* FROM ' . $this->table_name( 'group' ) . ' gr WHERE gr.name = %s', $this->escape( $name ) ), OBJECT_K );
 	}
 
 	public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
@@ -934,15 +937,7 @@ class MainWP_DB {
 			$where .= ' AND wp_sync.sync_errors = ""';
 		}
 
-		return $this->wpdb->get_results( 'SELECT DISTINCT(g.id), g.name, count(wp.wpid)
-              FROM ' . $this->table_name( 'group' ) . ' g
-              JOIN ' . $this->table_name( 'wp_group' ) . ' wp ON g.id = wp.groupid
-              JOIN ' . $this->table_name( 'wp' ) . ' wpsite ON wp.wpid = wpsite.id
-              JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.wpid = wp_sync.wpid
-              ' . $where . '
-              GROUP BY g.id
-              HAVING count(wp.wpid) > 0
-              ORDER BY g.name', OBJECT_K );
+		return $this->wpdb->get_results( 'SELECT DISTINCT(g.id), g.name, count(wp.wpid) FROM ' . $this->table_name( 'group' ) . ' g JOIN ' . $this->table_name( 'wp_group' ) . ' wp ON g.id = wp.groupid JOIN ' . $this->table_name( 'wp' ) . ' wpsite ON wp.wpid = wpsite.id JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.wpid = wp_sync.wpid ' . $where . ' GROUP BY g.id HAVING count(wp.wpid) > 0 ORDER BY g.name', OBJECT_K );
 	}
 
 	public function get_websites_by_url( $url ) {
@@ -1128,7 +1123,7 @@ class MainWP_DB {
 	}
 
 	public function close_open_requests() {
-		// Close requests open longer then 7 seconds.. something is wrong here..
+		// Close requests open longer then 7 seconds.. something is wrong here.
 		$this->wpdb->query( 'UPDATE ' . $this->table_name( 'request_log' ) . ' SET micro_timestamp_stop = micro_timestamp_start WHERE micro_timestamp_stop < micro_timestamp_start and ' . microtime( true ) . ' - micro_timestamp_start > 7' );
 	}
 
@@ -1213,17 +1208,21 @@ class MainWP_DB {
 				$syncValues['wpid'] = $websiteid;
 				$this->wpdb->insert( $this->table_name( 'wp_sync' ), $syncValues );
 				$this->wpdb->insert(
-					$this->table_name( 'wp_settings_backup' ), array(
+					$this->table_name( 'wp_settings_backup' ),
+					array(
 						'wpid'           => $websiteid,
 						'archiveFormat'  => 'global',
 					)
 				);
 
 				foreach ( $groupnames as $groupname ) {
-					if ( $this->wpdb->insert( $this->table_name( 'group' ), array(
-						'userid' => $userid,
-						'name'   => $this->escape( htmlspecialchars( $groupname ) ),
-					) )
+					if ( $this->wpdb->insert(
+						$this->table_name( 'group' ),
+						array(
+							'userid' => $userid,
+							'name'   => $this->escape( htmlspecialchars( $groupname ) ),
+						)
+						)
 					) {
 						$groupids[] = $this->wpdb->insert_id;
 					}
@@ -1231,7 +1230,8 @@ class MainWP_DB {
 				// add groupids.
 				foreach ( $groupids as $groupid ) {
 					$this->wpdb->insert(
-						$this->table_name( 'wp_group' ), array(
+						$this->table_name( 'wp_group' ),
+						array(
 							'wpid'       => $websiteid,
 							'groupid'    => $groupid,
 						)
@@ -1247,7 +1247,8 @@ class MainWP_DB {
 
 	public function update_group_site( $groupId, $websiteId ) {
 		$this->wpdb->insert(
-			$this->table_name( 'wp_group' ), array(
+			$this->table_name( 'wp_group' ),
+			array(
 				'wpid'    => $websiteId,
 				'groupid' => $groupId,
 			)
@@ -1260,10 +1261,13 @@ class MainWP_DB {
 
 	public function add_group( $userid, $name ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
-			if ( $this->wpdb->insert( $this->table_name( 'group' ), array(
-				'userid' => $userid,
-				'name'   => $this->escape( $name ),
-			) )
+			if ( $this->wpdb->insert(
+				$this->table_name( 'group' ),
+				array(
+					'userid' => $userid,
+					'name'   => $this->escape( $name ),
+				)
+			)
 			) {
 				return $this->wpdb->insert_id;
 			}
@@ -1336,18 +1340,22 @@ class MainWP_DB {
 				}
 				// add groups with groupnames.
 				foreach ( $groupnames as $groupname ) {
-					if ( $this->wpdb->insert( $this->table_name( 'group' ), array(
-						'userid' => $userid,
-						'name'   => $this->escape( $groupname ),
-					) )
+					if ( $this->wpdb->insert(
+						$this->table_name( 'group' ),
+						array(
+							'userid' => $userid,
+							'name'   => $this->escape( $groupname ),
+						)
+					)
 					) {
 						$groupids[] = $this->wpdb->insert_id;
 					}
 				}
-				// add groupids
+				// add groupids.
 				foreach ( $groupids as $groupid ) {
 					$this->wpdb->insert(
-						$this->table_name( 'wp_group' ), array(
+						$this->table_name( 'wp_group' ),
+						array(
 							'wpid'       => $websiteid,
 							'groupid'    => $groupid,
 						)
@@ -1374,7 +1382,9 @@ class MainWP_DB {
 
 	public function update_backup_task_progress( $task_id, $wp_id, $values ) {
 		$this->wpdb->update(
-			$this->table_name( 'wp_backup_progress' ), $values, array(
+			$this->table_name( 'wp_backup_progress' ),
+			$values,
+			array(
 				'task_id'    => $task_id,
 				'wp_id'      => $wp_id,
 			)
@@ -1402,7 +1412,7 @@ class MainWP_DB {
 	}
 
 	public function get_backup_task_progress( $task_id, $wp_id ) {
-		$progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id )  );
+		$progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id ) );
 
 		if ( '' !== $progress->fetchResult ) {
 			$progress->fetchResult = json_decode( $progress->fetchResult, true );
@@ -1413,7 +1423,7 @@ class MainWP_DB {
 
 	public function backup_full_task_running( $wp_id ) {
 
-		if ( ! get_option('mainwp_enableLegacyBackupFeature') ) {
+		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
 
@@ -1500,26 +1510,30 @@ class MainWP_DB {
 									$filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat,
 									$maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
-			return $this->wpdb->update( $this->table_name( 'wp_backup' ), array(
-				'userid'                         => $userid,
-				'name'                           => $name,
-				'schedule'                       => $schedule,
-				'type'                           => $type,
-				'exclude'                        => $exclude,
-				'sites'                          => $sites,
-				'groups'                         => $groups,
-				'subfolder'                      => MainWP_Utility::remove_preslash_spaces( $subfolder ),
-				'filename'                       => $filename,
-				'excludebackup'                  => $excludebackup,
-				'excludecache'                   => $excludecache,
-				'excludenonwp'                   => $excludenonwp,
-				'excludezip'                     => $excludezip,
-				'archiveFormat'                  => $archiveFormat,
-				'loadFilesBeforeZip'             => $loadFilesBeforeZip,
-				'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
-				'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
-				'maximumFileDescriptors'         => $maximumFileDescriptors,
-			), array( 'id' => $id ) );
+			return $this->wpdb->update(
+				$this->table_name( 'wp_backup' ),
+				array(
+					'userid'                         => $userid,
+					'name'                           => $name,
+					'schedule'                       => $schedule,
+					'type'                           => $type,
+					'exclude'                        => $exclude,
+					'sites'                          => $sites,
+					'groups'                         => $groups,
+					'subfolder'                      => MainWP_Utility::remove_preslash_spaces( $subfolder ),
+					'filename'                       => $filename,
+					'excludebackup'                  => $excludebackup,
+					'excludecache'                   => $excludecache,
+					'excludenonwp'                   => $excludenonwp,
+					'excludezip'                     => $excludezip,
+					'archiveFormat'                  => $archiveFormat,
+					'loadFilesBeforeZip'             => $loadFilesBeforeZip,
+					'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
+					'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
+					'maximumFileDescriptors'         => $maximumFileDescriptors,
+				),
+				array( 'id' => $id )
+			);
 		}
 
 		return false;
@@ -1535,11 +1549,15 @@ class MainWP_DB {
 
 	public function update_backup_run( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
-			return $this->wpdb->update( $this->table_name( 'wp_backup' ), array(
-				'last_run'           => time(),
-				'last'               => time(),
-				'completed_sites'    => wp_json_encode( array() ),
-			), array( 'id' => $id ) );
+			return $this->wpdb->update(
+				$this->table_name( 'wp_backup' ),
+				array(
+					'last_run'           => time(),
+					'last'               => time(),
+					'completed_sites'    => wp_json_encode( array() ),
+				),
+				array( 'id' => $id )
+			);
 		}
 
 		return false;
@@ -1590,32 +1608,23 @@ class MainWP_DB {
 	public function get_websites_check_updates_count() {
 		$where = $this->get_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp
-                                            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                                            WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where );
 	}
 
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
 		$where = $this->get_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp
-                                            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                                            WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where );
 	}
 
 	public function get_websites_last_automatic_sync() {
-		return $this->wpdb->get_var( 'SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->table_name( 'wp' ) . ' wp
-                                            JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid' );
+		return $this->wpdb->get_var( 'SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid' );
 	}
 
 	public function get_websites_check_updates( $limit ) {
 		$where = $this->get_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.*
-                                    FROM ' . $this->table_name( 'wp' ) . ' wp
-                                    JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-                                    JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
-                                    WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
+		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
 	}
 
 	public function get_websites_stats_update_sql() {
@@ -1624,14 +1633,15 @@ class MainWP_DB {
 	}
 
 	public function update_website_stats( $websiteid, $statsUpdated ) {
-		return $this->wpdb->update( $this->table_name( 'wp' ), array(
-			'statsUpdate' => $statsUpdated,
-		), array( 'id' => $websiteid ) );
+		return $this->wpdb->update(
+			$this->table_name( 'wp' ),
+			array( 'statsUpdate' => $statsUpdated ),
+			array( 'id' => $websiteid )
+		);
 	}
 
 	public function get_backup_tasks_to_complete() {
-		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run',
-		OBJECT );
+		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
 	}
 
 	public function get_backup_tasks_todo_daily() {
@@ -1770,7 +1780,7 @@ class MainWP_DB {
 			return false;
 		}
 
-		$result = self::_query( $sql, $this->wpdb->dbh );
+		$result = self::m_query( $sql, $this->wpdb->dbh );
 
 		if ( ! $result || ( 0 == self::num_rows( $result ) ) ) {
 			return false;
@@ -1804,7 +1814,7 @@ class MainWP_DB {
 		}
 	}
 
-	public static function _query( $query, $link ) {
+	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_query( $link, $query );
 		} else {

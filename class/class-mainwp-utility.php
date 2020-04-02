@@ -4,7 +4,7 @@
  *
  * Custom curl functions and PHP filesystem functions.
  *
- * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+ * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
  */
 
 namespace MainWP\Dashboard;
@@ -288,7 +288,7 @@ class MainWP_Utility {
 
 		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
 
-		$host   = parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
+		$host   = wp_parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
 		$ip     = false;
 		$target = false;
 
@@ -1665,7 +1665,7 @@ class MainWP_Utility {
 			$real_url    = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 		}
 
-		$host = parse_url( $real_url, PHP_URL_HOST );
+		$host = wp_parse_url( $real_url, PHP_URL_HOST );
 		$ip   = gethostbyname( $host );
 
 		if ( null != $website ) {

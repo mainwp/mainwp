@@ -77,6 +77,9 @@ class MainWP_Updates {
 	}
 
 	public static function render() {
+		
+		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
+		
 		global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
@@ -2790,6 +2793,8 @@ class MainWP_Updates {
 
 		<?php
 		self::render_footer();
+		
+		// phpcs:enable -- Generic.Metrics.CyclomaticComplexity
 	}
 
 	public static function upgrade_site( $id ) {

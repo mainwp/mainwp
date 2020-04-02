@@ -559,6 +559,9 @@ class MainWP_Manage_Sites {
 	 * @throws MainWP_Exception
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
+		
+		// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Big function
+		
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
@@ -1015,6 +1018,7 @@ class MainWP_Manage_Sites {
 		}
 
 		return $backup_result;
+		// phpcs:enable -- Generic.Metrics.CyclomaticComplexity -- Big function
 	}
 
 	public static function backup_get_file_size( $pFile ) {

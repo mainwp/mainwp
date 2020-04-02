@@ -163,7 +163,7 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 */	
+	 */
 	public static function render_sites( $isUpdatesPage = false ) {
 
 		$globalView = true;
@@ -772,8 +772,8 @@ class MainWP_Updates_Overview {
 			</div>
 
 			<?php
-			MainWP_DB::free_result( $websites );						
-	}	
+			MainWP_DB::free_result( $websites );
+	}
 
 
 	/**

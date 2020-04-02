@@ -554,10 +554,10 @@ class MainWP_Manage_Sites {
 		}
 		self::render_footer( $showpage );
 	}
-	
+
 	/**
 	 * @throws MainWP_Exception
-	 */	
+	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -1015,8 +1015,8 @@ class MainWP_Manage_Sites {
 			throw new MainWP_Exception( 'Database backup failed due to an undefined error.' );
 		}
 
-		return $backup_result;		
-	}	
+		return $backup_result;
+	}
 
 	public static function backup_get_file_size( $pFile ) {
 		$dir = MainWP_Utility::get_mainwp_specific_dir();

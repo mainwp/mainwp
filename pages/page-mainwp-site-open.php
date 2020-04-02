@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Site Open Page
+ *
+ * This page is used to redirect to child site WP Admin
+ *
+ * @package MainWP/Site_Open
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -29,7 +37,7 @@ class MainWP_Site_Open {
 
 		$location = '';
 		if ( isset( $_GET['location'] ) ) {
-			$location = base64_decode( $_GET['location'] );
+			$location = base64_decode( $_GET['location'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
@@ -45,7 +53,7 @@ class MainWP_Site_Open {
 			<div class="ui active inverted dimmer">
 				<div class="ui massive text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
 			</div>
-			<form method="POST" action="<?php echo MainWP_Utility::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location  ); ?>" id="redirectForm">
+			<form method="POST" action="<?php echo MainWP_Utility::get_get_data_authed( $website, ( null == $location || '' === $location ) ? 'index.php' : $location ); ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			</form>
 		</div>
@@ -66,7 +74,7 @@ class MainWP_Site_Open {
 
 		$file = '';
 		if ( isset( $_GET['f'] ) ) {
-			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) );
+			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
@@ -110,7 +118,7 @@ class MainWP_Site_Open {
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
 			$postdata                  = MainWP_Utility::get_get_data_authed( $website, 'index.php', 'where', true );
-			$postdata['open_location'] = base64_encode( $open_location );
+			$postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

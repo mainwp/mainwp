@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Security Issues page
+ *
+ * This page is used to manage child site security issues
+ *
+ * @package MainWP/Securtiy_Issues
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -6,7 +14,6 @@ namespace MainWP\Dashboard;
  *
  * Detect, display & fix known Security Issues
  */
-
 class MainWP_Security_Issues {
 
 	/**
@@ -21,7 +28,7 @@ class MainWP_Security_Issues {
 	/**
 	 * Method render()
 	 *
-	 * @param null $website Child Site ID
+	 * @param null $website Child Site ID.
 	 */
 	public static function render( $website = null ) {
 
@@ -182,7 +189,7 @@ class MainWP_Security_Issues {
 				</tr>
 				<?php
 					$is_wpengine = false;
-				if ( property_exists( $website, 'wpe' ) && $website->wpe == 1 ) {
+				if ( property_exists( $website, 'wpe' ) && 1 == $website->wpe ) {
 					$is_wpengine = true;
 				}
 				?>

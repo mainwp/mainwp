@@ -1,4 +1,12 @@
 <?php
+/**
+ * MainWP Setup Wizard
+ *
+ * MainWP Quick Setup Wizard enables you to quickly set basic plugin settings
+ *
+ * @package MainWP/Setup_Wizard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

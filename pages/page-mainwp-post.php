@@ -837,7 +837,7 @@ class MainWP_Post {
 	public static function posts_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
 				$output->errors[ $website->id ] = $posts['error'];
@@ -905,7 +905,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank">
 										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -1643,7 +1643,7 @@ class MainWP_Post {
 					<?php
 					$categories = array();
 					if ( $post ) {
-						$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) );
+						$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 						$categories = explode( ',', $categories );
 					}
 					if ( ! is_array( $categories ) ) {
@@ -1857,7 +1857,7 @@ class MainWP_Post {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			unset( $results );
 		}
 		$output->results[ $website->id ] = $posts;
@@ -1960,10 +1960,10 @@ class MainWP_Post {
 							$val             = get_post_meta( $id, '_selected_groups', true );
 							$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
 
-							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) );
+							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
-							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) );
-							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) );
+							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 							$post_custom = get_post_custom( $id );
 
 							$galleries           = get_post_gallery( $id, false );
@@ -2080,13 +2080,13 @@ class MainWP_Post {
 
 							if ( 0 < count( $dbwebsites ) ) {
 								$post_data = array(
-									'new_post'            => base64_encode( serialize( $new_post ) ),
-									'post_custom'         => base64_encode( serialize( $post_custom ) ),
-									'post_category'       => base64_encode( $post_category ),
-									'post_featured_image' => base64_encode( $post_featured_image ),
-									'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
-									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
-									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
+									'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_category'       => base64_encode( $post_category ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 								);
 								MainWP_Utility::fetch_urls_authed(
 									$dbwebsites,
@@ -2198,7 +2198,7 @@ class MainWP_Post {
 	public static function posts_get_terms_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result                       = $results[1];
-			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			$output->cats[ $website->id ] = is_array( $information ) ? $information : array();
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
@@ -2258,7 +2258,7 @@ class MainWP_Post {
 		if ( 0 < count( $dbwebsites ) ) {
 			$opt       = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'taxonomy' );
 			$post_data = array(
-				'taxonomy' => base64_encode( $opt ),
+				'taxonomy' => base64_encode( $opt ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			);
 			MainWP_Utility::fetch_urls_authed(
 				$dbwebsites,
@@ -2351,13 +2351,13 @@ class MainWP_Post {
 	}
 
 	public static function new_post( $post_data = array() ) {
-		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) );
-		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) );
-		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null );
+		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		$post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
-		$post_featured_image = base64_decode( $post_data['post_featured_image'] );
-		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] );
-		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) );
+		$post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
 	}
 
@@ -2486,16 +2486,16 @@ class MainWP_Post {
 		}
 
 		update_post_meta( $new_post_id, '_mainwp_edit_post_id', $edit_id );
-		update_post_meta( $new_post_id, '_slug', base64_encode( $new_post['post_name'] ) );
+		update_post_meta( $new_post_id, '_slug', base64_encode( $new_post['post_name'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		if ( isset( $post_category ) && '' !== $post_category ) {
-			update_post_meta( $new_post_id, '_categories', base64_encode( $post_category ) );
+			update_post_meta( $new_post_id, '_categories', base64_encode( $post_category ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( isset( $post_tags ) && '' !== $post_tags ) {
-			update_post_meta( $new_post_id, '_tags', base64_encode( $post_tags ) );
+			update_post_meta( $new_post_id, '_tags', base64_encode( $post_tags ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 		if ( $is_sticky ) {
-			update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) );
+			update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( null !== $post_featured_image ) {
@@ -2534,9 +2534,9 @@ class MainWP_Post {
 				$website,
 				'set_terms',
 				array(
-					'id'         => base64_encode( $postId ),
-					'terms'      => base64_encode( $cat_id ),
-					'taxonomy'   => base64_encode( $taxonomy ),
+					'id'         => base64_encode( $postId ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+					'terms'      => base64_encode( $cat_id ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+					'taxonomy'   => base64_encode( $taxonomy ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				)
 			);
 		} catch ( MainWP_Exception $e ) {
@@ -2564,7 +2564,7 @@ class MainWP_Post {
 				'insert_comment',
 				array(
 					'id'         => $postId,
-					'comments'   => base64_encode( serialize( $comments ) ),
+					'comments'   => base64_encode( serialize( $comments ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				)
 			);
 		} catch ( MainWP_Exception $e ) {
@@ -2575,9 +2575,9 @@ class MainWP_Post {
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
-			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) );
+			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
-			return base64_encode( $_POST['sticky'] );
+			return base64_encode( $_POST['sticky'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {

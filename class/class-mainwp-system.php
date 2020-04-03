@@ -282,7 +282,7 @@ class MainWP_System {
 				$query .= "'" . $option . "', ";
 			}
 			$query  = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ')';
+			$query .= ")";
 			// phpcs:ignore -- unprepared SQL ok.
 			$alloptions_db	 = $wpdb->get_results( $query );
 			$wpdb->suppress_errors( $suppress );
@@ -319,14 +319,14 @@ class MainWP_System {
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			$jobs = array_merge(
-						$jobs,
-						array(
-							'mainwp_cronbackups_action' => 'hourly',
-							'mainwp_cronbackups_continue_action' => '5minutely',
-						)
-					);
+				$jobs,
+				array(
+					'mainwp_cronbackups_action'          => 'hourly',
+					'mainwp_cronbackups_continue_action' => '5minutely',
+				)
+			);
 		} else {
-			// unset schedules
+			// unset schedules.
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
 			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );

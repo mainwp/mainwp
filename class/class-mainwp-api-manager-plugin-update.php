@@ -6,6 +6,7 @@
  *
  * @package MainWP API Manager/Update Handler
  */
+
 namespace MainWP\Dashboard;
 
 // Exit if accessed directly.
@@ -68,7 +69,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		$query_url = '';
 		foreach ( $args as $key => $value ) {
-			$query_url .= $key . '=' . urlencode( $value ) . '&';
+			$query_url .= $key . '=' . rawurlencode( $value ) . '&';
 		}
 		$query_url = rtrim( $query_url, '&' );
 
@@ -117,7 +118,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		$args = array(
 			'request'    => 'bulkupdatecheck',
 			'domain'     => MainWP_Api_Manager::instance()->get_domain(),
-			'extensions' => base64_encode( serialize( $plugins ) ),
+			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		);
 		return $this->plugin_information( $args, true ); // bulk update check.
 	}
@@ -138,7 +139,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		$response = $this->plugin_information( $args );
 
 		// If everything is okay return the response.
-		if ( isset( $response ) && is_object( $response ) && $response !== false ) {
+		if ( isset( $response ) && is_object( $response ) && false !== $response ) {
 			return $response;
 		}
 	}
@@ -158,7 +159,8 @@ class MainWP_Api_Manager_Plugin_Update {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );
 		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 		$request      = wp_remote_get(
-			$target_url, array(
+			$target_url,
+			array(
 				'timeout'   => 50,
 				'sslverify' => $apisslverify,
 			)

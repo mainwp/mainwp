@@ -282,7 +282,7 @@ class MainWP_System {
 				$query .= "'" . $option . "', ";
 			}
 			$query  = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ")";
+			$query .= ')';
 			// phpcs:ignore -- unprepared SQL ok.
 			$alloptions_db	 = $wpdb->get_results( $query );
 			$wpdb->suppress_errors( $suppress );

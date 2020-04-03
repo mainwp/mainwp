@@ -2,6 +2,7 @@
 /**
  * MainWP Child Scan
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -83,8 +84,8 @@ class MainWP_Child_Scan {
 					<?php
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$imgfavi = '';
-						if ( $website !== null ) {
-							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
+						if ( null !== $website ) {
+							if ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) {
 								$favi_url = MainWP_Utility::get_favico_url( $website );
 								$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 							}

@@ -3682,13 +3682,7 @@ mainwp_import_users = function () {
     import_user_current_line_number++;
 
     if ( import_user_current_line_number > import_user_total_import ) {
-        jQuery( '#import_user_btn_import' ).val( 'Finished' ).attr( 'disabled', 'true' );
-        jQuery( '#MainWPBulkUploadUserLoading' ).hide();
-        jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
-        if ( import_user_count_create_fails > 0 ) {
-            jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
-        }
-        jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+        mainwp_import_users_finished();
         return;
     }
 
@@ -3751,6 +3745,7 @@ mainwp_import_users = function () {
                 import_user_select_by = 'group';
         }
     }
+	
 
     if ( errors.length > 0 ) {
         jQuery( '#import_user_import_failed_rows' ).append( '<span>' + original_line + '</span>' );
@@ -3779,10 +3774,8 @@ mainwp_import_users = function () {
 
     jQuery.post( ajaxurl, data, function ( response_data ) {
             if ( response_data.error != undefined )
-                return;
-			
-			mainwp_import_users_response( response_data );            
-			
+                return;			
+			mainwp_import_users_response( response_data );
             mainwp_import_users();
     }, 'json' );
 };
@@ -3807,6 +3800,16 @@ mainwp_import_users_response = function( response_data ) {
 			jQuery( '#import_user_import_failed_rows' ).append( '<span>' + response_data.failed_logging + '</span>' );
 		}
 		jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+};
+
+mainwp_import_users_finished = function() {
+	jQuery( '#import_user_btn_import' ).val( 'Finished' ).attr( 'disabled', 'true' );
+	jQuery( '#MainWPBulkUploadUserLoading' ).hide();
+	jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
+	if ( import_user_count_create_fails > 0 ) {
+		jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
+	}
+	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );	
 }
 
 
@@ -7134,6 +7137,7 @@ mainwp_managesites_bulk_reconnect_specific = function ( pCheckedBox ) {
     return;
 };
 
+// phpcs:ignore  -- complex method
 function mainwp_according_table_sorting( pObj ) {
     var table, th, rows, switching, i, x, y, xVal, yVal, campare = false, shouldSwitch = false, dir, switchcount = 0, n, skip = 1;
     table = jQuery(pObj).closest('table')[0];

@@ -1569,7 +1569,7 @@ class MainWP_Live_Reports_Class {
 			'mwp_action'     => 'get_stream',
 			'sections'       => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			'other_tokens'   => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-			'date_from'      => $report->date_from
+			'date_from'      => $report->date_from,
 			'date_to'        => $report->date_to,
 		);
 

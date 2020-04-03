@@ -281,7 +281,7 @@ class MainWP_System {
 			foreach ( $options as $option ) {
 				$query .= "'" . $option . "', ";
 			}
-			$query  = substr( $query, 0, strlen( $query ) - 2 );
+			$query         = substr( $query, 0, strlen( $query ) - 2 );
 			$query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
 			$alloptions_db	 = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
 			$wpdb->suppress_errors( $suppress );

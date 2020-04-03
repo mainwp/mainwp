@@ -282,9 +282,8 @@ class MainWP_System {
 				$query .= "'" . $option . "', ";
 			}
 			$query  = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ")";
-			// phpcs:ignore -- unprepared SQL ok.
-			$alloptions_db	 = $wpdb->get_results( $query );
+			$query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
+			$alloptions_db	 = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
 			$wpdb->suppress_errors( $suppress );
 			if ( ! is_array( $alloptions ) ) {
 				$alloptions = array();

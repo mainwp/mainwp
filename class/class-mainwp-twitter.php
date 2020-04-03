@@ -5,6 +5,7 @@
  * Each time a Child Site is updated, build a Tweet to be sent out to brag
  * that MainWP was used and how fast it was.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -154,7 +155,7 @@ class MainWP_Twitter {
 		if ( ! empty( $message ) ) {
 			$in_sec = $value['seconds'];
 			if ( $in_sec <= 60 ) {
-				if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
+				if ( 'upgrade_all_plugins' == $what || 'upgrade_all_themes' == $what || 'upgrade_everything' == $what ) {
 					$real_updated = $value['real_items'];
 					$message     .= ', ' . _n( sprintf( '<strong>%d</strong> total update', $real_updated ), sprintf( '<strong>%d</strong> total updates', $real_updated ), $real_updated, 'mainwp' );
 				}
@@ -180,7 +181,7 @@ class MainWP_Twitter {
 		ob_start();
 		$content
 		?>
-		<button class="ui mini twitter button mainwp_tweet_this" msg="<?php echo urlencode( $content ); ?>">
+		<button class="ui mini twitter button mainwp_tweet_this" msg="<?php echo rawurlencode( $content ); ?>">
 			<i class="twitter icon"></i>
 			<?php esc_html_e( 'Brag on Twitter', 'mainwp' ); ?>
 		</button>
@@ -220,7 +221,7 @@ class MainWP_Twitter {
 		}
 
 		$clear_twit = false;
-		if ( empty( $coutRealItems ) || $coutRealItems == 1 ) {
+		if ( empty( $coutRealItems ) || 1 == $coutRealItems ) {
 			$clear_twit = true;
 		}
 
@@ -395,7 +396,7 @@ class MainWP_Twitter {
 				if ( ! empty( $twit ) ) {
 					$in_sec = $value['seconds'];
 					if ( $in_sec <= 60 ) {
-						if ( $what == 'upgrade_all_plugins' || $what == 'upgrade_all_themes' || $what == 'upgrade_everything' ) {
+						if ( 'upgrade_all_plugins' == $what || 'upgrade_all_themes' == $what || 'upgrade_everything' == $what ) {
 							$real_updated = $value['real_items'];
 							$twit        .= ', ' . sprintf( _n( '%d total update', '%d total updates', $real_updated, 'mainwp' ), $real_updated );
 						}

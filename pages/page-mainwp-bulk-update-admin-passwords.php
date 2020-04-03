@@ -148,7 +148,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				}
 
 				if ( count( $dbwebsites ) > 0 ) {
-					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) );
+					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 					$output         = new \stdClass();
 					$output->ok     = array();
 					$output->errors = array();
@@ -180,7 +180,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<div class="item">
 								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
 								<span class="right floated content">
-									<?php echo( isset( $output->ok[ $website->id ] ) && $output->ok[ $website->id ] == 1 ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
+									<?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
 								</span>
 							</div>
 						<?php endforeach; ?>

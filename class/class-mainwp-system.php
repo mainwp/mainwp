@@ -281,10 +281,9 @@ class MainWP_System {
 			foreach ( $options as $option ) {
 				$query .= "'" . $option . "', ";
 			}
-			$query  = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ')';
-			// phpcs:ignore -- unprepared SQL ok.
-			$alloptions_db	 = $wpdb->get_results( $query );
+			$query         = substr( $query, 0, strlen( $query ) - 2 );
+			$query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
+			$alloptions_db	 = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
 			$wpdb->suppress_errors( $suppress );
 			if ( ! is_array( $alloptions ) ) {
 				$alloptions = array();
@@ -319,14 +318,14 @@ class MainWP_System {
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			$jobs = array_merge(
-						$jobs,
-						array(
-							'mainwp_cronbackups_action' => 'hourly',
-							'mainwp_cronbackups_continue_action' => '5minutely',
-						)
-					);
+				$jobs,
+				array(
+					'mainwp_cronbackups_action'          => 'hourly',
+					'mainwp_cronbackups_continue_action' => '5minutely',
+				)
+			);
 		} else {
-			// unset schedules
+			// unset schedules.
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
 			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );

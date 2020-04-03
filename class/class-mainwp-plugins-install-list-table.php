@@ -2,6 +2,7 @@
 /**
  * Plugin Installer List Table class.
  */
+
 namespace MainWP\Dashboard;
 
 // Include class-wp-list-table.php.
@@ -72,7 +73,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );
-		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
+		if ( 'beta' === $tab || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta'] = _x( 'Beta Testing', 'Plugin Installer' );
 		}
 		if ( current_user_can( 'upload_plugins' ) ) {
@@ -86,8 +87,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		// $nonmenu_tabs = apply_filters( 'install_plugins_nonmenu_tabs', $nonmenu_tabs );
 		// If a non-valid menu tab has been selected, And it's not a non-menu action.
 		if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
-			// phpcs:ignore -- required for custom bulk install plugins.
-			$tab = key( $tabs );
+
+			$tab = key( $tabs ); // phpcs:ignore -- required for custom bulk install plugins.
 		}
 
 		$args = array(
@@ -197,7 +198,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 * Override the parent display() so we can provide a different container.
 	 */
 	public function display() {
-		?>		
+		?>
 		<div id="mainwp-install-plugins-container" class="ui stackable four cards">
 				<?php $this->display_rows_or_placeholder(); ?>
 			</div>
@@ -205,7 +206,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			<div class="ui column grid">
 				<div class="column right aligned">
 					<div class="inline field">
-						<?php $this->display_tablenav('bottom'); ?>
+						<?php $this->display_tablenav( 'bottom' ); ?>
 					</div>
 				</div>
 			</div>
@@ -223,7 +224,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 */
 	protected function display_tablenav( $which ) {
 
-		if ( $GLOBALS['tab'] === 'featured' ) {
+		if ( 'featured' === $GLOBALS['tab'] ) {
 			return;
 		}
 
@@ -268,11 +269,11 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 				$disable_prev = false;
 				$disable_next = false;
 
-		if ( $current == 1 ) {
+		if ( 1 == $current ) {
 			$disable_first = true;
 			$disable_prev  = true;
 		}
-		if ( $current == 2 ) {
+		if ( 2 == $current ) {
 			$disable_first = true;
 		}
 		if ( $current == $total_pages ) {
@@ -286,56 +287,35 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		if ( $disable_first ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle double left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'First page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( remove_query_arg( 'paged', $current_url ) ),
-				'<i class="angle double left icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'First page' ) . "' aria-hidden='true'>%s</a>", esc_url( remove_query_arg( 'paged', $current_url ) ), '<i class="angle double left icon"></i>' );
 		}
 
 		if ( $disable_prev ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Previous page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ),
-				'<i class="angle left icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Previous page' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ), '<i class="angle left icon"></i>' );
 		}
 
 		if ( $current - 1 > 0 ) {
-			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>",
-				esc_url( add_query_arg( 'paged', $current - 1, $current_url ) ),
-				$current - 1
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current - 1, $current_url ) ), $current - 1 );
 		}
 
-		$page_links[] = sprintf( "<a class='item active' href='%s'>%s</a>",
-			esc_url( add_query_arg( 'paged', $current, $current_url ) ),
-			$current
-		);
+		$page_links[] = sprintf( "<a class='item active' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current, $current_url ) ), $current );
 
 		if ( $current + 1 <= $total_pages ) {
-			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>",
-				esc_url( add_query_arg( 'paged', $current + 1, $current_url ) ),
-				$current + 1
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current + 1, $current_url ) ), $current + 1 );
 		}
 
 		if ( $disable_next ) {
 			$page_links[] = '<span class="item disabled " aria-hidden="true"><i class="right angle icon"></i></span>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Next page' ) . "'>%s</a>",
-				esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ),
-				'<i class="angle right icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Next page', 'mainwp' ) . "'>%s</a>", esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ), '<i class="angle right icon"></i>' );
 		}
 
 		if ( $disable_last ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="right angle double icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Last page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ),
-				'<i class="right angle double icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Last page', 'mainwp' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ), '<i class="right angle double icon"></i>' );
 		}
 
 		if ( $total_pages > 1 ) {
@@ -515,7 +495,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 					<div class="extra content">
 						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button thickbox open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
 						<div class="ui radio checkbox right floated">
-						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class ( $plugin['slug'] ); ?>">
+						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
 						</div>
 					</div>

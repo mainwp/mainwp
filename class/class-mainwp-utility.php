@@ -512,7 +512,7 @@ class MainWP_Utility {
 		$installed = false;
 
 		foreach ( $plugins as $plugin ) {
-			if ( ( is_string( $slug ) && $slug == strtolower( $plugin['slug'] ) ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
 				if ( $plugin['active'] ) {
 					$installed = true;
 				}

@@ -310,21 +310,21 @@ class MainWP_System {
 	public function init_cron() {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
-		
+
 		$jobs = array(
-			'mainwp_cronstats_action' => 'hourly',
-			'mainwp_cronpingchilds_action' => 'daily',
-			'mainwp_cronupdatescheck_action' => 'minutely'			
+			'mainwp_cronstats_action'        => 'hourly',
+			'mainwp_cronpingchilds_action'   => 'daily',
+			'mainwp_cronupdatescheck_action' => 'minutely',
 		);
-		
-		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {			
-			$jobs = array_merge( 
+
+		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+			$jobs = array_merge(
 						$jobs,
 						array(
 							'mainwp_cronbackups_action' => 'hourly',
-							'mainwp_cronbackups_continue_action' => '5minutely'
+							'mainwp_cronbackups_continue_action' => '5minutely',
 						)
-					);			
+					);
 		} else {
 			// unset schedules
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
@@ -336,14 +336,14 @@ class MainWP_System {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
 			}
 		}
-				
-		foreach( $jobs as $recur => $hook) {
+
+		foreach ( $jobs as $recur => $hook ) {
 			$this->cron_set( $useWPCron, $recur, $hook );
 		}
 	}
 
-	public function cron_set( $useWPCron, $recurrence, $cron_hook) {
-		$sched     = wp_next_scheduled( $cron_hook );
+	public function cron_set( $useWPCron, $recurrence, $cron_hook ) {
+		$sched = wp_next_scheduled( $cron_hook );
 		if ( false == $sched ) {
 			if ( $useWPCron ) {
 				wp_schedule_event( time(), $recurrence, $cron_hook );
@@ -354,7 +354,7 @@ class MainWP_System {
 			}
 		}
 	}
-		
+
 	public function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
@@ -452,11 +452,11 @@ class MainWP_System {
 		}
 
 		$this->render_notice_version();
-		
+
 		$this->render_notice_config_warning();
-		
+
 		if ( is_multisite() && ( ! isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
-			$this->render_notice_multi_sites();			
+			$this->render_notice_multi_sites();
 		}
 
 		if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {
@@ -467,7 +467,7 @@ class MainWP_System {
 			}
 		}
 
-		$this->check_rating_notice( $current_options );		
+		$this->check_rating_notice( $current_options );
 	}
 
 	public function render_notice_version() {
@@ -484,7 +484,7 @@ class MainWP_System {
 			}
 		}
 	}
-	
+
 	public function render_notice_config_warning() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
@@ -550,7 +550,7 @@ class MainWP_System {
 			$this->render_rating_notice_2();
 		}
 	}
-	
+
 	public function render_notice_trust_update() {
 		?>
 		<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -560,9 +560,9 @@ class MainWP_System {
 			</div>
 			<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
 		</div>
-		<?php	
+		<?php
 	}
-	
+
 	public function render_rating_notice_1() {
 		?>
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">

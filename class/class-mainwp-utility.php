@@ -361,7 +361,7 @@ class MainWP_Utility {
 	 * @return mixed null|Error String.
 	 */
 	protected static function get_http_status_error_string( $httpCode ) {
-		
+
 		$codeString = array(
 			100 => 'Continue',
 			101 => 'Switching Protocols',
@@ -372,7 +372,7 @@ class MainWP_Utility {
 			204 => 'No Content',
 			205 => 'Reset Content',
 			206 => 'Partial Content',
-			
+
 			300 => 'Multiple Choices',
 			301 => 'Moved Permanently',
 			302 => 'Found',
@@ -381,7 +381,7 @@ class MainWP_Utility {
 			305 => 'Use Proxy',
 			306 => '(Unused)',
 			307 => 'Temporary Redirect',
-			
+
 			400 => 'Bad Request',
 			401 => 'Unauthorized',
 			402 => 'Payment Required',
@@ -398,9 +398,9 @@ class MainWP_Utility {
 			413 => 'Request Entity Too Large',
 			414 => 'Request-URI Too Long',
 			415 => 'Unsupported Media Type',
-			416 => 'Requested Range Not Satisfiable',			
+			416 => 'Requested Range Not Satisfiable',
 			417 => 'Expectation Failed',
-			
+
 			500 => 'Internal Server Error',
 			501 => 'Not Implemented',
 			502 => 'Bad Gateway',
@@ -408,8 +408,8 @@ class MainWP_Utility {
 			504 => 'Gateway Timeout',
 			505 => 'HTTP Version Not Supported',
 		);
-		
-		return isset( $codeString[ $httpCode ] ) ?  $codeString[ $httpCode ] : null;
+
+		return isset( $codeString[ $httpCode ] ) ? $codeString[ $httpCode ] : null;
 	}
 
 	/**
@@ -494,22 +494,23 @@ class MainWP_Utility {
 		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
 			return false;
 		}
-		
+
 		$checks = array(
-			'backupbuddy' => 'backupbuddy/backupbuddy.php',
+			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
 			'backupwordpress' => 'backupwordpress/backupwordpress.php',
-			'backupwp' => array ( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
-			'updraftplus' => 'updraftplus/updraftplus.php',
-			
+			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus'     => 'updraftplus/updraftplus.php',
+
 		);
-		
+
 		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
-		
-		if ( empty( $slug ) )
+
+		if ( empty( $slug ) ) {
 			return false;
-		
+		}
+
 		$installed = false;
-		
+
 		foreach ( $plugins as $plugin ) {
 			if ( ( is_string( $slug ) && $slug == strtolower( $plugin['slug'] ) ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
 				if ( $plugin['active'] ) {
@@ -518,7 +519,7 @@ class MainWP_Utility {
 				break;
 			}
 		}
-		
+
 		return $installed;
 	}
 
@@ -1246,7 +1247,7 @@ class MainWP_Utility {
 		return $information;
 	}
 
-	public static function maybe_request_premium_updates( $website, $what, $params ){
+	public static function maybe_request_premium_updates( $website, $what, $params ) {
 		$request_update = false;
 		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
 
@@ -1296,10 +1297,10 @@ class MainWP_Utility {
 				}
 			}
 		}
-		
+
 		return $request_update;
 	}
-		
+
 	public static function fetch_url_not_authed( $url, $admin, $what, $params = null, $pForceFetch = false,
 									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		if ( empty( $params ) ) {

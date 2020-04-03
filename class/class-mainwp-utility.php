@@ -684,12 +684,12 @@ class MainWP_Utility {
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
-				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			} else {
 				$data['nossl'] = 1;
 				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
 			}
-			$data['mainwpsignature'] = base64_encode( $signature );
+			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 			if ( 5 !== $recent_number ) {
@@ -719,12 +719,12 @@ class MainWP_Utility {
 			$nonce = wp_rand( 0, 9999 );
 			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$nossl = 0;
-				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			} else {
 				$nossl     = 1;
 				$signature = md5( $paramValue . $nonce . $website->nosslkey );
 			}
-			$signature = base64_encode( $signature );
+			$signature = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			$params = array(
 				'login_required'     => 1,
@@ -1687,7 +1687,7 @@ class MainWP_Utility {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
-			$information = self::get_child_response( base64_decode( $result ) );
+			$information = self::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'information: [OK]' );
 			return $information;
@@ -1831,7 +1831,7 @@ class MainWP_Utility {
 
 		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ),
+				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			);
 		}
 
@@ -2282,7 +2282,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_google_count( $domain ) {
-		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&filter=0&q=site:' . rawurlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {
@@ -2451,11 +2451,11 @@ class MainWP_Utility {
 			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
 		}
 
-		return base64_encode( join( '', $stra ) );
+		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 	}
 
 	public static function decrypt( $str, $pass ) {
-		$str  = base64_decode( $str );
+		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
 		foreach ( $stra as $k => $v ) {
@@ -3437,7 +3437,6 @@ EOT;
 	}
 
 	public static function get_child_response( $data ) {
-		// to compatible.
 		if ( is_serialized( $data ) ) {
 			return unserialize( $data, array( 'allowed_classes' => false ) );
 		} else {

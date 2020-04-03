@@ -1,33 +1,54 @@
 <?php
+/**
+ * MainWP-CLI
+ *
+ * This file extends the WP-CLI and provides a set of SubCommands to Control your
+ * Child Sites that are added to the MainWP Dashboard.
+ *
+ * @todo: allow to add or remove child sites
+ */
 namespace MainWP\Dashboard;
 
+// Exit if access directly.
 if ( ! defined( 'WP_CLI' ) ) {
 	return;
 }
 
 /**
- * Manage all child sites added to the MainWP Dashboard
+ * Manage all child sites added to the MainWP Dashboard.
  */
 class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
+	/**
+	 * Method init()
+	 *
+	 * Initiate the MainWP CLI after all Plugins have loaded.
+	 */
 	public static function init() {
 		add_action( 'plugins_loaded', array( 'MainWP_WP_CLI_Command', 'init_wpcli_commands' ), 99999 );
 	}
 
+	/**
+	 * Method init_wpcli_commands
+	 *
+	 * Adds the MainWP WP CLI Commands via WP_CLI::add_command
+	 */
 	public static function init_wpcli_commands() {
 		WP_CLI::add_command( 'mainwp', 'MainWP_WP_CLI_Command' );
 	}
 
 	/**
-	 * List information about added child sites
+	 * List information about added child sites.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--list]
 	 *  : Get a list of all child sites
 	 *
-	 * @todo: allow to add or remove child sites
-	 * @synopsis [--list]
+	 * ## Synopsis [--list]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function sites( $args, $assoc_args ) {
 		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
@@ -79,7 +100,10 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp sync 2,5
 	 *     wp mainwp sync --all
 	 *
-	 * @synopsis [<websiteid>] [--all]
+	 * ## Synopsis [<websiteid>] [--all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -142,7 +166,10 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *
 	 *     wp mainwp reconnect 2,5
 	 *
-	 * @synopsis [<websiteid>]
+	 * ## Synopsis [<websiteid>]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
@@ -221,7 +248,10 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp plugin 2,5 --upgrade-all
 	 *     wp mainwp plugin 2,5 --upgrade=mainwpchild
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
+	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function plugin( $args, $assoc_args ) {
 		$sites = array();
@@ -481,7 +511,10 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp theme 2,5 --upgrade-all
 	 *     wp mainwp theme 2,5 --upgrade=twentysixteen
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
+	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function theme( $args, $assoc_args ) {
 		$sites = array();

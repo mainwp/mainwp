@@ -76,7 +76,6 @@ class MainWP_Page {
 		self::init_left_menu( self::$subPages );
 	}
 
-
 	public static function on_load_add_edit() {
 
 		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) {

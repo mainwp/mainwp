@@ -148,7 +148,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				}
 
 				if ( count( $dbwebsites ) > 0 ) {
-					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) );
+					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 					$output         = new \stdClass();
 					$output->ok     = array();
 					$output->errors = array();

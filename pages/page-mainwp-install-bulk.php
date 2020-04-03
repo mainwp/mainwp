@@ -335,7 +335,7 @@ class MainWP_Install_Bulk {
 	public static function install_plugin_theme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ] = array( $website->name );

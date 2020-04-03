@@ -575,8 +575,8 @@ class MainWP_Live_Reports_Class {
 				}
 			}
 
-			$report['sites']  = base64_encode( serialize( $selected_sites ) );
-			$report['groups'] = base64_encode( serialize( $selected_groups ) );
+			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( 'schedule' === $_POST['mwp_creport_report_submit_action'] ) {
 				$report['scheduled'] = 1;
@@ -1157,7 +1157,7 @@ class MainWP_Live_Reports_Class {
 		}
 		$post_data = array(
 			'mwp_action'     => 'save_sucuri_stream',
-			'result'         => base64_encode( serialize( $scan_result ) ),
+			'result'         => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			'scan_status'    => $scan_status,
 		);
 		global $mainWPCReportExtensionActivator;
@@ -1567,9 +1567,9 @@ class MainWP_Live_Reports_Class {
 		global $mainWPCReportExtensionActivator;
 		$post_data = array(
 			'mwp_action'     => 'get_stream',
-			'sections'       => base64_encode( serialize( $sections ) ),
-			'other_tokens'   => base64_encode( serialize( $tokens ) ),
-			'date_from'      => $report->date_from,
+			'sections'       => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			'other_tokens'   => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			'date_from'      => $report->date_from
 			'date_to'        => $report->date_to,
 		);
 
@@ -2327,12 +2327,12 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		if ( $wpdb->insert(
-				$this->table_name( 'client_report_site_token' ),
-				array(
-					'token_id'       => $token_id,
-					'token_value'    => $token_value,
-					'site_url'       => $site_url,
-				)
+			$this->table_name( 'client_report_site_token' ),
+			array(
+				'token_id'       => $token_id,
+				'token_value'    => $token_value,
+				'site_url'       => $site_url,
+			)
 			)
 		) {
 			return $this->get_tokens_by( 'id', $token_id, $site_url );

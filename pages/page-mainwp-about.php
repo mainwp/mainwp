@@ -40,7 +40,12 @@ class MainWP_About {
 	 */
 	public static function init_menu() {
 		add_submenu_page(
-			'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
+			'mainwp_tab',
+			__( 'About MainWP', 'mainwp' ),
+			' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>',
+			'read',
+			'mainwp_about',
+			array(
 				self::get_class_name(),
 				'render',
 			)
@@ -64,12 +69,11 @@ class MainWP_About {
 		?>
 		<div class="wrap about-wrap">
 			<h1><?php esc_html_e( 'Welcome to MainWP Dashboard', 'mainwp' ) . '&nbsp;' . $mainWP->get_version(); ?></h1>
-
 			<div class="about-text"><?php esc_html_e( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->get_version(); ?></div>
 			<div class="mainwp-badge"><?php esc_html_e( 'Version ', 'mainwp' ) . $mainWP->get_version(); ?></div>
 			<h2 class="nav-tab-wrapper wp-clearfix">
-				<a class="nav-tab <?php echo $showtab == 'whatsnew' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php esc_html_e( 'What\'s New', 'mainwp' ); ?></a>
-				<a class="nav-tab <?php echo $showtab == 'changelog' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php esc_html_e( 'Version Changelog', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo 'whatsnew' == $showtab ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php esc_html_e( 'What\'s New', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo 'changelog' == $showtab ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php esc_html_e( 'Version Changelog', 'mainwp' ); ?></a>
 			</h2>
 			<?php
 			if ( 'whatsnew' == $showtab ) {
@@ -119,16 +123,7 @@ class MainWP_About {
 		<h3><?php echo esc_html( $mainWP->get_version() ); ?>&nbsp;<?php esc_html_e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
-			<li>Fixed: an issue with sorting posts and pages by the publish date</li>
-			<li>Fixed: sync error caused by the WP-SpamShield plugin</li>
-			<li>Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin</li>
-			<li>Fixed: an issue with sending email notifications about available updates for some users</li>
-			<li>Fixed: an issue with triggering unwanted backups</li>
-			<li>Fixed: a usability issue with displaying incorrect last sync time</li>
-			<li>Fixed: incorrect changelog links</li>
-			<li>Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates</li>
-			<li>Updated: the Update Everything process includes Translations updates</li>
-			<li>Updated: the Update process will not check for required backups if a primary backup system is not set</li>
+			<li></li>
 		</ul>
 		<hr/>
 		<h3><?php esc_html_e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>

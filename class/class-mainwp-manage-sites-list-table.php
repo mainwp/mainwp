@@ -2,6 +2,7 @@
 /**
  * Manage Sites List Table.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -871,7 +872,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function get_datatable_rows() {
 		$all_rows  = array();
 		$info_rows = array();
-		$use_favi  = get_option( 'mainwp_use_favicon', 1);
+		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
 		if ( $this->items ) {
 			foreach ( $this->items as $website ) {
 					$rw_classes = '';
@@ -1076,7 +1077,7 @@ class MainWP_Manage_Sites_List_Table {
 									<?php endif; ?>
 										<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
 									<?php } elseif ( 'phpversion' === $column_name ) { ?>
-								<?php echo esc_html( substr( $website['phpversion'], 0, 6) ); ?>
+								<?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?>
 							<?php } elseif ( 'site_actions' === $column_name ) { ?>
 									<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 										<i class="ellipsis horizontal icon"></i>
@@ -1306,8 +1307,8 @@ class MainWP_Manage_Sites_List_Table {
 				</td>
 				<?php
 			} elseif ( 'site' === $column_name ) {
-					$cls_site = '';
-				if ( $website['sync_errors'] != '' ) {
+				$cls_site = '';
+				if ( '' != $website['sync_errors'] ) {
 					$cls_site = 'site-sync-error';
 				}
 				?>

@@ -6,7 +6,6 @@
         <encoding>utf8</encoding>
         <markers>
             <item>todo</item>
-            <item>Depriciated</item>
         </markers>
         <extensions>
             <extension>php</extension>

@@ -2,7 +2,8 @@
 /**
  * MainWP Settings page
  *
- * This page is used to manage MainWP Dashboard settings
+ * This Class handles building/Managing the
+ * Settings MainWP DashboardPage & all SubPages.
  *
  * @package MainWP/Settings
  */
@@ -14,12 +15,22 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Settings {
 
+
+	/**
+	 * Get Class Name
+	 *
+	 * @return __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var array $subPages Array used to store extra Sub pages.
+	 */
 	public static $subPages;
 
+	/** Instantiate Hooks for the Settings Page. */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Settings page header via the 'mainwp-pageheader-settings' action.
@@ -50,10 +61,12 @@ class MainWP_Settings {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/** Run the export_sites method that exports the Child Sites .csv file */
 	public static function admin_init() {
 		self::export_sites();
 	}
 
+	/** Instantiate the Settings Menu  */
 	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab',
@@ -129,6 +142,7 @@ class MainWP_Settings {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/** Instantiate Settings SubPages Menu */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
@@ -169,6 +183,14 @@ class MainWP_Settings {
 		<?php
 	}
 
+
+	/**
+	 * Instantiate left menu
+	 *
+	 * Settings Page & SubPage link data.
+	 *
+	 * @param array $subPages SubPages Array.
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -226,6 +248,8 @@ class MainWP_Settings {
 	}
 
 	/**
+	 * Render Page Header.
+	 *
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -286,15 +310,25 @@ class MainWP_Settings {
 		MainWP_UI::render_page_navigation( $renderItems );
 	}
 
-
-
 	/**
+	 * Close the HTML container.
+	 *
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method handle_settings_post().
+	 *
+	 * This class handles the $_POST of Settings Options.
+	 *
+	 * @uses MainWP_DB::instance()
+	 * @uses MainWP_Utility::update_option()
+	 *
+	 * @return boolean True|False Posts On True.
+	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB::instance()->get_user_extension();
@@ -360,6 +394,7 @@ class MainWP_Settings {
 		return false;
 	}
 
+	/** Render the MainWP Settings Page. */
 	public static function render() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -653,6 +688,11 @@ class MainWP_Settings {
 		self::render_footer( '' );
 	}
 
+	/**
+	 * Returns false or the location of the OpenSSL Lib File.
+	 *
+	 * @return mixed false|opensslLibLocation
+	 */
 	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			return true;
@@ -665,6 +705,11 @@ class MainWP_Settings {
 		}
 	}
 
+	/**
+	 * Check MainWP Installation Hosting Type & System Type.
+	 *
+	 * @return boolean true|false
+	 */
 	public static function is_local_window_config() {
 		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
@@ -674,6 +719,7 @@ class MainWP_Settings {
 		return false;
 	}
 
+	/** Render Advanced Options Subpage */
 	public static function render_advanced() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -800,6 +846,7 @@ class MainWP_Settings {
 		self::render_footer( 'Advanced' );
 	}
 
+	/** Render MainWP Tools SubPage */
 	public static function render_mainwp_tools() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -869,6 +916,7 @@ class MainWP_Settings {
 		self::render_footer( 'MainWPTools' );
 	}
 
+	/** Export Child Sites and save as .csv file */
 	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
 
@@ -899,6 +947,7 @@ class MainWP_Settings {
 		}
 	}
 
+	/** Render CLient Reports Responder */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );

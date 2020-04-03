@@ -4,6 +4,7 @@
  *
  * Renders MainWP Extensions Page.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -19,7 +20,12 @@ class MainWP_Extensions_View {
 	 */
 	public static function init_menu() {
 		$page = add_submenu_page(
-			'mainwp_tab', __( 'Extensions', 'mainwp' ), ' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>', 'read', 'Extensions', array(
+			'mainwp_tab',
+			__( 'Extensions', 'mainwp' ),
+			' <span id="mainwp-Extensions">' . __( 'Extensions', 'mainwp' ) . '</span>',
+			'read',
+			'Extensions',
+			array(
 				MainWP_Extensions::get_class_name(),
 				'render',
 			)
@@ -81,7 +87,6 @@ class MainWP_Extensions_View {
 	 *
 	 * @param mixed $shownPage
 	 */
-
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}

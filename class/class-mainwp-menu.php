@@ -23,7 +23,7 @@ class MainWP_Menu {
 		global $_mainwp_disable_menus_items;
 
 		// Init disable menu items, default is false.
-		if ( $_mainwp_disable_menus_items === null ) {
+		if ( null === $_mainwp_disable_menus_items ) {
 			$_mainwp_disable_menus_items = array(
 				// Compatible with old hooks.
 				'level_1'    => array(
@@ -66,7 +66,7 @@ class MainWP_Menu {
 			return;
 		}
 		foreach ( $subPages as $subPage ) {
-			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true ) ) {
+			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true != $subPage['menu_hidden'] ) ) {
 				$_item = array(
 					'title'      => $subPage['title'],
 					'parent_key' => $parentKey,
@@ -128,7 +128,7 @@ class MainWP_Menu {
 			return;
 		}
 
-		if ( $level != 1 && $level != 2 ) {
+		if ( 1 != $level && 2 != $level ) {
 			$level = 1;
 		}
 
@@ -239,11 +239,11 @@ class MainWP_Menu {
 
 					$link = array(
 						'url'  => $go_back_wpadmin_url,
-						'text' => __('Go to WP Admin', 'mainwp'),
+						'text' => __( 'Go to WP Admin', 'mainwp' ),
 						'tip'  => __( 'Click to go back to the site WP Admin area.', 'mainwp' ),
 					);
 
-					$go_back_link = apply_filters('mainwp_go_back_wpadmin_link', $link );
+					$go_back_link = apply_filters( 'mainwp_go_back_wpadmin_link', $link );
 					if ( is_array( $go_back_link ) ) {
 						if ( isset( $go_back_link['url'] ) ) {
 							$link['url'] = $go_back_link['url'];

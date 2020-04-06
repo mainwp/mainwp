@@ -1623,7 +1623,7 @@ class MainWP_Post {
 				self::do_meta_boxes( null, 'advanced', $post );
 
 				do_action( 'add_meta_boxes', $post_type, $post );
-				
+
 				self::do_meta_boxes( $post_type, 'normal', $post );
 
 				?>
@@ -1640,11 +1640,11 @@ class MainWP_Post {
 						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
 					</div>
 					<div class="ui divider"></div>
-					<?php 					
-					if ( 'bulkpost' === $post_type ) { 
+					<?php
+					if ( 'bulkpost' === $post_type ) {
 						self::render_categories( $post );
-					} 					
-					self::render_post_fields( $post, $post_type );					
+					}
+					self::render_post_fields( $post, $post_type );
 					?>
 					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
 					<div class="ui divider"></div>
@@ -1670,7 +1670,7 @@ class MainWP_Post {
 		<?php
 		self::render_footer( 'BulkAdd' );
 	}
-	
+
 	public static function render_categories( $post ) {
 		?>
 		<div class="mainwp-search-options">
@@ -1740,7 +1740,7 @@ class MainWP_Post {
 		<div class="ui divider"></div>		
 		<?php
 	}
-	
+
 	public static function render_post_fields( $post, $post_type ) {
 		?>
 		<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
@@ -1842,7 +1842,7 @@ class MainWP_Post {
 				</div>
 			</div>
 			<?php
-	}	
+	}
 
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {

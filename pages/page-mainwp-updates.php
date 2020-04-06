@@ -5,11 +5,11 @@ namespace MainWP\Dashboard;
  * MainWP Updates Page
  */
 class MainWP_Updates {
-	
-	public static $user_can_ignore_unignore_updates = true; 
-	public static $trusted_label = '';
-	public static $not_trusted_label = '';
-	
+
+	public static $user_can_ignore_unignore_updates = true;
+	public static $trusted_label                    = '';
+	public static $not_trusted_label                = '';
+
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -439,12 +439,12 @@ class MainWP_Updates {
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		$mainwp_show_language_updates     = get_option( 'mainwp_show_language_updates', 1 );
-		$user_can_update_translation      = mainwp_current_user_can( 'dashboard', 'update_translations' );
+		$mainwp_show_language_updates           = get_option( 'mainwp_show_language_updates', 1 );
+		$user_can_update_translation            = mainwp_current_user_can( 'dashboard', 'update_translations' );
 		self::$user_can_ignore_unignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
-		$user_can_update_wordpress        = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-		$user_can_update_themes           = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_update_plugins          = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+		$user_can_update_wordpress              = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+		$user_can_update_themes                 = mainwp_current_user_can( 'dashboard', 'update_themes' );
+		$user_can_update_plugins                = mainwp_current_user_can( 'dashboard', 'update_plugins' );
 
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
@@ -503,30 +503,32 @@ class MainWP_Updates {
 		}
 
 		self::render_header( 'UpdatesManage' );
-		
+
 		self::render_twitter_notice();
-	
+
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $userExtension );
-		
+
 		?>
 		
 	<div class="ui segment" id="mainwp-manage-updates">
 		<?php
 			$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
-			if ( $enable_http_check ) {
-				self::render_http_checks( $websites );
-			} 
-			?>
+		if ( $enable_http_check ) {
+			self::render_http_checks( $websites );
+		}
+		?>
 			<!-- WordPress Updates -->
-			<?php if ( 'wordpress-updates' === $current_tab ) : 				
+			<?php
+			if ( 'wordpress-updates' === $current_tab ) :
 				?>
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
-					<?php if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :					
-						self::render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);				
-					else :					
+					<?php
+					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+						self::render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
+					else :
 						MainWP_DB::data_seek( $websites, 0 );
 						self::render_wpcore_updates_per_site( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update );
-					endif; 
+					endif;
 					?>
 				</div>
 			<?php endif; ?>
@@ -541,17 +543,17 @@ class MainWP_Updates {
 				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
 					?>
 				<!-- Per Site -->
-				<?php
+					<?php
 					self::render_plugins_updates_per_site( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update );
-				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :					
+				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
-				<?php
+					<?php
 					self::render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset );
 				else :
 					?>
 				<!-- Per Item -->
-				<?php self::render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $trustedPlugins ); ?>				
+					<?php self::render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $trustedPlugins ); ?>				
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -2095,11 +2097,11 @@ class MainWP_Updates {
 			</div>
 	</div>
 		<?php
-	}		
-	
+	}
+
 	public static function render_twitter_notice() {
-		
-			if ( MainWP_Twitter::enabled_twitter_messages() ) {
+
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$filter = array(
 				'upgrade_all_plugins',
 				'upgrade_all_themes',
@@ -2121,11 +2123,10 @@ class MainWP_Updates {
 				}
 			}
 		}
-		
 	}
 
-	public static function render_http_checks( $websites ){
-		
+	public static function render_http_checks( $websites ) {
+
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 		$customPage           = apply_filters( 'mainwp-getcustompage-backups', false );
@@ -2203,7 +2204,7 @@ class MainWP_Updates {
 		<div class="ui hidden clearing divider"></div>
 		<?php
 	}
-	
+
 	public static function render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $show_updates_title, $site_offset ) {
 		?>
 			<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
@@ -2313,7 +2314,7 @@ class MainWP_Updates {
 			</table>
 		<?php
 	}
-	
+
 	public static function render_wpcore_updates_per_site( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-wordpress-updates-table">
@@ -2525,10 +2526,10 @@ class MainWP_Updates {
 			</tfoot>
 		</table>
 		<?php
-	}		
+	}
 
-	public static function render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset) {
-	?>
+	public static function render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset ) {
+		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 			<thead>
 				<tr>
@@ -2706,11 +2707,11 @@ class MainWP_Updates {
 				</tr>
 			</tfoot>
 	</table>	
-	<?php
+		<?php
 	}
 
-	public static function render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $trustedPlugins ){		
-	?>
+	public static function render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $trustedPlugins ) {
+		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
 			<thead>
 				<tr>
@@ -2846,7 +2847,7 @@ class MainWP_Updates {
 		</table>
 		<?php
 	}
-	
+
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 

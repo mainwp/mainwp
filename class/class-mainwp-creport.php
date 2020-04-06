@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- *  phpcs:disable PSR1.Classes.ClassDeclaration, Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+ *  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
  */
 class LiveReportResponder {
 
@@ -305,6 +305,7 @@ class MainWP_Live_Reports_Class {
 	public function init_cron() {
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function cal_schedule_nextsend( $schedule, $start_recurring_date, $scheduleLastSend = 0 ) {
 		if ( empty( $schedule ) || empty( $start_recurring_date ) ) {
 			return 0;
@@ -385,6 +386,7 @@ class MainWP_Live_Reports_Class {
 		return strtotime( $year_to_send . '-' . $month_to_send . '-' . $day_to_send . ' 23:59:59' );
 	}
 
+	// phpcs:ignore -- complex function, deprecated
 	public static function save_report() {
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
 			$messages             = array();
@@ -853,6 +855,7 @@ class MainWP_Live_Reports_Class {
 		return $filtered_reports;
 	}
 
+	// phpcs:ignore -- complex function, deprecated
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) {
 		$output                  = new \stdClass();
 		$output->filtered_header = $report->header;
@@ -1228,6 +1231,7 @@ class MainWP_Live_Reports_Class {
 		);
 	}
 
+	// phpcs:ignore -- complex function
 	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
 
 		if ( null === self::$enabled_ga ) {
@@ -2391,6 +2395,7 @@ PRIMARY KEY  (`id`)  ';
 		return false;
 	}
 
+	// phpcs:ignore -- complex function
 	public function update_report( $report ) {
 		/** @var $wpdb wpdb */
 		global $wpdb;

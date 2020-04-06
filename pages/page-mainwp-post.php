@@ -709,6 +709,7 @@ class MainWP_Post {
 		<?php
 	}
 
+	// phpcs:ignore -- complex function
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
 		MainWP_Cache::init_cache( 'Post' );
 
@@ -834,6 +835,7 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
+	// phpcs:ignore -- complex method
 	public static function posts_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -1354,6 +1356,7 @@ class MainWP_Post {
 		}
 	}
 
+	// phpcs:ignore -- not quite comple method
 	public static function do_meta_boxes( $screen, $context, $object ) {
 		global $wp_meta_boxes;
 		static $already_sorted = false;
@@ -1620,6 +1623,7 @@ class MainWP_Post {
 				self::do_meta_boxes( null, 'advanced', $post );
 
 				do_action( 'add_meta_boxes', $post_type, $post );
+				
 				self::do_meta_boxes( $post_type, 'normal', $post );
 
 				?>
@@ -1636,172 +1640,12 @@ class MainWP_Post {
 						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
 					</div>
 					<div class="ui divider"></div>
-
-		<?php if ( 'bulkpost' === $post_type ) { ?>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
-					<?php
-					$categories = array();
-					if ( $post ) {
-						$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-						$categories = explode( ',', $categories );
-					}
-					if ( ! is_array( $categories ) ) {
-						$categories = array();
-					}
-
-					$uncat     = __( 'Uncategorized', 'mainwp' );
-					$post_only = false;
-					if ( $post ) {
-						$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
-					}
+					<?php 					
+					if ( 'bulkpost' === $post_type ) { 
+						self::render_categories( $post );
+					} 					
+					self::render_post_fields( $post, $post_type );					
 					?>
-						<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
-						<div class="field">
-							<div class="ui checkbox">
-								<input type="checkbox" name="post_only_existing" id="post_only_existing" value="1" <?php echo $post_only ? 'checked' : ''; ?>>
-								<label><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?></label>
-							</div>
-						</div>
-						<div class="field">
-							<select name="post_category[]" id="categorychecklist" multiple="" class="ui fluid dropdown">
-								<option value=""><?php esc_html_e( 'Select categories', 'mainwp' ); ?></option>
-								<?php if ( ! in_array( $uncat, $categories ) ) : ?>
-								<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
-								<?php endif; ?>
-								<?php foreach ( $categories as $cat ) : ?>
-									<?php
-									if ( empty( $cat ) ) {
-										continue;
-									}
-									$cat_name = rawurldecode( $cat );
-									?>
-								<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory"><?php echo esc_html( $cat_name ); ?></option>
-								<?php endforeach; ?>
-							</select>
-							<?php
-							$init_cats = '';
-							foreach ( $categories as $cat ) {
-								$init_cats .= "'" . esc_attr( $cat ) . "',";
-							}
-							$init_cats = rtrim( $init_cats, ',' );
-							?>
-							<script type="text/javascript">
-								jQuery( document ).ready( function () {
-									jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; ?>] );
-								} );
-							</script>
-						</div>
-						<div class="field">
-							<a href="#" id="category-add-toggle" class="ui button fluid mini"><?php esc_html_e( 'Create New Category', 'mainwp' ); ?></a>
-						</div>
-						<div class="field" id="newcategory-field" style="display:none">
-							<input type="text" name="newcategory" id="newcategory" value="">
-						</div>
-						<div class="field" id="mainwp-category-add-submit-field" style="display:none">
-							<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
-						</div>
-					</div>
-					<div class="ui divider"></div>
-		<?php } ?>
-					<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
-						<?php echo '<div class="inside">'; ?>
-					<?php self::post_thumbnail_meta_box( $post ); ?>
-						<?php echo '</div>'; ?>
-					</div>
-					<div class="ui divider"></div>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
-						<div class="field">
-							<div class="ui checkbox">
-								<input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open' ); ?>>
-								<label><?php esc_html_e( 'Allow comments', 'mainwp' ); ?></label>
-							</div>
-							<div class="ui checkbox">
-								<input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked( $post->ping_status, 'open' ); ?> >
-								<label><?php esc_html_e( 'Allow trackbacks and pingbacks', 'mainwp' ); ?></label>
-							</div>
-						</div>
-					</div>
-					<div class="ui divider"></div>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
-						<div class="field">
-							<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
-							<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
-								<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
-								<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
-							</select>
-						</div>
-
-						<?php
-						if ( 'private' === $post->post_status ) {
-							$post->post_password = '';
-							$visibility          = 'private';
-							$visibility_trans    = __( 'Private', 'mainwp' );
-						} elseif ( ! empty( $post->post_password ) ) {
-							$visibility       = 'password';
-							$visibility_trans = __( 'Password protected', 'mainwp' );
-						} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
-							$visibility       = 'public';
-							$visibility_trans = __( 'Public, Sticky', 'mainwp' );
-						} else {
-							$visibility       = 'public';
-							$visibility_trans = __( 'Public', 'mainwp' );
-						}
-						?>
-
-						<div class="grouped fields">
-							<label><?php esc_html_e( 'Visibility', 'mainwp' ); ?></label>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( 'public' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Public', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field" id="sticky-field">
-								<div class="ui checkbox">
-									<input type="checkbox" id="sticky" name="sticky" value="sticky"  <?php checked( is_sticky( $post->ID ) ); ?>  />
-									<label><?php esc_html_e( 'Stick this post to the front page', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Password protected', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field" id="post_password-field" <?php echo ( 'password' === $visibility ) ? '' : 'style="display:none"'; ?>>
-								<label><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
-								<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr( $post->post_password ); ?>" />
-							</div>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( 'private' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Private', 'mainwp' ); ?></label>
-								</div>
-							</div>
-						</div>
-						<div class="field">
-							<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
-							<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
-								<option value="immediately" selected="selected"><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
-								<option value="schedule"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
-							</select>
-						</div>
-
-						<div class="field" id="post_timestamp_value-field" style="display:none">
-							<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
-								<div class="ui input left icon">
-									<i class="calendar icon"></i>
-									<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
-								</div>
-							</div>
-						</div>
-						<div style="display:none" id="timestampdiv">
-							<?php self::touch_time( $post ); ?>
-						</div>
-					</div>
 					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
 					<div class="ui divider"></div>
 					<?php do_action( 'mainwp_edit_posts_before_submit_button' ); ?>
@@ -1826,6 +1670,179 @@ class MainWP_Post {
 		<?php
 		self::render_footer( 'BulkAdd' );
 	}
+	
+	public static function render_categories( $post ) {
+		?>
+		<div class="mainwp-search-options">
+			<div class="ui header"><?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
+		<?php
+		$categories = array();
+		if ( $post ) {
+			$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$categories = explode( ',', $categories );
+		}
+		if ( ! is_array( $categories ) ) {
+			$categories = array();
+		}
+
+		$uncat     = __( 'Uncategorized', 'mainwp' );
+		$post_only = false;
+		if ( $post ) {
+			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
+		}
+		?>
+			<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="post_only_existing" id="post_only_existing" value="1" <?php echo $post_only ? 'checked' : ''; ?>>
+					<label><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?></label>
+				</div>
+			</div>
+			<div class="field">
+				<select name="post_category[]" id="categorychecklist" multiple="" class="ui fluid dropdown">
+					<option value=""><?php esc_html_e( 'Select categories', 'mainwp' ); ?></option>
+					<?php if ( ! in_array( $uncat, $categories ) ) : ?>
+					<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
+					<?php endif; ?>
+					<?php foreach ( $categories as $cat ) : ?>
+						<?php
+						if ( empty( $cat ) ) {
+							continue;
+						}
+						$cat_name = rawurldecode( $cat );
+						?>
+					<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory"><?php echo esc_html( $cat_name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php
+				$init_cats = '';
+				foreach ( $categories as $cat ) {
+					$init_cats .= "'" . esc_attr( $cat ) . "',";
+				}
+				$init_cats = rtrim( $init_cats, ',' );
+				?>
+				<script type="text/javascript">
+					jQuery( document ).ready( function () {
+						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; ?>] );
+					} );
+				</script>
+			</div>
+			<div class="field">
+				<a href="#" id="category-add-toggle" class="ui button fluid mini"><?php esc_html_e( 'Create New Category', 'mainwp' ); ?></a>
+			</div>
+			<div class="field" id="newcategory-field" style="display:none">
+				<input type="text" name="newcategory" id="newcategory" value="">
+			</div>
+			<div class="field" id="mainwp-category-add-submit-field" style="display:none">
+				<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
+			</div>
+		</div>
+		<div class="ui divider"></div>		
+		<?php
+	}
+	
+	public static function render_post_fields( $post, $post_type ) {
+		?>
+		<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
+				<?php echo '<div class="inside">'; ?>
+			<?php self::post_thumbnail_meta_box( $post ); ?>
+				<?php echo '</div>'; ?>
+			</div>
+			<div class="ui divider"></div>
+			<div class="mainwp-search-options">
+				<div class="ui header"><?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
+				<div class="field">
+					<div class="ui checkbox">
+						<input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open' ); ?>>
+						<label><?php esc_html_e( 'Allow comments', 'mainwp' ); ?></label>
+					</div>
+					<div class="ui checkbox">
+						<input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked( $post->ping_status, 'open' ); ?> >
+						<label><?php esc_html_e( 'Allow trackbacks and pingbacks', 'mainwp' ); ?></label>
+					</div>
+				</div>
+			</div>
+			<div class="ui divider"></div>
+			<div class="mainwp-search-options">
+				<div class="ui header"><?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
+				<div class="field">
+					<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
+					<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
+						<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
+						<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
+					</select>
+				</div>
+
+				<?php
+				if ( 'private' === $post->post_status ) {
+					$post->post_password = '';
+					$visibility          = 'private';
+					$visibility_trans    = __( 'Private', 'mainwp' );
+				} elseif ( ! empty( $post->post_password ) ) {
+					$visibility       = 'password';
+					$visibility_trans = __( 'Password protected', 'mainwp' );
+				} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
+					$visibility       = 'public';
+					$visibility_trans = __( 'Public, Sticky', 'mainwp' );
+				} else {
+					$visibility       = 'public';
+					$visibility_trans = __( 'Public', 'mainwp' );
+				}
+				?>
+
+				<div class="grouped fields">
+					<label><?php esc_html_e( 'Visibility', 'mainwp' ); ?></label>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( 'public' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Public', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field" id="sticky-field">
+						<div class="ui checkbox">
+							<input type="checkbox" id="sticky" name="sticky" value="sticky"  <?php checked( is_sticky( $post->ID ) ); ?>  />
+							<label><?php esc_html_e( 'Stick this post to the front page', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Password protected', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field" id="post_password-field" <?php echo ( 'password' === $visibility ) ? '' : 'style="display:none"'; ?>>
+						<label><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
+						<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr( $post->post_password ); ?>" />
+					</div>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( 'private' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Private', 'mainwp' ); ?></label>
+						</div>
+					</div>
+				</div>
+				<div class="field">
+					<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
+					<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
+						<option value="immediately" selected="selected"><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
+						<option value="schedule"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
+					</select>
+				</div>
+
+				<div class="field" id="post_timestamp_value-field" style="display:none">
+					<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
+						<div class="ui input left icon">
+							<i class="calendar icon"></i>
+							<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
+						</div>
+					</div>
+				</div>
+				<div style="display:none" id="timestampdiv">
+					<?php self::touch_time( $post ); ?>
+				</div>
+			</div>
+			<?php
+	}	
 
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
@@ -1923,6 +1940,7 @@ class MainWP_Post {
 		die();
 	}
 
+	// phpcs:ignore -- complex method
 	public static function posting() {
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
@@ -2205,6 +2223,7 @@ class MainWP_Post {
 		}
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function get_terms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
 		$output         = new \stdClass();
 		$output->errors = array();
@@ -2361,6 +2380,7 @@ class MainWP_Post {
 		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
 	}
 
+	// phpcs:ignore -- complex method
 	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) {
 		global $current_user;
 

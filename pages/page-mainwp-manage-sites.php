@@ -1195,6 +1195,7 @@ class MainWP_Manage_Sites {
 		);
 	}
 
+	// phpcs:ignore -- complex method
 	public static function backup( $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp,
 								$excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false,
 								$pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false,
@@ -1392,6 +1393,7 @@ class MainWP_Manage_Sites {
 	}
 
 	// add individual meta boxes.
+	// phpcs:ignore -- not quite complex method
 	public static function on_load_page_dashboard() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -1607,6 +1609,7 @@ class MainWP_Manage_Sites {
 		self::render_footer( '' );
 	}
 
+	// phpcs:ignore -- complex method
 	public static function render_manage_sites() {
 		global $current_user;
 

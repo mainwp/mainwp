@@ -3735,59 +3735,58 @@ mainwp_import_users_next = function () {
 
 mainwp_import_users_valid_data = function( decoded_data ) {	
 	
-	var errors = [];
-	var vd_data = {};
+	var errors = []; // array.
+	var val_data = {}; // object.
 	
-	vd_data.user_login = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
-	vd_data.email = decoded_data.email == undefined ? '' : decoded_data.email;
-	vd_data.first_name = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
-	vd_data.last_name = decoded_data.last_name == undefined ? '' : decoded_data.last_name ;
-	vd_data.url = decoded_data.url == undefined ? '' : decoded_data.url;
-	vd_data.pass1 = decoded_data.pass1 == undefined ? '' : decoded_data.pass1;
-	vd_data.send_password = decoded_data.send_password == undefined ? '' : decoded_data.send_password;
-	vd_data.role = decoded_data.role == undefined ? '' : decoded_data.role;
-	vd_data.select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
-	vd_data.select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
-	vd_data.select_by = '';
+	val_data.user_login = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
+	val_data.email = decoded_data.email == undefined ? '' : decoded_data.email;
+	val_data.first_name = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
+	val_data.last_name = decoded_data.last_name == undefined ? '' : decoded_data.last_name ;
+	val_data.url = decoded_data.url == undefined ? '' : decoded_data.url;
+	val_data.pass1 = decoded_data.pass1 == undefined ? '' : decoded_data.pass1;
+	val_data.send_password = decoded_data.send_password == undefined ? '' : decoded_data.send_password;
+	val_data.role = decoded_data.role == undefined ? '' : decoded_data.role;
+	val_data.select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
+	val_data.select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
+	val_data.select_by = '';
 	
-	if ( vd_data.user_login == '' ) {
+	if ( val_data.user_login == '' ) {
 		errors.push( __( 'Please enter a username.' ) );
 	}
 
-	if ( vd_data.email == '' ) {
+	if ( val_data.email == '' ) {
 		errors.push( __( 'Please enter an email.' ) );
 	}
 
-	if ( vd_data.pass1 == '' ) {
+	if ( val_data.pass1 == '' ) {
 		errors.push( __( 'Please enter a password.' ) );
 	}
 
 	var allowed_roles = [ 'subscriber', 'administrator', 'editor', 'author', 'contributor' ];
-	if ( jQuery.inArray( vd_data.role, allowed_roles ) == -1 ) {
+	if ( jQuery.inArray( val_data.role, allowed_roles ) == -1 ) {
 		errors.push( __( 'Please select a data role.' ) );
 	}
 
-	if ( vd_data.select_sites != '' ) {
-		var selected_sites = vd_data.select_sites.split( ';' );
+	if ( val_data.select_sites != '' ) {
+		var selected_sites = val_data.select_sites.split( ';' );
 		if ( selected_sites.length == 0 ) {
 			errors.push( __( 'Please select websites or groups to add a user.' ) );
 		} else {
-			vd_data.select_sites = selected_sites;
-			vd_data.select_by = 'site';
+			val_data.select_sites = selected_sites;
+			val_data.select_by = 'site';
 		}
 	} else {
-		var selected_groups = vd_data.select_groups.split( ';' );
+		var selected_groups = val_data.select_groups.split( ';' );
 		if ( selected_groups.length == 0 ) {
 			errors.push( __( 'Please select websites or groups to add a user.' ) );
 		} else {
-			vd_data.select_groups = selected_groups;
-			vd_data.select_by = 'group';
+			val_data.select_groups = selected_groups;
+			val_data.select_by = 'group';
 		}
-	}
-	
+	}	
 	return { 
 		errors: errors, 
-		data: Object.assign( {}, vd_data )  // convert array to object. 
+		data: val_data
 	};
 	
 };

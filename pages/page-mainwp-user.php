@@ -774,8 +774,8 @@ class MainWP_User {
 			return;
 		}
 	}
-	
-	public static function render_cache_not_found(){
+
+	public static function render_cache_not_found() {
 		ob_start();
 		?>
 			<tr><td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted users.', 'mainwp' ); ?></td></tr>
@@ -921,8 +921,8 @@ class MainWP_User {
 			}
 
 			if ( ! empty( $pass ) ) {
-				$extra['pass1']                 = $pass;
-				$extra['pass2']					= $pass;
+				$extra['pass1'] = $pass;
+				$extra['pass2'] = $pass;
 			}
 		}
 
@@ -1287,12 +1287,12 @@ class MainWP_User {
 			}
 
 			self::render_twitter_notice();
-			self::render_bulk_add_modal( $dbwebsites, $output );			
+			self::render_bulk_add_modal( $dbwebsites, $output );
 		} else {
 			echo wp_json_encode( array( $errorFields, $errors ) );
 		}
 	}
-	
+
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
@@ -1310,7 +1310,7 @@ class MainWP_User {
 			}
 		}
 	}
-	
+
 	public static function render_bulk_add_modal( $dbwebsites, $output ) {
 		?>
 		<div id="mainwp-creating-new-user-modal" class="ui modal">

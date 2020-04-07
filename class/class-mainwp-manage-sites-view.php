@@ -442,7 +442,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
-		$mwpDir = MainWP_Utility::getMainWPDir();
+		$mwpDir = MainWP_Utility::get_mainwp_dir();
 		$mwpDir = $mwpDir[0];
 
 		$output = '';

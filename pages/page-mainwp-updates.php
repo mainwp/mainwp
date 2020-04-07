@@ -441,12 +441,12 @@ class MainWP_Updates {
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		$mainwp_show_language_updates     = get_option( 'mainwp_show_language_updates', 1 );
-		$user_can_update_translation      = mainwp_current_user_can( 'dashboard', 'update_translations' );
+		$mainwp_show_language_updates           = get_option( 'mainwp_show_language_updates', 1 );
+		$user_can_update_translation            = mainwp_current_user_can( 'dashboard', 'update_translations' );
 		self::$user_can_ignore_unignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
-		$user_can_update_wordpress        = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-		$user_can_update_themes           = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_update_plugins          = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+		$user_can_update_wordpress              = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+		$user_can_update_themes                 = mainwp_current_user_can( 'dashboard', 'update_themes' );
+		$user_can_update_plugins                = mainwp_current_user_can( 'dashboard', 'update_plugins' );
 
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
@@ -519,11 +519,13 @@ class MainWP_Updates {
 			} 
 			?>
 			<!-- WordPress Updates -->
-			<?php if ( 'wordpress-updates' === $current_tab ) : 				
+			<?php
+			if ( 'wordpress-updates' === $current_tab ) :
 				?>
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
-					<?php if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :					
-						self::render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $site_offset);				
+					<?php
+					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+						self::render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
 					else :					
 						MainWP_DB::data_seek( $websites, 0 );
 						self::render_wpcore_updates_per_site( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update );

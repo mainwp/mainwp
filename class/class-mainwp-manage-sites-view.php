@@ -117,6 +117,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_header( $shownPage = '', &$subPages = '' ) {
 
 		if ( '' === $shownPage ) {

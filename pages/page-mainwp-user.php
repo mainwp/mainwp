@@ -585,6 +585,7 @@ class MainWP_User {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) {
 		MainWP_Cache::init_cache( 'Users' );
 
@@ -769,16 +770,19 @@ class MainWP_User {
 		// Sort if required.
 
 		if ( 0 == $output->users ) {
-			ob_start();
-			?>
-				<tr><td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted users.', 'mainwp' ); ?></td></tr>
-			<?php
-			$newOutput = ob_get_clean();
-			echo $newOutput;
-			MainWP_Cache::add_body( 'Users', $newOutput );
-
+			self::render_cache_not_found();
 			return;
 		}
+	}
+	
+	public static function render_cache_not_found(){
+		ob_start();
+		?>
+			<tr><td colspan="999"><?php esc_html_e( 'Please use the search options to find wanted users.', 'mainwp' ); ?></td></tr>
+		<?php
+		$newOutput = ob_get_clean();
+		echo $newOutput;
+		MainWP_Cache::add_body( 'Users', $newOutput );
 	}
 
 	private static function get_role( $role ) {
@@ -880,6 +884,7 @@ class MainWP_User {
 		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function action( $pAction, $extra = '' ) {
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
@@ -917,7 +922,7 @@ class MainWP_User {
 
 			if ( ! empty( $pass ) ) {
 				$extra['pass1']                 = $pass;
-								$extra['pass2'] = $pass;
+				$extra['pass2']					= $pass;
 			}
 		}
 
@@ -1140,6 +1145,7 @@ class MainWP_User {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function do_buk_add() {
 		$errors      = array();
 		$errorFields = array();
@@ -1280,25 +1286,34 @@ class MainWP_User {
 				MainWP_Twitter::update_twitter_info( 'create_new_user', $countSites, $seconds, $countRealItems, $startTime, 1 );
 			}
 
-			if ( MainWP_Twitter::enabled_twitter_messages() ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
-				if ( is_array( $twitters ) ) {
-					foreach ( $twitters as $timeid => $twit_mess ) {
-						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( 'create_new_user', $timeid );
-							?>
-							<div class="mainwp-tips ui info message twitter" style="margin:0">
-								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-							</div>
-							<?php
-						}
+			self::render_twitter_notice();
+			self::render_bulk_add_modal( $dbwebsites, $output );			
+		} else {
+			echo wp_json_encode( array( $errorFields, $errors ) );
+		}
+	}
+	
+	public static function render_twitter_notice() {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
+			$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
+			if ( is_array( $twitters ) ) {
+				foreach ( $twitters as $timeid => $twit_mess ) {
+					if ( ! empty( $twit_mess ) ) {
+						$sendText = MainWP_Twitter::get_twit_to_send( 'create_new_user', $timeid );
+						?>
+						<div class="mainwp-tips ui info message twitter" style="margin:0">
+							<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="create_new_user" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
+						</div>
+						<?php
 					}
 				}
 			}
-
-			?>
-
-			<div id="mainwp-creating-new-user-modal" class="ui modal">
+		}
+	}
+	
+	public static function render_bulk_add_modal( $dbwebsites, $output ) {
+		?>
+		<div id="mainwp-creating-new-user-modal" class="ui modal">
 				<div class="header"><?php esc_html_e( 'New User', 'mainwp' ); ?></div>
 				<div class="content">
 					<div class="ui middle aligned divided selection list">
@@ -1314,10 +1329,7 @@ class MainWP_User {
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</div>
-			<?php
-		} else {
-			echo wp_json_encode( array( $errorFields, $errors ) );
-		}
+		<?php
 	}
 
 	public static function render_bulk_upload() {
@@ -1431,6 +1443,7 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
+	// phpcs:ignore -- not quire complex method
 	public static function do_import() {
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();

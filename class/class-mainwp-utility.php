@@ -176,6 +176,7 @@ class MainWP_Utility {
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
+	// phpcs:ignore -- complex method
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';

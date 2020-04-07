@@ -7014,7 +7014,14 @@ mainwp_managesites_doaction = function ( action ) {
     return false;
   }
 
-  jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
+  mainwp_managesites_doaction_open( action );
+  
+  return false;
+  
+}
+
+mainwp_managesites_doaction_open = function( action ) {
+	jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
     var row = jQuery( this ).closest( 'tr' );
     switch ( action ) {
       case 'open_wpadmin':
@@ -7027,8 +7034,6 @@ mainwp_managesites_doaction = function ( action ) {
         break;
       }
   } );
-  return false;
-  
 }
 
 mainwp_managesites_doaction_process = function( action ) {

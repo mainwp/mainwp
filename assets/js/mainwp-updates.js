@@ -1798,7 +1798,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
         var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates , sitesList.join( '<br />' ) );
 
-        mainwp_confirm(confirmMsg, _callback, false, 2 );
+        mainwp_confirm( confirmMsg, _callback, false, 2 );
         return false;
     } else {
         return false;

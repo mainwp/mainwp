@@ -506,7 +506,7 @@ class MainWP_Updates {
 		self::render_header( 'UpdatesManage' );
 
 		self::render_twitter_notice();
-
+		
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $userExtension );
 
 		?>

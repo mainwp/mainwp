@@ -322,7 +322,7 @@ class MainWP_Server_Information {
 				$extensions       = MainWP_Extensions::load_extensions();
 				$extensions_slugs = array();
 				if ( 0 == count( $extensions ) ) {
-					echo '<tr><td colspan="4">' . esc_html_( 'No installed extensions', 'mainwp' ) . '</td></tr>';
+					echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';
 				}
 				foreach ( $extensions as $extension ) {
 					$extensions_slugs[] = $extension['slug'];
@@ -668,7 +668,7 @@ class MainWP_Server_Information {
 						<td><?php echo $cron_job; ?></td>
 						<td><?php echo $hook[1]; ?></td>
 						<td><?php echo $hook[2]; ?></td>
-						<td><?php echo ( false === get_option( $hook[0] ) || 0 == get_option( $hook[0] ) ) ? esc_html_( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
+						<td><?php echo ( false === get_option( $hook[0] ) || 0 == get_option( $hook[0] ) ) ? esc_html__( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
 						<td><?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) ); ?></td>
 					</tr>
 					<?php
@@ -1239,8 +1239,8 @@ class MainWP_Server_Information {
 	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
-			echo '<tr><td colspan="2">' . esc_html_( 'Error logging disabled.', 'mainwp' );
-			echo '<br/>' . sprintf( esc_html_( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' );
+			echo '<tr><td colspan="2">' . esc_html__( 'Error logging disabled.', 'mainwp' );
+			echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' );
 			echo '</td></tr>';
 		}
 
@@ -1261,7 +1261,7 @@ class MainWP_Server_Information {
 
 		if ( empty( $lines ) ) {
 
-			echo '<tr><td colspan="2">' . esc_html_( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
+			echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
 
 			return;
 		}
@@ -1490,6 +1490,7 @@ class MainWP_Server_Information {
 		}
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function mainwp_options() {
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),

@@ -623,77 +623,60 @@ class MainWP_Themes {
 			)
 		);
 
-		ob_start();
-		?>
-		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
-		<div class="ui dropdown" id="mainwp-bulk-actions">
-			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
-			<div class="menu">
-				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
-					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
-						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
-				<?php endif; ?>
-			</div>
-		</div>
-		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
-		<?php
-		$bulkActions = ob_get_clean();
-		ob_start();
-
+		$bulkActions = self::render_bulk_actions( $status );	
+		
 		if ( 0 == count( $output->themes ) ) {
+			ob_start();
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
+			
+		} else {
+			$sites             = array();
+			$siteThemes        = array();
+			$themes            = array();
+			$themesVersion     = array();
+			$themesRealVersion = array();
+			$themesSlug        = array();
 
-			$result = array(
-				'result'       => $newOutput,
-				'bulk_actions' => $bulkActions,
-			);
-			MainWP_Cache::add_result( 'Themes', $result );
+			foreach ( $output->themes as $theme ) {
 
-			return $result;
-		}
+				$theme['name']       = esc_html( $theme['name'] );
+				$theme['version']    = esc_html( $theme['version'] );
+				$theme['title']      = esc_html( $theme['title'] );
+				$theme['slug']       = esc_html( $theme['slug'] );
+				$theme['websiteurl'] = esc_html( $theme['websiteurl'] );
 
-		$sites             = array();
-		$siteThemes        = array();
-		$themes            = array();
-		$themesVersion     = array();
-		$themesRealVersion = array();
-		$themesSlug        = array();
-
-		foreach ( $output->themes as $theme ) {
-
-			$theme['name']       = esc_html( $theme['name'] );
-			$theme['version']    = esc_html( $theme['version'] );
-			$theme['title']      = esc_html( $theme['title'] );
-			$theme['slug']       = esc_html( $theme['slug'] );
-			$theme['websiteurl'] = esc_html( $theme['websiteurl'] );
-
-			$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
-			$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
-			$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
-			$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = $theme['title'] . ' ' . $theme['version'];
-			$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
-			if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
-				$siteThemes[ $theme['websiteid'] ] = array();
+				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
+				$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
+				$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
+				$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = $theme['title'] . ' ' . $theme['version'];
+				$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
+				if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
+					$siteThemes[ $theme['websiteid'] ] = array();
+				}
+				$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
 			}
-			$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
-		}
-		asort( $themesVersion );
-		?>
+			asort( $themesVersion );
 
+			ob_start();
+			self::render_manage_themes_table( $sites, $siteThemes, $themesVersion );
+			$newOutput = ob_get_clean();
+		}
+
+		$result    = array(
+			'result'       => $newOutput,
+			'bulk_actions' => $bulkActions,
+		);
+
+		MainWP_Cache::add_result( 'Themes', $result );
+		return $result;
+	}
+
+	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
+	?>
+	
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
@@ -754,19 +737,41 @@ class MainWP_Themes {
 				} );
 			jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
-		</script>
-
-			<?php
-			$newOutput = ob_get_clean();
-			$result    = array(
-				'result'       => $newOutput,
-				'bulk_actions' => $bulkActions,
-			);
-
-			MainWP_Cache::add_result( 'Themes', $result );
-			return $result;
+		</script>		
+			
+	<?php
 	}
-
+	
+	public static function render_bulk_actions( $status ) {
+			ob_start();
+		?>
+		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
+		<div class="ui dropdown" id="mainwp-bulk-actions">
+			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
+			<div class="menu">
+				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
+				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
+					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
+						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
+				<?php endif; ?>
+			</div>
+		</div>
+		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
+		<?php
+		$bulkActions = ob_get_clean();
+		return $bulkActions;
+	}
+	
 	/**
 	 * Theme Search Handler.
 	 *
@@ -1226,6 +1231,7 @@ class MainWP_Themes {
 	 *
 	 * @param null $output
 	 */
+	// phpcs:ignore -- not quite complex function
 	public static function render_all_themes_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';

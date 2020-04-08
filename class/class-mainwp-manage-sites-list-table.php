@@ -69,6 +69,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
+	// phpcs:ignore -- not quite complex function
 	public function column_default( $item, $column_name ) {
 
 		$item = apply_filters( 'mainwp-sitestable-item', $item, $item );
@@ -315,6 +316,7 @@ class MainWP_Manage_Sites_List_Table {
 		return ! empty( $this->items );
 	}
 
+	// phpcs:ignore -- complex function
 	public function prepare_items( $optimize = true ) {
 
 		if ( null === $this->userExtension ) {
@@ -488,6 +490,7 @@ class MainWP_Manage_Sites_List_Table {
 		$this->total_items = $totalRecords;
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public function get_available_update_siteids() {
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -869,6 +872,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	// phpcs:ignore -- complex function
 	public function get_datatable_rows() {
 		$all_rows  = array();
 		$info_rows = array();
@@ -1155,6 +1159,7 @@ class MainWP_Manage_Sites_List_Table {
 		echo '</tr>';
 	}
 
+	// phpcs:ignore -- complex function
 	protected function single_row_columns( $website ) {
 
 		$total_updates         = 0;
@@ -1283,8 +1288,8 @@ class MainWP_Manage_Sites_List_Table {
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
 
-		foreach ( $columns as $column_name => $column_display_name ) {
-
+		foreach ( $columns as $column_name => $column_display_name ) {			
+			
 			$classes    = "collapsing center aligned $column_name column-$column_name";
 			$attributes = "class='$classes'";
 
@@ -1354,7 +1359,7 @@ class MainWP_Manage_Sites_List_Table {
 					<?php endif; ?>
 						<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
 				</td>
-			<?php } elseif ( 'phpversion' === $column_name ) { ?>
+		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>
 				<?php
 			} elseif ( 'site_actions' === $column_name ) {
@@ -1390,8 +1395,8 @@ class MainWP_Manage_Sites_List_Table {
 				echo "<td $attributes>";
 				echo $this->column_default( $website, $column_name );
 				echo '</td>';
-			}
+			}	
 		}
 	}
-
+	
 }

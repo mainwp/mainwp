@@ -593,6 +593,7 @@ class MainWP_Page {
 		return ucfirst( $status );
 	}
 
+	// phpcs:ignore -- complex function
 	public static function pages_search_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
@@ -770,6 +771,7 @@ class MainWP_Page {
 		self::render_footer( $what );
 	}
 
+	// phpcs:ignore -- complex function
 	public static function posting() {
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
@@ -954,21 +956,7 @@ class MainWP_Page {
 							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
-						if ( MainWP_Twitter::enabled_twitter_messages() ) {
-							$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
-							if ( is_array( $twitters ) ) {
-								foreach ( $twitters as $timeid => $twit_mess ) {
-									if ( ! empty( $twit_mess ) ) {
-										$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
-										?>
-										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-										</div>
-										<?php
-									}
-								}
-							}
-						}
+						self::render_twitter_notice();						
 					}
 				} else {
 					?>
@@ -1002,6 +990,24 @@ class MainWP_Page {
 		<?php
 	}
 
+	public static function render_twitter_notice(){
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
+			$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
+			if ( is_array( $twitters ) ) {
+				foreach ( $twitters as $timeid => $twit_mess ) {
+					if ( ! empty( $twit_mess ) ) {
+						$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
+						?>
+						<div class="mainwp-tips ui info message twitter" style="margin:0">
+							<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
+						</div>
+						<?php
+					}
+				}
+			}
+		}
+	}
+		
 	/**
 	 * Hook the section help content to the Help Sidebar element
 	 */

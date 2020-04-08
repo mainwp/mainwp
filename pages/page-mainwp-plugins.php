@@ -415,12 +415,12 @@ class MainWP_Plugins {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="
-					<?php
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value=
+					"<?php
 					if ( null != $cachedSearch ) {
 						echo esc_attr( $cachedSearch['keyword'] ); }
-					?>
-					"/>
+					?>"
+					/>
 				</div>
 			</div>
 		</div>
@@ -443,6 +443,7 @@ class MainWP_Plugins {
 	}
 
 	public static function render_table( $keyword, $status, $groups, $sites ) {
+		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
 			$output          = new \stdClass();
@@ -1220,8 +1221,12 @@ class MainWP_Plugins {
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
 		if ( ! is_array( $trustedPluginsNotes ) ) {
 			$trustedPluginsNotes = array();
-		}
-		?>
+		}		
+		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );		
+	}
+
+	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
+	?>
 		<table class="ui single line table" id="mainwp-all-active-plugins-table">
 			<thead>
 				<tr>
@@ -1258,9 +1263,9 @@ class MainWP_Plugins {
 						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
 						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
-						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html_( 'Active', 'mainwp' ) : esc_html_( 'Inactive', 'mainwp' ); ?></td>
-						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html_( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html_( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html_( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
+						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
 						<td class="collapsing center aligned">
 						<?php if ( '' === $esc_note ) : ?>
 							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
@@ -1302,9 +1307,9 @@ class MainWP_Plugins {
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
 		</script>
-		<?php
+	<?php
 	}
-
+	
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();

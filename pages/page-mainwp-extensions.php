@@ -92,6 +92,7 @@ class MainWP_Extensions {
 		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::get_class_name(), 'gen_api_password' ), 10, 3 );
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function init_menu() {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
@@ -1147,6 +1148,7 @@ class MainWP_Extensions {
 	 *
 	 * @return array|bool An array of arrays, the inner-array contains the id/url/name/totalsize of the website. False when something goes wrong.
 	 */
+	// phpcs:ignore -- not quite complex function
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;

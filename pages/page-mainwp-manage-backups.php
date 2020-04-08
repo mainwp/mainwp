@@ -681,7 +681,7 @@ class MainWP_Manage_Backups {
 		$archiveFormat = isset( $task ) ? $task->archiveFormat : 'site';
 		$useGlobal     = ( 'global' == $archiveFormat );
 		$useSite       = ( '' == $archiveFormat || 'site' == $archiveFormat );
-		
+
 		self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite  );
 	}
 
@@ -826,7 +826,7 @@ class MainWP_Manage_Backups {
 			</div>
 		<?php
 	}
-	
+
 	public static function update_backup() {
 		global $current_user;
 

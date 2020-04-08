@@ -416,10 +416,12 @@ class MainWP_Plugins {
 			<div class="field">
 				<div class="ui input fluid">
 					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value=
-					"<?php
+					"
+					<?php
 					if ( null != $cachedSearch ) {
 						echo esc_attr( $cachedSearch['keyword'] ); }
-					?>"
+					?>
+					"
 					/>
 				</div>
 			</div>
@@ -1221,12 +1223,12 @@ class MainWP_Plugins {
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
 		if ( ! is_array( $trustedPluginsNotes ) ) {
 			$trustedPluginsNotes = array();
-		}		
-		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );		
+		}
+		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
 	}
 
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
-	?>
+		?>
 		<table class="ui single line table" id="mainwp-all-active-plugins-table">
 			<thead>
 				<tr>
@@ -1307,9 +1309,9 @@ class MainWP_Plugins {
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
 		</script>
-	<?php
+		<?php
 	}
-	
+
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();

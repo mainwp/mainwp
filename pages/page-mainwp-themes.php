@@ -623,15 +623,15 @@ class MainWP_Themes {
 			)
 		);
 
-		$bulkActions = self::render_bulk_actions( $status );	
-		
+		$bulkActions = self::render_bulk_actions( $status );
+
 		if ( 0 == count( $output->themes ) ) {
 			ob_start();
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
-			
+
 		} else {
 			$sites             = array();
 			$siteThemes        = array();
@@ -665,7 +665,7 @@ class MainWP_Themes {
 			$newOutput = ob_get_clean();
 		}
 
-		$result    = array(
+		$result = array(
 			'result'       => $newOutput,
 			'bulk_actions' => $bulkActions,
 		);
@@ -675,7 +675,7 @@ class MainWP_Themes {
 	}
 
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
-	?>
+		?>
 	
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
@@ -739,9 +739,9 @@ class MainWP_Themes {
 			} );
 		</script>		
 			
-	<?php
+		<?php
 	}
-	
+
 	public static function render_bulk_actions( $status ) {
 			ob_start();
 		?>
@@ -771,7 +771,7 @@ class MainWP_Themes {
 		$bulkActions = ob_get_clean();
 		return $bulkActions;
 	}
-	
+
 	/**
 	 * Theme Search Handler.
 	 *

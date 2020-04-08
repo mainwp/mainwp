@@ -1344,14 +1344,15 @@ class MainWP_Plugins {
 			</h3>
 			<?php
 			self::render_sites_ignored( $cnt, $websites );
-			?>			
+			?>
+						
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
 	}
 
 	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
-	?>
+		?>
 		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table stackable">
 				<thead>
 					<tr>
@@ -1395,9 +1396,9 @@ class MainWP_Plugins {
 			</table>	
 		<?php
 	}
-	
+
 	public static function render_sites_ignored( $cnt, $websites ) {
-	?>
+		?>
 	<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1462,9 +1463,9 @@ class MainWP_Plugins {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>		
-	<?php
+		<?php
 	}
-	
+
 	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();
@@ -1488,20 +1489,21 @@ class MainWP_Plugins {
 			</h3>
 			<?php
 			self::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins );
-			?>			
+			?>
+						
 			<div class="ui hidden divider"></div>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<?php 
-			self::render_sites_ignored_abandoned( $cnt, $websites );			
+			<?php
+			self::render_sites_ignored_abandoned( $cnt, $websites );
 			?>
 		</div>
 		<?php
 		self::render_footer( 'IgnoreAbandoned' );
 	}
-	
+
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
 		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">
@@ -1547,7 +1549,7 @@ class MainWP_Plugins {
 		</table>	
 		<?php
 	}
-	
+
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
 		<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table stackable">

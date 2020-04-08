@@ -1555,6 +1555,8 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
     return false;
 };
 
+
+// phpcs:ignore -- complex function
 updatesoverview_global_upgrade_all = function ( which )
 {
 

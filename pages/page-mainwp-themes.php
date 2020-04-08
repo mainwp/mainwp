@@ -434,12 +434,7 @@ class MainWP_Themes {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="
-																		<?php
-																		if ( null != $cachedSearch ) {
-																			echo esc_attr( $cachedSearch['keyword'] ); }
-																		?>
-					"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ""; ?>"/>
 				</div>
 			</div>
 		</div>
@@ -1350,8 +1345,11 @@ class MainWP_Themes {
 		if ( ! is_array( $trustedThemesNotes ) ) {
 			$trustedThemesNotes = array();
 		}
-
-		?>
+		self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );		
+	}
+	
+	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
+	?>
 		<table class="ui single line table" id="mainwp-all-active-themes-table">
 			<thead>
 				<tr>
@@ -1432,10 +1430,10 @@ class MainWP_Themes {
 				} );
 			} );
 		</script>
-		<?php
+	<?php
 	}
 
-	/** Render the Themes Ignored Updates Tab. */
+		/** Render the Themes Ignored Updates Tab. */
 	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
@@ -1465,7 +1463,25 @@ class MainWP_Themes {
 				<?php esc_html_e( 'Globally Ignored Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
+			<?php
+			self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes );
+			?>			
+		<div class="ui hidden divider"></div>
+		<h3 class="ui header">
+			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
+			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
+		</h3>
+		<?php
+			self::render_sites_ignored( $cnt, $websites );
+			?>		
+		</div>
+		<?php
+		self::render_footer( 'Ignore' );
+	}
+
+	public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
+	?>
+		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -1503,12 +1519,12 @@ class MainWP_Themes {
 					</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>
-		<div class="ui hidden divider"></div>
-		<h3 class="ui header">
-			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
-		</h3>
+		</table>	
+	<?php
+	}
+	
+	public static function render_sites_ignored( $cnt, $websites ){
+	?>
 		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1573,11 +1589,9 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
-		</div>
-		<?php
-		self::render_footer( 'Ignore' );
+	<?php
 	}
-
+	
 	/** Render the Themes Ignored/Abandoned Tab */
 	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1600,7 +1614,25 @@ class MainWP_Themes {
 				<?php esc_html_e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Themes Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
+			<?php
+			self::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes );
+			?>
+		<div class="ui hidden divider"></div>
+		<h3 class="ui header">
+			<?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
+			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
+		</h3>
+			<?php
+			self::render_sites_ignored_abandoned( $cnt, $websites );
+			?>		
+		</div>
+		<?php
+		self::render_footer( 'IgnoreAbandoned' );
+	}
+	
+	public static function render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ) {
+	?>
+		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -1639,75 +1671,74 @@ class MainWP_Themes {
 					<?php endif; ?>
 				<?php endif; ?>
 		</table>
-		<div class="ui hidden divider"></div>
-		<h3 class="ui header">
-			<?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
-		</h3>
-		<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody id="ignored-abandoned-themes-list">
-				<?php if ( 0 < $cnt ) : ?>
-					<?php
-					MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
-						if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
-							continue;
-						}
-
-						$first = true;
-						foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
-							?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
-							<?php if ( $first ) : ?>
-							<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-								<?php $first = false; ?>
-							<?php else : ?>
-							<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-							<?php endif; ?>
-							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
-							<td><?php echo esc_html( $ignoredTheme ); ?></td>
-							<td class="right aligned">
-							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
-							<?php endif; ?>
-							</td>
-						</tr>
-							<?php
-						}
-					}
-					MainWP_DB::free_result( $websites );
-					?>
-				<?php else : ?>
-				<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
-				<?php endif; ?>
-				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<?php if ( 0 < $cnt ) : ?>
-					<tfoot class="full-width">
-						<tr>
-							<th colspan="999">
-								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
-									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
-								</a>
-							</th>
-						</tr>
-					</tfoot>
-					<?php endif; ?>
-				<?php endif; ?>
-			</table>
-		</div>
-		<?php
-		self::render_footer( 'IgnoreAbandoned' );
+	<?php		
 	}
+	
+	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
+	?>
+	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
+		<thead>
+			<tr>
+				<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+				<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+				<th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody id="ignored-abandoned-themes-list">
+			<?php if ( 0 < $cnt ) : ?>
+				<?php
+				MainWP_DB::data_seek( $websites, 0 );
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+					$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+					if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
+						continue;
+					}
+
+					$first = true;
+					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
+						?>
+					<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
+						<?php if ( $first ) : ?>
+						<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+							<?php $first = false; ?>
+						<?php else : ?>
+						<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+						<?php endif; ?>
+						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
+						<td><?php echo esc_html( $ignoredTheme ); ?></td>
+						<td class="right aligned">
+						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+						<?php endif; ?>
+						</td>
+					</tr>
+						<?php
+					}
+				}
+				MainWP_DB::free_result( $websites );
+				?>
+			<?php else : ?>
+			<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
+			<?php endif; ?>
+			</tbody>
+			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( 0 < $cnt ) : ?>
+				<tfoot class="full-width">
+					<tr>
+						<th colspan="999">
+							<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
+								<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
+							</a>
+						</th>
+					</tr>
+				</tfoot>
+				<?php endif; ?>
+			<?php endif; ?>
+		</table>	
+	<?php
+	}
+		
 
 	/** This is the Bulk Method to Trust A Theme. */
 	public static function trust_post() {

@@ -434,7 +434,7 @@ class MainWP_Themes {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ""; ?>"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
 		</div>
@@ -1345,11 +1345,11 @@ class MainWP_Themes {
 		if ( ! is_array( $trustedThemesNotes ) ) {
 			$trustedThemesNotes = array();
 		}
-		self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );		
+		self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );
 	}
-	
+
 	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
-	?>
+		?>
 		<table class="ui single line table" id="mainwp-all-active-themes-table">
 			<thead>
 				<tr>
@@ -1430,7 +1430,7 @@ class MainWP_Themes {
 				} );
 			} );
 		</script>
-	<?php
+		<?php
 	}
 
 		/** Render the Themes Ignored Updates Tab. */
@@ -1465,7 +1465,8 @@ class MainWP_Themes {
 			</h3>
 			<?php
 			self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes );
-			?>			
+			?>
+						
 		<div class="ui hidden divider"></div>
 		<h3 class="ui header">
 			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
@@ -1473,14 +1474,15 @@ class MainWP_Themes {
 		</h3>
 		<?php
 			self::render_sites_ignored( $cnt, $websites );
-			?>		
+		?>
+					
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
 	}
 
 	public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
-	?>
+		?>
 		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
 				<thead>
 					<tr>
@@ -1520,11 +1522,11 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>	
-	<?php
+		<?php
 	}
-	
-	public static function render_sites_ignored( $cnt, $websites ){
-	?>
+
+	public static function render_sites_ignored( $cnt, $websites ) {
+		?>
 		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1589,9 +1591,9 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
-	<?php
+		<?php
 	}
-	
+
 	/** Render the Themes Ignored/Abandoned Tab */
 	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1624,14 +1626,15 @@ class MainWP_Themes {
 		</h3>
 			<?php
 			self::render_sites_ignored_abandoned( $cnt, $websites );
-			?>		
+			?>
+					
 		</div>
 		<?php
 		self::render_footer( 'IgnoreAbandoned' );
 	}
-	
+
 	public static function render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ) {
-	?>
+		?>
 		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1671,11 +1674,11 @@ class MainWP_Themes {
 					<?php endif; ?>
 				<?php endif; ?>
 		</table>
-	<?php		
+		<?php
 	}
-	
+
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
-	?>
+		?>
 	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
 		<thead>
 			<tr>
@@ -1736,9 +1739,9 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>	
-	<?php
+		<?php
 	}
-		
+
 
 	/** This is the Bulk Method to Trust A Theme. */
 	public static function trust_post() {

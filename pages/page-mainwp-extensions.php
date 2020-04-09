@@ -660,6 +660,7 @@ class MainWP_Extensions {
 	}
 
 
+	// phpcs:ignore -- complex method
 	public static function get_purchased_exts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );

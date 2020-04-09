@@ -465,6 +465,7 @@ class MainWP_Themes {
 	 *
 	 * @return mixed $result Errors|HTML
 	 */
+	// phpcs:ignore -- complex function
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		MainWP_Cache::init_cache( 'Themes' );
 

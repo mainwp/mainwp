@@ -31,18 +31,17 @@ class MainWP_Recent_Posts {
 	 * Fire off render_sites().
 	 */
 	public static function render() {
-		self::render_sites( false, false );
+		self::render_sites();
 	}
 
 	/**
 	 * Method render_sites()
 	 *
-	 * Build the resent posts list.
+	 * Build the recent posts list.
 	 *
-	 * @param mixed   $renew
-	 * @param boolean $pExit true|false If $pEixt is true then exit.
+	 * @param	 
 	 */
-	public static function render_sites( $renew, $pExit = true ) {
+	public static function render_sites() {
 
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30.
 
@@ -78,20 +77,44 @@ class MainWP_Recent_Posts {
 			}
 			MainWP_DB::free_result( $websites );
 		}
-
-		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
-		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
-		$recent_posts_draft     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
-		$recent_posts_draft     = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
-		$recent_posts_pending   = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
-		$recent_posts_pending   = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
-		$recent_posts_trash     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
-		$recent_posts_trash     = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
-		$recent_posts_future    = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
-		$recent_posts_future    = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
-
+	
+		self::render_top_grid();		
 		?>
+		<!-- Published List -->
+		<?php self::render_published_posts( $allPosts, $recent_number ); ?>		
+		<!-- END Published List -->
 
+		<!-- Draft List -->		
+		<?php self::render_draft_posts( $allPosts, $recent_number ); ?>
+		<!-- END Draft List -->
+
+		<!-- Pending List -->		
+		<?php self::render_pending_posts( $allPosts, $recent_number ); ?>
+		<!-- END Pending List -->
+
+		<!-- Future List -->		
+		<?php self::render_future_posts( $allPosts, $recent_number ); ?>			
+		<!-- END Future List -->
+
+		<!-- Trash List -->		
+		<?php self::render_trash_posts( $allPosts, $recent_number ); ?>			
+		<!-- END Trash List -->
+
+		<div class="ui hidden divider"></div>
+
+		<div class="ui two column grid">
+			<div class="column">
+				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
+			</div>
+			<div class="column right aligned">
+				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
+			</div>
+		</div>
+		<?php		
+	}
+
+	public static function render_top_grid() {
+	?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -113,23 +136,28 @@ class MainWP_Recent_Posts {
 				</div>
 			</div>
 		</div>
-		<div class="ui section hidden divider"></div>
-
-		<!-- Published List -->
-
-			<div class="recent_posts_published ui tab active" data-tab="published">
-				<?php
-				if ( 0 == count( $recent_posts_published ) ) {
-					?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-					<?php
-				}
+		<div class="ui section hidden divider"></div>				
+		<?php
+	}
+	
+	public static function render_published_posts( $allPosts, $recent_number ) {
+		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
+		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
+		
+	?>		
+		<div class="recent_posts_published ui tab active" data-tab="published">
+			<?php
+			if ( 0 == count( $recent_posts_published ) ) {
 				?>
+			<h2 class="ui icon header">
+				<i class="folder open outline icon"></i>
+				<div class="content">
+					<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
+				</div>
+			</h2>
+				<?php
+			}
+			?>
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_posts_published );
@@ -176,24 +204,27 @@ class MainWP_Recent_Posts {
 				<?php } ?>
 			</div>
 		</div>
-
-		<!-- END Published List -->
-
-		<!-- Draft List -->
-
-			<div class="recent_posts_draft ui tab" data-tab="draft">
-				<?php
-				if ( 0 == count( $recent_posts_draft ) ) {
-					?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No draft posts found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-					<?php
-				}
+		<?php
+	}
+	
+	public static function render_draft_posts( $allPosts, $recent_number ) {
+		
+		$recent_posts_draft     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
+		$recent_posts_draft     = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
+	?>
+	<div class="recent_posts_draft ui tab" data-tab="draft">
+			<?php
+			if ( 0 == count( $recent_posts_draft ) ) {
 				?>
+			<h2 class="ui icon header">
+				<i class="folder open outline icon"></i>
+				<div class="content">
+					<?php esc_html_e( 'No draft posts found!', 'mainwp' ); ?>
+				</div>
+			</h2>
+				<?php
+			}
+			?>
 			<div class="ui middle aligned divided selection list">
 			<?php
 			$_count = count( $recent_posts_draft );
@@ -236,13 +267,16 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
-		</div>
-
-		<!-- END Draft List -->
-
-		<!-- Pending List -->
-
-			<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
+		</div>	
+	<?php
+	}
+	
+	public static function render_pending_posts( $allPosts, $recent_number ) {
+		$recent_posts_pending   = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
+		$recent_posts_pending   = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
+		
+	?>
+		<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
 				<?php
 				if ( 0 == count( $recent_posts_pending ) ) {
 					?>
@@ -298,12 +332,16 @@ class MainWP_Recent_Posts {
 				<?php } ?>
 			</div>
 		</div>
-
-		<!-- END Pending List -->
-
-		<!-- Future List -->
-
-			<div class="recent_posts_future ui tab" data-tab="future">
+		<?php
+	}
+	
+	public static function render_future_posts( $allPosts, $recent_number ) {
+	
+		$recent_posts_future    = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
+		$recent_posts_future    = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
+		
+	?>
+		<div class="recent_posts_future ui tab" data-tab="future">
 				<?php
 				if ( 0 == count( $recent_posts_future ) ) {
 					?>
@@ -360,12 +398,15 @@ class MainWP_Recent_Posts {
 				<?php } ?>
 			</div>
 		</div>
-
-		<!-- END Future List -->
-
-		<!-- Trash List -->
-
-			<div class="recent_posts_trash ui tab" data-tab="trash">
+		<?php
+	}
+	
+	public static function render_trash_posts( $allPosts, $recent_number ) {
+		$recent_posts_trash     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
+		$recent_posts_trash     = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
+		
+	?>
+		<div class="recent_posts_trash ui tab" data-tab="trash">
 				<?php
 				if ( 0 == count( $recent_posts_trash ) ) {
 					?>
@@ -420,24 +461,9 @@ class MainWP_Recent_Posts {
 				<?php } ?>
 			</div>
 		</div>
-		<!-- END Trash List -->
-
-		<div class="ui hidden divider"></div>
-
-		<div class="ui two column grid">
-			<div class="column">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
-			</div>
-			<div class="column right aligned">
-				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
-			</div>
-		</div>
 		<?php
-		if ( true == $pExit ) {
-			exit();
-		}
 	}
-
+	
 	/**
 	 * Method publish()
 	 *

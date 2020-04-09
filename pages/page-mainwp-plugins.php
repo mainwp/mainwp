@@ -453,7 +453,7 @@ class MainWP_Plugins {
 			$output->plugins = array();
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
-			if ( '' !== $sites ) {
+			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$website    = MainWP_DB::instance()->get_website_by_id( $v );
@@ -600,6 +600,57 @@ class MainWP_Plugins {
 			)
 		);
 
+		$bulkActions = self::render_bulk_actions( $status );
+		
+		ob_start();
+
+		if ( 0 == count( $output->plugins ) ) {
+			?>
+			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
+			<?php
+		} else {
+				$sites              = array();
+				$sitePlugins        = array();
+				$plugins            = array();
+				$muPlugins          = array();
+				$pluginsVersion     = array();
+				$pluginsName        = array();
+				$pluginsMainWP      = array();
+				$pluginsRealVersion = array();
+
+				foreach ( $output->plugins as $plugin ) {
+					$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
+					$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
+					$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
+					$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
+					$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
+					$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
+					$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
+					$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
+
+					if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
+						$sitePlugins[ $plugin['websiteid'] ] = array();
+					}
+
+					$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
+				}
+				asort( $pluginsVersion );		
+				
+				self::render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion );
+
+		}
+		
+		$newOutput = ob_get_clean();
+		$result    = array(
+			'result'       => $newOutput,
+			'bulk_actions' => $bulkActions,
+		);
+
+		MainWP_Cache::add_result( 'Plugins', $result );
+		return $result;
+	}
+
+	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
 		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
@@ -629,128 +680,79 @@ class MainWP_Plugins {
 	<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
 		<?php
 		$bulkActions = ob_get_clean();
-		ob_start();
-
-		if ( 0 == count( $output->plugins ) ) {
-			?>
-			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
-			<?php
-			$newOutput = ob_get_clean();
-
-			$result = array(
-				'result'       => $newOutput,
-				'bulk_actions' => $bulkActions,
-			);
-			MainWP_Cache::add_result( 'Plugins', $result );
-
-			return $result;
-		}
-
-		$sites              = array();
-		$sitePlugins        = array();
-		$plugins            = array();
-		$muPlugins          = array();
-		$pluginsVersion     = array();
-		$pluginsName        = array();
-		$pluginsMainWP      = array();
-		$pluginsRealVersion = array();
-
-		foreach ( $output->plugins as $plugin ) {
-			$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
-			$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
-			$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
-			$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
-			$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
-			$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
-			$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
-			$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
-
-			if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
-				$sitePlugins[ $plugin['websiteid'] ] = array();
-			}
-
-			$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
-		}
-		asort( $pluginsVersion );
-		?>
-
-	<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
-		<thead>
-			<tr>
-				<th></th>
-				<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
-					<?php
-					$th_id = strtolower( $plugin_name );
-					$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
-					?>
-					<th id="<?php echo esc_html( $th_id ); ?>">
-						<div class="ui checkbox">
-							<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
-							<label for="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
-						</div>
-					</th>
-				<?php endforeach; ?>
-			</tr>
-		</thead>
-		<tbody>
-		<?php foreach ( $sites as $site_id => $site_url ) : ?>
-		<tr>
-			<td>
-			<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
-			<div class="ui checkbox">
-				<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/>
-				<label><?php echo esc_html( $site_url ); ?></label>
-			</div>
-			</td>
-			<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
-			<td class="center aligned">
-				<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
-					<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
-				<div class="ui checkbox">
-					<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo wp_strip_all_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
-				</div>
-			<?php elseif ( isset( $pluginsMainWP[ $plugin_name ] ) && 'T' === $pluginsMainWP[ $plugin_name ] ) : ?>
-				<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
-				<?php endif; ?>
-			<?php endif; ?>
-			</td>
-			<?php endforeach; ?>
-		</tr>
-		<?php endforeach; ?>
-		</tbody>
-	</table>
-	<style type="text/css">
-	.DTFC_LeftBodyLiner { overflow-x: hidden; }
-	</style>
-	<script type="text/javascript">
-	jQuery( document ).ready( function( $ ) {
-		jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
-			"paging" : false,
-			"colReorder" : true,
-			"stateSave" :  true,
-			"ordering" : true,
-			"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-			"scrollCollapse" : true,
-			"scrollY" : 500,
-			"scrollX" : true,
-			"scroller" : true,
-			"fixedColumns" : true,
-		} );
-		jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
-	} );
-	</script>
-
-		<?php
-		$newOutput = ob_get_clean();
-		$result    = array(
-			'result'       => $newOutput,
-			'bulk_actions' => $bulkActions,
-		);
-
-		MainWP_Cache::add_result( 'Plugins', $result );
-		return $result;
+		return $bulkActions;
 	}
-
+	
+	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
+	?>
+		<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
+			<thead>
+				<tr>
+					<th></th>
+					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
+						<?php
+						$th_id = strtolower( $plugin_name );
+						$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
+						?>
+						<th id="<?php echo esc_html( $th_id ); ?>">
+							<div class="ui checkbox">
+								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
+								<label for="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
+							</div>
+						</th>
+					<?php endforeach; ?>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $sites as $site_id => $site_url ) : ?>
+				<tr>
+					<td>
+					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
+					<div class="ui checkbox">
+						<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/>
+						<label><?php echo esc_html( $site_url ); ?></label>
+					</div>
+					</td>
+					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
+					<td class="center aligned">
+						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
+							<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
+						<div class="ui checkbox">
+							<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" name="<?php echo wp_strip_all_tags( $pluginsName[ $plugin_name ] ); ?>" class="mainwp-selected-plugin" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" />
+						</div>
+					<?php elseif ( isset( $pluginsMainWP[ $plugin_name ] ) && 'T' === $pluginsMainWP[ $plugin_name ] ) : ?>
+						<div class="ui disabled checkbox"><input type="checkbox" disabled="disabled"><label></label></div>
+						<?php endif; ?>
+					<?php endif; ?>
+					</td>
+					<?php endforeach; ?>
+				</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			<style type="text/css">
+			.DTFC_LeftBodyLiner { overflow-x: hidden; }
+			</style>
+			<script type="text/javascript">
+			jQuery( document ).ready( function( $ ) {
+				jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
+					"paging" : false,
+					"colReorder" : true,
+					"stateSave" :  true,
+					"ordering" : true,
+					"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
+					"scrollCollapse" : true,
+					"scrollY" : 500,
+					"scrollX" : true,
+					"scroller" : true,
+					"fixedColumns" : true,
+				} );
+				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
+			} );
+			</script>
+		<?php
+	}
+	
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];
@@ -1088,6 +1090,7 @@ class MainWP_Plugins {
 		self::render_footer( 'AutoUpdate' );
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function render_all_active_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';

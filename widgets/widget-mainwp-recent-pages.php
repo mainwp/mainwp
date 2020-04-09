@@ -31,7 +31,7 @@ class MainWP_Recent_Pages {
 	 * Fire off Method render_sites().
 	 */
 	public static function render() {
-		self::render_sites( false, false );
+		self::render_sites();
 	}
 
 	/**
@@ -39,10 +39,9 @@ class MainWP_Recent_Pages {
 	 *
 	 * Build the resent pages list.
 	 *
-	 * @param mixed   $renew Site Data.
-	 * @param boolean $pExit true|false If $pExit is true exit.
+	 * @param 	 
 	 */
-	public static function render_sites( $renew, $pExit = true ) {
+	public static function render_sites() {
 
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 
@@ -79,18 +78,46 @@ class MainWP_Recent_Pages {
 			MainWP_DB::free_result( $websites );
 		}
 
-		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
-		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
-		$recent_pages_draft     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
-		$recent_pages_draft     = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
-		$recent_pages_pending   = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
-		$recent_pages_pending   = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
-		$recent_pages_trash     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
-		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
-		$recent_pages_future    = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
-		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
 		?>
 
+		<?php self::render_top_grid(); ?>
+
+		<!-- Published List -->
+		<?php self::render_published_posts( $allPages, $recent_number ); ?>		
+
+		<!-- END Published List -->
+
+		<!-- Draft List -->
+		<?php self::render_draft_posts( $allPages, $recent_number ); ?>
+		<!-- END Draft List -->
+
+		<!-- Pending List -->
+		<?php self::render_pending_posts( $allPages, $recent_number ); ?>
+		<!-- END Pending List -->
+
+		<!-- Future List -->
+		<?php self::render_future_posts( $allPages, $recent_number ); ?>
+		<!-- END Future  List -->
+
+		<!-- Trash List -->			
+		<?php self::render_trash_posts( $allPages, $recent_number ); ?>
+		<!-- END Trash  List -->			
+
+		<div class="ui hidden divider"></div>
+
+		<div class="ui two column grid">
+			<div class="column">
+				<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
+			</div>
+			<div class="column right aligned">
+				<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Page', 'mainwp' ); ?></a>
+			</div>
+		</div>
+		<?php		
+	}
+	
+	public static function render_top_grid() {
+	?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -114,71 +141,81 @@ class MainWP_Recent_Pages {
 			</div>
 
 			<div class="ui section hidden divider"></div>
-
-			<!-- Published List -->
-
-			<div class="recent_posts_published ui tab active" data-tab="page-published">
-				<?php if ( count( $recent_pages_published ) == 0 ) : ?>
-				<h2 class="ui icon header">
-					<i class="folder open outline icon"></i>
-					<div class="content">
-						<?php esc_html_e( 'No pages found!', 'mainwp' ); ?>
-					</div>
-				</h2>
-				<?php endif; ?>
-				<div class="ui middle aligned divided selection list">
-				<?php
-				$_count = count( $recent_pages_published );
-				for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
-					if ( ! isset( $recent_pages_published[ $i ]['title'] ) || ( '' == $recent_pages_published[ $i ]['title'] ) ) {
-						$recent_pages_published[ $i ]['title'] = '(No Title)';
+	<?php
+	}	
+	
+	public static function render_published_posts( $allPages, $recent_number ){
+		
+		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
+		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );		
+		
+	?>
+	<div class="recent_posts_published ui tab active" data-tab="page-published">
+			<?php if ( count( $recent_pages_published ) == 0 ) : ?>
+			<h2 class="ui icon header">
+				<i class="folder open outline icon"></i>
+				<div class="content">
+					<?php esc_html_e( 'No pages found!', 'mainwp' ); ?>
+				</div>
+			</h2>
+			<?php endif; ?>
+			<div class="ui middle aligned divided selection list">
+			<?php
+			$_count = count( $recent_pages_published );
+			for ( $i = 0; $i < $_count && $i < $recent_number; $i ++ ) {
+				if ( ! isset( $recent_pages_published[ $i ]['title'] ) || ( '' == $recent_pages_published[ $i ]['title'] ) ) {
+					$recent_pages_published[ $i ]['title'] = '(No Title)';
+				}
+				if ( isset( $recent_pages_published[ $i ]['dts'] ) ) {
+					if ( ! stristr( $recent_pages_published[ $i ]['dts'], '-' ) ) {
+						$recent_pages_published[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_published[ $i ]['dts'] ) );
 					}
-					if ( isset( $recent_pages_published[ $i ]['dts'] ) ) {
-						if ( ! stristr( $recent_pages_published[ $i ]['dts'], '-' ) ) {
-							$recent_pages_published[ $i ]['dts'] = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $recent_pages_published[ $i ]['dts'] ) );
-						}
-					}
+				}
 
-					$name = wp_strip_all_tags( $recent_pages_published[ $i ]['website']->name );
+				$name = wp_strip_all_tags( $recent_pages_published[ $i ]['website']->name );
 
-					?>
-					<div class="item">
-						<div class="ui grid">
-							<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
-							<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
-							<div class="six wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
-							</div>
-							<div class="four wide column middle aligned">
-							<?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?>
+				?>
+				<div class="item">
+					<div class="ui grid">
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>"/>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>"/>
+						<div class="six wide column middle aligned">
+							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_pages_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 						</div>
-							<div class="four wide column middle aligned">
-								<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
-							</div>
-							<div class="two wide column right aligned">
-								<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
-								<i class="ellipsis horizontal icon"></i>
-									<div class="menu">
-										<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
-										<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[ $i ]['id'] ) . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-trash" href="#" ><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-										<a class="item" href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ) . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
-										<a class="item mainwp-post-viewall" href="admin.php?page=PageBulkManage" ><?php esc_html_e( 'View all', 'mainwp' ); ?></a>
-									</div>
+						<div class="four wide column middle aligned">
+						<?php echo esc_html( $recent_pages_published[ $i ]['dts'] ); ?>
+					</div>
+						<div class="four wide column middle aligned">
+							<a href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ); ?>" target="_blank"><?php echo $name; ?></a>
+						</div>
+						<div class="two wide column right aligned">
+							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
+							<i class="ellipsis horizontal icon"></i>
+								<div class="menu">
+									<a class="item mainwp-post-unpublish" href="#"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></a>
+									<a class="item" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $recent_pages_published[ $i ]['website']->id ); ?>&location=<?php echo base64_encode( 'post.php?action=editpost&post=' . esc_attr( $recent_pages_published[ $i ]['id'] ) . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" title="Edit this post" target="_blank"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+									<a class="item mainwp-post-trash" href="#" ><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
+									<a class="item" href="<?php echo esc_url( $recent_pages_published[ $i ]['website']->url ) . ( substr( $recent_pages_published[ $i ]['website']->url, - 1 ) != '/' ? '/' : '' ) . '?p=' . esc_attr( $recent_pages_published[ $i ]['id'] ); ?>" target="_blank" class="mainwp-may-hide-referrer" title="View '<?php echo esc_attr( $recent_pages_published[ $i ]['title'] ); ?>'" rel="permalink"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
+									<a class="item mainwp-post-viewall" href="admin.php?page=PageBulkManage" ><?php esc_html_e( 'View all', 'mainwp' ); ?></a>
 								</div>
 							</div>
 						</div>
-						<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
 					</div>
-				<?php } ?>
-			</div>
-			</div>
-
-			<!-- END Published List -->
-
-			<!-- Draft List -->
-
-			<div class="recent_posts_draft ui tab" data-tab="page-draft">
+					<div class="mainwp-row-actions-working"><i class="notched circle loading icon"></i><?php esc_html_e( 'Please wait...', 'mainwp' ); ?></div>
+				</div>
+			<?php } ?>
+		</div>
+		</div>		
+	<?php
+	}
+	
+	public static function render_draft_posts( $allPages, $recent_number ) {
+		
+		$recent_pages_draft     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
+		$recent_pages_draft     = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
+		
+	?>
+	<div class="recent_posts_draft ui tab" data-tab="page-draft">
 				<?php
 				if ( count( $recent_pages_draft ) == 0 ) {
 					?>
@@ -234,13 +271,17 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>
+			</div>		
+	<?php
+	}
 
-			<!-- END Draft List -->
-
-			<!-- Pending List -->
-
-			<div class="recent_posts_pending ui bottom attached tab" data-tab="page-pending">
+	public static function render_pending_posts( $allPages, $recent_number  ) {
+		
+		$recent_pages_pending   = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
+		$recent_pages_pending   = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
+		
+	?>
+	<div class="recent_posts_pending ui bottom attached tab" data-tab="page-pending">
 				<?php
 				if ( count( $recent_pages_pending ) == 0 ) {
 					?>
@@ -296,13 +337,16 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>
-
-			<!-- END Pending List -->
-
-			<!-- Future List -->
-
-			<div class="recent_posts_future ui tab" data-tab="page-future">
+			</div>		
+	<?php
+	}
+	
+	public static function render_future_posts( $allPages, $recent_number ) {
+		$recent_pages_future    = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
+		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
+	
+	?>
+	<div class="recent_posts_future ui tab" data-tab="page-future">
 				<?php
 				if ( count( $recent_pages_future ) == 0 ) {
 					?>
@@ -359,13 +403,16 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>
-
-			<!-- END Future  List -->
-
-			<!-- Trash List -->
-
-			<div class="recent_posts_trash ui tab" data-tab="page-trash">
+			</div>		
+	<?php		
+	}
+	
+	public static function render_trash_posts( $allPages, $recent_number ) {
+		$recent_pages_trash     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
+		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
+		
+	?>
+	<div class="recent_posts_trash ui tab" data-tab="page-trash">
 				<?php
 				if ( count( $recent_pages_trash ) == 0 ) {
 					?>
@@ -420,23 +467,7 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-		</div>
-
-		<div class="ui hidden divider"></div>
-
-		<div class="ui two column grid">
-			<div class="column">
-				<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
-			</div>
-			<div class="column right aligned">
-				<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Page', 'mainwp' ); ?></a>
-			</div>
-		</div>
-
-		<?php
-		if ( true == $pExit ) {
-			exit();
-		}
+		</div>		
+	<?php
 	}
-
 }

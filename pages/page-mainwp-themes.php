@@ -1514,7 +1514,7 @@ class MainWP_Themes {
 		<?php
 		self::render_footer( 'Ignore' );
 	}
-  
+
 	/**
 	 * Render globally Ignored themes.
 	 *
@@ -1564,7 +1564,7 @@ class MainWP_Themes {
 		</table>	
 		<?php
 	}
-  
+
 	/**
 	 * Render ignored sites.
 	 *
@@ -1728,7 +1728,7 @@ class MainWP_Themes {
 		</table>
 		<?php
 	}
-  
+
 	/**
 	 * Render ignored sites list.
 	 *

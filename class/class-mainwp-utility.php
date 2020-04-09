@@ -2039,39 +2039,6 @@ class MainWP_Utility {
 		return $dirs[1] . $userid . '/' . $dir . '/';
 	}
 
-	public static function get_alexa_rank( $domain ) {
-		$remote_url = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' . trim( $domain );
-		$search_for = '<POPULARITY URL';
-		$part       = '';
-		$handle     = @fopen( $remote_url, 'r' );
-		if ( $handle ) {
-			while ( ! feof( $handle ) ) {
-				$part .= fread( $handle, 100 );
-				$pos   = strpos( $part, $search_for );
-				if ( false === $pos ) {
-					continue;
-				} else {
-					break;
-				}
-			}
-			$part .= fread( $handle, 100 );
-			fclose( $handle );
-		}
-		if ( ! stristr( $part, '<ALEXA' ) ) {
-			return null;
-		}
-		if ( ! stristr( $part, $search_for ) ) {
-			return 0;
-		}
-
-		$str = explode( $search_for, $part );
-		$str = explode( '"/>', $str[1] );
-		$str = array_shift( $str );
-		$str = explode( 'TEXT="', $str );
-
-		return $str[1];
-	}
-
 	protected static function str_to_num( $Str, $Check, $Magic ) {
 		$Int32Unit = 4294967296;
 
@@ -2139,19 +2106,6 @@ class MainWP_Utility {
 		}
 
 		return '7' . $CheckByte . $HashStr;
-	}
-
-	public static function getpagerank( $url ) {
-		$query = 'http://toolbarqueries.google.com/tbr?client=navclient-auto&ch=' . self::check_hash( self::hash_url( $url ) ) . '&features=Rank&q=info:' . $url . '&num=100&filter=0';
-		$data  = self::file_get_contents_curl( $query );
-		$pos   = strpos( $data, 'Rank_' );
-		if ( false === $pos ) {
-			return false;
-		} else {
-			$pagerank = substr( $data, $pos + 9 );
-
-			return $pagerank;
-		}
 	}
 
 	public static function get_file_content( $url ) {

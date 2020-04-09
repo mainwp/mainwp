@@ -637,7 +637,7 @@ class MainWP_Manage_Sites {
 
 		if ( 'zip' === $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
-		} elseif ( '' === $pTask->archiveFormat || 'site' === $pTask->archiveFormat ) {
+		} elseif ( '' == $pTask->archiveFormat || 'site' == $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
 		} else {
 			$loadFilesBeforeZip = 1;
@@ -899,7 +899,7 @@ class MainWP_Manage_Sites {
 			if ( $information['db'] ) {
 				$what            = 'db';
 				$regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
-				if ( '' === $backupTaskProgress->downloadedDB ) {
+				if ( '' == $backupTaskProgress->downloadedDB ) {
 					$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
 					if ( null != $pFilename ) {
@@ -942,7 +942,7 @@ class MainWP_Manage_Sites {
 				$realExt         = MainWP_Utility::get_real_extension( $information['full'] );
 				$what            = 'full';
 				$regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
-				if ( '' === $backupTaskProgress->downloadedFULL ) {
+				if ( '' == $backupTaskProgress->downloadedFULL ) {
 					$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
 					if ( null != $pFilename ) {
@@ -1204,7 +1204,7 @@ class MainWP_Manage_Sites {
 			return false;
 		}
 
-		if ( '' === trim( $pFilename ) ) {
+		if ( '' == trim( $pFilename ) ) {
 			$pFilename = null;
 		}
 

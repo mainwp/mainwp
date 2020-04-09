@@ -74,7 +74,7 @@ class MainWP_UI {
 		
 		<?php 		
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
-		self::render_select_sites( $websites, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
+		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
 		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites);		
 		self::render_select_sites_group( $groups, $tab_id, $selected_groups );
 		?>
@@ -119,7 +119,7 @@ class MainWP_UI {
 	<?php
 	}
 
-	public static function render_select_sites( $websites, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ){
+	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ){
 	?>
 		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
 			<div id="mainwp-select-sites-body">
@@ -135,7 +135,7 @@ class MainWP_UI {
 						else :
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								$selected = false;
-								if ( '' === $website->sync_errors || $enableOfflineSites ) {
+								if ( '' == $website->sync_errors || $enableOfflineSites ) {
 									$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 									$disabled = '';
 									if ( $edit_site_id ) {
@@ -189,7 +189,7 @@ class MainWP_UI {
 						else :
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								$selected = false;
-								if ( '' === $website->sync_errors || $enableOfflineSites ) {
+								if ( '' == $website->sync_errors || $enableOfflineSites ) {
 										$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 										$disabled = '';
 									if ( $edit_site_id ) {
@@ -198,7 +198,7 @@ class MainWP_UI {
 										}
 									}
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">										
 										<input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>

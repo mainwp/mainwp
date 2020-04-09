@@ -923,7 +923,7 @@ class MainWP_Updates {
 
 											$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
-											if ( ( 0 == count( $wp_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+											if ( ( 0 == count( $wp_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 												continue;
 											}
 
@@ -1003,7 +1003,7 @@ class MainWP_Updates {
 
 					$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
-					if ( ( 0 === count( $wp_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+					if ( ( 0 === count( $wp_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 						continue;
 					}
 					?>
@@ -1048,6 +1048,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_plugins_updates_per_site( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $trustedPlugins ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
@@ -1107,7 +1108,7 @@ class MainWP_Updates {
 						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
 					}
 
-					if ( ( 0 === count( $plugin_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+					if ( ( 0 === count( $plugin_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 						continue;
 					}
 					?>
@@ -1185,6 +1186,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
@@ -1278,7 +1280,7 @@ class MainWP_Updates {
 
 										$total_group_plugin_updates += count( $plugin_upgrades );
 
-										if ( ( 0 === count( $plugin_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+										if ( ( 0 === count( $plugin_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 											continue;
 										}
 										?>
@@ -1367,6 +1369,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $pluginsInfo, $trustedPlugins ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
@@ -1505,6 +1508,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_themes_updates_per_site( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $trustedThemes ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-sites-table">
@@ -1564,7 +1568,7 @@ class MainWP_Updates {
 					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
 				}
 
-				if ( ( 0 === count( $theme_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+				if ( ( 0 === count( $theme_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 					continue;
 				}
 				?>
@@ -1636,6 +1640,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_themes_updates_per_group( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) {
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
@@ -1729,7 +1734,7 @@ class MainWP_Updates {
 
 										$total_group_theme_updates += count( $theme_upgrades );
 
-										if ( ( 0 === count( $theme_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+										if ( ( 0 === count( $theme_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 											continue;
 										}
 										?>
@@ -1812,6 +1817,7 @@ class MainWP_Updates {
 		<?php
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function render_themes_updates_per_item( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $allThemes, $themesInfo, $trustedThemes ) {
 		?>
 	<table class="ui stackable single line table" id="mainwp-themes-updates-table">
@@ -1963,7 +1969,7 @@ class MainWP_Updates {
 				MainWP_DB::data_seek( $websites, 0 );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$translation_upgrades = json_decode( $website->translation_upgrades, true );
-					if ( ( 0 === count( $translation_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+					if ( ( 0 === count( $translation_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 						continue;
 					}
 					?>
@@ -2097,7 +2103,7 @@ class MainWP_Updates {
 									$translation_upgrades             = json_decode( $website->translation_upgrades, true );
 									$total_group_translation_updates += count( $translation_upgrades );
 
-									if ( ( 0 === count( $translation_upgrades ) ) && ( '' === $website->sync_errors ) ) {
+									if ( ( 0 === count( $translation_upgrades ) ) && ( '' == $website->sync_errors ) ) {
 										continue;
 									}
 									?>

@@ -824,7 +824,6 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName )
     //Step 1: build form
     var sitesToUpdate = [ ];
     var siteNames = [ ];
-//    var foundChildren = jQuery( 'div[plugin_slug="' + slug + '"]' ).children( 'div[updated="0"]' );
     var foundChildren = jQuery( 'tr[plugin_slug="' + slug + '"]' ).find( 'table tr[updated="0"]' );
 
     if ( foundChildren.length == 0 )
@@ -1291,8 +1290,7 @@ updatesoverview_themes_upgrade_all = function ( slug, themeName )
 
     //Step 1: build form
     var sitesToUpdate = [ ];
-    var siteNames = [ ];
-    //var foundChildren = jQuery( 'div[theme_slug="' + slug + '"]' ).children( 'div[updated="0"]' );
+    var siteNames = [ ];    
     var foundChildren = jQuery( 'tr[theme_slug="' + slug + '"]' ).find( 'table tr[updated="0"]' );
     if ( foundChildren.length == 0 )
         return false;
@@ -1667,31 +1665,31 @@ updatesoverview_global_upgrade_all = function ( which )
         foundChildren = jQuery( '#wp_translation_upgrades' ).find( 'div[updated="0"]' );
         if ( foundChildren.length != 0 )
         {
-        for ( var i = 0; i < foundChildren.length; i++ )
-        {
-            var child = jQuery( foundChildren[i] );
-            var siteElement = child;
+			for ( var i = 0; i < foundChildren.length; i++ )
+			{
+				var child = jQuery( foundChildren[i] );
+				var siteElement = child;
 
-            var siteId = siteElement.attr( 'site_id' );
-            var siteName = siteElement.attr( 'site_name' );
-            var transSlug = siteElement.attr( 'translation_slug' );
+				var siteId = siteElement.attr( 'site_id' );
+				var siteName = siteElement.attr( 'site_name' );
+				var transSlug = siteElement.attr( 'translation_slug' );
 
-            if ( sitesToUpdate.indexOf( siteId ) == -1 )
-            {
-                sitesCount++;
-                sitesToUpdate.push( siteId );
-                siteNames[siteId] = siteName;
-            }
+				if ( sitesToUpdate.indexOf( siteId ) == -1 )
+				{
+					sitesCount++;
+					sitesToUpdate.push( siteId );
+					siteNames[siteId] = siteName;
+				}
 
-            if ( sitesTranslationSlugs[siteId] == undefined )
-            {
-                sitesTranslationSlugs[siteId] = transSlug;
-            } else
-            {
-                sitesTranslationSlugs[siteId] += ',' + transSlug;
-            }
-        }
-    }
+				if ( sitesTranslationSlugs[siteId] == undefined )
+				{
+					sitesTranslationSlugs[siteId] = transSlug;
+				} else
+				{
+					sitesTranslationSlugs[siteId] += ',' + transSlug;
+				}
+			}
+		}
     }
 
     var _callback = function() {

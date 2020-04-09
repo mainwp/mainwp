@@ -1166,7 +1166,7 @@ class MainWP_DB {
 				'pagerank'               => 0,
 				'indexed'                => 0,
 				'alexia'                 => 0,
-				'pagerank_old'           => 0,
+				//'pagerank_old'           => 0,
 				'indexed_old'            => 0,
 				'alexia_old'             => 0,
 				'directories'            => '',

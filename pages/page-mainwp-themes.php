@@ -7,7 +7,6 @@
  *
  * @package MainWP/Themes
  */
-
 namespace MainWP\Dashboard;
 
 /**
@@ -674,6 +673,18 @@ class MainWP_Themes {
 		return $result;
 	}
 
+	/**
+	 * This method renders the Manage Themes Table
+	 *
+	 * @param mixed $sites List of sites.
+	 * @param mixed $themes List of themes.
+	 * @param mixed $siteThemes
+	 * @param mixed $themesSlug
+	 * @param mixed $themesVersion Installed Theme version.
+	 * @param mixed $themesRealVersion Current Theme version.
+	 *
+	 * @return html Output the table.
+	 */
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
 		?>
 	
@@ -742,6 +753,13 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * Render the bulk actions UI.
+	 *
+	 * @param mixed $status Theme status.
+	 *
+	 * @return mixed $bulkActions
+	 */
 	public static function render_bulk_actions( $status ) {
 			ob_start();
 		?>
@@ -1226,6 +1244,7 @@ class MainWP_Themes {
 		self::render_footer( 'AutoUpdate' );
 	}
 
+	// phpcs:ignore -- not quite complex function
 	/**
 	 * Render the All Themes Table.
 	 *
@@ -1354,6 +1373,15 @@ class MainWP_Themes {
 		self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );
 	}
 
+	/**
+	 * Render all themes html.
+	 *
+	 * @param mixed $themes Themes list.
+	 * @param mixed $search_status Search status.
+	 * @param mixed $trustedThemes Trusted themes.
+	 * @param mixed $trustedThemesNotes Trusted themes notes.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
+	 */
 	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
 		?>
 		<table class="ui single line table" id="mainwp-all-active-themes-table">
@@ -1487,6 +1515,12 @@ class MainWP_Themes {
 		self::render_footer( 'Ignore' );
 	}
 
+	/**
+	 * Render globally Ignored themes.
+	 *
+	 * @param mixed $ignoredThemes Encoded ignored themes.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
+	 */
 	public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
 		?>
 		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
@@ -1531,6 +1565,12 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * Render ignored sites.
+	 *
+	 * @param mixed $cnt
+	 * @param mixed $websites Websites list.
+	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
 		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table stackable">
@@ -1639,6 +1679,12 @@ class MainWP_Themes {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
+	/**
+	 * Render the global ignored themes list.
+	 *
+	 * @param mixed $ignoredThemes Encoded ignored themes list.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes list.
+	 */
 	public static function render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ) {
 		?>
 		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
@@ -1683,6 +1729,12 @@ class MainWP_Themes {
 		<?php
 	}
 
+	/**
+	 * Render ignored sites list.
+	 *
+	 * @param mixed $cnt
+	 * @param mixed $websites Websites list.
+	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
 	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">

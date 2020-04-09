@@ -39,7 +39,7 @@ class MainWP_Recent_Pages {
 	 *
 	 * Build the resent pages list.
 	 *
-	 * @param 	 
+	 * @param
 	 */
 	public static function render_sites() {
 
@@ -113,11 +113,11 @@ class MainWP_Recent_Pages {
 				<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Page', 'mainwp' ); ?></a>
 			</div>
 		</div>
-		<?php		
+		<?php
 	}
-	
+
 	public static function render_top_grid() {
-	?>
+		?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -141,15 +141,15 @@ class MainWP_Recent_Pages {
 			</div>
 
 			<div class="ui section hidden divider"></div>
-	<?php
-	}	
-	
-	public static function render_published_posts( $allPages, $recent_number ){
-		
+		<?php
+	}
+
+	public static function render_published_posts( $allPages, $recent_number ) {
+
 		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
-		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );		
-		
-	?>
+		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
+
+		?>
 	<div class="recent_posts_published ui tab active" data-tab="page-published">
 			<?php if ( count( $recent_pages_published ) == 0 ) : ?>
 			<h2 class="ui icon header">
@@ -206,15 +206,15 @@ class MainWP_Recent_Pages {
 			<?php } ?>
 		</div>
 		</div>		
-	<?php
+		<?php
 	}
-	
+
 	public static function render_draft_posts( $allPages, $recent_number ) {
-		
-		$recent_pages_draft     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
-		$recent_pages_draft     = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
-		
-	?>
+
+		$recent_pages_draft = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
+		$recent_pages_draft = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
+
+		?>
 	<div class="recent_posts_draft ui tab" data-tab="page-draft">
 				<?php
 				if ( count( $recent_pages_draft ) == 0 ) {
@@ -272,15 +272,15 @@ class MainWP_Recent_Pages {
 				<?php } ?>
 			</div>
 			</div>		
-	<?php
+		<?php
 	}
 
-	public static function render_pending_posts( $allPages, $recent_number  ) {
-		
-		$recent_pages_pending   = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
-		$recent_pages_pending   = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
-		
-	?>
+	public static function render_pending_posts( $allPages, $recent_number ) {
+
+		$recent_pages_pending = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
+		$recent_pages_pending = MainWP_Utility::sortmulti( $recent_pages_pending, 'dts', 'desc' );
+
+		?>
 	<div class="recent_posts_pending ui bottom attached tab" data-tab="page-pending">
 				<?php
 				if ( count( $recent_pages_pending ) == 0 ) {
@@ -338,14 +338,14 @@ class MainWP_Recent_Pages {
 				<?php } ?>
 			</div>
 			</div>		
-	<?php
+		<?php
 	}
-	
+
 	public static function render_future_posts( $allPages, $recent_number ) {
-		$recent_pages_future    = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
-		$recent_pages_future    = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
-	
-	?>
+		$recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
+		$recent_pages_future = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
+
+		?>
 	<div class="recent_posts_future ui tab" data-tab="page-future">
 				<?php
 				if ( count( $recent_pages_future ) == 0 ) {
@@ -404,14 +404,14 @@ class MainWP_Recent_Pages {
 				<?php } ?>
 			</div>
 			</div>		
-	<?php		
+		<?php
 	}
-	
+
 	public static function render_trash_posts( $allPages, $recent_number ) {
-		$recent_pages_trash     = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
-		$recent_pages_trash     = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
-		
-	?>
+		$recent_pages_trash = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
+		$recent_pages_trash = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );
+
+		?>
 	<div class="recent_posts_trash ui tab" data-tab="page-trash">
 				<?php
 				if ( count( $recent_pages_trash ) == 0 ) {
@@ -468,6 +468,6 @@ class MainWP_Recent_Pages {
 				<?php } ?>
 			</div>
 		</div>		
-	<?php
+		<?php
 	}
 }

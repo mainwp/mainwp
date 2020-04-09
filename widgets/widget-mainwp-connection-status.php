@@ -49,9 +49,9 @@ class MainWP_Connection_Status {
 
 		$websites = MainWP_DB::instance()->query( $sql );
 
-		$count_connected            = 0;
+		$count_connected    = 0;
 		$count_disconnected = 0;
-		
+
 		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites.
 		$SYNCERRORS = 0;
 		$DOWN       = 1;
@@ -104,13 +104,13 @@ class MainWP_Connection_Status {
 				ob_start();
 				if ( $j == $ALL ) {
 					self::render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors );
-				} elseif ( $j == $UP ) { 
+				} elseif ( $j == $UP ) {
 					self::render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 );
 				} else {
 					self::render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 );
 				}
 				$output = ob_get_clean();
-				
+
 				if ( $j == $ALL ) {
 					$html_all_sites .= $output;
 				} elseif ( $j == $UP ) {
@@ -125,22 +125,21 @@ class MainWP_Connection_Status {
 		}
 
 		MainWP_DB::free_result( $websites );
-		
+
 		self::render_status( $current_wpid );
-		
+
 		if ( empty( $current_wpid ) ) {
-			self::render_multi_status( $count_connected, $count_disconnected ); 
+			self::render_multi_status( $count_connected, $count_disconnected );
 		} else {
 			// Get site by ID $current_wpid.
 			$site = MainWP_DB::instance()->get_website_by_id( $current_wpid );
-			self::render_current_status( $site, $count_connected ); 
+			self::render_current_status( $site, $count_connected );
 		}
-		
-		self::render_details( $html_all_sites, $html_online_sites, $html_other_sites );				
-		
+
+		self::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
 	}
 
-	public static function render_status( $current_wpid ){
+	public static function render_status( $current_wpid ) {
 		?>
 		<div class="ui grid">
 			<div class="twelve wide column">
@@ -185,9 +184,10 @@ class MainWP_Connection_Status {
 		</div>
 		<div class="ui hidden divider"></div>
 		<?php
-	}		
+	}
 	public static function render_current_status( $site, $count_connected ) {
-		if ( $count_connected > 0 ) : ?>
+		if ( $count_connected > 0 ) :
+			?>
 			<div class="ui two column stackable grid">
 				<div class="column left aligned">
 					<h2 class="ui header">
@@ -214,12 +214,12 @@ class MainWP_Connection_Status {
 					<a href="#" class="mainwp-updates-overview-reconnect-site ui mini breen basic button" siteid="<?php echo $site->id; ?>" data-tooltip="Reconnect <?php echo stripslashes( $site->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 				</div>
 			</div>
-		<?php 
+			<?php
 		endif;
 	}
-	
+
 	public static function render_multi_status( $count_connected, $count_disconnected ) {
-	?>
+		?>
 		<div class="ui two column stackable grid">
 			<div class="column center aligned">
 				<div class="ui horizontal statistics large">
@@ -248,9 +248,9 @@ class MainWP_Connection_Status {
 		</div>
 		<?php
 	}
-	
+
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
-	?>
+		?>
 		<div class="ui hidden divider"></div>
 
 		<div class="ui active tab" data-tab="no-sites"></div>
@@ -274,9 +274,10 @@ class MainWP_Connection_Status {
 		</div>
 		<?php
 	}
-	
+
 	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
-	?>		
+		?>
+			
 			<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
@@ -308,11 +309,11 @@ class MainWP_Connection_Status {
 				</div>
 			</div>
 		</div>
-	<?php
+		<?php
 	}
-	
-	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5  ) {
-	?>
+
+	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
+		?>
 	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 		<div class="ui grid">
 			<div class="six wide column middle aligned">
@@ -340,11 +341,11 @@ class MainWP_Connection_Status {
 			</div>
 		</div>
 	</div>
-	<?php
+		<?php
 	}
-	
+
 	public static function render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
-	?>
+		?>
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
@@ -370,7 +371,7 @@ class MainWP_Connection_Status {
 				</div>
 			</div>
 		</div>		
-	<?php
-	}	
-		
+		<?php
+	}
+
 }

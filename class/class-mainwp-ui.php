@@ -72,7 +72,7 @@ class MainWP_UI {
 		$tab_id = wp_rand();
 		?>
 		
-		<?php 		
+		<?php
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
 		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
 		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites);		
@@ -85,9 +85,9 @@ class MainWP_UI {
 		</script>
 		<?php
 	}
-	
+
 	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups ) {
-	?>
+		?>
 	<div id="mainwp-select-sites-footer">
 			<div class="ui grid">
 				<div class="four wide column">
@@ -116,7 +116,7 @@ class MainWP_UI {
 			</div>
 		</div>
 		<div class="ui divider hidden"></div>	
-	<?php
+		<?php
 	}
 
 	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ){
@@ -171,8 +171,8 @@ class MainWP_UI {
 			</div>
 		</div>		
 		<?php
-	}	
-	
+	}
+
 	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites ) {
 		if ( $staging_enabled ) :
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
@@ -222,12 +222,12 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>
-		<?php 
-		endif; 
+			<?php
+		endif;
 	}
-	
-	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ){
-	?>
+
+	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ) {
+		?>
 		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-groups-list">
@@ -258,8 +258,8 @@ class MainWP_UI {
 			</div>
 		</div>
 		<?php
-	}	
-	
+	}
+
 	public static function render_top_header( $params = array() ) {
 
 		$title = isset( $params['title'] ) ? $params['title'] : '';

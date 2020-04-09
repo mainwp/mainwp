@@ -1288,8 +1288,8 @@ class MainWP_Manage_Sites_List_Table {
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
 
-		foreach ( $columns as $column_name => $column_display_name ) {			
-			
+		foreach ( $columns as $column_name => $column_display_name ) {
+
 			$classes    = "collapsing center aligned $column_name column-$column_name";
 			$attributes = "class='$classes'";
 
@@ -1362,24 +1362,24 @@ class MainWP_Manage_Sites_List_Table {
 		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>
 				<?php
-			} elseif ( 'site_actions' === $column_name ) {
-				?>
+		} elseif ( 'site_actions' === $column_name ) {
+			?>
 				<td class="collapsing">
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 						<i class="ellipsis horizontal icon"></i>
 						<div class="menu">
-						<?php if ( '' !== $website['sync_errors'] ) : ?>
+					<?php if ( '' !== $website['sync_errors'] ) : ?>
 						<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 						<?php else : ?>
 						<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&dashboard=<?php echo $website['id']; ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&id=<?php echo $website['id']; ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
@@ -1387,16 +1387,16 @@ class MainWP_Manage_Sites_List_Table {
 					</div>
 				</td>
 				<?php
-			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-				echo "<td $attributes>";
-				echo call_user_func( array( $this, 'column_' . $column_name ), $website );
-				echo '</td>';
-			} else {
-				echo "<td $attributes>";
-				echo $this->column_default( $website, $column_name );
-				echo '</td>';
-			}	
+		} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+			echo "<td $attributes>";
+			echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+			echo '</td>';
+		} else {
+			echo "<td $attributes>";
+			echo $this->column_default( $website, $column_name );
+			echo '</td>';
+		}
 		}
 	}
-	
+
 }

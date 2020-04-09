@@ -956,7 +956,7 @@ class MainWP_Page {
 							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
-						self::render_twitter_notice();						
+						self::render_twitter_notice();
 					}
 				} else {
 					?>
@@ -990,7 +990,7 @@ class MainWP_Page {
 		<?php
 	}
 
-	public static function render_twitter_notice(){
+	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
 			if ( is_array( $twitters ) ) {
@@ -1007,7 +1007,7 @@ class MainWP_Page {
 			}
 		}
 	}
-		
+
 	/**
 	 * Hook the section help content to the Help Sidebar element
 	 */

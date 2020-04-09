@@ -2106,15 +2106,15 @@ class MainWP_System {
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
-		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {		
-			
+		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {
+
 			/**
-			* Check permission level by hook mainwp_currentusercan of Team Control extension		
-			* 
-			* @param string  $cap_type group or type of capabilities 
-			* @param string $cap capabilities for current user
-			* @return bool true|false
-			*/			
+			 * Check permission level by hook mainwp_currentusercan of Team Control extension
+			 *
+			 * @param string $cap_type group or type of capabilities
+			 * @param string $cap capabilities for current user
+			 * @return bool true|false
+			 */
 			function mainwp_current_user_can( $cap_type = '', $cap ) {
 				global $current_user;
 
@@ -2125,7 +2125,7 @@ class MainWP_System {
 				if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					return true;
 				}
-				
+
 				if ( empty( $current_user ) ) {
 					if ( ! function_exists( 'wp_get_current_user' ) ) {
 						require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php';

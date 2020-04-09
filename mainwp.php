@@ -102,15 +102,15 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 
 	/**
-	 * Check permission level. 
+	 * Check permission level.
 	 * To compatible with extensions
 	 *
-	 * @param string  $cap_type group or type of capabilities 
+	 * @param string $cap_type group or type of capabilities
 	 * @param string $cap capabilities for current user
 	 * @return bool true|false
 	 */
 	function mainwp_current_user_can( $cap_type = '', $cap ) {
-		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {						
+		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {
 			return MainWP\Dashboard\mainwp_current_user_can( $cap_type, $cap );
 		}
 		return false;

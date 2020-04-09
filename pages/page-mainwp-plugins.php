@@ -601,7 +601,7 @@ class MainWP_Plugins {
 		);
 
 		$bulkActions = self::render_bulk_actions( $status );
-		
+
 		ob_start();
 
 		if ( 0 == count( $output->plugins ) ) {
@@ -618,28 +618,28 @@ class MainWP_Plugins {
 				$pluginsMainWP      = array();
 				$pluginsRealVersion = array();
 
-				foreach ( $output->plugins as $plugin ) {
-					$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
-					$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
-					$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
-					$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
-					$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
-					$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
-					$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
-					$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
+			foreach ( $output->plugins as $plugin ) {
+				$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
+				$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
+				$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
+				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
+				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
+				$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
+				$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
+				$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
 
-					if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
-						$sitePlugins[ $plugin['websiteid'] ] = array();
-					}
-
-					$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
+				if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
+					$sitePlugins[ $plugin['websiteid'] ] = array();
 				}
-				asort( $pluginsVersion );		
-				
+
+				$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
+			}
+				asort( $pluginsVersion );
+
 				self::render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion );
 
 		}
-		
+
 		$newOutput = ob_get_clean();
 		$result    = array(
 			'result'       => $newOutput,
@@ -682,9 +682,9 @@ class MainWP_Plugins {
 		$bulkActions = ob_get_clean();
 		return $bulkActions;
 	}
-	
+
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
-	?>
+		?>
 		<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
@@ -752,7 +752,7 @@ class MainWP_Plugins {
 			</script>
 		<?php
 	}
-	
+
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];

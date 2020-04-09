@@ -39,7 +39,7 @@ class MainWP_Recent_Posts {
 	 *
 	 * Build the recent posts list.
 	 *
-	 * @param	 
+	 * @param
 	 */
 	public static function render_sites() {
 
@@ -77,8 +77,8 @@ class MainWP_Recent_Posts {
 			}
 			MainWP_DB::free_result( $websites );
 		}
-	
-		self::render_top_grid();		
+
+		self::render_top_grid();
 		?>
 		<!-- Published List -->
 		<?php self::render_published_posts( $allPosts, $recent_number ); ?>		
@@ -110,11 +110,11 @@ class MainWP_Recent_Posts {
 				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
 			</div>
 		</div>
-		<?php		
+		<?php
 	}
 
 	public static function render_top_grid() {
-	?>
+		?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -139,12 +139,13 @@ class MainWP_Recent_Posts {
 		<div class="ui section hidden divider"></div>				
 		<?php
 	}
-	
+
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
 		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
-		
-	?>		
+
+		?>
+			
 		<div class="recent_posts_published ui tab active" data-tab="published">
 			<?php
 			if ( 0 == count( $recent_posts_published ) ) {
@@ -206,12 +207,12 @@ class MainWP_Recent_Posts {
 		</div>
 		<?php
 	}
-	
+
 	public static function render_draft_posts( $allPosts, $recent_number ) {
-		
-		$recent_posts_draft     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
-		$recent_posts_draft     = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
-	?>
+
+		$recent_posts_draft = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
+		$recent_posts_draft = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
+		?>
 	<div class="recent_posts_draft ui tab" data-tab="draft">
 			<?php
 			if ( 0 == count( $recent_posts_draft ) ) {
@@ -268,14 +269,14 @@ class MainWP_Recent_Posts {
 				<?php } ?>
 			</div>
 		</div>	
-	<?php
+		<?php
 	}
-	
+
 	public static function render_pending_posts( $allPosts, $recent_number ) {
-		$recent_posts_pending   = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
-		$recent_posts_pending   = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
-		
-	?>
+		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
+		$recent_posts_pending = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
+
+		?>
 		<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
 				<?php
 				if ( 0 == count( $recent_posts_pending ) ) {
@@ -334,13 +335,13 @@ class MainWP_Recent_Posts {
 		</div>
 		<?php
 	}
-	
+
 	public static function render_future_posts( $allPosts, $recent_number ) {
-	
-		$recent_posts_future    = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
-		$recent_posts_future    = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
-		
-	?>
+
+		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
+		$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
+
+		?>
 		<div class="recent_posts_future ui tab" data-tab="future">
 				<?php
 				if ( 0 == count( $recent_posts_future ) ) {
@@ -400,12 +401,12 @@ class MainWP_Recent_Posts {
 		</div>
 		<?php
 	}
-	
+
 	public static function render_trash_posts( $allPosts, $recent_number ) {
-		$recent_posts_trash     = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
-		$recent_posts_trash     = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
-		
-	?>
+		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
+		$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
+
+		?>
 		<div class="recent_posts_trash ui tab" data-tab="trash">
 				<?php
 				if ( 0 == count( $recent_posts_trash ) ) {
@@ -463,7 +464,7 @@ class MainWP_Recent_Posts {
 		</div>
 		<?php
 	}
-	
+
 	/**
 	 * Method publish()
 	 *

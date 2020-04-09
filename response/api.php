@@ -1,16 +1,15 @@
 <?php
 namespace MainWP\Dashboard;
-
 /**
  * MainWP Client Live Report Responder
  *
  * Legacy Client Reports Extension.
  *
- * @deprecated moved to external Extension ( unprepared SQL ok )
+ * @deprecated Moved to external Extension ( unprepared SQL ok )
  * @see MainWP-Client-Reports-Extension
  */
 
-// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, depredicated
+/** Include class-mainwp-creport.php i it exists. */
 function live_reports_responder_classes() {
 	if ( file_exists( '../class/class-mainwp-creport.php' ) ) {
 		include_once '../class/class-mainwp-creport.php';

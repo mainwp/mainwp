@@ -2,7 +2,7 @@
 /**
  * MainWP Security Issues page
  *
- * This page is used to manage child site security issues
+ * This page is used to manage child site security issues.
  *
  * @package MainWP/Securtiy_Issues
  */
@@ -12,7 +12,7 @@ namespace MainWP\Dashboard;
 /**
  * MainWP Security Issues Page
  *
- * Detect, display & fix known Security Issues
+ * Detect, display & fix known Security Issues.
  */
 class MainWP_Security_Issues {
 

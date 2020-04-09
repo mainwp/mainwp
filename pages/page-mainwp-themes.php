@@ -675,14 +675,14 @@ class MainWP_Themes {
 
 	/**
 	 * This method renders the Manage Themes Table
-	 * 
+	 *
 	 * @param mixed $sites List of sites.
 	 * @param mixed $themes List of themes.
-	 * @param mixed $siteThemes 
+	 * @param mixed $siteThemes
 	 * @param mixed $themesSlug
 	 * @param mixed $themesVersion Installed Theme version.
 	 * @param mixed $themesRealVersion Current Theme version.
-	 * 
+	 *
 	 * @return html Output the table.
 	 */
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
@@ -755,9 +755,9 @@ class MainWP_Themes {
 
 	/**
 	 * Render the bulk actions UI.
-	 * 
+	 *
 	 * @param mixed $status Theme status.
-	 * 
+	 *
 	 * @return mixed $bulkActions
 	 */
 	public static function render_bulk_actions( $status ) {
@@ -1249,7 +1249,6 @@ class MainWP_Themes {
 	 * Render the All Themes Table.
 	 *
 	 * @param null $output
-	 * 
 	 */
 	public static function render_all_themes_table( $output = null ) {
 		$keyword       = null;
@@ -1374,12 +1373,12 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Render all themes html. 
-	 * 
+	 * Render all themes html.
+	 *
 	 * @param mixed $themes Themes list.
 	 * @param mixed $search_status Search status.
 	 * @param mixed $trustedThemes Trusted themes.
-	 * @param mixed $trustedThemesNotes Trusted themes notes. 
+	 * @param mixed $trustedThemesNotes Trusted themes notes.
 	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
 	 */
 	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
@@ -1516,8 +1515,8 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Render globally Ignored themes. 
-	 * 
+	 * Render globally Ignored themes.
+	 *
 	 * @param mixed $ignoredThemes Encoded ignored themes.
 	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
 	 */
@@ -1567,7 +1566,7 @@ class MainWP_Themes {
 
 	/**
 	 * Render ignored sites.
-	 * 
+	 *
 	 * @param mixed $cnt
 	 * @param mixed $websites Websites list.
 	 */
@@ -1681,7 +1680,7 @@ class MainWP_Themes {
 
 	/**
 	 * Render the global ignored themes list.
-	 * 
+	 *
 	 * @param mixed $ignoredThemes Encoded ignored themes list.
 	 * @param mixed $decodedIgnoredThemes Decoded ignored themes list.
 	 */
@@ -1731,7 +1730,7 @@ class MainWP_Themes {
 
 	/**
 	 * Render ignored sites list.
-	 * 
+	 *
 	 * @param mixed $cnt
 	 * @param mixed $websites Websites list.
 	 */

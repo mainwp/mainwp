@@ -38,7 +38,7 @@ class MainWP_Bulk_Add {
 	public static function posting_bulk_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( isset( $information['added'] ) ) {
 				$output->ok[ $website->id ] = '1';

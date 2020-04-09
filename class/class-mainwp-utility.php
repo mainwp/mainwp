@@ -176,6 +176,7 @@ class MainWP_Utility {
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
+	// phpcs:ignore -- complex method
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -361,131 +362,55 @@ class MainWP_Utility {
 	 * @return mixed null|Error String.
 	 */
 	protected static function get_http_status_error_string( $httpCode ) {
-		if ( 100 === $httpCode ) {
-			return 'Continue';
-		}
-		if ( 101 === $httpCode ) {
-			return 'Switching Protocols';
-		}
-		if ( 200 === $httpCode ) {
-			return 'OK';
-		}
-		if ( 201 === $httpCode ) {
-			return 'Created';
-		}
-		if ( 202 === $httpCode ) {
-			return 'Accepted';
-		}
-		if ( 203 === $httpCode ) {
-			return 'Non-Authoritative Information';
-		}
-		if ( 204 === $httpCode ) {
-			return 'No Content';
-		}
-		if ( 205 === $httpCode ) {
-			return 'Reset Content';
-		}
-		if ( 206 === $httpCode ) {
-			return 'Partial Content';
-		}
-		if ( 300 === $httpCode ) {
-			return 'Multiple Choices';
-		}
-		if ( 301 === $httpCode ) {
-			return 'Moved Permanently';
-		}
-		if ( 302 === $httpCode ) {
-			return 'Found';
-		}
-		if ( 303 === $httpCode ) {
-			return 'See Other';
-		}
-		if ( 304 === $httpCode ) {
-			return 'Not Modified';
-		}
-		if ( 305 === $httpCode ) {
-			return 'Use Proxy';
-		}
-		if ( 306 === $httpCode ) {
-			return '(Unused)';
-		}
-		if ( 307 === $httpCode ) {
-			return 'Temporary Redirect';
-		}
-		if ( 400 === $httpCode ) {
-			return 'Bad Request';
-		}
-		if ( 401 === $httpCode ) {
-			return 'Unauthorized';
-		}
-		if ( 402 === $httpCode ) {
-			return 'Payment Required';
-		}
-		if ( 403 === $httpCode ) {
-			return 'Forbidden';
-		}
-		if ( 404 === $httpCode ) {
-			return 'Not Found';
-		}
-		if ( 405 === $httpCode ) {
-			return 'Method Not Allowed';
-		}
-		if ( 406 === $httpCode ) {
-			return 'Not Acceptable';
-		}
-		if ( 407 === $httpCode ) {
-			return 'Proxy Authentication Required';
-		}
-		if ( 408 === $httpCode ) {
-			return 'Request Timeout';
-		}
-		if ( 409 === $httpCode ) {
-			return 'Conflict';
-		}
-		if ( 410 === $httpCode ) {
-			return 'Gone';
-		}
-		if ( 411 === $httpCode ) {
-			return 'Length Required';
-		}
-		if ( 412 === $httpCode ) {
-			return 'Precondition Failed';
-		}
-		if ( 413 === $httpCode ) {
-			return 'Request Entity Too Large';
-		}
-		if ( 414 === $httpCode ) {
-			return 'Request-URI Too Long';
-		}
-		if ( 415 === $httpCode ) {
-			return 'Unsupported Media Type';
-		}
-		if ( 416 === $httpCode ) {
-			return 'Requested Range Not Satisfiable';
-		}
-		if ( 407 === $httpCode ) {
-			return 'Expectation Failed';
-		}
-		if ( 500 === $httpCode ) {
-			return 'Internal Server Error';
-		}
-		if ( 501 === $httpCode ) {
-			return 'Not Implemented';
-		}
-		if ( 502 === $httpCode ) {
-			return 'Bad Gateway';
-		}
-		if ( 503 === $httpCode ) {
-			return 'Service Unavailable';
-		}
-		if ( 504 === $httpCode ) {
-			return 'Gateway Timeout';
-		}
-		if ( 505 === $httpCode ) {
-			return 'HTTP Version Not Supported';
-		}
 
-		return null;
+		$codeString = array(
+			100 => 'Continue',
+			101 => 'Switching Protocols',
+			200 => 'OK',
+			201 => 'Created',
+			202 => 'Accepted',
+			203 => 'Non-Authoritative Information',
+			204 => 'No Content',
+			205 => 'Reset Content',
+			206 => 'Partial Content',
+
+			300 => 'Multiple Choices',
+			301 => 'Moved Permanently',
+			302 => 'Found',
+			303 => 'See Other',
+			304 => 'Not Modified',
+			305 => 'Use Proxy',
+			306 => '(Unused)',
+			307 => 'Temporary Redirect',
+
+			400 => 'Bad Request',
+			401 => 'Unauthorized',
+			402 => 'Payment Required',
+			403 => 'Forbidden',
+			404 => 'Not Found',
+			405 => 'Method Not Allowed',
+			406 => 'Not Acceptable',
+			407 => 'Proxy Authentication Required',
+			408 => 'Request Timeout',
+			409 => 'Conflict',
+			410 => 'Gone',
+			411 => 'Length Required',
+			412 => 'Precondition Failed',
+			413 => 'Request Entity Too Large',
+			414 => 'Request-URI Too Long',
+			415 => 'Unsupported Media Type',
+			416 => 'Requested Range Not Satisfiable',
+			417 => 'Expectation Failed',
+
+			500 => 'Internal Server Error',
+			501 => 'Not Implemented',
+			502 => 'Bad Gateway',
+			503 => 'Service Unavailable',
+			504 => 'Gateway Timeout',
+			505 => 'HTTP Version Not Supported',
+		);
+
+		return isset( $codeString[ $httpCode ] ) ? $codeString[ $httpCode ] : null;
 	}
 
 	/**
@@ -571,49 +496,31 @@ class MainWP_Utility {
 			return false;
 		}
 
-		$installed = false;
-		switch ( $what ) {
-			case 'backupbuddy':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupbuddy/backupbuddy.php' == strtolower( $plugin['slug'] ) ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'backupwp':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupwordpress/backupwordpress.php' == $plugin['slug'] ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'backwpup':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 0 === strcmp( $plugin['slug'], 'backwpup/backwpup.php' ) ) || 0 === strcmp( $plugin['slug'], 'backwpup-pro/backwpup.php' ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'updraftplus':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'updraftplus/updraftplus.php' == $plugin['slug'] ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
+		$checks = array(
+			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
+			'backupwordpress' => 'backupwordpress/backupwordpress.php',
+			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus'     => 'updraftplus/updraftplus.php',
+
+		);
+
+		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
+
+		if ( empty( $slug ) ) {
+			return false;
 		}
+
+		$installed = false;
+
+		foreach ( $plugins as $plugin ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+				if ( $plugin['active'] ) {
+					$installed = true;
+				}
+				break;
+			}
+		}
+
 		return $installed;
 	}
 
@@ -684,12 +591,12 @@ class MainWP_Utility {
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
-				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			} else {
 				$data['nossl'] = 1;
 				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
 			}
-			$data['mainwpsignature'] = base64_encode( $signature );
+			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 			if ( 5 !== $recent_number ) {
@@ -719,12 +626,12 @@ class MainWP_Utility {
 			$nonce = wp_rand( 0, 9999 );
 			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$nossl = 0;
-				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) );
+				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			} else {
 				$nossl     = 1;
 				$signature = md5( $paramValue . $nonce . $website->nosslkey );
 			}
-			$signature = base64_encode( $signature );
+			$signature = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			$params = array(
 				'login_required'     => 1,
@@ -1265,55 +1172,7 @@ class MainWP_Utility {
 			'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
 		);
 
-		$request_update = false;
-		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
-
-			$update_type = '';
-
-			$check_premi_plugins = array();
-			$check_premi_themes  = array();
-
-			if ( 'stats' === $what ) {
-				if ( '' != $website->plugins ) {
-					$check_premi_plugins = json_decode( $website->plugins, 1 );
-				}
-				if ( '' != $website->themes ) {
-					$check_premi_themes = json_decode( $website->themes, 1 );
-				}
-			} elseif ( 'upgradeplugintheme' === $what ) {
-				$update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
-				if ( 'plugin' === $update_type ) {
-					if ( '' != $website->plugins ) {
-						$check_premi_plugins = json_decode( $website->plugins, 1 );
-					}
-				} elseif ( 'theme' === $update_type ) {
-					if ( '' != $website->themes ) {
-						$check_premi_themes = json_decode( $website->themes, 1 );
-					}
-				}
-			}
-
-			if ( is_array( $check_premi_plugins ) && 0 < count( $check_premi_plugins ) ) {
-				if ( self::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
-					self::try_to_detect_premiums_update( $website, 'plugin' );
-				}
-			}
-
-			if ( is_array( $check_premi_themes ) && 0 < count( $check_premi_themes ) ) {
-				if ( self::check_premium_updates( $check_premi_themes, 'theme' ) ) {
-					self::try_to_detect_premiums_update( $website, 'theme' );
-				}
-			}
-
-			if ( 'upgradeplugintheme' === $what ) {
-				if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-					if ( self::check_request_update_premium( $params['list'], $update_type ) ) {
-						self::request_premiums_update( $website, $update_type, $params['list'] );
-						$request_update = true;
-					}
-				}
-			}
-		}
+		$request_update = self::maybe_request_premium_updates( $website, $what, $params );
 
 		if ( isset( $rawResponse ) && $rawResponse ) {
 			$others['raw_response'] = 'yes';
@@ -1389,6 +1248,61 @@ class MainWP_Utility {
 		return $information;
 	}
 
+	// phpcs:ignore -- not quite complex method
+	public static function maybe_request_premium_updates( $website, $what, $params ) {
+		$request_update = false;
+		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
+
+			$update_type = '';
+
+			$check_premi_plugins = array();
+			$check_premi_themes  = array();
+
+			if ( 'stats' === $what ) {
+				if ( '' != $website->plugins ) {
+					$check_premi_plugins = json_decode( $website->plugins, 1 );
+				}
+				if ( '' != $website->themes ) {
+					$check_premi_themes = json_decode( $website->themes, 1 );
+				}
+			} elseif ( 'upgradeplugintheme' === $what ) {
+				$update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
+				if ( 'plugin' === $update_type ) {
+					if ( '' != $website->plugins ) {
+						$check_premi_plugins = json_decode( $website->plugins, 1 );
+					}
+				} elseif ( 'theme' === $update_type ) {
+					if ( '' != $website->themes ) {
+						$check_premi_themes = json_decode( $website->themes, 1 );
+					}
+				}
+			}
+
+			if ( is_array( $check_premi_plugins ) && 0 < count( $check_premi_plugins ) ) {
+				if ( self::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
+					self::try_to_detect_premiums_update( $website, 'plugin' );
+				}
+			}
+
+			if ( is_array( $check_premi_themes ) && 0 < count( $check_premi_themes ) ) {
+				if ( self::check_premium_updates( $check_premi_themes, 'theme' ) ) {
+					self::try_to_detect_premiums_update( $website, 'theme' );
+				}
+			}
+
+			if ( 'upgradeplugintheme' === $what ) {
+				if ( 'plugin' === $update_type || 'theme' === $update_type ) {
+					if ( self::check_request_update_premium( $params['list'], $update_type ) ) {
+						self::request_premiums_update( $website, $update_type, $params['list'] );
+						$request_update = true;
+					}
+				}
+			}
+		}
+
+		return $request_update;
+	}
+
 	public static function fetch_url_not_authed( $url, $admin, $what, $params = null, $pForceFetch = false,
 									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		if ( empty( $params ) ) {
@@ -1421,25 +1335,26 @@ class MainWP_Utility {
 				$tmpUrl .= 'wp-admin/admin-ajax.php';
 			}
 
-			return self::fetch_a_url( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+			return self::m_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 		} catch ( Exception $e ) {
 			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
 				throw $e;
 			}
 
 			try {
-				return self::fetch_a_url( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+				return self::m_fetch_url( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 			} catch ( Exception $ex ) {
 				throw $e;
 			}
 		}
 	}
 
-	public static function fetch_a_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	// phpcs:ignore -- complex method
+	public static function m_fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
@@ -1631,7 +1546,7 @@ class MainWP_Utility {
 
 		self::end_session();
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'Executing handlers' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Executing handlers' );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1674,9 +1589,9 @@ class MainWP_Utility {
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'post data: [' . print_r( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'post data: [' . print_r( $postdata, 1 ) . ']' );
 		}
 
 		if ( ( false === $data ) && ( 0 === $http_status ) ) {
@@ -1687,14 +1602,14 @@ class MainWP_Utility {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
-			$information = self::get_child_response( base64_decode( $result ) );
+			$information = self::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'information: [OK]' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 === $http_status && ! empty( $err ) ) {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( $raw_response ) {
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_a_url', 'Response: [RAW]' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Response: [RAW]' );
 			return $data;
 		} else {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
@@ -1831,7 +1746,7 @@ class MainWP_Utility {
 
 		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ),
+				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			);
 		}
 
@@ -2282,7 +2197,7 @@ class MainWP_Utility {
 	}
 
 	public static function get_google_count( $domain ) {
-		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
+		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&filter=0&q=site:' . rawurlencode( $domain ) );
 		$data    = json_decode( $content );
 
 		if ( empty( $data ) ) {
@@ -2451,11 +2366,11 @@ class MainWP_Utility {
 			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
 		}
 
-		return base64_encode( join( '', $stra ) );
+		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 	}
 
 	public static function decrypt( $str, $pass ) {
-		$str  = base64_decode( $str );
+		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
 		foreach ( $stra as $k => $v ) {
@@ -3437,7 +3352,6 @@ EOT;
 	}
 
 	public static function get_child_response( $data ) {
-		// to compatible.
 		if ( is_serialized( $data ) ) {
 			return unserialize( $data, array( 'allowed_classes' => false ) );
 		} else {

@@ -281,10 +281,9 @@ class MainWP_System {
 			foreach ( $options as $option ) {
 				$query .= "'" . $option . "', ";
 			}
-			$query  = substr( $query, 0, strlen( $query ) - 2 );
-			$query .= ')';
-			// phpcs:ignore -- unprepared SQL ok.
-			$alloptions_db	 = $wpdb->get_results( $query );
+			$query         = substr( $query, 0, strlen( $query ) - 2 );
+			$query .= ")"; // phpcs:ignore -- ignore double quotes auto-correction.
+			$alloptions_db	 = $wpdb->get_results( $query ); // phpcs:ignore -- unprepared SQL ok.
 			$wpdb->suppress_errors( $suppress );
 			if ( ! is_array( $alloptions ) ) {
 				$alloptions = array();
@@ -310,39 +309,23 @@ class MainWP_System {
 	public function init_cron() {
 
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
-		$sched     = wp_next_scheduled( 'mainwp_cronstats_action' );
-		if ( false == $sched ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'hourly', 'mainwp_cronstats_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
-			}
-		}
+
+		$jobs = array(
+			'mainwp_cronstats_action'        => 'hourly',
+			'mainwp_cronpingchilds_action'   => 'daily',
+			'mainwp_cronupdatescheck_action' => 'minutely',
+		);
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
-			if ( false == $sched ) {
-				if ( $useWPCron ) {
-					wp_schedule_event( time(), 'hourly', 'mainwp_cronbackups_action' );
-				}
-			} else {
-				if ( ! $useWPCron ) {
-					wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
-				}
-			}
-			$sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
-			if ( false == $sched ) {
-				if ( $useWPCron ) {
-					wp_schedule_event( time(), '5minutely', 'mainwp_cronbackups_continue_action' );
-				}
-			} else {
-				if ( ! $useWPCron ) {
-					wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
-				}
-			}
+			$jobs = array_merge(
+				$jobs,
+				array(
+					'mainwp_cronbackups_action'          => 'hourly',
+					'mainwp_cronbackups_continue_action' => '5minutely',
+				)
+			);
 		} else {
+			// unset schedules.
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
 			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
@@ -352,28 +335,21 @@ class MainWP_System {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
 			}
 		}
-		$sched = wp_next_scheduled( 'mainwp_cronremotedestinationcheck_action' );
-		if ( false != $sched ) {
-			wp_unschedule_event( $sched, 'mainwp_cronremotedestinationcheck_action' );
+
+		foreach ( $jobs as $recur => $hook ) {
+			$this->cron_set( $useWPCron, $recur, $hook );
 		}
-		$sched = wp_next_scheduled( 'mainwp_cronpingchilds_action' );
+	}
+
+	public function cron_set( $useWPCron, $recurrence, $cron_hook ) {
+		$sched = wp_next_scheduled( $cron_hook );
 		if ( false == $sched ) {
 			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'daily', 'mainwp_cronpingchilds_action' );
+				wp_schedule_event( time(), $recurrence, $cron_hook );
 			}
 		} else {
 			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronpingchilds_action' );
-			}
-		}
-		$sched = wp_next_scheduled( 'mainwp_cronupdatescheck_action' );
-		if ( false == $sched ) {
-			if ( $useWPCron ) {
-				wp_schedule_event( time(), 'minutely', 'mainwp_cronupdatescheck_action' );
-			}
-		} else {
-			if ( ! $useWPCron ) {
-				wp_unschedule_event( $sched, 'mainwp_cronupdatescheck_action' );
+				wp_unschedule_event( $sched, $cron_hook );
 			}
 		}
 	}
@@ -474,6 +450,26 @@ class MainWP_System {
 			$current_options = array();
 		}
 
+		$this->render_notice_version();
+
+		$this->render_notice_config_warning();
+
+		if ( is_multisite() && ( ! isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
+			$this->render_notice_multi_sites();
+		}
+
+		if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {
+			if ( self::is_mainwp_pages() ) {
+				if ( ! MainWP_Plugins::check_auto_update_plugin( 'mainwp-child/mainwp-child.php' ) ) {
+					$this->render_notice_trust_update();
+				}
+			}
+		}
+
+		$this->check_rating_notice( $current_options );
+	}
+
+	public function render_notice_version() {
 		$phpver = phpversion();
 		if ( version_compare( $phpver, '5.5', '<' ) ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'phpver_5_5' ) ) {
@@ -486,7 +482,9 @@ class MainWP_System {
 				<?php
 			}
 		}
+	}
 
+	public function render_notice_config_warning() {
 		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
 				if ( isset( $_GET['page'] ) && 'SettingsAdvanced' != $_GET['page'] ) {
@@ -500,33 +498,19 @@ class MainWP_System {
 				}
 			}
 		}
+	}
 
-		if ( is_multisite() && ( ! isset( $current_options['hide_multi_site_notice'] ) || empty( $current_options['hide_multi_site_notice'] ) ) ) {
-			?>
-			<div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
-				<i class="exclamation circle icon"></i>
-				<?php esc_html_e( 'MainWP plugin is not designed nor fully tested on WordPress Multisite installations. Various features may not work properly. We highly recommend installing it on a single site installation!', 'mainwp' ); ?>
-				<i class="close icon mainwp-notice-dismiss" notice-id="multi_site"></i>
-			</div>
-			<?php
-		}
+	public function render_notice_multi_sites() {
+		?>
+		<div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
+			<i class="exclamation circle icon"></i>
+			<?php esc_html_e( 'MainWP plugin is not designed nor fully tested on WordPress Multisite installations. Various features may not work properly. We highly recommend installing it on a single site installation!', 'mainwp' ); ?>
+			<i class="close icon mainwp-notice-dismiss" notice-id="multi_site"></i>
+		</div>
+		<?php
+	}
 
-		if ( ! isset( $current_options['trust_child'] ) || empty( $current_options['trust_child'] ) ) {
-			if ( self::is_mainwp_pages() ) {
-				if ( ! MainWP_Plugins::check_auto_update_plugin( 'mainwp-child/mainwp-child.php' ) ) {
-					?>
-					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
-						<i class="info circle icon"></i>
-						<div class="content">
-							<?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?> <a id="mainwp_btn_autoupdate_and_trust" class="ui mini yellow button" href="#"><?php esc_html_e( 'Turn On', 'mainwp' ); ?></a>
-						</div>
-						<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
-					</div>
-					<?php
-				}
-			}
-		}
-
+	public function check_rating_notice( $current_options ) {
 		$display_request1 = false;
 		$display_request2 = false;
 
@@ -564,6 +548,18 @@ class MainWP_System {
 		} elseif ( $display_request2 ) {
 			$this->render_rating_notice_2();
 		}
+	}
+
+	public function render_notice_trust_update() {
+		?>
+		<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
+			<i class="info circle icon"></i>
+			<div class="content">
+				<?php esc_html_e( 'You have not set your MainWP Child plugins for auto updates, this is highly recommended!', 'mainwp' ); ?> <a id="mainwp_btn_autoupdate_and_trust" class="ui mini yellow button" href="#"><?php esc_html_e( 'Turn On', 'mainwp' ); ?></a>
+			</div>
+			<i class="close icon mainwp-events-notice-dismiss" notice="trust_child"></i>
+		</div>
+		<?php
 	}
 
 	public function render_rating_notice_1() {
@@ -660,6 +656,7 @@ class MainWP_System {
 		return $this->current_version;
 	}
 
+	// phpcs:ignore -- complex method
 	public function check_update_custom( $transient ) {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions::get_extensions( array( 'activated' => true ) );
@@ -2390,56 +2387,8 @@ class MainWP_System {
 		}
 
 		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
-			$update_screen_options = false;
-			if ( 'MainWPTools' === $_GET['page'] ) {
-				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
-					$update_screen_options = true;
-					MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
-					MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
-
-					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
-					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
-					if ( ! $enabled_twit ) {
-						MainWP_Twitter::clear_all_twitter_messages();
-					}
-				}
-			} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
-				if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
-					$update_screen_options = true;
-				}
-			}
-
-			if ( $update_screen_options ) {
-				$hide_wids = array();
-				if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
-					foreach ( $_POST['mainwp_hide_widgets'] as $value ) {
-						$hide_wids[] = $value;
-					}
-				}
-				$user = wp_get_current_user();
-				if ( $user ) {
-					update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
-				}
-
-				MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_show_usersnap', ( ! isset( $_POST['mainwp_show_usersnap'] ) ? 0 : time() ) );
-				MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
-			}
-
-			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
-				$hide_cols = array();
-				foreach ( $_POST as $key => $val ) {
-					if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
-						$col         = str_replace( 'mainwp_hide_column_', '', $key );
-						$hide_cols[] = $col;
-					}
-				}
-				$user = wp_get_current_user();
-				if ( $user ) {
-					update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
-					update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
-				}
-			}
+			$this->handle_mainwp_tools_settings();
+			$this->handle_manage_sites_screen_settings();
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
@@ -2458,16 +2407,61 @@ class MainWP_System {
 				}
 				wp_safe_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
 				exit();
-			} elseif ( wp_verify_nonce( $_POST['wp_nonce'], 'PluginAutoUpdate' ) ) {
-				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
-				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
-				wp_safe_redirect( admin_url( 'admin.php?page=PluginsAutoUpdate&message=saved' ) );
-				exit();
-			} elseif ( wp_verify_nonce( $_POST['wp_nonce'], 'ThemeAutoUpdate' ) ) {
-				$val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_themeAutomaticDailyUpdate'] );
-				MainWP_Utility::update_option( 'mainwp_themeAutomaticDailyUpdate', $val );
-				wp_safe_redirect( admin_url( 'admin.php?page=ThemesAutoUpdate&message=saved' ) );
-				exit();
+			}
+		}
+	}
+
+	public function handle_mainwp_tools_settings() {
+		$update_screen_options = false;
+		if ( 'MainWPTools' === $_GET['page'] ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
+				$update_screen_options = true;
+				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
+				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+
+				$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
+				MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
+				if ( ! $enabled_twit ) {
+					MainWP_Twitter::clear_all_twitter_messages();
+				}
+			}
+		} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
+				$update_screen_options = true;
+			}
+		}
+
+		if ( $update_screen_options ) {
+			$hide_wids = array();
+			if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
+				foreach ( $_POST['mainwp_hide_widgets'] as $value ) {
+					$hide_wids[] = $value;
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
+			}
+
+			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
+			MainWP_Utility::update_option( 'mainwp_show_usersnap', ( ! isset( $_POST['mainwp_show_usersnap'] ) ? 0 : time() ) );
+			MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
+		}
+	}
+
+	public function handle_manage_sites_screen_settings() {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
+			$hide_cols = array();
+			foreach ( $_POST as $key => $val ) {
+				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
+					$col         = str_replace( 'mainwp_hide_column_', '', $key );
+					$hide_cols[] = $col;
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
+				update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
 			}
 		}
 	}

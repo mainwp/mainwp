@@ -709,6 +709,7 @@ class MainWP_Post {
 		<?php
 	}
 
+	// phpcs:ignore -- complex function
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
 		MainWP_Cache::init_cache( 'Post' );
 
@@ -834,10 +835,11 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
+	// phpcs:ignore -- complex method
 	public static function posts_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
 				$output->errors[ $website->id ] = $posts['error'];
@@ -905,7 +907,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank">
 										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -1354,6 +1356,7 @@ class MainWP_Post {
 		}
 	}
 
+	// phpcs:ignore -- not quite comple method
 	public static function do_meta_boxes( $screen, $context, $object ) {
 		global $wp_meta_boxes;
 		static $already_sorted = false;
@@ -1620,6 +1623,7 @@ class MainWP_Post {
 				self::do_meta_boxes( null, 'advanced', $post );
 
 				do_action( 'add_meta_boxes', $post_type, $post );
+
 				self::do_meta_boxes( $post_type, 'normal', $post );
 
 				?>
@@ -1636,172 +1640,12 @@ class MainWP_Post {
 						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
 					</div>
 					<div class="ui divider"></div>
-
-		<?php if ( 'bulkpost' === $post_type ) { ?>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
 					<?php
-					$categories = array();
-					if ( $post ) {
-						$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) );
-						$categories = explode( ',', $categories );
+					if ( 'bulkpost' === $post_type ) {
+						self::render_categories( $post );
 					}
-					if ( ! is_array( $categories ) ) {
-						$categories = array();
-					}
-
-					$uncat     = __( 'Uncategorized', 'mainwp' );
-					$post_only = false;
-					if ( $post ) {
-						$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
-					}
+					self::render_post_fields( $post, $post_type );
 					?>
-						<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
-						<div class="field">
-							<div class="ui checkbox">
-								<input type="checkbox" name="post_only_existing" id="post_only_existing" value="1" <?php echo $post_only ? 'checked' : ''; ?>>
-								<label><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?></label>
-							</div>
-						</div>
-						<div class="field">
-							<select name="post_category[]" id="categorychecklist" multiple="" class="ui fluid dropdown">
-								<option value=""><?php esc_html_e( 'Select categories', 'mainwp' ); ?></option>
-								<?php if ( ! in_array( $uncat, $categories ) ) : ?>
-								<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
-								<?php endif; ?>
-								<?php foreach ( $categories as $cat ) : ?>
-									<?php
-									if ( empty( $cat ) ) {
-										continue;
-									}
-									$cat_name = rawurldecode( $cat );
-									?>
-								<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory"><?php echo esc_html( $cat_name ); ?></option>
-								<?php endforeach; ?>
-							</select>
-							<?php
-							$init_cats = '';
-							foreach ( $categories as $cat ) {
-								$init_cats .= "'" . esc_attr( $cat ) . "',";
-							}
-							$init_cats = rtrim( $init_cats, ',' );
-							?>
-							<script type="text/javascript">
-								jQuery( document ).ready( function () {
-									jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; ?>] );
-								} );
-							</script>
-						</div>
-						<div class="field">
-							<a href="#" id="category-add-toggle" class="ui button fluid mini"><?php esc_html_e( 'Create New Category', 'mainwp' ); ?></a>
-						</div>
-						<div class="field" id="newcategory-field" style="display:none">
-							<input type="text" name="newcategory" id="newcategory" value="">
-						</div>
-						<div class="field" id="mainwp-category-add-submit-field" style="display:none">
-							<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
-						</div>
-					</div>
-					<div class="ui divider"></div>
-		<?php } ?>
-					<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
-						<?php echo '<div class="inside">'; ?>
-					<?php self::post_thumbnail_meta_box( $post ); ?>
-						<?php echo '</div>'; ?>
-					</div>
-					<div class="ui divider"></div>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
-						<div class="field">
-							<div class="ui checkbox">
-								<input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open' ); ?>>
-								<label><?php esc_html_e( 'Allow comments', 'mainwp' ); ?></label>
-							</div>
-							<div class="ui checkbox">
-								<input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked( $post->ping_status, 'open' ); ?> >
-								<label><?php esc_html_e( 'Allow trackbacks and pingbacks', 'mainwp' ); ?></label>
-							</div>
-						</div>
-					</div>
-					<div class="ui divider"></div>
-					<div class="mainwp-search-options">
-						<div class="ui header"><?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
-						<div class="field">
-							<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
-							<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
-								<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
-								<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
-							</select>
-						</div>
-
-						<?php
-						if ( 'private' === $post->post_status ) {
-							$post->post_password = '';
-							$visibility          = 'private';
-							$visibility_trans    = __( 'Private', 'mainwp' );
-						} elseif ( ! empty( $post->post_password ) ) {
-							$visibility       = 'password';
-							$visibility_trans = __( 'Password protected', 'mainwp' );
-						} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
-							$visibility       = 'public';
-							$visibility_trans = __( 'Public, Sticky', 'mainwp' );
-						} else {
-							$visibility       = 'public';
-							$visibility_trans = __( 'Public', 'mainwp' );
-						}
-						?>
-
-						<div class="grouped fields">
-							<label><?php esc_html_e( 'Visibility', 'mainwp' ); ?></label>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( 'public' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Public', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field" id="sticky-field">
-								<div class="ui checkbox">
-									<input type="checkbox" id="sticky" name="sticky" value="sticky"  <?php checked( is_sticky( $post->ID ) ); ?>  />
-									<label><?php esc_html_e( 'Stick this post to the front page', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Password protected', 'mainwp' ); ?></label>
-								</div>
-							</div>
-							<div class="field" id="post_password-field" <?php echo ( 'password' === $visibility ) ? '' : 'style="display:none"'; ?>>
-								<label><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
-								<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr( $post->post_password ); ?>" />
-							</div>
-							<div class="field">
-								<div class="ui radio checkbox">
-									<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( 'private' === $visibility ) ? 'checked="checked"' : ''; ?>>
-									<label><?php esc_html_e( 'Private', 'mainwp' ); ?></label>
-								</div>
-							</div>
-						</div>
-						<div class="field">
-							<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
-							<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
-								<option value="immediately" selected="selected"><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
-								<option value="schedule"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
-							</select>
-						</div>
-
-						<div class="field" id="post_timestamp_value-field" style="display:none">
-							<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
-								<div class="ui input left icon">
-									<i class="calendar icon"></i>
-									<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
-								</div>
-							</div>
-						</div>
-						<div style="display:none" id="timestampdiv">
-							<?php self::touch_time( $post ); ?>
-						</div>
-					</div>
 					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
 					<div class="ui divider"></div>
 					<?php do_action( 'mainwp_edit_posts_before_submit_button' ); ?>
@@ -1825,6 +1669,179 @@ class MainWP_Post {
 		</div>
 		<?php
 		self::render_footer( 'BulkAdd' );
+	}
+
+	public static function render_categories( $post ) {
+		?>
+		<div class="mainwp-search-options">
+			<div class="ui header"><?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
+		<?php
+		$categories = array();
+		if ( $post ) {
+			$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$categories = explode( ',', $categories );
+		}
+		if ( ! is_array( $categories ) ) {
+			$categories = array();
+		}
+
+		$uncat     = __( 'Uncategorized', 'mainwp' );
+		$post_only = false;
+		if ( $post ) {
+			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
+		}
+		?>
+			<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
+			<div class="field">
+				<div class="ui checkbox">
+					<input type="checkbox" name="post_only_existing" id="post_only_existing" value="1" <?php echo $post_only ? 'checked' : ''; ?>>
+					<label><?php esc_html_e( 'Post only to existing categories', 'mainwp' ); ?></label>
+				</div>
+			</div>
+			<div class="field">
+				<select name="post_category[]" id="categorychecklist" multiple="" class="ui fluid dropdown">
+					<option value=""><?php esc_html_e( 'Select categories', 'mainwp' ); ?></option>
+					<?php if ( ! in_array( $uncat, $categories ) ) : ?>
+					<option value="<?php esc_attr_e( 'Uncategorized', 'mainwp' ); ?>" class="sitecategory"><?php esc_html_e( 'Uncategorized', 'mainwp' ); ?></option>
+					<?php endif; ?>
+					<?php foreach ( $categories as $cat ) : ?>
+						<?php
+						if ( empty( $cat ) ) {
+							continue;
+						}
+						$cat_name = rawurldecode( $cat );
+						?>
+					<option value="<?php echo esc_attr( $cat ); ?>" class="sitecategory"><?php echo esc_html( $cat_name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php
+				$init_cats = '';
+				foreach ( $categories as $cat ) {
+					$init_cats .= "'" . esc_attr( $cat ) . "',";
+				}
+				$init_cats = rtrim( $init_cats, ',' );
+				?>
+				<script type="text/javascript">
+					jQuery( document ).ready( function () {
+						jQuery( '#categorychecklist' ).dropdown( 'set selected', [<?php echo $init_cats; ?>] );
+					} );
+				</script>
+			</div>
+			<div class="field">
+				<a href="#" id="category-add-toggle" class="ui button fluid mini"><?php esc_html_e( 'Create New Category', 'mainwp' ); ?></a>
+			</div>
+			<div class="field" id="newcategory-field" style="display:none">
+				<input type="text" name="newcategory" id="newcategory" value="">
+			</div>
+			<div class="field" id="mainwp-category-add-submit-field" style="display:none">
+				<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
+			</div>
+		</div>
+		<div class="ui divider"></div>		
+		<?php
+	}
+
+	public static function render_post_fields( $post, $post_type ) {
+		?>
+		<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
+				<?php echo '<div class="inside">'; ?>
+			<?php self::post_thumbnail_meta_box( $post ); ?>
+				<?php echo '</div>'; ?>
+			</div>
+			<div class="ui divider"></div>
+			<div class="mainwp-search-options">
+				<div class="ui header"><?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
+				<div class="field">
+					<div class="ui checkbox">
+						<input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open' ); ?>>
+						<label><?php esc_html_e( 'Allow comments', 'mainwp' ); ?></label>
+					</div>
+					<div class="ui checkbox">
+						<input type="checkbox" name="ping_status" id="ping_status" value="open" <?php checked( $post->ping_status, 'open' ); ?> >
+						<label><?php esc_html_e( 'Allow trackbacks and pingbacks', 'mainwp' ); ?></label>
+					</div>
+				</div>
+			</div>
+			<div class="ui divider"></div>
+			<div class="mainwp-search-options">
+				<div class="ui header"><?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
+				<div class="field">
+					<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
+					<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
+						<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
+						<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
+					</select>
+				</div>
+
+				<?php
+				if ( 'private' === $post->post_status ) {
+					$post->post_password = '';
+					$visibility          = 'private';
+					$visibility_trans    = __( 'Private', 'mainwp' );
+				} elseif ( ! empty( $post->post_password ) ) {
+					$visibility       = 'password';
+					$visibility_trans = __( 'Password protected', 'mainwp' );
+				} elseif ( 'post' === $post_type && is_sticky( $post->ID ) ) {
+					$visibility       = 'public';
+					$visibility_trans = __( 'Public, Sticky', 'mainwp' );
+				} else {
+					$visibility       = 'public';
+					$visibility_trans = __( 'Public', 'mainwp' );
+				}
+				?>
+
+				<div class="grouped fields">
+					<label><?php esc_html_e( 'Visibility', 'mainwp' ); ?></label>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="public" id="visibility-radio-public" <?php echo ( 'public' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Public', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field" id="sticky-field">
+						<div class="ui checkbox">
+							<input type="checkbox" id="sticky" name="sticky" value="sticky"  <?php checked( is_sticky( $post->ID ) ); ?>  />
+							<label><?php esc_html_e( 'Stick this post to the front page', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="password" id="visibility-radio-password" <?php echo ( 'password' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Password protected', 'mainwp' ); ?></label>
+						</div>
+					</div>
+					<div class="field" id="post_password-field" <?php echo ( 'password' === $visibility ) ? '' : 'style="display:none"'; ?>>
+						<label><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
+						<input type="text" name="post_password" id="post_password" value="<?php echo esc_attr( $post->post_password ); ?>" />
+					</div>
+					<div class="field">
+						<div class="ui radio checkbox">
+							<input type="radio" name="visibility" value="private" id="visibility-radio-private" <?php echo ( 'private' === $visibility ) ? 'checked="checked"' : ''; ?>>
+							<label><?php esc_html_e( 'Private', 'mainwp' ); ?></label>
+						</div>
+					</div>
+				</div>
+				<div class="field">
+					<label><?php esc_html_e( 'Publish', 'mainwp' ); ?></label>
+					<select class="ui dropdown" name="post_timestamp" id="post_timestamp">
+						<option value="immediately" selected="selected"><?php esc_html_e( 'Immediately', 'mainwp' ); ?></option>
+						<option value="schedule"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></option>
+					</select>
+				</div>
+
+				<div class="field" id="post_timestamp_value-field" style="display:none">
+					<div class="ui calendar mainwp_datepicker" id="schedule_post_datetime" >
+						<div class="ui input left icon">
+							<i class="calendar icon"></i>
+							<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
+						</div>
+					</div>
+				</div>
+				<div style="display:none" id="timestampdiv">
+					<?php self::touch_time( $post ); ?>
+				</div>
+			</div>
+			<?php
 	}
 
 	public static function render_bulk_add() {
@@ -1857,7 +1874,7 @@ class MainWP_Post {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			unset( $results );
 		}
 		$output->results[ $website->id ] = $posts;
@@ -1923,6 +1940,7 @@ class MainWP_Post {
 		die();
 	}
 
+	// phpcs:ignore -- complex method
 	public static function posting() {
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
@@ -1960,10 +1978,10 @@ class MainWP_Post {
 							$val             = get_post_meta( $id, '_selected_groups', true );
 							$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
 
-							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) );
+							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
-							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) );
-							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) );
+							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 							$post_custom = get_post_custom( $id );
 
 							$galleries           = get_post_gallery( $id, false );
@@ -2080,13 +2098,13 @@ class MainWP_Post {
 
 							if ( 0 < count( $dbwebsites ) ) {
 								$post_data = array(
-									'new_post'            => base64_encode( serialize( $new_post ) ),
-									'post_custom'         => base64_encode( serialize( $post_custom ) ),
-									'post_category'       => base64_encode( $post_category ),
-									'post_featured_image' => base64_encode( $post_featured_image ),
-									'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ),
-									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ),
-									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ),
+									'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_category'       => base64_encode( $post_category ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 								);
 								MainWP_Utility::fetch_urls_authed(
 									$dbwebsites,
@@ -2198,13 +2216,14 @@ class MainWP_Post {
 	public static function posts_get_terms_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result                       = $results[1];
-			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			$output->cats[ $website->id ] = is_array( $information ) ? $information : array();
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
 		}
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function get_terms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
 		$output         = new \stdClass();
 		$output->errors = array();
@@ -2258,7 +2277,7 @@ class MainWP_Post {
 		if ( 0 < count( $dbwebsites ) ) {
 			$opt       = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'taxonomy' );
 			$post_data = array(
-				'taxonomy' => base64_encode( $opt ),
+				'taxonomy' => base64_encode( $opt ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			);
 			MainWP_Utility::fetch_urls_authed(
 				$dbwebsites,
@@ -2351,16 +2370,17 @@ class MainWP_Post {
 	}
 
 	public static function new_post( $post_data = array() ) {
-		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) );
-		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) );
-		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null );
+		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		$post_tags           = rawurldecode( isset( $new_post['post_tags'] ) ? $new_post['post_tags'] : null );
-		$post_featured_image = base64_decode( $post_data['post_featured_image'] );
-		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] );
-		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) );
+		$post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
 	}
 
+	// phpcs:ignore -- complex method
 	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) {
 		global $current_user;
 
@@ -2486,16 +2506,16 @@ class MainWP_Post {
 		}
 
 		update_post_meta( $new_post_id, '_mainwp_edit_post_id', $edit_id );
-		update_post_meta( $new_post_id, '_slug', base64_encode( $new_post['post_name'] ) );
+		update_post_meta( $new_post_id, '_slug', base64_encode( $new_post['post_name'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		if ( isset( $post_category ) && '' !== $post_category ) {
-			update_post_meta( $new_post_id, '_categories', base64_encode( $post_category ) );
+			update_post_meta( $new_post_id, '_categories', base64_encode( $post_category ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( isset( $post_tags ) && '' !== $post_tags ) {
-			update_post_meta( $new_post_id, '_tags', base64_encode( $post_tags ) );
+			update_post_meta( $new_post_id, '_tags', base64_encode( $post_tags ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 		if ( $is_sticky ) {
-			update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) );
+			update_post_meta( $new_post_id, '_sticky', base64_encode( 'sticky' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( null !== $post_featured_image ) {
@@ -2534,9 +2554,9 @@ class MainWP_Post {
 				$website,
 				'set_terms',
 				array(
-					'id'         => base64_encode( $postId ),
-					'terms'      => base64_encode( $cat_id ),
-					'taxonomy'   => base64_encode( $taxonomy ),
+					'id'         => base64_encode( $postId ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+					'terms'      => base64_encode( $cat_id ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+					'taxonomy'   => base64_encode( $taxonomy ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				)
 			);
 		} catch ( MainWP_Exception $e ) {
@@ -2564,7 +2584,7 @@ class MainWP_Post {
 				'insert_comment',
 				array(
 					'id'         => $postId,
-					'comments'   => base64_encode( serialize( $comments ) ),
+					'comments'   => base64_encode( serialize( $comments ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 				)
 			);
 		} catch ( MainWP_Exception $e ) {
@@ -2575,9 +2595,9 @@ class MainWP_Post {
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
-			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) );
+			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
-			return base64_encode( $_POST['sticky'] );
+			return base64_encode( $_POST['sticky'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		}
 
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {

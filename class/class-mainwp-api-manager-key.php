@@ -5,6 +5,7 @@
  * This class handles user authentication with MainWP.com License Servers
  * and provides the ability to grab license keys automatically.
  */
+
 namespace MainWP\Dashboard;
 
 // Exit if accessed directly.
@@ -92,14 +93,15 @@ class MainWP_Api_Manager_Key {
 		}
 
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
 			)
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 
 			return false;
 		}
@@ -130,14 +132,15 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?wc-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?wc-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
 			)
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -168,14 +171,15 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
 			)
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -206,7 +210,8 @@ class MainWP_Api_Manager_Key {
 		$args['password'] = stripslashes( $args['password'] );
 
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
@@ -221,7 +226,7 @@ class MainWP_Api_Manager_Key {
 		MainWP_Logger::instance()->debug( 'test_login_api:: RESULT :: ' . print_r( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
-			if ( self::$apisslverify == 1 ) {
+			if ( 1 == self::$apisslverify ) {
 				MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 
 				return array( 'retry_action' => 1 );
@@ -231,7 +236,7 @@ class MainWP_Api_Manager_Key {
 		}
 
 		$code = wp_remote_retrieve_response_code( $request );
-		if ( $code != 200 ) {
+		if ( 200 != $code ) {
 			throw new \Exception( 'Error: code ' . $code );
 		}
 
@@ -261,14 +266,15 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
 			)
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}
@@ -294,14 +300,15 @@ class MainWP_Api_Manager_Key {
 			$args['password'] = stripslashes( $args['password'] );
 		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api', array(
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
+			array(
 				'body'      => $args,
 				'timeout'   => 50,
 				'sslverify' => self::$apisslverify,
 			)
 		);
 
-		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
+		if ( is_wp_error( $request ) || 200 != wp_remote_retrieve_response_code( $request ) ) {
 			// Request failed.
 			return false;
 		}

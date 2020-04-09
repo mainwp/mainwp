@@ -4,6 +4,7 @@
  *
  * Handle all syncing between MainWP & Child Site Network.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -21,11 +22,11 @@ class MainWP_Sync {
 	 * @return array sync_information_array
 	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
-		if ( $pWebsite == null ) {
+		if ( null == $pWebsite ) {
 			return false;
 		}
 		$userExtension = MainWP_DB::instance()->get_user_extension_by_user_id( $pWebsite->userid );
-		if ( $userExtension == null ) {
+		if ( null == $userExtension ) {
 			return false;
 		}
 
@@ -37,7 +38,7 @@ class MainWP_Sync {
 			$cloneSites   = array();
 			if ( $cloneEnabled ) {
 				$disallowedCloneSites = get_option( 'mainwp_clone_disallowedsites' );
-				if ( $disallowedCloneSites === false ) {
+				if ( false === $disallowedCloneSites ) {
 					$disallowedCloneSites = array();
 				}
 				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -64,18 +65,23 @@ class MainWP_Sync {
 			$primaryBackup = MainWP_Utility::get_primary_backup();
 
 			$othersData  = apply_filters( 'mainwp-sync-others-data', array(), $pWebsite );
-			$information = MainWP_Utility::fetch_url_authed( $pWebsite, 'stats', array(
-				'optimize'                       => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
-				'heatMap'                        => 0,
-				'cloneSites'                     => ( ! $cloneEnabled ? 0 : urlencode( wp_json_encode( $cloneSites ) ) ),
-				'othersData'                     => wp_json_encode( $othersData ),
-				'server'                         => get_admin_url(),
-				'numberdaysOutdatePluginTheme'   => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-				'primaryBackup'                  => $primaryBackup,
-				'siteId'                         => $pWebsite->id,
-			), true, $pForceFetch
+			$information = MainWP_Utility::fetch_url_authed(
+				$pWebsite,
+				'stats',
+				array(
+					'optimize'                       => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
+					'heatMap'                        => 0,
+					'cloneSites'                     => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+					'othersData'                     => wp_json_encode( $othersData ),
+					'server'                         => get_admin_url(),
+					'numberdaysOutdatePluginTheme'   => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+					'primaryBackup'                  => $primaryBackup,
+					'siteId'                         => $pWebsite->id,
+				),
+				true,
+				$pForceFetch
 			);
-			MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', isset( $information['primaryLasttimeBackup'] ) ? $information['primaryLasttimeBackup'] : 0  );
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', isset( $information['primaryLasttimeBackup'] ) ? $information['primaryLasttimeBackup'] : 0 );
 			$return = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
 
 			return $return;
@@ -144,7 +150,7 @@ class MainWP_Sync {
 		}
 
 		$phpversion = '';
-		if ( isset( $information['site_info'] ) && $information['site_info'] != null ) {
+		if ( isset( $information['site_info'] ) && null != $information['site_info'] ) {
 			if ( is_array( $information['site_info'] ) && isset( $information['site_info']['phpversion'] ) ) {
 				$phpversion = $information['site_info']['phpversion'];
 			}
@@ -163,9 +169,11 @@ class MainWP_Sync {
 			$done                         = true;
 		}
 
-		if ( isset( $information['wp_updates'] ) && $information['wp_updates'] != null ) {
+		if ( isset( $information['wp_updates'] ) && null != $information['wp_updates'] ) {
 			MainWP_DB::instance()->update_website_option(
-				$pWebsite, 'wp_upgrades', wp_json_encode(
+				$pWebsite,
+				'wp_upgrades',
+				wp_json_encode(
 					array(
 						'current'    => $information['wpversion'],
 						'new'        => $information['wp_updates'],

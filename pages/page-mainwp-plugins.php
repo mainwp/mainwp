@@ -415,12 +415,14 @@ class MainWP_Plugins {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value=
+					"
 					<?php
 					if ( null != $cachedSearch ) {
 						echo esc_attr( $cachedSearch['keyword'] ); }
 					?>
-					"/>
+					"
+					/>
 				</div>
 			</div>
 		</div>
@@ -443,6 +445,7 @@ class MainWP_Plugins {
 	}
 
 	public static function render_table( $keyword, $status, $groups, $sites ) {
+		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
 			$output          = new \stdClass();
@@ -655,12 +658,12 @@ class MainWP_Plugins {
 		foreach ( $output->plugins as $plugin ) {
 			$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
 			$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
-			$plugins[ $pn ]                = urlencode( $plugin['slug'] );
+			$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
 			$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
 			$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
 			$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
 			$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
-			$pluginsRealVersion[ $pn ]     = urlencode( $plugin['version'] );
+			$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
 
 			if ( ! isset( $sitePlugins[ $plugin['websiteid'] ] ) || ! is_array( $sitePlugins[ $plugin['websiteid'] ] ) ) {
 				$sitePlugins[ $plugin['websiteid'] ] = array();
@@ -751,7 +754,7 @@ class MainWP_Plugins {
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];
-			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			unset( $results );
 			if ( isset( $plugins['error'] ) ) {
 				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $plugins['error'], $website->url ) );
@@ -814,7 +817,7 @@ class MainWP_Plugins {
 				$slug = $plugins[ $i ];
 				$name = $names[ $i ];
 				if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-					$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
+					$decodedIgnoredPlugins[ $slug ] = rawurlencode( $name );
 				}
 			}
 			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
@@ -839,7 +842,7 @@ class MainWP_Plugins {
 
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
-			$plugin      = urldecode( $plugin );
+			$plugin      = rawurlencode( $plugin );
 			$information = MainWP_Utility::fetch_url_authed(
 				$website,
 				'plugin_action',
@@ -1221,6 +1224,10 @@ class MainWP_Plugins {
 		if ( ! is_array( $trustedPluginsNotes ) ) {
 			$trustedPluginsNotes = array();
 		}
+		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
+	}
+
+	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
 		?>
 		<table class="ui single line table" id="mainwp-all-active-plugins-table">
 			<thead>
@@ -1254,13 +1261,13 @@ class MainWP_Plugins {
 						$strip_note = wp_strip_all_tags( $esc_note );
 					}
 					?>
-					<tr plugin-slug="<?php echo urlencode( $slug ); ?>" plugin-name="<?php echo wp_strip_all_tags( $name ); ?>">
-						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
+					<tr plugin-slug="<?php echo rawurlencode( $slug ); ?>" plugin-name="<?php echo wp_strip_all_tags( $name ); ?>">
+						<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="plugin[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
 						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
-						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
-						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html_( 'Active', 'mainwp' ) : esc_html_( 'Inactive', 'mainwp' ); ?></td>
-						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html_( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html_( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html_( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
+						<td><?php echo ( 1 == $plugin['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
+						<td><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
+						<td><?php echo ( isset( $decodedIgnoredPlugins[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
 						<td class="collapsing center aligned">
 						<?php if ( '' === $esc_note ) : ?>
 							<a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
@@ -1334,7 +1341,26 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Globally Ignored Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table stackable">
+			<?php
+			self::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins );
+			?>
+			<div class="ui hidden divider"></div>
+			<h3 class="ui header">
+				<?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
+				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
+			</h3>
+			<?php
+			self::render_sites_ignored( $cnt, $websites );
+			?>
+						
+		</div>
+		<?php
+		self::render_footer( 'Ignore' );
+	}
+
+	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
+		?>
+		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table stackable">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
@@ -1345,12 +1371,12 @@ class MainWP_Plugins {
 				<tbody id="globally-ignored-plugins-list">
 					<?php if ( $ignoredPlugins ) : ?>
 						<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
-							<tr plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
+								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned">
 									<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-										<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_globally( '<?php echo urlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+										<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_globally( '<?php echo rawurlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 									<?php endif; ?>
 								</td>
 							</tr>
@@ -1374,79 +1400,77 @@ class MainWP_Plugins {
 						</tfoot>
 					<?php endif; ?>
 				<?php endif; ?>
-			</table>
-			<div class="ui hidden divider"></div>
-			<h3 class="ui header">
-				<?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
-				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
-			</h3>
-			<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="ignored-plugins-list">
-					<?php if ( 0 < $cnt ) : ?>
-						<?php
-						MainWP_DB::data_seek( $websites, 0 );
+			</table>	
+		<?php
+	}
 
-						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( $website->is_ignorePluginUpdates ) {
-								continue;
-							}
+	public static function render_sites_ignored( $cnt, $websites ) {
+		?>
+	<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ignored-plugins-list">
+				<?php if ( 0 < $cnt ) : ?>
+					<?php
+					MainWP_DB::data_seek( $websites, 0 );
 
-							$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
-							if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
-								continue;
-							}
-							$first = true;
-
-							foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
-								?>
-								<tr site-id="<?php echo intval( $website->id ); ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
-								<?php if ( $first ) : ?>
-									<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-									<?php $first = false; ?>
-								<?php else : ?>
-									<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-								<?php endif; ?>
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
-								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
-								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-									<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_detail( '<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
-								<?php endif; ?>
-							</tr>
-								<?php
-							}
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+						if ( $website->is_ignorePluginUpdates ) {
+							continue;
 						}
 
-						MainWP_DB::free_result( $websites );
-						?>
-					<?php else : ?>
-						<tr><td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td></tr>
-					<?php endif; ?>
-				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<?php if ( 0 < $cnt ) : ?>
-						<tfoot class="full-width">
-							<tr>
-								<th colspan="999">
-									<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_detail_all();" id="mainwp-unignore-detail-all">
-										<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
-									</a>
-								</th>
-							</tr>
-						</tfoot>
-					<?php endif; ?>
+						$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
+						if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
+							continue;
+						}
+						$first = true;
+
+						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
+							?>
+							<tr site-id="<?php echo intval( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
+							<?php if ( $first ) : ?>
+								<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+								<?php $first = false; ?>
+							<?php else : ?>
+								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+							<?php endif; ?>
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
+							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
+							<?php endif; ?>
+						</tr>
+							<?php
+						}
+					}
+
+					MainWP_DB::free_result( $websites );
+					?>
+				<?php else : ?>
+					<tr><td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
-			</table>
-		</div>
+			</tbody>
+			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( 0 < $cnt ) : ?>
+					<tfoot class="full-width">
+						<tr>
+							<th colspan="999">
+								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_unignore_detail_all();" id="mainwp-unignore-detail-all">
+									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
+								</a>
+							</th>
+						</tr>
+					</tfoot>
+				<?php endif; ?>
+			<?php endif; ?>
+		</table>		
 		<?php
-		self::render_footer( 'Ignore' );
 	}
 
 	public static function render_ignored_abandoned() {
@@ -1470,92 +1494,111 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Globally Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="ignored-abandoned-plugins-list">
-					<?php if ( $ignoredPlugins ) : ?>
-						<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
-							<tr plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
-								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
-								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
-								<td class="right aligned">
-									<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-										<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_abandoned_unignore_globally( '<?php echo urlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
-									<?php endif; ?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					<?php else : ?>
-						<tr>
-							<td colspan="999"><?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?></td>
-						</tr>
-					<?php endif; ?>
-				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<?php if ( $ignoredPlugins ) : ?>
-						<tfoot class="full-width">
-							<tr>
-								<th colspan="999">
-									<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
-										<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
-									</a>
-								</th>
-							</tr>
-						</tfoot>
-					<?php endif; ?>
-				<?php endif; ?>
-			</table>
+			<?php
+			self::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins );
+			?>
+						
 			<div class="ui hidden divider"></div>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table stackable">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="ignored-abandoned-plugins-list">
-					<?php if ( 0 < $cnt ) : ?>
-						<?php
-						MainWP_DB::data_seek( $websites, 0 );
+			<?php
+			self::render_sites_ignored_abandoned( $cnt, $websites );
+			?>
+		</div>
+		<?php
+		self::render_footer( 'IgnoreAbandoned' );
+	}
 
-						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-							if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
-								continue;
-							}
-							$first = true;
-							foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
-								?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" plugin-slug="<?php echo urlencode( $ignoredPlugin ); ?>">
-								<?php if ( $first ) : ?>
-								<td>
-									<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-								</td>
-									<?php $first = false; ?>
-							<?php else : ?>
-								<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-							<?php endif; ?>
-							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
+		?>
+		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ignored-abandoned-plugins-list">
+				<?php if ( $ignoredPlugins ) : ?>
+					<?php foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) : ?>
+						<tr plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
+							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
-							<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo urlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
+							<td class="right aligned">
+								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+									<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_abandoned_unignore_globally( '<?php echo rawurlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+								<?php endif; ?>
+							</td>
 						</tr>
-								<?php
-							}
-						}
+					<?php endforeach; ?>
+				<?php else : ?>
+					<tr>
+						<td colspan="999"><?php esc_html_e( 'No ignored abandoned plugins.', 'mainwp' ); ?></td>
+					</tr>
+				<?php endif; ?>
+			</tbody>
+			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( $ignoredPlugins ) : ?>
+					<tfoot class="full-width">
+						<tr>
+							<th colspan="999">
+								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_plugins_abandoned_unignore_globally_all();" id="mainwp-unignore-globally-all">
+									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
+								</a>
+							</th>
+						</tr>
+					</tfoot>
+				<?php endif; ?>
+			<?php endif; ?>
+		</table>	
+		<?php
+	}
 
-						MainWP_DB::free_result( $websites );
+	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
+		?>
+		<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table stackable">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Plugin slug', 'mainwp' ); ?></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody id="ignored-abandoned-plugins-list">
+				<?php if ( 0 < $cnt ) : ?>
+					<?php
+					MainWP_DB::data_seek( $websites, 0 );
+
+					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+						$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+						if ( ! is_array( $decodedIgnoredPlugins ) || 0 == count( $decodedIgnoredPlugins ) ) {
+							continue;
+						}
+						$first = true;
+						foreach ( $decodedIgnoredPlugins as $ignoredPlugin => $ignoredPluginName ) {
+							?>
+					<tr site-id="<?php echo esc_attr( $website->id ); ?>" plugin-slug="<?php echo rawurlencode( $ignoredPlugin ); ?>">
+							<?php if ( $first ) : ?>
+							<td>
+								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							</td>
+								<?php $first = false; ?>
+						<?php else : ?>
+							<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+						<?php endif; ?>
+						<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
+						<td><?php echo esc_html( $ignoredPlugin ); ?></td>
+						<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
+					</tr>
+							<?php
+						}
+					}
+
+					MainWP_DB::free_result( $websites );
 
 		else :
 			?>
@@ -1578,11 +1621,8 @@ class MainWP_Plugins {
 			<?php endif; ?>
 		<?php endif; ?>
 		</table>
-	</div>
 		<?php
-		self::render_footer( 'IgnoreAbandoned' );
 	}
-
 	public static function trust_post() {
 		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -1599,15 +1639,15 @@ class MainWP_Plugins {
 		}
 		if ( 'trust' === $action ) {
 			foreach ( $slugs as $slug ) {
-				$idx = array_search( urldecode( $slug ), $trustedPlugins );
+				$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
 				if ( false === $idx ) {
-					$trustedPlugins[] = urldecode( $slug );
+					$trustedPlugins[] = rawurlencode( $slug );
 				}
 			}
 		} elseif ( 'untrust' === $action ) {
 			foreach ( $slugs as $slug ) {
-				if ( in_array( urldecode( $slug ), $trustedPlugins ) ) {
-					$trustedPlugins = array_diff( $trustedPlugins, array( urldecode( $slug ) ) );
+				if ( in_array( rawurlencode( $slug ), $trustedPlugins ) ) {
+					$trustedPlugins = array_diff( $trustedPlugins, array( rawurlencode( $slug ) ) );
 				}
 			}
 		}
@@ -1621,9 +1661,9 @@ class MainWP_Plugins {
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-		$idx = array_search( urldecode( $slug ), $trustedPlugins );
+		$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
 		if ( false === $idx ) {
-			$trustedPlugins[] = urldecode( $slug );
+			$trustedPlugins[] = rawurlencode( $slug );
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 		MainWP_DB::instance()->update_user_extension( $userExtension );
@@ -1642,7 +1682,7 @@ class MainWP_Plugins {
 	}
 
 	public static function save_trusted_plugin_note() {
-		$slug                = urldecode( $_POST['slug'] );
+		$slug                = rawurlencode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB::instance()->get_user_extension();

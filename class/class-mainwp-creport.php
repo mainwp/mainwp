@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * Class LiveReportResponder
  *
  * @deprecated moved to external Extension.
- *  phpcs:disable PSR1.Classes.ClassDeclaration, Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+ *  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
  */
 class LiveReportResponder {
 
@@ -305,6 +305,7 @@ class MainWP_Live_Reports_Class {
 	public function init_cron() {
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public static function cal_schedule_nextsend( $schedule, $start_recurring_date, $scheduleLastSend = 0 ) {
 		if ( empty( $schedule ) || empty( $start_recurring_date ) ) {
 			return 0;
@@ -385,6 +386,7 @@ class MainWP_Live_Reports_Class {
 		return strtotime( $year_to_send . '-' . $month_to_send . '-' . $day_to_send . ' 23:59:59' );
 	}
 
+	// phpcs:ignore -- complex function, deprecated
 	public static function save_report() {
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
 			$messages             = array();
@@ -575,8 +577,8 @@ class MainWP_Live_Reports_Class {
 				}
 			}
 
-			$report['sites']  = base64_encode( serialize( $selected_sites ) );
-			$report['groups'] = base64_encode( serialize( $selected_groups ) );
+			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( 'schedule' === $_POST['mwp_creport_report_submit_action'] ) {
 				$report['scheduled'] = 1;
@@ -853,6 +855,7 @@ class MainWP_Live_Reports_Class {
 		return $filtered_reports;
 	}
 
+	// phpcs:ignore -- complex function, deprecated
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) {
 		$output                  = new \stdClass();
 		$output->filtered_header = $report->header;
@@ -1157,7 +1160,7 @@ class MainWP_Live_Reports_Class {
 		}
 		$post_data = array(
 			'mwp_action'     => 'save_sucuri_stream',
-			'result'         => base64_encode( serialize( $scan_result ) ),
+			'result'         => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			'scan_status'    => $scan_status,
 		);
 		global $mainWPCReportExtensionActivator;
@@ -1228,6 +1231,7 @@ class MainWP_Live_Reports_Class {
 		);
 	}
 
+	// phpcs:ignore -- complex function
 	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) {
 
 		if ( null === self::$enabled_ga ) {
@@ -1567,8 +1571,8 @@ class MainWP_Live_Reports_Class {
 		global $mainWPCReportExtensionActivator;
 		$post_data = array(
 			'mwp_action'     => 'get_stream',
-			'sections'       => base64_encode( serialize( $sections ) ),
-			'other_tokens'   => base64_encode( serialize( $tokens ) ),
+			'sections'       => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			'other_tokens'   => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			'date_from'      => $report->date_from,
 			'date_to'        => $report->date_to,
 		);
@@ -2327,12 +2331,12 @@ PRIMARY KEY  (`id`)  ';
 		}
 
 		if ( $wpdb->insert(
-				$this->table_name( 'client_report_site_token' ),
-				array(
-					'token_id'       => $token_id,
-					'token_value'    => $token_value,
-					'site_url'       => $site_url,
-				)
+			$this->table_name( 'client_report_site_token' ),
+			array(
+				'token_id'       => $token_id,
+				'token_value'    => $token_value,
+				'site_url'       => $site_url,
+			)
 			)
 		) {
 			return $this->get_tokens_by( 'id', $token_id, $site_url );
@@ -2391,6 +2395,7 @@ PRIMARY KEY  (`id`)  ';
 		return false;
 	}
 
+	// phpcs:ignore -- complex function
 	public function update_report( $report ) {
 		/** @var $wpdb wpdb */
 		global $wpdb;

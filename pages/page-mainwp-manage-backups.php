@@ -13,7 +13,6 @@ class MainWP_Manage_Backups {
 
 	private static $hideSubmenuBackups = false;
 
-
 	private static $instance = null;
 
 	public static function instance() {
@@ -54,7 +53,7 @@ class MainWP_Manage_Backups {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 		$customPage           = apply_filters( 'mainwp-getcustompage-backups', false );
-		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup) ) {
+		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {
 			self::$hideSubmenuBackups = true;
 			add_submenu_page( 'mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">' . $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback'] );
 			MainWP_Menu::add_left_menu(
@@ -64,7 +63,8 @@ class MainWP_Manage_Backups {
 					'slug'       => 'ManageBackups' . $customPage['slug'],
 					'href'       => 'admin.php?page=ManageBackups' . $customPage['slug'],
 					'icon'       => '<i class="hdd outline icon"></i>',
-				), 1
+				),
+				1
 			);
 
 		} else {
@@ -88,13 +88,13 @@ class MainWP_Manage_Backups {
 		self::$subPages = apply_filters( 'mainwp-getsubpages-backups', array() );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
-				if ( MainWP_Menu::is_disable_menu_item(3, 'ManageBackups' . $subPage['slug']) ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
 					continue;
 				}
 				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageBackups' . $subPage['slug'], $subPage['callback'] );
 			}
 		}
-		self::init_left_menu(self::$subPages, $enable_legacy_backup );
+		self::init_left_menu( self::$subPages, $enable_legacy_backup );
 	}
 
 	public static function init_subpages_menu() {
@@ -119,7 +119,7 @@ class MainWP_Manage_Backups {
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-							if ( MainWP_Menu::is_disable_menu_item(3, 'ManageBackups' . $subPage['slug']) ) {
+							if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
 									continue;
 							}
 							?>
@@ -143,7 +143,8 @@ class MainWP_Manage_Backups {
 					'slug'              => 'ManageBackups',
 					'href'              => 'admin.php?page=ManageBackups',
 					'icon'              => '<i class="hdd outline icon"></i>',
-				), 1
+				),
+				1
 			);
 
 			$init_sub_subleftmenu = array(
@@ -680,6 +681,11 @@ class MainWP_Manage_Backups {
 		$archiveFormat = isset( $task ) ? $task->archiveFormat : 'site';
 		$useGlobal     = ( 'global' == $archiveFormat );
 		$useSite       = ( '' == $archiveFormat || 'site' == $archiveFormat );
+
+		self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite  );
+	}
+
+	public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) {
 		?>
 
 		<div class="ui divider hidden"></div>
@@ -924,7 +930,7 @@ class MainWP_Manage_Backups {
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
-		$task = MainWP_DB::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip);
+		$task = MainWP_DB::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], 0, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 
 		if ( ! $task ) {
 			die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
@@ -935,6 +941,7 @@ class MainWP_Manage_Backups {
 		}
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) {
 
 		if ( $updateRun ) {
@@ -1160,125 +1167,6 @@ class MainWP_Manage_Backups {
 			'sites'              => $allSites,
 			'remoteDestinations' => $remoteDestinations,
 		);
-	}
-
-	public static function get_site_directories() {
-		$websites = array();
-		if ( isset( $_REQUEST['site'] ) && ( '' != $_REQUEST['site'] ) ) {
-			$siteId  = $_REQUEST['site'];
-			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$websites[] = $website;
-			}
-		} elseif ( isset( $_REQUEST['sites'] ) && ( '' != $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( $_REQUEST['sites'] ) );
-			$siteIdsRequested = array();
-			foreach ( $siteIds as $siteId ) {
-				$siteId = $siteId;
-
-				if ( ! MainWP_Utility::ctype_digit( $siteId ) ) {
-					continue;
-				}
-				$siteIdsRequested[] = $siteId;
-			}
-
-			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
-		} elseif ( isset( $_REQUEST['groups'] ) && ( '' != $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', urldecode( $_REQUEST['groups'] ) );
-			$groupIdsRequested = array();
-			foreach ( $groupIds as $groupId ) {
-				$groupId = $groupId;
-
-				if ( ! MainWP_Utility::ctype_digit( $groupId ) ) {
-					continue;
-				}
-				$groupIdsRequested[] = $groupId;
-			}
-
-			$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
-		}
-
-		if ( 0 == count( $websites ) ) {
-			die( '<i><strong>Select a site or group first.</strong></i>' );
-		}
-
-		$allFiles            = array();
-		$excludedBackupFiles = array();
-		$excludedCacheFiles  = array();
-		$excludedNonWPFiles  = array();
-		foreach ( $websites as $website ) {
-			$files = null;
-
-			$result = json_decode( $website->directories, true );
-			$dir    = urldecode( $_POST['dir'] );
-
-			if ( '' == $dir ) {
-				if ( is_array( $result ) ) {
-					$files = array_keys( $result );
-					self::add_excluded_backups( $result, $excludedBackupFiles );
-					self::add_excluded_cache( $result, $excludedCacheFiles );
-					self::add_excluded_nonwp( $files, $excludedNonWPFiles );
-				}
-			} else {
-				$dirExploded = explode( '/', $dir );
-
-				$tmpResult = $result;
-				foreach ( $dirExploded as $innerDir ) {
-					if ( '' == $innerDir ) {
-						continue;
-					}
-
-					if ( isset( $tmpResult[ $innerDir ] ) ) {
-						$tmpResult = $tmpResult[ $innerDir ];
-					} else {
-						$tmpResult = null;
-						break;
-					}
-				}
-				if ( null != $tmpResult && is_array( $tmpResult ) ) {
-					$files = array_keys( $tmpResult );
-				} else {
-					$files = null;
-				}
-			}
-
-			if ( ( null != $files ) && ( 0 < count( $files ) ) ) {
-				$allFiles = array_unique( array_merge( $allFiles, $files ) );
-			}
-		}
-
-		if ( null != $allFiles && 0 < count( $allFiles ) ) {
-			natcasesort( $allFiles );
-			echo '<ul class="jqueryFileTree" style="display: none;">';
-			foreach ( $allFiles as $file ) {
-				echo '<li class="directory collapsed"><a href="#" rel="' . esc_attr( $_POST['dir'] . $file ) . '/">' . esc_html( $file ) . '<div title="Exclude form backup" class="exclude_folder_control"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/exclude.png" /></div></a></li>';
-			}
-			echo '</ul>';
-
-			if ( count( $excludedBackupFiles ) > 0 ) {
-				echo '<div id="excludedBackupFiles" style="display:none">';
-				foreach ( $excludedBackupFiles as $excludedBackupFile ) {
-					echo esc_html( $excludedBackupFile ) . "\n";
-				}
-				echo '</div>';
-			}
-
-			if ( count( $excludedCacheFiles ) > 0 ) {
-				echo '<div id="excludedCacheFiles" style="display:none">';
-				foreach ( $excludedCacheFiles as $excludedCacheFile ) {
-					echo esc_html( $excludedCacheFile ) . "\n";
-				}
-				echo '</div>';
-			}
-
-			if ( count( $excludedNonWPFiles ) > 0 ) {
-				echo '<div id="excludedNonWPFiles" style="display:none">';
-				foreach ( $excludedNonWPFiles as $excludedNonWPFile ) {
-					echo esc_html( $excludedNonWPFile ) . "\n";
-				}
-				echo '</div>';
-			}
-		}
 	}
 
 	private static function add_excluded_backups( &$files, &$arr ) {

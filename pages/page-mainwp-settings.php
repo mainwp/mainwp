@@ -2,7 +2,7 @@
 /**
  * MainWP Settings page
  *
- * This Class handles building/Managing the 
+ * This Class handles building/Managing the
  * Settings MainWP DashboardPage & all SubPages.
  *
  * @package MainWP/Settings

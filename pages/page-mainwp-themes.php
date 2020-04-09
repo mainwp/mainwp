@@ -1250,6 +1250,7 @@ class MainWP_Themes {
 	 *
 	 * @param null $output
 	 */
+	// phpcs:ignore -- not quite complex function
 	public static function render_all_themes_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
@@ -1466,7 +1467,7 @@ class MainWP_Themes {
 		<?php
 	}
 
-	/** Render the Themes Ignored Updates Tab. */
+		/** Render the Themes Ignored Updates Tab. */
 	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension        = MainWP_DB::instance()->get_user_extension();
@@ -1513,7 +1514,7 @@ class MainWP_Themes {
 		<?php
 		self::render_footer( 'Ignore' );
 	}
-
+  
 	/**
 	 * Render globally Ignored themes.
 	 *
@@ -1563,7 +1564,7 @@ class MainWP_Themes {
 		</table>	
 		<?php
 	}
-
+  
 	/**
 	 * Render ignored sites.
 	 *
@@ -1727,7 +1728,7 @@ class MainWP_Themes {
 		</table>
 		<?php
 	}
-
+  
 	/**
 	 * Render ignored sites list.
 	 *
@@ -1798,6 +1799,7 @@ class MainWP_Themes {
 		</table>	
 		<?php
 	}
+
 
 	/** This is the Bulk Method to Trust A Theme. */
 	public static function trust_post() {

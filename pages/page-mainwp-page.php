@@ -593,10 +593,11 @@ class MainWP_Page {
 		return ucfirst( $status );
 	}
 
+	// phpcs:ignore -- complex function
 	public static function pages_search_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
-			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 
 			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
 				$output->errors[ $website->id ] = $pages['error'];
@@ -637,7 +638,7 @@ class MainWP_Page {
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( 'trash' != $page['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
 									<?php echo esc_html( $page['title'] ); ?>
 								<?php } ?>
@@ -770,6 +771,7 @@ class MainWP_Page {
 		self::render_footer( $what );
 	}
 
+	// phpcs:ignore -- complex function
 	public static function posting() {
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
@@ -807,7 +809,7 @@ class MainWP_Page {
 						$selected_sites  = MainWP_Utility::maybe_unserialyze( $val );
 						$val             = get_post_meta( $id, '_selected_groups', true );
 						$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
-						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) );
+						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 						$post_custom     = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
 						$featured_image_id   = get_post_thumbnail_id( $id );
@@ -898,12 +900,12 @@ class MainWP_Page {
 
 						if ( 0 < count( $dbwebsites ) ) {
 							$post_data = array(
-								'new_post'               => base64_encode( serialize( $new_post ) ),
-								'post_custom'            => base64_encode( serialize( $post_custom ) ),
-								'post_featured_image'    => base64_encode( $post_featured_image ),
-								'post_gallery_images'    => base64_encode( serialize( $post_gallery_images ) ),
-								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ),
-								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ),
+								'new_post'               => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'post_custom'            => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'post_featured_image'    => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'post_gallery_images'    => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 							);
 							$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
 							MainWP_Utility::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
@@ -954,21 +956,7 @@ class MainWP_Page {
 							MainWP_Twitter::update_twitter_info( 'new_page', $countSites, $seconds, $countRealItems, $startTime, 1 );
 						}
 
-						if ( MainWP_Twitter::enabled_twitter_messages() ) {
-							$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
-							if ( is_array( $twitters ) ) {
-								foreach ( $twitters as $timeid => $twit_mess ) {
-									if ( ! empty( $twit_mess ) ) {
-										$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
-										?>
-										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-										</div>
-										<?php
-									}
-								}
-							}
-						}
+						self::render_twitter_notice();
 					}
 				} else {
 					?>
@@ -1000,6 +988,24 @@ class MainWP_Page {
 			} );
 		</script>
 		<?php
+	}
+
+	public static function render_twitter_notice() {
+		if ( MainWP_Twitter::enabled_twitter_messages() ) {
+			$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
+			if ( is_array( $twitters ) ) {
+				foreach ( $twitters as $timeid => $twit_mess ) {
+					if ( ! empty( $twit_mess ) ) {
+						$sendText = MainWP_Twitter::get_twit_to_send( 'new_page', $timeid );
+						?>
+						<div class="mainwp-tips ui info message twitter" style="margin:0">
+							<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_page" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
+						</div>
+						<?php
+					}
+				}
+			}
+		}
 	}
 
 	/**

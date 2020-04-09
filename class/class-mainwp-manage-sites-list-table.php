@@ -2,6 +2,7 @@
 /**
  * Manage Sites List Table.
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -68,6 +69,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
+	// phpcs:ignore -- not quite complex function
 	public function column_default( $item, $column_name ) {
 
 		$item = apply_filters( 'mainwp-sitestable-item', $item, $item );
@@ -314,6 +316,7 @@ class MainWP_Manage_Sites_List_Table {
 		return ! empty( $this->items );
 	}
 
+	// phpcs:ignore -- complex function
 	public function prepare_items( $optimize = true ) {
 
 		if ( null === $this->userExtension ) {
@@ -487,6 +490,7 @@ class MainWP_Manage_Sites_List_Table {
 		$this->total_items = $totalRecords;
 	}
 
+	// phpcs:ignore -- not quite complex function
 	public function get_available_update_siteids() {
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -868,10 +872,11 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	// phpcs:ignore -- complex function
 	public function get_datatable_rows() {
 		$all_rows  = array();
 		$info_rows = array();
-		$use_favi  = get_option( 'mainwp_use_favicon', 1);
+		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
 		if ( $this->items ) {
 			foreach ( $this->items as $website ) {
 					$rw_classes = '';
@@ -1076,7 +1081,7 @@ class MainWP_Manage_Sites_List_Table {
 									<?php endif; ?>
 										<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
 									<?php } elseif ( 'phpversion' === $column_name ) { ?>
-								<?php echo esc_html( substr( $website['phpversion'], 0, 6) ); ?>
+								<?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?>
 							<?php } elseif ( 'site_actions' === $column_name ) { ?>
 									<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 										<i class="ellipsis horizontal icon"></i>
@@ -1154,6 +1159,7 @@ class MainWP_Manage_Sites_List_Table {
 		echo '</tr>';
 	}
 
+	// phpcs:ignore -- complex function
 	protected function single_row_columns( $website ) {
 
 		$total_updates         = 0;
@@ -1306,8 +1312,8 @@ class MainWP_Manage_Sites_List_Table {
 				</td>
 				<?php
 			} elseif ( 'site' === $column_name ) {
-					$cls_site = '';
-				if ( $website['sync_errors'] != '' ) {
+				$cls_site = '';
+				if ( '' != $website['sync_errors'] ) {
 					$cls_site = 'site-sync-error';
 				}
 				?>
@@ -1353,27 +1359,27 @@ class MainWP_Manage_Sites_List_Table {
 					<?php endif; ?>
 						<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
 				</td>
-			<?php } elseif ( 'phpversion' === $column_name ) { ?>
+		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>
 				<?php
-			} elseif ( 'site_actions' === $column_name ) {
-				?>
+		} elseif ( 'site_actions' === $column_name ) {
+			?>
 				<td class="collapsing">
 					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 						<i class="ellipsis horizontal icon"></i>
 						<div class="menu">
-						<?php if ( '' !== $website['sync_errors'] ) : ?>
+					<?php if ( '' !== $website['sync_errors'] ) : ?>
 						<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 						<?php else : ?>
 						<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&dashboard=<?php echo $website['id']; ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&id=<?php echo $website['id']; ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) : ?>
 						<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
@@ -1381,15 +1387,15 @@ class MainWP_Manage_Sites_List_Table {
 					</div>
 				</td>
 				<?php
-			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-				echo "<td $attributes>";
-				echo call_user_func( array( $this, 'column_' . $column_name ), $website );
-				echo '</td>';
-			} else {
-				echo "<td $attributes>";
-				echo $this->column_default( $website, $column_name );
-				echo '</td>';
-			}
+		} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+			echo "<td $attributes>";
+			echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+			echo '</td>';
+		} else {
+			echo "<td $attributes>";
+			echo $this->column_default( $website, $column_name );
+			echo '</td>';
+		}
 		}
 	}
 

@@ -19,6 +19,7 @@ class MainWP_Post_Handler {
 		return self::$instance;
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public function init() {
 		// Page: ManageBackups.
 		$this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
@@ -1394,6 +1395,7 @@ class MainWP_Post_Handler {
 		}
 	}
 
+	// phpcs:ignore -- not quite complex method
 	public function mainwp_upgrade_plugintheme() {
 
 		if ( ! isset( $_POST['type'] ) ) {

@@ -3644,7 +3644,7 @@ jQuery( document ).ready( function () {
             jQuery( '#import_user_btn_import' ).val( __( 'Pause' ) );
             jQuery( '#MainWPBulkUploadUserLoading' ).show();
             jQuery( '#import_user_btn_save_csv' ).attr( 'disabled', 'true' ); // Disable
-            mainwp_import_users();
+            mainwp_import_users_next();
         }
     } );
 
@@ -3660,7 +3660,7 @@ jQuery( document ).ready( function () {
 
     if ( jQuery( '#import_user_do_import' ).val() == 1 ) {
         jQuery( '#MainWPBulkUploadUserLoading' ).show();
-        mainwp_import_users();
+        mainwp_import_users_next();
     }
 } );
 
@@ -3674,7 +3674,7 @@ mainwp_bulkupload_users = function () {
     }
 };
 
-mainwp_import_users = function () {
+mainwp_import_users_next = function () {
 
     if ( import_stop_by_user == true )
         return;
@@ -3682,13 +3682,7 @@ mainwp_import_users = function () {
     import_user_current_line_number++;
 
     if ( import_user_current_line_number > import_user_total_import ) {
-        jQuery( '#import_user_btn_import' ).val( 'Finished' ).attr( 'disabled', 'true' );
-        jQuery( '#MainWPBulkUploadUserLoading' ).hide();
-        jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
-        if ( import_user_count_create_fails > 0 ) {
-            jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
-        }
-        jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+        mainwp_import_users_finished();
         return;
     }
 
@@ -3696,95 +3690,105 @@ mainwp_import_users = function () {
     var original_line = jQuery( '#user_import_csv_line_' + import_user_current_line_number ).attr('original-line');
 
     var decoded_data = false;
-    var errors = [ ];
-
+	var pos_data = [ ];
+    var errors = [ ];	
+	
     try {
-        var decoded_data = JSON.parse( import_data );
-    } catch(e) {
-        decoded_data = false
+        decoded_data = JSON.parse( import_data );		
+    } catch(e) {        
+		decoded_data = false;
         errors.push( __( 'Invalid import data.' ) );
     }
 
-    if ( decoded_data != false ) {
-        var import_user_username = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
-        var import_user_email = decoded_data.email == undefined ? '' : decoded_data.email;
-        var import_user_fname = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
-        var import_user_lname = decoded_data.last_name == undefined ? '' : decoded_data.last_name ;
-        var import_user_website = decoded_data.url == undefined ? '' : decoded_data.url;
-        var import_user_passw = decoded_data.pass1 == undefined ? '' : decoded_data.pass1;
-        var import_user_send_passw = decoded_data.send_password == undefined ? '' : decoded_data.send_password;
-        var import_user_role = decoded_data.role == undefined ? '' : decoded_data.role;
-        var import_user_select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
-        var import_user_select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
-        var import_user_select_by = '';
-
-        jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + '] ' + original_line + '\n');
-
-        if ( import_user_username == '' ) {
-            errors.push( __( 'Please enter a username.' ) );
-        }
-
-        if ( import_user_email == '' ) {
-            errors.push( __( 'Please enter an email.' ) );
-        }
-
-        if ( import_user_passw == '' ) {
-            errors.push( __( 'Please enter a password.' ) );
-        }
-
-        allowed_roles = [ 'subscriber', 'administrator', 'editor', 'author', 'contributor' ];
-        if ( jQuery.inArray( import_user_role, allowed_roles ) == -1 ) {
-            errors.push( __( 'Please select a valid role.' ) );
-        }
-
-        if ( import_user_select_sites != '' ) {
-            var selected_sites = import_user_select_sites.split( ';' );
-            if ( selected_sites.length == 0 ) {
-                errors.push( __( 'Please select websites or groups to add a user.' ) );
-            } else
-                import_user_select_by = 'site';
-        } else {
-            var selected_groups = import_user_select_groups.split( ';' );
-            if ( selected_groups.length == 0 ) {
-                errors.push( __( 'Please select websites or groups to add a user.' ) );
-            } else
-                import_user_select_by = 'group';
-        }
-    }
-
+    if ( false != decoded_data ) {
+		jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + '] ' + original_line + '\n');		
+		var valid = mainwp_import_users_valid_data( decoded_data );		
+		pos_data = valid.data;					
+		errors = valid.errors;		
+    }	
+	
     if ( errors.length > 0 ) {
         jQuery( '#import_user_import_failed_rows' ).append( '<span>' + original_line + '</span>' );
         jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + ']>> Error - ' + errors.join( " " ) + '\n' );
         import_user_count_create_fails++;
-        mainwp_import_users();
+        mainwp_import_users_next();
         return;
     }
-
-    //Add user via ajax!!
-    var data = mainwp_secure_data( {
-        action: 'mainwp_importuser',
-        'select_by': import_user_select_by,
-        'selected_groups[]': selected_groups,
-        'selected_sites[]': selected_sites,
-        'user_login': import_user_username,
-        'email': import_user_email,
-        'url': import_user_website,
-        'first_name': import_user_fname,
-        'last_name': import_user_lname,
-        'pass1': import_user_passw,
-        'send_password': import_user_send_passw,
-        'role': import_user_role,
-        'line_number': import_user_current_line_number
-    } );
-
-    jQuery.post( ajaxurl, data, function ( response_data ) {
+	
+	if ( 0 == pos_data.length ) {
+		console.log( 'Error: import user data!' );
+		return; 
+	}
+	
+	pos_data.action = 'mainwp_importuser';
+	pos_data.line_number = import_user_current_line_number;		
+	var data = mainwp_secure_data( pos_data );
+	
+    //Add user via ajax!!    
+	jQuery.post( ajaxurl, data, function ( response_data ) {
             if ( response_data.error != undefined )
-                return;
-			
-			mainwp_import_users_response( response_data );            
-			
-            mainwp_import_users();
+                return;			
+			mainwp_import_users_response( response_data );
+            mainwp_import_users_next();
     }, 'json' );
+};
+
+mainwp_import_users_valid_data = function( decoded_data ) {	
+	
+	var errors = []; // array.
+	var val_data = {}; // object.
+	
+	val_data.user_login = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
+	val_data.email = decoded_data.email == undefined ? '' : decoded_data.email;
+	val_data.first_name = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
+	val_data.last_name = decoded_data.last_name == undefined ? '' : decoded_data.last_name ;
+	val_data.url = decoded_data.url == undefined ? '' : decoded_data.url;
+	val_data.pass1 = decoded_data.pass1 == undefined ? '' : decoded_data.pass1;
+	val_data.send_password = decoded_data.send_password == undefined ? '' : decoded_data.send_password;
+	val_data.role = decoded_data.role == undefined ? '' : decoded_data.role;
+	val_data.select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
+	val_data.select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
+	val_data.select_by = '';
+	
+	if ( val_data.user_login == '' ) {
+		errors.push( __( 'Please enter a username.' ) );
+	}
+
+	if ( val_data.email == '' ) {
+		errors.push( __( 'Please enter an email.' ) );
+	}
+
+	if ( val_data.pass1 == '' ) {
+		errors.push( __( 'Please enter a password.' ) );
+	}
+
+	var allowed_roles = [ 'subscriber', 'administrator', 'editor', 'author', 'contributor' ];
+	if ( jQuery.inArray( val_data.role, allowed_roles ) == -1 ) {
+		errors.push( __( 'Please select a data role.' ) );
+	}
+
+	if ( val_data.select_sites != '' ) {
+		var selected_sites = val_data.select_sites.split( ';' );
+		if ( selected_sites.length == 0 ) {
+			errors.push( __( 'Please select websites or groups to add a user.' ) );
+		} else {
+			val_data.select_sites = selected_sites;
+			val_data.select_by = 'site';
+		}
+	} else {
+		var selected_groups = val_data.select_groups.split( ';' );
+		if ( selected_groups.length == 0 ) {
+			errors.push( __( 'Please select websites or groups to add a user.' ) );
+		} else {
+			val_data.select_groups = selected_groups;
+			val_data.select_by = 'group';
+		}
+	}	
+	return { 
+		errors: errors, 
+		data: val_data
+	};
+	
 };
 
 mainwp_import_users_response = function( response_data ) {
@@ -3807,6 +3811,16 @@ mainwp_import_users_response = function( response_data ) {
 			jQuery( '#import_user_import_failed_rows' ).append( '<span>' + response_data.failed_logging + '</span>' );
 		}
 		jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
+};
+
+mainwp_import_users_finished = function() {
+	jQuery( '#import_user_btn_import' ).val( 'Finished' ).attr( 'disabled', 'true' );
+	jQuery( '#MainWPBulkUploadUserLoading' ).hide();
+	jQuery( '#import_user_import_logging .log' ).append( '\n' + __( 'Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails ) + '\n' );
+	if ( import_user_count_create_fails > 0 ) {
+		jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
+	}
+	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );	
 }
 
 
@@ -6951,36 +6965,6 @@ mainwp_managesites_doaction = function ( action ) {
     if ( bulkManageSitesTaskRunning )
       return false;
       
-    // put here to pass 'action' value into the callback function
-    _callback  = function() {
-          managesites_bulk_init();
-          bulkManageSitesTotal = jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]' ).length;
-          bulkManageSitesTaskRunning = true;
-
-		var selectedIds = jQuery.map( jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ), function ( el ) {
-		    return jQuery( el ).val();
-		} );
-	    
-          if ( action == 'delete' ) {
-            mainwp_managesites_bulk_remove_next();
-            return false;
-          } else if ( action == 'sync' ) {            
-            mainwp_sync_sites_data( selectedIds );
-          } else if ( action == 'reconnect' ) {
-            mainwp_managesites_bulk_reconnect_next();
-          } else if ( action == 'update_plugins' ) {           
-            mainwp_update_pluginsthemes( 'plugin', selectedIds );
-          } else if ( action == 'update_themes' ) {            
-            mainwp_update_pluginsthemes( 'theme', selectedIds );
-          } else if ( action == 'update_wpcore' ) {            
-            managesites_wordpress_global_upgrade_all( selectedIds );
-          } else if ( action == 'update_translations' ) {            
-            mainwp_update_pluginsthemes( 'translation', selectedIds );
-          } else if (action == 'refresh_favico') {            
-            mainwp_managesites_bulk_refresh_favico(selectedIds);
-          }
-    }
-
     if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
       var confirmMsg = '';
       var _selection_cancelled = false;      
@@ -7021,16 +7005,23 @@ mainwp_managesites_doaction = function ( action ) {
           updateType = 2; // multi update
       }
 
-      mainwp_confirm( confirmMsg, _callback, _cancelled_callback, updateType );
+      mainwp_confirm( confirmMsg, _callback = function(){ mainwp_managesites_doaction_process( action ); }, _cancelled_callback, updateType );
       return false; // return those case
     }
 
-    _callback(); // other case callback
+    mainwp_managesites_doaction_process( action ); // other case callback
 
     return false;
   }
 
-  jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
+  mainwp_managesites_doaction_open( action );
+  
+  return false;
+  
+}
+
+mainwp_managesites_doaction_open = function( action ) {
+	jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
     var row = jQuery( this ).closest( 'tr' );
     switch ( action ) {
       case 'open_wpadmin':
@@ -7043,7 +7034,37 @@ mainwp_managesites_doaction = function ( action ) {
         break;
       }
   } );
-  return false;
+}
+
+mainwp_managesites_doaction_process = function( action ) {
+	
+	managesites_bulk_init();
+	
+	bulkManageSitesTotal = jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked[status="queue"]' ).length;
+	bulkManageSitesTaskRunning = true;
+
+	var selectedIds = jQuery.map( jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ), function ( el ) {
+		return jQuery( el ).val();
+	} );
+
+	if ( action == 'delete' ) {
+	  mainwp_managesites_bulk_remove_next();
+	  return false;
+	} else if ( action == 'sync' ) {            
+	  mainwp_sync_sites_data( selectedIds );
+	} else if ( action == 'reconnect' ) {
+	  mainwp_managesites_bulk_reconnect_next();
+	} else if ( action == 'update_plugins' ) {           
+	  mainwp_update_pluginsthemes( 'plugin', selectedIds );
+	} else if ( action == 'update_themes' ) {            
+	  mainwp_update_pluginsthemes( 'theme', selectedIds );
+	} else if ( action == 'update_wpcore' ) {            
+	  managesites_wordpress_global_upgrade_all( selectedIds );
+	} else if ( action == 'update_translations' ) {            
+	  mainwp_update_pluginsthemes( 'translation', selectedIds );
+	} else if (action == 'refresh_favico') {            
+	  mainwp_managesites_bulk_refresh_favico(selectedIds);
+	}
 }
    
 
@@ -7134,6 +7155,7 @@ mainwp_managesites_bulk_reconnect_specific = function ( pCheckedBox ) {
     return;
 };
 
+// phpcs:ignore  -- complex method
 function mainwp_according_table_sorting( pObj ) {
     var table, th, rows, switching, i, x, y, xVal, yVal, campare = false, shouldSwitch = false, dir, switchcount = 0, n, skip = 1;
     table = jQuery(pObj).closest('table')[0];

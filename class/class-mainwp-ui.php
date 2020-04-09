@@ -71,7 +71,24 @@ class MainWP_UI {
 		// to fix layout with multi sites selector.
 		$tab_id = wp_rand();
 		?>
-		<div id="mainwp-select-sites-footer">
+		
+		<?php
+		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
+		self::render_select_sites( $websites, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
+		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites);
+		self::render_select_sites_group( $groups, $tab_id, $selected_groups );
+		?>
+		<script type="text/javascript">
+		jQuery( document ).ready( function () {
+			jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
+		} );
+		</script>
+		<?php
+	}
+
+	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups ) {
+		?>
+	<div id="mainwp-select-sites-footer">
 			<div class="ui grid">
 				<div class="four wide column">
 					<div class="ui basic icon mini buttons">
@@ -98,7 +115,12 @@ class MainWP_UI {
 				<?php endif; ?>
 			</div>
 		</div>
-		<div class="ui divider hidden"></div>
+		<div class="ui divider hidden"></div>	
+		<?php
+	}
+
+	public static function render_select_sites( $websites, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
+		?>
 		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
@@ -147,8 +169,11 @@ class MainWP_UI {
 						?>
 				</div>
 			</div>
-		</div>
+		</div>		
 		<?php
+	}
+
+	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites ) {
 		if ( $staging_enabled ) :
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>
@@ -197,7 +222,12 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>
-		<?php endif; ?>
+			<?php
+		endif;
+	}
+
+	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ) {
+		?>
 		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-groups-list">
@@ -227,13 +257,6 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>
-
-		<script type="text/javascript">
-		jQuery( document ).ready( function () {
-			jQuery('#mainwp-select-sites-header .ui.menu .item').tab( {'onVisible': function() { mainwp_sites_selection_onvisible_callback( this ); } } );
-		} );
-		</script>
-
 		<?php
 	}
 
@@ -522,6 +545,7 @@ class MainWP_UI {
 
 	// customize WordPress add_meta_box() function.
 	// param $context: lef, right.
+	// phpcs:ignore -- not quite complex function
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) {
 		global $mainwp_widget_boxes;
 

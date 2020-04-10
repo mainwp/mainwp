@@ -17,11 +17,26 @@ function live_reports_responder_classes() {
 	}
 }
 
+/**
+ * Check if user has access. 
+ * 
+ * @param $siteurl Child Site URL.
+ */
 function check_live_reporting_access( $siteurl ) {
 	$access = get_option( 'live-report-responder-provideaccess' );
 	return ( ( 'yes' == $access ) && ( get_option( 'live-report-responder-siteurl' ) == $siteurl ) );
 }
 
+/**
+ * Live Reports secure connection.
+ * 
+ * @param $siteurl Child Site URL. 
+ * @param $securitykey Security Key.
+ * @param $signature Security Signature. 
+ * @param $action Action to perform.
+ * @param $timestamp Timestamp of action.
+ * @param $pubkey Public Key.
+ */
 function live_reports_responder_secure_connection( $siteurl = null, $securitykey = null, $signature = null, $action = null,
 											$timestamp = null, $pubkey = null ) {
 	if ( ( null == $siteurl ) || ( null == $signature ) || ( null == $action ) || ( null == $timestamp ) ) {
@@ -67,6 +82,12 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 	return true;
 }
 
+/**
+ * Check database to see if client exists.
+ * 
+ * @param $email Client Email Address.
+ * @param $siteid Child Site ID.
+ */
 function check_if_valid_client( $email, $siteid ) {
 	$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 	$result          = array();

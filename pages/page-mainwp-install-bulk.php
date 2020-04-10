@@ -8,11 +8,23 @@ namespace MainWP\Dashboard;
  * @used-by MainWP_Themes::InstallThemes
  */
 class MainWP_Install_Bulk {
+
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 * @uses self::init()
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	// Has to be called in System constructor - adds handling for the main page.
+	/** 
+	 * Instantiate the main page
+	 * 
+	 * Has to be called in System constructor,
+	 * adds handling for the main page.
+	 */
 	public static function init() {
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 	}
@@ -35,7 +47,14 @@ class MainWP_Install_Bulk {
 		}
 	}
 
-	// Renders the upload sub part.
+
+	/**
+	 * Renders the upload sub part.
+	 * 
+	 * @param string $type Plugin|Theme Type of upload.
+	 * 
+	 * @return html
+	 */
 	public static function render_upload( $type ) {
 		$title             = ( 'plugin' == $type ) ? 'Plugins' : 'Themes';
 		$favorites_enabled = is_plugin_active( 'mainwp-favorites-extension/mainwp-favorites-extension.php' );
@@ -81,6 +100,13 @@ class MainWP_Install_Bulk {
 		<?php
 	}
 
+	/** 
+	 * Prepair for the installation
+	 * 
+	 * Grab all the nesesary data to make the upload and prepair json response.
+	 * 
+	 * @return $output wp_send_json( $output ).
+	  */
 	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
@@ -161,6 +187,14 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
+
+	/**
+	 * Grab Post addition data.
+	 * 
+	 * @param array $post_data Data for post.
+	 * 
+	 * @return mixed $post_data Bulk post addition data. 
+	 */
 	public static function addition_post_data( &$post_data = array() ) {
 		$clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
 		if ( isset( $post_data['url'] ) && false !== strpos( $post_data['url'], 'mwpdl' ) && false !== strpos( $post_data['url'], 'sig' ) ) {
@@ -172,10 +206,11 @@ class MainWP_Install_Bulk {
 		return $post_data;
 	}
 
+	/** Perform Install */
 	public static function perform_install() {
 		MainWP_Utility::end_session();
 
-		// Fetch info..
+		// Fetch info.
 		$post_data = array(
 			'type' => $_POST['type'],
 		);
@@ -186,7 +221,13 @@ class MainWP_Install_Bulk {
 			$post_data['overwrite'] = true;
 		}
 
-		// deprecated from 3.5.6.
+		/**
+		 * Addition Post Data.
+		 * 
+		 * @param $post_data The post data.
+		 * @deprecated From.
+		 * @since 3.5.6.
+		 */ 
 		self::addition_post_data( $post_data );
 
 		// hook to support addition data: wpadmin_user, wpadmin_passwd.
@@ -214,6 +255,11 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
+	/** 
+	 * Prepair the upload. 
+	 * 
+	 * @return $output wp_send_json( $output ).
+	 */
 	public static function prepare_upload() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
@@ -270,6 +316,11 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
+	/** 
+	 * Perform the upload. 
+	 * 
+	 * @return $output wp_send_json( $output ).
+	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
 
@@ -311,7 +362,14 @@ class MainWP_Install_Bulk {
 
 		wp_send_json( $output );
 	}
-
+	
+	/**
+	 * Clean the upload
+	 * 
+	 * Do file structure mainenance and tmp file removals.
+	 * 
+	 * @return json array( 'ok' => true ) & die.
+	 */
 	public static function clean_upload() {
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
 		global $wp_filesystem;
@@ -332,10 +390,25 @@ class MainWP_Install_Bulk {
 		die( wp_json_encode( array( 'ok' => true ) ) );
 	}
 
+	/**
+	 * Plugin & Theme upload handler.
+	 * 
+	 * @param mixed $data
+	 * @param mixed $website
+	 * @param mixed $output
+	 * 
+	 * @return mixed $output->ok[ $website->id ] = array( $website->name )|Error,
+	 * 	Already installed,
+	 * 	Undefined error! Please reinstall the MainWP Child plugin on the child site,
+	 * 	Error while installing.
+	 */
 	public static function install_plugin_theme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
+
 			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); 
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ] = array( $website->name );

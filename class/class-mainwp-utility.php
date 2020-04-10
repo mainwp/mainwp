@@ -294,7 +294,7 @@ class MainWP_Utility {
 		$target = false;
 
 		$dnsRecord = @dns_get_record( $host );
-		MainWP_Logger::instance()->debug( ' :: tryVisit :: [dnsRecord=' . MainWP_Utility::value_to_string( $dnsRecord, 1 ) . ']' );
+		MainWP_Logger::instance()->debug( ' :: tryVisit :: [dnsRecord=' . self::value_to_string( $dnsRecord, 1 ) . ']' );
 		if ( false === $dnsRecord ) {
 			$data = false;
 		} elseif ( is_array( $dnsRecord ) ) {
@@ -1354,7 +1354,7 @@ class MainWP_Utility {
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . self::value_to_string( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
@@ -1591,7 +1591,7 @@ class MainWP_Utility {
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' === $http_status ) {
-			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'post data: [' . self::value_to_string( $postdata, 1 ) . ']' );
 		}
 
 		if ( ( false === $data ) && ( 0 === $http_status ) ) {
@@ -3305,16 +3305,16 @@ EOT;
 		return $randomString;
 	}
 
-	public static function value_to_string( $var ){
-		if (is_array( $var ) || is_object( $var )) {
+	public static function value_to_string( $var ) {
+		if ( is_array( $var ) || is_object( $var ) ) {
 			//phpcs:ignore -- for debug only
 			return print_r( $var, true );
-		} else if ( is_string ( $var ) ) {
+		} elseif ( is_string ( $var ) ) {
 			return $var;
 		}
 		return '';
 	}
-	
+
 	public static function get_child_response( $data ) {
 		if ( is_serialized( $data ) ) {
 			return unserialize( $data, array( 'allowed_classes' => false ) );

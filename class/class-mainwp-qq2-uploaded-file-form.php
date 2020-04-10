@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
 class MainWP_QQ2_Uploaded_File_Form {
 	/**
 	 * Save the file to the specified path.
-	 * 
+	 *
 	 * @param string $path Path to save file to.
 	 * @return boolean TRUE on success|false on failer.
 	 */

@@ -1,5 +1,5 @@
 <?php
-/** 
+/**
  * MainWP Overview Page.
  */
 namespace MainWP\Dashboard;
@@ -31,10 +31,10 @@ class MainWP_Overview {
 		'backup_tasks'      => true,
 	);
 
-	/** 
+	/**
 	 * Check if there is a session,
 	 * if there isn't one create it.
-	 * 
+	 *
 	 *  @return self::singlton Overview Page Session.
 	 */
 	public static function get() {
@@ -53,11 +53,11 @@ class MainWP_Overview {
 	}
 
 	/**
-	 * Set the number of page coumns. 
-	 * 
+	 * Set the number of page coumns.
+	 *
 	 * @param mixed $columns Number of Columns.
 	 * @param mixed $screen Screen size.
-	 * 
+	 *
 	 * @return int $columns Number of desired page columns.
 	 */
 	public function on_screen_layout_columns( $columns, $screen ) {
@@ -135,7 +135,8 @@ class MainWP_Overview {
 		self::add_meta_boxes( $this->dashBoard );
 	}
 
-	/** Add MainWP Overview Page Widgets. 
+	/** Add MainWP Overview Page Widgets.
+	 *
 	 * @param $page Current page.
 	 */
 	public static function add_meta_boxes( $page ) {
@@ -231,7 +232,7 @@ class MainWP_Overview {
 
 	/**
 	 * Method on_show_page
-	 * 
+	 *
 	 * When the page loads render the body content.
 	 */
 	public function on_show_page() {
@@ -256,14 +257,14 @@ class MainWP_Overview {
 		<?php
 	}
 
-	
+
 	/**
 	 * Render the Dasboard Body content.
-	 * 
+	 *
 	 * @param mixed $websites Array of Child Sites.
 	 * @param mixed $pDashboard Dashboard.
 	 * @param mixed $pScreenLayout Screen Layout.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {

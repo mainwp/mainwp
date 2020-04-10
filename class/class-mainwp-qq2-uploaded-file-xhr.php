@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
 class MainWP_QQ2_Uploaded_File_Xhr {
 	/**
 	 * Save the file to the specified path
-	 * 
+	 *
 	 * @param $path Path to File.
 	 * @return boolean TRUE on success|False
 	 */
@@ -69,7 +69,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 
 		return true;
 	}
-	
+
 	/** Get the File Name. */
 	public function get_name() {
 		return $_GET['qqfile'];

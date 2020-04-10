@@ -10,10 +10,10 @@ namespace MainWP\Dashboard;
 class MainWP_Meta_Boxes {
 
 	/**
-	 * Select Sites. 
-	 * 
+	 * Select Sites.
+	 *
 	 * @param mixed $post Post Array
-	 * 
+	 *
 	 * @return html Select Sites Form.
 	 */
 	public function select_sites( $post ) {
@@ -45,11 +45,11 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Update Post meta for Select Sites Meta boxes.
-	 * 
+	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type
-	 * 
-	 * @return int $post_id 
+	 *
+	 * @return int $post_id
 	 */
 	public function select_sites_handle( $post_id, $post_type ) {
 		/**
@@ -105,9 +105,9 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Render Add Categories.
-	 * 
+	 *
 	 * @param mixed $post Post array.
-	 * 
+	 *
 	 * @return html
 	 */
 	public function add_categories( $post ) {
@@ -183,10 +183,10 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Handle adding Categories.
-	 * 
+	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type.
-	 * 
+	 *
 	 * @return self
 	 */
 	public function add_categories_handle( $post_id, $post_type ) {
@@ -227,19 +227,19 @@ class MainWP_Meta_Boxes {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Add tags to Post array.
-	 * 
+	 *
 	 * @param mixed $post Post array.
 	 */
 	public function add_tags( $post ) {
 		$this->add_extra( 'Tags', '_tags', 'add_tags', $post );
 	}
-	
+
 	/**
 	 * Add Tags to post array handler.
-	 * 
+	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type post Type.
 	 */
@@ -252,7 +252,7 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Add Slug to Post array.
-	 * 
+	 *
 	 * @param $post Post Array.
 	 */
 	public function add_slug( $post ) {
@@ -261,12 +261,12 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Add nounce to post array.
-	 * 
+	 *
 	 * @param mixed $title Post Title
-	 * @param mixed $saveto 
+	 * @param mixed $saveto
 	 * @param mixed $prefix
 	 * @param mixed $post
-	 * 
+	 *
 	 * @return void
 	 */
 	private function add_extra( $title, $saveto, $prefix, $post ) {
@@ -280,24 +280,24 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Add Post Slug.
-	 * 
+	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type.
 	 */
 	public function add_slug_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Slug', '_slug', 'add_slug', $post_id, $post_type );
 	}
-	
+
 	/**
 	 * Update Post meta & add Security Nonce Prefix.
-	 * 
+	 *
 	 * @param mixed $title Post title.
 	 * @param mixed $saveto Where to save.
 	 * @param mixed $prefix Nounce Prefix.
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type.
-	 * 
-	 * @return int 	$post_id Post ID.
+	 *
+	 * @return int  $post_id Post ID.
 	 */
 	private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
 		/**

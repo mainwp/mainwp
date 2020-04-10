@@ -18,8 +18,8 @@ function live_reports_responder_classes() {
 }
 
 /**
- * Check if user has access. 
- * 
+ * Check if user has access.
+ *
  * @param $siteurl Child Site URL.
  */
 function check_live_reporting_access( $siteurl ) {
@@ -29,10 +29,10 @@ function check_live_reporting_access( $siteurl ) {
 
 /**
  * Live Reports secure connection.
- * 
- * @param $siteurl Child Site URL. 
+ *
+ * @param $siteurl Child Site URL.
  * @param $securitykey Security Key.
- * @param $signature Security Signature. 
+ * @param $signature Security Signature.
  * @param $action Action to perform.
  * @param $timestamp Timestamp of action.
  * @param $pubkey Public Key.
@@ -84,7 +84,7 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 
 /**
  * Check database to see if client exists.
- * 
+ *
  * @param $email Client Email Address.
  * @param $siteid Child Site ID.
  */

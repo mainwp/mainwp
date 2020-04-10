@@ -1,7 +1,7 @@
 <?php
-/** 
+/**
  * This file handles all of the Bulk Installation Methods
- * for Plugins & Themes. 
+ * for Plugins & Themes.
  */
 namespace MainWP\Dashboard;
 
@@ -23,9 +23,9 @@ class MainWP_Install_Bulk {
 		return __CLASS__;
 	}
 
-	/** 
+	/**
 	 * Instantiate the main page
-	 * 
+	 *
 	 * Has to be called in System constructor,
 	 * adds handling for the main page.
 	 */
@@ -56,9 +56,9 @@ class MainWP_Install_Bulk {
 
 	/**
 	 * Renders the upload sub part.
-	 * 
+	 *
 	 * @param string $type Plugin|Theme Type of upload.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_upload( $type ) {
@@ -106,13 +106,13 @@ class MainWP_Install_Bulk {
 		<?php
 	}
 
-	/** 
+	/**
 	 * Prepair for the installation
-	 * 
+	 *
 	 * Grab all the nesesary data to make the upload and prepair json response.
-	 * 
+	 *
 	 * @return $output wp_send_json( $output ).
-	  */
+	 */
 	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
@@ -196,10 +196,10 @@ class MainWP_Install_Bulk {
 
 	/**
 	 * Grab Post addition data.
-	 * 
+	 *
 	 * @param array $post_data Data for post.
-	 * 
-	 * @return mixed $post_data Bulk post addition data. 
+	 *
+	 * @return mixed $post_data Bulk post addition data.
 	 */
 	public static function addition_post_data( &$post_data = array() ) {
 		$clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
@@ -229,11 +229,11 @@ class MainWP_Install_Bulk {
 
 		/**
 		 * Addition Post Data.
-		 * 
+		 *
 		 * @param $post_data The post data.
 		 * @deprecated From.
 		 * @since 3.5.6.
-		 */ 
+		 */
 		self::addition_post_data( $post_data );
 
 		// hook to support addition data: wpadmin_user, wpadmin_passwd.
@@ -261,9 +261,9 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
-	/** 
-	 * Prepair the upload. 
-	 * 
+	/**
+	 * Prepair the upload.
+	 *
 	 * @return $output wp_send_json( $output ).
 	 */
 	public static function prepare_upload() {
@@ -322,9 +322,9 @@ class MainWP_Install_Bulk {
 		wp_send_json( $output );
 	}
 
-	/** 
-	 * Perform the upload. 
-	 * 
+	/**
+	 * Perform the upload.
+	 *
 	 * @return $output wp_send_json( $output ).
 	 */
 	public static function perform_upload() {
@@ -368,12 +368,12 @@ class MainWP_Install_Bulk {
 
 		wp_send_json( $output );
 	}
-	
+
 	/**
 	 * Clean the upload
-	 * 
+	 *
 	 * Do file structure mainenance and tmp file removals.
-	 * 
+	 *
 	 * @return json array( 'ok' => true ) & die.
 	 */
 	public static function clean_upload() {
@@ -398,23 +398,23 @@ class MainWP_Install_Bulk {
 
 	/**
 	 * Plugin & Theme upload handler.
-	 * 
+	 *
 	 * @param mixed $data
 	 * @param mixed $website
 	 * @param mixed $output
-	 * 
+	 *
 	 * @return mixed $output->ok[ $website->id ] = array( $website->name )|Error,
-	 * 	Already installed,
-	 * 	Undefined error! Please reinstall the MainWP Child plugin on the child site,
-	 * 	Error while installing.
+	 *  Already installed,
+	 *  Undefined error! Please reinstall the MainWP Child plugin on the child site,
+	 *  Error while installing.
 	 */
 	public static function install_plugin_theme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 
-			$result      = $results[1];
+			$result = $results[1];
 
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); 
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ] = array( $website->name );

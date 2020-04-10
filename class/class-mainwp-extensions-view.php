@@ -171,7 +171,7 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Render Incompatability Notice.
-	 * 
+	 *
 	 * @return html Html block for Incompatability Notice.
 	 */
 	public static function render_incompatible_notice() {
@@ -196,7 +196,7 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Render Intro Notice.
-	 * 
+	 *
 	 * @return html Html block for Intro Notice.
 	 */
 	public static function render_intro_notice() {
@@ -213,9 +213,9 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Render Search Box.
-	 * 
+	 *
 	 * @param mixed $extensions Extentions Array.
-	 * 
+	 *
 	 * @return html Html block for Search Box.
 	 */
 	public static function render_search_box( $extensions ) {
@@ -252,11 +252,11 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Render the MainWP Extension Cards.
-	 * 
+	 *
 	 * @param mixed $extension Extention to render.
 	 * @param mixed $extension_update Extension update.
-	 * 
-	 * @return html Html Block for MainWP Extensions. 
+	 *
+	 * @return html Html Block for MainWP Extensions.
 	 */
 	public static function render_extension_card( $extension, $extension_update ) {
 
@@ -343,8 +343,8 @@ class MainWP_Extensions_View {
 
 	/**
 	 * Render Purchase Notice.
-	 * 
-	 * @return html Html Block for purchange notice. 
+	 *
+	 * @return html Html Block for purchange notice.
 	 */
 	public static function render_purchase_notice() {
 		?>
@@ -363,11 +363,11 @@ class MainWP_Extensions_View {
 	}
 
 	/**
-	 * Render the Sidebar. 
-	 * 
+	 * Render the Sidebar.
+	 *
 	 * @param mixed $username MainWP.com Username.
 	 * @param mixed $password MainWP.com Password.
-	 * 
+	 *
 	 * @return html HTML block for Extentions Page.
 	 */
 	public static function render_side_box( $username, $password ) {

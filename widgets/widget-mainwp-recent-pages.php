@@ -118,7 +118,7 @@ class MainWP_Recent_Pages {
 
 	/**
 	 * Render MainWP Recent Paged Widget Header
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_top_grid() {
@@ -151,10 +151,10 @@ class MainWP_Recent_Pages {
 
 	/**
 	 * Render Published Pages.
-	 * 
-	 * @param mixed $allPages All pages data. 
+	 *
+	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_published_posts( $allPages, $recent_number ) {
@@ -224,10 +224,10 @@ class MainWP_Recent_Pages {
 
 	/**
 	 * Render all draft pages.
-	 * 
-	 * @param mixed $allPages All pages data. 
+	 *
+	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_draft_posts( $allPages, $recent_number ) {
@@ -297,11 +297,11 @@ class MainWP_Recent_Pages {
 	}
 
 	/**
-	 * Render all pending pages. 
+	 * Render all pending pages.
 	 *
-	 * @param mixed $allPages All pages data. 
+	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_pending_posts( $allPages, $recent_number ) {
@@ -371,11 +371,11 @@ class MainWP_Recent_Pages {
 	}
 
 	/**
-	 * Render all future pages. 
+	 * Render all future pages.
 	 *
-	 * @param mixed $allPages All pages data. 
+	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_future_posts( $allPages, $recent_number ) {
@@ -445,11 +445,11 @@ class MainWP_Recent_Pages {
 	}
 
 	/**
-	 * Render all trashed pages. 
+	 * Render all trashed pages.
 	 *
-	 * @param mixed $allPages All pages data. 
+	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 * 
+	 *
 	 * @return html
 	 */
 	public static function render_trash_posts( $allPages, $recent_number ) {

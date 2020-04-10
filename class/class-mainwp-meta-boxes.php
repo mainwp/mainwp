@@ -1,4 +1,7 @@
 <?php
+/**
+ * This file handles the addintion and updating of Post Meta Boxes.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,6 +9,13 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Meta_Boxes {
 
+	/**
+	 * Select Sites. 
+	 * 
+	 * @param mixed $post Post Array
+	 * 
+	 * @return html Select Sites Form.
+	 */
 	public function select_sites( $post ) {
 
 		$val            = get_post_meta( $post->ID, '_selected_sites', true );
@@ -34,10 +44,12 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
-	 * @param mixed $post_id
-	 * @param mixed $post_type
+	 * Update Post meta for Select Sites Meta boxes.
 	 * 
-	 * @return void $post_id 
+	 * @param mixed $post_id Post ID.
+	 * @param mixed $post_type Post Type
+	 * 
+	 * @return int $post_id 
 	 */
 	public function select_sites_handle( $post_id, $post_type ) {
 		/**
@@ -240,6 +252,8 @@ class MainWP_Meta_Boxes {
 
 	/**
 	 * Add Slug to Post array.
+	 * 
+	 * @param $post Post Array.
 	 */
 	public function add_slug( $post ) {
 		$this->add_extra( 'Slug', '_slug', 'add_slug', $post );

@@ -2,7 +2,7 @@
 /**
  * MainWP Connection Status
  *
- * Build the Connection Status Widget.
+ * Build the MainWP Overview page Connection Status Widget.
  */
 
 namespace MainWP\Dashboard;
@@ -139,6 +139,13 @@ class MainWP_Connection_Status {
 		self::render_details( $html_all_sites, $html_online_sites, $html_other_sites );
 	}
 
+	/**
+	 * The renders the MainWP Overview page Connection Status Widget Header and Drop down Box.
+	 * 
+	 * @param mixed $current_wpid Current Website ID
+	 * 
+	 * @return html
+	 */
 	public static function render_status( $current_wpid ) {
 		?>
 		<div class="ui grid">
@@ -185,6 +192,15 @@ class MainWP_Connection_Status {
 		<div class="ui hidden divider"></div>
 		<?php
 	}
+
+	/**
+	 * Render the MainWP Overview page COnection Status Widget Content.
+	 * 
+	 * @param mixed $site Site list. 
+	 * @param mixed $count_connected Connection Count.
+	 * 
+	 * @return html
+	 */
 	public static function render_current_status( $site, $count_connected ) {
 		if ( $count_connected > 0 ) :
 			?>
@@ -218,6 +234,14 @@ class MainWP_Connection_Status {
 		endif;
 	}
 
+	/**
+	 * Render Count UI
+	 * 
+	 * @param mixed $count_connected Connected Count.
+	 * @param mixed $count_disconnected Disconnected Count.
+	 * 
+	 * @return html
+	 */
 	public static function render_multi_status( $count_connected, $count_disconnected ) {
 		?>
 		<div class="ui two column stackable grid">
@@ -249,6 +273,15 @@ class MainWP_Connection_Status {
 		<?php
 	}
 
+	/**
+	 * Render See All Sites List.
+	 * 
+	 * @param mixed $html_all_sites All sites html.
+	 * @param mixed $html_online_sites Online sites html.
+	 * @param mixed $html_other_sites Other sites html.
+	 * 
+	 * @return html
+	 */
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
 		?>
 		<div class="ui hidden divider"></div>
@@ -275,6 +308,16 @@ class MainWP_Connection_Status {
 		<?php
 	}
 
+
+	/**
+	 * @param mixed $website Website Info.
+	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
+	 * @param mixed $md5Connection md5 Connection.
+	 * @param mixed $output_md5 md5 decoded output.
+	 * @param mixed $hasSyncErrors Collected errors.
+	 * 
+	 * @return void
+	 */
 	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
 		?>
 			
@@ -312,6 +355,16 @@ class MainWP_Connection_Status {
 		<?php
 	}
 
+	/**
+	 * Render Connected Sites List.
+	 * 
+	 * @param mixed $website Website Info.
+	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
+	 * @param mixed $md5Connection md5 Connection.
+	 * @param mixed $output_md5 md5 decoded output.
+	 * 
+	 * @return html
+	 */
 	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>
 	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
@@ -344,6 +397,16 @@ class MainWP_Connection_Status {
 		<?php
 	}
 
+	/**
+	 * Render Disconected Sites List. 
+	 * 
+	 * @param mixed $website Website Info.
+	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
+	 * @param mixed $md5Connection md5 Connection.
+	 * @param mixed $output_md5 md5 decoded output.
+	 * 
+	 * @return html
+	 */
 	public static function render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">

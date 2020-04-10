@@ -30,7 +30,7 @@ class MainWP_Widget_Themes {
 	 * Fire off render_widget().
 	 */
 	public static function render() {
-		self::render_widget( false, false );
+		self::render_widget();
 	}
 
 
@@ -39,10 +39,9 @@ class MainWP_Widget_Themes {
 	 *
 	 * Build Themes Widget
 	 *
-	 * @param mixed   $renew
-	 * @param boolean $pExit true|false If $pEixt is true then exit.
+	 * @param none	 
 	 */
-	public static function render_widget( $renew, $pExit = true ) {
+	public static function render_widget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;
@@ -64,33 +63,29 @@ class MainWP_Widget_Themes {
 			MainWP_DB::free_result( $websites );
 		}
 
+		self::render_html_widget( $website, $allThemes );		
+	}
+	
+	/**
+	 * 
+	 * Method render_html_widget().
+	 * 
+	 * Render html themes widget for current site
+	 *	 
+	 * @param mixed $website current site.
+	 * @param mixed $allPlugins all plugins.
+	 *
+	 * @return echo html
+	 */
+	public static function render_html_widget( $website, $allThemes ) {
+		
 		$actived_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 1 );
 		$actived_themes = MainWP_Utility::sortmulti( $actived_themes, 'name', 'asc' );
 
 		$inactive_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 0 );
 		$inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
-		if ( ( 0 < count( $allThemes ) ) && $website ) {
-			$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
-			if ( ! is_array( $themes_outdate ) ) {
-				$themes_outdate = array();
-			}
-
-			$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
-			if ( is_array( $themesOutdateDismissed ) ) {
-				$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
-			}
-
-			$userExtension          = MainWP_DB::instance()->get_user_extension();
-			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
-
-			if ( is_array( $decodedDismissedThemes ) ) {
-				$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
-			}
-		}
-
-		?>
-
+	?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -162,11 +157,7 @@ class MainWP_Widget_Themes {
 				<?php } ?>
 			</div>
 		</div>
-		<?php
-
-		if ( true === $pExit ) {
-			exit();
-		}
+	<?php
 	}
 
 	/**

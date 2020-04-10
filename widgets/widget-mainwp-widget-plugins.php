@@ -30,7 +30,7 @@ class MainWP_Widget_Plugins {
 	 * Fire off render_widget().
 	 */
 	public static function render() {
-		self::render_widget( false, false );
+		self::render_widget();
 	}
 
 	/**
@@ -65,10 +65,9 @@ class MainWP_Widget_Plugins {
 	 *
 	 * Build Plugins Widget
 	 *
-	 * @param mixed   $renew
-	 * @param boolean $pExit true|false If $pEixt is true then exit.
+	 * @param none 
 	 */
-	public static function render_widget( $renew, $pExit = true ) {
+	public static function render_widget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;
@@ -92,38 +91,31 @@ class MainWP_Widget_Plugins {
 			}
 			MainWP_DB::free_result( $websites );
 		}
-
+		
+		self::render_html_widget( $website, $allPlugins );	
+	}
+	
+	/**
+	 * 
+	 * Method render_html_widget().
+	 * 
+	 * Render html plugins widget for current site
+	 *	 
+	 * @param mixed $website current site.
+	 * @param mixed $allPlugins all plugins.
+	 *
+	 * @return echo html
+	 */
+	public static function render_html_widget( $website, $allPlugins ){
+		
 		$actived_plugins = MainWP_Utility::get_sub_array_having( $allPlugins, 'active', 1 );
 		$actived_plugins = MainWP_Utility::sortmulti( $actived_plugins, 'name', 'asc' );
 
 		$inactive_plugins = MainWP_Utility::get_sub_array_having( $allPlugins, 'active', 0 );
 		$inactive_plugins = MainWP_Utility::sortmulti( $inactive_plugins, 'name', 'asc' );
-
-		$plugins_outdate = array();
-
-		if ( ( 0 < count( $allPlugins ) ) && $website ) {
-
-			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-			if ( ! is_array( $plugins_outdate ) ) {
-				$plugins_outdate = array();
-			}
-
-			$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-			if ( is_array( $pluginsOutdateDismissed ) ) {
-				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
-			}
-
-			$userExtension           = MainWP_DB::instance()->get_user_extension();
-			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
-
-			if ( is_array( $decodedDismissedPlugins ) ) {
-				$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
-			}
-		}
-
-		?>
-
-		<div class="ui grid">
+		
+	?>
+	<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
 					<?php esc_html_e( 'Plugins', 'mainwp' ); ?>
@@ -199,11 +191,8 @@ class MainWP_Widget_Plugins {
 				<?php } ?>
 			</div>
 		</div>
-		<?php
-
-		if ( true === $pExit ) {
-			exit();
-		}
+	<?php
+	
 	}
 
 	/**

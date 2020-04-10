@@ -47,8 +47,23 @@ class MainWP_Security_Issues_Widget {
 				$total_securityIssues += $website->securityIssues;
 			}
 		}
+		
+		self::render_issues( $websites, $total_securityIssues );
+	}
+	
+	/**
+	 * 
+	 * Method render_html_widget().
+	 * 
+	 * Render html themes widget for current site
+	 *	 
+	 * @param mixed $website current site.
+	 * @param mixed $allPlugins all plugins.
+	 *
+	 * @return echo html
+	 */
+	public static function render_issues( $websites, $total_securityIssues ) {
 		?>
-
 		<h3 class="ui header handle-drag">
 			<?php esc_html_e( 'Security Issues', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>

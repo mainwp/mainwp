@@ -18,8 +18,10 @@ class MainWP_Overview {
 		return __CLASS__;
 	}
 
+	/** Session Variable. */
 	protected static $singleton = null;
 
+	/** Array of enabled Widgets. */
 	private static $enable_widgets = array(
 		'overview'          => true,
 		'connection_status' => true,

@@ -116,6 +116,11 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render MainWP Recent Paged Widget Header
+	 * 
+	 * @return html
+	 */
 	public static function render_top_grid() {
 		?>
 		<div class="ui grid">
@@ -144,6 +149,14 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render Published Pages.
+	 * 
+	 * @param mixed $allPages All pages data. 
+	 * @param mixed $recent_number Number of pages.
+	 * 
+	 * @return html
+	 */
 	public static function render_published_posts( $allPages, $recent_number ) {
 
 		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
@@ -209,13 +222,21 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render all draft pages.
+	 * 
+	 * @param mixed $allPages All pages data. 
+	 * @param mixed $recent_number Number of pages.
+	 * 
+	 * @return html
+	 */
 	public static function render_draft_posts( $allPages, $recent_number ) {
 
 		$recent_pages_draft = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'draft' );
 		$recent_pages_draft = MainWP_Utility::sortmulti( $recent_pages_draft, 'dts', 'desc' );
 
 		?>
-	<div class="recent_posts_draft ui tab" data-tab="page-draft">
+		<div class="recent_posts_draft ui tab" data-tab="page-draft">
 				<?php
 				if ( count( $recent_pages_draft ) == 0 ) {
 					?>
@@ -275,6 +296,14 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render all pending pages. 
+	 *
+	 * @param mixed $allPages All pages data. 
+	 * @param mixed $recent_number Number of pages.
+	 * 
+	 * @return html
+	 */
 	public static function render_pending_posts( $allPages, $recent_number ) {
 
 		$recent_pages_pending = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'pending' );
@@ -341,6 +370,14 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render all future pages. 
+	 *
+	 * @param mixed $allPages All pages data. 
+	 * @param mixed $recent_number Number of pages.
+	 * 
+	 * @return html
+	 */
 	public static function render_future_posts( $allPages, $recent_number ) {
 		$recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
 		$recent_pages_future = MainWP_Utility::sortmulti( $recent_pages_future, 'dts', 'desc' );
@@ -407,6 +444,14 @@ class MainWP_Recent_Pages {
 		<?php
 	}
 
+	/**
+	 * Render all trashed pages. 
+	 *
+	 * @param mixed $allPages All pages data. 
+	 * @param mixed $recent_number Number of pages.
+	 * 
+	 * @return html
+	 */
 	public static function render_trash_posts( $allPages, $recent_number ) {
 		$recent_pages_trash = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
 		$recent_pages_trash = MainWP_Utility::sortmulti( $recent_pages_trash, 'dts', 'desc' );

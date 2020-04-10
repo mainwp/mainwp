@@ -310,13 +310,15 @@ class MainWP_Connection_Status {
 
 
 	/**
+	 * Render all items list. 
+	 * 
 	 * @param mixed $website Website Info.
 	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
 	 * @param mixed $md5Connection md5 Connection.
 	 * @param mixed $output_md5 md5 decoded output.
 	 * @param mixed $hasSyncErrors Collected errors.
 	 * 
-	 * @return void
+	 * @return html
 	 */
 	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
 		?>

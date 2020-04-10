@@ -47,16 +47,16 @@ class MainWP_Security_Issues_Widget {
 				$total_securityIssues += $website->securityIssues;
 			}
 		}
-		
+
 		self::render_issues( $websites, $total_securityIssues );
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Method render_html_widget().
-	 * 
+	 *
 	 * Render html themes widget for current site
-	 *	 
+	 *
 	 * @param mixed $website current site.
 	 * @param mixed $allPlugins all plugins.
 	 *

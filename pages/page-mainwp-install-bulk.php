@@ -1,4 +1,8 @@
 <?php
+/** 
+ * This file handles all of the Bulk Installation Methods
+ * for Plugins & Themes. 
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -29,7 +33,9 @@ class MainWP_Install_Bulk {
 		add_action( 'admin_init', array( self::get_class_name(), 'admin_init' ) );
 	}
 
-	// Handles the uploading of a file.
+	/**
+	 * Handles the uploading of a file.
+	 */
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
 			if ( 'MainWP_Install_Bulk-uploadfile' == $_REQUEST['mainwp_do'] ) {

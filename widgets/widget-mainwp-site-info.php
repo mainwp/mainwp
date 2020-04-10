@@ -64,23 +64,23 @@ class MainWP_Site_Info {
 			'ip'                    => __( 'Server IP', 'mainwp' ),
 			'group'                 => __( 'Groups', 'mainwp' ),
 		);
-		
+
 		self::render_info();
-		
+
 		MainWP_DB::free_result( $websites );
 	}
-	
+
 	/**
 	 * Render Sites Info.
 	 *
 	 * @param object $website Website object.
-	 * @param array $website_info Website data.
-	 * @param array $child_site_info Website info to display.	 
+	 * @param array  $website_info Website data.
+	 * @param array  $child_site_info Website info to display.
 	 *
 	 * @return echo html
 	 */
-	public static function render_info( $website, $website_info, $child_site_info ){
-	?>
+	public static function render_info( $website, $website_info, $child_site_info ) {
+		?>
 		<h3 class="ui header handle-drag">
 			<?php esc_html_e( 'Site Info', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>

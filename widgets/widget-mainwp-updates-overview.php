@@ -95,7 +95,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * Check if $_GET['dashboard'] then run render_sites().
 	 */
-	public static function render() {		
+	public static function render() {
 		self::render_sites();
 	}
 
@@ -137,7 +137,7 @@ class MainWP_Updates_Overview {
 		}
 
 		MainWP_Utility::end_session();
-		
+
 		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
 		MainWP_Utility::end_session();
 
@@ -387,13 +387,13 @@ class MainWP_Updates_Overview {
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
-		
+
 		// the hook using to set maximum number of plugins/themes for huge number of updates.
-		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update      = '';		
+		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
+		$continue_update   = '';
 		if ( $limit_updates_all > 0 ) {
 			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
-				$continue_update = $_GET['continue_update'];				
+				$continue_update = $_GET['continue_update'];
 			}
 		}
 
@@ -426,7 +426,7 @@ class MainWP_Updates_Overview {
 		$user_can_update_plugins     = mainwp_current_user_can( 'dashboard', 'update_plugins' );
 
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
-		
+
 		?>		
 		<?php self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ); ?>
 		<!-- END Total Updates -->
@@ -439,7 +439,7 @@ class MainWP_Updates_Overview {
 		<!-- END Themes Updates -->
 
 		<?php if ( 1 == $mainwp_show_language_updates ) : ?>
-		<?php self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ); ?>
+			<?php self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ); ?>
 		<!-- END Language Updates -->		
 		<?php endif; ?>
 
@@ -451,43 +451,43 @@ class MainWP_Updates_Overview {
 
 		<?php // Invisible section to support global updates all. ?>
 
-		<?php self::render_global_update( 
-			
-				$user_can_update_wordpress, 
-				$total_wp_upgrades, 
-				$all_wp_updates, 
-			
-				$user_can_update_plugins, 
-				$total_plugin_upgrades, 
+		<?php
+		self::render_global_update(
+
+				$user_can_update_wordpress,
+				$total_wp_upgrades,
+				$all_wp_updates,
+
+				$user_can_update_plugins,
+				$total_plugin_upgrades,
 				$all_plugins_updates,
-			
+
 				$user_can_update_themes,
-				$total_theme_upgrades, 
+				$total_theme_upgrades,
 				$all_themes_updates,
-			
+
 				$mainwp_show_language_updates,
 				$user_can_update_translation,
-				$total_translation_upgrades, 
-				$all_translations_updates				
-				
-			); 
-		
+				$total_translation_upgrades,
+				$all_translations_updates
+
+			);
+
 		self::render_bottom( $websites, $globalView );
-		
 	}
-	
+
 	/**
 	 * Render total update.
 	 *
-	 * @param int $total_upgrades number of update.
-	 * @param string $lastSyncMsg last sync info.
-	 * @param bool true|false $can_total_update permission to update all.	 
-	 * @param int $limit_updates_all limit number of update per request, 0 is no limit.	 
+	 * @param int             $total_upgrades number of update.
+	 * @param string          $lastSyncMsg last sync info.
+	 * @param bool true|false $can_total_update permission to update all.
+	 * @param int             $limit_updates_all limit number of update per request, 0 is no limit.
 	 *
 	 * @return echo html
 	 */
 	public static function render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ) {
-	?>
+		?>
 		<div class="ui grid">
 			<div class="sixteen wide column">
 				<h3 class="ui header handle-drag">
@@ -514,7 +514,7 @@ class MainWP_Updates_Overview {
 					<a href="#"
 					<?php
 					if ( 0 == $total_upgrades ) {
-						echo 'disabled'; 						
+						echo 'disabled';
 					} else {
 						?>
 						onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
@@ -522,22 +522,22 @@ class MainWP_Updates_Overview {
 		<?php endif; ?>
 				</div>
 			</div>
-	<?php
+		<?php
 	}
-	
+
 	/**
-	 * Render Wordpress update detail.
+	 * Render WordPress update detail.
 	 *
-	 * @param bool true|false $user_can_update_wordpress permission to update Wordpress.
-	 * @param int $total_wp_upgrades  total number of Wordpress update.
+	 * @param bool true|false $user_can_update_wordpress permission to update WordPress.
+	 * @param int             $total_wp_upgrades  total number of WordPress update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string $continue_update  string of continue update.
-	 * @param int $current_wpid  current site id.	 	 
+	 * @param string          $continue_update  string of continue update.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update ) {
-	?>
+		?>
 		<div class="ui hidden divider"></div>
 		<div class="ui horizontal divider"><?php esc_html_e( 'Update Details', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
@@ -575,22 +575,22 @@ class MainWP_Updates_Overview {
 			</div>
 			</div>
 		</div>
-	<?php
+		<?php
 	}
-	
+
 	/**
 	 * Render Plugins update detail.
 	 *
 	 * @param bool true|false $user_can_update_plugins permission to update.
-	 * @param int $total_plugin_upgrades  total number of update.
+	 * @param int             $total_plugin_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string $continue_update  string of continue update.
-	 * @param int $current_wpid  current site id.	 	 	 	 	 
+	 * @param string          $continue_update  string of continue update.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update ) {
-	?>
+		?>
 	<div class="ui grid">
 		<div class="two column row">
 			<div class="column">
@@ -630,22 +630,22 @@ class MainWP_Updates_Overview {
 							</div>
 						</div>
 				</div>
-	<?php
+		<?php
 	}
-	
+
 	/**
 	 * Render Themes update detail.
 	 *
 	 * @param bool true|false $user_can_update_themes permission to update.
-	 * @param int $total_theme_upgrades  total number of update.
+	 * @param int             $total_theme_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string $continue_update  string of continue update.
-	 * @param int $current_wpid  current site id.	 	 
+	 * @param string          $continue_update  string of continue update.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update ) {
-	?>
+		?>
 	<div class="ui grid">
 		<div class="two column row">
 					<div class="column">
@@ -686,21 +686,21 @@ class MainWP_Updates_Overview {
 				</div>
 			</div>
 		</div>	
-	<?php
+		<?php
 	}
 	/**
 	 * Render language update detail.
 	 *
 	 * @param bool true|false $user_can_update_translation permission to update.
-	 * @param int $total_translation_upgrades  total number of update.
+	 * @param int             $total_translation_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string $continue_update  string of continue update.
-	 * @param int $current_wpid  current site id.	 	 
+	 * @param string          $continue_update  string of continue update.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ) {
-	?>
+		?>
 	<div class="ui grid">
 		<div class="two column row">
 					<div class="column">
@@ -741,20 +741,20 @@ class MainWP_Updates_Overview {
 				</div>
 			</div>
 		</div>		
-	<?php
+		<?php
 	}
-	
+
 	/**
 	 * Render abandoned plugins detail.
-	 *	 
-	 * @param int $total_plugins_outdate  total number of update.
-	 * @param bool true|false $globalView global view or not.	 	 
-	 * @param int $current_wpid  current site id.
+	 *
+	 * @param int             $total_plugins_outdate  total number of update.
+	 * @param bool true|false $globalView global view or not.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid ) {
-	?>
+		?>
 	
 		<div class="ui hidden divider"></div>
 		<div class="ui horizontal divider"><?php esc_html_e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
@@ -784,20 +784,20 @@ class MainWP_Updates_Overview {
 					</div>
 			</div>
 		</div>	
-	<?php
+		<?php
 	}
 
 	/**
 	 * Render abandoned themes detail.
-	 *	 
-	 * @param int $total_themes_outdate  total number of update.
-	 * @param bool true|false $globalView global view or not.	 	 
-	 * @param int $current_wpid  current site id.
+	 *
+	 * @param int             $total_themes_outdate  total number of update.
+	 * @param bool true|false $globalView global view or not.
+	 * @param int             $current_wpid  current site id.
 	 *
 	 * @return echo html
 	 */
 	public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid ) {
-	?>
+		?>
 	<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
@@ -822,38 +822,38 @@ class MainWP_Updates_Overview {
 							</div>
 				</div>
 			</div>
-	<?php
+		<?php
 	}
-	
+
 	/**
 	 * Render to support global update.
-	 *	 
-	 * @param bool true|false $user_can_update_wordpress permission to update wordpress.
-	 * @param int $total_wp_upgrades total wordpress update.
-	 * @param mixed $all_wp_updates all wordpress update list.
+	 *
+	 * @param bool true|false                     $user_can_update_wordpress permission to update WordPress.
+	 * @param int                                 $total_wp_upgrades total WordPress update.
+	 * @param mixed                               $all_wp_updates all WordPress update list.
 	 * @param ... same for plugins, themes, languages
 	 *
 	 * @return echo html
 	 */
 	public static function render_global_update(
-		$user_can_update_wordpress, 
-		$total_wp_upgrades, 
-		$all_wp_updates, 
+		$user_can_update_wordpress,
+		$total_wp_upgrades,
+		$all_wp_updates,
 
-		$user_can_update_plugins, 
-		$total_plugin_upgrades, 
+		$user_can_update_plugins,
+		$total_plugin_upgrades,
 		$all_plugins_updates,
 
 		$user_can_update_themes,
-		$total_theme_upgrades, 
+		$total_theme_upgrades,
 		$all_themes_updates,
 
 		$mainwp_show_language_updates,
 		$user_can_update_translation,
-		$total_translation_upgrades, 
-		$all_translations_updates	
+		$total_translation_upgrades,
+		$all_translations_updates
 		) {
-	?>
+		?>
 		<div style="display: none">
 
 			<div id="wp_upgrades">
@@ -907,28 +907,28 @@ class MainWP_Updates_Overview {
 			</div>
 			<?php endif; ?>
 		</div>
-	<?php
+		<?php
 	}
-	
+
 	/**
 	 * Render bottom of widget.
-	 *	 
-	 * @param mixed $websites all sites.
+	 *
+	 * @param mixed           $websites all sites.
 	 * @param bool true|false $globalView global view or not.
 	 *
 	 * @return echo html
 	 */
 	public static function render_bottom( $websites, $globalView ) {
-		
+
 		MainWP_DB::data_seek( $websites, 0 );
-		
+
 		$site_ids = array();
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 			$site_ids[] = $website->id;
 		}
 
 		do_action( 'mainwp_updatesoverview_widget_bottom', $site_ids, $globalView );
-		
+
 		// render modal.
 		?>
 		<div class="ui modal" id="updatesoverview-backup-box" tabindex="0">

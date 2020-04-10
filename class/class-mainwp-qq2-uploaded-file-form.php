@@ -1,13 +1,13 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP_QQ2_Uploaded_File_Form
  *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
  * Handle file uploads via regular form post (uses the $_FILES array)
  */
+namespace MainWP\Dashboard;
 
+/**  Class MainWP_QQ2_Uploaded_File_Form.  */
 class MainWP_QQ2_Uploaded_File_Form {
 	/**
 	 * Save the file to the specified path
@@ -31,10 +31,12 @@ class MainWP_QQ2_Uploaded_File_Form {
 		return true;
 	}
 
+	/** Get the File Name. */
 	public function get_name() {
 		return $_FILES['qqfile']['name'];
 	}
 
+	/** Get the File Size. */
 	public function get_size() {
 		return $_FILES['qqfile']['size'];
 	}

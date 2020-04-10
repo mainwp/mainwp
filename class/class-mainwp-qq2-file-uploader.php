@@ -1,17 +1,29 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP_QQ2_File_Uploader
  *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
  */
+namespace MainWP\Dashboard;
 
+/** Class MainWP_QQ2_File_Uploader. */
 class MainWP_QQ2_File_Uploader {
+
+	/** Array of allowed Extensions. */
 	private $allowedExtensions = array();
-	private $sizeLimit         = 8388608;
+
+	/** Maximum allowed file size.  */
+	private $sizeLimit = 8388608;
+
+	/** File to be uploaded.  */
 	private $file;
 
+	/**
+	 * Method __construct
+	 *
+	 * @param array $allowedExtensions Array of allowed Extensions.
+	 * @param int   $sizeLimit Maximum allowed file size.
+	 */
 	public function __construct( array $allowedExtensions = array(), $sizeLimit = 8388608 ) {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );
 
@@ -27,6 +39,13 @@ class MainWP_QQ2_File_Uploader {
 		}
 	}
 
+	/**
+	 * Convert file size into bytes.
+	 *
+	 * @param int $str Original File.
+	 *
+	 * @return int $val File Size in Bytes.
+	 */
 	private function to_bytes( $str ) {
 		$val  = trim( $str );
 		$last = strtolower( $str[ strlen( $str ) - 1 ] );
@@ -46,7 +65,12 @@ class MainWP_QQ2_File_Uploader {
 	}
 
 	/**
-	 * Returns array('success'=>true) or array('error'=>'error message')
+	 * Handle the file upload.
+	 *
+	 * @param mixed   $uploadDirectory File Upload directory.
+	 * @param boolean $replaceOldFile True|False Weather or not to replace the orignal file or not.
+	 *
+	 * @return array success'=>true|error'=>'error message'
 	 */
 	public function handle_upload( $uploadDirectory, $replaceOldFile = false ) {
 

@@ -113,6 +113,11 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render MainWP Recent Posts Widget Header
+	 *
+	 * @return html
+	 */
 	public static function render_top_grid() {
 		?>
 		<div class="ui grid">
@@ -140,6 +145,14 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render Published Posts.
+	 *
+	 * @param mixed $allPosts All posts data.
+	 * @param mixed $recent_number Number of posts.
+	 *
+	 * @return html
+	 */
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
 		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
@@ -208,12 +221,20 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render all draft posts.
+	 *
+	 * @param mixed $allPosts All posts data.
+	 * @param mixed $recent_number Number of Posts.
+	 *
+	 * @return html
+	 */
 	public static function render_draft_posts( $allPosts, $recent_number ) {
 
 		$recent_posts_draft = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
 		$recent_posts_draft = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
 		?>
-	<div class="recent_posts_draft ui tab" data-tab="draft">
+		<div class="recent_posts_draft ui tab" data-tab="draft">
 			<?php
 			if ( 0 == count( $recent_posts_draft ) ) {
 				?>
@@ -272,6 +293,14 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render all pending posts.
+	 *
+	 * @param mixed $allPosts All posts data.
+	 * @param mixed $recent_number Number of posts.
+	 *
+	 * @return html
+	 */
 	public static function render_pending_posts( $allPosts, $recent_number ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
 		$recent_posts_pending = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
@@ -336,6 +365,14 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render all future posts.
+	 *
+	 * @param mixed $allPosts All posts data.
+	 * @param mixed $recent_number Number of post.
+	 *
+	 * @return html
+	 */
 	public static function render_future_posts( $allPosts, $recent_number ) {
 
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
@@ -402,6 +439,14 @@ class MainWP_Recent_Posts {
 		<?php
 	}
 
+	/**
+	 * Render all trashed posts.
+	 *
+	 * @param mixed $allPosts All posts data.
+	 * @param mixed $recent_number Number of posts.
+	 *
+	 * @return html
+	 */
 	public static function render_trash_posts( $allPosts, $recent_number ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
 		$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );

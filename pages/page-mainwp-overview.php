@@ -1,17 +1,27 @@
 <?php
+/**
+ * MainWP Overview Page.
+ */
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Overview Page
+ * MainWP Overview Page.
  */
 class MainWP_Overview {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/** Session Variable. */
 	protected static $singleton = null;
 
+	/** Array of enabled Widgets. */
 	private static $enable_widgets = array(
 		'overview'          => true,
 		'connection_status' => true,
@@ -21,6 +31,12 @@ class MainWP_Overview {
 		'backup_tasks'      => true,
 	);
 
+	/**
+	 * Check if there is a session,
+	 * if there isn't one create it.
+	 *
+	 *  @return self::singlton Overview Page Session.
+	 */
 	public static function get() {
 		if ( null == self::$singleton ) {
 			self::$singleton = new MainWP_Overview();
@@ -29,12 +45,21 @@ class MainWP_Overview {
 		return self::$singleton;
 	}
 
+	/** Method __construct(). */
 	public function __construct() {
 		add_filter( 'screen_layout_columns', array( &$this, 'on_screen_layout_columns' ), 10, 2 );
 		add_action( 'admin_menu', array( &$this, 'on_admin_menu' ) );
 		add_action( 'mainwp_help_sidebar_content', array( &$this, 'mainwp_help_content' ) );
 	}
 
+	/**
+	 * Set the number of page coumns.
+	 *
+	 * @param mixed $columns Number of Columns.
+	 * @param mixed $screen Screen size.
+	 *
+	 * @return int $columns Number of desired page columns.
+	 */
 	public function on_screen_layout_columns( $columns, $screen ) {
 		if ( $screen == $this->dashBoard ) {
 			$columns[ $this->dashBoard ] = 3;
@@ -43,6 +68,7 @@ class MainWP_Overview {
 		return $columns;
 	}
 
+	/** Add MainWP Overview top level menu. */
 	public function on_admin_menu() {
 		if ( MainWP_Utility::is_admin() ) {
 			global $current_user;
@@ -84,6 +110,7 @@ class MainWP_Overview {
 		}
 	}
 
+	/** Instantiate the MainWP Overview Menu item. */
 	public static function init_left_menu() {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -97,6 +124,7 @@ class MainWP_Overview {
 		);
 	}
 
+	/** Run on page load. */
 	public function on_load_page() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -107,6 +135,10 @@ class MainWP_Overview {
 		self::add_meta_boxes( $this->dashBoard );
 	}
 
+	/** Add MainWP Overview Page Widgets.
+	 *
+	 * @param $page Current page.
+	 */
 	public static function add_meta_boxes( $page ) {
 
 		/**
@@ -198,6 +230,11 @@ class MainWP_Overview {
 		}
 	}
 
+	/**
+	 * Method on_show_page
+	 *
+	 * When the page loads render the body content.
+	 */
 	public function on_show_page() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
@@ -220,6 +257,16 @@ class MainWP_Overview {
 		<?php
 	}
 
+
+	/**
+	 * Render the Dasboard Body content.
+	 *
+	 * @param mixed $websites Array of Child Sites.
+	 * @param mixed $pDashboard Dashboard.
+	 * @param mixed $pScreenLayout Screen Layout.
+	 *
+	 * @return html
+	 */
 	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {
 
 		$current_wp_id = MainWP_Utility::get_current_wpid();
@@ -357,10 +404,7 @@ class MainWP_Overview {
 		<?php
 	}
 
-	/*
-	 * Hook the section help content to the Help Sidebar element
-	 */
-
+	/** Hook the section help content to the Help Sidebar element. */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) {
 			?>

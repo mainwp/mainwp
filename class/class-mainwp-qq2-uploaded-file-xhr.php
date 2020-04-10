@@ -1,18 +1,19 @@
 <?php
-namespace MainWP\Dashboard;
-
 /**
  * MainWP_QQ2_Uploaded_File_Xhr
  *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
  * Handle file uploads via XMLHttpRequest
  */
+namespace MainWP\Dashboard;
 
+/** Class MainWP_QQ2_Uploaded_File_Xhr. */
 class MainWP_QQ2_Uploaded_File_Xhr {
 	/**
 	 * Save the file to the specified path
 	 *
-	 * @return boolean TRUE on success
+	 * @param $path Path to File.
+	 * @return boolean TRUE on success|False
 	 */
 	public function save( $path ) {
 		$input    = fopen( 'php://input', 'r' );
@@ -69,10 +70,12 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 		return true;
 	}
 
+	/** Get the File Name. */
 	public function get_name() {
 		return $_GET['qqfile'];
 	}
 
+	/** Get the File Size. */
 	public function get_size() {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
 			return (int) $_SERVER['CONTENT_LENGTH'];

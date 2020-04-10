@@ -465,8 +465,7 @@ class MainWP_Themes {
 	 *
 	 * @return mixed $result Errors|HTML
 	 */
-	// phpcs:ignore -- complex function
-	public static function render_table( $keyword, $status, $groups, $sites ) {
+	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function
 		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new \stdClass();
@@ -1245,14 +1244,12 @@ class MainWP_Themes {
 		self::render_footer( 'AutoUpdate' );
 	}
 
-	// phpcs:ignore -- not quite complex function
 	/**
 	 * Render the All Themes Table.
 	 *
 	 * @param null $output
 	 */
-	// phpcs:ignore -- not quite complex function
-	public static function render_all_themes_table( $output = null ) {
+	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function
 		$keyword       = null;
 		$search_status = 'all';
 

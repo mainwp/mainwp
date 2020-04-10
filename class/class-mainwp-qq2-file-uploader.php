@@ -8,10 +8,22 @@ namespace MainWP\Dashboard;
 
 /** Class MainWP_QQ2_File_Uploader. */
 class MainWP_QQ2_File_Uploader {
+
+	/** Array of allowed Extensions. */
 	private $allowedExtensions = array();
+
+	/** Maximum allowed file size.  */
 	private $sizeLimit         = 8388608;
+
+	/** File to be uploaded.  */
 	private $file;
 
+	/**
+	* Method __construct
+	*  
+	* @param array $allowedExtensions Array of allowed Extensions.
+ 	* @param int $sizeLimit Maximum allowed file size. 
+	 */
 	public function __construct( array $allowedExtensions = array(), $sizeLimit = 8388608 ) {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );
 
@@ -27,9 +39,8 @@ class MainWP_QQ2_File_Uploader {
 		}
 	}
 
-
 	/**
-	 * Convert file sise into bytes.
+	 * Convert file size into bytes.
 	 * 
 	 * @param int $str Original File.
 	 * 

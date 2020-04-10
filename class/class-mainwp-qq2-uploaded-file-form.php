@@ -10,9 +10,10 @@ namespace MainWP\Dashboard;
 /**  Class MainWP_QQ2_Uploaded_File_Form.  */
 class MainWP_QQ2_Uploaded_File_Form {
 	/**
-	 * Save the file to the specified path
-	 *
-	 * @return boolean TRUE on success
+	 * Save the file to the specified path.
+	 * 
+	 * @param string $path Path to save file to.
+	 * @return boolean TRUE on success|false on failer.
 	 */
 	public function save( $path ) {
 		$wpFileSystem = MainWP_Utility::get_wp_file_system();

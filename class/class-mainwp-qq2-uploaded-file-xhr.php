@@ -11,8 +11,9 @@ namespace MainWP\Dashboard;
 class MainWP_QQ2_Uploaded_File_Xhr {
 	/**
 	 * Save the file to the specified path
-	 *
-	 * @return boolean TRUE on success
+	 * 
+	 * @param $path Path to File.
+	 * @return boolean TRUE on success|False
 	 */
 	public function save( $path ) {
 		$input    = fopen( 'php://input', 'r' );

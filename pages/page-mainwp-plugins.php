@@ -444,6 +444,7 @@ class MainWP_Plugins {
 		}
 	}
 
+	// phpcs:ignore -- complex method
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );

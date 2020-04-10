@@ -172,29 +172,61 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
 		?>
 		<?php if ( ! $show_form ) : ?>
-			<div class="ui modal" id="mainwp-reset-admin-passwords-modal">
-				<div class="header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
-				<div class="scrolling content">
-					<div class="ui relaxed divided list">
-						<?php foreach ( $dbwebsites as $website ) : ?>
-							<div class="item">
-								<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-								<span class="right floated content">
-									<?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
-								</span>
-							</div>
-						<?php endforeach; ?>
-					</div>
-				</div>
-				<div class="actions">
-					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+		<?php self::render_modal( $dbwebsites, $output ); ?>			
+		<?php endif; ?>
+		<?php self::render_bulk_form( $websites ); ?>
+		<?php
+		MainWP_User::render_footer( 'UpdateAdminPasswords' );
+	}
+	
+	/**
+	 * Method render_modal()
+	 *
+	 * Render update password results.
+	 *
+	 * @param mixed   $dbwebsites
+	 * @param mixed   $output result of update password
+	 * 
+	 * @return echo html.
+	 */
+	public static function render_modal( $dbwebsites, $output ) {
+		?>
+		<div class="ui modal" id="mainwp-reset-admin-passwords-modal">
+			<div class="header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
+			<div class="scrolling content">
+				<div class="ui relaxed divided list">
+					<?php foreach ( $dbwebsites as $website ) : ?>
+						<div class="item">
+							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<span class="right floated content">
+								<?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? '<i class="green check icon"></i>' : '<i class="red times icon"></i> ' . $output->errors[ $website->id ] ); ?>
+							</span>
+						</div>
+					<?php endforeach; ?>
 				</div>
 			</div>
-			<script type="text/javascript">
-				jQuery( '#mainwp-reset-admin-passwords-modal' ).modal( 'show' );
-			</script>
-		<?php endif; ?>
-			<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
+			<div class="actions">
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			jQuery( '#mainwp-reset-admin-passwords-modal' ).modal( 'show' );
+		</script>		
+		<?php
+	}
+	
+	/**
+	 * Method render_bulk_form()
+	 *
+	 * Render bulk update administrator password form.
+	 *
+	 * @param mixed   $websites
+	 *
+	 * @return echo html.
+	 */
+	public static function render_bulk_form( $websites ) {
+	?>
+		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
@@ -263,7 +295,6 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				</form>
 			</div>
 		<?php
-		MainWP_User::render_footer( 'UpdateAdminPasswords' );
 	}
 }
 

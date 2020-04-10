@@ -3733,6 +3733,7 @@ mainwp_import_users_next = function () {
     }, 'json' );
 };
 
+// phpcs:ignore -- not quite complex method
 mainwp_import_users_valid_data = function( decoded_data ) {	
 	
 	var errors = []; // array.

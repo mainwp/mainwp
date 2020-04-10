@@ -15,7 +15,7 @@ namespace MainWP\Dashboard;
 class MainWP_DB {
 
 	// Config.
-	private $mainwp_db_version = '8.15';
+	private $mainwp_db_version = '8.16';
 	// Private.
 	private $table_prefix;
 	// Singleton.
@@ -102,13 +102,7 @@ class MainWP_DB {
   http_response_code int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   note_lastupdate int(11) NOT NULL DEFAULT 0,
-  statsUpdate int(11) NOT NULL,
-  pagerank int(11) NOT NULL,
-  indexed int(11) NOT NULL,
-  alexia int(11) NOT NULL,
-  pagerank_old int(11) DEFAULT NULL,
-  indexed_old int(11) DEFAULT NULL,
-  alexia_old int(11) DEFAULT NULL,
+  statsUpdate int(11) NOT NULL,  
   directories longtext NOT NULL,
   plugin_upgrades longtext NOT NULL,
   theme_upgrades longtext NOT NULL,
@@ -124,8 +118,7 @@ class MainWP_DB {
   categories longtext NOT NULL,
   pluginDir text NOT NULL,
   automatic_update tinyint(1) NOT NULL,
-  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
-  last_db_backup_size int(11) NOT NULL,
+  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,  
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
@@ -400,6 +393,24 @@ class MainWP_DB {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
 				$this->wpdb->suppress_errors( $suppress );
 			}
+		}
+		// delete old columns
+		if ( version_compare( $currentVersion, '8.16', '<' ) ) {			
+			$rankColumns = array(
+				'pagerank',
+				'indexed',
+				'alexia',
+				'pagerank_old',
+				'indexed_old',
+				'alexia_old',
+				'last_db_backup_size'
+			);
+			
+			foreach ( $rankColumns as $rankColumn ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
+				$this->wpdb->suppress_errors( $suppress );
+			}			
 		}
 	}
 
@@ -1163,12 +1174,6 @@ class MainWP_DB {
 				'offline_check_result'   => 0,
 				'note'                   => '',
 				'statsUpdate'            => 0,
-				'pagerank'               => 0,
-				'indexed'                => 0,
-				'alexia'                 => 0,
-				// 'pagerank_old'           => 0,
-				'indexed_old'            => 0,
-				'alexia_old'             => 0,
 				'directories'            => '',
 				'plugin_upgrades'        => '',
 				'theme_upgrades'         => '',

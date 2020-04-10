@@ -253,6 +253,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
+	// phpcs:ignore -- complex method
 	public function plugin( $args, $assoc_args ) {
 		$sites = array();
 		if ( 0 < count( $args ) ) {
@@ -476,7 +477,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->get_message_extra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}
@@ -516,6 +517,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
+	// phpcs:ignore -- complex function
 	public function theme( $args, $assoc_args ) {
 		$sites = array();
 		if ( count( $args ) > 0 ) {
@@ -740,7 +742,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->get_message_extra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}

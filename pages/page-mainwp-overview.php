@@ -139,6 +139,7 @@ class MainWP_Overview {
 	 *
 	 * @param $page Current page.
 	 */
+	// phpcs:ignore -- complex method
 	public static function add_meta_boxes( $page ) {
 
 		/**

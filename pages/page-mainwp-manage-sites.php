@@ -705,7 +705,7 @@ class MainWP_Manage_Sites {
 					MainWP_Utility::get_file_parameter( $website ) => $file,
 				);
 
-				MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+				MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
 				$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
@@ -1316,7 +1316,7 @@ class MainWP_Manage_Sites {
 			'append'                                       => ( $append ? 1 : 0 ),
 		);
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . print_r( $params, 1 ) );
+		MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
 		$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );

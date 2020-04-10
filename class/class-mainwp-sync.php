@@ -115,6 +115,7 @@ class MainWP_Sync {
 	 *
 	 * @return mixed do_action( 'mainwp-site-synced', $pWebsite, $information ).
 	 */
+	// phpcs:ignore -- complex method
 	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1, $error = false, $pAllowDisconnect = true ) {
 		$emptyArray        = wp_json_encode( array() );
 		$websiteValues     = array(

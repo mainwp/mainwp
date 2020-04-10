@@ -6,7 +6,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites List Table
+ * MainWP Manage Sites List Table.
  */
 class MainWP_Manage_Sites_List_Table {
 

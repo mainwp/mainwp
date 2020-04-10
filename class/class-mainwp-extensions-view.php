@@ -169,6 +169,11 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
+	/**
+	 * Render Incompatability Notice.
+	 * 
+	 * @return html Html block for Incompatability Notice.
+	 */
 	public static function render_incompatible_notice() {
 		$deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
 		if ( $deactivated_exts && is_array( $deactivated_exts ) && 0 < count( $deactivated_exts ) ) :
@@ -189,6 +194,11 @@ class MainWP_Extensions_View {
 		endif;
 	}
 
+	/**
+	 * Render Intro Notice.
+	 * 
+	 * @return html Html block for Intro Notice.
+	 */
 	public static function render_intro_notice() {
 		?>
 		<div class="ui secondary segment">
@@ -201,6 +211,13 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
+	/**
+	 * Render Search Box.
+	 * 
+	 * @param mixed $extensions Extentions Array.
+	 * 
+	 * @return html Html block for Search Box.
+	 */
 	public static function render_search_box( $extensions ) {
 		?>
 		<div class="ui stackable grid">
@@ -233,6 +250,14 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
+	/**
+	 * Render the MainWP Extension Cards.
+	 * 
+	 * @param mixed $extension Extention to render.
+	 * @param mixed $extension_update Extension update.
+	 * 
+	 * @return html Html Block for MainWP Extensions. 
+	 */
 	public static function render_extension_card( $extension, $extension_update ) {
 
 		if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
@@ -316,7 +341,11 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
-
+	/**
+	 * Render Purchase Notice.
+	 * 
+	 * @return html Html Block for purchange notice. 
+	 */
 	public static function render_purchase_notice() {
 		?>
 		
@@ -333,6 +362,14 @@ class MainWP_Extensions_View {
 		<?php
 	}
 
+	/**
+	 * Render the Sidebar. 
+	 * 
+	 * @param mixed $username MainWP.com Username.
+	 * @param mixed $password MainWP.com Password.
+	 * 
+	 * @return html HTML block for Extentions Page.
+	 */
 	public static function render_side_box( $username, $password ) {
 		?>
 		<div class="ui header">
@@ -381,7 +418,7 @@ class MainWP_Extensions_View {
 	 *
 	 * Grab current MainWP Extension Groups.
 	 *
-	 * @return mixed $groups
+	 * @return array $groups
 	 */
 	public static function get_extension_groups() {
 		$groups = array(

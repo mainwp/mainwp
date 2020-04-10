@@ -368,7 +368,7 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all future posts. 
 	 *
-	 * @param mixed $allPost All posts data. 
+	 * @param mixed $allPosts All posts data. 
 	 * @param mixed $recent_number Number of post.
 	 * 
 	 * @return html
@@ -442,7 +442,7 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all trashed posts. 
 	 *
-	 * @param mixed $allPost All posts data. 
+	 * @param mixed $allPosts All posts data. 
 	 * @param mixed $recent_number Number of posts.
 	 * 
 	 * @return html

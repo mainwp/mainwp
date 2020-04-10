@@ -39,7 +39,7 @@ class MainWP_Widget_Themes {
 	 *
 	 * Build Themes Widget
 	 *
-	 * @param none	 
+	 * @param none
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
@@ -63,29 +63,29 @@ class MainWP_Widget_Themes {
 			MainWP_DB::free_result( $websites );
 		}
 
-		self::render_html_widget( $website, $allThemes );		
+		self::render_html_widget( $website, $allThemes );
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Method render_html_widget().
-	 * 
+	 *
 	 * Render html themes widget for current site
-	 *	 
+	 *
 	 * @param mixed $website current site.
 	 * @param mixed $allPlugins all plugins.
 	 *
 	 * @return echo html
 	 */
 	public static function render_html_widget( $website, $allThemes ) {
-		
+
 		$actived_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 1 );
 		$actived_themes = MainWP_Utility::sortmulti( $actived_themes, 'name', 'asc' );
 
 		$inactive_themes = MainWP_Utility::get_sub_array_having( $allThemes, 'active', 0 );
 		$inactive_themes = MainWP_Utility::sortmulti( $inactive_themes, 'name', 'asc' );
 
-	?>
+		?>
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
@@ -157,7 +157,7 @@ class MainWP_Widget_Themes {
 				<?php } ?>
 			</div>
 		</div>
-	<?php
+		<?php
 	}
 
 	/**

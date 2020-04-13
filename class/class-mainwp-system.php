@@ -165,7 +165,7 @@ class MainWP_System {
 
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_getsites' instead.
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_getsites' instead.
-		
+
 		add_filter( 'mainwp_activated_check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp_extension_enabled_check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) );
 
@@ -176,12 +176,12 @@ class MainWP_System {
 		 *
 		 * @see \MainWP_Extensions::hook_get_sites
 		 */
-		add_filter( 'mainwp-getsites', array( MainWP_Extensions::get_class_name(), 'hook_get_sites' ), 10, 5 );		// @deprecated Use 'mainwp_getsites' instead.
+		add_filter( 'mainwp-getsites', array( MainWP_Extensions::get_class_name(), 'hook_get_sites' ), 10, 5 );     // @deprecated Use 'mainwp_getsites' instead.
 		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions::get_class_name(), 'hook_get_db_sites' ), 10, 5 ); // @deprecated Use 'mainwp_getdbsites' instead.
-		
+
 		add_filter( 'mainwp_getsites', array( MainWP_Extensions::get_class_name(), 'hook_get_sites' ), 10, 5 );
 		add_filter( 'mainwp_getdbsites', array( MainWP_Extensions::get_class_name(), 'hook_get_db_sites' ), 10, 5 );
-		
+
 		/**
 		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.
 		 *
@@ -211,10 +211,10 @@ class MainWP_System {
 
 		/*
 		* @deprecated Use 'mainwp_activated' instead.
-		* 
+		*
 		*/
 		do_action( 'mainwp-activated' );
-		
+
 		do_action( 'mainwp_activated' );
 
 		MainWP_Updates::init();
@@ -2292,14 +2292,14 @@ class MainWP_System {
 
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
-		if ( null === $mainwpUseExternalPrimaryBackupsMethod ) {			
+		if ( null === $mainwpUseExternalPrimaryBackupsMethod ) {
 			$return = '';
-			
+
 			/*
 			 * @deprecated Use 'mainwp_getprimarybackup_activated' instead.
-			 * 
+			 *
 			 */
-			$return         = apply_filters_deprecated( 'mainwp-getprimarybackup-activated', array( $return ), '4.0.1', 'mainwp_getprimarybackup_activated' );			
+			$return                                = apply_filters_deprecated( 'mainwp-getprimarybackup-activated', array( $return ), '4.0.1', 'mainwp_getprimarybackup_activated' );
 			$mainwpUseExternalPrimaryBackupsMethod = apply_filters( 'mainwp_getprimarybackup_activated', $return );
 		}
 

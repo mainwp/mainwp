@@ -51,16 +51,14 @@ class MainWP_Manage_Backups {
 
 	public static function init_menu() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );		
+		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 		/*
 		* @deprecated Use 'mainwp_getcustompage_backups' instead.
-		* 
+		*
 		*/
-		$customPage				= apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
-		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
-		
-		
-		
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
+		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
+
 		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {
 			self::$hideSubmenuBackups = true;
 			add_submenu_page( 'mainwp_tab', $customPage['title'], '<span id="mainwp-Backups">' . $customPage['title'] . '</span>', 'read', 'ManageBackups' . $customPage['slug'], $customPage['callback'] );

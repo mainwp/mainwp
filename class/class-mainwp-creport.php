@@ -146,9 +146,9 @@ class MainWP_Live_Reports_Class {
 			add_action( 'mainwp_delete_site', array( &$this, 'delete_site_delete_tokens' ), 8, 1 );
 			add_action( 'mainwp_managesite_backup', array( &$this, 'managesite_backup' ), 10, 3 );
 			add_action( 'mainwp_sucuri_scan_done', array( &$this, 'sucuri_scan_done' ), 10, 3 );
-			if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {				
+			if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {
 				add_action( 'mainwp-extension-sites-edit', array( &$this, 'manage_site_token' ), 9, 1 ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
-				add_action( 'mainwp_extension_sites_edit', array( &$this, 'manage_site_token' ), 9, 1 ); 				
+				add_action( 'mainwp_extension_sites_edit', array( &$this, 'manage_site_token' ), 9, 1 );
 			}
 		}
 

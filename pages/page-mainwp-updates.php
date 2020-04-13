@@ -788,12 +788,12 @@ class MainWP_Updates {
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 		/*
 		* @deprecated Use 'mainwp_getcustompage_backups' instead.
-		* 
+		*
 		*/
-		$customPage				= apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
-		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
-		
-		$restorePageSlug      = '';
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
+		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
+
+		$restorePageSlug = '';
 		if ( empty( $enable_legacy_backup ) && ! empty( $mainwp_primaryBackup ) && is_array( $customPage ) && isset( $customPage['managesites_slug'] ) ) {
 			$restorePageSlug = 'admin.php?page=ManageSites' . $customPage['managesites_slug'];
 		} elseif ( $enable_legacy_backup ) {

@@ -395,7 +395,7 @@ class MainWP_DB {
 			}
 		}
 		// delete old columns
-		if ( version_compare( $currentVersion, '8.16', '<' ) ) {			
+		if ( version_compare( $currentVersion, '8.16', '<' ) ) {
 			$rankColumns = array(
 				'pagerank',
 				'indexed',
@@ -403,14 +403,14 @@ class MainWP_DB {
 				'pagerank_old',
 				'indexed_old',
 				'alexia_old',
-				'last_db_backup_size'
+				'last_db_backup_size',
 			);
-			
+
 			foreach ( $rankColumns as $rankColumn ) {
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
 				$this->wpdb->suppress_errors( $suppress );
-			}			
+			}
 		}
 	}
 

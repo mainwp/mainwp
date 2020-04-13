@@ -173,21 +173,21 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
 		?>
 		<?php if ( ! $show_form ) : ?>
-		<?php self::render_modal( $dbwebsites, $output ); ?>			
+			<?php self::render_modal( $dbwebsites, $output ); ?>			
 		<?php endif; ?>
 		<?php self::render_bulk_form( $websites ); ?>
 		<?php
 		MainWP_User::render_footer( 'UpdateAdminPasswords' );
 	}
-	
+
 	/**
 	 * Method render_modal()
 	 *
 	 * Render update password results.
 	 *
-	 * @param mixed   $dbwebsites
-	 * @param mixed   $output result of update password
-	 * 
+	 * @param mixed $dbwebsites
+	 * @param mixed $output result of update password
+	 *
 	 * @return echo html.
 	 */
 	public static function render_modal( $dbwebsites, $output ) {
@@ -215,18 +215,18 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		</script>		
 		<?php
 	}
-	
+
 	/**
 	 * Method render_bulk_form()
 	 *
 	 * Render bulk update administrator password form.
 	 *
-	 * @param mixed   $websites
+	 * @param mixed $websites
 	 *
 	 * @return echo html.
 	 */
 	public static function render_bulk_form( $websites ) {
-	?>
+		?>
 		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

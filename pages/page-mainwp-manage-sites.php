@@ -55,9 +55,8 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
-		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) ); // @deprecated Use 'mainwp_extension_sites_edit' instead.		
+		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
 		add_action( 'mainwp_extension_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
-		
 
 		// Hook the Help Sidebar content.
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
@@ -114,10 +113,10 @@ class MainWP_Manage_Sites {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
 		 */
-		$sub_pages = array();
-		$sub_pages = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
+		$sub_pages      = array();
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_sites', $sub_pages );
-		
+
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 2, 'ManageSites' . $subPage['slug'] ) ) {

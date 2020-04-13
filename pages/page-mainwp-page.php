@@ -916,17 +916,17 @@ class MainWP_Page {
 							if ( ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								/*
 								* @deprecated Use 'mainwp_post_posting_page' instead.
-								* 
+								*
 								*/
-								do_action( 'mainwp-post-posting-page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );								
+								do_action( 'mainwp-post-posting-page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
 								/*
 								* @deprecated Use 'mainwp_bulkposting_done' instead.
-								* 
+								*
 								*/
-								do_action( 'mainwp-bulkposting-done', $_post, $website, $output );	
-								
-								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );																
-								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );	
+								do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
+
+								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
+								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 							} else {
 								$failed_posts[] = $website->id;
 							}

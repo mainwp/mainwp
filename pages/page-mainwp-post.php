@@ -76,7 +76,10 @@ class MainWP_Post {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
 		 */
-		self::$subPages = apply_filters( 'mainwp-getsubpages-post', array() );
+		$sub_pages = array();
+		$sub_pages = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.		
+		self::$subPages = apply_filters( 'mainwp_getsubpages_post', $sub_pages );
+		
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
@@ -2121,14 +2124,30 @@ class MainWP_Post {
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {
 								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+									/*
+									* @deprecated Use 'mainwp_post_posting_post' instead.
+									* 
+									*/
 									do_action( 'mainwp-post-posting-post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
+									/*
+									* @deprecated Use 'mainwp_bulkposting_done' instead.
+									* 
+									*/
 									do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
+									
+									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
+									do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 								} else {
 									$failed_posts[] = $website->id;
 								}
 							}
 
-							$after_posting = apply_filters( 'mainwp-after-posting-bulkpost-result', false, $_post, $dbwebsites, $output );
+							/*
+							* @deprecated Use 'mainwp_after_posting_bulkpost_result' instead.
+							* 
+							*/
+							$newExtensions         = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.1', 'mainwp_after_posting_bulkpost_result' );						
+							$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
 
 							if ( false === $after_posting ) {
 								?>
@@ -2264,10 +2283,20 @@ class MainWP_Post {
 		}
 
 		if ( 'bulk' === $prefix ) {
-			$opt           = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
+			/*
+			* @deprecated Use 'mainwp_get_options' instead.
+			* 
+			*/
+			$opt			= apply_filters_deprecated( 'mainwp-get-options', array( '', 'bulk_keyword_cats', $bkc_option_path ), '4.0.1', 'mainwp_get_options' );
+			$opt           = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );			
 			$selected_cats = MainWP_Utility::maybe_unserialyze( $opt );
 		} else {
-			$opt = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', $keyword_option );
+			/*
+			* @deprecated Use 'mainwp_get_options' instead.
+			* 
+			*/
+			$opt			= apply_filters_deprecated( 'mainwp-get-options', array( '', 'mainwp_content_extension', $keyword_option ), '4.0.1', 'mainwp_get_options' );
+			$opt = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', $keyword_option );
 			if ( is_array( $opt ) && is_array( $opt[ $prefix ] ) ) {
 				$selected_cats = MainWP_Utility::maybe_unserialyze( $opt[ $prefix ]['selected_cats'] );
 			}
@@ -2275,7 +2304,12 @@ class MainWP_Post {
 		$selected_cats = is_array( $selected_cats ) ? $selected_cats : array();
 		$ret           = '';
 		if ( 0 < count( $dbwebsites ) ) {
-			$opt       = apply_filters( 'mainwp-get-options', $value = '', 'mainwp_content_extension', 'taxonomy' );
+			/*
+			* @deprecated Use 'mainwp_get_options' instead.
+			* 
+			*/
+			$opt			= apply_filters_deprecated( 'mainwp-get-options', array( '', 'mainwp_content_extension', 'taxonomy' ), '4.0.1', 'mainwp_get_options' );
+			$opt       = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', 'taxonomy' );
 			$post_data = array(
 				'taxonomy' => base64_encode( $opt ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 			);

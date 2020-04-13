@@ -101,7 +101,14 @@ class MainWP_Extensions {
 		self::$extensions = array();
 		$all_extensions   = array();
 
-		$newExtensions      = apply_filters( 'mainwp-getextensions', array() );
+		/*
+		* @deprecated Use 'mainwp_getextensions' instead.
+		* 
+		*/
+		$newExtensions = array();
+		$newExtensions         = apply_filters_deprecated( 'mainwp-getextensions', array( $newExtensions ), '4.0.1', 'mainwp_getextensions' );						
+		$newExtensions      = apply_filters( 'mainwp_getextensions', $newExtensions );
+		
 		$activations_cached = get_option( 'mainwp_extensions_all_activation_cached', array() );
 
 		if ( ! is_array( $activations_cached ) ) {

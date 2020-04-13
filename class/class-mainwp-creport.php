@@ -66,7 +66,7 @@ class LiveReportResponder_Activator {
 	public function __construct() {
 
 		$this->childFile           = __FILE__;
-		$this->mainwpMainActivated = apply_filters( 'mainwp-activated-check', false );
+		$this->mainwpMainActivated = apply_filters( 'mainwp_activated_check', false );
 
 		if ( false !== $this->mainwpMainActivated ) {
 			$this->activate_this_plugin();
@@ -77,8 +77,8 @@ class LiveReportResponder_Activator {
 
 	public function activate_this_plugin() {
 
-		$this->mainwpMainActivated = apply_filters( 'mainwp-activated-check', $this->mainwpMainActivated );
-		$this->childEnabled        = apply_filters( 'mainwp-extension-enabled-check', __FILE__ );
+		$this->mainwpMainActivated = apply_filters( 'mainwp_activated_check', $this->mainwpMainActivated );
+		$this->childEnabled        = apply_filters( 'mainwp_extension_enabled_check', __FILE__ );
 		$this->childKey            = $this->childEnabled['key'];
 		if ( function_exists( 'mainwp_current_user_can' ) && ! mainwp_current_user_can( 'extension', 'mainwp-client-reports-extension' ) ) {
 			return;
@@ -146,8 +146,9 @@ class MainWP_Live_Reports_Class {
 			add_action( 'mainwp_delete_site', array( &$this, 'delete_site_delete_tokens' ), 8, 1 );
 			add_action( 'mainwp_managesite_backup', array( &$this, 'managesite_backup' ), 10, 3 );
 			add_action( 'mainwp_sucuri_scan_done', array( &$this, 'sucuri_scan_done' ), 10, 3 );
-			if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {
-				add_action( 'mainwp-extension-sites-edit', array( &$this, 'manage_site_token' ), 9, 1 );
+			if ( get_option( 'mainwp_enable_managed_cr_for_wc' ) == 1 ) {				
+				add_action( 'mainwp-extension-sites-edit', array( &$this, 'manage_site_token' ), 9, 1 ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
+				add_action( 'mainwp_extension_sites_edit', array( &$this, 'manage_site_token' ), 9, 1 ); 				
 			}
 		}
 
@@ -1598,7 +1599,7 @@ class MainWP_Live_Reports_Class {
 		global $mainWPCReportExtensionActivator;
 
 		$websiteid = $post->id;
-		$website   = apply_filters( 'mainwp-getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $websiteid );
+		$website   = apply_filters( 'mainwp_getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $websiteid );
 
 		if ( $website && is_array( $website ) ) {
 			$website = current( $website );
@@ -1651,7 +1652,7 @@ class MainWP_Live_Reports_Class {
 	public function update_site_update_tokens( $websiteId ) {
 		global $wpdb, $mainWPCReportExtensionActivator;
 		if ( isset( $_POST['submit'] ) ) {
-			$website = apply_filters( 'mainwp-getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $websiteId );
+			$website = apply_filters( 'mainwp_getsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $websiteId );
 			if ( $website && is_array( $website ) ) {
 				$website = current( $website );
 			}

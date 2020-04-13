@@ -749,8 +749,27 @@ class MainWP_Utility {
 				$_new_post = null;
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
+					
+					/*
+					* @deprecated Use 'mainwp_pre_posting_posts' instead.
+					* 
+					*/
+					$params         = apply_filters_deprecated( 
+						'mainwp-pre-posting-posts', 
+						array( 
+							( is_array( $params ) ? $params : array() ), 
+							(object) array(
+								'id'     => $website->id,
+								'url'    => $website->url,
+								'name'   => $website->name,
+							)  
+						), 
+						'4.0.1', 
+						'mainwp_pre_posting_posts' 
+					);
+					
 					$params    = apply_filters(
-						'mainwp-pre-posting-posts',
+						'mainwp_pre_posting_posts',
 						( is_array( $params ) ? $params : array() ),
 						(object) array(
 							'id'     => $website->id,
@@ -1011,8 +1030,27 @@ class MainWP_Utility {
 			$_new_post = null;
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {
 				$_new_post = $params['new_post'];
+				
+				/*
+				* @deprecated Use 'mainwp_pre_posting_posts' instead.
+				* 
+				*/
+				$params         = apply_filters_deprecated( 
+					'mainwp-pre-posting-posts', 
+					array( 
+						( is_array( $params ) ? $params : array() ), 
+						(object) array(
+							'id'     => $website->id,
+							'url'    => $website->url,
+							'name'   => $website->name,
+						)  
+					), 
+					'4.0.1', 
+					'mainwp_pre_posting_posts' 
+				);				
+				
 				$params    = apply_filters(
-					'mainwp-pre-posting-posts',
+					'mainwp_pre_posting_posts',
 					( is_array( $params ) ? $params : array() ),
 					(object) array(
 						'id'     => $website->id,

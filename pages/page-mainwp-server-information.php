@@ -673,7 +673,7 @@ class MainWP_Server_Information {
 					</tr>
 					<?php
 				}
-				do_action( 'mainwp-cron-jobs-list' );
+				do_action( 'mainwp_cron_jobs_list' );
 				?>
 			</tbody>
 		</table>

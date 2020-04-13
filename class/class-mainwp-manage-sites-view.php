@@ -1613,10 +1613,14 @@ class MainWP_Manage_Sites_View {
 					</div>
 				</div>
 
-				<?php do_action( 'mainwp-manage-sites-edit', $website ); ?>
+				<?php do_action( 'mainwp-manage-sites-edit', $website ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
 
-				<?php do_action( 'mainwp-extension-sites-edit', $website ); ?>
+				<?php do_action( 'mainwp-extension-sites-edit', $website ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
 
+				<?php do_action( 'mainwp_manage_sites_edit', $website ); ?>
+
+				<?php do_action( 'mainwp_extension_sites_edit', $website ); ?>
+				
 				<?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); ?>
 
 				<div class="ui divider"></div>

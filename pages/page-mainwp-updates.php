@@ -786,7 +786,13 @@ class MainWP_Updates {
 
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
-		$customPage           = apply_filters( 'mainwp-getcustompage-backups', false );
+		/*
+		* @deprecated Use 'mainwp_getcustompage_backups' instead.
+		* 
+		*/
+		$customPage				= apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
+		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
+		
 		$restorePageSlug      = '';
 		if ( empty( $enable_legacy_backup ) && ! empty( $mainwp_primaryBackup ) && is_array( $customPage ) && isset( $customPage['managesites_slug'] ) ) {
 			$restorePageSlug = 'admin.php?page=ManageSites' . $customPage['managesites_slug'];

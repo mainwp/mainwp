@@ -535,5 +535,5 @@ class MainWP_Hooks {
 	public function hook_decrypt_string( $enscrypt ) {
 		return MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt );
 	}
-
+	
 }

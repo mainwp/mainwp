@@ -70,8 +70,8 @@ class LiveReportResponder_Activator {
 
 		if ( false !== $this->mainwpMainActivated ) {
 			$this->activate_this_plugin();
-		} else {			
-			add_action( 'mainwp_activated', array( &$this, 'activate_this_plugin' ) );			
+		} else {
+			add_action( 'mainwp_activated', array( &$this, 'activate_this_plugin' ) );
 		}
 	}
 

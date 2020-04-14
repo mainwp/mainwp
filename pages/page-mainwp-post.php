@@ -2123,8 +2123,8 @@ class MainWP_Post {
 
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {									
-									$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;									
+								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+									$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
 									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.1', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
 									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.1', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
@@ -2224,7 +2224,7 @@ class MainWP_Post {
 		</script>
 		<?php
 	}
-	
+
 	public static function get_post() {
 		$postId    = $_POST['postId'];
 		$postType  = $_POST['postType'];

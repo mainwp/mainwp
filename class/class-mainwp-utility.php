@@ -3376,4 +3376,4 @@ EOT;
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}
-	}
+}

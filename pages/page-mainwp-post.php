@@ -2123,19 +2123,12 @@ class MainWP_Post {
 
 							$failed_posts = array();
 							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
-									/*
-									* @deprecated Use 'mainwp_post_posting_post' instead.
-									*
-									*/
-									do_action( 'mainwp-post-posting-post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
-									/*
-									* @deprecated Use 'mainwp_bulkposting_done' instead.
-									*
-									*/
-									do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
+								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {									
+									$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;									
+									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.1', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
+									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.1', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
-									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
+									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], $links );
 									do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 								} else {
 									$failed_posts[] = $website->id;
@@ -2231,130 +2224,7 @@ class MainWP_Post {
 		</script>
 		<?php
 	}
-
-	public static function posts_get_terms_handler( $data, $website, &$output ) {
-		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result                       = $results[1];
-			$information                  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-			$output->cats[ $website->id ] = is_array( $information ) ? $information : array();
-		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
-		}
-	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function get_terms( $websiteid, $prefix = '', $what = 'site', $gen_type = 'post' ) {
-		$output         = new \stdClass();
-		$output->errors = array();
-		$output->cats   = array();
-		$dbwebsites     = array();
-		if ( 'group' === $what ) {
-			$input_name = 'groups_selected_cats_' . $prefix . '[]';
-		} else {
-			$input_name = 'sites_selected_cats_' . $prefix . '[]';
-		}
-
-		if ( ! empty( $websiteid ) ) {
-			if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
-				$website                    = MainWP_DB::instance()->get_website_by_id( $websiteid );
-				$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-					$website,
-					array(
-						'id',
-						'url',
-						'name',
-						'adminname',
-						'nossl',
-						'privkey',
-						'nosslkey',
-						'http_user',
-						'http_pass',
-					)
-				);
-			}
-		}
-
-		if ( 'post' === $gen_type ) {
-			$bkc_option_path = 'default_keywords_post';
-			$keyword_option  = 'keywords_page';
-		} elseif ( 'page' === $gen_type ) {
-			$bkc_option_path = 'default_keywords_page';
-			$keyword_option  = 'keywords_page';
-		}
-
-		if ( 'bulk' === $prefix ) {
-			/*
-			* @deprecated Use 'mainwp_get_options' instead.
-			*
-			*/
-			$opt           = apply_filters_deprecated( 'mainwp-get-options', array( '', 'bulk_keyword_cats', $bkc_option_path ), '4.0.1', 'mainwp_get_options' );
-			$opt           = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', 'bulk_keyword_cats', $bkc_option_path );
-			$selected_cats = MainWP_Utility::maybe_unserialyze( $opt );
-		} else {
-			/*
-			* @deprecated Use 'mainwp_get_options' instead.
-			*
-			*/
-			$opt = apply_filters_deprecated( 'mainwp-get-options', array( '', 'mainwp_content_extension', $keyword_option ), '4.0.1', 'mainwp_get_options' );
-			$opt = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', $keyword_option );
-			if ( is_array( $opt ) && is_array( $opt[ $prefix ] ) ) {
-				$selected_cats = MainWP_Utility::maybe_unserialyze( $opt[ $prefix ]['selected_cats'] );
-			}
-		}
-		$selected_cats = is_array( $selected_cats ) ? $selected_cats : array();
-		$ret           = '';
-		if ( 0 < count( $dbwebsites ) ) {
-			/*
-			* @deprecated Use 'mainwp_get_options' instead.
-			*
-			*/
-			$opt       = apply_filters_deprecated( 'mainwp-get-options', array( '', 'mainwp_content_extension', 'taxonomy' ), '4.0.1', 'mainwp_get_options' );
-			$opt       = apply_filters( 'mainwp_get_options', $opt, 'mainwp_content_extension', 'taxonomy' );
-			$post_data = array(
-				'taxonomy' => base64_encode( $opt ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-			);
-			MainWP_Utility::fetch_urls_authed(
-				$dbwebsites,
-				'get_terms',
-				$post_data,
-				array(
-					self::get_class_name(),
-					'posts_get_terms_handler',
-				),
-				$output
-			);
-			foreach ( $dbwebsites as $siteid => $website ) {
-				$cats = array();
-				if ( is_array( $selected_cats[ $siteid ] ) ) {
-					foreach ( $selected_cats[ $siteid ] as $val ) {
-						$cats[] = $val['term_id'];
-					}
-				}
-				if ( ! empty( $output->errors[ $siteid ] ) ) {
-					$ret .= '<p> ' . __( 'Error - ', 'mainwp' ) . $output->errors[ $siteid ] . '</p>';
-				} else {
-					if ( 0 < count( $output->cats[ $siteid ] ) ) {
-						foreach ( $output->cats[ $siteid ] as $cat ) {
-							if ( $cat->term_id ) {
-								if ( in_array( $cat->term_id, $cats ) ) {
-									$checked = ' checked="checked" ';
-								} else {
-									$checked = '';
-								}
-								$ret .= '<div class="mainwp_selected_sites_item ' . ( ! empty( $checked ) ? 'selected_sites_item_checked' : '' ) . '"><input type="checkbox" name="' . $input_name . '" value="' . $siteid . ',' . $cat->term_id . ',' . stripslashes( $cat->name ) . '" ' . $checked . '/><label>' . $cat->name . '</label></div>';
-							}
-						}
-					} else {
-						$ret .= '<p>No categories have been found!</p>';
-					}
-				}
-			}
-		} else {
-			$ret .= '<p>' . __( 'ERROR: ', 'mainwp' ) . ' no site</p>';
-		}
-		echo $ret;
-	}
-
+	
 	public static function get_post() {
 		$postId    = $_POST['postId'];
 		$postType  = $_POST['postType'];

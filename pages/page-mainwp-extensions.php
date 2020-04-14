@@ -90,6 +90,7 @@ class MainWP_Extensions {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 
 		add_filter( 'mainwp-extensions-apigeneratepassword', array( self::get_class_name(), 'gen_api_password' ), 10, 3 );
+		add_filter( 'mainwp_extensions_apigeneratepassword', array( self::get_class_name(), 'gen_api_password' ), 10, 3 );
 	}
 
 	// phpcs:ignore -- not quite complex function
@@ -379,6 +380,7 @@ class MainWP_Extensions {
 	}
 
 	public static function gen_api_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 		return MainWP_Api_Manager_Password_Management::generate_password( $length, $special_chars, $extra_special_chars );
 	}
 
@@ -1023,6 +1025,9 @@ class MainWP_Extensions {
 	}
 
 	public static function is_extension_available( $pAPI ) {
+		
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
+		
 		$extensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 		if ( isset( $extensions ) && is_array( $extensions ) ) {
 			foreach ( $extensions as $extension ) {
@@ -1113,6 +1118,8 @@ class MainWP_Extensions {
 			return false;
 		}
 
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
+		
 		$dbwebsites = array();
 		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
 
@@ -1165,6 +1172,8 @@ class MainWP_Extensions {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
+		
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 
 		if ( ! is_array( $others ) ) {
 			$others = array();
@@ -1273,7 +1282,7 @@ class MainWP_Extensions {
 
 		return $output;
 	}
-
+	
 	/**
 	 * @param string $pluginFile Extension plugin file to verify
 	 * @param string $key The child-key
@@ -1290,6 +1299,8 @@ class MainWP_Extensions {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
+		
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 
 		if ( isset( $groupid ) ) {
 			$group = MainWP_DB::instance()->get_group_by_id( $groupid );

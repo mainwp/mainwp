@@ -482,7 +482,10 @@ class MainWP_Manage_Sites_List_Table {
 		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
 			$site_ids[] = $site->id;
 		}
-		do_action( 'mainwp-sitestable-prepared-items', $websites, $site_ids );
+		
+		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.1', 'mainwp_sitestable_prepared_items' ); // @deprecated Use 'mainwp_sitestable_prepared_items' instead.
+		
+		do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
 		MainWP_DB::data_seek( $websites, 0 );
 

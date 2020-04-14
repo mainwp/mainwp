@@ -51,7 +51,6 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions::get_class_name(), 'is_extension_available' ) );
-		add_filter( 'mainwp-extension-decrypt-string', array( &$this, 'hook_decrypt_string' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
@@ -532,8 +531,4 @@ class MainWP_Hooks {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
 	}
 
-	public function hook_decrypt_string( $enscrypt ) {
-		return MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt );
-	}
-
-}
+}		

@@ -3346,7 +3346,7 @@ EOT;
 	public static function value_to_string( $var ) {
 		if ( is_array( $var ) || is_object( $var ) ) {
 			//phpcs:ignore -- for debug only
-			return print_r( $var, true );
+			return print_r( $var, true );  // @codingStandardsIgnoreLine
 		} elseif ( is_string ( $var ) ) {
 			return $var;
 		}
@@ -3376,4 +3376,4 @@ EOT;
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}
-}
+	}

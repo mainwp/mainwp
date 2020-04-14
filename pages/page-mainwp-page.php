@@ -913,19 +913,13 @@ class MainWP_Page {
 
 						$failed_posts = array();
 						foreach ( $dbwebsites as $website ) {
-							if ( ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
-								/*
-								* @deprecated Use 'mainwp_post_posting_page' instead.
-								*
-								*/
-								do_action( 'mainwp-post-posting-page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
-								/*
-								* @deprecated Use 'mainwp_bulkposting_done' instead.
-								*
-								*/
-								do_action( 'mainwp-bulkposting-done', $_post, $website, $output );
+							if ( ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {																
+								$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
+								
+								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.1', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.
+								do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.1', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
-								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], ( isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null ) );
+								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], $links );
 								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 							} else {
 								$failed_posts[] = $website->id;

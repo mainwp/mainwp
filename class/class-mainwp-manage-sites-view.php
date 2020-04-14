@@ -1405,8 +1405,9 @@ class MainWP_Manage_Sites_View {
 			if ( empty( $website ) ) {
 				return;
 			}
-			if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
-				do_action( 'mainwp-securityissues-sites', $website );
+			if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {				
+				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.1', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
+				do_action( 'mainwp_securityissues_sites', $website );				
 			}
 			?>
 
@@ -1414,7 +1415,8 @@ class MainWP_Manage_Sites_View {
 			// Hook in MainWP Sucuri Extension.
 			if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
-					do_action( 'mainwp-sucuriscan-sites', $website );
+					do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.1', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
+					do_action( 'mainwp_sucuriscan_sites', $website );
 				}
 			}
 			?>
@@ -1423,7 +1425,9 @@ class MainWP_Manage_Sites_View {
 			// Hook in MainWP Wordfence Extension.
 			if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
-					do_action( 'mainwp-wordfence-sites', $website );
+					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.1', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
+					do_action( 'mainwp_wordfence_sites', $website );
+					
 				}
 			}
 			?>
@@ -1612,11 +1616,11 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				</div>
-
-				<?php do_action( 'mainwp-manage-sites-edit', $website ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
-
-				<?php do_action( 'mainwp-extension-sites-edit', $website ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
-
+					
+				<?php do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit'  ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
+				
+				<?php do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit'  ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
+				
 				<?php do_action( 'mainwp_manage_sites_edit', $website ); ?>
 
 				<?php do_action( 'mainwp_extension_sites_edit', $website ); ?>

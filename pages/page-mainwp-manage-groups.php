@@ -83,7 +83,10 @@ class MainWP_Manage_Groups {
 			return;
 		}
 
-		do_action( 'mainwp-pageheader-sites', 'ManageGroups' );
+		do_action_deprecated( 'mainwp-pageheader-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pageheader_sites'  ); // @deprecated Use 'mainwp_pageheader_sites' instead.
+		
+		do_action( 'mainwp_pageheader_sites', 'ManageGroups' );
+		
 		?>
 
 		<div id="mainwp-manage-groups" class="ui segment">
@@ -124,7 +127,10 @@ class MainWP_Manage_Groups {
 
 		</div>
 
-		<?php do_action( 'mainwp-pagefooter-sites', 'ManageGroups' ); ?>
+		<?php 
+		do_action_deprecated( 'mainwp-pagefooter-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pagefooter_sites'  ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
+		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' ); 		
+		?>
 
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {

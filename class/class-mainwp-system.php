@@ -163,8 +163,8 @@ class MainWP_System {
 
 		add_action( 'after_plugin_row', array( &$this, 'after_extensions_plugin_row' ), 10, 3 );
 
-		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_getsites' instead.
-		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_getsites' instead.
+		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_activated_check' instead.
+		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_extension_enabled_check' instead.
 
 		add_filter( 'mainwp_activated_check', array( &$this, 'activated_check' ) );
 		add_filter( 'mainwp_extension_enabled_check', array( MainWP_Extensions::get_class_name(), 'is_extension_enabled' ) );
@@ -189,7 +189,8 @@ class MainWP_System {
 		 *
 		 * @see \MainWP_Extensions::hook_get_groups
 		 */
-		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hook_get_groups' ), 10, 4 );
+		add_filter( 'mainwp-getgroups', array( MainWP_Extensions::get_class_name(), 'hook_get_groups' ), 10, 4 ); // @deprecated Use 'mainwp_getgroups' instead.
+		add_filter( 'mainwp_getgroups', array( MainWP_Extensions::get_class_name(), 'hook_get_groups' ), 10, 4 );
 		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
 		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
 		add_filter(
@@ -213,7 +214,8 @@ class MainWP_System {
 		* @deprecated Use 'mainwp_activated' instead.
 		*
 		*/
-		do_action( 'mainwp-activated' );
+		
+		do_action_deprecated( 'mainwp-activated', array(), '4.0.1', 'mainwp_activated'  ); // @deprecated Use 'mainwp_activated' instead.
 
 		do_action( 'mainwp_activated' );
 
@@ -436,6 +438,7 @@ class MainWP_System {
 	}
 
 	public function activated_check() {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 		return $this->get_version();
 	}
 

@@ -113,7 +113,11 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {
 			return MainWP\Dashboard\mainwp_current_user_can( $cap_type, $cap );
 		}
-		return false;
+		// to compatible
+		if ( has_filter( 'mainwp_currentusercan' ) ) {
+			return false;
+		}
+		return true;
 	}
 }
 

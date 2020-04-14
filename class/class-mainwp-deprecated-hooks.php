@@ -2,9 +2,8 @@
 
 /**
  * MainWP Deprecated Hooks
- * 
- * Init mainwp deprecated hooks 
- * 
+ *
+ * Init mainwp deprecated hooks
  */
 
 namespace MainWP\Dashboard;
@@ -25,11 +24,11 @@ class MainWP_Deprecated_Hooks {
 	 * @var array
 	 */
 	public $deprecated_filters = array(
-		'mainwp-getsites'					 => 'mainwp_getsites',
-		'mainwp-getdbsites'					 => 'mainwp_getdbsites',
-		'mainwp-getgroups'					 => 'mainwp_getgroups',
-		'mainwp-activated-check'			 => 'mainwp_activated_check',
-		'mainwp-extension-available-check'	 => '',
+		'mainwp-getsites'                    => 'mainwp_getsites',
+		'mainwp-getdbsites'                  => 'mainwp_getdbsites',
+		'mainwp-getgroups'                   => 'mainwp_getgroups',
+		'mainwp-activated-check'             => 'mainwp_activated_check',
+		'mainwp-extension-available-check'   => '',
 	);
 
 	/**
@@ -38,7 +37,7 @@ class MainWP_Deprecated_Hooks {
 	 * @var array
 	 */
 	public $deprecated_actions = array(
-		'mainwp-activated' => 'mainwp_activated'
+		'mainwp-activated' => 'mainwp_activated',
 	);
 
 	/**
@@ -47,12 +46,12 @@ class MainWP_Deprecated_Hooks {
 	 * @var array
 	 */
 	public $deprecated_version = array(
-		'mainwp-getsites'					 => '4.0.1',
-		'mainwp-getdbsites'					 => '4.0.1',
-		'mainwp-activated'					 => '4.0.1',
-		'mainwp-activated-check'			 => '4.0.1',
-		'mainwp-extension-available-check'	 => '4.0.1',
-		'mainwp-getgroups'					 => '4.0.1',
+		'mainwp-getsites'                    => '4.0.1',
+		'mainwp-getdbsites'                  => '4.0.1',
+		'mainwp-activated'                   => '4.0.1',
+		'mainwp-activated-check'             => '4.0.1',
+		'mainwp-extension-available-check'   => '4.0.1',
+		'mainwp-getgroups'                   => '4.0.1',
 	);
 
 	/**
@@ -77,7 +76,6 @@ class MainWP_Deprecated_Hooks {
 	 * @return none
 	 */
 	public function __construct() {
-		
 	}
 
 	/**
@@ -98,10 +96,11 @@ class MainWP_Deprecated_Hooks {
 	 * @return array
 	 */
 	public function get_replacement_hooks( $old_hook ) {
-		if ( isset( $this->deprecated_filters[$old_hook] ) )
-			return $this->deprecated_filters[$old_hook];
-		else if ( isset( $this->deprecated_actions[$old_hook] ) )
-			return $this->deprecated_actions[$old_hook];
+		if ( isset( $this->deprecated_filters[ $old_hook ] ) ) {
+			return $this->deprecated_filters[ $old_hook ];
+		} elseif ( isset( $this->deprecated_actions[ $old_hook ] ) ) {
+			return $this->deprecated_actions[ $old_hook ];
+		}
 		return false;
 	}
 
@@ -112,20 +111,20 @@ class MainWP_Deprecated_Hooks {
 	 * @return string
 	 */
 	protected function get_deprecated_version( $old_hook ) {
-		return !empty( $this->deprecated_version[$old_hook] ) ? $this->deprecated_version[$old_hook] : WC_VERSION;
+		return ! empty( $this->deprecated_version[ $old_hook ] ) ? $this->deprecated_version[ $old_hook ] : WC_VERSION;
 	}
 
 	/**
 	 * If the filter is Deprecated, display a deprecated notice.
 	 */
 	public static function maybe_handle_deprecated_filter() {
-		$current_hook	 = current_filter();
-		$new_hook		 = self::instance()->get_replacement_hooks( $current_hook );
+		$current_hook = current_filter();
+		$new_hook     = self::instance()->get_replacement_hooks( $current_hook );
 		if ( false !== $new_hook ) {
 			self::instance()->deprecated_message( $current_hook, $new_hook );
 		}
 	}
-	
+
 	/**
 	 * Display a deprecated notice for old hooks.
 	 *

@@ -1025,9 +1025,9 @@ class MainWP_Extensions {
 	}
 
 	public static function is_extension_available( $pAPI ) {
-		
+
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
-		
+
 		$extensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
 		if ( isset( $extensions ) && is_array( $extensions ) ) {
 			foreach ( $extensions as $extension ) {
@@ -1119,7 +1119,7 @@ class MainWP_Extensions {
 		}
 
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
-		
+
 		$dbwebsites = array();
 		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
 
@@ -1172,7 +1172,7 @@ class MainWP_Extensions {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
-		
+
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 
 		if ( ! is_array( $others ) ) {
@@ -1282,7 +1282,7 @@ class MainWP_Extensions {
 
 		return $output;
 	}
-	
+
 	/**
 	 * @param string $pluginFile Extension plugin file to verify
 	 * @param string $key The child-key
@@ -1299,7 +1299,7 @@ class MainWP_Extensions {
 		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
-		
+
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 
 		if ( isset( $groupid ) ) {

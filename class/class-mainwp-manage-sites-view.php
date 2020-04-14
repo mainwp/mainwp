@@ -1405,9 +1405,9 @@ class MainWP_Manage_Sites_View {
 			if ( empty( $website ) ) {
 				return;
 			}
-			if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {				
+			if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.1', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
-				do_action( 'mainwp_securityissues_sites', $website );				
+				do_action( 'mainwp_securityissues_sites', $website );
 			}
 			?>
 
@@ -1427,7 +1427,7 @@ class MainWP_Manage_Sites_View {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
 					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.1', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
 					do_action( 'mainwp_wordfence_sites', $website );
-					
+
 				}
 			}
 			?>

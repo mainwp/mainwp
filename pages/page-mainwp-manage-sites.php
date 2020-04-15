@@ -561,7 +561,7 @@ class MainWP_Manage_Sites {
 		}
 		self::render_footer( $showpage );
 	}
-	
+
 	// add individual meta boxes.
 	// phpcs:ignore -- not quite complex method
 	public static function on_load_page_dashboard() {
@@ -717,7 +717,7 @@ class MainWP_Manage_Sites {
 
 		MainWP_Manage_Sites_View::show_backups( $website, $fullBackups, $dbBackups );
 	}
-	
+
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
 		$optimize_for_sites_table = ( 1 === get_option( 'mainwp_optimize' ) );
@@ -937,8 +937,8 @@ class MainWP_Manage_Sites {
 			}
 		}
 	}
-		
-	
+
+
 
 
 	// Hook the section help content to the Help Sidebar element.

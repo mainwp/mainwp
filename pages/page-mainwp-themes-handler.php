@@ -2,7 +2,6 @@
 /**
  * This File handles the Themes SubPage.
  * MainWP Themes Handler
- * 
  *
  * @package MainWP/Themes
  */

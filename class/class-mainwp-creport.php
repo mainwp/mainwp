@@ -838,7 +838,7 @@ class MainWP_Live_Reports_Class {
 		if ( ! is_array( $sel_groups ) ) {
 			$sel_groups = array();
 		}
-		$dbwebsites = apply_filters( 'mainwp-getdbsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $sel_sites, $sel_groups );
+		$dbwebsites = apply_filters( 'mainwp_getdbsites', $mainWPCReportExtensionActivator->get_child_file(), $mainWPCReportExtensionActivator->get_child_key(), $sel_sites, $sel_groups );
 
 		if ( is_array( $dbwebsites ) ) {
 			foreach ( $dbwebsites as $site ) {

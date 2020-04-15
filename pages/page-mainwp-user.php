@@ -91,7 +91,9 @@ class MainWP_User {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-user
 		 */
-		self::$subPages = apply_filters( 'mainwp-getsubpages-user', array() );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-user', array( array() ), '4.0.1', 'mainwp_getsubpages_user' );  // @deprecated Use 'mainwp_getsubpages_user' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_user', $sub_pages );
+		
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'UserBulk' . $subPage['slug'] ) ) {
@@ -333,7 +335,10 @@ class MainWP_User {
 					'author'        => __( 'Author', 'mainwp' ),
 					'contributor'   => __( 'Contributor', 'mainwp' ),
 				);
-				$user_roles = apply_filters( 'mainwp-users-manage-roles', $user_roles );
+				
+				$user_roles      = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $user_roles ), '4.0.1', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.		
+				$user_roles = apply_filters( 'mainwp_users_manage_roles', $user_roles );
+				
 				?>
 
 				<div class="ui divider"></div>
@@ -414,8 +419,10 @@ class MainWP_User {
 			'author'        => __( 'Author', 'mainwp' ),
 			'editor'        => __( 'Editor', 'mainwp' ),
 		);
-
-		$editable_roles     = apply_filters( 'mainwp-users-manage-roles', $editable_roles );
+	
+		$editable_roles      = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $editable_roles ), '4.0.1', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
+		$editable_roles = apply_filters( 'mainwp_users_manage_roles', $editable_roles );
+				
 		$editable_roles[''] = __( '&mdash; No role for this site &mdash;', 'mainwp' );
 
 		?>
@@ -1054,7 +1061,8 @@ class MainWP_User {
 								'author'        => __( 'Author', 'mainwp' ),
 								'contributor'   => __( 'Contributor', 'mainwp' ),
 							);
-							$user_roles = apply_filters( 'mainwp-users-manage-roles', $user_roles );
+							$user_roles      = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $user_roles ), '4.0.1', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
+							$user_roles = apply_filters( 'mainwp_users_manage_roles', $user_roles );
 
 							?>
 
@@ -1183,7 +1191,9 @@ class MainWP_User {
 
 		$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
 		$cus_roles     = array();
-		$cus_roles     = apply_filters( 'mainwp-users-manage-roles', $cus_roles );
+		$cus_roles      = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $cus_roles ), '4.0.1', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.		
+		$cus_roles     = apply_filters( 'mainwp_users_manage_roles', $cus_roles );
+		
 		if ( is_array( $cus_roles ) && 0 < count( $cus_roles ) ) {
 			$cus_roles     = array_keys( $cus_roles );
 			$allowed_roles = array_merge( $allowed_roles, $cus_roles );

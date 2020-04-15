@@ -28,7 +28,8 @@ class MainWP_Manage_Sites_List_Table {
 
 		$lastBackup = MainWP_DB::instance()->get_website_option( $item, 'primary_lasttime_backup' );
 
-		$backupnow_lnk = apply_filters( 'mainwp-managesites-getbackuplink', '', $item['id'], $lastBackup );
+		$backupnow_lnk      = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.1', 'mainwp_managesites_getbackuplink' );  // @deprecated Use 'mainwp_managesites_getbackuplink' instead.
+		$backupnow_lnk = apply_filters( 'mainwp_managesites_getbackuplink', $backupnow_lnk, $item['id'], $lastBackup );
 
 		if ( ! empty( $backupnow_lnk ) ) {
 			return $backupnow_lnk;
@@ -72,7 +73,8 @@ class MainWP_Manage_Sites_List_Table {
 	// phpcs:ignore -- not quite complex function
 	public function column_default( $item, $column_name ) {
 
-		$item = apply_filters( 'mainwp-sitestable-item', $item, $item );
+		$item      = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );  // @deprecated Use 'mainwp_sitestable_item' instead.
+		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
 
 		switch ( $column_name ) {
 			case 'status':
@@ -131,12 +133,18 @@ class MainWP_Manage_Sites_List_Table {
 	public function get_columns() {
 
 		$columns                 = $this->get_default_columns();
-		$columns                 = apply_filters( 'mainwp-sitestable-getcolumns', $columns, $columns );
+		$columns      = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.1', 'mainwp_sitestable_getcolumns' );  // @deprecated Use 'mainwp_sitestable_getcolumns' instead.
+		$columns                 = apply_filters( 'mainwp_sitestable_getcolumns', $columns, $columns );
+		
 		$columns['site_actions'] = '';
 
 		$disable_backup       = false;
-		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
-		$primaryBackupMethods = apply_filters( 'mainwp-getprimarybackup-methods', array() );
+		$primaryBackup        = get_option( 'mainwp_primaryBackup' );		
+		
+		$primary_methods = array();
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+		
 		if ( empty( $primaryBackup ) ) {
 			if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 				$disable_backup = true;

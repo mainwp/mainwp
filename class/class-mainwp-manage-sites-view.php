@@ -378,7 +378,9 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function render_sync_exts_settings() {
-		$sync_extensions_options = apply_filters( 'mainwp-sync-extensions-options', array() );
+		$sync_extensions_options      = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.1', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.		
+		$sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
+		
 		$working_extensions      = MainWP_Extensions::get_extensions();
 		$available_exts_data     = MainWP_Extensions_View::get_available_extensions();
 		if ( 0 < count( $working_extensions ) && 0 < count( $sync_extensions_options ) ) {
@@ -494,8 +496,10 @@ class MainWP_Manage_Sites_View {
 		$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 
 		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
-		$primaryBackupMethods = apply_filters( 'mainwp-getprimarybackup-methods', array() );
-
+		$primary_methods = array();
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+		
 		if ( ! is_array( $primaryBackupMethods ) ) {
 			$primaryBackupMethods = array();
 		}
@@ -1198,7 +1202,10 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$primaryBackupMethods = apply_filters( 'mainwp-getprimarybackup-methods', array() );
+		$primary_methods = array();
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+		
 		if ( ! is_array( $primaryBackupMethods ) ) {
 			$primaryBackupMethods = array();
 		}

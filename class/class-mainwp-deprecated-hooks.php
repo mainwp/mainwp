@@ -33,15 +33,6 @@ class MainWP_Deprecated_Hooks {
 	);
 
 	/**
-	 * Array of deprecated actions. Format of 'old' => 'new'.
-	 *
-	 * @var array
-	 */
-	public $deprecated_actions = array(
-		'mainwp-activated' => 'mainwp_activated'
-	);
-
-	/**
 	 * Array of versions of deprecated hooks.
 	 *
 	 * @var array
@@ -99,9 +90,7 @@ class MainWP_Deprecated_Hooks {
 	 */
 	public function get_replacement_hooks( $old_hook ) {
 		if ( isset( $this->deprecated_filters[$old_hook] ) )
-			return $this->deprecated_filters[$old_hook];
-		else if ( isset( $this->deprecated_actions[$old_hook] ) )
-			return $this->deprecated_actions[$old_hook];
+			return $this->deprecated_filters[$old_hook];		
 		return false;
 	}
 

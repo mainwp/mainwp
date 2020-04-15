@@ -2940,7 +2940,7 @@ EOT;
 	public static function get_websites_automatic_update_time() {
 		$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
 
-		if ( 0 === $lastAutomaticUpdate ) {
+		if ( 0 == $lastAutomaticUpdate ) {
 			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
 		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
@@ -2948,7 +2948,7 @@ EOT;
 			$nextAutomaticUpdate = self::format_timestamp( self::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
 		}
 
-		if ( 0 === $lastAutomaticUpdate ) {
+		if ( 0 == $lastAutomaticUpdate ) {
 			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
 		} else {
 			$lastAutomaticUpdate = self::format_timestamp( self::get_timestamp( $lastAutomaticUpdate ) );

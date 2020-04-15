@@ -926,7 +926,8 @@ class MainWP_Page {
 							}
 						}
 
-						$after_posting = apply_filters( 'mainwp-after-posting-bulkpage-result', false, $_post, $dbwebsites, $output );
+						$after_posting      = apply_filters_deprecated( 'mainwp-after-posting-bulkpage-result', array( false, $_post, $dbwebsites, $output ), '4.0.1', 'mainwp_after_posting_bulkpage_result' );  // @deprecated Use 'mainwp_after_posting_bulkpage_result' instead.
+						$after_posting = apply_filters( 'mainwp_after_posting_bulkpage_result', $after_posting, $_post, $dbwebsites, $output );
 
 						if ( false == $after_posting ) {
 							?>

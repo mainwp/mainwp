@@ -811,7 +811,9 @@ class MainWP_UI {
 			'child_site_info'           => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
 		);
 
-		$custom_opts = apply_filters( 'mainwp-widgets-screen-options', array() );
+		$custom_opts      = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.1', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
+		$custom_opts = apply_filters( 'mainwp_widgets_screen_options', $custom_opts );
+		
 		if ( is_array( $custom_opts ) && 0 < count( $custom_opts ) ) {
 			$default_widgets = array_merge( $default_widgets, $custom_opts );
 		}

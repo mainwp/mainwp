@@ -111,7 +111,8 @@ class MainWP_Plugins {
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
 		 */
 
-		self::$subPages = apply_filters( 'mainwp-getsubpages-plugins', array() );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-plugins', array( array() ), '4.0.1', 'mainwp_getsubpages_plugins' );  // @deprecated Use 'mainwp_getsubpages_plugins' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_plugins', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {

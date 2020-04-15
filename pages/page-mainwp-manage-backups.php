@@ -315,7 +315,10 @@ class MainWP_Manage_Backups {
 			}
 		}
 
-		$primaryBackupMethods = apply_filters( 'mainwp-getprimarybackup-methods', array() );
+		$primary_methods = array();
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+		
 		if ( ! is_array( $primaryBackupMethods ) ) {
 			$primaryBackupMethods = array();
 		}

@@ -96,7 +96,9 @@ class MainWP_Server_Information {
 				)
 			);
 		}
-		self::$subPages = apply_filters( 'mainwp-getsubpages-server', array() );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.1', 'mainwp_getsubpages_server' );  // @deprecated Use 'mainwp_getsubpages_server' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
+		
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
@@ -1562,7 +1564,10 @@ class MainWP_Server_Information {
 		}
 
 		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
-		$primaryBackupMethods = apply_filters( 'mainwp-getprimarybackup-methods', array() );
+		$primary_methods = array();
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
+		
 		if ( ! is_array( $primaryBackupMethods ) ) {
 			$primaryBackupMethods = array();
 		}

@@ -197,6 +197,7 @@ class MainWP_Logger {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			ob_start();
+			// phpcs:ignore -- for debugging
 			debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
 			$stackTrace = "\n" . ob_get_clean();
 		}
@@ -231,7 +232,7 @@ class MainWP_Logger {
 			$logCurrentHandle     = fopen( $this->logCurrentFile, 'a+' );
 
 			if ( $logCurrentHandle ) {
-				$time   = date( $this->logDateFormat );
+				$time   = gmdate( $this->logDateFormat );
 				$prefix = '[' . $this->get_log_text( $pPriority ) . ']';
 
 				global $current_user;

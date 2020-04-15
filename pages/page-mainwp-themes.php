@@ -128,7 +128,8 @@ class MainWP_Themes {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 */
-		self::$subPages = apply_filters( 'mainwp-getsubpages-themes', array() );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-themes', array( array() ), '4.0.1', 'mainwp_getsubpages_themes' );  // @deprecated Use 'mainwp_getsubpages_themes' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_themes', $sub_pages );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Themes' . $subPage['slug'] ) ) {

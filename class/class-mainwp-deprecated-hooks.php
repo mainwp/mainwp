@@ -89,7 +89,7 @@ class MainWP_Deprecated_Hooks {
 	public function get_replacement_hooks( $old_hook ) {
 		if ( isset( $this->deprecated_filters[ $old_hook ] ) ) {
 			return $this->deprecated_filters[ $old_hook ];
-		} 
+		}
 		return false;
 	}
 

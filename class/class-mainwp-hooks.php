@@ -531,4 +531,4 @@ class MainWP_Hooks {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
 	}
 
-}		
+}

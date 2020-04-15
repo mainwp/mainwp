@@ -459,9 +459,9 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 
-				<?php 
+				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.1', 'mainwp_manage_sites_edit'  ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
-				do_action( 'mainwp_manage_sites_edit', false ); 
+				do_action( 'mainwp_manage_sites_edit', false );
 				?>
 
 				<div class="ui divider"></div>

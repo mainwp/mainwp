@@ -214,7 +214,7 @@ class MainWP_System {
 		* @deprecated Use 'mainwp_activated' instead.
 		*
 		*/
-		
+
 		do_action_deprecated( 'mainwp-activated', array(), '4.0.1', 'mainwp_activated'  ); // @deprecated Use 'mainwp_activated' instead.
 
 		do_action( 'mainwp_activated' );

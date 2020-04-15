@@ -198,7 +198,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
-				if ( MainWP_Manage_Sites::m_reconnect_site( $website ) ) {
+				if ( MainWP_Manage_Sites_Handler::m_reconnect_site( $website ) ) {
 					WP_CLI::success( '  Reconnected successfully' );
 				} else {
 					WP_CLI::warning( '  Reconnect failed' );
@@ -472,7 +472,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' plugins for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
+						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
@@ -737,7 +737,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' themes for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
+						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );

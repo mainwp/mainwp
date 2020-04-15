@@ -471,7 +471,7 @@ class MainWP_Hooks {
 	}
 
 	public function delete_theme() {
-		MainWP_Themes::delete_themes();
+		MainWP_Themes_Handler::delete_themes();
 		die();
 	}
 

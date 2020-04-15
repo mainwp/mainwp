@@ -1665,8 +1665,8 @@ class MainWP_System {
 						}
 
 						try {
-							$result = MainWP_Manage_Sites::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-							MainWP_Manage_Sites::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
+							$result = MainWP_Manage_Sites_Handler::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
+							MainWP_Manage_Sites_Handler::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
 							$sitesCheckCompleted[ $siteId ] = true;
 							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
 						} catch ( Exception $e ) {
@@ -1951,7 +1951,7 @@ class MainWP_System {
 			if ( property_exists( $website, 'sync_errors' ) && '' != $website->sync_errors ) {
 				MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Trying to reconnect' );
 				try {
-					if ( MainWP_Manage_Sites::m_reconnect_site( $website ) ) {
+					if ( MainWP_Manage_Sites_Handler::m_reconnect_site( $website ) ) {
 						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
 				} catch ( Exception $e ) {
@@ -2429,7 +2429,7 @@ class MainWP_System {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
 			if ( wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				$updated  = MainWP_Settings::handle_settings_post();
-				$updated |= MainWP_Manage_Sites::handle_settings_post();
+				$updated |= MainWP_Manage_Sites_Handler::handle_settings_post();
 				$msg      = '';
 				if ( $updated ) {
 					$msg = '&message=saved';

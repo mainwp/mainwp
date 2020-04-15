@@ -1538,35 +1538,35 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Require backup before update', 'mainwp' ); ?></label>
 					<div class="ui six wide column">
 						<select class="ui dropdown" id="mainwp_backup_before_upgrade" name="mainwp_backup_before_upgrade">
-							<option <?php echo ( 1 === $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-							<option <?php echo ( 0 === $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 === $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+							<option <?php echo ( 1 == $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
+							<option <?php echo ( 0 == $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 == $website->backup_before_upgrade ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Auto update core', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want MainWP to automatically update WP Core on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 === $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
+						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 == $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
 					</div>
 				</div>
 				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore core updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo ( 1 === $website->is_ignoreCoreUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignoreCoreUpdates" id="mainwp_is_ignoreCoreUpdates" <?php echo ( 1 == $website->is_ignoreCoreUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreCoreUpdates"></label>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore plugin updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore plugin updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo ( 1 === $website->is_ignorePluginUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignorePluginUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignorePluginUpdates" id="mainwp_is_ignorePluginUpdates" <?php echo ( 1 == $website->is_ignorePluginUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignorePluginUpdates"></label>
 						</div>
 					</div>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore theme updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore theme updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo ( 1 === $website->is_ignoreThemeUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
+							<input type="checkbox" name="mainwp_is_ignoreThemeUpdates" id="mainwp_is_ignoreThemeUpdates" <?php echo ( 1 == $website->is_ignoreThemeUpdates ? 'checked="true"' : '' ); ?>><label for="mainwp_is_ignoreThemeUpdates"></label>
 						</div>
 					</div>
 				<?php endif; ?>
@@ -1575,9 +1575,9 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify certificate (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown" id="mainwp_managesites_edit_verifycertificate" name="mainwp_managesites_edit_verifycertificate">
-						<option <?php echo ( 1 === $website->verify_certificate ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-						<option <?php echo ( 0 === $website->verify_certificate ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-						<option <?php echo ( 2 === $website->verify_certificate ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						<option <?php echo ( 1 == $website->verify_certificate ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
+						<option <?php echo ( 0 == $website->verify_certificate ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
+						<option <?php echo ( 2 == $website->verify_certificate ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -1585,13 +1585,13 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
-							<option <?php echo ( 0 === $website->ssl_version ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-							<option <?php echo ( 6 === $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
-							<option <?php echo ( 1 === $website->ssl_version ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 === $website->ssl_version ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
-							<option <?php echo ( 3 === $website->ssl_version ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
-							<option <?php echo ( 4 === $website->ssl_version ) ? 'selected' : ''; ?> value="4"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
-							<option <?php echo ( 5 === $website->ssl_version ) ? 'selected' : ''; ?> value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
+							<option <?php echo ( 0 == $website->ssl_version ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
+							<option <?php echo ( 6 == $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+							<option <?php echo ( 1 == $website->ssl_version ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 == $website->ssl_version ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
+							<option <?php echo ( 3 == $website->ssl_version ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
+							<option <?php echo ( 4 == $website->ssl_version ) ? 'selected' : ''; ?> value="4"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
+							<option <?php echo ( 5 == $website->ssl_version ) ? 'selected' : ''; ?> value="5"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -1599,9 +1599,9 @@ class MainWP_Manage_Sites_View {
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown" id="mainwp_managesites_edit_forceuseipv4" name="mainwp_managesites_edit_forceuseipv4">
-							<option <?php echo ( 1 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
-							<option <?php echo ( 0 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
-							<option <?php echo ( 2 === $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+							<option <?php echo ( 1 == $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'Yes', 'mainwp' ); ?></option>
+							<option <?php echo ( 0 == $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'No', 'mainwp' ); ?></option>
+							<option <?php echo ( 2 == $website->force_use_ipv4 ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
@@ -1857,9 +1857,9 @@ class MainWP_Manage_Sites_View {
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
-				if ( 'HTTPERROR' === $e->getMessage() ) {
+				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
-				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
+				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
 					$error = __( 'MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.', 'mainwp' );
 				} else {
 					$error = $e->getMessage();

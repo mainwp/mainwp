@@ -554,19 +554,19 @@ class MainWP_System {
 	}
 
 	public function mainwp_cronpingchilds_action() {
-		MainWP_System_Cron_Jobs::instance()->cron_ping_childs();		
+		MainWP_System_Cron_Jobs::instance()->cron_ping_childs();
 	}
 
 	public function mainwp_cronbackups_continue_action() {
-		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();				
+		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
 	}
 
-	public function mainwp_cronbackups_action() {		
-		MainWP_System_Cron_Jobs::instance()->cron_backups();				
+	public function mainwp_cronbackups_action() {
+		MainWP_System_Cron_Jobs::instance()->cron_backups();
 	}
 
 	public function mainwp_cronstats_action() {
-		MainWP_System_Cron_Jobs::instance()->cron_stats();				
+		MainWP_System_Cron_Jobs::instance()->cron_stats();
 	}
 
 	public function admin_footer() {
@@ -613,7 +613,7 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::admin_footer();
-		
+
 		global $_mainwp_disable_menus_items;
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );

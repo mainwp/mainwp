@@ -3356,5 +3356,5 @@ EOT;
 			// phpcs:ignore -- for compatible.
 			return maybe_unserialize( base64_decode( $data ) );
 		}
-	}	
+	}
 }

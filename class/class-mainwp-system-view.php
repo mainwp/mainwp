@@ -10,11 +10,11 @@ namespace MainWP\Dashboard;
  * MainWP Translations
  */
 class MainWP_System_View {
-	
+
 	public static function get_class_name() {
 		return __CLASS__;
 	}
-	
+
 	/**
 	 * Method get_mainwp_translations()
 	 * Build Translations Array.
@@ -213,8 +213,8 @@ class MainWP_System_View {
 
 		return $mainwpTranslations;
 	}
-	
-	
+
+
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		if ( ! isset( $extensions[ $plugin_slug ] ) ) {

@@ -1517,7 +1517,7 @@ class MainWP_Plugins {
 		</table>
 		<?php
 	}
-	
+
 	/*
 	 * Hook the section help content to the Help Sidebar element
 	 */

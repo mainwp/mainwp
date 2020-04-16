@@ -13,7 +13,7 @@ class MainWP_Extensions_Handler {
 	public static $extensionsLoaded = false;
 	public static $extensions;
 
-	
+
 	private static $possible_options = array(
 		'plugin_upgrades'  => 'plugin_upgrades',
 		'theme_upgrades'   => 'theme_upgrades',
@@ -24,7 +24,7 @@ class MainWP_Extensions_Handler {
 		'sync_errors'      => 'sync_errors',
 		'ignored_plugins'  => 'ignored_plugins',
 	);
-	
+
 
 	public static function get_plugin_slug( $pSlug ) {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );

@@ -16,7 +16,7 @@ class MainWP_Manage_Backups_Handler {
 
 		return self::$instance;
 	}
-	
+
 	public static function get_class_name() {
 		return __CLASS__;
 	}

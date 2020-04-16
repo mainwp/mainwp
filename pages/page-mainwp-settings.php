@@ -697,7 +697,7 @@ class MainWP_Settings {
 	 * @return mixed false|opensslLibLocation
 	 */
 	public static function show_openssl_lib_config() {
-		if ( MainWP_Server_Information::is_openssl_config_warning() ) {
+		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
 			return true;
 		} else {
 			if ( self::is_local_window_config() ) {

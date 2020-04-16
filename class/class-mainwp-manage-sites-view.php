@@ -381,7 +381,7 @@ class MainWP_Manage_Sites_View {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.1', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
 		$sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
 
-		$working_extensions  = MainWP_Extensions::get_extensions();
+		$working_extensions  = MainWP_Extensions_Handler::get_extensions();
 		$available_exts_data = MainWP_Extensions_View::get_available_extensions();
 		if ( 0 < count( $working_extensions ) && 0 < count( $sync_extensions_options ) ) {
 			?>

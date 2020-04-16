@@ -461,7 +461,6 @@ mainwp_extension_bulk_install = function () {
 mainwp_extension_bulk_install_next = function () {
     while ( ( extToInstall = jQuery( '.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked:first' ).closest( '.extension-to-install' ) ) && ( extToInstall.length > 0 ) && ( bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads ) ) {
         mainwp_extension_bulk_install_specific( extToInstall );
-//        mainwp_extension_bulk_activate_license( extToInstall );
     }
 
     if ( ( bulkExtensionsTotal > 0 ) && ( bulkExtensionsFinished == bulkExtensionsTotal ) ) {

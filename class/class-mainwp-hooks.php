@@ -50,7 +50,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
-		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions::get_class_name(), 'is_extension_available' ) );
+		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
@@ -63,7 +63,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'get_website_options' ), 10, 3 );
-		add_filter( 'mainwp_addgroup', array( MainWP_Extensions::get_class_name(), 'hook_add_group' ), 10, 3 );
+		add_filter( 'mainwp_addgroup', array( MainWP_Extensions_Handler::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 	}
@@ -155,12 +155,12 @@ class MainWP_Hooks {
 	 * @return array
 	 */
 	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
-		return MainWP_Extensions::hook_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
+		return MainWP_Extensions_Handler::hook_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
 	}
 
 
 	public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
-		return MainWP_Extensions::hook_delete_clone_site( $pluginFile, $key, $clone_url, $clone_site_id );
+		return MainWP_Extensions_Handler::hook_delete_clone_site( $pluginFile, $key, $clone_url, $clone_site_id );
 	}
 
 	/**
@@ -243,7 +243,7 @@ class MainWP_Hooks {
 	}
 
 	public function get_activate_extension_notice( $pluginFile ) {
-		$active = MainWP_Extensions::is_extension_activated( $pluginFile );
+		$active = MainWP_Extensions_Handler::is_extension_activated( $pluginFile );
 		if ( $active ) {
 			return false;
 		}
@@ -456,17 +456,17 @@ class MainWP_Hooks {
 	}
 
 	public function active_plugin() {
-		MainWP_Plugins::activate_plugins();
+		MainWP_Plugins_Handler::activate_plugins();
 		die();
 	}
 
 	public function deactive_plugin() {
-		MainWP_Plugins::deactivate_plugins();
+		MainWP_Plugins_Handler::deactivate_plugins();
 		die();
 	}
 
 	public function delete_plugin() {
-		MainWP_Plugins::delete_plugins();
+		MainWP_Plugins_Handler::delete_plugins();
 		die();
 	}
 

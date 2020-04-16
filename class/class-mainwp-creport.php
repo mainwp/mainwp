@@ -303,9 +303,6 @@ class MainWP_Live_Reports_Class {
 		return $output;
 	}
 
-	public function init_cron() {
-	}
-
 	// phpcs:ignore -- not quite complex method
 	public static function cal_schedule_nextsend( $schedule, $start_recurring_date, $scheduleLastSend = 0 ) {
 		if ( empty( $schedule ) || empty( $start_recurring_date ) ) {

@@ -3260,25 +3260,6 @@ EOT;
 	}
 	// phpcs:enable --!
 
-	public static function get_curl_ssl_version( $sslVersion ) {
-		switch ( $sslVersion ) {
-			case '1.x':
-				return 1;
-			case '2':
-				return 2;
-			case '3':
-				return 3;
-			case '1.0':
-				return 4;
-			case '1.1':
-				return 5;
-			case '1.2':
-				return 6;
-			default:
-				return 0;
-		}
-	}
-
 	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
 		$sorter = array();
 		$ret    = array();
@@ -3375,5 +3356,5 @@ EOT;
 			// phpcs:ignore -- for compatible.
 			return maybe_unserialize( base64_decode( $data ) );
 		}
-	}
+	}	
 }

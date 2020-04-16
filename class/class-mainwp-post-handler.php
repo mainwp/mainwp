@@ -209,7 +209,7 @@ class MainWP_Post_Handler {
 
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 
-		MainWP_Extensions::init_ajax_handlers();
+		MainWP_Extensions_Handler::init_ajax_handlers();
 
 		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) );
 	}
@@ -305,35 +305,35 @@ class MainWP_Post_Handler {
 	public function mainwp_plugin_activate() {
 		$this->secure_request( 'mainwp_plugin_activate' );
 
-		MainWP_Plugins::activate_plugins();
+		MainWP_Plugins_Handler::activate_plugins();
 		die();
 	}
 
 	public function mainwp_plugin_deactivate() {
 		$this->secure_request( 'mainwp_plugin_deactivate' );
 
-		MainWP_Plugins::deactivate_plugins();
+		MainWP_Plugins_Handler::deactivate_plugins();
 		die();
 	}
 
 	public function mainwp_plugin_delete() {
 		$this->secure_request( 'mainwp_plugin_delete' );
 
-		MainWP_Plugins::delete_plugins();
+		MainWP_Plugins_Handler::delete_plugins();
 		die();
 	}
 
 	public function mainwp_plugin_ignore_updates() {
 		$this->secure_request( 'mainwp_plugin_ignore_updates' );
 
-		MainWP_Plugins::ignore_updates();
+		MainWP_Plugins_Handler::ignore_updates();
 		die();
 	}
 
 	public function mainwp_trusted_plugin_notes_save() {
 		$this->secure_request( 'mainwp_trusted_plugin_notes_save' );
 
-		MainWP_Plugins::save_trusted_plugin_note();
+		MainWP_Plugins_Handler::save_trusted_plugin_note();
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
@@ -1135,33 +1135,33 @@ class MainWP_Post_Handler {
 	public function mainwp_addbackup() {
 		$this->secure_request( 'mainwp_addbackup' );
 
-		MainWP_Manage_Backups::add_backup();
+		MainWP_Manage_Backups_Handler::add_backup();
 	}
 
 	// Update task.
 	public function mainwp_updatebackup() {
 		$this->secure_request( 'mainwp_updatebackup' );
 
-		MainWP_Manage_Backups::update_backup();
+		MainWP_Manage_Backups_Handler::update_backup();
 	}
 
 	// Remove a task from MainWP.
 	public function mainwp_removebackup() {
 		$this->secure_request( 'mainwp_removebackup' );
 
-		MainWP_Manage_Backups::remove_backup();
+		MainWP_Manage_Backups_Handler::remove_backup();
 	}
 
 	public function mainwp_resumebackup() {
 		$this->secure_request( 'mainwp_resumebackup' );
 
-		MainWP_Manage_Backups::resume_backup();
+		MainWP_Manage_Backups_Handler::resume_backup();
 	}
 
 	public function mainwp_pausebackup() {
 		$this->secure_request( 'mainwp_pausebackup' );
 
-		MainWP_Manage_Backups::pause_backup();
+		MainWP_Manage_Backups_Handler::pause_backup();
 	}
 
 	public function mainwp_backuptask_get_sites() {
@@ -1169,7 +1169,7 @@ class MainWP_Post_Handler {
 
 		$taskID = $_POST['task_id'];
 
-		wp_send_json( array( 'result' => MainWP_Manage_Backups::get_backup_task_sites( $taskID ) ) );
+		wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
 	}
 
 	public function mainwp_backuptask_run_site() {
@@ -1180,7 +1180,7 @@ class MainWP_Post_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			wp_send_json( array( 'result' => MainWP_Manage_Backups::backup( $_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID'] ) ) );
+			wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::backup( $_POST['task_id'], $_POST['site_id'], $_POST['fileNameUID'] ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -1572,7 +1572,7 @@ class MainWP_Post_Handler {
 	public function mainwp_trust_plugin() {
 		$this->secure_request( 'mainwp_trust_plugin' );
 
-		MainWP_Plugins::trust_post();
+		MainWP_Plugins_Handler::trust_post();
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
@@ -1723,7 +1723,7 @@ class MainWP_Post_Handler {
 		if ( get_option( 'mainwp_automaticDailyUpdate' ) != 1 ) {
 			update_option( 'mainwp_automaticDailyUpdate', 1 );
 		}
-		MainWP_Plugins::trust_plugin( 'mainwp-child/mainwp-child.php' );
+		MainWP_Plugins_Handler::trust_plugin( 'mainwp-child/mainwp-child.php' );
 		die( 'ok' );
 	}
 

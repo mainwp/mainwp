@@ -1,0 +1,198 @@
+<?php
+namespace MainWP\Dashboard;
+
+/**
+ *  MainWP Plugins Handler
+ *
+ * @uses MainWP_Install_Bulk
+ */
+class MainWP_Plugins_Handler {
+
+	public static function get_class_name() {
+		return __CLASS__;
+	}
+
+	public static function plugins_search_handler( $data, $website, &$output ) {
+		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
+			$result  = $results[1];
+			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			unset( $results );
+			if ( isset( $plugins['error'] ) ) {
+				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $plugins['error'], $website->url ) );
+				return;
+			}
+
+			foreach ( $plugins as $plugin ) {
+				if ( ! isset( $plugin['name'] ) ) {
+					continue;
+				}
+				$plugin['websiteid']  = $website->id;
+				$plugin['websiteurl'] = $website->url;
+
+				$output->plugins[] = $plugin;
+			}
+			unset( $plugins );
+		} else {
+			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );
+		}
+	}
+
+	public static function activate_plugins() {
+		self::action( 'activate' );
+	}
+
+	public static function deactivate_plugins() {
+		self::action( 'deactivate' );
+	}
+
+	public static function delete_plugins() {
+		self::action( 'delete' );
+	}
+
+	public static function ignore_updates() {
+		$websiteIdEnc = $_POST['websiteId'];
+		$websiteId    = $websiteIdEnc;
+
+		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+		}
+
+		$plugins = $_POST['plugins'];
+		$names   = $_POST['names'];
+
+		$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
+
+		if ( ! is_array( $decodedIgnoredPlugins ) ) {
+			$decodedIgnoredPlugins = array();
+		}
+
+		if ( is_array( $plugins ) ) {
+			$_count = count( $plugins );
+			for ( $i = 0; $i < $_count; $i ++ ) {
+				$slug = $plugins[ $i ];
+				$name = $names[ $i ];
+				if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
+					$decodedIgnoredPlugins[ $slug ] = rawurlencode( $name );
+				}
+			}
+			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
+		}
+
+		die( wp_json_encode( array( 'result' => true ) ) );
+	}
+
+	public static function action( $pAction ) {
+		$websiteIdEnc = $_POST['websiteId'];
+		$websiteId    = $websiteIdEnc;
+
+		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+
+		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
+		}
+
+		try {
+			$plugin      = implode( '||', $_POST['plugins'] );
+			$plugin      = rawurlencode( $plugin );
+			$information = MainWP_Utility::fetch_url_authed(
+				$website,
+				'plugin_action',
+				array(
+					'action' => $pAction,
+					'plugin' => $plugin,
+				)
+			);
+		} catch ( MainWP_Exception $e ) {
+			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+		}
+
+		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
+			die( wp_json_encode( array( 'error' => __( 'Unexpected error. Please try again.', 'mainwp' ) ) ) );
+		}
+
+		die( wp_json_encode( array( 'result' => true ) ) );
+	}
+
+	public static function trust_post() {
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
+		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
+		if ( ! is_array( $trustedPlugins ) ) {
+			$trustedPlugins = array();
+		}
+		$action = $_POST['do'];
+		$slugs  = $_POST['slugs'];
+		if ( ! is_array( $slugs ) ) {
+			return;
+		}
+		if ( 'trust' !== $action && 'untrust' !== $action ) {
+			return;
+		}
+		if ( 'trust' === $action ) {
+			foreach ( $slugs as $slug ) {
+				$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
+				if ( false === $idx ) {
+					$trustedPlugins[] = rawurlencode( $slug );
+				}
+			}
+		} elseif ( 'untrust' === $action ) {
+			foreach ( $slugs as $slug ) {
+				if ( in_array( rawurlencode( $slug ), $trustedPlugins ) ) {
+					$trustedPlugins = array_diff( $trustedPlugins, array( rawurlencode( $slug ) ) );
+				}
+			}
+		}
+		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
+	}
+
+	public static function trust_plugin( $slug ) {
+		$userExtension  = MainWP_DB::instance()->get_user_extension();
+		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
+		if ( ! is_array( $trustedPlugins ) ) {
+			$trustedPlugins = array();
+		}
+		$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
+		if ( false === $idx ) {
+			$trustedPlugins[] = rawurlencode( $slug );
+		}
+		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
+	}
+
+	public static function check_auto_update_plugin( $slug ) {
+		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
+			return false;
+		}
+			$userExtension  = MainWP_DB::instance()->get_user_extension();
+			$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
+		if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {
+			return true;
+		}
+			return false;
+	}
+
+	public static function save_trusted_plugin_note() {
+		$slug                = rawurlencode( $_POST['slug'] );
+		$note                = stripslashes( $_POST['note'] );
+		$esc_note            = MainWP_Utility::esc_content( $note );
+		$userExtension       = MainWP_DB::instance()->get_user_extension();
+		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
+		if ( ! is_array( $trustedPluginsNotes ) ) {
+			$trustedPluginsNotes = array();
+		}
+		$trustedPluginsNotes[ $slug ]         = $esc_note;
+		$userExtension->trusted_plugins_notes = wp_json_encode( $trustedPluginsNotes );
+		MainWP_DB::instance()->update_user_extension( $userExtension );
+	}
+
+}

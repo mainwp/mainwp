@@ -30,7 +30,7 @@ class MainWP_API_Settings {
 	 */
 	public static function check_upgrade() {
 
-		$extensions = MainWP_Extensions::load_extensions();
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$output     = array();
 		if ( is_array( $extensions ) ) {
 			$check_exts = array();
@@ -99,7 +99,7 @@ class MainWP_API_Settings {
 	 */
 	public static function get_upgrade_information( $pSlug ) {
 
-		$extensions = MainWP_Extensions::load_extensions();
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$rslt       = null;
 		if ( is_array( $extensions ) ) {
 			foreach ( $extensions as $ext ) {
@@ -142,7 +142,7 @@ class MainWP_API_Settings {
 	 * @return array $rslt List of results.
 	 */
 	public static function get_plugin_information( $pSlug ) {
-		$extensions = MainWP_Extensions::load_extensions();
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$rslt       = null;
 		if ( is_array( $extensions ) ) {
 			foreach ( $extensions as $ext ) {

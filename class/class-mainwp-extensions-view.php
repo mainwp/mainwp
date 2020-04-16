@@ -137,7 +137,7 @@ class MainWP_Extensions_View {
 							}
 
 							$extensions_data = isset( $available_extensions_data[ dirname( $extension['slug'] ) ] ) ? $available_extensions_data[ dirname( $extension['slug'] ) ] : array();
-							$added_on_menu   = MainWP_Extensions::added_on_menu( $extension['slug'] );
+							$added_on_menu   = MainWP_Extensions_Handler::added_on_menu( $extension['slug'] );
 
 							if ( isset( $extensions_data['img'] ) ) {
 								$img_url = $extensions_data['img'];
@@ -268,7 +268,7 @@ class MainWP_Extensions_View {
 			$extension_page_url = admin_url( 'admin.php?page=Extensions' );
 		}
 
-		$active = MainWP_Extensions::is_extension_activated( $extension['slug'] );
+		$active = MainWP_Extensions_Handler::is_extension_activated( $extension['slug'] );
 
 		if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
 			if ( $active ) {
@@ -287,7 +287,7 @@ class MainWP_Extensions_View {
 				<div class="content">
 					<img class="right floated mini ui image" src="<?php echo esc_url( $img_url ); ?>">
 					<div class="header">
-						<a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions::polish_ext_name( $extension ) ); ?></a>
+						<a href="<?php echo esc_url( $extension_page_url ); ?>"><?php echo esc_html( MainWP_Extensions_Handler::polish_ext_name( $extension ) ); ?></a>
 					</div>
 					<div class="meta">
 						<?php echo esc_html__( 'Version ', 'mainwp' ) . $extension['version']; ?> - <?php echo ( isset( $extension['DocumentationURI'] ) && ! empty( $extension['DocumentationURI'] ) ) ? ' <a href="' . str_replace( array( 'http:', 'https:' ), '', $extension['DocumentationURI'] ) . '" target="_blank">' . __( 'Documentation', 'mainwp' ) . '</a>' : ''; ?>

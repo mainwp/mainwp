@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta charset="utf-8"/>
+    <title>MainWP Documentation</title>
+    <meta name="author" content=""/>
+    <meta name="description" content=""/>
+
+    <link href="../css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/prism.css" rel="stylesheet" media="all"/>
+    <link href="../css/template.css" rel="stylesheet" media="all"/>
+    
+    <!--[if lt IE 9]>
+    <script src="../js/html5.js"></script>
+    <![endif]-->
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ui/1.10.4/jquery-ui.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/jquery.smooth-scroll.js"></script>
+    <script src="../js/prism.min.js"></script>
+    <!-- TODO: Add http://jscrollpane.kelvinluck.com/ to style the scrollbars for browsers not using webkit-->
+    <script type="text/javascript">
+    function loadExternalCodeSnippets() {
+        Array.prototype.slice.call(document.querySelectorAll('pre[data-src]')).forEach(function (pre) {
+            var src = pre.getAttribute('data-src').replace( /\\/g, '/');
+            var extension = (src.match(/\.(\w+)$/) || [, ''])[1];
+            var language = 'php';
+
+            var code = document.createElement('code');
+            code.className = 'language-' + language;
+
+            pre.textContent = '';
+
+            code.textContent = 'Loading…';
+
+            pre.appendChild(code);
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', src, true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+
+                    if (xhr.status < 400 && xhr.responseText) {
+                        code.textContent = xhr.responseText;
+
+                        Prism.highlightElement(code);
+                    }
+                    else if (xhr.status >= 400) {
+                        code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
+                    }
+                    else {
+                        code.textContent = '✖ Error: File does not exist or is empty';
+                    }
+                }
+            };
+
+            xhr.send(null);
+        });
+    }
+
+    $(document).ready(function(){
+        loadExternalCodeSnippets();
+    });
+    $('#source-view').on('shown', function () {
+        loadExternalCodeSnippets();
+    })
+</script>
+
+    <link rel="shortcut icon" href="../images/favicon.ico"/>
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="../images/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="../images/apple-touch-icon-114x114.png"/>
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <i class="icon-ellipsis-vertical"></i>
+            </a>
+            <a class="brand" href="../index.html">MainWP Documentation</a>
+
+            <div class="nav-collapse">
+                <ul class="nav pull-right">
+                                        <li class="dropdown">
+                        <a href="../index.html" class="dropdown-toggle" data-toggle="dropdown">
+                            API Documentation <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                                                        <li><a href="../namespaces/MainWP.html">\MainWP</a></li>
+                                                    </ul>
+                    </li>
+                                        <li class="dropdown" id="charts-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Charts <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../graphs/class.html">
+                                    <i class="icon-list-alt"></i>&#160;Class hierarchy diagram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown" id="reports-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Reports <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../reports/errors.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Errors <span class="label label-info pull-right">2234</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/markers.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Markers <span class="label label-info pull-right">1</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/deprecated.html">
+                                                                                                                                                                                        <i class="icon-list-alt"></i>&#160;Deprecated <span class="label label-info pull-right">1</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--<div class="go_to_top">-->
+    <!--<a href="#___" style="color: inherit">Back to top&#160;&#160;<i class="icon-upload icon-white"></i></a>-->
+    <!--</div>-->
+</div>
+
+<div id="___" class="container-fluid">
+        <section class="row-fluid">
+        <div class="span2 sidebar">
+                                <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle " data-toggle="collapse" data-target="#namespace-1763191742"></a>
+                                <a href="../namespaces/default.html" style="margin-left: 30px; padding-left: 0">\</a>
+            </div>
+            <div id="namespace-1763191742" class="accordion-body collapse in">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-450547968"></a>
+                                <a href="../namespaces/MainWP.html" style="margin-left: 30px; padding-left: 0">MainWP</a>
+            </div>
+            <div id="namespace-450547968" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-866319424"></a>
+                                <a href="../namespaces/MainWP.Dashboard.html" style="margin-left: 30px; padding-left: 0">Dashboard</a>
+            </div>
+            <div id="namespace-866319424" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder.html">LiveReportResponder</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder_Activator.html">LiveReportResponder_Activator</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder_DB.html">LiveReportResponder_DB</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_About.html">MainWP_About</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager.html">MainWP_Api_Manager</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Key.html">MainWP_Api_Manager_Key</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Password_Management.html">MainWP_Api_Manager_Password_Management</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Plugin_Update.html">MainWP_Api_Manager_Plugin_Update</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_API_Settings.html">MainWP_API_Settings</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Backup_Tasks.html">MainWP_Backup_Tasks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Add.html">MainWP_Bulk_Add</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Post.html">MainWP_Bulk_Post</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Update_Admin_Passwords.html">MainWP_Bulk_Update_Admin_Passwords</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Cache.html">MainWP_Cache</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Child_Scan.html">MainWP_Child_Scan</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Connection_Status.html">MainWP_Connection_Status</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_DB.html">MainWP_DB</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Deprecated_Hooks.html">MainWP_Deprecated_Hooks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Error_Helper.html">MainWP_Error_Helper</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Exception.html">MainWP_Exception</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions.html">MainWP_Extensions</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions_Handler.html">MainWP_Extensions_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions_View.html">MainWP_Extensions_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Hooks.html">MainWP_Hooks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Install_Bulk.html">MainWP_Install_Bulk</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Live_Reports_Class.html">MainWP_Live_Reports_Class</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Live_Reports_Utility.html">MainWP_Live_Reports_Utility</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Logger.html">MainWP_Logger</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Backups.html">MainWP_Manage_Backups</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Backups_Handler.html">MainWP_Manage_Backups_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Groups.html">MainWP_Manage_Groups</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites.html">MainWP_Manage_Sites</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_Handler.html">MainWP_Manage_Sites_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_List_Table.html">MainWP_Manage_Sites_List_Table</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_View.html">MainWP_Manage_Sites_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Menu.html">MainWP_Menu</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Meta_Boxes.html">MainWP_Meta_Boxes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Notes.html">MainWP_Notes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Overview.html">MainWP_Overview</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Page.html">MainWP_Page</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins.html">MainWP_Plugins</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins_Handler.html">MainWP_Plugins_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins_Install_List_Table.html">MainWP_Plugins_Install_List_Table</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Post.html">MainWP_Post</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Post_Handler.html">MainWP_Post_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_File_Uploader.html">MainWP_QQ2_File_Uploader</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_Uploaded_File_Form.html">MainWP_QQ2_Uploaded_File_Form</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_Uploaded_File_Xhr.html">MainWP_QQ2_Uploaded_File_Xhr</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Recent_Pages.html">MainWP_Recent_Pages</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Recent_Posts.html">MainWP_Recent_Posts</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Security_Issues.html">MainWP_Security_Issues</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Security_Issues_Widget.html">MainWP_Security_Issues_Widget</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Server_Information.html">MainWP_Server_Information</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Server_Information_Handler.html">MainWP_Server_Information_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Settings.html">MainWP_Settings</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Setup_Wizard.html">MainWP_Setup_Wizard</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Site_Info.html">MainWP_Site_Info</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Site_Open.html">MainWP_Site_Open</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Sync.html">MainWP_Sync</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System.html">MainWP_System</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System_Cron_Jobs.html">MainWP_System_Cron_Jobs</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System_View.html">MainWP_System_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Themes.html">MainWP_Themes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Themes_Handler.html">MainWP_Themes_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Twitter.html">MainWP_Twitter</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_UI.html">MainWP_UI</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates.html">MainWP_Updates</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates_Handler.html">MainWP_Updates_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html">MainWP_Updates_Overview</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_User.html">MainWP_User</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Utility.html">MainWP_Utility</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Widget_Plugins.html">MainWP_Widget_Plugins</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Widget_Themes.html">MainWP_Widget_Themes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_WP_CLI_Command.html">MainWP_WP_CLI_Command</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </section>
+    <section class="row-fluid">
+        <div class="span10 offset2">
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <nav>
+                                                <a href="../namespaces/MainWP.Dashboard.html">\MainWP\Dashboard</a> <i class="icon-level-up"></i>
+                                            </nav>
+                    <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal"><i class="icon-code"></i></a>
+
+                    <h1><small>\MainWP\Dashboard</small>MainWP_System</h1>
+                    <p><em></em></p>
+                    
+                    
+                                        
+                    <section id="summary">
+                        <h2>Summary</h2>
+                        <section class="row-fluid heading">
+                            <section class="span4">
+                                <a href="#methods">Methods</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#properties">Properties</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#constants">Constants</a>
+                            </section>
+                        </section>
+                        <section class="row-fluid public">
+                            <section class="span4">
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_instance" class="">instance()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method___construct" class="">__construct()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_load_all_options" class="">load_all_options()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_filter_fetch_urls_authed" class="">filter_fetch_urls_authed()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_filter_fetch_url_authed" class="">filter_fetch_url_authed()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_parse_request" class="">parse_request()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_localization" class="">localization()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_activated_check" class="">activated_check()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_wp_mail_failed" class="">wp_mail_failed()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_get_version" class="">get_version()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_check_update_custom" class="">check_update_custom()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_map_rslt_obj" class="">map_rslt_obj()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_pre_check_update_custom" class="">pre_check_update_custom()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_check_info" class="">check_info()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_mainwp_cronupdatescheck_action" class="">mainwp_cronupdatescheck_action()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_sync_site_icon" class="">sync_site_icon()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_mainwp_cronpingchilds_action" class="">mainwp_cronpingchilds_action()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_mainwp_cronbackups_continue_action" class="">mainwp_cronbackups_continue_action()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_mainwp_cronbackups_action" class="">mainwp_cronbackups_action()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_mainwp_cronstats_action" class="">mainwp_cronstats_action()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_footer" class="">admin_footer()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_print_admin_styles" class="">print_admin_styles()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_is_mainwp_pages" class="">is_mainwp_pages()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_get_openssl_conf" class="">get_openssl_conf()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_init" class="">init()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_upload_file" class="">upload_file()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_readfile_chunked" class="">readfile_chunked()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_parse_init" class="">parse_init()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_login_form" class="">login_form()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_activate_redirect" class="">activate_redirect()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_activate_extention" class="">activate_extention()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_deactivate_extention" class="">deactivate_extention()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_init" class="">admin_init()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_redirects" class="">admin_redirects()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_handle_settings_post" class="">handle_settings_post()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_handle_mainwp_tools_settings" class="">handle_mainwp_tools_settings()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_handle_manage_sites_screen_settings" class="">handle_manage_sites_screen_settings()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_handle_edit_bulkpost" class="">handle_edit_bulkpost()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_redirect_edit_bulkpost" class="">redirect_edit_bulkpost()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_redirect_edit_bulkpage" class="">redirect_edit_bulkpage()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_save_bulkpost" class="">save_bulkpost()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_save_bulkpage" class="">save_bulkpage()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_create_post_type" class="">create_post_type()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_init_session" class="">init_session()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_enqueue_scripts" class="">admin_enqueue_scripts()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_enqueue_styles" class="">admin_enqueue_styles()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_admin_menu" class="">admin_menu()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_enqueue_postbox_scripts" class="">enqueue_postbox_scripts()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_update_footer" class="">update_footer()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_init_mainwp_menus" class="">init_mainwp_menus()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_activation" class="">activation()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_deactivation" class="">deactivation()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_update" class="">update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_apply_filter" class="">apply_filter()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_is_single_user" class="">is_single_user()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_is_multi_user" class="">is_multi_user()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_version" class="">$version</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_metaboxes" class="">$metaboxes</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_slug" class="">$slug</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No constants found</em>
+                                                            </section>
+                        </section>
+                        <section class="row-fluid protected">
+                            <section class="span4">
+                                                                    <em>No protected methods found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No protected properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                        <section class="row-fluid private">
+                            <section class="span4">
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#method_check_upgrade" class="">check_upgrade()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_instance" class="">$instance</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_upgradeVersionInfo" class="">$upgradeVersionInfo</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_current_version" class="">$current_version</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_System.html#property_plugin_slug" class="">$plugin_slug</a><br />
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                    </section>
+                </div>
+                <aside class="span4 detailsbar">
+                                        
+                    
+                    <dl>
+                        <dt>File</dt>
+                            <dd><a href="../files/class.class-mainwp-system.html"><div class="path-wrapper">class/class-mainwp-system.php</div></a></dd>
+                                                <dt>Package</dt>
+                            <dd><div class="namespace-wrapper">Default</div></dd>
+                                                <dt>Class hierarchy</dt>
+                            <dd class="hierarchy">
+                                                                                                                                                                    <div class="namespace-wrapper">\MainWP\Dashboard\MainWP_System</div>
+                            </dd>
+
+                        
+                        
+                        
+                                                
+                                                                        </dl>
+                    <h2>Tags</h2>
+                    <table class="table table-condensed">
+                                            <tr><td colspan="2"><em>None found</em></td></tr>
+                                        </table>
+                </aside>
+            </div>
+
+                        
+                                    <a id="properties" name="properties"></a>
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <h2>Properties</h2>
+                </div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_version" name="property_version" class="anchor"></a>
+            <article class="property">
+                <h3 class="public ">$version</h3>
+                <pre class="signature">$version : </pre>
+                <p><em></em></p>
+                
+
+                                <h4>Type</h4>
+                
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_metaboxes" name="property_metaboxes" class="anchor"></a>
+            <article class="property">
+                <h3 class="public ">$metaboxes</h3>
+                <pre class="signature">$metaboxes : </pre>
+                <p><em></em></p>
+                
+
+                                <h4>Type</h4>
+                
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_slug" name="property_slug" class="anchor"></a>
+            <article class="property">
+                <h3 class="public ">$slug</h3>
+                <pre class="signature">$slug : string</pre>
+                <p><em>Plugin name (plugin_file)</em></p>
+                
+
+                                <h4>Type</h4>
+                string
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_instance" name="property_instance" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$instance</h3>
+                <pre class="signature">$instance : </pre>
+                <p><em>Singleton.</em></p>
+                
+
+                                <h4>Type</h4>
+                
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_upgradeVersionInfo" name="property_upgradeVersionInfo" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$upgradeVersionInfo</h3>
+                <pre class="signature">$upgradeVersionInfo : </pre>
+                <p><em></em></p>
+                
+
+                                <h4>Type</h4>
+                
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_current_version" name="property_current_version" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$current_version</h3>
+                <pre class="signature">$current_version : string</pre>
+                <p><em>The plugin current version</em></p>
+                
+
+                                <h4>Type</h4>
+                string
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="property_plugin_slug" name="property_plugin_slug" class="anchor"></a>
+            <article class="property">
+                <h3 class="private ">$plugin_slug</h3>
+                <pre class="signature">$plugin_slug : string</pre>
+                <p><em>Plugin Slug (plugin_directory/plugin_file.php)</em></p>
+                
+
+                                <h4>Type</h4>
+                string
+                                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                        <dl>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                            
+                                    <a id="methods" name="methods"></a>
+            <div class="row-fluid">
+                <div class="span8 content class"><h2>Methods</h2></div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_instance" name="method_instance" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">instance()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">instance() : \MainWP\Dashboard\MainWP_System</pre>
+                <p><em></em></p>
+                
+
+                
+                
+                                    <h4>Returns</h4>
+                    <a href="../classes/MainWP.Dashboard.MainWP_System.html">\MainWP\Dashboard\MainWP_System</a>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr>
+                        <th>
+                            static
+                        </th>
+                        <td>
+                                                                                            
+                                                    </td>
+                    </tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method___construct" name="method___construct" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">__construct()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">__construct(  <span class="argument">$mainwp_plugin_file</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$mainwp_plugin_file </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_load_all_options" name="method_load_all_options" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">load_all_options()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">load_all_options() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_filter_fetch_urls_authed" name="method_filter_fetch_urls_authed" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">filter_fetch_urls_authed()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">filter_fetch_urls_authed(  <span class="argument">$pluginFile</span>,   <span class="argument">$key</span>,   <span class="argument">$dbwebsites</span>,   <span class="argument">$what</span>,   <span class="argument">$params</span>,   <span class="argument">$handle</span>,   <span class="argument">$output</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$pluginFile </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$key </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$dbwebsites </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$what </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$params </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$handle </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$output </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_filter_fetch_url_authed" name="method_filter_fetch_url_authed" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">filter_fetch_url_authed()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">filter_fetch_url_authed(  <span class="argument">$pluginFile</span>,   <span class="argument">$key</span>,   <span class="argument">$websiteId</span>,   <span class="argument">$what</span>,   <span class="argument">$params</span>,   <span class="argument">$raw_response = null</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$pluginFile </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$key </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$websiteId </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$what </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$params </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$raw_response </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_parse_request" name="method_parse_request" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">parse_request()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">parse_request() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_localization" name="method_localization" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">localization()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">localization() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_activated_check" name="method_activated_check" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">activated_check()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">activated_check() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_wp_mail_failed" name="method_wp_mail_failed" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">wp_mail_failed()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">wp_mail_failed(  <span class="argument">$error</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$error </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_get_version" name="method_get_version" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">get_version()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">get_version() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_check_update_custom" name="method_check_update_custom" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">check_update_custom()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">check_update_custom(  <span class="argument">$transient</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$transient </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_map_rslt_obj" name="method_map_rslt_obj" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">map_rslt_obj()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">map_rslt_obj(  <span class="argument">$pRslt</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$pRslt </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_pre_check_update_custom" name="method_pre_check_update_custom" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">pre_check_update_custom()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">pre_check_update_custom(  <span class="argument">$transient</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$transient </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_check_info" name="method_check_info" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">check_info()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">check_info(  <span class="argument">$false</span>,   <span class="argument">$action</span>,   <span class="argument">$arg</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$false </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$action </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$arg </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_mainwp_cronupdatescheck_action" name="method_mainwp_cronupdatescheck_action" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">mainwp_cronupdatescheck_action()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">mainwp_cronupdatescheck_action() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_sync_site_icon" name="method_sync_site_icon" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">sync_site_icon()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">sync_site_icon(  <span class="argument">$siteId = null</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$siteId </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_mainwp_cronpingchilds_action" name="method_mainwp_cronpingchilds_action" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">mainwp_cronpingchilds_action()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">mainwp_cronpingchilds_action() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_mainwp_cronbackups_continue_action" name="method_mainwp_cronbackups_continue_action" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">mainwp_cronbackups_continue_action()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">mainwp_cronbackups_continue_action() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_mainwp_cronbackups_action" name="method_mainwp_cronbackups_action" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">mainwp_cronbackups_action()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">mainwp_cronbackups_action() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_mainwp_cronstats_action" name="method_mainwp_cronstats_action" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">mainwp_cronstats_action()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">mainwp_cronstats_action() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_footer" name="method_admin_footer" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_footer()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_footer() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_print_admin_styles" name="method_print_admin_styles" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">print_admin_styles()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">print_admin_styles(  <span class="argument">$value = true</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$value </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_is_mainwp_pages" name="method_is_mainwp_pages" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">is_mainwp_pages()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">is_mainwp_pages() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_get_openssl_conf" name="method_get_openssl_conf" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">get_openssl_conf()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">get_openssl_conf() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_init" name="method_init" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">init()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">init() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_upload_file" name="method_upload_file" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">upload_file()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">upload_file(  <span class="argument">$file</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$file </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_readfile_chunked" name="method_readfile_chunked" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">readfile_chunked()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">readfile_chunked(  <span class="argument">$filename</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$filename </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_parse_init" name="method_parse_init" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">parse_init()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">parse_init() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_login_form" name="method_login_form" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">login_form()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">login_form() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_activate_redirect" name="method_activate_redirect" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">activate_redirect()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">activate_redirect(  <span class="argument">$location</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$location </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_activate_extention" name="method_activate_extention" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">activate_extention()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">activate_extention(  <span class="argument">$ext_key</span>,   <span class="argument">$info = array()</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$ext_key </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$info </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deactivate_extention" name="method_deactivate_extention" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deactivate_extention()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deactivate_extention(  <span class="argument">$ext_key</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$ext_key </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_init" name="method_admin_init" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_init()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_init() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_redirects" name="method_admin_redirects" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_redirects()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_redirects() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_handle_settings_post" name="method_handle_settings_post" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">handle_settings_post()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">handle_settings_post() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_handle_mainwp_tools_settings" name="method_handle_mainwp_tools_settings" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">handle_mainwp_tools_settings()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">handle_mainwp_tools_settings() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_handle_manage_sites_screen_settings" name="method_handle_manage_sites_screen_settings" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">handle_manage_sites_screen_settings()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">handle_manage_sites_screen_settings() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_handle_edit_bulkpost" name="method_handle_edit_bulkpost" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">handle_edit_bulkpost()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">handle_edit_bulkpost() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_redirect_edit_bulkpost" name="method_redirect_edit_bulkpost" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">redirect_edit_bulkpost()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">redirect_edit_bulkpost(  <span class="argument">$location</span>,   <span class="argument">$post_id</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$location </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$post_id </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_redirect_edit_bulkpage" name="method_redirect_edit_bulkpage" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">redirect_edit_bulkpage()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">redirect_edit_bulkpage(  <span class="argument">$location</span>,   <span class="argument">$post_id</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$location </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$post_id </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_save_bulkpost" name="method_save_bulkpost" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">save_bulkpost()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">save_bulkpost(  <span class="argument">$post_id</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$post_id </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_save_bulkpage" name="method_save_bulkpage" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">save_bulkpage()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">save_bulkpage(  <span class="argument">$post_id</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$post_id </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_create_post_type" name="method_create_post_type" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">create_post_type()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">create_post_type() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_init_session" name="method_init_session" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">init_session()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">init_session() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_enqueue_scripts" name="method_admin_enqueue_scripts" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_enqueue_scripts()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_enqueue_scripts(  <span class="argument">$hook</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$hook </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_enqueue_styles" name="method_admin_enqueue_styles" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_enqueue_styles()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_enqueue_styles(  <span class="argument">$hook</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$hook </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_admin_menu" name="method_admin_menu" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">admin_menu()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">admin_menu() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_enqueue_postbox_scripts" name="method_enqueue_postbox_scripts" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">enqueue_postbox_scripts()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">enqueue_postbox_scripts() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_update_footer" name="method_update_footer" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">update_footer()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">update_footer(  <span class="argument">$echo = false</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$echo </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_init_mainwp_menus" name="method_init_mainwp_menus" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">init_mainwp_menus()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">init_mainwp_menus() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_activation" name="method_activation" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">activation()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">activation() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_deactivation" name="method_deactivation" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">deactivation()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">deactivation() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_update" name="method_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">update() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_apply_filter" name="method_apply_filter" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">apply_filter()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">apply_filter(  <span class="argument">$filter</span>,   <span class="argument">$value = array()</span>) </pre>
+                <p><em></em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$filter </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$value </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_is_single_user" name="method_is_single_user" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">is_single_user()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">is_single_user() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_is_multi_user" name="method_is_multi_user" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">is_multi_user()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">is_multi_user() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_check_upgrade" name="method_check_upgrade" class="anchor"></a>
+            <article class="method">
+                <h3 class="private ">check_upgrade()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">check_upgrade() </pre>
+                <p><em></em></p>
+                
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_System.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_System</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    </div>
+    </section>
+
+    <div id="source-view" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="source-view-label" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="source-view-label">class-mainwp-system.php</h3>
+        </div>
+        <div class="modal-body">
+            <pre data-src="../files/class/class-mainwp-system.php.txt" class="language-php line-numbers"></pre>
+        </div>
+    </div>
+
+    <footer class="row-fluid">
+        <section class="span10 offset2">
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <section class="row-fluid footer-sections">
+                        <section class="span4">
+                                                        <h1><i class="icon-code"></i></h1>
+                            <div>
+                                <ul>
+                                                                            <li><a href="../namespaces/MainWP.html">\MainWP</a></li>
+                                                                    </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-bar-chart"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../graphs/class.html">Class Hierarchy Diagram</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-pushpin"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../reports/errors.html">Errors</a></li>
+                                    <li><a href="../reports/markers.html">Markers</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <hr />
+                    Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor </a> and authored
+                    on April 16th, 2020 at 21:27.
+                </section>
+            </section>
+        </section>
+    </footer>
+</div>
+
+</body>
+</html>

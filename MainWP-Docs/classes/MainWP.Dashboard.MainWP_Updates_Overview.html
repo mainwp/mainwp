@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta charset="utf-8"/>
+    <title>MainWP Documentation</title>
+    <meta name="author" content=""/>
+    <meta name="description" content=""/>
+
+    <link href="../css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/prism.css" rel="stylesheet" media="all"/>
+    <link href="../css/template.css" rel="stylesheet" media="all"/>
+    
+    <!--[if lt IE 9]>
+    <script src="../js/html5.js"></script>
+    <![endif]-->
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ui/1.10.4/jquery-ui.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/jquery.smooth-scroll.js"></script>
+    <script src="../js/prism.min.js"></script>
+    <!-- TODO: Add http://jscrollpane.kelvinluck.com/ to style the scrollbars for browsers not using webkit-->
+    <script type="text/javascript">
+    function loadExternalCodeSnippets() {
+        Array.prototype.slice.call(document.querySelectorAll('pre[data-src]')).forEach(function (pre) {
+            var src = pre.getAttribute('data-src').replace( /\\/g, '/');
+            var extension = (src.match(/\.(\w+)$/) || [, ''])[1];
+            var language = 'php';
+
+            var code = document.createElement('code');
+            code.className = 'language-' + language;
+
+            pre.textContent = '';
+
+            code.textContent = 'Loading…';
+
+            pre.appendChild(code);
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', src, true);
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4) {
+
+                    if (xhr.status < 400 && xhr.responseText) {
+                        code.textContent = xhr.responseText;
+
+                        Prism.highlightElement(code);
+                    }
+                    else if (xhr.status >= 400) {
+                        code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
+                    }
+                    else {
+                        code.textContent = '✖ Error: File does not exist or is empty';
+                    }
+                }
+            };
+
+            xhr.send(null);
+        });
+    }
+
+    $(document).ready(function(){
+        loadExternalCodeSnippets();
+    });
+    $('#source-view').on('shown', function () {
+        loadExternalCodeSnippets();
+    })
+</script>
+
+    <link rel="shortcut icon" href="../images/favicon.ico"/>
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" sizes="72x72" href="../images/apple-touch-icon-72x72.png"/>
+    <link rel="apple-touch-icon" sizes="114x114" href="../images/apple-touch-icon-114x114.png"/>
+</head>
+<body>
+
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <i class="icon-ellipsis-vertical"></i>
+            </a>
+            <a class="brand" href="../index.html">MainWP Documentation</a>
+
+            <div class="nav-collapse">
+                <ul class="nav pull-right">
+                                        <li class="dropdown">
+                        <a href="../index.html" class="dropdown-toggle" data-toggle="dropdown">
+                            API Documentation <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                                                        <li><a href="../namespaces/MainWP.html">\MainWP</a></li>
+                                                    </ul>
+                    </li>
+                                        <li class="dropdown" id="charts-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Charts <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../graphs/class.html">
+                                    <i class="icon-list-alt"></i>&#160;Class hierarchy diagram
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="dropdown" id="reports-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            Reports <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="../reports/errors.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Errors <span class="label label-info pull-right">2234</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/markers.html">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="icon-list-alt"></i>&#160;Markers <span class="label label-info pull-right">1</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="../reports/deprecated.html">
+                                                                                                                                                                                        <i class="icon-list-alt"></i>&#160;Deprecated <span class="label label-info pull-right">1</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!--<div class="go_to_top">-->
+    <!--<a href="#___" style="color: inherit">Back to top&#160;&#160;<i class="icon-upload icon-white"></i></a>-->
+    <!--</div>-->
+</div>
+
+<div id="___" class="container-fluid">
+        <section class="row-fluid">
+        <div class="span2 sidebar">
+                                <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle " data-toggle="collapse" data-target="#namespace-459631309"></a>
+                                <a href="../namespaces/default.html" style="margin-left: 30px; padding-left: 0">\</a>
+            </div>
+            <div id="namespace-459631309" class="accordion-body collapse in">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-612768759"></a>
+                                <a href="../namespaces/MainWP.html" style="margin-left: 30px; padding-left: 0">MainWP</a>
+            </div>
+            <div id="namespace-612768759" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                                                    <div class="accordion" style="margin-bottom: 0">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#namespace-1909070295"></a>
+                                <a href="../namespaces/MainWP.Dashboard.html" style="margin-left: 30px; padding-left: 0">Dashboard</a>
+            </div>
+            <div id="namespace-1909070295" class="accordion-body collapse ">
+                <div class="accordion-inner">
+
+                    
+                    <ul>
+                                                                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder.html">LiveReportResponder</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder_Activator.html">LiveReportResponder_Activator</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.LiveReportResponder_DB.html">LiveReportResponder_DB</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_About.html">MainWP_About</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager.html">MainWP_Api_Manager</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Key.html">MainWP_Api_Manager_Key</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Password_Management.html">MainWP_Api_Manager_Password_Management</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Api_Manager_Plugin_Update.html">MainWP_Api_Manager_Plugin_Update</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_API_Settings.html">MainWP_API_Settings</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Backup_Tasks.html">MainWP_Backup_Tasks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Add.html">MainWP_Bulk_Add</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Post.html">MainWP_Bulk_Post</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Bulk_Update_Admin_Passwords.html">MainWP_Bulk_Update_Admin_Passwords</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Cache.html">MainWP_Cache</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Child_Scan.html">MainWP_Child_Scan</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Connection_Status.html">MainWP_Connection_Status</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_DB.html">MainWP_DB</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Deprecated_Hooks.html">MainWP_Deprecated_Hooks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Error_Helper.html">MainWP_Error_Helper</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Exception.html">MainWP_Exception</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions.html">MainWP_Extensions</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions_Handler.html">MainWP_Extensions_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Extensions_View.html">MainWP_Extensions_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Hooks.html">MainWP_Hooks</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Install_Bulk.html">MainWP_Install_Bulk</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Live_Reports_Class.html">MainWP_Live_Reports_Class</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Live_Reports_Utility.html">MainWP_Live_Reports_Utility</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Logger.html">MainWP_Logger</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Backups.html">MainWP_Manage_Backups</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Backups_Handler.html">MainWP_Manage_Backups_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Groups.html">MainWP_Manage_Groups</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites.html">MainWP_Manage_Sites</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_Handler.html">MainWP_Manage_Sites_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_List_Table.html">MainWP_Manage_Sites_List_Table</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Manage_Sites_View.html">MainWP_Manage_Sites_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Menu.html">MainWP_Menu</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Meta_Boxes.html">MainWP_Meta_Boxes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Notes.html">MainWP_Notes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Overview.html">MainWP_Overview</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Page.html">MainWP_Page</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins.html">MainWP_Plugins</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins_Handler.html">MainWP_Plugins_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Plugins_Install_List_Table.html">MainWP_Plugins_Install_List_Table</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Post.html">MainWP_Post</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Post_Handler.html">MainWP_Post_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_File_Uploader.html">MainWP_QQ2_File_Uploader</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_Uploaded_File_Form.html">MainWP_QQ2_Uploaded_File_Form</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_QQ2_Uploaded_File_Xhr.html">MainWP_QQ2_Uploaded_File_Xhr</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Recent_Pages.html">MainWP_Recent_Pages</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Recent_Posts.html">MainWP_Recent_Posts</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Security_Issues.html">MainWP_Security_Issues</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Security_Issues_Widget.html">MainWP_Security_Issues_Widget</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Server_Information.html">MainWP_Server_Information</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Server_Information_Handler.html">MainWP_Server_Information_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Settings.html">MainWP_Settings</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Setup_Wizard.html">MainWP_Setup_Wizard</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Site_Info.html">MainWP_Site_Info</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Site_Open.html">MainWP_Site_Open</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Sync.html">MainWP_Sync</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System.html">MainWP_System</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System_Cron_Jobs.html">MainWP_System_Cron_Jobs</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_System_View.html">MainWP_System_View</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Themes.html">MainWP_Themes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Themes_Handler.html">MainWP_Themes_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Twitter.html">MainWP_Twitter</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_UI.html">MainWP_UI</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates.html">MainWP_Updates</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates_Handler.html">MainWP_Updates_Handler</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html">MainWP_Updates_Overview</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_User.html">MainWP_User</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Utility.html">MainWP_Utility</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Widget_Plugins.html">MainWP_Widget_Plugins</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_Widget_Themes.html">MainWP_Widget_Themes</a></li>
+                                                    <li class="class"><a href="../classes/MainWP.Dashboard.MainWP_WP_CLI_Command.html">MainWP_WP_CLI_Command</a></li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                    
+                    <ul>
+                                                                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </section>
+    <section class="row-fluid">
+        <div class="span10 offset2">
+            <div class="row-fluid">
+                <div class="span8 content class">
+                    <nav>
+                                                <a href="../namespaces/MainWP.Dashboard.html">\MainWP\Dashboard</a> <i class="icon-level-up"></i>
+                                            </nav>
+                    <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal"><i class="icon-code"></i></a>
+
+                    <h1><small>\MainWP\Dashboard</small>MainWP_Updates_Overview</h1>
+                    <p><em>MainWP Updates Overview</em></p>
+                    
+                    
+                                        
+                    <section id="summary">
+                        <h2>Summary</h2>
+                        <section class="row-fluid heading">
+                            <section class="span4">
+                                <a href="#methods">Methods</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#properties">Properties</a>
+                            </section>
+                            <section class="span4">
+                                <a href="#constants">Constants</a>
+                            </section>
+                        </section>
+                        <section class="row-fluid public">
+                            <section class="span4">
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_get_class_name" class="">get_class_name()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_init" class="">init()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_plugins_api" class="">plugins_api()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_get_name" class="">get_name()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render" class="">render()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_last_update" class="">render_last_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_sync_site" class="">sync_site()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_sites" class="">render_sites()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_total_update" class="">render_total_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_wordpress_update" class="">render_wordpress_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_plugins_update" class="">render_plugins_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_themes_update" class="">render_themes_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_language_update" class="">render_language_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_abandoned_plugins" class="">render_abandoned_plugins()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_abandoned_themes" class="">render_abandoned_themes()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_global_update" class="">render_global_update()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_render_bottom" class="">render_bottom()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_dismiss_sync_errors" class="">dismiss_sync_errors()</a><br />
+                                                                    <a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html#method_check_backups" class="">check_backups()</a><br />
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No public properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No constants found</em>
+                                                            </section>
+                        </section>
+                        <section class="row-fluid protected">
+                            <section class="span4">
+                                                                    <em>No protected methods found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No protected properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                        <section class="row-fluid private">
+                            <section class="span4">
+                                                                    <em>No private methods found</em>
+                                                            </section>
+                            <section class="span4">
+                                                                    <em>No private properties found</em>
+                                                            </section>
+                            <section class="span4">
+                                <em>N/A</em>
+                            </section>
+                        </section>
+                    </section>
+                </div>
+                <aside class="span4 detailsbar">
+                                        
+                    
+                    <dl>
+                        <dt>File</dt>
+                            <dd><a href="../files/widgets.widget-mainwp-updates-overview.html"><div class="path-wrapper">widgets/widget-mainwp-updates-overview.php</div></a></dd>
+                                                <dt>Package</dt>
+                            <dd><div class="namespace-wrapper">MainWP/Updates_Overview</div></dd>
+                                                <dt>Class hierarchy</dt>
+                            <dd class="hierarchy">
+                                                                                                                                                                    <div class="namespace-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div>
+                            </dd>
+
+                        
+                        
+                        
+                                                
+                                                                        </dl>
+                    <h2>Tags</h2>
+                    <table class="table table-condensed">
+                                            <tr><td colspan="2"><em>None found</em></td></tr>
+                                        </table>
+                </aside>
+            </div>
+
+                        
+                        
+                                    <a id="methods" name="methods"></a>
+            <div class="row-fluid">
+                <div class="span8 content class"><h2>Methods</h2></div>
+                <aside class="span4 detailsbar"></aside>
+            </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_get_class_name" name="method_get_class_name" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">get_class_name()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">get_class_name() : string</pre>
+                <p><em>Method get_class_name()</em></p>
+                <p>Get Class Name</p>
+
+                
+                
+                                    <h4>Returns</h4>
+                    string
+                                            &mdash; <p><strong>CLASS</strong> Class Name.</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_init" name="method_init" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">init()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">init() </pre>
+                <p><em>Method init()</em></p>
+                <p>Add plugins api filter.</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_plugins_api" name="method_plugins_api" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">plugins_api()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">plugins_api(mixed  <span class="argument">$default</span>, mixed  <span class="argument">$action</span>, mixed  <span class="argument">$args</span>) : mixed</pre>
+                <p><em>Method plugins_api()</em></p>
+                <p>Grab Child Sites update status &amp; build widget.</p>
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$default </td>
+                                <td><p>Default.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$action </td>
+                                <td><p>Action.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$args </td>
+                                <td><p>Slug.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    mixed
+                                            &mdash; <p>$default|$res</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_get_name" name="method_get_name" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">get_name()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">get_name() </pre>
+                <p><em>Method get_name()</em></p>
+                <p>Define Widget Title.</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render" name="method_render" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render() </pre>
+                <p><em>Method render()</em></p>
+                <p>Check if $_GET['dashboard'] then run render_sites().</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_last_update" name="method_render_last_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_last_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_last_update() </pre>
+                <p><em>Method render_last_update()</em></p>
+                <p>Check when the Child Site was last synced.</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_sync_site" name="method_sync_site" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">sync_site()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">sync_site() </pre>
+                <p><em>Method sync_site()</em></p>
+                <p>Sync Child Site.</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_sites" name="method_render_sites" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_sites()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_sites() </pre>
+                <p><em>Method render_sites()</em></p>
+                <p>Grab available Child Sites updates a build Widget.</p>
+
+                
+                
+                
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_total_update" name="method_render_total_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_total_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_total_update(integer  <span class="argument">$total_upgrades</span>, string  <span class="argument">$lastSyncMsg</span>,   <span class="argument">$can_total_update</span>, integer  <span class="argument">$limit_updates_all</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render total update.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_upgrades </td>
+                                <td><p>number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$lastSyncMsg </td>
+                                <td><p>last sync info.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$can_total_update </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$limit_updates_all </td>
+                                <td><p>limit number of update per request, 0 is no limit.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_wordpress_update" name="method_render_wordpress_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_wordpress_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_wordpress_update(  <span class="argument">$user_can_update_wordpress</span>, integer  <span class="argument">$total_wp_upgrades</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>, string  <span class="argument">$continue_update</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render WordPress update detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_wordpress </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_wp_upgrades </td>
+                                <td><p>total number of WordPress update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$continue_update </td>
+                                <td><p>string of continue update.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_plugins_update" name="method_render_plugins_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_plugins_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_plugins_update(  <span class="argument">$user_can_update_plugins</span>, integer  <span class="argument">$total_plugin_upgrades</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>, string  <span class="argument">$continue_update</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render Plugins update detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_plugins </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_plugin_upgrades </td>
+                                <td><p>total number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$continue_update </td>
+                                <td><p>string of continue update.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_themes_update" name="method_render_themes_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_themes_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_themes_update(  <span class="argument">$user_can_update_themes</span>, integer  <span class="argument">$total_theme_upgrades</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>, string  <span class="argument">$continue_update</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render Themes update detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_themes </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_theme_upgrades </td>
+                                <td><p>total number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$continue_update </td>
+                                <td><p>string of continue update.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_language_update" name="method_render_language_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_language_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_language_update(  <span class="argument">$user_can_update_translation</span>, integer  <span class="argument">$total_translation_upgrades</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>, string  <span class="argument">$continue_update</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render language update detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_translation </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_translation_upgrades </td>
+                                <td><p>total number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>string</td>
+                                <td>$continue_update </td>
+                                <td><p>string of continue update.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_abandoned_plugins" name="method_render_abandoned_plugins" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_abandoned_plugins()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_abandoned_plugins(integer  <span class="argument">$total_plugins_outdate</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render abandoned plugins detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_plugins_outdate </td>
+                                <td><p>total number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_abandoned_themes" name="method_render_abandoned_themes" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_abandoned_themes()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_abandoned_themes(integer  <span class="argument">$total_themes_outdate</span>,   <span class="argument">$globalView</span>, integer  <span class="argument">$current_wpid</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render abandoned themes detail.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_themes_outdate </td>
+                                <td><p>total number of update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$current_wpid </td>
+                                <td><p>current site id.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_global_update" name="method_render_global_update" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_global_update()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_global_update(  <span class="argument">$user_can_update_wordpress</span>, integer  <span class="argument">$total_wp_upgrades</span>, mixed  <span class="argument">$all_wp_updates</span>,   <span class="argument">$user_can_update_plugins</span>, integer  <span class="argument">$total_plugin_upgrades</span>, mixed  <span class="argument">$all_plugins_updates</span>,   <span class="argument">$user_can_update_themes</span>, integer  <span class="argument">$total_theme_upgrades</span>, mixed  <span class="argument">$all_themes_updates</span>, mixed  <span class="argument">$mainwp_show_language_updates</span>,   <span class="argument">$user_can_update_translation</span>, integer  <span class="argument">$total_translation_upgrades</span>, mixed  <span class="argument">$all_translations_updates</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render to support global update.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_wordpress </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_wp_upgrades </td>
+                                <td><p>total WordPress update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$all_wp_updates </td>
+                                <td><p>all WordPress update list.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_plugins </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_plugin_upgrades </td>
+                                <td><p>total WordPress update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$all_plugins_updates </td>
+                                <td><p>all WordPress update list.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_themes </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_theme_upgrades </td>
+                                <td><p>total themes update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$all_themes_updates </td>
+                                <td><p>all themes update list.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$mainwp_show_language_updates </td>
+                                <td><p>MainWP Language Updates.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$user_can_update_translation </td>
+                                <td></td>
+                            </tr>
+                                                    <tr>
+                                <td>integer</td>
+                                <td>$total_translation_upgrades </td>
+                                <td><p>total WordPress update.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$all_translations_updates </td>
+                                <td><p>all transations update list.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_render_bottom" name="method_render_bottom" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">render_bottom()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">render_bottom(mixed  <span class="argument">$websites</span>,   <span class="argument">$globalView</span>) : \MainWP\Dashboard\echo</pre>
+                <p><em>Render bottom of widget.</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>mixed</td>
+                                <td>$websites </td>
+                                <td><p>all sites.</p></td>
+                            </tr>
+                                                    <tr>
+                                <td></td>
+                                <td>$globalView </td>
+                                <td></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    \MainWP\Dashboard\echo
+                                            &mdash; <p>html</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_dismiss_sync_errors" name="method_dismiss_sync_errors" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">dismiss_sync_errors()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">dismiss_sync_errors(boolean  <span class="argument">$dismiss = true</span>) : boolean</pre>
+                <p><em>Method dismiss_sync_errors()</em></p>
+                
+
+                                    <h4>Parameters</h4>
+                    <table class="table table-condensed table-hover">
+                                                    <tr>
+                                <td>boolean</td>
+                                <td>$dismiss </td>
+                                <td><p>true|false.</p></td>
+                            </tr>
+                                            </table>
+                
+                
+                                    <h4>Returns</h4>
+                    boolean
+                                            &mdash; <p>true</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                    <div class="row-fluid">
+        <div class="span8 content class">
+            <a id="method_check_backups" name="method_check_backups" class="anchor"></a>
+            <article class="method">
+                <h3 class="public ">check_backups()</h3>
+                <a href="#source-view" role="button" class="pull-right btn" data-toggle="modal" style="font-size: 1.1em; padding: 9px 14px"><i class="icon-code"></i></a>
+                <pre class="signature" style="margin-right: 54px;">check_backups() : mixed</pre>
+                <p><em>Method checkbackups()</em></p>
+                <p>Check if Child Site needs to be backed up before updates.</p>
+
+                
+                
+                                    <h4>Returns</h4>
+                    mixed
+                                            &mdash; <p>$output</p>
+                                    
+                            </article>
+        </div>
+        <aside class="span4 detailsbar">
+            <h1><i class="icon-arrow-down"></i></h1>
+                            <span class="label label-info">static</span>
+                                                            <dl>
+                                                    <dt>Inherited from</dt>
+                    <dd><a href="../classes/MainWP.Dashboard.MainWP_Updates_Overview.html"><div class="path-wrapper">\MainWP\Dashboard\MainWP_Updates_Overview</div></a></dd>
+                                                            </dl>
+            <h2>Tags</h2>
+            <table class="table table-condensed">
+                                    <tr><td colspan="2"><em>None found</em></td></tr>
+                            </table>
+        </aside>
+    </div>
+
+                                                                    </div>
+    </section>
+
+    <div id="source-view" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="source-view-label" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="source-view-label">widget-mainwp-updates-overview.php</h3>
+        </div>
+        <div class="modal-body">
+            <pre data-src="../files/widgets/widget-mainwp-updates-overview.php.txt" class="language-php line-numbers"></pre>
+        </div>
+    </div>
+
+    <footer class="row-fluid">
+        <section class="span10 offset2">
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <section class="row-fluid footer-sections">
+                        <section class="span4">
+                                                        <h1><i class="icon-code"></i></h1>
+                            <div>
+                                <ul>
+                                                                            <li><a href="../namespaces/MainWP.html">\MainWP</a></li>
+                                                                    </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-bar-chart"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../graphs/class.html">Class Hierarchy Diagram</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                        <section class="span4">
+                                                        <h1><i class="icon-pushpin"></i></h1>
+                            <div>
+                                <ul>
+                                    <li><a href="../reports/errors.html">Errors</a></li>
+                                    <li><a href="../reports/markers.html">Markers</a></li>
+                                </ul>
+                            </div>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="row-fluid">
+                <section class="span10 offset1">
+                    <hr />
+                    Documentation is powered by <a href="http://www.phpdoc.org/">phpDocumentor </a> and authored
+                    on April 16th, 2020 at 21:27.
+                </section>
+            </section>
+        </section>
+    </footer>
+</div>
+
+</body>
+</html>

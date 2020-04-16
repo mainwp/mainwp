@@ -349,7 +349,13 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** Render MainWP Review Request. */
+	/**
+	 * Render MainWP Review Request.
+	 * 
+	 * @param boolean $current_options false|true Weather or not to display request.
+	 * 
+	 * @return self
+	 */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;
 		$display_request2 = false;
@@ -596,6 +602,13 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/**
+	 * MainWP Admin body CSS class attributes.
+	 * 
+	 * @param mixed $class_string MainWP CSS Class attributes.
+	 * 
+	 * @return string $class_string The CSS attributes to add to the page.
+	 */
 	public function admin_body_class( $class_string ) {
 		if ( MainWP_System::is_mainwp_pages() ) {
 			$class_string .= ' mainwp-ui mainwp-ui-page ';
@@ -604,7 +617,13 @@ class MainWP_System_View {
 		return $class_string;
 	}
 
-	/** Render footer content. */
+	/**
+	 * Render footer content.
+	 * 
+	 * @param mixed $websites List of Child Sites. 
+	 * 
+	 * @return html MainWP footer.
+	 */
 	public static function render_footer_content( $websites ) {
 
 		$cntr = 0;

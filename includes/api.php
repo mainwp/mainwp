@@ -84,7 +84,7 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 function check_if_valid_client( $email, $siteid ) {
 	$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 	$result          = array();
-	if ( $checkPermission ) {		
+	if ( $checkPermission ) {
 		global $wpdb;
 
 		$get_site_url = $wpdb->get_row( $wpdb->prepare( "SELECT `url` FROM {$wpdb->prefix}mainwp_wp WHERE id=%d", $siteid ) );
@@ -104,7 +104,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
-		if ( $checkPermission ) {			
+		if ( $checkPermission ) {
 			$report                     = new \stdClass();
 			$report->title              = 'Live Reports';
 			$report->date_from          = strtotime( gmdate( 'Y-m-01' ) );
@@ -167,7 +167,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
 	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
-		if ( $checkPermission ) {			
+		if ( $checkPermission ) {
 			$checkifvalidclient = check_if_valid_client( $_POST['email'], $_POST['siteid'] );
 			$allAccess          = isset( $_POST['allAccess'] ) ? $_POST['allAccess'] : false;
 			if ( ( isset( $checkifvalidclient['result'] ) && 'success' == $checkifvalidclient['result'] ) || $allAccess ) {
@@ -243,7 +243,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 	if ( $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
-			
+
 			global $wpdb;
 			$result       = array();
 			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, $_POST['email'] ) );
@@ -295,7 +295,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 	if ( true === $secureconnection ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
-			
+
 			global $wpdb;
 			$result       = array();
 			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d ORDER BY `id` DESC", 12 ) );

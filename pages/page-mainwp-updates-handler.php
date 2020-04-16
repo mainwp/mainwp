@@ -442,8 +442,8 @@ class MainWP_Updates_Handler {
 
 		return implode( ',', $slugs );
 	}
-	
-	
+
+
 	/**
 	 * Method activated_primary_backup_plugin()
 	 *

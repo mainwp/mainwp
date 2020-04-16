@@ -16,7 +16,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
 		add_filter( 'mainwp_getwpfilesystem', array( MainWP_Utility::get_class_name(), 'get_wp_file_system' ) );
 		add_filter( 'mainwp_getspecificurl', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_url' ), 10, 1 );
-		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );		
+		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
 		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 		add_action( 'mainwp_renderImage', array( MainWP_UI::get_class_name(), 'render_image' ), 10, 4 );

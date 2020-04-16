@@ -1008,7 +1008,7 @@ EOT;
 
 		return $outputSite;
 	}
-	
+
 	public static function sec2hms( $sec, $padHours = false ) {
 
 		$hms     = '';

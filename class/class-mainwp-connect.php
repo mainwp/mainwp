@@ -304,7 +304,7 @@ class MainWP_Connect {
 		return false;
 	}
 
-	
+
 	/**
 	 * Method is_website_available()
 	 *
@@ -338,7 +338,7 @@ class MainWP_Connect {
 		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 	}
 
-	
+
 	/**
 	 * Method  get_post_data_authed()
 	 *
@@ -968,7 +968,7 @@ class MainWP_Connect {
 		return true;
 	}
 
-	
+
 	public static function get_resource_id( $resource ) {
 		if ( ! is_resource( $resource ) ) {
 			return false;
@@ -980,8 +980,8 @@ class MainWP_Connect {
 
 		return $result;
 	}
-	
-	
+
+
 	public static function get_lock_identifier( $pLockName ) {
 		if ( ( null == $pLockName ) || ( false == $pLockName ) ) {
 			return false;
@@ -1000,8 +1000,8 @@ class MainWP_Connect {
 
 		return false;
 	}
-	
-	
+
+
 	public static function lock( $pIdentifier ) {
 		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
 			return false;
@@ -1038,7 +1038,7 @@ class MainWP_Connect {
 
 		return false;
 	}
-	
+
 	public static function fetch_url_authed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
 								$pRetryFailed = true, $rawResponse = null ) {
 		if ( ! is_array( $params ) ) {
@@ -1767,7 +1767,7 @@ class MainWP_Connect {
 		}
 		return $data;
 	}
-	
+
 	protected static function file_get_contents_curl( $url ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();

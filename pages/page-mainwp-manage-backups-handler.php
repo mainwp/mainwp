@@ -8,7 +8,12 @@ namespace MainWP\Dashboard;
  * MainWP Manage Backups
  */
 class MainWP_Manage_Backups_Handler {
-
+	
+	/**
+	 * Instance variable.
+	 * 
+	 * @var null $instance.
+	 */
 	private static $instance = null;
 
 	/**
@@ -407,7 +412,14 @@ class MainWP_Manage_Backups_Handler {
 		return MainWP_Manage_Sites_Handler::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 	}
 
-	/** Get backup tasks and sites. */
+	/**
+	 * Get backup tasks and site ID.
+	 * 
+	 * @param mixed $pTaskId Task ID.
+	 * 
+	 * @return array $allSites All Sites array.
+	 * @return array $remoteDestinations Remote destinations array.
+	 */
 	public static function get_backup_task_sites( $pTaskId ) {
 		$sites      = array();
 		$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $pTaskId );

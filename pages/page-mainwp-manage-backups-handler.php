@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Legacy Backups Handler.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,9 +9,13 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Backups_Handler {
 
-
 	private static $instance = null;
 
+	/**
+	 * Create instance.
+	 * 
+	 * @return self $instance.
+	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
@@ -17,14 +24,21 @@ class MainWP_Manage_Backups_Handler {
 		return self::$instance;
 	}
 
+	/**
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	/**
-	 * @param $pBackupTasks
+	 * Validate Backup Tasks.
+	 * 
+	 * @param $pBackupTasks Backup tasks. 
 	 *
-	 * @return bool
+	 * @return bool true|false.
 	 */
 	public static function validate_backup_tasks( $pBackupTasks ) {
 		if ( ! is_array( $pBackupTasks ) ) {
@@ -70,6 +84,7 @@ class MainWP_Manage_Backups_Handler {
 		return $nothingChanged;
 	}
 
+	/** Update backup task. */
 	public static function update_backup() {
 		global $current_user;
 
@@ -129,6 +144,7 @@ class MainWP_Manage_Backups_Handler {
 		}
 	}
 
+	/** Add backup task. */
 	public static function add_backup() {
 		global $current_user;
 
@@ -184,7 +200,17 @@ class MainWP_Manage_Backups_Handler {
 		}
 	}
 
-	// phpcs:ignore -- not quite complex function
+	/**
+	 * Execute the backup task. 
+	 * 
+	 * @param mixed $task Task to perform
+	 * @param integer $nrOfSites Number of Child Sites to perform the task on.
+	 * @param boolean $updateRun ture|false 
+	 * 
+	 * @return mixed $errorOutput
+	 * 
+	 * phpcs:ignore -- not quite complex function
+	 */
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) {
 
 		if ( $updateRun ) {
@@ -344,6 +370,15 @@ class MainWP_Manage_Backups_Handler {
 		return ( '' == $errorOutput );
 	}
 
+	/**
+	 * Prepair Child Site to be backed up.
+	 * 
+	 * @param mixed $pTaskId Task ID.
+	 * @param mixed $pSiteId Child Site ID.
+	 * @param mixed $pFileNameUID Filename Eunique ID.
+	 * 
+	 * @return self MainWP_Manage_Sites_Handler()
+	 */
 	public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
 		$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $pTaskId );
 
@@ -372,6 +407,7 @@ class MainWP_Manage_Backups_Handler {
 		return MainWP_Manage_Sites_Handler::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 	}
 
+	/** Get backup tasks and sites. */
 	public static function get_backup_task_sites( $pTaskId ) {
 		$sites      = array();
 		$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $pTaskId );
@@ -412,6 +448,7 @@ class MainWP_Manage_Backups_Handler {
 		);
 	}
 
+	/** Remove Backup. */
 	public static function remove_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );
@@ -423,6 +460,7 @@ class MainWP_Manage_Backups_Handler {
 		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
+	/** Resume Backup. */
 	public static function resume_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );
@@ -434,6 +472,7 @@ class MainWP_Manage_Backups_Handler {
 		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
+	/** Pause Backup. */
 	public static function pause_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB::instance()->get_backup_task_by_id( $_POST['id'] );

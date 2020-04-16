@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Legacy Backups Page.
+ */
 namespace MainWP\Dashboard;
 
 /**

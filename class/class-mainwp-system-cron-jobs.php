@@ -9,8 +9,8 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Singleton.
 	 */
-	private static $instance    = null;
-	
+	private static $instance = null;
+
 	/**
 	 * @static
 	 * @return MainWP_System_Cron_Jobs
@@ -22,13 +22,12 @@ class MainWP_System_Cron_Jobs {
 
 		return self::$instance;
 	}
-	
+
 	public function __construct() {
-		
 	}
-	
+
 	public function init_cron_jobs() {
-		
+
 		do_action( 'mainwp_cronload_action' );
 
 		add_action( 'mainwp_cronstats_action', array( $this, 'cron_stats' ) );
@@ -39,9 +38,8 @@ class MainWP_System_Cron_Jobs {
 
 		// phpcs:ignore -- required for dashboard's minutely scheduled jobs.
 		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ) );
-		
-		$this->init_cron();
 
+		$this->init_cron();
 	}
 
 	public function init_cron() {
@@ -123,8 +121,8 @@ class MainWP_System_Cron_Jobs {
 		return $schedules;
 	}
 
-	
-	
+
+
 	public static function get_timestamp_from_hh_mm( $hh_mm ) {
 		$hh_mm = explode( ':', $hh_mm );
 		$_hour = isset( $hh_mm[0] ) ? intval( $hh_mm[0] ) : 0;
@@ -152,7 +150,7 @@ class MainWP_System_Cron_Jobs {
 		}
 		return $_hour * 60 + $_mins;
 	}
-	
+
 
 	public function cron_updates_check() {
 
@@ -1016,7 +1014,7 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
-	
+
 	public function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
 
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
@@ -1057,7 +1055,7 @@ class MainWP_System_Cron_Jobs {
 		return $output;
 	}
 
-	
+
 	public function cron_ping_childs() {
 		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
 
@@ -1084,11 +1082,11 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	public function cron_backups_continue() {
-		
+
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return;
 		}
-		
+
 		MainWP_Logger::instance()->info( 'CRON :: backups continue' );
 
 		ignore_user_abort( true );

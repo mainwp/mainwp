@@ -20,7 +20,6 @@ class MainWP_Extensions {
 		return __CLASS__;
 	}
 
-
 	/**
 	 * @var boolean true|false Extension is loaded.
 	 */

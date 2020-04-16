@@ -17,7 +17,12 @@ class MainWP_Manage_Backups {
 	private static $hideSubmenuBackups = false;
 
 	private static $instance = null;
-
+	
+	/**
+	 * Create instance.
+	 * 
+	 * @return self $instance.
+	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Manage_Backups();
@@ -26,6 +31,7 @@ class MainWP_Manage_Backups {
 		return self::$instance;
 	}
 
+	/** Instantiate Hooks. */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Backups page header via the 'mainwp-pageheader-backups' action.
@@ -52,13 +58,17 @@ class MainWP_Manage_Backups {
 		add_action( 'mainwp-pagefooter-backups', array( self::get_class_name(), 'render_footer' ) );
 	}
 
+	/**
+	 * Instantiate Legacy Backups Menu.
+	 * 
+	 * @return void
+	 * 
+	 * @deprecated Use 'mainwp_getcustompage_backups' instead.
+	 */
 	public static function init_menu() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
-		/*
-		* @deprecated Use 'mainwp_getcustompage_backups' instead.
-		*
-		*/
+
 		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
 		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
@@ -106,6 +116,7 @@ class MainWP_Manage_Backups {
 		self::init_left_menu( self::$subPages, $enable_legacy_backup );
 	}
 
+	/** Instantiate legacy backups subpages. */
 	public static function init_subpages_menu() {
 		if ( self::$hideSubmenuBackups && ( empty( self::$subPages ) || ! is_array( self::$subPages ) ) ) {
 			return;
@@ -143,6 +154,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
+	/** Instantiate Legacy Backups Menu. */
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
 			MainWP_Menu::add_left_menu(
@@ -185,6 +197,8 @@ class MainWP_Manage_Backups {
 	}
 
 	/**
+	 * Render MainWP Legacy Backups Page Header.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -242,6 +256,8 @@ class MainWP_Manage_Backups {
 	}
 
 	/**
+	 * Render MainWP Legacy Backups Footer. 
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
@@ -328,7 +344,14 @@ class MainWP_Manage_Backups {
 			self::render_edit( $backupTask );
 		}
 	}
-
+	
+	/**
+	 * Render MainWP Legacy Backups Table.
+	 * 
+	 * @param mixed $backup_items List Item.
+	 * 
+	 * @return html Table Content.
+	 */
 	public function display( $backup_items ) {
 		$can_trigger = true;
 		if ( ! mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
@@ -412,6 +435,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
+	/** Single ow Content. */
 	public function single_row( $item, $columns ) {
 		?>
 		<tr>
@@ -430,6 +454,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
+	/** Column Actions. */
 	public function column_actions( $item ) {
 
 		$actions = array(
@@ -469,18 +494,22 @@ class MainWP_Manage_Backups {
 		return $out;
 	}
 
+	/** Column Task Name. */
 	public function column_task_name( $item ) {
 		return stripslashes( $item->name );
 	}
 
+	/** Column Type. */
 	public function column_type( $item ) {
 		return ( 'db' == $item->type ? __( 'DATABASE BACKUP', 'mainwp' ) : __( 'FULL BACKUP', 'mainwp' ) );
 	}
 
+	/** Column Schdule. */
 	public function column_schedule( $item ) {
 		return strtoupper( $item->schedule );
 	}
 
+	/** Column Destination. */
 	public function column_destination( $item ) {
 		$extraOutput = apply_filters( 'mainwp_backuptask_column_destination', '', $item->id );
 		if ( '' != $extraOutput ) {
@@ -490,6 +519,7 @@ class MainWP_Manage_Backups {
 		return __( 'SERVER', 'mainwp' );
 	}
 
+	/** Column Websites. */
 	public function column_websites( $item ) {
 		if ( 0 == count( $item->the_sites ) ) {
 			echo( '<span style="color: red; font-weight: bold; ">' . count( $item->the_sites ) . '</span>' );
@@ -498,6 +528,7 @@ class MainWP_Manage_Backups {
 		}
 	}
 
+	/** Column Details. */
 	public function column_details( $item ) {
 		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
 		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
@@ -518,11 +549,18 @@ class MainWP_Manage_Backups {
 		return $output;
 	}
 
+	/** Column Trigger. */
 	public function column_trigger( $item ) {
 		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
 	}
 
-
+	/**
+	 * Render edit.
+	 * 
+	 * @param mixed $task Task to edit.
+	 * 
+	 * @return html Edit task form.
+	 */
 	public static function render_edit( $task ) {
 		self::render_header( 'ManageBackupsEdit' );
 		?>
@@ -540,6 +578,7 @@ class MainWP_Manage_Backups {
 		self::render_footer( 'ManageBackupsEdit' );
 	}
 
+	/** Render New Task Form. */
 	public static function render_new() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
 			mainwp_do_not_have_permissions( __( 'add backup tasks', 'mainwp' ) );
@@ -557,7 +596,13 @@ class MainWP_Manage_Backups {
 		<?php
 		self::render_footer( 'AddNew' );
 	}
-
+	
+	/**
+	 * Render New edit Form.
+	 * @param mixed $task Task to edit.
+	 * 
+	 * @return html Form.
+	 */
 	public static function render_new_edit( $task ) {
 		$selected_websites = array();
 		$selected_groups   = array();
@@ -593,6 +638,7 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
+	/** Render Scheduled Backup. */
 	public static function render_schedule_backup() {
 		$backupTask = null;
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
@@ -648,6 +694,17 @@ class MainWP_Manage_Backups {
 		self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite  );
 	}
 
+	/**
+	 * Render Task Details.
+	 * 
+	 * @param mixed $task Task to perform.
+	 * @param mixed $globalArchiveFormatText Global Archived Format Text.
+	 * @param mixed $archiveFormat Archive Format.
+	 * @param mixed $useGlobal Use Global.
+	 * @param mixed $useSite Use Site.
+	 * 
+	 * @return html Task details.
+	 */
 	public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) {
 		?>
 

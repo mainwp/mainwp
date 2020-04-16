@@ -595,7 +595,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'post_action',
 				array(
@@ -639,7 +639,7 @@ class MainWP_Recent_Posts {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'post_action',
 				array(

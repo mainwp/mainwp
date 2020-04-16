@@ -949,7 +949,7 @@ class MainWP_System_Cron_Jobs {
 					MainWP_Logger::instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
 
 					try {
-						MainWP_Utility::fetch_url_authed(
+						MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
@@ -976,7 +976,7 @@ class MainWP_System_Cron_Jobs {
 					}
 
 					try {
-						MainWP_Utility::fetch_url_authed(
+						MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
@@ -1003,7 +1003,7 @@ class MainWP_System_Cron_Jobs {
 					}
 
 					try {
-						MainWP_Utility::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
+						MainWP_Connect::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( Exception $e ) {
 						// ok.
 					}

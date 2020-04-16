@@ -17,7 +17,7 @@ class MainWP_Updates_Handler {
 
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 
-				$information = MainWP_Utility::fetch_url_authed( $website, 'upgrade' );
+				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::instance()->update_website_option( $website, 'wp_upgrades', wp_json_encode( array() ) );
@@ -323,7 +323,7 @@ class MainWP_Updates_Handler {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$information = MainWP_Utility::fetch_url_authed(
+				$information = MainWP_Connect::fetch_url_authed(
 					$website,
 					( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
 					array(
@@ -442,4 +442,50 @@ class MainWP_Updates_Handler {
 
 		return implode( ',', $slugs );
 	}
+	
+	
+	/**
+	 * Method activated_primary_backup_plugin()
+	 *
+	 * Chek which primary backup plugin is being used.
+	 *
+	 * @param mixed $what Which backup plugin is being use.
+	 * @param mixed $website Website array of information.
+	 *
+	 * @return boolean True|False.
+	 */
+	public static function activated_primary_backup_plugin( $what, $website ) {
+		$plugins = json_decode( $website->plugins, 1 );
+		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
+			return false;
+		}
+
+		$checks = array(
+			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
+			'backupwordpress' => 'backupwordpress/backupwordpress.php',
+			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus'     => 'updraftplus/updraftplus.php',
+
+		);
+
+		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
+
+		if ( empty( $slug ) ) {
+			return false;
+		}
+
+		$installed = false;
+
+		foreach ( $plugins as $plugin ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+				if ( $plugin['active'] ) {
+					$installed = true;
+				}
+				break;
+			}
+		}
+
+		return $installed;
+	}
+
 }

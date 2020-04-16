@@ -67,7 +67,7 @@ class MainWP_Sync {
 			$othersData = apply_filters_deprecated( 'mainwp-sync-others-data', array( array(), $pWebsite ), '4.0.1', 'mainwp_sync_others_data' );  // @deprecated Use 'mainwp_sync_others_data' instead.
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$pWebsite,
 				'stats',
 				array(

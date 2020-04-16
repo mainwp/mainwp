@@ -599,7 +599,7 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
+			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -1178,7 +1178,7 @@ class MainWP_Themes {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
+				MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {

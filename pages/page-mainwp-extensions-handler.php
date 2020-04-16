@@ -600,7 +600,7 @@ class MainWP_Extensions_Handler {
 			return false;
 		}
 
-		return MainWP_Utility::fetch_urls_authed( $dbwebsites, $what, $params, $handle, $output );
+		return MainWP_Connect::fetch_urls_authed( $dbwebsites, $what, $params, $handle, $output );
 	}
 
 	public static function hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
@@ -614,7 +614,7 @@ class MainWP_Extensions_Handler {
 				throw new MainWP_Exception( 'You can not edit this website.' );
 			}
 
-			return MainWP_Utility::fetch_url_authed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
+			return MainWP_Connect::fetch_url_authed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
 		} catch ( MainWP_Exception $e ) {
 			return array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
 		}

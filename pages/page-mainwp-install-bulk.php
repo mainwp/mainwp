@@ -245,7 +245,7 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetch_urls_authed(
+		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
 			$post_data,
@@ -353,7 +353,7 @@ class MainWP_Install_Bulk {
 		$output->ok     = array();
 		$output->errors = array();
 		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
-		MainWP_Utility::fetch_urls_authed(
+		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
 			$post_data,

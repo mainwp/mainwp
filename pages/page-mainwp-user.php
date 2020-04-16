@@ -751,7 +751,7 @@ class MainWP_User {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			MainWP_Utility::fetch_urls_authed(
+			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
 				'search_users',
 				$post_data,
@@ -936,7 +936,7 @@ class MainWP_User {
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'user_action',
 				array(
@@ -1270,7 +1270,7 @@ class MainWP_User {
 				$output         = new \stdClass();
 				$output->ok     = array();
 				$output->errors = array();
-				MainWP_Utility::fetch_urls_authed(
+				MainWP_Connect::fetch_urls_authed(
 					$dbwebsites,
 					'newuser',
 					$post_data,
@@ -1550,7 +1550,7 @@ class MainWP_User {
 			$output         = new \stdClass();
 			$output->ok     = array();
 			$output->errors = array();
-			MainWP_Utility::fetch_urls_authed(
+			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
 				'newuser',
 				$post_data,

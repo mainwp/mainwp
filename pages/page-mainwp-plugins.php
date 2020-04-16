@@ -578,7 +578,7 @@ class MainWP_Plugins {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
+			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
@@ -1049,7 +1049,7 @@ class MainWP_Plugins {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
+				MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {

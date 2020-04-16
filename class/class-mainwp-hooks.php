@@ -16,8 +16,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
 		add_filter( 'mainwp_getwpfilesystem', array( MainWP_Utility::get_class_name(), 'get_wp_file_system' ) );
 		add_filter( 'mainwp_getspecificurl', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_url' ), 10, 1 );
-		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
-		add_action( 'mainwp_renderToolTip', array( MainWP_Utility::get_class_name(), 'render_tool_tip' ), 10, 4 );
+		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );		
 		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 		add_action( 'mainwp_renderImage', array( MainWP_UI::get_class_name(), 'render_image' ), 10, 4 );
@@ -233,7 +232,7 @@ class MainWP_Hooks {
 		MainWP_DB::instance()->update_website_values( $website->id, $data );
 		if ( null !== $uniqueId ) {
 			try {
-				$information = MainWP_Utility::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+				$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 			} catch ( MainWP_Exception $e ) {
 				$error = $e->getMessage();
 			}
@@ -356,7 +355,7 @@ class MainWP_Hooks {
 		$output          = new \stdClass();
 		$output->results = array();
 		if ( $dbwebsites ) {
-			MainWP_Utility::fetch_urls_authed(
+			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
 				'get_all_posts',
 				$post_data,
@@ -505,7 +504,7 @@ class MainWP_Hooks {
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 				if ( MainWP_Utility::can_edit_website( $website ) ) {
-					$information = MainWP_Utility::fetch_url_authed(
+					$information = MainWP_Connect::fetch_url_authed(
 						$website,
 						'upgradeplugintheme',
 						array(

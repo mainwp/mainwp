@@ -1063,7 +1063,7 @@ class MainWP_Manage_Sites_List_Table {
 								$imgfavi = '';
 								if ( $use_favi ) {
 									$siteObj  = (object) $website;
-									$favi_url = MainWP_Utility::get_favico_url( $siteObj );
+									$favi_url = MainWP_Connect::get_favico_url( $siteObj );
 									$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 								}
 								echo $imgfavi;
@@ -1343,7 +1343,7 @@ class MainWP_Manage_Sites_List_Table {
 				$imgfavi = '';
 				if ( $use_favi ) {
 					$siteObj  = (object) $website;
-					$favi_url = MainWP_Utility::get_favico_url( $siteObj );
+					$favi_url = MainWP_Connect::get_favico_url( $siteObj );
 					$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 				}
 

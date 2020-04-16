@@ -86,7 +86,7 @@ class MainWP_Child_Scan {
 						$imgfavi = '';
 						if ( null !== $website ) {
 							if ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) {
-								$favi_url = MainWP_Utility::get_favico_url( $website );
+								$favi_url = MainWP_Connect::get_favico_url( $website );
 								$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 							}
 						}
@@ -126,7 +126,7 @@ class MainWP_Child_Scan {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			$rslt       = MainWP_Utility::fetch_url_authed( $website, 'search_users', $post_data );
+			$rslt       = MainWP_Connect::fetch_url_authed( $website, 'search_users', $post_data );
 			$usersfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 
 			if ( ! $usersfound ) {
@@ -138,7 +138,7 @@ class MainWP_Child_Scan {
 				$post_data['status'] = 'active';
 				$post_data['filter'] = true;
 
-				$rslt = MainWP_Utility::fetch_url_authed( $website, 'get_all_plugins', $post_data );
+				$rslt = MainWP_Connect::fetch_url_authed( $website, 'get_all_plugins', $post_data );
 
 				$pluginfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 

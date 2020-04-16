@@ -798,7 +798,7 @@ class MainWP_Post {
 			}
 
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
-			MainWP_Utility::fetch_urls_authed(
+			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
 				'get_all_posts',
 				$post_data,
@@ -2109,7 +2109,7 @@ class MainWP_Post {
 									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 								);
-								MainWP_Utility::fetch_urls_authed(
+								MainWP_Connect::fetch_urls_authed(
 									$dbwebsites,
 									'newpost',
 									$post_data,
@@ -2243,7 +2243,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'post_action',
 				array(
@@ -2454,7 +2454,7 @@ class MainWP_Post {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'set_terms',
 				array(
@@ -2483,7 +2483,7 @@ class MainWP_Post {
 			return;
 		}
 		try {
-			MainWP_Utility::fetch_url_authed(
+			MainWP_Connect::fetch_url_authed(
 				$website,
 				'insert_comment',
 				array(

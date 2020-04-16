@@ -162,7 +162,7 @@ class MainWP_Manage_Sites_Handler {
 
 				MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
-				$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
+				$information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
 			} catch ( MainWP_Exception $e ) {
 				MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->get_message_extra() . ')' );
 				$stop = microtime( true );
@@ -194,7 +194,7 @@ class MainWP_Manage_Sites_Handler {
 			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 		} elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
-				$temp = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
+				$temp = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
 			} catch ( Exception $e ) {
 				// ok!
 			}
@@ -205,7 +205,7 @@ class MainWP_Manage_Sites_Handler {
 						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 
 						try {
-							$information = MainWP_Utility::fetch_url_authed(
+							$information = MainWP_Connect::fetch_url_authed(
 								$website,
 								'backup',
 								array(
@@ -388,7 +388,7 @@ class MainWP_Manage_Sites_Handler {
 				}
 
 				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
-					MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
 			}
@@ -451,8 +451,8 @@ class MainWP_Manage_Sites_Handler {
 						}
 					}
 
-					MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
-					MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
+					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
+					MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
 					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
 			}
@@ -533,11 +533,11 @@ class MainWP_Manage_Sites_Handler {
 
 		$what = null;
 		if ( 'db' === $pType ) {
-			MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		if ( 'full' === $pType ) {
-			MainWP_Utility::download_to_file( MainWP_Utility::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
+			MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $pUrl, 'fdl' ), $pFile, false, $website->http_user, $website->http_pass );
 		}
 
 		return true;
@@ -545,7 +545,7 @@ class MainWP_Manage_Sites_Handler {
 
 	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
-		MainWP_Utility::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
+		MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
 
 		return true;
 	}
@@ -554,7 +554,7 @@ class MainWP_Manage_Sites_Handler {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 
 		MainWP_Utility::end_session();
-		$information = MainWP_Utility::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
+		$information = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $pid ) );
 
 		$status = $information['status'];
 
@@ -763,7 +763,7 @@ class MainWP_Manage_Sites_Handler {
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
-		$information = MainWP_Utility::fetch_url_authed( $website, 'backup', $params, false, false, false );
+		$information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
@@ -849,7 +849,7 @@ class MainWP_Manage_Sites_Handler {
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
 				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
-				$information    = MainWP_Utility::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
+				$information    = MainWP_Connect::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';
@@ -951,7 +951,7 @@ class MainWP_Manage_Sites_Handler {
 				// do not deactive child on staging site, it will deactive child plugin of source site.
 				if ( ! $website->is_staging ) {
 					try {
-						$information = MainWP_Utility::fetch_url_authed( $website, 'deactivate' );
+						$information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
 					} catch ( MainWP_Exception $e ) {
 						$error = $e->getMessage();
 					}
@@ -1055,7 +1055,7 @@ class MainWP_Manage_Sites_Handler {
 				$error    = '';
 				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';
 				try {
-					$information = MainWP_Utility::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+					$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}

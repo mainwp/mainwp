@@ -96,7 +96,7 @@ class MainWP_Themes_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'theme_action',
 				array(

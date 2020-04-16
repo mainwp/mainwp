@@ -56,10 +56,6 @@ class MainWP_System {
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
-		if ( file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php' ) ) {
-			include_once WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->plugin_slug ) . DIRECTORY_SEPARATOR . 'class' . DIRECTORY_SEPARATOR . 'class-mainwp-creport.php';
-		}
-
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
 			$pluginData            = get_plugin_data( $mainwp_plugin_file );
@@ -315,7 +311,7 @@ class MainWP_System {
 	}
 
 	public function parse_request() {
-		include_once MAINWP_PLUGIN_DIR . '/response/api.php';
+		include_once MAINWP_PLUGIN_DIR . '/include/api.php';
 	}
 
 	public function localization() {
@@ -505,7 +501,7 @@ class MainWP_System {
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$error = '';
 				try {
-					$information = MainWP_Utility::fetch_url_authed( $website, 'get_site_icon' );
+					$information = MainWP_Connect::fetch_url_authed( $website, 'get_site_icon' );
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}
@@ -514,7 +510,7 @@ class MainWP_System {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
 					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
-					$content = MainWP_Utility::get_file_content( $information['faviIconUrl'] );
+					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 
 						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();

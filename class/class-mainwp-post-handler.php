@@ -751,7 +751,7 @@ class MainWP_Post_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed( $website, 'disconnect' );
+			$information = MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
 		} catch ( Exception $e ) {
 			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
@@ -909,7 +909,7 @@ class MainWP_Post_Handler {
 
 			MainWP_Utility::end_session();
 			// Send request to the childsite!
-			$result = MainWP_Utility::fetch_url_authed(
+			$result = MainWP_Connect::fetch_url_authed(
 				$website,
 				'createBackupPoll',
 				array(
@@ -1307,14 +1307,14 @@ class MainWP_Post_Handler {
 			}
 		}
 
-		$rslt = MainWP_Utility::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+		$rslt = MainWP_Connect::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 
 		if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url    .= 'wp-admin/';
-			$newrslt = MainWP_Utility::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+			$newrslt = MainWP_Connect::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 			if ( isset( $newrslt['error'] ) && ( '' !== $rslt['error'] ) ) {
 				$rslt = $newrslt;
 			}
@@ -1679,9 +1679,9 @@ class MainWP_Post_Handler {
 			die( -1 );
 		}
 
-		$result       = MainWP_Utility::is_website_available( $website );
+		$result       = MainWP_Connect::is_website_available( $website );
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-		$check_result = MainWP_Utility::check_ignored_http_code( $http_code );
+		$check_result = MainWP_Connect::check_ignored_http_code( $http_code );
 		MainWP_DB::instance()->update_website_values(
 			$website->id,
 			array(
@@ -1805,7 +1805,7 @@ class MainWP_Post_Handler {
 		}
 
 		try {
-			$information = MainWP_Utility::fetch_url_authed(
+			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'settings_tools',
 				array(

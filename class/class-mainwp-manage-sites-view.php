@@ -203,7 +203,7 @@ class MainWP_Manage_Sites_View {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 			$imgfavi = '';
 			if ( 1 === get_option( 'mainwp_use_favicon', 1 ) ) {
-				$favi_url = MainWP_Utility::get_favico_url( $website );
+				$favi_url = MainWP_Connect::get_favico_url( $website );
 				$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 			}
 			$pagetitle = $imgfavi . ' ' . $website->url;
@@ -1663,7 +1663,7 @@ class MainWP_Manage_Sites_View {
 					$pubkey  = '-1';
 				}
 
-				$information = MainWP_Utility::fetch_url_not_authed(
+				$information = MainWP_Connect::fetch_url_not_authed(
 					$website->url,
 					$website->adminname,
 					'register',
@@ -1771,7 +1771,7 @@ class MainWP_Manage_Sites_View {
 				$http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
 				$http_pass         = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 				$force_use_ipv4    = isset( $params['force_use_ipv4'] ) ? $params['force_use_ipv4'] : null;
-				$information       = MainWP_Utility::fetch_url_not_authed(
+				$information       = MainWP_Connect::fetch_url_not_authed(
 					$url,
 					$params['wpadmin'],
 					'register',

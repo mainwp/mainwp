@@ -1,16 +1,19 @@
 <?php
 /**
- * MainWP Translations
- *
- * Array of Translatable stings.
+ * MainWP System Notices.
  */
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Translations
+ * MainWP System Notices.
  */
 class MainWP_System_View {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -214,7 +217,15 @@ class MainWP_System_View {
 		return $mainwpTranslations;
 	}
 
-
+	/**
+	 * Check if MainWP Extensions are Activated or not.
+	 * 
+	 * @param mixed $plugin_slug Plugin Slug.
+	 * @param mixed $plugin_data Plugin Data.
+	 * @param mixed $status Status of plugin activation.
+	 * 
+	 * @return html Activation warning message.
+	 */
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		if ( ! isset( $extensions[ $plugin_slug ] ) ) {
@@ -250,6 +261,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** MainWP Version 4 update Notice. */
 	public static function mainwp_4_update_notice() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_4' ) ) {
 			?>
@@ -262,6 +274,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Render Administration Notice. */
 	public static function admin_notices() {
 		if ( get_option( 'mainwp_refresh' ) ) {
 			echo '<meta http-equiv="refresh" content="0">';
@@ -292,6 +305,7 @@ class MainWP_System_View {
 		self::check_rating_notice( $current_options );
 	}
 
+	/** Render PHP Version Notice. */
 	public static function render_notice_version() {
 		$phpver = phpversion();
 		if ( version_compare( $phpver, '5.5', '<' ) ) {
@@ -307,6 +321,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Render OpenSSL Error message. */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
@@ -323,6 +338,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Render WP Multisite Error Message. */
 	public static function render_notice_multi_sites() {
 		?>
 		<div class="ui icon red message" style="margin-bottom: 0; border-radius: 0;">
@@ -333,6 +349,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** Render MainWP Review Request. */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;
 		$display_request2 = false;
@@ -373,6 +390,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Render MainWP Dashboard & Child Plugin auto update Alert. */
 	public static function render_notice_trust_update() {
 		?>
 		<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
@@ -385,6 +403,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** Render MainWP 30 day review request. */
 	public static function render_rating_notice_1() {
 		?>
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -404,6 +423,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** Render MainWP review notice after a few extensions have been installed. */
 	public static function render_rating_notice_2() {
 		?>
 		<div class="ui green icon message" style="margin-bottom: 0; border-radius: 0;">
@@ -423,6 +443,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** Render Send Mail Function may have failed error. */
 	public static function wp_admin_notices() {
 		global $pagenow;
 
@@ -451,6 +472,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Render Admin Footer. */
 	public static function admin_footer() {
 
 		if ( MainWP_System::is_mainwp_pages() ) {
@@ -496,6 +518,7 @@ class MainWP_System_View {
 		}
 	}
 
+	/** Admin print styles. */
 	public static function admin_print_styles() {
 		?>
 		<style>
@@ -525,6 +548,13 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/**
+	 * Render post updated message.
+	 * 
+	 * @param mixed $messages Message to display.
+	 * 
+	 * @return string $messages.
+	 */
 	public function post_updated_messages( $messages ) {
 		$messages['post'][98] = esc_html__( 'WordPress SEO values have been saved.', 'mainwp' );
 		$messages['post'][99] = esc_html__( 'You have to select the sites you wish to publish to.', 'mainwp' );
@@ -532,6 +562,7 @@ class MainWP_System_View {
 		return $messages;
 	}
 
+	/** MainWP Productions Site warning. */
 	public static function mainwp_warning_notice() {
 
 		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
@@ -558,6 +589,7 @@ class MainWP_System_View {
 		<?php
 	}
 
+	/** Render Admin Header */
 	public static function admin_head() {
 		?>
 		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>"</script>
@@ -572,6 +604,7 @@ class MainWP_System_View {
 		return $class_string;
 	}
 
+	/** Render footer content. */
 	public static function render_footer_content( $websites ) {
 
 		$cntr = 0;

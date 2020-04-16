@@ -253,8 +253,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
-	// phpcs:ignore -- complex method
-	public function plugin( $args, $assoc_args ) {
+	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- complex method
 		$sites = array();
 		if ( 0 < count( $args ) ) {
 			$args_exploded = explode( ',', $args[0] );
@@ -517,8 +516,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * @param mixed $args
 	 * @param mixed $assoc_args
 	 */
-	// phpcs:ignore -- complex function
-	public function theme( $args, $assoc_args ) {
+	public function theme( $args, $assoc_args ) { // phpcs:ignore -- complex function
 		$sites = array();
 		if ( count( $args ) > 0 ) {
 			$args_exploded = explode( ',', $args[0] );

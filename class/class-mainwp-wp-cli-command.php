@@ -1,35 +1,57 @@
 <?php
+/**
+ * MainWP-CLI
+ *
+ * This file extends the WP-CLI and provides a set of SubCommands to Control your
+ * Child Sites that are added to the MainWP Dashboard.
+ *
+ * @todo: allow to add or remove child sites
+ */
+namespace MainWP\Dashboard;
 
+// Exit if access directly.
 if ( ! defined( 'WP_CLI' ) ) {
 	return;
 }
 
 /**
- * Manage all child sites added to the MainWP Dashboard
+ * Manage all child sites added to the MainWP Dashboard.
  */
 class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
+	/**
+	 * Method init()
+	 *
+	 * Initiate the MainWP CLI after all Plugins have loaded.
+	 */
 	public static function init() {
 		add_action( 'plugins_loaded', array( 'MainWP_WP_CLI_Command', 'init_wpcli_commands' ), 99999 );
 	}
 
+	/**
+	 * Method init_wpcli_commands
+	 *
+	 * Adds the MainWP WP CLI Commands via WP_CLI::add_command
+	 */
 	public static function init_wpcli_commands() {
 		WP_CLI::add_command( 'mainwp', 'MainWP_WP_CLI_Command' );
 	}
 
 	/**
-	 * List information about added child sites
+	 * List information about added child sites.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--list]
 	 *  : Get a list of all child sites
 	 *
-	 * @todo: allow to add or remove child sites
-	 * @synopsis [--list]
+	 * ## Synopsis [--list]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function sites( $args, $assoc_args ) {
-		$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
+		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		$idLength      = strlen( 'id' );
 		$nameLength    = strlen( 'name' );
 		$urlLength     = strlen( 'url' );
@@ -78,7 +100,10 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp sync 2,5
 	 *     wp mainwp sync --all
 	 *
-	 * @synopsis [<websiteid>] [--all]
+	 * ## Synopsis [<websiteid>] [--all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -97,25 +122,25 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		WP_CLI::line( 'Sync started' );
 		$warnings = 0;
 		$errors   = 0;
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 				continue;
 			}
 
 			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
-				if ( MainWP_Sync::syncSite( $website ) ) {
+				if ( MainWP_Sync::sync_site( $website ) ) {
 					WP_CLI::success( '  Sync succeeded' );
 				} else {
 					WP_CLI::warning( '  Sync failed' );
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
@@ -141,52 +166,53 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *
 	 *     wp mainwp reconnect 2,5
 	 *
-	 * @synopsis [<websiteid>]
+	 * ## Synopsis [<websiteid>]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
-		if ( count( $args ) > 0 ) {
+		if ( 0 < count( $args ) ) {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error('Child site ids should be numeric.');
+					WP_CLI::error( 'Child site ids should be numeric.' );
 				}
 
 				$sites[] = trim( $arg );
 			}
 		}
 
-		if ( count($sites) == 0 ) {
-			WP_CLI::error('Please specify one or more child sites.');
+		if ( count( $sites ) == 0 ) {
+			WP_CLI::error( 'Please specify one or more child sites.' );
 		}
 
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser(false, null, 'wp.url', false, false, null, true) );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 		WP_CLI::line( 'Reconnect started' );
 		$warnings = 0;
 		$errors   = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+			if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 				continue;
 			}
 			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
-				if ( MainWP_Manage_Sites::_reconnectSite( $website ) ) {
-					// Reconnected
+				if ( MainWP_Manage_Sites_Handler::m_reconnect_site( $website ) ) {
 					WP_CLI::success( '  Reconnected successfully' );
 				} else {
 					WP_CLI::warning( '  Reconnect failed' );
 					$warnings++;
 				}
 			} catch ( Exception $e ) {
-				// something wrong
-				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
 		MainWP_DB::free_result( $websites );
-		if ( $errors > 0 ) {
+		if ( 0 < $errors ) {
 			WP_CLI::error( 'Reconnect completed with errors' );
-		} elseif ( $warnings > 0 ) {
+		} elseif ( 0 < $warnings ) {
 			WP_CLI::warning( 'Reconnect completed with warnings' );
 		} else {
 			WP_CLI::success( 'Reconnect completed' );
@@ -222,11 +248,15 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp plugin 2,5 --upgrade-all
 	 *     wp mainwp plugin 2,5 --upgrade=mainwpchild
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
+	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
+	// phpcs:ignore -- complex method
 	public function plugin( $args, $assoc_args ) {
 		$sites = array();
-		if ( count( $args ) > 0 ) {
+		if ( 0 < count( $args ) ) {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
@@ -238,11 +268,11 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 
@@ -315,7 +345,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_to_upgrade['plugins'] as $plugin_to_upgrade ) {
-					if ( $i == 0 ) {
+					if ( 0 == $i ) {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
 					} else {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
@@ -326,11 +356,11 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
-			$websites         = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension    = MainWP_DB::Instance()->getUserExtension();
+			$websites         = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension    = MainWP_DB::instance()->get_user_extension();
 			$websites_to_list = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 
@@ -387,7 +417,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_item['plugins'] as $plugin_item ) {
-					if ( $i == 0 ) {
+					if ( 0 == $i ) {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $plugin_item['name'], $plugin_item['version'] ) );
 					} else {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', '', '', $plugin_item['name'], $plugin_item['version'] ) );
@@ -398,17 +428,16 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
-			// slugs to update
 
 			$pluginSlugs = array();
 			if ( isset( $assoc_args['upgrade'] ) ) {
 				$pluginSlugs = explode( ',', $assoc_args['upgrade'] );
 			}
 
-			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension = MainWP_DB::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 
@@ -427,7 +456,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 					$tmp = array();
 					foreach ( $plugin_upgrades as $key => $plugin_upgrade ) {
-						if ( ( count( $pluginSlugs ) > 0 ) && ( ! in_array( $plugin_upgrade['update']['slug'], $pluginSlugs ) ) ) {
+						if ( ( count( $pluginSlugs ) > 0 ) && ( ! in_array( $plugin_upgrade['update']['slug'], $pluginSlugs, true ) ) ) {
 							continue;
 						}
 
@@ -443,12 +472,12 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' plugins for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'plugin', implode( ',', $tmp ) );
+						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}
@@ -483,8 +512,12 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 *     wp mainwp theme 2,5 --upgrade-all
 	 *     wp mainwp theme 2,5 --upgrade=twentysixteen
 	 *
-	 * @synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
+	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
+	 *
+	 * @param mixed $args
+	 * @param mixed $assoc_args
 	 */
+	// phpcs:ignore -- complex function
 	public function theme( $args, $assoc_args ) {
 		$sites = array();
 		if ( count( $args ) > 0 ) {
@@ -499,11 +532,11 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 		}
 
 		if ( isset( $assoc_args['list'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 
@@ -576,7 +609,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_to_upgrade['themes'] as $theme_to_upgrade ) {
-					if ( $i == 0 ) {
+					if ( 0 == $i ) {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
 					} else {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
@@ -587,11 +620,11 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
-			$websites            = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB::Instance()->getUserExtension();
+			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension       = MainWP_DB::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 				$theme_to_list = json_decode( $website->themes, true );
@@ -649,7 +682,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 				$i = 0;
 				foreach ( $website_item['themes'] as $theme_item ) {
-					if ( $i == 0 ) {
+					if ( 0 == $i ) {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
 					} else {
 						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', '', '', $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
@@ -660,17 +693,16 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
-			// slugs to update
 
 			$themeSlugs = array();
 			if ( isset( $assoc_args['upgrade'] ) ) {
 				$themeSlugs = explode( ',', $assoc_args['upgrade'] );
 			}
 
-			$websites      = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB::Instance()->getUserExtension();
+			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+			$userExtension = MainWP_DB::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites ) ) ) {
+				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
 				}
 
@@ -689,7 +721,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 
 					$tmp = array();
 					foreach ( $theme_upgrades as $key => $theme_upgrade ) {
-						if ( ( count( $themeSlugs ) > 0 ) && ( ! in_array( $theme_upgrade['update']['slug'], $themeSlugs ) ) ) {
+						if ( ( count( $themeSlugs ) > 0 ) && ( ! in_array( $theme_upgrade['update']['slug'], $themeSlugs, true ) ) ) {
 							continue;
 						}
 
@@ -705,12 +737,12 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::line( 'Updating ' . count( $tmp ) . ' themes for ' . $website->name );
 
 					try {
-						MainWP_Updates::upgradePluginThemeTranslation( $website->id, 'theme', implode( ',', $tmp ) );
+						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
 					} catch ( Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::getConsoleErrorMessage( $e ) );
+						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . print_r( $e->getMessageExtra(), 1 ) );
+							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}

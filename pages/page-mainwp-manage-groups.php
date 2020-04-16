@@ -1,127 +1,141 @@
 <?php
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Manage Groups
  */
 class MainWP_Manage_Groups {
 
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Groups', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>', 'read', 'ManageGroups', array(
-			self::getClassName(),
-			'renderAllGroups',
-		) );
+	public static function init_menu() {
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Groups', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Groups', 'mainwp' ) . '</div>',
+			'read',
+			'ManageGroups',
+			array(
+				self::get_class_name(),
+				'render_all_groups',
+			)
+		);
 	}
 
-	public static function getGroupListContent() {
+	public static function get_group_list_content() {
 
-		$groups = MainWP_DB::Instance()->getGroupsAndCount();
+		$groups = MainWP_DB::instance()->get_groups_and_count();
 
 		foreach ( $groups as $group ) {
-			self::createGroupItem( $group );
+			self::create_group_item( $group );
 		}
 	}
 
-	private static function createGroupItem( $group ) {
+	private static function create_group_item( $group ) {
 		?>
 		<tr group-id="<?php echo esc_attr( $group->id ); ?>" class="mainwp-group-row">
 			<td>
 				<span class="ui text">
-					<?php esc_html_e( stripslashes( $group->name ) ); ?>
+					<?php echo esc_html( stripslashes( $group->name ) ); ?>
 				</span>
 				<span class="ui mini input fluid" style="display:none;">
-					<input type="text" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" value="<?php esc_attr_e( $group->name ); ?>" />
+					<input type="text" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" value="<?php echo esc_attr( $group->name ); ?>" />
 				</span>
 			</td>
 			<td></td>
 			<td class="right aligned">
-				<a href="#" class="managegroups-edit ui button green mini"> <?php _e( 'Edit Group', 'mainwp' ); ?></a>
+				<a href="#" class="managegroups-edit ui button green mini"> <?php esc_html_e( 'Edit Group', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-rename ui button mini"><?php esc_html_e( 'Rename Group', 'mainwp' ); ?></a>
-				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php _e( 'Save Group Name', 'mainwp' ); ?></a>
+				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php esc_html_e( 'Save Group Name', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-delete ui button basic red mini"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 			</td>
 		</tr>
 		<tr id="mainwp-group-<?php echo esc_attr( $group->id ); ?>-sites" class="mainwp-group-sites-row">
 			<td colspan="3">
 				<div class="ui list">
-					<?php echo self::getWebsiteListContent(); ?>
+					<?php echo self::get_website_list_content(); ?>
 				</div>
 			</td>
 		</tr>
 		<?php
 	}
 
-	public static function getWebsiteListContent() {
-		$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+	public static function get_website_list_content() {
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			?>
 			<div class="item ui checkbox">
-				<input type="checkbox" name="sites" value="<?php echo esc_attr($website->id); ?>" id="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>" >
-				<label for="<?php echo MainWP_Utility::getNiceURL( $website->url ); ?>"><?php echo MainWP_Utility::getNiceURL( $website->url ); ?></label>
+				<input type="checkbox" name="sites" value="<?php echo esc_attr( $website->id ); ?>" id="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>" >
+				<label for="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>"><?php echo MainWP_Utility::get_nice_url( $website->url ); ?></label>
 			</div>
 			<?php
 		}
 		MainWP_DB::free_result( $websites );
 	}
 
-	public static function renderAllGroups() {
+	public static function render_all_groups() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage groups', 'mainwp' ) );
 
 			return;
 		}
 
-		do_action( 'mainwp-pageheader-sites', 'ManageGroups' );
+		do_action_deprecated( 'mainwp-pageheader-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pageheader_sites'  ); // @deprecated Use 'mainwp_pageheader_sites' instead.
+
+		do_action( 'mainwp_pageheader_sites', 'ManageGroups' );
+
 		?>
 
 		<div id="mainwp-manage-groups" class="ui segment">
 
 			<div id="mainwp-message-zone" style="display: none;">
-				 <div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
+				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
 			</div>
 			<table id="mainwp-groups-table" class="ui table">
-			  <thead>
-				<tr>
+				<thead>
+					<tr>
 						<th colspan="3">
 							<?php esc_html_e( 'Groups', 'mainwp' ); ?>
 						</th>
-				  </tr>
+					</tr>
 				</thead>
 				<tbody>
-					<?php echo self::getGroupListContent(); ?>
+					<?php echo self::get_group_list_content(); ?>
 					<tr class="managegroups-group-add" style="display:none;">
 						<td>
 							<span class="ui mini input fluid"><input type="text" placeholder="<?php esc_attr_e( 'Group name', 'mainwp' ); ?>" value="" /></span>
 						</td>
 						<td></td>
 						<td class="right aligned">
-							<a href="#" class="managegroups-savenew ui button green mini"><?php _e( 'Save Group', 'mainwp' ); ?></a>
+							<a href="#" class="managegroups-savenew ui button green mini"><?php esc_html_e( 'Save Group', 'mainwp' ); ?></a>
 							<a href="#" class="managegroups-cancel ui button basic red mini"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></a>
 						</td>
 					</tr>
 				</tbody>
 				<tfoot class="full-width">
-				<tr>
-				  <th colspan="3">
+					<tr>
+						<th colspan="3">
 							<input type="button" value="<?php esc_attr_e( 'Save Selection', 'mainwp' ); ?>" class="managegroups-saveAll ui right floated green button" style="display:none" />
-							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php _e( 'Create New Group', 'mainwp' ); ?></a>
-				  </th>
-				</tr>
-			  </tfoot>
+							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php esc_html_e( 'Create New Group', 'mainwp' ); ?></a>
+						</th>
+					</tr>
+				</tfoot>
 			</table>
 
 		</div>
 
-		<?php do_action( 'mainwp-pagefooter-sites', 'ManageGroups' ); ?>
+		<?php
+		do_action_deprecated( 'mainwp-pagefooter-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pagefooter_sites'  ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
+		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
+		?>
 
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 
-		jQuery( document ).on( 'click', '.managegroups-rename', function () {
+				jQuery( document ).on( 'click', '.managegroups-rename', function () {
 					var parentObj = jQuery( this ).closest( 'tr' );
 					parentObj.find( '.text' ).hide();
 					parentObj.find( '.input' ).show();
@@ -131,7 +145,7 @@ class MainWP_Manage_Groups {
 					return false;
 				} );
 
-		jQuery( document ).on( 'click', '.managegroups-save', function () {
+				jQuery( document ).on( 'click', '.managegroups-save', function () {
 					var parentObj = jQuery( this ).closest( 'tr' );
 					var groupId = parentObj.attr( 'group-id' );
 					var newName = parentObj.find( '.input input' ).val();
@@ -168,7 +182,7 @@ class MainWP_Manage_Groups {
 					var me = this;
 					var confirmed = function() {
 						var parentObj = jQuery( me ).closest( 'tr' );
-						 parentObj.addClass( 'negative' );
+						parentObj.addClass( 'negative' );
 						var groupId = parentObj.attr( 'group-id' );
 
 						var data = mainwp_secure_data( {
@@ -238,10 +252,10 @@ class MainWP_Manage_Groups {
 					var parentObj = jQuery( this ).closest( '.mainwp-group-row' );
 					var curActive = parentObj.hasClass('active') ? true : false;
 
-					jQuery('.mainwp-group-row').removeClass('active'); // remove all active
-					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row
+					jQuery('.mainwp-group-row').removeClass('active'); // remove all active.
+					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row.
 
-		  if ( curActive ) {
+					if ( curActive ) {
 						parentObj.removeClass('active');
 						parentObj.next('.mainwp-group-sites-row').removeClass('active');
 					} else {
@@ -249,20 +263,20 @@ class MainWP_Manage_Groups {
 						parentObj.next('.mainwp-group-sites-row').addClass('active');
 					}
 
-		  if ( jQuery( '.mainwp-group-row.active' ).length > 0 ) {
-			jQuery( '.managegroups-saveAll' ).show();
+					if ( jQuery( '.mainwp-group-row.active' ).length > 0 ) {
+						jQuery( '.managegroups-saveAll' ).show();
 					} else {
-			jQuery( '.managegroups-saveAll' ).hide();
+						jQuery( '.managegroups-saveAll' ).hide();
 					}
 
 					var groupId = parentObj.attr( 'group-id' );
 
-					var data = {
+					var data = mainwp_secure_data( {
 						action: 'mainwp_group_getsites',
 						groupId: groupId
-					}
+					} );
 
-		  jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
+					jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
 					jQuery.post( ajaxurl, data, function ( response ) {
 						jQuery('.managegroups-saveAll').removeAttr("disabled");
 
@@ -314,32 +328,32 @@ class MainWP_Manage_Groups {
 		<?php
 	}
 
-	public static function renameGroup() {
+	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
 				$name = $_POST['newName'];
-				if ( $name == '' ) {
+				if ( '' == $name ) {
 					$name = $group->name;
 				}
 
-				$name = self::checkGroupName( $name, $group->id );
-				// update group
-				$nr = MainWP_DB::Instance()->updateGroup( $group->id, $name );
+				$name = self::check_group_name( $name, $group->id );
+				// update group.
+				$nr = MainWP_DB::instance()->update_group( $group->id, $name );
 
-				// Reload group
-				$group = MainWP_DB::Instance()->getGroupById( $group->id );
+				// Reload group.
+				$group = MainWP_DB::instance()->get_group_by_id( $group->id );
 				die( wp_json_encode( array( 'result' => $group->name ) ) );
 			}
 		}
 	}
 
-	public static function deleteGroup() {
+	public static function delete_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				// Remove from DB
-				$nr = MainWP_DB::Instance()->removegroup( $group->id );
+				// Remove from DB.
+				$nr = MainWP_DB::instance()->removegroup( $group->id );
 
 				if ( $nr > 0 ) {
 					die( 'OK' );
@@ -349,8 +363,8 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
-	public static function checkGroupName( $groupName, $groupId = null ) {
-		if ( $groupName == '' ) {
+	public static function check_group_name( $groupName, $groupId = null ) {
+		if ( '' == $groupName ) {
 			$groupName = __( 'New group', 'mainwp' );
 		}
 
@@ -361,37 +375,37 @@ class MainWP_Manage_Groups {
 			$groupName = $matches[1];
 		}
 
-		$group = MainWP_DB::Instance()->getGroupByNameForUser( $groupName );
-		while ( $group && ( ( $groupId == null ) || ( $group->id != $groupId ) ) ) {
-			if ( $cnt == null ) {
+		$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName );
+		while ( $group && ( ( null == $groupId ) || ( $group->id != $groupId ) ) ) {
+			if ( null == $cnt ) {
 				$cnt = 1;
 			} else {
 				$cnt ++;
 			}
 
-			$group = MainWP_DB::Instance()->getGroupByNameForUser( $groupName . ' (' . $cnt . ')' );
+			$group = MainWP_DB::instance()->get_group_by_name_for_user( $groupName . ' (' . $cnt . ')' );
 		}
 
-		return $groupName . ( $cnt == null ? '' : ' (' . $cnt . ')' );
+		return $groupName . ( null == $cnt ? '' : ' (' . $cnt . ')' );
 	}
 
-	public static function addGroup() {
+	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB::Instance()->addGroup( $current_user->ID, self::checkGroupName( $_POST['newName'] ) );
+			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, self::check_group_name( $_POST['newName'] ) );
 			do_action( 'mainwp_added_new_group', $groupId );
-			$group = MainWP_DB::Instance()->getGroupById( $groupId );
-			self::createGroupItem( $group );
+			$group = MainWP_DB::instance()->get_group_by_id( $groupId );
+			self::create_group_item( $group );
 			die();
 		}
 		die( wp_json_encode( array( 'error' => 1 ) ) );
 	}
 
-	public static function getSites() {
+	public static function get_sites() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				$websites   = MainWP_DB::Instance()->getWebsitesByGroupId( $group->id );
+				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
 				$websiteIds = array();
 				if ( ! empty( $websites ) ) {
 					foreach ( $websites as $website ) {
@@ -405,16 +419,16 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
-	public static function updateGroup() {
+	public static function update_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB::Instance()->getGroupById( $_POST['groupId'] );
+			$group = MainWP_DB::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( MainWP_Utility::can_edit_group( $group ) ) {
-				MainWP_DB::Instance()->clearGroup( $group->id );
+				MainWP_DB::instance()->clear_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {
 					foreach ( $_POST['websiteIds'] as $websiteId ) {
-						$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
+						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 						if ( MainWP_Utility::can_edit_website( $website ) ) {
-							MainWP_DB::Instance()->updateGroupSite( $group->id, $website->id );
+							MainWP_DB::instance()->update_group_site( $group->id, $website->id );
 						}
 					}
 				}

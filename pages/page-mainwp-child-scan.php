@@ -1,46 +1,82 @@
 <?php
+/**
+ * MainWP Child Scan
+ */
+
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Child Scan
  */
 class MainWP_Child_Scan {
 
-	public static function getClassName() {
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'MainWP Child Scan', 'mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( self::getClassName(), 'render' ) );
+	/**
+	 * Method init_menu()
+	 *
+	 * Add Users Sub Menu "MainWP Child Scan".
+	 *
+	 * @return string MainWP Child Scan.
+	 */
+	public static function init_menu() {
+		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'MainWP Child Scan', 'mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( self::get_class_name(), 'render' ) );
 	}
 
-	public static function renderHeader( $shownPage = '' ) {
+	/**
+	 * Method render_header()
+	 *
+	 * Render Page Header.
+	 *
+	 * @param string $shownPage
+	 */
+	public static function render_header( $shownPage = '' ) {
 
 		$params = array(
 			'title' => __( 'Child Scan', 'mainwp' ),
 		);
-		MainWP_UI::render_top_header($params);
+		MainWP_UI::render_top_header( $params );
 		?>
 			<div class="wrap">
 				<div id="mainwp_wrap-inside">
 					<?php
 	}
 
-	public static function renderFooter( $shownPage ) {
+	/**
+	 * Method render_footer()
+	 *
+	 * Rnder Page Footer.
+	 *
+	 * @param mixed $shownPage
+	 */
+	public static function render_footer( $shownPage ) {
 		?>
 				</div>
 			</div>
 			<?php
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Render Page html content.
+	 */
 	public static function render() {
 
-		self::renderHeader( '' );
+		self::render_header( '' );
 		?>
-			<a class="button-primary mwp-child-scan" href="#"><?php _e( 'Scan', 'mainwp' ); ?></a>
+			<a class="button-primary mwp-child-scan" href="#"><?php esc_html_e( 'Scan', 'mainwp' ); ?></a>
 			<?php
-			$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			if ( ! $websites ) {
-				echo __( '<p>No websites to scan.</p>', 'mainwp' );
+				esc_html_e( '<p>No websites to scan.</p>', 'mainwp' );
 			} else {
 				?>
 				<table id="mwp_child_scan_childsites">
@@ -48,15 +84,15 @@ class MainWP_Child_Scan {
 					<?php
 					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 						$imgfavi = '';
-						if ( $website !== null ) {
-							if ( get_option( 'mainwp_use_favicon', 1 ) == 1 ) {
-								$favi_url = MainWP_Utility::get_favico_url( $website );
+						if ( null !== $website ) {
+							if ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) {
+								$favi_url = MainWP_Connect::get_favico_url( $website );
 								$imgfavi  = '<img src="' . $favi_url . '" width="16" height="16" style="vertical-align:middle;"/>&nbsp;';
 							}
 						}
 
 						if ( $website->sync_errors == '' ) {
-							echo '<tr siteid="' . intval($website->id) . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
+							echo '<tr siteid="' . intval( $website->id ) . '"><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td></td></tr>';
 						} else {
 							echo '<tr><td title="' . $website->url . '">' . $imgfavi . ' ' . stripslashes( $website->name ) . ':</td><td>Sync errors</td></tr>';
 						}
@@ -68,15 +104,18 @@ class MainWP_Child_Scan {
 			}
 			?>
 			<?php
-			self::renderFooter( '' );
+			self::render_footer( '' );
 	}
 
+	/**
+	 * Method scan()
+	 */
 	public static function scan() {
 		if ( ! isset( $_POST['childId'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Wrong request' ) ) );
 		}
 
-		$website = MainWP_DB::Instance()->getWebsiteById( $_POST['childId'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $_POST['childId'] );
 		if ( ! $website ) {
 			die( wp_json_encode( array( 'error' => 'Site not found' ) ) );
 		}
@@ -87,11 +126,11 @@ class MainWP_Child_Scan {
 				'search_columns' => 'user_login,display_name,user_email',
 			);
 
-			$rslt       = MainWP_Utility::fetchUrlAuthed( $website, 'search_users', $post_data );
+			$rslt       = MainWP_Connect::fetch_url_authed( $website, 'search_users', $post_data );
 			$usersfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 
 			if ( ! $usersfound ) {
-				// fallback to plugin search
+				// fallback to plugin search.
 				$post_data = array(
 					'keyword' => 'WordPress admin security',
 				);
@@ -99,7 +138,7 @@ class MainWP_Child_Scan {
 				$post_data['status'] = 'active';
 				$post_data['filter'] = true;
 
-				$rslt = MainWP_Utility::fetchUrlAuthed( $website, 'get_all_plugins', $post_data );
+				$rslt = MainWP_Connect::fetch_url_authed( $website, 'get_all_plugins', $post_data );
 
 				$pluginfound = ! ( is_array( $rslt ) && count( $rslt ) == 0 );
 

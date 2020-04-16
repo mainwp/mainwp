@@ -1,32 +1,50 @@
 <?php
 /**
  * Plugin Installer List Table class.
+ */
+
+namespace MainWP\Dashboard;
+
+// Include class-wp-list-table.php.
+if ( ! class_exists( '\WP_List_Table' ) ) {
+	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
+
+/**
+ * Plugin Installer List Table class.
  *
  * @package WordPress
  * @subpackage List_Table
  * @since 3.1.0
  * @access private
  */
-if ( ! class_exists( 'WP_List_Table' ) ) {
-	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
-}
+class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
-class MainWP_Plugins_Install_List_Table extends WP_List_Table {
+	/** @var string Direction ASC|DESC */
+	public $order = 'ASC';
 
-	public $order   = 'ASC';
+	/** @var int 0|1. */
 	public $orderby = null;
-	public $groups  = array();
+
+	/** @var array Groups Array. */
+	public $groups = array();
+
+	/** @var mixed Error messages. */
 	private $error;
 
 	/**
+	 * Method ajax_user_can()
 	 *
-	 * @return bool
+	 * Chck if the current user has the WP ability "install_plugins".
+	 *
+	 * @return boolean True|False.
 	 */
 	public function ajax_user_can() {
 		return current_user_can( 'install_plugins' );
 	}
 
 	/**
+	 * Method prepair_items()
 	 *
 	 * @global array  $tabs
 	 * @global string $tab
@@ -35,10 +53,11 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	 * @global string $term
 	 * @global string $wp_version
 	 */
+	// phpcs:ignore -- complex method
 	public function prepare_items() {
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		global $tab; // , $paged, $type, $term;
+		global $tab; // required.
 
 		wp_reset_vars( array( 'tab' ) );
 
@@ -46,7 +65,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 		$per_page = 40;
 
-		// These are the tabs which are shown on the page
+		// These are the tabs which are shown on the page.
 		$tabs = array();
 
 		if ( 'search' == $tab ) {
@@ -55,8 +74,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		$tabs['featured']    = _x( 'Featured', 'Plugin Installer' );
 		$tabs['popular']     = _x( 'Popular', 'Plugin Installer' );
 		$tabs['recommended'] = _x( 'Recommended', 'Plugin Installer' );
-		// $tabs['favorites'] = _x( 'Favorites', 'Plugin Installer' );
-		if ( $tab === 'beta' || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
+		if ( 'beta' === $tab || false !== strpos( $GLOBALS['wp_version'], '-' ) ) {
 			$tabs['beta'] = _x( 'Beta Testing', 'Plugin Installer' );
 		}
 		if ( current_user_can( 'upload_plugins' ) ) {
@@ -70,7 +88,8 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		// $nonmenu_tabs = apply_filters( 'install_plugins_nonmenu_tabs', $nonmenu_tabs );
 		// If a non-valid menu tab has been selected, And it's not a non-menu action.
 		if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
-			$tab = key( $tabs );
+
+			$tab = key( $tabs ); // phpcs:ignore -- required for custom bulk install plugins.
 		}
 
 		$args = array(
@@ -107,7 +126,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			case 'featured':
 				$args['fields']['group'] = true;
 				$this->orderby           = 'group';
-				// No break!
+				// no b r e a k!
 			case 'popular':
 			case 'new':
 			case 'beta':
@@ -148,10 +167,12 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			uasort( $this->items, array( $this, 'order_callback' ) );
 		}
 
-		$this->set_pagination_args( array(
-			'total_items'    => $api->info['results'],
-			'per_page'       => $args['per_page'],
-		) );
+		$this->set_pagination_args(
+			array(
+				'total_items'    => $api->info['results'],
+				'per_page'       => $args['per_page'],
+			)
+		);
 
 		if ( isset( $api->info['groups'] ) ) {
 			$this->groups = $api->info['groups'];
@@ -159,7 +180,9 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @access public
+	 * Method no_items()
+	 *
+	 * Check for errors.
 	 */
 	public function no_items() {
 		if ( isset( $this->error ) ) {
@@ -171,11 +194,12 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Method dislpay()
+	 *
 	 * Override the parent display() so we can provide a different container.
 	 */
 	public function display() {
 		?>
-		<?php // $this->display_tablenav('top'); ?>
 		<div id="mainwp-install-plugins-container" class="ui stackable four cards">
 				<?php $this->display_rows_or_placeholder(); ?>
 			</div>
@@ -183,16 +207,25 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			<div class="ui column grid">
 				<div class="column right aligned">
 					<div class="inline field">
-						<?php $this->display_tablenav('bottom'); ?>
+						<?php $this->display_tablenav( 'bottom' ); ?>
 					</div>
 				</div>
 			</div>
 		<?php
 	}
 
+	/**
+	 * Method display_tablenav()
+	 *
+	 * Displays the table Navigation.
+	 *
+	 * @param mixed $which
+	 *
+	 * @return mixed wp_referer_field();
+	 */
 	protected function display_tablenav( $which ) {
 
-		if ( $GLOBALS['tab'] === 'featured' ) {
+		if ( 'featured' === $GLOBALS['tab'] ) {
 			return;
 		}
 
@@ -204,6 +237,15 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		}
 	}
 
+	/**
+	 * Method pagination()
+	 *
+	 * Build the pagination menu.
+	 *
+	 * @param mixed $which
+	 *
+	 * @return mixed Pagination HTML
+	 */
 	protected function pagination( $which ) {
 		if ( empty( $this->_pagination_args ) ) {
 			return;
@@ -223,13 +265,16 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 
 		$page_links = array();
 
-		$disable_first = $disable_last = $disable_prev = $disable_next = false;
+		$disable_first        = false;
+				$disable_last = false;
+				$disable_prev = false;
+				$disable_next = false;
 
-		if ( $current == 1 ) {
+		if ( 1 == $current ) {
 			$disable_first = true;
 			$disable_prev  = true;
 		}
-		if ( $current == 2 ) {
+		if ( 2 == $current ) {
 			$disable_first = true;
 		}
 		if ( $current == $total_pages ) {
@@ -243,56 +288,35 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		if ( $disable_first ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle double left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'First page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( remove_query_arg( 'paged', $current_url ) ),
-				'<i class="angle double left icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'First page' ) . "' aria-hidden='true'>%s</a>", esc_url( remove_query_arg( 'paged', $current_url ) ), '<i class="angle double left icon"></i>' );
 		}
 
 		if ( $disable_prev ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="angle left icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Previous page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ),
-				'<i class="angle left icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Previous page' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', max( 1, $current - 1 ), $current_url ) ), '<i class="angle left icon"></i>' );
 		}
 
 		if ( $current - 1 > 0 ) {
-			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>",
-				esc_url( add_query_arg( 'paged', $current - 1, $current_url ) ),
-				$current - 1
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current - 1, $current_url ) ), $current - 1 );
 		}
 
-		$page_links[] = sprintf( "<a class='item active' href='%s'>%s</a>",
-			esc_url( add_query_arg( 'paged', $current, $current_url ) ),
-			$current
-		);
+		$page_links[] = sprintf( "<a class='item active' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current, $current_url ) ), $current );
 
 		if ( $current + 1 <= $total_pages ) {
-			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>",
-				esc_url( add_query_arg( 'paged', $current + 1, $current_url ) ),
-				$current + 1
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s'>%s</a>", esc_url( add_query_arg( 'paged', $current + 1, $current_url ) ), $current + 1 );
 		}
 
 		if ( $disable_next ) {
 			$page_links[] = '<span class="item disabled " aria-hidden="true"><i class="right angle icon"></i></span>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Next page' ) . "'>%s</a>",
-				esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ),
-				'<i class="angle right icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Next page', 'mainwp' ) . "'>%s</a>", esc_url( add_query_arg( 'paged', min( $total_pages, $current + 1 ), $current_url ) ), '<i class="angle right icon"></i>' );
 		}
 
 		if ( $disable_last ) {
 			$page_links[] = '<a class="item disabled" aria-hidden="true"><i class="right angle double icon"></i></a>';
 		} else {
-			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Last page' ) . "' aria-hidden='true'>%s</a>",
-				esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ),
-				'<i class="right angle double icon"></i>'
-			);
+			$page_links[] = sprintf( "<a class='item' href='%s' title='" . __( 'Last page', 'mainwp' ) . "' aria-hidden='true'>%s</a>", esc_url( add_query_arg( 'paged', $total_pages, $current_url ) ), '<i class="right angle double icon"></i>' );
 		}
 
 		if ( $total_pages > 1 ) {
@@ -313,12 +337,24 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @return array
+	 * Method get_columns()
+	 *
+	 * Get the collumns to display.
+	 *
+	 * @return array List of collumns to display.
 	 */
 	public function get_columns() {
 		return array();
 	}
 
+	/**
+	 * Method order_callback()
+	 *
+	 * @param mixed $plugin_a
+	 * @param mixed $plugin_b
+	 *
+	 * @return int 0|1 Default 0.
+	 */
 	private function order_callback( $plugin_a, $plugin_b ) {
 		$orderby = $this->orderby;
 		if ( ! isset( $plugin_a->$orderby, $plugin_b->$orderby ) ) {
@@ -340,7 +376,11 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * @global string $wp_version
+	 * Method display_rows()
+	 *
+	 * Build Plugin Cards.
+	 *
+	 * @return mixed Plugin cards.
 	 */
 	public function display_rows() {
 		$plugins_allowedtags = array(
@@ -375,7 +415,7 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 				$plugin = (array) $plugin;
 			}
 
-			// Display the group heading if there is one
+			// Display the group heading if there is one.
 			if ( isset( $plugin['group'] ) && $plugin['group'] != $group ) {
 				if ( isset( $this->groups[ $plugin['group'] ] ) ) {
 					$group_name = $this->groups[ $plugin['group'] ];
@@ -386,13 +426,13 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 					$group_name = $plugin['group'];
 				}
 
-				// Starting a new group, close off the divs of the last one
+				// Starting a new group, close off the divs of the last one.
 				if ( ! empty( $group ) ) {
 					echo '</div></div>';
 				}
 
 				echo '<div class="plugin-group"><h3>' . esc_html( $group_name ) . '</h3>';
-				// needs an extra wrapping div for nth-child selectors to work
+				// Needs an extra wrapping div for nth-child selectors to work.
 				echo '<div class="plugin-items">';
 
 				$group = $plugin['group'];
@@ -400,10 +440,10 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			$title = wp_kses( $plugin['name'], $plugins_allowedtags );
 
 			// Remove any HTML from the description.
-			$description = strip_tags( $plugin['short_description'] );
+			$description = wp_strip_all_tags( $plugin['short_description'] );
 			$version     = wp_kses( $plugin['version'], $plugins_allowedtags );
 
-			$name = strip_tags( $title . ' ' . $version );
+			$name = wp_strip_all_tags( $title . ' ' . $version );
 
 			$author = wp_kses( $plugin['author'], $plugins_allowedtags );
 			if ( ! empty( $author ) ) {
@@ -428,15 +468,15 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 			<div class="card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
 				<?php do_action( 'mainwp_install_plugin_card_top' ); ?>
 			<div class="content">
-			  <a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
-			  <div class="header">
+			<a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
+			<div class="header">
 				<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
 					</div>
-			  <div class="meta">
-						<?php echo $author; // html content ?>
+			<div class="meta">
+						<?php echo $author; // html content. ?>
 					</div>
-			  <div class="description">
-				<?php echo strip_tags( $description ); // html content ?>
+			<div class="description">
+				<?php echo wp_strip_all_tags( $description ); // html content. ?>
 				</div>
 					</div>
 				<div class="extra content">
@@ -444,18 +484,20 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 						<strong><?php esc_html_e( 'Last Updated: ', 'mainwp' ); ?></strong><?php printf( __( '%s ago', 'mainwp' ), human_time_diff( $last_updated_timestamp ) ); ?>
 						</span>
 					<?php
-					wp_star_rating( array(
-						'rating' => $plugin['rating'],
-						'type'   => 'percent',
-						'number' => $plugin['num_ratings'],
-					) );
+					wp_star_rating(
+						array(
+							'rating' => $plugin['rating'],
+							'type'   => 'percent',
+							'number' => $plugin['num_ratings'],
+						)
+					);
 					?>
 					</div>
 					<div class="extra content">
 						<a href="<?php echo esc_attr( $details_link ); ?>" class="ui mini button thickbox open-plugin-details-modal"><?php echo esc_html( 'Plugin Details' ); ?></a>
 						<div class="ui radio checkbox right floated">
-						  <input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class ( $plugin['slug'] ); ?>">
-						  <label><?php echo esc_html( 'Install this Plugin', 'mainwp' ); ?></label>
+						<input name="install-plugin" type="radio" id="install-plugin-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
+						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
 						</div>
 					</div>
 				<?php do_action( 'mainwp_install_plugin_card_bottom', $plugin ); ?>
@@ -464,10 +506,12 @@ class MainWP_Plugins_Install_List_Table extends WP_List_Table {
 		}
 		?>
 		<script type="text/javascript">
-			jQuery( '.card .ui.star.rating' ).rating();
+			jQuery( document ).ready( function() {
+				jQuery( '.card .ui.star.rating' ).rating();
+			} );
 		</script>
 		<?php
-		// Close off the group divs of the last one
+		// Close off the group divs of the last one.
 		if ( ! empty( $group ) ) {
 			echo '</div></div>';
 		}

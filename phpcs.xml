@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="WordPress Coding Standards" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="MainWP Dashboard" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
 
-	<description>The Coding standard for the WordPress Coding Standards itself.</description>
+	<description>The Coding standard for the MainWP Dashboard.</description>
 
 	<file>.</file>
 
@@ -14,15 +14,28 @@
 	<exclude-pattern>*/bin/*</exclude-pattern>
 	<exclude-pattern>*/.github/*</exclude-pattern>
 	<exclude-pattern>*/tests/*</exclude-pattern>
-	<!-- Exclude Composer vendor directory. -->
-	<exclude-pattern>*/vendor/*</exclude-pattern>
 
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName"/>
 		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition"/>
+		
+		<!-- Disable Nonce verification due to large number of false positives. -->
+		<exclude name="WordPress.Security.NonceVerification"/>
+		
+		<!-- Disable Escaping output check due to large number of false positives. -->
+		<exclude name="WordPress.Security.EscapeOutput"/>
+		
+		<!-- Disable Strict comparison check. Not applicable in the mojority of cases. -->
+		<exclude name="WordPress.PHP.StrictComparisons"/>
+                
+                <!-- Disable Strict comparison in array check. Not applicable in the mojority of cases. -->               
+                <exclude name="WordPress.PHP.StrictInArray"/>
+		
+		<!-- Disable Misuse of WP internationalization function check. -->               
+                <exclude name="WordPress.WP.I18n"/>                
 	</rule>
-
+	
 	<!-- Enforce PSR1 compatible namespaces. -->
 	<rule ref="PSR1.Classes.ClassDeclaration"/>
 

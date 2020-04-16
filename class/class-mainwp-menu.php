@@ -1,25 +1,36 @@
 <?php
 /**
  * MainWP Main Menu
+ *
+ * Build & Render MainWP Main Menu.
+ */
+
+namespace MainWP\Dashboard;
+
+/**
+ * MainWP Main Menu
  */
 class MainWP_Menu {
 
+	/**
+	 * Method __construct()
+	 *
+	 * Define MainWP Main Menu Items.
+	 */
 	public function __construct() {
 
-		// use the hook mainwp_main_menu_disable_menu_items to disable menu items
+		// Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
 		global $_mainwp_disable_menus_items;
-		if ( $_mainwp_disable_menus_items === null ) {
-			// init some disable menu items, default is false
+
+		// Init disable menu items, default is false.
+		if ( null === $_mainwp_disable_menus_items ) {
 			$_mainwp_disable_menus_items = array(
-				// compatible with old hooks
+				// Compatible with old hooks.
 				'level_1'    => array(
 					'not_set_this_level' => true,
-					// 'mainwp_tab' => false, // not hide this menu
-					// 'Extensions'       => false,
-					// 'childsites_menu'  => false,
 				),
 				'level_2'    => array(
-					// 'mainwp_tab' => false,  // not hide this menu
+					// 'mainwp_tab' - Do not hide this menu.
 					'UpdatesManage'      => false,
 					'managesites'        => false,
 					'PostBulkManage'     => false,
@@ -32,18 +43,30 @@ class MainWP_Menu {
 					'Extensions'         => false,
 					'ServerInformation'  => false,
 				),
-				// compatible with old hooks
+				// Compatible with old hooks.
 				'level_3'    => array(),
 			);
 		}
 	}
 
+	/**
+	 * Method init_subpages_left_menu
+	 *
+	 * Build left menu subpages array.
+	 *
+	 * @param array  $subPages Array of SubPages.
+	 * @param array  $initSubpage Initial SubPage Array.
+	 * @param string $parentKey Parent Menu Slug.
+	 * @param mixed  $slug SubPage Slug.
+	 *
+	 * @return array $initSubpage[] Final SubPages Array.
+	 */
 	public static function init_subpages_left_menu( $subPages, &$initSubpage, $parentKey, $slug ) {
 		if ( ! is_array( $subPages ) ) {
 			return;
 		}
 		foreach ( $subPages as $subPage ) {
-			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && $subPage['menu_hidden'] != true ) ) {
+			if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true != $subPage['menu_hidden'] ) ) {
 				$_item = array(
 					'title'      => $subPage['title'],
 					'parent_key' => $parentKey,
@@ -52,7 +75,7 @@ class MainWP_Menu {
 					'right'      => '',
 				);
 
-				// to support check right to open menu for sometime
+				// To support check right to open menu for sometime.
 				if ( isset( $subPage['item_slug'] ) ) {
 					$_item['item_slug'] = $subPage['item_slug'];
 				}
@@ -62,9 +85,21 @@ class MainWP_Menu {
 		}
 	}
 
+	/**
+	 * Method is_disable_menu_item
+	 *
+	 * Check if $_mainwp_disable_menus_items contains any menu items to hide.
+	 *
+	 * @param mixed $level The level the menu item is on.
+	 * @param mixed $item The menu items meta data.
+	 *
+	 * @return booleen True|False, default is False.
+	 */
 	public static function is_disable_menu_item( $level, $item ) {
 
+		// Grab disable menus array.
 		global $_mainwp_disable_menus_items;
+
 		$_level = 'level_' . $level;
 		if ( is_array( $_mainwp_disable_menus_items ) && isset( $_mainwp_disable_menus_items[ $_level ] ) && isset( $_mainwp_disable_menus_items[ $_level ][ $item ] ) ) {
 			if ( $_mainwp_disable_menus_items[ $_level ][ $item ] ) {
@@ -77,25 +112,35 @@ class MainWP_Menu {
 		return false;
 	}
 
+	/**
+	 * Method add_left_menu
+	 *
+	 * Build Top Level Menu
+	 *
+	 * @param array   $params Menu Item parameters.
+	 * @param integer $level Menu Item Level
+	 *
+	 * @return array $mainwp_leftmenu[], $_mainwp_menu_active_slugs[].
+	 */
 	public static function add_left_menu( $params = array(), $level = 1 ) {
 
 		if ( empty( $params ) ) {
 			return;
 		}
 
-		if ( $level != 1 && $level != 2 ) {
+		if ( 1 != $level && 2 != $level ) {
 			$level = 1;
 		}
 
 		$title = $params['title'];
 
 		if ( 1 === $level ) {
-			$parent_key = 'mainwp_tab'; // forced value
+			$parent_key = 'mainwp_tab'; // forced value.
 		} else {
 			if ( isset( $params['parent_key'] ) ) {
 				$parent_key = $params['parent_key'];
 			} else {
-				$parent_key = 'mainwp_tab'; // forced value
+				$parent_key = 'mainwp_tab'; // forced value.
 			}
 		}
 
@@ -106,21 +151,26 @@ class MainWP_Menu {
 
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 
-		$title = esc_html($title);
+		$title = esc_html( $title );
 
 		if ( 1 == $level ) {
 			$mainwp_leftmenu[ $parent_key ][] = array( $title, $slug, $href, $id );
 			if ( ! empty( $slug ) ) {
-				$_mainwp_menu_active_slugs[ $slug ] = $slug; // to get active menu
+				$_mainwp_menu_active_slugs[ $slug ] = $slug; // to get active menu.
 			}
 		} elseif ( 2 == $level ) {
 			$mainwp_sub_leftmenu[ $parent_key ][] = array( $title, $href, $right, $id );
 			if ( ! empty( $slug ) ) {
-				$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu
+				$_mainwp_menu_active_slugs[ $slug ] = $parent_key; // to get active menu.
 			}
 		}
 	}
 
+	/**
+	 * Method render_left_menu
+	 *
+	 * Build Top Level Main Menu HTML & Render.
+	 */
 	public static function render_left_menu() {
 
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs, $plugin_page;
@@ -147,7 +197,7 @@ class MainWP_Menu {
 							$title    = wptexturize( $item[0] );
 							$item_key = $item[1];
 							$href     = $item[2];
-							$item_id  = isset($item[3]) ? $item[3] : '';
+							$item_id  = isset( $item[3] ) ? $item[3] : '';
 
 							$has_sub = true;
 							if ( ! isset( $mainwp_sub_leftmenu[ $item_key ] ) || empty( $mainwp_sub_leftmenu[ $item_key ] ) ) {
@@ -155,7 +205,7 @@ class MainWP_Menu {
 							}
 							$active_item = '';
 							$set_actived = false;
-							// to fix active menu
+							// to fix active menu.
 							if ( ! $set_actived ) {
 								if ( isset( $_mainwp_menu_active_slugs[ $plugin_page ] ) ) {
 									if ( $item_key == $_mainwp_menu_active_slugs[ $plugin_page ] ) {
@@ -165,7 +215,7 @@ class MainWP_Menu {
 								}
 							}
 
-							$id_attr = ! empty($item_id) ? 'id="' . esc_html($item_id) . '"' : '';
+							$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
 							if ( $has_sub ) {
 								echo '<div ' . $id_attr . " class=\"item $active_item\">";
@@ -189,48 +239,47 @@ class MainWP_Menu {
 
 					$link = array(
 						'url'  => $go_back_wpadmin_url,
-						'text' => __('Go to WP Admin', 'mainwp'),
+						'text' => __( 'Go to WP Admin', 'mainwp' ),
 						'tip'  => __( 'Click to go back to the site WP Admin area.', 'mainwp' ),
 					);
 
-					$go_back_link = apply_filters('mainwp_go_back_wpadmin_link', $link );
-					if ( is_array($go_back_link) ) {
-						if ( isset($go_back_link['url']) ) {
+					$go_back_link = apply_filters( 'mainwp_go_back_wpadmin_link', $link );
+					if ( is_array( $go_back_link ) ) {
+						if ( isset( $go_back_link['url'] ) ) {
 							$link['url'] = $go_back_link['url'];
 						}
-						if ( isset($go_back_link['text']) ) {
+						if ( isset( $go_back_link['text'] ) ) {
 							$link['text'] = $go_back_link['text'];
 						}
-						if ( isset($go_back_link['tip']) ) {
+						if ( isset( $go_back_link['tip'] ) ) {
 							$link['tip'] = $go_back_link['tip'];
 						}
 					}
-
 					?>
-					 <div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
-						 <a href="<?php echo esc_html($link['url']); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html($link['tip']); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html($link['text']); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php _e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
-					 </div>
+					<div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
+						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="WordPress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a>
+					</div>
 					<div class="hamburger">
 						<span class="hamburger-bun"></span>
 						<span class="hamburger-patty"></span>
 						<span class="hamburger-bun"></span>
-					 </div>
-				 </div>
+					</div>
+				</div>
 					<?php do_action( 'after_mainwp_menu' ); ?>
 			</div>
 		</div>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					// click on menu with-sub icon
+					// click on menu with-sub icon.
 					jQuery( '.mainwp-nav-menu a.title.with-sub .icon' ).on( "click", function ( event ) {
 						var pr = jQuery( this ).closest( '.item' );
 						var title = jQuery( this ).closest( '.title' );
 						var active = jQuery( title ).hasClass( 'active' );
 
-						// remove current active
+						// remove current active.
 						mainwp_menu_collapse();
 
-						// if current menu item are not active then set it active
+						// if current menu item are not active then set it active.
 						if ( !active ) {
 							jQuery( title ).addClass( 'active' );
 							jQuery( pr ).find('.content.menu').addClass( 'active' );
@@ -243,10 +292,10 @@ class MainWP_Menu {
 						var pr = jQuery( this ).closest( '.item' );
 						var active = jQuery( this ).hasClass( 'active' );
 
-						// remove current active
+						// remove current active.
 						mainwp_menu_collapse();
 
-						// set active before go to the page
+						// set active before go to the page.
 						if ( !active ) {
 							jQuery( this ).addClass( 'active' );
 							jQuery( pr ).find('.content.menu').addClass( 'active' );
@@ -255,7 +304,7 @@ class MainWP_Menu {
 					} );
 
 					mainwp_menu_collapse = function() {
-						// remove current active
+						// remove current active.
 						jQuery( '.mainwp-nav-menu a.title.active').removeClass('active');
 						jQuery( '.mainwp-nav-menu .menu .item').removeClass('active');
 						jQuery( '.mainwp-nav-menu .content.menu.active').removeClass('active');
@@ -265,6 +314,13 @@ class MainWP_Menu {
 		<?php
 	}
 
+	/**
+	 * Method render_sub_item
+	 *
+	 * Grab all submenu items and attatch to Main Menu.
+	 *
+	 * @param mixed $parent_key
+	 */
 	public static function render_sub_item( $parent_key ) {
 		if ( empty( $parent_key ) ) {
 			return;
@@ -289,7 +345,7 @@ class MainWP_Menu {
 			}
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_can( $right_group, $right ) ) ) {
 				?>
-			<a class="item" href="<?php echo esc_url($href); ?>"><?php echo esc_html($title); ?></a>
+			<a class="item" href="<?php echo esc_url( $href ); ?>"><?php echo esc_html( $title ); ?></a>
 				<?php
 			}
 		}

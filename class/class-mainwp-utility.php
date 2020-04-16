@@ -1,16 +1,57 @@
 <?php
 /**
+ * MainWP Utility Helper
+ *
+ * Custom curl functions and PHP filesystem functions.
+ *
+ * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+ */
+
+namespace MainWP\Dashboard;
+
+/**
  * MainWP Utility
  */
 class MainWP_Utility {
 
 	public static $enabled_wp_seo = null;
 
-	public static function startsWith( $haystack, $needle ) {
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
+	public static function get_class_name() {
+		return __CLASS__;
+	}
+
+	/**
+	 * Method starts_with()
+	 *
+	 * Start of Stack Trace.
+	 *
+	 * @param mixed $haystack The full stack.
+	 * @param mixed $needle The function that is throwing the error.
+	 *
+	 * @return mixed Needle in the Haystack.
+	 */
+	public static function starts_with( $haystack, $needle ) {
 		return ! strncmp( $haystack, $needle, strlen( $needle ) );
 	}
 
-	public static function endsWith( $haystack, $needle ) {
+	/**
+	 * Method ends_with()
+	 *
+	 * End of Stack Trace.
+	 *
+	 * @param mixed $haystack
+	 * @param mixed $needle
+	 *
+	 * @return mixed True|substr( $haystack, - $length ) === $needle.
+	 */
+	public static function ends_with( $haystack, $needle ) {
 		$length = strlen( $needle );
 		if ( 0 === $length ) {
 			return true;
@@ -19,14 +60,24 @@ class MainWP_Utility {
 		return ( substr( $haystack, - $length ) === $needle );
 	}
 
-	public static function getNiceURL( $pUrl, $showHttp = false ) {
+	/**
+	 * Method get_nice_url()
+	 *
+	 * Grab url.
+	 *
+	 * @param mixed   $pUrl
+	 * @param boolean $showHttp
+	 *
+	 * @return string $url.
+	 */
+	public static function get_nice_url( $pUrl, $showHttp = false ) {
 		$url = $pUrl;
 
-		if ( self::startsWith( $url, 'http://' ) ) {
+		if ( self::starts_with( $url, 'http://' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 7 );
 			}
-		} elseif ( self::startsWith( $pUrl, 'https://' ) ) {
+		} elseif ( self::starts_with( $pUrl, 'https://' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 8 );
 			}
@@ -36,7 +87,7 @@ class MainWP_Utility {
 			}
 		}
 
-		if ( self::endsWith( $url, '/' ) ) {
+		if ( self::ends_with( $url, '/' ) ) {
 			if ( ! $showHttp ) {
 				$url = substr( $url, 0, strlen( $url ) - 1 );
 			}
@@ -47,18 +98,14 @@ class MainWP_Utility {
 		return $url;
 	}
 
-	public static function limitString( $pInput, $pMax = 500 ) {
-		$output = strip_tags( $pInput );
-		if ( strlen( $output ) > $pMax ) {
-			// truncate string
-			$outputCut = substr( $output, 0, $pMax );
-			// make sure it ends in a word so assassinate doesn't become ass...
-			$output = substr( $outputCut, 0, strrpos( $outputCut, ' ' ) ) . '...';
-		}
-		echo $output;
-	}
-
-	public static function isAdmin() {
+	/**
+	 * Method is_admin()
+	 *
+	 * Check if current user is an administrator.
+	 *
+	 * @return boolean True|False.
+	 */
+	public static function is_admin() {
 		global $current_user;
 		if ( 0 === $current_user->ID ) {
 			return false;
@@ -71,360 +118,29 @@ class MainWP_Utility {
 		return false;
 	}
 
-	public static function isWebsiteAvailable( $website ) {
-		$http_user         = null;
-		$http_pass         = null;
-		$sslVersion        = null;
-		$verifyCertificate = null;
-		$forceUseIPv4      = null;
-		if ( is_object( $website ) && isset( $website->url ) ) {
-			$url               = $website->url;
-			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
-			$forceUseIPv4      = $website->force_use_ipv4;
-			$http_user         = $website->http_user;
-			$http_pass         = $website->http_pass;
-			$sslVersion        = $website->ssl_version;
-		} else {
-			$url = $website;
-		}
-
-		if ( ! self::isDomainValid( $url ) ) {
-			return false;
-		}
-
-		return self::tryVisit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
-	}
-
-	private static function isDomainValid( $url ) {
-		// check, if a valid url is provided
+	/**
+	 * Method is_domain_valid()
+	 *
+	 * Check $url against FILTER_VALIDATE_URL.
+	 *
+	 * @return boolean True|False.
+	 */
+	private static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
 
-	public static function tryVisit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
 
-		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		$postdata = array( 'test' => 'yes' );
-
-		$ch = curl_init();
-
-		// cURL offers really easy proxy support.
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-
-		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-			$http_pass = stripslashes($http_pass); // to fix
-			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-		}
-
-		$ssl_verifyhost = false;
-		if ( null !== $verifyCertificate ) {
-			if ( 1 === $verifyCertificate ) {
-				$ssl_verifyhost = true;
-			} elseif ( 2 === $verifyCertificate ) { // use global setting
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
-			}
-		} else {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-				$ssl_verifyhost = true;
-			}
-		}
-
-		if ( $ssl_verifyhost ) {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		}
-
-		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
-
-		$force_use_ipv4 = false;
-		if ( null !== $forceUseIPv4 ) {
-			if ( 1 === $forceUseIPv4 ) {
-				$force_use_ipv4 = true;
-			} elseif ( 2 === $forceUseIPv4 ) { // use global setting
-				if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-					$force_use_ipv4 = true;
-				}
-			}
-		} else {
-			if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-				$force_use_ipv4 = true;
-			}
-		}
-
-		if ( $force_use_ipv4 ) {
-			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-			}
-		}
-
-		$disabled_functions = ini_get( 'disable_functions' );
-		if ( empty( $disabled_functions ) || ( stristr( $disabled_functions, 'curl_multi_exec' ) === false ) ) {
-			$mh = curl_multi_init();
-			@curl_multi_add_handle( $mh, $ch );
-
-			do {
-				curl_multi_exec( $mh, $running ); // Execute handlers
-				while ( $info = curl_multi_info_read( $mh ) ) {
-					$data        = curl_multi_getcontent( $info['handle'] );
-					$err         = curl_error( $info['handle'] );
-					$http_status = curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
-					$errno       = curl_errno( $info['handle'] );
-					$realurl     = curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
-
-					curl_multi_remove_handle( $mh, $info['handle'] );
-				}
-				usleep( 10000 );
-			} while ( $running > 0 );
-
-			curl_multi_close( $mh );
-		} else {
-			$data        = curl_exec( $ch );
-			$err         = curl_error( $ch );
-			$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-			$errno       = curl_errno( $ch );
-			$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
-			curl_close( $ch );
-		}
-
-		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
-
-		$host   = parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
-		$ip     = false;
-		$target = false;
-
-		$dnsRecord = @dns_get_record( $host );
-		MainWP_Logger::Instance()->debug( ' :: tryVisit :: [dnsRecord=' . print_r( $dnsRecord, 1 ) . ']' );
-		if ( false === $dnsRecord ) {
-			$data = false;
-		} elseif ( is_array( $dnsRecord ) ) {
-			if ( ! isset( $dnsRecord['ip'] ) ) {
-				foreach ( $dnsRecord as $dnsRec ) {
-					if ( isset( $dnsRec['ip'] ) ) {
-						$ip = $dnsRec['ip'];
-						break;
-					}
-				}
-			} else {
-				$ip = $dnsRecord['ip'];
-			}
-
-			$found = false;
-			if ( ! isset( $dnsRecord['host'] ) ) {
-				foreach ( $dnsRecord as $dnsRec ) {
-					if ( $dnsRec['host'] == $host ) {
-						if ( 'CNAME' === $dnsRec['type'] ) {
-							$target = $dnsRec['target'];
-						}
-						$found = true;
-						break;
-					}
-				}
-			} else {
-				$found = ( $dnsRecord['host'] == $host );
-				if ( 'CNAME' === $dnsRecord['type'] ) {
-					$target = $dnsRecord['target'];
-				}
-			}
-
-			if ( ! $found ) {
-				$data = false;
-			}
-		}
-
-		if ( false === $ip ) {
-			$ip = gethostbynamel( $host );
-		}
-		if ( ( false !== $target ) && ( $target != $host ) ) {
-			$host .= ' (CNAME: ' . $target . ')';
-		}
-
-		$out = array(
-			'host'           => $host,
-			'httpCode'       => $http_status,
-			'error'          => ( '' == $err && false === $data ? 'Invalid host.' : $err ),
-			'httpCodeString' => self::getHttpStatusErrorString( $http_status ),
-		);
-		if ( false !== $ip ) {
-			$out['ip'] = $ip;
-		}
-
-		return $out;
-	}
-
-	protected static function getHttpStatusErrorString( $httpCode ) {
-		if ( 100 === $httpCode ) {
-			return 'Continue';
-		}
-		if ( 101 === $httpCode ) {
-			return 'Switching Protocols';
-		}
-		if ( 200 === $httpCode ) {
-			return 'OK';
-		}
-		if ( 201 === $httpCode ) {
-			return 'Created';
-		}
-		if ( 202 === $httpCode ) {
-			return 'Accepted';
-		}
-		if ( 203 === $httpCode ) {
-			return 'Non-Authoritative Information';
-		}
-		if ( 204 === $httpCode ) {
-			return 'No Content';
-		}
-		if ( 205 === $httpCode ) {
-			return 'Reset Content';
-		}
-		if ( 206 === $httpCode ) {
-			return 'Partial Content';
-		}
-		if ( 300 === $httpCode ) {
-			return 'Multiple Choices';
-		}
-		if ( 301 === $httpCode ) {
-			return 'Moved Permanently';
-		}
-		if ( 302 === $httpCode ) {
-			return 'Found';
-		}
-		if ( 303 === $httpCode ) {
-			return 'See Other';
-		}
-		if ( 304 === $httpCode ) {
-			return 'Not Modified';
-		}
-		if ( 305 === $httpCode ) {
-			return 'Use Proxy';
-		}
-		if ( 306 === $httpCode ) {
-			return '(Unused)';
-		}
-		if ( 307 === $httpCode ) {
-			return 'Temporary Redirect';
-		}
-		if ( 400 === $httpCode ) {
-			return 'Bad Request';
-		}
-		if ( 401 === $httpCode ) {
-			return 'Unauthorized';
-		}
-		if ( 402 === $httpCode ) {
-			return 'Payment Required';
-		}
-		if ( 403 === $httpCode ) {
-			return 'Forbidden';
-		}
-		if ( 404 === $httpCode ) {
-			return 'Not Found';
-		}
-		if ( 405 === $httpCode ) {
-			return 'Method Not Allowed';
-		}
-		if ( 406 === $httpCode ) {
-			return 'Not Acceptable';
-		}
-		if ( 407 === $httpCode ) {
-			return 'Proxy Authentication Required';
-		}
-		if ( 408 === $httpCode ) {
-			return 'Request Timeout';
-		}
-		if ( 409 === $httpCode ) {
-			return 'Conflict';
-		}
-		if ( 410 === $httpCode ) {
-			return 'Gone';
-		}
-		if ( 411 === $httpCode ) {
-			return 'Length Required';
-		}
-		if ( 412 === $httpCode ) {
-			return 'Precondition Failed';
-		}
-		if ( 413 === $httpCode ) {
-			return 'Request Entity Too Large';
-		}
-		if ( 414 === $httpCode ) {
-			return 'Request-URI Too Long';
-		}
-		if ( 415 === $httpCode ) {
-			return 'Unsupported Media Type';
-		}
-		if ( 416 === $httpCode ) {
-			return 'Requested Range Not Satisfiable';
-		}
-		if ( 407 === $httpCode ) {
-			return 'Expectation Failed';
-		}
-		if ( 500 === $httpCode ) {
-			return 'Internal Server Error';
-		}
-		if ( 501 === $httpCode ) {
-			return 'Not Implemented';
-		}
-		if ( 502 === $httpCode ) {
-			return 'Bad Gateway';
-		}
-		if ( 503 === $httpCode ) {
-			return 'Service Unavailable';
-		}
-		if ( 504 === $httpCode ) {
-			return 'Gateway Timeout';
-		}
-		if ( 505 === $httpCode ) {
-			return 'HTTP Version Not Supported';
-		}
-
-		return null;
-	}
-
-	static function check_ignored_http_code( $value ) {
-		if ( 200 === $value ) {
-			return true;
-		}
-
-		$ignored_code = get_option( 'mainwp_ignore_HTTP_response_status', '' );
-		$ignored_code = trim( $ignored_code );
-		if ( ! empty( $ignored_code ) ) {
-			$ignored_code = explode( ',', $ignored_code );
-			foreach ( $ignored_code as $code ) {
-				$code = trim( $code );
-				if ( $value == $code ) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
+	/**
+	 * Method utf8ize()
+	 *
+	 * Convert content into utf8 encoding.
+	 *
+	 * @param mixed $mixed
+	 *
+	 * @return mixed $mixed
+	 */
 	public static function utf8ize( $mixed ) {
-		if ( is_array($mixed) ) {
+		if ( is_array( $mixed ) ) {
 			foreach ( $mixed as $key => $value ) {
 				$mixed[ $key ] = self::utf8ize( $value );
 			}
@@ -436,6 +152,15 @@ class MainWP_Utility {
 		return $mixed;
 	}
 
+	/**
+	 * Method safe_json_encode()
+	 *
+	 * @param mixed   $value String to encode.
+	 * @param integer $options Options for encoding.
+	 * @param integer $depth Depth to encode to.
+	 *
+	 * @return mixed $encoded Encoded String.
+	 */
 	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
 		$encoded = wp_json_encode( $value, $options, $depth );
 		if ( false === $encoded && $value && json_last_error() == JSON_ERROR_UTF8 ) {
@@ -444,58 +169,57 @@ class MainWP_Utility {
 		return $encoded;
 	}
 
-	static function activated_primary_backup_plugin( $what, $website ) {
+	/**
+	 * Method activated_primary_backup_plugin()
+	 *
+	 * Chek which primary backup plugin is being used.
+	 *
+	 * @param mixed $what Which backup plugin is being use.
+	 * @param mixed $website Website array of information.
+	 *
+	 * @return boolean True|False.
+	 */
+	public static function activated_primary_backup_plugin( $what, $website ) {
 		$plugins = json_decode( $website->plugins, 1 );
 		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
 			return false;
 		}
 
-		$installed = false;
-		switch ( $what ) {
-			case 'backupbuddy':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupbuddy/backupbuddy.php' === strtolower( $plugin['slug'] ) ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'backupwp':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'backupwordpress/backupwordpress.php' === $plugin['slug'] ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'backwpup':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 0 === strcmp( $plugin['slug'], 'backwpup/backwpup.php' ) ) || 0 === strcmp( $plugin['slug'], 'backwpup-pro/backwpup.php' ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
-			case 'updraftplus':
-				foreach ( $plugins as $plugin ) {
-					if ( ( 'updraftplus/updraftplus.php' === $plugin['slug'] ) ) {
-						if ( $plugin['active'] ) {
-							$installed = true;
-						}
-						break;
-					}
-				}
-				break;
+		$checks = array(
+			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
+			'backupwordpress' => 'backupwordpress/backupwordpress.php',
+			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus'     => 'updraftplus/updraftplus.php',
+
+		);
+
+		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
+
+		if ( empty( $slug ) ) {
+			return false;
 		}
+
+		$installed = false;
+
+		foreach ( $plugins as $plugin ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+				if ( $plugin['active'] ) {
+					$installed = true;
+				}
+				break;
+			}
+		}
+
 		return $installed;
 	}
 
+	/**
+	 * Method get_primary_backup()
+	 *
+	 * Check if using Legacy Backup Solution.
+	 *
+	 * @return mixed False|$enable_legacy_backup.
+	 */
 	public static function get_primary_backup() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		if ( ! $enable_legacy_backup ) {
@@ -504,7 +228,16 @@ class MainWP_Utility {
 		return false;
 	}
 
-	static function getNotificationEmail( $user = null ) {
+	/**
+	 * Method get_notification_email()
+	 *
+	 * Check if user wants to recieve MainWP Notification Emails.
+	 *
+	 * @param null $user User Email Address.
+	 *
+	 * @return mixed null|User Email Address.
+	 */
+	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
 			global $current_user;
 			$user = $current_user;
@@ -518,7 +251,7 @@ class MainWP_Utility {
 			return null;
 		}
 
-		$userExt = MainWP_DB::Instance()->getUserExtension();
+		$userExt = MainWP_DB::instance()->get_user_extension();
 		if ( '' != $userExt->user_email ) {
 			return $userExt->user_email;
 		}
@@ -526,1402 +259,28 @@ class MainWP_Utility {
 		return $user->user_email;
 	}
 
-	/*
-	 * $website: Expected object ($website->id, $website->url, ... returned by MainWP_DB)
-	 * $what: What function needs to be called - defined in the mainwpplugin
-	 * $params: (Optional) array(key => value, key => value);
-	 */
 
-	static function getPostDataAuthed( &$website, $what, $params = null ) {
-		if ( $website && '' != $what ) {
-			$data             = array();
-			$data['user']     = $website->adminname;
-			$data['function'] = $what;
-			$data['nonce']    = rand( 0, 9999 );
-			if ( null != $params ) {
-				$data = array_merge( $data, $params );
-			}
-
-			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
-				$data['nossl'] = 0;
-				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) );
-			} else {
-				$data['nossl'] = 1;
-				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
-			}
-			$data['mainwpsignature'] = base64_encode( $signature );
-
-			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
-			if ( 5 !== $recent_number ) {
-				$data['recent_number'] = $recent_number;
-			}
-
-			global $current_user;
-
-			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined('WP_CLI') || false === WP_CLI ) ) {
-				if ( is_object( $current_user ) && property_exists( $current_user, 'ID' ) && $current_user->ID ) {
-					$alter_user = apply_filters('mainwp_alter_login_user', false, $website->id);
-					if ( ! empty( $alter_user ) ) {
-						$data['alt_user'] = rawurlencode($alter_user);
-					}
-				}
-			}
-
-			return http_build_query( $data, '', '&' );
-		}
-
-		return null;
-	}
-
-	static function getGetDataAuthed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
-		$params = array();
-		if ( $website && '' != $paramValue ) {
-			$nonce = rand( 0, 9999 );
-			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
-				$nossl = 0;
-				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) );
-			} else {
-				$nossl     = 1;
-				$signature = md5( $paramValue . $nonce . $website->nosslkey );
-			}
-			$signature = base64_encode( $signature );
-
-			$params = array(
-				'login_required'     => 1,
-				'user'               => rawurlencode( $website->adminname ),
-				'mainwpsignature'    => rawurlencode( $signature ),
-				'nonce'              => $nonce,
-				'nossl'              => $nossl,
-				$paramName           => rawurlencode( $paramValue ),
-			);
-
-			global $current_user;
-			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined('WP_CLI') || false === WP_CLI ) ) {
-				if ( $current_user && $current_user->ID ) {
-					$alter_user = apply_filters('mainwp_alter_login_user', false, $current_user->ID, $website->id);
-					if ( ! empty( $alter_user ) ) {
-						$params['alt_user'] = rawurlencode($alter_user);
-					}
-				}
-			}
-		}
-
-		if ( $asArray ) {
-			return $params;
-		}
-
-		$url  = ( isset( $website->url ) && '' != $website->url ? $website->url : $website->siteurl );
-		$url .= ( substr( $url, - 1 ) != '/' ? '/' : '' );
-		$url .= '?';
-
-		foreach ( $params as $key => $value ) {
-			$url .= $key . '=' . $value . '&';
-		}
-
-		return rtrim( $url, '&' );
-	}
-
-	/*
-	 * $url: String
-	 * $admin: admin username
-	 * $what: What function needs to be called - defined in the mainwpplugin
-	 * $params: (Optional) array(key => value, key => value);
-	 */
-
-	static function getPostDataNotAuthed( $url, $admin, $what, $params = null ) {
-		if ( '' != $url && '' != $admin && '' != $what ) {
-			$data             = array();
-			$data['user']     = $admin;
-			$data['function'] = $what;
-			if ( null != $params ) {
-				$data = array_merge( $data, $params );
-			}
-
-			return http_build_query( $data, '', '&' );
-		}
-
-		return null;
-	}
-
-	/*
-	 * $websites: Expected array of objects ($website->id, $website->url, ... returned by MainWP_DB) indexed by the object->id
-	 * $what: What function needs to be called - defined in the mainwpplugin
-	 * $params: (Optional) array(key => value, key => value);
-	 * $handler: Name of a function to be called:
-	 *      function handler($data, $website, &$output) {}
-	 *          the $data = data returned by the request, $website = website object returned by MainWP_DB
-	 *          $output has to be filled in by the handler-function - it is used as an output variable!
-	 */
-
-	static function fetchUrlsAuthed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null,
-								  $others = array(), $is_external_hook = false ) {
-		if ( ! is_array( $websites ) || empty( $websites ) ) {
-			return false;
-		}
-
-		if ( ! is_array( $params ) ) {
-			$params = array();
-		}
-
-		$chunkSize = 10;
-		if ( count( $websites ) > $chunkSize ) {
-			$total = count( $websites );
-			$loops = ceil( $total / $chunkSize );
-			for ( $i = 0; $i < $loops; $i ++ ) {
-				$newSites = array_slice( $websites, $i * $chunkSize, $chunkSize, true );
-				self::fetchUrlsAuthed( $newSites, $what, $params, $handler, $output, $whatPage, $others, $is_external_hook );
-				sleep( 5 );
-			}
-
-			return false;
-		}
-
-		if ( $is_external_hook ) {
-			// to compatible with old extensions, will remove later
-			// using hook to config response format for external call (from extensions)
-			// to prevent break communication between dashboard and child
-			$json_format = apply_filters( 'mainwp_response_json_format', false ); // for hook: mainwp_fetchurlsauthed
-		} else {
-			// config response format for internal dashboard call
-			$json_format = true;
-		}
-
-		$debug = false;
-		if ( $debug ) {
-			$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
-			$timeout = 20 * 60 * 60; // 20 minutes
-
-			$handleToWebsite = array();
-			$requestUrls     = array();
-			$requestHandles  = array();
-
-			self::init_cookiesdir();
-
-			foreach ( $websites as $website ) {
-				$url = $website->url;
-				if ( '/' != substr( $url, - 1 ) ) {
-					$url .= '/';
-				}
-
-				if ( false === strpos( $url, 'wp-admin' ) ) {
-					$url .= 'wp-admin/';
-				}
-
-				if ( null != $whatPage ) {
-					$url .= $whatPage;
-				} else {
-					$url .= 'admin-ajax.php';
-				}
-
-				if ( property_exists( $website, 'http_user' ) ) {
-					$http_user = $website->http_user;
-				}
-				if ( property_exists( $website, 'http_pass' ) ) {
-					$http_pass = $website->http_pass;
-				}
-
-				$_new_post = null;
-				if ( isset( $params ) && isset( $params['new_post'] ) ) {
-					$_new_post = $params['new_post'];
-					// hook for extension: boilerplate ...
-					$params = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
-						'id'     => $website->id,
-						'url'    => $website->url,
-						'name'   => $website->name,
-					) );
-				}
-
-				$ch = curl_init();
-
-				// cURL offers really easy proxy support.
-				$proxy = new WP_HTTP_Proxy();
-				if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-					curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-					curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-					curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-					if ( $proxy->use_authentication() ) {
-						curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-						curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-					}
-				}
-
-				// For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-				if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
-					$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
-					if ( ! file_exists( $cookieFile ) ) {
-						@file_put_contents( $cookieFile, '' );
-					}
-
-					if ( file_exists( $cookieFile ) ) {
-						@chmod( $cookieFile, 0644 );
-						curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-						curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
-					}
-				}
-
-				curl_setopt( $ch, CURLOPT_URL, $url );
-				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-				curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-				curl_setopt( $ch, CURLOPT_POST, true );
-
-				// json_result: true/false to request response json format
-				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
-
-				$postdata = self::getPostDataAuthed( $website, $what, $params );
-				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-				curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-				curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-				if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-					$http_pass = stripslashes( $http_pass ); // to fix
-					curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-				}
-
-				$ssl_verifyhost    = false;
-				$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
-				if ( null !== $verifyCertificate ) {
-					if ( 1 == $verifyCertificate ) {
-						$ssl_verifyhost = true;
-					} elseif ( 2 === $verifyCertificate ) { // use global setting
-						if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-							$ssl_verifyhost = true;
-						}
-					}
-				} else {
-					if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-						$ssl_verifyhost = true;
-					}
-				}
-
-				if ( $ssl_verifyhost ) {
-					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-				} else {
-					curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-					curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-				}
-
-				curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-				curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-				curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
-
-				$force_use_ipv4 = false;
-				$forceUseIPv4   = isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : null;
-				if ( null !== $forceUseIPv4 ) {
-					if ( 1 === $forceUseIPv4 ) {
-						$force_use_ipv4 = true;
-					} elseif ( 2 === $forceUseIPv4 ) { // use global setting
-						if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-							$force_use_ipv4 = true;
-						}
-					}
-				} else {
-					if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-						$force_use_ipv4 = true;
-					}
-				}
-
-				if ( $force_use_ipv4 ) {
-					if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-						curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-					}
-				}
-
-				curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
-				if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-					@set_time_limit( $timeout );
-				} //20minutes
-				@ini_set( 'max_execution_time', $timeout );
-
-				$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
-				$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
-				$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
-
-				if ( null != $_new_post ) {
-					$params['new_post'] = $_new_post;
-				} // reassign new_post
-			}
-
-			foreach ( $requestHandles as $id => $ch ) {
-				$website = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-
-				$identifier = null;
-				$semLock    = '103218'; // SNSyncLock
-				// Lock
-				$identifier = self::getLockIdentifier( $semLock );
-
-				// Check the delays
-				// In MS
-				$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
-				if ( 0 < $minimumDelay ) {
-					$minimumDelay = $minimumDelay / 1000;
-				}
-				$minimumIPDelay = ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) );
-				if ( 0 < $minimumIPDelay ) {
-					$minimumIPDelay = $minimumIPDelay / 1000;
-				}
-
-				self::endSession();
-				$delay = true;
-				while ( $delay ) {
-					self::lock( $identifier );
-
-					if ( 0 < $minimumDelay ) {
-						// Check last request overall
-						$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp();
-						if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
-							// Delay!
-							self::release( $identifier );
-							usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-							continue;
-						}
-					}
-
-					if ( 0 < $minimumIPDelay && null != $website ) {
-						// Get ip of this site url
-						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
-
-						if ( null != $ip && '' != $ip ) {
-							// Check last request for this site
-							$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp( $ip );
-
-							// Check last request for this subnet?
-							if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
-								// Delay!
-								self::release( $identifier );
-								usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-								continue;
-							}
-						}
-					}
-
-					$delay = false;
-				}
-
-				// Check the simultaneous requests
-				$maximumRequests   = ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
-				$maximumIPRequests = ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
-
-				$first = true;
-				$delay = true;
-				while ( $delay ) {
-					if ( ! $first ) {
-						self::lock( $identifier );
-					} else {
-						$first = false;
-					}
-
-					// Clean old open requests (may have timed out or something..)
-					MainWP_DB::Instance()->closeOpenRequests();
-
-					if ( 0 < $maximumRequests ) {
-						$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests();
-						if ( $nrOfOpenRequests >= $maximumRequests ) {
-							// Delay!
-							self::release( $identifier );
-							// Wait 200ms
-							usleep( 200000 );
-							continue;
-						}
-					}
-
-					if ( 0 < $maximumIPRequests && null != $website ) {
-						// Get ip of this site url
-						$ip = MainWP_DB::Instance()->getWPIp( $website->id );
-
-						if ( null != $ip && '' != $ip ) {
-							$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests( $ip );
-							if ( $nrOfOpenRequests >= $maximumIPRequests ) {
-								// Delay!
-								self::release( $identifier );
-								// Wait 200ms
-								usleep( 200000 );
-								continue;
-							}
-						}
-					}
-
-					$delay = false;
-				}
-
-				if ( null != $website ) {
-					// Log the start of this request!
-					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, null, microtime( true ), null );
-				}
-
-				if ( null != $identifier ) {
-					// Unlock
-					self::release( $identifier );
-				}
-
-				$data = curl_exec( $ch );
-
-				if ( null != $website ) {
-					MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
-				}
-
-				if ( null != $handler ) {
-					call_user_func_array( $handler, array( $data, $website, &$output ) );
-				}
-			}
-
-			return true;
-		}
-
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		$mh    = curl_multi_init();
-
-		$timeout = 20 * 60 * 60; // 20 minutes
-
-		$disabled_functions = ini_get( 'disable_functions' );
-		$handleToWebsite    = array();
-		$requestUrls        = array();
-		$requestHandles     = array();
-
-		self::init_cookiesdir();
-
-		foreach ( $websites as $website ) {
-			$url = $website->url;
-			if ( '/' != substr( $url, - 1 ) ) {
-				$url .= '/';
-			}
-
-			if ( false === strpos( $url, 'wp-admin' ) ) {
-				$url .= 'wp-admin/';
-			}
-
-			if ( null != $whatPage ) {
-				$url .= $whatPage;
-			} else {
-				$url .= 'admin-ajax.php';
-			}
-
-			if ( property_exists( $website, 'http_user' ) ) {
-				$http_user = $website->http_user;
-			}
-			if ( property_exists( $website, 'http_pass' ) ) {
-				$http_pass = $website->http_pass;
-			}
-
-			$_new_post = null;
-			if ( isset( $params ) && isset( $params['new_post'] ) ) {
-				$_new_post = $params['new_post'];
-				$params    = apply_filters( 'mainwp-pre-posting-posts', ( is_array( $params ) ? $params : array() ), (object) array(
-					'id'     => $website->id,
-					'url'    => $website->url,
-					'name'   => $website->name,
-				) );
-			}
-
-			$ch = curl_init();
-
-			// cURL offers really easy proxy support.
-			$proxy = new WP_HTTP_Proxy();
-			if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-				curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-				curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-				curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-				if ( $proxy->use_authentication() ) {
-					curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-					curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-				}
-			}
-
-			// For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-			if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
-				$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
-				if ( ! file_exists( $cookieFile ) ) {
-					@file_put_contents( $cookieFile, '' );
-				}
-
-				if ( file_exists( $cookieFile ) ) {
-					@chmod( $cookieFile, 0644 );
-					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
-				}
-			}
-
-			curl_setopt( $ch, CURLOPT_URL, $url );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-			curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-			curl_setopt( $ch, CURLOPT_POST, true );
-
-			if ( is_array( $params ) ) {
-				$params['json_result'] = $json_format; // ::fetchUrlsAuthed
-			}
-
-			$postdata = self::getPostDataAuthed( $website, $what, $params );
-			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-			curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-			curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-			curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-				$http_pass = stripslashes( $http_pass ); // to fix
-				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-			}
-
-			$ssl_verifyhost    = false;
-			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
-			if ( null !== $verifyCertificate ) {
-				if ( 1 === $verifyCertificate ) {
-					$ssl_verifyhost = true;
-				} elseif ( 2 === $verifyCertificate ) { // use global setting
-					if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-						$ssl_verifyhost = true;
-					}
-				}
-			} else {
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
-			}
-
-			if ( $ssl_verifyhost ) {
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-			} else {
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-			}
-
-			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-
-			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout ); // 20minutes
-			if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-				@set_time_limit( $timeout );
-			} //20minutes
-			@ini_set( 'max_execution_time', $timeout );
-
-			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-				@curl_multi_add_handle( $mh, $ch );
-			}
-
-			$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
-			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
-			$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
-
-			if ( null != $_new_post ) {
-				$params['new_post'] = $_new_post;
-			} // reassign new_post
-		}
-
-		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-			$lastRun = 0;
-			do {
-				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout ); // reset timer..
-					$lastRun = time();
-				}
-
-				curl_multi_exec( $mh, $running ); // Execute handlers
-				while ( $info = curl_multi_info_read( $mh ) ) {
-					$data     = curl_multi_getcontent( $info['handle'] );
-					$contains = ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) );
-					curl_multi_remove_handle( $mh, $info['handle'] );
-
-					if ( ! $contains && isset( $requestUrls[ self::get_resource_id( $info['handle'] ) ] ) ) {
-						curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
-						curl_multi_add_handle( $mh, $info['handle'] );
-						unset( $requestUrls[ self::get_resource_id( $info['handle'] ) ] );
-						$running ++;
-						continue;
-					}
-
-					if ( null != $handler ) {
-						$site = &$handleToWebsite[ self::get_resource_id( $info['handle'] ) ];
-						call_user_func_array( $handler, array( $data, $site, &$output ) );
-					}
-
-					unset( $handleToWebsite[ self::get_resource_id( $info['handle'] ) ] );
-					if ( 'resource' === gettype( $info['handle'] ) ) {
-						curl_close( $info['handle'] );
-					}
-					unset( $info['handle'] );
-				}
-				usleep( 10000 );
-			} while ( $running > 0 );
-
-			curl_multi_close( $mh );
-		} else {
-			foreach ( $requestHandles as $id => $ch ) {
-				$data = curl_exec( $ch );
-
-				if ( null != $handler ) {
-					$site = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-					call_user_func_array( $handler, array( $data, $site, &$output ) );
-				}
-			}
-		}
-
-		return true;
-	}
-
-	static function fetchUrlAuthed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
-								 $pRetryFailed = true, $rawResponse = null ) {
-		if ( ! is_array( $params ) ) {
-			$params = array();
-		}
-
-		 $others = array(
-			 'force_use_ipv4' => $website->force_use_ipv4,
-			 'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
-		 );
-
-		 $request_update = false;
-		 // detect premiums plugins/themes update
-		 if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
-
-			 $update_type = '';
-
-			 $check_premi_plugins = $check_premi_themes = array();
-
-			 if ( 'stats' === $what ) {
-				 if ( '' != $website->plugins ) {
-					 $check_premi_plugins = json_decode( $website->plugins, 1 );
-				 }
-				 if ( '' != $website->themes ) {
-					 $check_premi_themes = json_decode( $website->themes, 1 );
-				 }
-			 } elseif ( 'upgradeplugintheme' === $what ) {
-
-				 $update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
-				 if ( 'plugin' === $update_type ) {
-					 if ( '' != $website->plugins ) {
-						 $check_premi_plugins = json_decode( $website->plugins, 1 );
-					 }
-				 } elseif ( 'theme' === $update_type ) {
-					 if ( '' != $website->themes ) {
-						 $check_premi_themes = json_decode( $website->themes, 1 );
-					 }
-				 }
-			 }
-
-			 if ( is_array( $check_premi_plugins ) && 0 < count( $check_premi_plugins ) ) {
-				 if ( self::checkPremiumUpdates( $check_premi_plugins, 'plugin' ) ) {
-					 // detect plugin
-					 self::try_to_detect_premiums_update( $website, 'plugin' );
-				 }
-			 }
-
-			 if ( is_array( $check_premi_themes ) && 0 < count( $check_premi_themes ) ) {
-				 if ( self::checkPremiumUpdates( $check_premi_themes, 'theme' ) ) {
-					 // detect themes
-					 self::try_to_detect_premiums_update( $website, 'theme' );
-				 }
-			 }
-
-			 if ( 'upgradeplugintheme' === $what ) {
-				 if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-					 // request premiums update
-					 if ( self::checkRequestUpdatePremium( $params['list'], $update_type ) ) {
-						 self::request_premiums_update( $website, $update_type, $params['list'] );
-						 $request_update = true;
-					 }
-				 }
-			 }
-		 }
-		 // end detect/request update
-
-		 if ( isset($rawResponse) && $rawResponse ) {
-			 $others['raw_response'] = 'yes';
-		 }
-
-		 $params['optimize'] = ( ( 1 === get_option( 'mainwp_optimize' ) ) ? 1 : 0 );
-
-		 $updating_website = false;
-		 $type             = $list = '';
-		 if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ) {
-			 $updating_website = true;
-			 if ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {
-				 $type = $params['type'];
-				 $list = $params['list'];
-			 } else {
-				 $type = 'wp';
-				 $list = '';
-			 }
-		 }
-
-		 if ( $updating_website ) {
-			 do_action( 'mainwp_website_before_updated', $website, $type, $list );
-		 }
-
-		 $params['json_result'] = true; // ::fetchUrlAuthed
-		 $postdata              = self::getPostDataAuthed( $website, $what, $params );
-		 $others['function']    = $what;
-
-		 $information = array();
-
-		 if ( ! $request_update ) {
-			 $information = self::fetchUrl( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
-		 } else {
-			 $slug = $params['list'];
-			 // temporary set it is successful, see function upgradePluginThemeTranslation()
-			 // need to re-sync to update info
-			 $information['upgrades'] = array( $slug => 1 );
-		 }
-
-		 if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-			 MainWP_Sync::syncInformationArray( $website, $information['sync'] );
-			 unset( $information['sync'] );
-		 }
-
-		 if ( $updating_website ) {
-			 do_action( 'mainwp_website_updated', $website, $type, $list, $information );
-			 if ( 1 === get_option( 'mainwp_check_http_response', 0 ) ) {
-				 $result          = self::isWebsiteAvailable( $website );
-				 $http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-				 $online_detected = self::check_ignored_http_code( $http_code );
-				 MainWP_DB::Instance()->updateWebsiteValues( $website->id, array(
-					 'offline_check_result' => $online_detected ? 1 : -1,
-					 'offline_checks_last'  => time(),
-					 'http_response_code'   => $http_code,
-				 ) );
-
-				 if ( defined( 'DOING_CRON' ) && DOING_CRON && ! $online_detected ) {
-					 $sitesHttpChecks = get_option( 'mainwp_automaticUpdate_httpChecks' );
-					 if ( ! is_array( $sitesHttpChecks ) ) {
-						 $sitesHttpChecks = array();
-					 }
-
-					 if ( ! in_array( $website->id, $sitesHttpChecks ) ) {
-						 $sitesHttpChecks[] = $website->id;
-						 self::update_option( 'mainwp_automaticUpdate_httpChecks', $sitesHttpChecks );
-					 }
-				 }
-			 }
-		 }
-
-		 return $information;
-	}
-
-	static function fetchUrlNotAuthed( $url, $admin, $what, $params = null, $pForceFetch = false,
-									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
-		if ( empty( $params ) ) {
-			$params = array();
-		}
-
-		if ( is_array( $params ) ) {
-			$params['json_result'] = true;  // ::fetchUrlNotAuthed, internal
-		}
-
-		$postdata = self::getPostDataNotAuthed( $url, $admin, $what, $params );
-		$website  = null;
-
-		$others['function'] = $what;
-		return self::fetchUrl( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
-	}
-
-	static function fetchUrlClean( $url, $postdata ) {
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
-		$ch = curl_init();
-
-		// cURL offers really easy proxy support.
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-
-		if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		}
-
-		$data = curl_exec( $ch );
-		curl_close( $ch );
-		if ( ! $data ) {
-			throw new Exception( 'HTTPERROR' );
-		} else {
-			return $data;
-		}
-	}
-
-	static function fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
-						   $verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0,
-						   $others = array() ) {
-		$start = time();
-
-		try {
-			$tmpUrl = $url;
-			if ( '/' != substr( $tmpUrl, - 1 ) ) {
-				$tmpUrl .= '/';
-			}
-
-			if ( false === strpos( $url, 'wp-admin' ) ) {
-				$tmpUrl .= 'wp-admin/admin-ajax.php';
-			}
-
-			return self::_fetchUrl( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
-		} catch ( Exception $e ) {
-			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
-				// If more then 30secs past since the initial request, do not retry this!
-				throw $e;
-			}
-
-			try {
-				return self::_fetchUrl( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
-			} catch ( Exception $ex ) {
-				throw $e;
-			}
-		}
-	}
-
-	static function _fetchUrl( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
-							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Request to [' . $url . '] [' . print_r( $postdata, 1 ) . ']' );
-
-		$identifier = null;
-		if ( $checkConstraints ) {
-			$semLock = '103218'; // SNSyncLock
-			// Lock
-			$identifier = self::getLockIdentifier( $semLock );
-
-			// Check the delays
-			// In MS
-			$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
-			if ( 0 < $minimumDelay ) {
-				$minimumDelay = $minimumDelay / 1000;
-			}
-			$minimumIPDelay = ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
-			if ( 0 < $minimumIPDelay ) {
-				$minimumIPDelay = $minimumIPDelay / 1000;
-			}
-
-			self::endSession();
-			$delay = true;
-			while ( $delay ) {
-				self::lock( $identifier );
-
-				if ( 0 < $minimumDelay ) {
-					// Check last request overall
-					$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp();
-					if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
-						// Delay!
-						self::release( $identifier );
-						usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $minimumIPDelay && null != $website ) {
-					// Get ip of this site url
-					$ip = MainWP_DB::Instance()->getWPIp( $website->id );
-
-					if ( null != $ip && '' != $ip ) {
-						// Check last request for this site
-						$lastRequest = MainWP_DB::Instance()->getLastRequestTimestamp( $ip );
-
-						// Check last request for this subnet?
-						if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
-							// Delay!
-							self::release( $identifier );
-							usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
-
-			// Check the simultaneous requests
-			$maximumRequests   = ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
-			$maximumIPRequests = ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
-
-			$first = true;
-			$delay = true;
-			while ( $delay ) {
-				if ( ! $first ) {
-					self::lock( $identifier );
-				} else {
-					$first = false;
-				}
-
-				// Clean old open requests (may have timed out or something..)
-				MainWP_DB::Instance()->closeOpenRequests();
-
-				if ( 0 < $maximumRequests ) {
-					$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests();
-					if ( $nrOfOpenRequests >= $maximumRequests ) {
-						// Delay!
-						self::release( $identifier );
-						// Wait 200ms
-						usleep( 200000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $maximumIPRequests && null != $website ) {
-					// Get ip of this site url
-					$ip = MainWP_DB::Instance()->getWPIp( $website->id );
-
-					if ( null != $ip && '' != $ip ) {
-						$nrOfOpenRequests = MainWP_DB::Instance()->getNrOfOpenRequests( $ip );
-						if ( $nrOfOpenRequests >= $maximumIPRequests ) {
-							// Delay!
-							self::release( $identifier );
-							// Wait 200ms
-							usleep( 200000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
-		}
-
-		if ( null != $website ) {
-			// Log the start of this request!
-			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, null, microtime( true ), null );
-		}
-
-		if ( null != $identifier ) {
-			// Unlock
-			self::release( $identifier );
-		}
-
-		self::init_cookiesdir();
-
-		$ch = curl_init();
-
-		// cURL offers really easy proxy support.
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		// For WPE upgrades we require cookies too, for normal WPE syncing we do not require cookies, messes up the connection
-		if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 !== $website->wpe ) || ( isset( $others['upgrade'] ) && ( true === $others['upgrade'] ) ) ) ) {
-			$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
-			if ( ! file_exists( $cookieFile ) ) {
-				@file_put_contents( $cookieFile, '' );
-			}
-
-			if ( file_exists( $cookieFile ) ) {
-				@chmod( $cookieFile, 0644 );
-				curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-				curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-
-		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-			$http_pass = stripslashes( $http_pass ); // to fix
-			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-		}
-
-		$ssl_verifyhost = false;
-		if ( null !== $verifyCertificate ) {
-			if ( 1 === $verifyCertificate ) {
-				$ssl_verifyhost = true;
-			} elseif ( 2 === $verifyCertificate ) { // use global setting
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
-			}
-		} else {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-				$ssl_verifyhost = true;
-			}
-		}
-
-		if ( $ssl_verifyhost ) {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-		} else {
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		}
-
-		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
-		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ));
-
-		$force_use_ipv4 = false;
-		$forceUseIPv4   = isset( $others['force_use_ipv4'] ) ? $others['force_use_ipv4'] : null;
-		if ( null !== $forceUseIPv4 ) {
-			if ( 1 === $forceUseIPv4 ) {
-				$force_use_ipv4 = true;
-			} elseif ( 2 === $forceUseIPv4 ) { // use global setting
-				if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-					$force_use_ipv4 = true;
-				}
-			}
-		} else {
-			if ( 1 === get_option( 'mainwp_forceUseIPv4' ) ) {
-				$force_use_ipv4 = true;
-			}
-		}
-
-		if ( $force_use_ipv4 ) {
-			if ( defined( 'CURLOPT_IPRESOLVE' ) and defined( 'CURL_IPRESOLVE_V4' ) ) {
-				curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-			}
-		}
-
-		$timeout = 20 * 60 * 60; // 20 minutes
-		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		if ( version_compare( phpversion(), '5.3.0' ) >= 0 || ! ini_get( 'safe_mode' ) ) {
-			@set_time_limit( $timeout );
-		}
-		@ini_set( 'max_execution_time', $timeout );
-		self::endSession();
-
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Executing handlers' );
-
-		$disabled_functions = ini_get( 'disable_functions' );
-		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-			$mh = @curl_multi_init();
-			@curl_multi_add_handle( $mh, $ch );
-
-			$lastRun = 0;
-			do {
-				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout ); // reset timer..
-					$lastRun = time();
-				}
-				@curl_multi_exec( $mh, $running ); // Execute handlers
-				while ( $info = @curl_multi_info_read( $mh ) ) {
-					$data = @curl_multi_getcontent( $info['handle'] );
-
-					$http_status = @curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
-					$err         = @curl_error( $info['handle'] );
-					$real_url    = @curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
-
-					@curl_multi_remove_handle( $mh, $info['handle'] );
-				}
-				usleep( 10000 );
-			} while ( $running > 0 );
-
-			@curl_multi_close( $mh );
-		} else {
-			$data        = @curl_exec( $ch );
-			$http_status = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-			$err         = @curl_error( $ch );
-			$real_url    = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
-		}
-
-		$host = parse_url( $real_url, PHP_URL_HOST );
-		$ip   = gethostbyname( $host );
-
-		if ( null != $website ) {
-			MainWP_DB::Instance()->insertOrUpdateRequestLog( $website->id, $ip, null, microtime( true ) );
-		}
-
-		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
-
-		MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
-		if ( '400' === $http_status ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'post data: [' . print_r( $postdata, 1 ) . ']' );
-		}
-
-		if ( ( false === $data ) && ( 0 === $http_status ) ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
-			throw new MainWP_Exception( 'HTTPERROR', $err );
-		} elseif ( empty( $data ) && ! empty( $err ) ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
-			throw new MainWP_Exception( 'HTTPERROR', $err );
-		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result      = $results[1];
-			$information = self::get_child_response( base64_decode( $result ) );
-
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'information: [OK]' );
-			return $information;
-		} elseif ( 200 === $http_status && ! empty( $err ) ) { // unexpected http error
-			throw new MainWP_Exception( 'HTTPERROR', $err );
-		} elseif ( $raw_response ) {
-			MainWP_Logger::Instance()->debugForWebsite( $website, '_fetchUrl', 'Response: [RAW]' );
-			return $data;
-		} else {
-			MainWP_Logger::Instance()->debugForWebsite( $website, 'fetchUrl', '[' . $url . '] Result was: [' . $data . ']' );
-			throw new MainWP_Exception( 'NOMAINWP', $url );
-		}
-	}
-
-	public static function checkPremiumUpdates( $updates, $type ) {
-
-		if ( ! is_array( $updates ) || empty( $updates ) ) {
-			return false;
-		}
-
-		if ( 'plugin' === $type ) {
-
-			$premiums = array(
-				'ithemes-security-pro/ithemes-security-pro.php',
-				'monarch/monarch.php',
-				'cornerstone/cornerstone.php',
-				'updraftplus/updraftplus.php',
-				'wp-all-import-pro/wp-all-import-pro.php',
-				'bbq-pro/bbq-pro.php',
-				'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
-				'elementor-pro/elementor-pro.php',
-				'bbpowerpack/bb-powerpack.php',
-				'bb-ultimate-addon/bb-ultimate-addon.php',
-				'webarx/webarx.php',
-				'leco-client-portal/leco-client-portal.php',
-				'elementor-extras/elementor-extras.php',
-				'wp-schema-pro/wp-schema-pro.php',
-				'convertpro/convertpro.php',
-				'astra-addon/astra-addon.php',
-				'astra-portfolio/astra-portfolio.php',
-				'astra-pro-sites/astra-pro-sites.php',
-				'custom-facebook-feed-pro/custom-facebook-feed.php',
-				'convertpro/convertpro.php',
-				'convertpro-addon/convertpro-addon.php',
-				'wp-schema-pro/wp-schema-pro.php',
-				'ultimate-elementor/ultimate-elementor.php',
-				'gp-premium/gp-premium.php',
-			);
-
-			$premiums = apply_filters( 'mainwp_detect_premiums_updates', $premiums ); // deprecated 3.5.4
-
-			$premiums = apply_filters( 'mainwp_detect_premium_plugins_update', $premiums );
-
-			if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
-				foreach ( $updates as $info ) {
-					if ( isset( $info['slug'] ) ) {
-						if ( in_array( $info['slug'], $premiums ) ) {
-							return true;
-						} elseif ( false !== strpos( $info['slug'], 'yith-') ) { // detect for Yithemes plugins
-							return true;
-						}
-					}
-				}
-			}
-		} elseif ( 'theme' === $type ) {
-
-			$premiums = array();
-
-			$premiums = apply_filters( 'mainwp_detect_premium_themes_update', $premiums );
-
-			if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
-				foreach ( $updates as $info ) {
-					if ( isset( $info['slug'] ) ) {
-						if ( in_array( $info['slug'], $premiums ) ) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-
-		return false;
-	}
-
-	public static function checkRequestUpdatePremium( $list, $type ) {
-
-		$updates = explode( ',', $list );
-
-		if ( ! is_array( $updates ) || empty( $updates ) ) {
-			return false;
-		}
-
-		// limit support request one premium one site at the moment
-		if ( 1 < count( $updates ) ) {
-			return false;
-		}
-
-		if ( 'plugin' === $type ) {
-
-			$update_premiums = array(
-				'yith-woocommerce-request-a-quote-premium/init.php',
-			);
-
-			$update_premiums = apply_filters('mainwp_request_update_premium_plugins', $update_premiums );
-
-			if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
-				foreach ( $updates as $slug ) {
-					if ( ! empty( $slug ) ) {
-						if ( in_array( $slug, $update_premiums ) ) {
-							return true;
-						}
-					}
-				}
-			}
-		} elseif ( 'theme' === $type ) {
-
-			$update_premiums = array();
-			$update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
-			if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
-				foreach ( $themes as $slug ) {
-					if ( ! empty( $slug ) ) {
-						if ( in_array( $slug, $update_premiums ) ) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	static function redirect_request_site( $website, $where_url ) {
-
-		$request_url = self::getGetDataAuthed( $website, $where_url );
-
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		$args  = array(
-			'timeout'     => 25,
-			'httpversion' => '1.1',
-			'User-Agent'  => $agent,
-		);
-
-		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
-			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . $website->http_pass ),
-			);
-		}
-
-		MainWP_Logger::Instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
-
-		$reponse = wp_remote_get( $request_url, $args );
-		$body    = is_array( $reponse ) && isset( $reponse['body'] ) ? $reponse['body'] : '';
-
-		MainWP_Logger::Instance()->debug( ' :: Response :: ' . $body );
-
-		return $reponse;
-	}
-
-	static function request_premiums_update( $website, $type, $list ) {
-		if ( 'plugin' === $type ) {
-			$where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list;
-		} elseif ( 'theme' === $type ) {
-			$where_url = 'update-core.php?_request_update_premiums_type=theme&list=' . $list;
-		} else {
-			return null; // need to null
-		}
-		self::redirect_request_site( $website, $where_url );
-		return true;
-	}
-
-	static function try_to_detect_premiums_update( $website, $type ) {
-		if ( 'plugin' === $type ) {
-			$where_url = 'plugins.php?_detect_plugins_updates=yes';
-		} elseif ( 'theme' === $type ) {
-			$where_url = 'update-core.php?_detect_themes_updates=yes';
-		} else {
-			return false;
-		}
-		self::redirect_request_site( $website, $where_url );
-	}
-
-
-	static function ctype_digit( $str ) {
+	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
 	}
 
-	static function log( $text ) {
-	}
-
-	public static function downloadToFile( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
-		if ( file_exists( $file ) && ( ( false === $size ) || ( @filesize( $file ) > $size ) ) ) {
-			@unlink( $file );
-		}
-
-		if ( ! file_exists( @dirname( $file ) ) ) {
-			@mkdir( @dirname( $file ), 0777, true );
-		}
-
-		if ( ! file_exists( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP plugin could not create directory in order to download the file.', 'mainwp' ) );
-		}
-
-		if ( ! @is_writable( @dirname( $file ) ) ) {
-			throw new MainWP_Exception( __( 'MainWP upload directory is not writable.', 'mainwp' ) );
-		}
-
-		$fp    = fopen( $file, 'a' );
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		if ( false !== $size ) {
-			if ( file_exists( $file ) ) {
-				$size = @filesize( $file );
-				$url .= '&foffset=' . $size;
-			}
-		}
-		$ch = curl_init( str_replace( ' ', '%20', $url ) );
-
-		// cURL offers really easy proxy support.
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_FILE, $fp );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-			$http_pass = stripslashes($http_pass); // to fix
-			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-		}
-		curl_exec( $ch );
-		curl_close( $ch );
-		fclose( $fp );
-	}
-
-	static function uploadImage( $img_url, $img_data = array() ) {
+	public static function upload_image( $img_url, $img_data = array() ) {
 		if ( ! is_array( $img_data ) ) {
 			$img_data = array();
 		}
-		include_once ABSPATH . 'wp-admin/includes/file.php'; // Contains download_url
-		$upload_dir = wp_upload_dir();
-		// Download $img_url
+		include_once ABSPATH . 'wp-admin/includes/file.php';
+		$upload_dir     = wp_upload_dir();
 		$temporary_file = download_url( $img_url );
 
 		if ( is_wp_error( $temporary_file ) ) {
-			throw new Exception( 'Error: ' . $temporary_file->get_error_message() );
+			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );
 		} else {
 			$upload_dir     = wp_upload_dir();
-			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url ); // Local name
+			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
 			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
 			$moved          = @rename( $temporary_file, $local_img_path );
 			if ( $moved ) {
-				$wp_filetype = wp_check_filetype( basename( $img_url ), null ); // Get the filetype to set the mimetype
+				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
 				$attachment  = array(
 					'post_mime_type' => $wp_filetype['type'],
 					'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
@@ -1929,10 +288,10 @@ class MainWP_Utility {
 					'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? $img_data['caption'] : '',
 					'post_status'    => 'inherit',
 				);
-				$attach_id   = wp_insert_attachment( $attachment, $local_img_path ); // Insert the image in the database
+				$attach_id   = wp_insert_attachment( $attachment, $local_img_path );
 				require_once ABSPATH . 'wp-admin/includes/image.php';
 				$attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
-				wp_update_attachment_metadata( $attach_id, $attach_data ); // Update generated metadata
+				wp_update_attachment_metadata( $attach_id, $attach_data );
 				if ( isset( $img_data['alt'] ) && ! empty( $img_data['alt'] ) ) {
 					update_post_meta( $attach_id, '_wp_attachment_image_alt', $img_data['alt'] );
 				}
@@ -1942,68 +301,78 @@ class MainWP_Utility {
 				);
 			}
 		}
-		if ( file_exists( $temporary_file ) ) {
-			unlink( $temporary_file );
+
+		$hasWPFileSystem = self::get_wp_file_system();
+		global $wp_filesystem;
+
+		if ( $wp_filesystem->exists( $temporary_file ) ) {
+			$wp_filesystem->delete( $temporary_file );
 		}
 
 		return null;
 	}
 
-	static function getBaseDir() {
+	public static function get_base_dir() {
 		$upload_dir = wp_upload_dir();
 
 		return $upload_dir['basedir'] . DIRECTORY_SEPARATOR;
 	}
 
-	public static function getIconsDir() {
-		$dirs = self::getMainWPDir();
+	public static function get_icons_dir() {
+		$hasWPFileSystem = self::get_wp_file_system();
+		global $wp_filesystem;
+
+		$dirs = self::get_mainwp_dir();
 		$dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 		$url  = $dirs[1] . 'icons/';
-		if ( ! file_exists( $dir ) ) {
-			@mkdir( $dir, 0777, true );
+		if ( ! $wp_filesystem->exists( $dir ) ) {
+			$wp_filesystem->mkdir( $dir, 0777, true );
 		}
-		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 		return array( $dir, $url );
 	}
 
-	public static function getMainWPDir() {
+	public static function get_mainwp_dir() {
+		$hasWPFileSystem = self::get_wp_file_system();
+		global $wp_filesystem;
+
 		$upload_dir = wp_upload_dir();
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
 		$url        = $upload_dir['baseurl'] . '/mainwp/';
-		if ( ! file_exists( $dir ) ) {
-			@mkdir( $dir, 0777, true );
+		if ( ! $wp_filesystem->exists( $dir ) ) {
+			$wp_filesystem->mkdir( $dir, 0777, true );
 		}
-		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 
 		return array( $dir, $url );
 	}
 
-	public static function getDownloadUrl( $what, $filename ) {
-		$specificDir = self::getMainWPSpecificDir( $what );
-		$mwpDir      = self::getMainWPDir();
+	public static function get_download_url( $what, $filename ) {
+		$specificDir = self::get_mainwp_specific_dir( $what );
+		$mwpDir      = self::get_mainwp_dir();
 		$mwpDir      = $mwpDir[0];
 		$fullFile    = $specificDir . $filename;
 
 		return admin_url( '?sig=' . md5( filesize( $fullFile ) ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
 	}
 
-	public static function getMainWPSpecificDir( $dir = null ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+	public static function get_mainwp_specific_dir( $dir = null ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
 
-		$hasWPFileSystem = self::getWPFilesystem();
+		$hasWPFileSystem = self::get_wp_file_system();
 
 		global $wp_filesystem;
 
-		$dirs   = self::getMainWPDir();
+		$dirs   = self::get_mainwp_dir();
 		$newdir = $dirs[0] . $userid . ( null != $dir ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '' );
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -2032,107 +401,27 @@ class MainWP_Utility {
 		return $newdir;
 	}
 
-	public static function init_cookiesdir() {
-
-			$hasWPFileSystem = self::getWPFilesystem();
-
-			global $wp_filesystem;
-
-			$dirs      = self::getMainWPDir();
-			$cookieDir = $dirs[0] . 'cookies';
-
-		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-
-			if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
-				$wp_filesystem->mkdir( $cookieDir, 0777, true );
-			}
-
-			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-				// open and write the data to file.
-				$file_htaccess = $cookieDir . '/.htaccess';
-				$wp_filesystem->put_contents( $file_htaccess, 'deny from all' );
-			}
-
-			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-				// If file doesn't exist, it will be created.
-				$file_index = $cookieDir . '/index.php';
-				$wp_filesystem->touch( $file_index );
-			}
-		} else {
-
-			if ( ! file_exists( $cookieDir ) ) {
-				@mkdir( $cookieDir, 0777, true );
-			}
-
-			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {
-				$file_htaccess = @fopen( $cookieDir . '/.htaccess', 'w+' );
-				@fwrite( $file_htaccess, 'deny from all' );
-				@fclose( $file_htaccess );
-			}
-
-			if ( ! file_exists( $cookieDir . '/index.php' ) ) {
-				$file_index = @fopen( $cookieDir . '/index.php', 'w+' );
-				@fclose( $file_index );
-			}
-		}
-	}
-
-	public static function getMainWPSpecificUrl( $dir ) {
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+	public static function get_mainwp_specific_url( $dir ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
 			global $current_user;
 			$userid = $current_user->ID;
 		}
-		$dirs = self::getMainWPDir();
+		$dirs = self::get_mainwp_dir();
 
 		return $dirs[1] . $userid . '/' . $dir . '/';
 	}
 
-	public static function getAlexaRank( $domain ) {
-		$remote_url = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' . trim( $domain );
-		$search_for = '<POPULARITY URL';
-		$part       = '';
-		if ( $handle         = @fopen( $remote_url, 'r' ) ) {
-			while ( ! feof( $handle ) ) {
-				$part .= fread( $handle, 100 );
-				$pos   = strpos( $part, $search_for );
-				if ( false === $pos ) {
-					continue;
-				} else {
-					break;
-				}
-			}
-			$part .= fread( $handle, 100 );
-			fclose( $handle );
-		}
-		if ( ! stristr( $part, '<ALEXA' ) ) {
-			return null;
-		}
-		if ( ! stristr( $part, $search_for ) ) {
-			return 0;
-		}
-
-		$str = explode( $search_for, $part );
-		$str = explode( '"/>', $str[1] );
-		$str = array_shift( $str );
-		$str = explode( 'TEXT="', $str );
-
-		return $str[1];
-	}
-
-	protected static function StrToNum( $Str, $Check, $Magic ) {
-		$Int32Unit = 4294967296; // 2^32
+	protected static function str_to_num( $Str, $Check, $Magic ) {
+		$Int32Unit = 4294967296;
 
 		$length = strlen( $Str );
 		for ( $i = 0; $i < $length; $i ++ ) {
 			$Check *= $Magic;
-			// If the float is beyond the boundaries of integer (usually +/- 2.15e+9 = 2^31),
-			// the result of converting to integer is undefined
-			// refer to http://www.php.net/manual/en/language.types.integer.php
+
 			if ( $Check >= $Int32Unit ) {
 				$Check = ( $Check - $Int32Unit * (int) ( $Check / $Int32Unit ) );
-				// if the check less than -2^31
 				$Check = ( $Check < - 2147483648 ) ? ( $Check + $Int32Unit ) : $Check;
 			}
 			$Check += ord( $Str{$i} );
@@ -2141,13 +430,12 @@ class MainWP_Utility {
 		return $Check;
 	}
 
-	// --> for google pagerank
 	/*
 	 * Genearate a hash for a url
 	 */
-	protected static function HashURL( $String ) {
-		$Check1 = self::StrToNum( $String, 0x1505, 0x21 );
-		$Check2 = self::StrToNum( $String, 0, 0x1003F );
+	protected static function hash_url( $String ) {
+		$Check1 = self::str_to_num( $String, 0x1505, 0x21 );
+		$Check2 = self::str_to_num( $String, 0, 0x1003F );
 
 		$Check1 >>= 2;
 		$Check1   = ( ( $Check1 >> 4 ) & 0x3FFFFC0 ) | ( $Check1 & 0x3F );
@@ -2160,11 +448,10 @@ class MainWP_Utility {
 		return ( $T1 | $T2 );
 	}
 
-	// --> for google pagerank
 	/*
 	 * genearate a checksum for the hash string
 	 */
-	protected static function CheckHash( $Hashnum ) {
+	protected static function check_hash( $Hashnum ) {
 		$CheckByte = 0;
 		$Flag      = 0;
 
@@ -2195,85 +482,7 @@ class MainWP_Utility {
 		return '7' . $CheckByte . $HashStr;
 	}
 
-	// get google pagerank
-	public static function getpagerank( $url ) {
-		$query = 'http://toolbarqueries.google.com/tbr?client=navclient-auto&ch=' . self::CheckHash( self::HashURL( $url ) ) . '&features=Rank&q=info:' . $url . '&num=100&filter=0';
-		$data  = self::file_get_contents_curl( $query );
-		$pos   = strpos( $data, 'Rank_' );
-		if ( false === $pos ) {
-			return false;
-		} else {
-			$pagerank = substr( $data, $pos + 9 );
-
-			return $pagerank;
-		}
-	}
-
-	public static function get_file_content( $url ) {
-		$data = self::file_get_contents_curl( $url );
-		if ( empty( $data ) ) {
-			return false;
-		}
-		return $data;
-	}
-
-	protected static function file_get_contents_curl( $url ) {
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-		$ch    = curl_init();
-
-		// cURL offers really easy proxy support.
-		$proxy = new WP_HTTP_Proxy();
-		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-			curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-			curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-			curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-			if ( $proxy->use_authentication() ) {
-				curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-				curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-			}
-		}
-
-		curl_setopt( $ch, CURLOPT_HEADER, 0 );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 ); // Set curl to return the data instead of printing it to the browser.
-		curl_setopt( $ch, CURLOPT_URL, $url );
-		curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-		curl_setopt( $ch, CURLOPT_ENCODING, 'none'); // to fix
-
-		$data     = @curl_exec( $ch );
-		$httpCode = @curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-		curl_close( $ch );
-
-		if ( 200 === $httpCode ) {
-			return $data;
-		} else {
-			return false;
-		}
-	}
-
-	public static function getGoogleCount( $domain ) {
-		$content = file_get_contents( 'https://ajax.googleapis.com/ajax/services/' .
-		'search/web?v=1.0&filter=0&q=site:' . urlencode( $domain ) );
-		$data    = json_decode( $content );
-
-		if ( empty( $data ) ) {
-			return null;
-		}
-		if ( ! property_exists( $data, 'responseData' ) ) {
-			return null;
-		}
-		if ( ! is_object( $data->responseData ) || ! property_exists( $data->responseData, 'cursor' ) ) {
-			return 0;
-		}
-		if ( ! is_object( $data->responseData->cursor ) || ! property_exists( $data->responseData->cursor, 'estimatedResultCount' ) ) {
-			return 0;
-		}
-
-		return intval( $data->responseData->cursor->estimatedResultCount );
-	}
-
-	public static function countRecursive( $array, $levels ) {
+	public static function count_recursive( $array, $levels ) {
 		if ( 0 === $levels ) {
 			return count( $array );
 		}
@@ -2282,7 +491,7 @@ class MainWP_Utility {
 		$count = 0;
 		foreach ( $array as $value ) {
 			if ( is_array( $value ) && ( 0 < $levels ) ) {
-				$count += self::countRecursive( $value, $levels - 1 );
+				$count += self::count_recursive( $value, $levels - 1 );
 			} else {
 				$count += count( $value );
 			}
@@ -2327,7 +536,7 @@ class MainWP_Utility {
 		return $sorted;
 	}
 
-	public static function getSubArrayHaving( $array, $index, $value ) {
+	public static function get_sub_array_having( $array, $index, $value ) {
 		$output = array();
 		if ( is_array( $array ) && 0 < count( $array ) ) {
 			foreach ( $array as $arrvalue ) {
@@ -2340,81 +549,8 @@ class MainWP_Utility {
 		return $output;
 	}
 
-	public static function http_post( $request, $http_host, $path, $port = 80, $pApplication = 'main',
-								   $throwException = false ) {
-
-		$connect_timeout = get_option( 'mainwp_versioncontrol_timeout' );
-		if ( false !== $connect_timeout && 60 * 60 * 12 > ( time() - $connect_timeout ) ) { // 12 hrs..
-			return false;
-		}
-
-		if ( 'main' === $pApplication ) {
-			$pApplication = 'MainWP/1.1';
-		} else {
-			$pApplication = 'MainWPExtension/' . $pApplication . '/v';
-		}
-
-		// use the WP HTTP class if it is available
-
-		$http_args  = array(
-			'body'           => $request,
-			'headers'        => array(
-				'Content-Type'   => 'application/x-www-form-urlencoded; ' .
-				'charset=' . get_option( 'blog_charset' ),
-				'Host'           => $http_host,
-				'User-Agent'     => $pApplication,
-			),
-			'httpversion'    => '1.0',
-			'timeout'        => 15,
-		);
-		$mainwp_url = "http://{$http_host}{$path}";
-
-		$response = wp_remote_post( $mainwp_url, $http_args );
-
-		if ( empty( $response ) || is_wp_error( $response ) ) {
-			self::update_option( 'mainwp_versioncontrol_timeout', time() );
-		} elseif ( false !== $connect_timeout ) {
-			delete_option( 'mainwp_versioncontrol_timeout' );
-		}
-
-		if ( is_wp_error( $response ) ) {
-			if ( $throwException ) {
-				throw new Exception( $response->get_error_message() );
-			}
-
-			return '';
-		}
-
-		return array( $response['headers'], $response['body'] );
-	}
-
-	static function trimSlashes( $elem ) {
+	public static function trim_slashes( $elem ) {
 		return trim( $elem, '/' );
-	}
-
-	public static function renderToolTip( $pText, $pUrl = null, $pImage = 'assets/images/info.png', $style = null ) {
-		$output = '<span class="tooltipcontainer">';
-		if ( null != $pUrl ) {
-			$output .= '<a href="' . esc_url( $pUrl ) . '" target="_blank">';
-		}
-		$output .= '<span style="color: #0074a2; font-size: 14px;" class="tooltip"><i class="question circle icon"></i></span>';
-		if ( null != $pUrl ) {
-			$output .= '</a>';
-		}
-		$output .= '<span class="tooltipcontent" style="display: none;">' . esc_html( $pText );
-		if ( null != $pUrl ) {
-			$output .= ' (Click to read more)';
-		}
-		$output .= '</span></span>';
-		echo $output;
-	}
-
-	public static function renderNoteTooltip( $pText, $pImage = '<i class="edit outline icon"></i>' ) {
-		$output  = '<span class="tooltipcontainer">';
-		$output .= '<span style="font-size: 14px;" class="tooltip">' . $pImage . '</span>';
-		$output .= '<span class="tooltipcontent" style="display: none;">' . $pText;
-		$output .= '</span></span>';
-		return $output;
 	}
 
 	public static function encrypt( $str, $pass ) {
@@ -2425,11 +561,11 @@ class MainWP_Utility {
 			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
 		}
 
-		return base64_encode( join( '', $stra ) );
+		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 	}
 
 	public static function decrypt( $str, $pass ) {
-		$str  = base64_decode( $str );
+		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
 		foreach ( $stra as $k => $v ) {
@@ -2443,8 +579,7 @@ class MainWP_Utility {
 	/**
 	 * @return WP_Filesystem_Base
 	 */
-	public static function getWPFilesystem() {
-		/** @global WP_Filesystem_Base $wp_filesystem */
+	public static function get_wp_file_system() {
 		global $wp_filesystem;
 
 		if ( empty( $wp_filesystem ) ) {
@@ -2472,13 +607,13 @@ class MainWP_Utility {
 		return preg_replace( '/[\\\\\/\:"\*\?\<\>\|]+/', '', $str );
 	}
 
-	public static function formatEmail( $to, $body, $title = '', $text_format = false ) {
-		$current_year = date( 'Y' );
+	public static function format_email( $to, $body, $title = '', $text_format = false ) {
+		$current_year = gmdate( 'Y' );
 		if ( $text_format ) {
 				$mail_send['header'] = '';
 
 				$mail_send['body']   = $title . "\r\n\r\n" .
-									  $body . "\r\n\r\n";
+									$body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
 										'Documentation: https://mainwp.com/help/' . "\r\n" .
@@ -2490,7 +625,7 @@ class MainWP_Utility {
 										"Copyright {$current_year} MainWP, All rights reserved.";
 		} else {
 			$mail_send['header'] = <<<EOT
-            <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -2828,83 +963,24 @@ EOT;
 		return $mail_send['header'] . $mail_send['body'] . $mail_send['footer'];
 	}
 
-	public static function endSession() {
+	public static function end_session() {
 		session_write_close();
 		if ( 0 < ob_get_length() ) {
 			ob_end_flush();
 		}
 	}
 
-	public static function getLockIdentifier( $pLockName ) {
-		if ( ( null == $pLockName ) || ( false == $pLockName ) ) {
-			return false;
-		}
-
-		if ( function_exists( 'sem_get' ) ) {
-			return sem_get( $pLockName );
-		} else {
-			$fh = @fopen( sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'lock' . $pLockName . '.txt', 'w+' );
-			if ( ! $fh ) {
-				return false;
-			}
-
-			return $fh;
-		}
-
-		return false;
-	}
-
-	public static function lock( $pIdentifier ) {
-		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
-			return false;
-		}
-
-		if ( function_exists( 'sem_acquire' ) ) {
-			return sem_acquire( $pIdentifier );
-		} else {
-			// Retry lock 3 times
-			for ( $i = 0; $i < 3; $i ++ ) {
-				if ( @flock( $pIdentifier, LOCK_EX ) ) {
-					// acquire an exclusive lock
-					return $pIdentifier;
-				} else {
-					// Sleep before lock retry
-					sleep( 1 );
-				}
-			}
-
-			return false;
-		}
-
-		return false;
-	}
-
-	public static function release( $pIdentifier ) {
-		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
-			return false;
-		}
-
-		if ( function_exists( 'sem_release' ) ) {
-			return sem_release( $pIdentifier );
-		} else {
-			@flock( $pIdentifier, LOCK_UN ); // release the lock
-			@fclose( $pIdentifier );
-		}
-
-		return false;
-	}
-
-	public static function getTimestamp( $timestamp ) {
+	public static function get_timestamp( $timestamp ) {
 		$gmtOffset = get_option( 'gmt_offset' );
 
 		return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
 	}
 
 	public static function date( $format ) {
-		return date( $format, self::getTimestamp( time() ) );
+		return date( $format, self::get_timestamp( time() ) );
 	}
 
-	public static function formatTimestamp( $timestamp ) {
+	public static function format_timestamp( $timestamp ) {
 		return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
 	}
 
@@ -2915,7 +991,7 @@ EOT;
 		return sprintf( "%.{$decimals}f", $bytes / pow( 1024, $factor ) ) . @$size[ $factor ];
 	}
 
-	public static function mapSite( &$website, $keys ) {
+	public static function map_site( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
@@ -2924,7 +1000,7 @@ EOT;
 		return (object) $outputSite;
 	}
 
-	public static function mapSiteArray( &$website, $keys ) {
+	public static function map_site_array( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
@@ -2933,13 +1009,25 @@ EOT;
 		return $outputSite;
 	}
 
+	public static function sec2hms( $sec, $padHours = false ) {
+
+		$hms     = '';
+		$hours   = intval( intval( $sec ) / 3600 );
+		$hms    .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
+		$minutes = intval( ( $sec / 60 ) % 60 );
+		$hms    .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
+		$seconds = intval( $sec % 60 );
+		$hms    .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
+
+		return $hms;
+	}
+
 	public static function can_edit_website( &$website ) {
 		if ( null == $website ) {
 			return false;
 		}
 
-		// Everyone may change this website
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2953,8 +1041,7 @@ EOT;
 			return false;
 		}
 
-		// Everyone may change this website
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -2968,7 +1055,7 @@ EOT;
 			return false;
 		}
 
-		if ( MainWP_System::Instance()->isSingleUser() ) {
+		if ( MainWP_System::instance()->is_single_user() ) {
 			return true;
 		}
 
@@ -3010,21 +1097,21 @@ EOT;
 		return $output;
 	}
 
-	public static function getWebsitesAutomaticUpdateTime() {
-		$lastAutomaticUpdate = MainWP_DB::Instance()->getWebsitesLastAutomaticSync();
+	public static function get_websites_automatic_update_time() {
+		$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
 
-		if ( 0 === $lastAutomaticUpdate ) {
-			$nextAutomaticUpdate = 'Any minute';
-		} elseif ( 0 < MainWP_DB::Instance()->getWebsitesCountWhereDtsAutomaticSyncSmallerThenStart() || 0 < MainWP_DB::Instance()->getWebsitesCheckUpdatesCount() ) {
-			$nextAutomaticUpdate = 'Processing your websites.';
+		if ( 0 == $lastAutomaticUpdate ) {
+			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
+		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
+			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$nextAutomaticUpdate = self::formatTimestamp( self::getTimestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
+			$nextAutomaticUpdate = self::format_timestamp( self::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
 		}
 
-		if ( 0 === $lastAutomaticUpdate ) {
-			$lastAutomaticUpdate = 'Never';
+		if ( 0 == $lastAutomaticUpdate ) {
+			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
 		} else {
-			$lastAutomaticUpdate = self::formatTimestamp( self::getTimestamp( $lastAutomaticUpdate ) );
+			$lastAutomaticUpdate = self::format_timestamp( self::get_timestamp( $lastAutomaticUpdate ) );
 		}
 
 		return array(
@@ -3033,77 +1120,7 @@ EOT;
 		);
 	}
 
-	public static function mime_content_type( $filename ) {
-		if ( function_exists( 'finfo_open' ) ) {
-			$finfo    = finfo_open( FILEINFO_MIME );
-			$mimetype = finfo_file( $finfo, $filename );
-			finfo_close( $finfo );
-
-			return $mimetype;
-		}
-
-		if ( function_exists( 'mime_content_type' ) ) {
-			return mime_content_type( $filename );
-		}
-
-		$mime_types = array(
-			'txt'    => 'text/plain',
-			'htm'    => 'text/html',
-			'html'   => 'text/html',
-			'php'    => 'text/html',
-			'css'    => 'text/css',
-			'js'     => 'application/javascript',
-			'json'   => 'application/json',
-			'xml'    => 'application/xml',
-			'swf'    => 'application/x-shockwave-flash',
-			'flv'    => 'video/x-flv',
-			// images
-			'png'    => 'image/png',
-			'jpe'    => 'image/jpeg',
-			'jpeg'   => 'image/jpeg',
-			'jpg'    => 'image/jpeg',
-			'gif'    => 'image/gif',
-			'bmp'    => 'image/bmp',
-			'ico'    => 'image/vnd.microsoft.icon',
-			'tiff'   => 'image/tiff',
-			'tif'    => 'image/tiff',
-			'svg'    => 'image/svg+xml',
-			'svgz'   => 'image/svg+xml',
-			// archives
-			'zip'    => 'application/zip',
-			'rar'    => 'application/x-rar-compressed',
-			'exe'    => 'application/x-msdownload',
-			'msi'    => 'application/x-msdownload',
-			'cab'    => 'application/vnd.ms-cab-compressed',
-			// audio/video
-			'mp3'    => 'audio/mpeg',
-			'qt'     => 'video/quicktime',
-			'mov'    => 'video/quicktime',
-			// adobe
-			'pdf'    => 'application/pdf',
-			'psd'    => 'image/vnd.adobe.photoshop',
-			'ai'     => 'application/postscript',
-			'eps'    => 'application/postscript',
-			'ps'     => 'application/postscript',
-			// ms office
-			'doc'    => 'application/msword',
-			'rtf'    => 'application/rtf',
-			'xls'    => 'application/vnd.ms-excel',
-			'ppt'    => 'application/vnd.ms-powerpoint',
-			// open office
-			'odt'    => 'application/vnd.oasis.opendocument.text',
-			'ods'    => 'application/vnd.oasis.opendocument.spreadsheet',
-		);
-
-		$ext = strtolower( array_pop( explode( '.', $filename ) ) );
-		if ( array_key_exists( $ext, $mime_types ) ) {
-			return $mime_types[ $ext ];
-		}
-
-		return 'application/octet-stream';
-	}
-
-	static function update_option( $option_name, $option_value ) {
+	public static function update_option( $option_name, $option_value ) {
 		$success = add_option( $option_name, $option_value, '', 'no' );
 
 		if ( ! $success ) {
@@ -3113,29 +1130,17 @@ EOT;
 		return $success;
 	}
 
-	static function fix_option( $option_name ) {
+	public static function fix_option( $option_name ) {
 		global $wpdb;
-
-		if ( 'yes' == $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
+		// phpcs:ignore -- unprepared SQL ok.
+		if ( 'yes' === $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
 			$option_value = get_option( $option_name );
 			delete_option( $option_name );
-			add_option( $option_name, $option_value, null, 'no' );
+			add_option( $option_name, $option_value, '', 'no' );
 		}
 	}
 
-	static function get_resource_id( $resource ) {
-		if ( ! is_resource( $resource ) ) {
-			return false;
-		}
-
-		$resourceString = (string) $resource;
-		$exploded       = explode( '#', $resourceString );
-		$result         = array_pop( $exploded );
-
-		return $result;
-	}
-
-	public static function getFileParameter( &$website ) {
+	public static function get_file_parameter( &$website ) {
 		if ( ! isset( $website->version ) || empty( $website->version ) ) {
 			return 'file';
 		}
@@ -3146,7 +1151,7 @@ EOT;
 		return 'file';
 	}
 
-	public static function removePreSlashSpaces( $text ) {
+	public static function remove_preslash_spaces( $text ) {
 		while ( stristr( $text, ' /' ) ) {
 			$text = str_replace( ' /', '/', $text );
 		}
@@ -3154,28 +1159,28 @@ EOT;
 		return $text;
 	}
 
-	public static function removeHttpPrefix( $pUrl, $pTrimSlashes = false ) {
+	public static function remove_http_prefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
 	}
 
-	public static function removeHttpWWWPrefix( $pUrl ) {
-		$pUrl = self::removeHttpPrefix($pUrl, true);
+	public static function remove_http_www_prefix( $pUrl ) {
+		$pUrl = self::remove_http_prefix( $pUrl, true );
 		return str_replace( 'www', '', $pUrl );
 	}
 
-	public static function isArchive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
+	public static function is_archive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
 		return preg_match( '/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName );
 	}
 
-	public static function isSQLFile( $pFileName ) {
-		return preg_match( '/(.*).sql$/', $pFileName ) || self::isSQLArchive( $pFileName );
+	public static function is_sql_file( $pFileName ) {
+		return preg_match( '/(.*).sql$/', $pFileName ) || self::is_sql_archive( $pFileName );
 	}
 
-	public static function isSQLArchive( $pFileName ) {
+	public static function is_sql_archive( $pFileName ) {
 		return preg_match( '/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName );
 	}
 
-	public static function getCurrentArchiveExtension( $website = false, $task = false ) {
+	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;
 		if ( false != $task ) {
 			if ( 'global' === $task->archiveFormat ) {
@@ -3192,10 +1197,10 @@ EOT;
 		}
 
 		if ( $useSite ) {
-			if ( false == $website ) {
+			if ( false === $website ) {
 				$useGlobal = true;
 			} else {
-				$backupSettings = MainWP_DB::Instance()->getWebsiteBackupSettings( $website->id );
+				$backupSettings = MainWP_DB::instance()->get_website_backup_settings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
 				$useGlobal      = ( 'global' === $archiveFormat );
 			}
@@ -3211,10 +1216,10 @@ EOT;
 		return $archiveFormat;
 	}
 
-	public static function getRealExtension( $path ) {
+	public static function get_real_extension( $path ) {
 		$checks = array( '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2' );
 		foreach ( $checks as $check ) {
-			if ( self::endsWith( $path, $check ) ) {
+			if ( self::ends_with( $path, $check ) ) {
 				return $check;
 			}
 		}
@@ -3229,17 +1234,16 @@ EOT;
 	}
 
 	public static function normalize_filename( $s ) {
-		// maps German (umlauts) and other European characters onto two characters before just removing diacritics
-		$s = preg_replace( '@\x{00c4}@u', 'A', $s ); // umlaut Ä => A
-		$s = preg_replace( '@\x{00d6}@u', 'O', $s ); // umlaut Ö => O
-		$s = preg_replace( '@\x{00dc}@u', 'U', $s ); // umlaut Ü => U
-		$s = preg_replace( '@\x{00cb}@u', 'E', $s ); // umlaut Ë => E
-		$s = preg_replace( '@\x{00e4}@u', 'a', $s ); // umlaut ä => a
-		$s = preg_replace( '@\x{00f6}@u', 'o', $s ); // umlaut ö => o
-		$s = preg_replace( '@\x{00fc}@u', 'u', $s ); // umlaut ü => u
-		$s = preg_replace( '@\x{00eb}@u', 'e', $s ); // umlaut ë => e
-		$s = preg_replace( '@\x{00f1}@u', 'n', $s ); // ñ => n
-		$s = preg_replace( '@\x{00ff}@u', 'y', $s ); // ÿ => y
+		$s = preg_replace( '@\x{00c4}@u', 'A', $s );
+		$s = preg_replace( '@\x{00d6}@u', 'O', $s );
+		$s = preg_replace( '@\x{00dc}@u', 'U', $s );
+		$s = preg_replace( '@\x{00cb}@u', 'E', $s );
+		$s = preg_replace( '@\x{00e4}@u', 'a', $s );
+		$s = preg_replace( '@\x{00f6}@u', 'o', $s );
+		$s = preg_replace( '@\x{00fc}@u', 'u', $s );
+		$s = preg_replace( '@\x{00eb}@u', 'e', $s );
+		$s = preg_replace( '@\x{00f1}@u', 'n', $s );
+		$s = preg_replace( '@\x{00ff}@u', 'y', $s );
 		return $s;
 	}
 
@@ -3273,7 +1277,7 @@ EOT;
 		return $content;
 	}
 
-	public static function showMainWPMessage( $type, $notice_id ) {
+	public static function show_mainwp_message( $type, $notice_id ) {
 		$status = get_user_option( 'mainwp_notice_saved_status' );
 		if ( ! is_array( $status ) ) {
 			$status = array();
@@ -3284,9 +1288,10 @@ EOT;
 		return true;
 	}
 
-	public static function resetUserCookie( $what, $value = '' ) {
+	public static function reset_user_cookie( $what, $value = '' ) {
 		global $current_user;
-		if ( $user_id = $current_user->ID ) {
+		$user_id = $current_user->ID;
+		if ( $user_id ) {
 			$reset_cookies = get_option( 'mainwp_reset_user_cookies' );
 			if ( ! is_array( $reset_cookies ) ) {
 				$reset_cookies = array();
@@ -3312,50 +1317,6 @@ EOT;
 		return true;
 	}
 
-	public static function get_favico_url( $website ) {
-		$favi    = MainWP_DB::Instance()->getWebsiteOption( $website, 'favi_icon', '' );
-		$faviurl = '';
-
-		if ( ! empty( $favi ) ) {
-			if ( false !== strpos( $favi, 'favi-' . intval($website->id) . '-' ) ) {
-				$dirs = self::getIconsDir();
-				if ( file_exists( $dirs[0] . $favi ) ) {
-					$faviurl = $dirs[1] . $favi;
-				} else {
-					$faviurl = '';
-				}
-			} elseif ( ( 0 === strpos( $favi, '//' ) ) || ( 0 === strpos( $favi, 'http' ) ) ) {
-				$faviurl = $favi;
-			} else {
-				$faviurl = $website->url . $favi;
-				$faviurl = self::removeHttpPrefix( $faviurl );
-			}
-		}
-		if ( empty( $faviurl ) ) {
-			$faviurl = MAINWP_PLUGIN_URL . 'assets/images/sitefavi.png';
-		}
-
-		return $faviurl;
-	}
-
-	public static function getCURLSSLVersion( $sslVersion ) {
-		switch ( $sslVersion ) {
-			case '1.x':
-				return 1; // CURL_SSLVERSION_TLSv1;
-			case '2':
-				return 2; // CURL_SSLVERSION_SSLv2;
-			case '3':
-				return 3; // CURL_SSLVERSION_SSLv3;
-			case '1.0':
-				return 4; // CURL_SSLVERSION_TLSv1_0;
-			case '1.1':
-				return 5; // CURL_SSLVERSION_TLSv1_1;
-			case '1.2':
-				return 6; // CURL_SSLVERSION_TLSv1_2;
-			default:
-				return 0; // CURL_SSLVERSION_DEFAULT;
-		}
-	}
 
 	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
 		$sorter = array();
@@ -3396,18 +1357,7 @@ EOT;
 		return $page;
 	}
 
-	public static function gen_hidden_column( $col, $hidden ) {
-		if ( ! is_array( $hidden ) ) {
-			return;
-		}
-		if ( in_array( $col, $hidden ) ) {
-			echo 'hidden';
-			return;
-		}
-		return;
-	}
-
-	static function generate_random_string( $length = 8 ) {
+	public static function generate_random_string( $length = 8 ) {
 
 		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -3417,10 +1367,20 @@ EOT;
 
 		for ( $i = 0; $i < $length; $i++ ) {
 
-			$randomString .= $characters[ rand( 0, $charactersLength - 1 ) ];
+			$randomString .= $characters[ wp_rand( 0, $charactersLength - 1 ) ];
 		}
 
 		return $randomString;
+	}
+
+	public static function value_to_string( $var ) {
+		if ( is_array( $var ) || is_object( $var ) ) {
+			//phpcs:ignore -- for debug only
+			return print_r( $var, true );  // @codingStandardsIgnoreLine
+		} elseif ( is_string ( $var ) ) {
+			return $var;
+		}
+		return '';
 	}
 
 	public static function get_child_response( $data ) {
@@ -3428,6 +1388,22 @@ EOT;
 			return unserialize( $data, array( 'allowed_classes' => false ) );
 		} else {
 			return json_decode( $data, true );
+		}
+	}
+
+	public static function render_mainwp_nonce() {
+		wp_nonce_field( 'mainwp-admin-nonce' );
+	}
+
+	public static function maybe_unserialyze( $data ) {
+		if ( '' == $data || is_array( $data ) ) {
+			return $data;
+		} elseif ( is_serialized( $data ) ) {
+			// phpcs:ignore -- for compatible.
+			return maybe_unserialize( $data );
+		} else {
+			// phpcs:ignore -- for compatible.
+			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}
 }

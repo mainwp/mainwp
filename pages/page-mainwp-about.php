@@ -7,6 +7,8 @@
  * @package MainWP/About
  */
 
+namespace MainWP\Dashboard;
+
 /**
  * Class MainWP_About
  *
@@ -21,7 +23,7 @@ class MainWP_About {
 	 *
 	 * @return string __CLASS__
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -36,11 +38,18 @@ class MainWP_About {
 	 *
 	 * Add WP Submenu Page "About MainWP"
 	 */
-	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'About MainWP', 'mainwp' ), ' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>', 'read', 'mainwp_about', array(
-			self::getClassName(),
-			'render',
-		) );
+	public static function init_menu() {
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'About MainWP', 'mainwp' ),
+			' <div class="mainwp-hidden">' . __( 'About MainWP', 'mainwp' ) . '</div>',
+			'read',
+			'mainwp_about',
+			array(
+				self::get_class_name(),
+				'render',
+			)
+		);
 	}
 
 	/**
@@ -59,19 +68,18 @@ class MainWP_About {
 		}
 		?>
 		<div class="wrap about-wrap">
-			<h1><?php echo __( 'Welcome to MainWP Dashboard', 'mainwp' ) . '&nbsp;' . $mainWP->getVersion(); ?></h1>
-
-			<div class="about-text"><?php echo __( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->getVersion(); ?></div>
-			<div class="mainwp-badge"><?php echo __( 'Version ', 'mainwp' ) . $mainWP->getVersion(); ?></div>
+			<h1><?php esc_html_e( 'Welcome to MainWP Dashboard', 'mainwp' ) . '&nbsp;' . $mainWP->get_version(); ?></h1>
+			<div class="about-text"><?php esc_html_e( 'Thank you for updating your MainWP Dashboard to', 'mainwp' ) . ' ' . $mainWP->get_version(); ?></div>
+			<div class="mainwp-badge"><?php esc_html_e( 'Version ', 'mainwp' ) . $mainWP->get_version(); ?></div>
 			<h2 class="nav-tab-wrapper wp-clearfix">
-				<a class="nav-tab <?php echo $showtab == 'whatsnew' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php _e( 'What\'s New', 'mainwp' ); ?></a>
-				<a class="nav-tab <?php echo $showtab == 'changelog' ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php _e( 'Version Changelog', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo 'whatsnew' == $showtab ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=whatsnew"><?php esc_html_e( 'What\'s New', 'mainwp' ); ?></a>
+				<a class="nav-tab <?php echo 'changelog' == $showtab ? 'nav-tab-active' : ''; ?>" href="admin.php?page=mainwp_about&do=changelog"><?php esc_html_e( 'Version Changelog', 'mainwp' ); ?></a>
 			</h2>
 			<?php
 			if ( 'whatsnew' == $showtab ) {
-				self::renderWhatSNew();
+				self::render_whats_new();
 			} elseif ( 'changelog' == $showtab ) {
-				self::renderMainWPChangelog();
+				self::render_mainwp_change_log();
 			}
 			?>
 			<br/>
@@ -85,7 +93,7 @@ class MainWP_About {
 	 *
 	 * Render the What's new content block
 	 */
-	public static function renderWhatSNew() {
+	public static function render_whats_new() {
 		global $mainWP;
 		?>
 		<br/>
@@ -108,26 +116,17 @@ class MainWP_About {
 	 *
 	 * Render the MainWP Change Log Block
 	 */
-	public static function renderMainWPChangelog() {
+	public static function render_mainwp_change_log() {
 		global $mainWP;
 		?>
 		<br/>
-		<h3><?php echo esc_html($mainWP->getVersion()); ?>&nbsp;<?php _e( 'Changelog', 'mainwp' ); ?></h3>
+		<h3><?php echo esc_html( $mainWP->get_version() ); ?>&nbsp;<?php esc_html_e( 'Changelog', 'mainwp' ); ?></h3>
 		<hr/>
 		<ul>
-			<li>Fixed: an issue with sorting posts and pages by the publish date</li>
-			<li>Fixed: sync error caused by the WP-SpamShield plugin</li>
-			<li>Fixed: JavaScript (moment.js) conflict with the Gutenberg plugin</li>
-			<li>Fixed: an issue with sending email notifications about available updates for some users</li>
-			<li>Fixed: an issue with triggering unwanted backups</li>
-			<li>Fixed: a usability issue with displaying incorrect last sync time</li>
-			<li>Fixed: incorrect changelog links</li>
-			<li>Added: mainwp_updatescheck_disable_notification_mail hook to disable email notifications about available updates</li>
-			<li>Updated: the Update Everything process includes Translations updates</li>
-			<li>Updated: the Update process will not check for required backups if a primary backup system is not set</li>
+			<li></li>
 		</ul>
 		<hr/>
-		<h3><?php _e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>
+		<h3><?php esc_html_e( 'See older versions changelogs', 'mainwp' ); ?>:</h3>
 		<a href="https://wordpress.org/plugins/mainwp/#developers" target="_blank">MainWP Dashboard</a><br/>
 		<a href="https://wordpress.org/plugins/mainwp-child/#developers" target="_blank">MainWP Child</a><br/>
 		<?php

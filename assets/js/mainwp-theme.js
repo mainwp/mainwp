@@ -173,7 +173,7 @@ window.wp = window.wp || { };
             this.reset( themes.data.themes, { silent: true } );
 
             // Escape the term string for RegExp meta characters
-            term = term.replace( /[-\/\\^$*+?.()|[\]{}]/g, '\\$&' );
+            term = term.replace( /[-/\\^$*+?.()|[\]{}]/g, '\\$&' );
 
             // Consider spaces as word delimiters and match the whole string
             // so matching terms can be combined

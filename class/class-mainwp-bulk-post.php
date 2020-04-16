@@ -1,10 +1,24 @@
 <?php
 /**
+ * MainWP Bluk Post
+ *
  * Display custom fields form fields.
+ */
+namespace MainWP\Dashboard;
+
+/**
+ * MainWP Bluk Post
  */
 class MainWP_Bulk_Post {
 
-	public static function getClassName() {
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
@@ -15,13 +29,13 @@ class MainWP_Bulk_Post {
 	 *
 	 * @param object $post
 	 */
-	static function post_custom_meta_box( $post ) {
+	public static function post_custom_meta_box( $post ) {
 		?>
 		<div class="field">
 		<div id="postcustomstuff">
 		<div id="ajax-response"></div>
 		<?php
-		$metadata = has_meta($post->ID);
+		$metadata = has_meta( $post->ID );
 		foreach ( $metadata as $key => $value ) {
 			if ( is_protected_meta( $metadata[ $key ]['meta_key'], 'post' ) || ! current_user_can( 'edit_post_meta', $post->ID, $metadata[ $key ]['meta_key'] ) ) {
 				unset( $metadata[ $key ] );

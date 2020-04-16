@@ -1,4 +1,13 @@
 <?php
+/**
+ * This File handles the Themes SubPage.
+ * MainWP Themes Page
+ *
+ * This page is used to Manage Themes on Child Sites
+ *
+ * @package MainWP/Themes
+ */
+namespace MainWP\Dashboard;
 
 /**
  * MainWP Themes Page
@@ -6,12 +15,24 @@
  * @uses MainWP_Install_Bulk
  */
 class MainWP_Themes {
-	public static function getClassName() {
+
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var $subPages Array of SubPages.
+	 */
 	public static $subPages;
 
+	/**
+	 * Fire on the initialization of WordPress.
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Themes page header via the 'mainwp-pageheader-themes' action.
@@ -21,9 +42,9 @@ class MainWP_Themes {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 *
-		 * @see \MainWP_Themes::renderHeader
+		 * @see \MainWP_Themes::render_header
 		 */
-		add_action( 'mainwp-pageheader-themes', array( self::getClassName(), 'renderHeader' ) );
+		add_action( 'mainwp-pageheader-themes', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Themes page footer via the 'mainwp-pagefooter-themes' action.
@@ -33,43 +54,82 @@ class MainWP_Themes {
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-themes'
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 *
-		 * @see \MainWP_Themes::renderFooter
+		 * @see \MainWP_Themes::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-themes', array( self::getClassName(), 'renderFooter' ) );
+		add_action( 'mainwp-pagefooter-themes', array( self::get_class_name(), 'render_footer' ) );
 
-		add_action( 'mainwp_help_sidebar_content', array( self::getClassName(), 'mainwp_help_content' ) );
+		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	public static function initMenu() {
+	/**
+	 * Initiate the MainWP Themes SubMenu Page.
+	 */
+	public static function init_menu() {
 
-		$_page = add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>', 'read', 'ThemesManage', array(
-			self::getClassName(),
-			'render',
-		) );
+		$_page = add_submenu_page(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<span id="mainwp-Themes">' . __( 'Themes', 'mainwp' ) . '</span>',
+			'read',
+			'ThemesManage',
+			array(
+				self::get_class_name(),
+				'render',
+			)
+		);
 
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>', 'read', 'ThemesInstall', array(
-			self::getClassName(),
-			'renderInstall',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>', 'read', 'ThemesAutoUpdate', array(
-			self::getClassName(),
-			'renderAutoUpdate',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>', 'read', 'ThemesIgnore', array(
-			self::getClassName(),
-			'renderIgnore',
-		) );
-		add_submenu_page( 'mainwp_tab', __( 'Themes', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>', 'read', 'ThemesIgnoredAbandoned', array(
-			self::getClassName(),
-			'renderIgnoredAbandoned',
-		) );
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Install', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesInstall',
+			array(
+				self::get_class_name(),
+				'render_install',
+			)
+		);
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesAutoUpdate',
+			array(
+				self::get_class_name(),
+				'render_auto_update',
+			)
+		);
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Updates', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesIgnore',
+			array(
+				self::get_class_name(),
+				'render_ignore',
+			)
+		);
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Themes', 'mainwp' ),
+			'<div class="mainwp-hidden">' . __( 'Ignored Abandoned', 'mainwp' ) . '</div>',
+			'read',
+			'ThemesIgnoredAbandoned',
+			array(
+				self::get_class_name(),
+				'render_ignored_abandoned',
+			)
+		);
 
 		/**
 		 * This hook allows you to add extra sub pages to the Themes page via the 'mainwp-getsubpages-themes' filter.
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
 		 */
-		self::$subPages = apply_filters( 'mainwp-getsubpages-themes', array() );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-themes', array( array() ), '4.0.1', 'mainwp_getsubpages_themes' );  // @deprecated Use 'mainwp_getsubpages_themes' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_themes', $sub_pages );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'Themes' . $subPage['slug'] ) ) {
@@ -81,7 +141,10 @@ class MainWP_Themes {
 		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	/**
+	 * Themes Subpage Menu HTML Content.
+	 */
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Themes" class="mainwp-submenu-wrapper">
 			<div class="wp-submenu sub-open">
@@ -122,14 +185,22 @@ class MainWP_Themes {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'      => __( 'Themes', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'       => 'ThemesManage',
-			'href'       => 'admin.php?page=ThemesManage',
-			'icon'       => '<i class="paint brush icon"></i>',
-		), 1 );
+	/**
+	 * Build arrays for each SubPage Menu Block.
+	 *
+	 * @param array $subPages Array of SubPages.
+	 */
+	public static function init_left_menu( $subPages = array() ) {
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Themes', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesManage',
+				'icon'       => '<i class="paint brush icon"></i>',
+			),
+			1
+		);
 
 		$init_sub_subleftmenu = array(
 			array(
@@ -180,9 +251,11 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Render Themes SubPage Header.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderHeader( $shownPage = '' ) {
+	public static function render_header( $shownPage = '' ) {
 		$params = array( 'title' => __( 'Themes', 'mainwp' ) );
 
 		MainWP_UI::render_top_header( $params );
@@ -243,14 +316,19 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Close the page container.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
-	public static function renderFooter( $shownPage ) {
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Render the Theme SubPage content.
+	 */
 	public static function render() {
-		$cachedSearch    = MainWP_Cache::getCachedContext( 'Themes' );
+		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
 		$selected_sites  = array();
 		$selected_groups = array();
 
@@ -262,9 +340,9 @@ class MainWP_Themes {
 			}
 		}
 
-		$cachedResult = MainWP_Cache::getCachedResult( 'Themes' );
+		$cachedResult = MainWP_Cache::get_cached_result( 'Themes' );
 
-		self::renderHeader( 'Manage' );
+		self::render_header( 'Manage' );
 		?>
 
 		<div id="mainwp-manage-themes" class="ui alt segment">
@@ -278,7 +356,7 @@ class MainWP_Themes {
 								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
 									echo $cachedResult['bulk_actions'];
 								} else {
-									echo MainWP_UI::get_empty_bulk_actions();
+									MainWP_UI::render_empty_bulk_actions();
 								}
 								?>
 								</div>
@@ -332,7 +410,7 @@ class MainWP_Themes {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::renderSearchOptions(); ?>
+					<?php self::render_search_options(); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
@@ -342,23 +420,21 @@ class MainWP_Themes {
 			<div style="clear:both"></div>
 		</div>
 		<?php
-		self::renderFooter( 'Manage' );
+		self::render_footer( 'Manage' );
 	}
 
-	public static function renderSearchOptions() {
-		$cachedSearch = MainWP_Cache::getCachedContext( 'Themes' );
+	/**
+	 * Render the Search Options Meta Box.
+	 */
+	public static function render_search_options() {
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		?>
 
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="
-																		<?php
-																		if ( null != $cachedSearch ) {
-																			echo esc_attr( $cachedSearch['keyword'] ); }
-																		?>
-					"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
 		</div>
@@ -367,23 +443,33 @@ class MainWP_Themes {
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
 			foreach ( $statuses as $st ) {
-				$status .= "'" . esc_attr( $st ) . "',";
+				$status .= "'" . esc_js( $st ) . "',";
 			}
 			$status = rtrim( $status, ',' );
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php echo $status; ?>] );
+				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php echo $status; // escaped ?>] );
 			} );
 			</script>
 			<?php
 		}
 	}
 
-	public static function renderTable( $keyword, $status, $groups, $sites ) {
-		MainWP_Cache::initCache( 'Themes' );
+	/**
+	 * Render the Child Sites Bulk action & Sidebar Meta boxes.
+	 *
+	 * @param mixed $keyword
+	 * @param mixed $status
+	 * @param mixed $groups
+	 * @param mixed $sites
+	 *
+	 * @return mixed $result Errors|HTML
+	 */
+	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function
+		MainWP_Cache::init_cache( 'Themes' );
 
-		$output         = new stdClass();
+		$output         = new \stdClass();
 		$output->errors = array();
 		$output->themes = array();
 
@@ -391,7 +477,7 @@ class MainWP_Themes {
 			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website   = MainWP_DB::Instance()->getWebsiteById( $v );
+						$website   = MainWP_DB::instance()->get_website_by_id( $v );
 						$allThemes = json_decode( $website->themes, true );
 						$_count    = count( $allThemes );
 						for ( $i = 0; $i < $_count; $i ++ ) {
@@ -419,7 +505,7 @@ class MainWP_Themes {
 			if ( '' !== $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 							if ( '' !== $website->sync_errors ) {
 								continue;
@@ -454,31 +540,10 @@ class MainWP_Themes {
 			if ( '' !== $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$website                    = MainWP_DB::Instance()->getWebsiteById( $v );
-						$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-							'id',
-							'url',
-							'name',
-							'adminname',
-							'nossl',
-							'privkey',
-							'nosslkey',
-							'http_user',
-							'http_pass',
-						) );
-					}
-				}
-			}
-
-			if ( '' !== $groups ) {
-				foreach ( $groups as $k => $v ) {
-					if ( MainWP_Utility::ctype_digit( $v ) ) {
-						$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesByGroupId( $v ) );
-						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
-								continue;
-							}
-							$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
+						$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
+							array(
 								'id',
 								'url',
 								'name',
@@ -488,7 +553,34 @@ class MainWP_Themes {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-							) );
+							)
+						);
+					}
+				}
+			}
+
+			if ( '' !== $groups ) {
+				foreach ( $groups as $k => $v ) {
+					if ( MainWP_Utility::ctype_digit( $v ) ) {
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
+						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+							if ( '' !== $website->sync_errors ) {
+								continue;
+							}
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+								$website,
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+								)
+							);
 						}
 						MainWP_DB::free_result( $websites );
 					}
@@ -507,11 +599,11 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
-			MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::getClassName(), 'ThemesSearch_handler' ), $output );
+			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
 				foreach ( $output->errors as $siteid => $error ) {
-					echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
+					echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . '<br/>';
 				}
 				echo '<div class="ui hidden divider"></div>';
 			}
@@ -521,84 +613,82 @@ class MainWP_Themes {
 			}
 		}
 
-		MainWP_Cache::addContext( 'Themes', array(
-			'keyword' => $keyword,
-			'status'  => $status,
-			'sites'   => ( '' !== $sites ) ? $sites : '',
-			'groups'  => ( '' !== $groups ) ? $groups : '',
-		) );
+		MainWP_Cache::add_context(
+			'Themes',
+			array(
+				'keyword' => $keyword,
+				'status'  => $status,
+				'sites'   => ( '' !== $sites ) ? $sites : '',
+				'groups'  => ( '' !== $groups ) ? $groups : '',
+			)
+		);
 
-		ob_start();
-		?>
-		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
-		<div class="ui dropdown" id="mainwp-bulk-actions">
-			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
-			<div class="menu">
-				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
-					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
-						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
-				<?php endif; ?>
-			</div>
-		</div>
-		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
-		<?php
-		$bulkActions = ob_get_clean();
-		ob_start();
+		$bulkActions = self::render_bulk_actions( $status );
 
 		if ( 0 == count( $output->themes ) ) {
+			ob_start();
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
 			<?php
 			$newOutput = ob_get_clean();
 
-			$result = array(
-				'result'       => $newOutput,
-				'bulk_actions' => $bulkActions,
-			);
-			MainWP_Cache::addResult( 'Themes', $result );
+		} else {
+			$sites             = array();
+			$siteThemes        = array();
+			$themes            = array();
+			$themesVersion     = array();
+			$themesRealVersion = array();
+			$themesSlug        = array();
 
-			return $result;
-		}
+			foreach ( $output->themes as $theme ) {
 
-		$sites             = array();
-		$siteThemes        = array();
-		$themes            = array();
-		$themesVersion     = array();
-		$themesRealVersion = array();
-		$themesSlug        = array();
+				$theme['name']       = esc_html( $theme['name'] );
+				$theme['version']    = esc_html( $theme['version'] );
+				$theme['title']      = esc_html( $theme['title'] );
+				$theme['slug']       = esc_html( $theme['slug'] );
+				$theme['websiteurl'] = esc_html( $theme['websiteurl'] );
 
-		foreach ( $output->themes as $theme ) {
-
-			$theme['name']       = esc_html( $theme['name'] );
-			$theme['version']    = esc_html( $theme['version'] );
-			$theme['title']      = esc_html( $theme['title'] );
-			$theme['slug']       = esc_html( $theme['slug'] );
-			$theme['websiteurl'] = esc_html( $theme['websiteurl'] );
-
-			$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
-			$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
-			$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
-			$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = $theme['title'] . ' ' . $theme['version'];
-			$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
-			if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
-				$siteThemes[ $theme['websiteid'] ] = array();
+				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
+				$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
+				$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
+				$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = $theme['title'] . ' ' . $theme['version'];
+				$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
+				if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
+					$siteThemes[ $theme['websiteid'] ] = array();
+				}
+				$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
 			}
-			$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
-		}
-		asort( $themesVersion );
-		?>
+			asort( $themesVersion );
 
+			ob_start();
+			self::render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion );
+			$newOutput = ob_get_clean();
+		}
+
+		$result = array(
+			'result'       => $newOutput,
+			'bulk_actions' => $bulkActions,
+		);
+
+		MainWP_Cache::add_result( 'Themes', $result );
+		return $result;
+	}
+
+	/**
+	 * This method renders the Manage Themes Table
+	 *
+	 * @param mixed $sites List of sites.
+	 * @param mixed $themes List of themes.
+	 * @param mixed $siteThemes
+	 * @param mixed $themesSlug
+	 * @param mixed $themesVersion Installed Theme version.
+	 * @param mixed $themesRealVersion Current Theme version.
+	 *
+	 * @return html Output the table.
+	 */
+	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
+		?>
+	
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
@@ -659,154 +749,85 @@ class MainWP_Themes {
 				} );
 			jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
-		</script>
-
-			<?php
-			$newOutput = ob_get_clean();
-			$result    = array(
-				'result'       => $newOutput,
-				'bulk_actions' => $bulkActions,
-			);
-
-			MainWP_Cache::addResult( 'Themes', $result );
-			return $result;
+		</script>		
+			
+		<?php
 	}
 
-	public static function ThemesSearch_handler( $data, $website, &$output ) {
-		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
-			$result = $results[1];
-			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) );
-			unset( $results );
-			if ( isset( $themes['error'] ) ) {
-				$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( $themes['error'], $website->url ) );
-
-				return;
-			}
-
-			foreach ( $themes as $theme ) {
-				if ( ! isset( $theme['name'] ) ) {
-					continue;
-				}
-				$theme['websiteid']  = $website->id;
-				$theme['websiteurl'] = $website->url;
-
-				$output->themes[] = $theme;
-			}
-			unset( $themes );
-		} else {
-			$output->errors[ $website->id ] = MainWP_Error_Helper::getErrorMessage( new MainWP_Exception( 'NOMAINWP', $website->url ) );
-		}
+	/**
+	 * Render the bulk actions UI.
+	 *
+	 * @param mixed $status Theme status.
+	 *
+	 * @return mixed $bulkActions
+	 */
+	public static function render_bulk_actions( $status ) {
+			ob_start();
+		?>
+		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
+		<div class="ui dropdown" id="mainwp-bulk-actions">
+			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
+			<div class="menu">
+				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
+				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
+					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
+						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
+				<?php endif; ?>
+			</div>
+		</div>
+		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
+		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
+		<?php
+		$bulkActions = ob_get_clean();
+		return $bulkActions;
 	}
 
-	public static function activateTheme() {
-		self::action( 'activate', $_POST['theme'] );
-		die( 'SUCCESS' );
+
+	/** Render the Install Themes Tab. */
+	public static function render_install() {
+		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION, true );
+		wp_localize_script(
+			'mainwp-theme',
+			'_mainwpThemeSettings',
+			array(
+				'themes'          => false,
+				'settings'        => array(
+					'isInstall'     => true,
+					'canInstall'    => false,
+					'installURI'    => null,
+					'adminUrl'      => wp_parse_url( self_admin_url(), PHP_URL_PATH ),
+				),
+				'l10n'            => array(
+					'addNew'            => __( 'Add new theme' ),
+					'search'            => __( 'Search themes' ),
+					'searchPlaceholder' => __( 'Search themes...' ),
+					'upload'            => __( 'Upload theme' ),
+					'back'              => __( 'Back' ),
+					'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
+					'themesFound'       => __( 'Number of themes found: %d' ),
+					'noThemesFound'     => __( 'No themes found. Try a different search.' ),
+					'collapseSidebar'   => __( 'Collapse sidebar' ),
+					'expandSidebar'     => __( 'Expand sidebar' ),
+				),
+				'installedThemes' => array(),
+			)
+		);
+		self::render_header( 'Install' );
+		self::render_themes_table();
+		self::render_footer( 'Install' );
 	}
 
-	public static function deleteThemes() {
-		self::action( 'delete', implode( '||', $_POST['themes'] ) );
-		die( 'SUCCESS' );
-	}
-
-	public static function action( $pAction, $theme ) {
-		$websiteIdEnc = $_POST['websiteId'];
-
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( 'FAIL' );
-		}
-
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( 'FAIL' );
-		}
-
-		try {
-			$information = MainWP_Utility::fetchUrlAuthed( $website, 'theme_action', array(
-				'action' => $pAction,
-				'theme'  => $theme,
-			) );
-		} catch ( MainWP_Exception $e ) {
-			die( 'FAIL' );
-		}
-
-		if ( isset( $information['error'] ) ) {
-			wp_send_json( $information );
-		}
-
-		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
-			die( 'FAIL' );
-		}
-
-		die( wp_json_encode( array( 'result' => true ) ) );
-	}
-
-	public static function ignoreUpdates() {
-		$websiteIdEnc = $_POST['websiteId'];
-
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
-			die( 'FAIL' );
-		}
-
-		$website = MainWP_DB::Instance()->getWebsiteById( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
-			die( 'FAIL' );
-		}
-
-		$themes = $_POST['themes'];
-		$names  = $_POST['names'];
-
-		$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
-		if ( ! is_array( $decodedIgnoredThemes ) ) {
-			$decodedIgnoredThemes = array();
-		}
-
-		if ( is_array( $themes ) ) {
-			$_count = count( $themes );
-			for ( $i = 0; $i < $_count; $i ++ ) {
-				$slug = $themes[ $i ];
-				$name = $names[ $i ];
-				if ( ! isset( $decodedIgnoredThemes[ $slug ] ) ) {
-					$decodedIgnoredThemes[ $slug ] = urldecode( $name );
-				}
-			}
-			MainWP_DB::Instance()->updateWebsiteValues( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
-		}
-
-		die( wp_json_encode( array( 'result' => true ) ) );
-	}
-
-	public static function renderInstall() {
-		wp_enqueue_script( 'mainwp-theme', MAINWP_PLUGIN_URL . 'assets/js/mainwp-theme.js', array( 'wp-backbone', 'wp-a11y' ), MAINWP_VERSION );
-		wp_localize_script( 'mainwp-theme', '_mainwpThemeSettings', array(
-			'themes'          => false,
-			'settings'        => array(
-				'isInstall'     => true,
-				'canInstall'    => false,
-				'installURI'    => null,
-				'adminUrl'      => parse_url( self_admin_url(), PHP_URL_PATH ),
-			),
-			'l10n'            => array(
-				'addNew'            => __( 'Add new theme' ),
-				'search'            => __( 'Search themes' ),
-				'searchPlaceholder' => __( 'Search themes...' ),
-				'upload'            => __( 'Upload theme' ),
-				'back'              => __( 'Back' ),
-				'error'             => __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="https://wordpress.org/support/">support forums</a>.' ),
-				'themesFound'       => __( 'Number of themes found: %d' ),
-				'noThemesFound'     => __( 'No themes found. Try a different search.' ),
-				'collapseSidebar'   => __( 'Collapse sidebar' ),
-				'expandSidebar'     => __( 'Expand sidebar' ),
-			),
-			'installedThemes' => array(),
-		) );
-		self::renderHeader( 'Install' );
-		self::renderThemesTable();
-		self::renderFooter( 'Install' );
-	}
-
-	public static function renderThemesTable() {
+	/** Redner the Themes table for the Install Themes Tab. */
+	public static function render_themes_table() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
 			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
@@ -839,10 +860,11 @@ class MainWP_Themes {
 				<div class="ui segment">
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 					<div class="mainwp-upload-theme">
-						<?php MainWP_Install_Bulk::renderUpload( 'theme' ); ?>
+						<?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
 					</div>
 					<div id="themes-loading" class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
 					<form id="theme-filter" method="post">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="mainwp-browse-themes content-filterable hide-if-upload"></div>
 						<div class="theme-install-overlay wp-full-overlay expanded"></div>
 					</form>
@@ -969,18 +991,15 @@ class MainWP_Themes {
 		<?php
 	}
 
-	public static function performSearch() {
-		MainWP_Install_Bulk::performSearch( self::getClassName(), 'Themes' );
-	}
-
-	public static function renderAutoUpdate() {
+	/** Render the Themes Auto Update Tab. */
+	public static function render_auto_update() {
 
 		$cachedThemesSearch = null;
 		if ( isset( $_SESSION['SNThemesAllStatus'] ) ) {
 			$cachedThemesSearch = $_SESSION['SNThemesAllStatus'];
 		}
 
-		self::renderHeader( 'AutoUpdate' );
+		self::render_header( 'AutoUpdate' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
@@ -993,7 +1012,7 @@ class MainWP_Themes {
 				update_option( 'mainwp_themeAutomaticDailyUpdate', $snThemeAutomaticDailyUpdate );
 			}
 
-			$update_time         = MainWP_Utility::getWebsitesAutomaticUpdateTime();
+			$update_time         = MainWP_Utility::get_websites_automatic_update_time();
 			$lastAutomaticUpdate = $update_time['last'];
 			$nextAutomaticUpdate = $update_time['next'];
 			?>
@@ -1031,7 +1050,7 @@ class MainWP_Themes {
 						<div id="mainwp-auto-updates-themes-table-wrapper">
 							<?php
 							if ( isset( $_SESSION['SNThemesAll'] ) ) {
-								self::renderAllThemesTable( $_SESSION['SNThemesAll'] );
+								self::render_all_themes_table( $_SESSION['SNThemesAll'] );
 							}
 							?>
 						</div>
@@ -1084,10 +1103,15 @@ class MainWP_Themes {
 			<?php
 		}
 		MainWP_UI::render_modal_edit_notes( 'theme' );
-		self::renderFooter( 'AutoUpdate' );
+		self::render_footer( 'AutoUpdate' );
 	}
 
-	public static function renderAllThemesTable( $output = null ) {
+	/**
+	 * Render the All Themes Table.
+	 *
+	 * @param null $output
+	 */
+	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function
 		$keyword       = null;
 		$search_status = 'all';
 
@@ -1096,12 +1120,12 @@ class MainWP_Themes {
 			$search_status       = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
 			$search_theme_status = isset( $_POST['theme_status'] ) ? $_POST['theme_status'] : 'all';
 
-			$output         = new stdClass();
+			$output         = new \stdClass();
 			$output->errors = array();
 			$output->themes = array();
 
 			if ( 1 == get_option( 'mainwp_optimize' ) ) {
-				$websites = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					$allThemes = json_decode( $website->themes, true );
 					$_count    = count( $allThemes );
@@ -1125,19 +1149,22 @@ class MainWP_Themes {
 				MainWP_DB::free_result( $websites );
 			} else {
 				$dbwebsites = array();
-				$websites   = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
+				$websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$dbwebsites[ $website->id ] = MainWP_Utility::mapSite( $website, array(
-						'id',
-						'url',
-						'name',
-						'adminname',
-						'nossl',
-						'privkey',
-						'nosslkey',
-						'http_user',
-						'http_pass',
-					) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+						$website,
+						array(
+							'id',
+							'url',
+							'name',
+							'adminname',
+							'nossl',
+							'privkey',
+							'nosslkey',
+							'http_user',
+							'http_pass',
+						)
+					);
 				}
 				MainWP_DB::free_result( $websites );
 
@@ -1151,11 +1178,11 @@ class MainWP_Themes {
 					$post_data['filter'] = false;
 				}
 
-				MainWP_Utility::fetchUrlsAuthed( $dbwebsites, 'get_all_themes', $post_data, array( self::getClassName(), 'ThemesSearch_handler' ), $output );
+				MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
 				if ( 0 < count( $output->errors ) ) {
 					foreach ( $output->errors as $siteid => $error ) {
-						echo MainWP_Utility::getNiceURL( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
+						echo MainWP_Utility::get_nice_url( $dbwebsites[ $siteid ]->url ) . ' - ' . $error . ' <br/>';
 					}
 					echo '<div class="ui hidden divider"></div>';
 				}
@@ -1193,7 +1220,7 @@ class MainWP_Themes {
 		}
 		asort( $themes );
 
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$trustedThemes        = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
@@ -1203,7 +1230,19 @@ class MainWP_Themes {
 		if ( ! is_array( $trustedThemesNotes ) ) {
 			$trustedThemesNotes = array();
 		}
+		self::render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes );
+	}
 
+	/**
+	 * Render all themes html.
+	 *
+	 * @param mixed $themes Themes list.
+	 * @param mixed $search_status Search status.
+	 * @param mixed $trustedThemes Trusted themes.
+	 * @param mixed $trustedThemesNotes Trusted themes notes.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
+	 */
+	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
 		?>
 		<table class="ui single line table" id="mainwp-all-active-themes-table">
 			<thead>
@@ -1236,14 +1275,14 @@ class MainWP_Themes {
 				$strip_note = '';
 				if ( isset( $trustedThemesNotes[ $slug ] ) ) {
 					$esc_note   = MainWP_Utility::esc_content( $trustedThemesNotes[ $slug ] );
-					$strip_note = strip_tags( $esc_note );
+					$strip_note = wp_strip_all_tags( $esc_note );
 				}
 
 				?>
 				<tr theme-slug="<?php echo rawurlencode( $slug ); ?>" theme-name="<?php echo esc_attr( $name ); ?>">
-					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo urlencode( $slug ); ?>"></span></td>
+					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="theme[]" value="<?php echo rawurlencode( $slug ); ?>"></span></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span data-tooltip="Ignored themes will not be automatically updated." data-inverted=""><i class="info red circle icon"></i></span>' : ''; ?></td>
-					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . urlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
+					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $slug ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $name ); ?></a></td>
 					<td><?php echo ( 1 == $theme['active'] ) ? esc_html__( 'Active', 'mainwp' ) : esc_html__( 'Inactive', 'mainwp' ); ?></td>
 					<td><?php echo ( in_array( $slug, $trustedThemes ) ) ? '<span class="ui mini green fluid center aligned label">' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red fluid center aligned label">' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
 					<td><?php echo ( isset( $decodedIgnoredThemes[ $slug ] ) ) ? '<span class="ui mini label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
@@ -1278,19 +1317,20 @@ class MainWP_Themes {
 				jQuery( '#mainwp-all-active-themes-table' ).DataTable( {
 					"colReorder" : true,
 					"stateSave":  true,
-				  "paging":   false,
-				  "ordering": true,
-				  "columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-				  "order": [ [ 2, "asc" ] ]
+					"paging":   false,
+					"ordering": true,
+					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
+					"order": [ [ 2, "asc" ] ]
 				} );
 			} );
 		</script>
 		<?php
 	}
 
-	public static function renderIgnore() {
-		$websites             = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+		/** Render the Themes Ignored Updates Tab. */
+	public static function render_ignore() {
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 
@@ -1310,14 +1350,40 @@ class MainWP_Themes {
 			$cnt ++;
 		}
 
-		self::renderHeader( 'Ignore' );
+		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
 			<h3 class="ui header">
 				<?php esc_html_e( 'Globally Ignored Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
+			<?php
+			self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes );
+			?>
+						
+		<div class="ui hidden divider"></div>
+		<h3 class="ui header">
+			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
+			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
+		</h3>
+		<?php
+			self::render_sites_ignored( $cnt, $websites );
+		?>
+					
+		</div>
+		<?php
+		self::render_footer( 'Ignore' );
+	}
+
+	/**
+	 * Render globally Ignored themes.
+	 *
+	 * @param mixed $ignoredThemes Encoded ignored themes.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
+	 */
+	public static function render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ) {
+		?>
+		<table id="mainwp-globally-ignored-themes" class="ui compact selectable table stackable">
 				<thead>
 					<tr>
 						<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -1328,12 +1394,12 @@ class MainWP_Themes {
 				<tbody id="globally-ignored-themes-list">
 					<?php if ( $ignoredThemes ) : ?>
 						<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
-						<tr theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo urlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -1355,12 +1421,18 @@ class MainWP_Themes {
 					</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>
-		<div class="ui hidden divider"></div>
-		<h3 class="ui header">
-			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
-		</h3>
+		</table>	
+		<?php
+	}
+
+	/**
+	 * Render ignored sites.
+	 *
+	 * @param mixed $cnt
+	 * @param mixed $websites Websites list.
+	 */
+	public static function render_sites_ignored( $cnt, $websites ) {
+		?>
 		<table id="mainwp-per-site-ignored-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1387,7 +1459,7 @@ class MainWP_Themes {
 
 					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
 						?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 							<?php if ( $first ) : ?>
 								<td><div><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
 								<?php $first = false; ?>
@@ -1398,7 +1470,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
 							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
+								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
 						</tr>
@@ -1425,33 +1497,57 @@ class MainWP_Themes {
 				<?php endif; ?>
 			<?php endif; ?>
 		</table>
-		</div>
 		<?php
-		self::renderFooter( 'Ignore' );
 	}
 
-	public static function renderIgnoredAbandoned() {
-		$websites             = MainWP_DB::Instance()->query( MainWP_DB::Instance()->getSQLWebsitesForCurrentUser() );
-		$userExtension        = MainWP_DB::Instance()->getUserExtension();
+	/** Render the Themes Ignored/Abandoned Tab */
+	public static function render_ignored_abandoned() {
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$userExtension        = MainWP_DB::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 		$cnt                  = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
+			$tmpDecodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 			if ( ! is_array( $tmpDecodedIgnoredThemes ) || 0 == count( $tmpDecodedIgnoredThemes ) ) {
 				continue;
 			}
 			$cnt ++;
 		}
 
-		self::renderHeader( 'IgnoreAbandoned' );
+		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-themes" class="ui segment">
 			<h3 class="ui header">
 				<?php esc_html_e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Themes Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
+			<?php
+			self::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes );
+			?>
+		<div class="ui hidden divider"></div>
+		<h3 class="ui header">
+			<?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
+			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
+		</h3>
+			<?php
+			self::render_sites_ignored_abandoned( $cnt, $websites );
+			?>
+					
+		</div>
+		<?php
+		self::render_footer( 'IgnoreAbandoned' );
+	}
+
+	/**
+	 * Render the global ignored themes list.
+	 *
+	 * @param mixed $ignoredThemes Encoded ignored themes list.
+	 * @param mixed $decodedIgnoredThemes Decoded ignored themes list.
+	 */
+	public static function render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ) {
+		?>
+		<table id="mainwp-globally-ignored-abandoned-themes" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
@@ -1462,12 +1558,12 @@ class MainWP_Themes {
 			<tbody id="globally-ignored-themes-list">
 				<?php if ( $ignoredThemes ) : ?>
 					<?php foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) : ?>
-					<tr theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
+					<tr theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>
 						<td class="right aligned">
 						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo urlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						</td>
 					</tr>
@@ -1490,125 +1586,82 @@ class MainWP_Themes {
 					<?php endif; ?>
 				<?php endif; ?>
 		</table>
-		<div class="ui hidden divider"></div>
-		<h3 class="ui header">
-			<?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
-		</h3>
-		<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
-			<thead>
-				<tr>
-					<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody id="ignored-abandoned-themes-list">
-				<?php if ( 0 < $cnt ) : ?>
-					<?php
-					MainWP_DB::data_seek( $websites, 0 );
-					while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-						$decodedIgnoredThemes = json_decode( MainWP_DB::Instance()->getWebsiteOption( $website, 'themes_outdate_dismissed' ), true );
-						if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
-							continue;
-						}
-
-						$first = true;
-						foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
-							?>
-						<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo urlencode( $ignoredTheme ); ?>">
-							<?php if ( $first ) : ?>
-							<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-								<?php $first = false; ?>
-							<?php else : ?>
-							<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
-							<?php endif; ?>
-							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
-							<td><?php echo esc_html( $ignoredTheme ); ?></td>
-							<td class="right aligned">
-							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo urlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
-							<?php endif; ?>
-							</td>
-						</tr>
-							<?php
-						}
-					}
-					MainWP_DB::free_result( $websites );
-					?>
-				<?php else : ?>
-				<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
-				<?php endif; ?>
-				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<?php if ( 0 < $cnt ) : ?>
-					<tfoot class="full-width">
-						<tr>
-							<th colspan="999">
-								<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
-									<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
-								</a>
-							</th>
-						</tr>
-					</tfoot>
-					<?php endif; ?>
-				<?php endif; ?>
-			</table>
-		</div>
 		<?php
-		self::renderFooter( 'IgnoreAbandoned' );
 	}
 
-	public static function trustPost() {
-		$userExtension = MainWP_DB::Instance()->getUserExtension();
-		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
-		if ( ! is_array( $trustedThemes ) ) {
-			$trustedThemes = array();
-		}
-		$action = $_POST['do'];
-		$slugs  = $_POST['slugs'];
-		if ( ! is_array( $slugs ) ) {
-			return;
-		}
-		if ( 'trust' !== $action && 'untrust' !== $action ) {
-			return;
-		}
-		if ( 'trust' === $action ) {
-			foreach ( $slugs as $slug ) {
-				$idx = array_search( urldecode( $slug ), $trustedThemes );
-				if ( false === $idx ) {
-					$trustedThemes[] = urldecode( $slug );
-				}
-			}
-		} elseif ( 'untrust' === $action ) {
-			foreach ( $slugs as $slug ) {
-				if ( in_array( urldecode( $slug ), $trustedThemes ) ) {
-					$trustedThemes = array_diff( $trustedThemes, array( urldecode( $slug ) ) );
-				}
-			}
-		}
-		$userExtension->trusted_themes = wp_json_encode( $trustedThemes );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
-	}
-
-	public static function saveTrustedThemeNote() {
-		$slug               = urldecode( $_POST['slug'] );
-		$note               = stripslashes( $_POST['note'] );
-		$esc_note           = MainWP_Utility::esc_content( $note );
-		$userExtension      = MainWP_DB::Instance()->getUserExtension();
-		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );
-		if ( ! is_array( $trustedThemesNotes ) ) {
-			$trustedThemesNotes = array();
-		}
-		$trustedThemesNotes[ $slug ]         = $esc_note;
-		$userExtension->trusted_themes_notes = wp_json_encode( $trustedThemesNotes );
-		MainWP_DB::Instance()->updateUserExtension( $userExtension );
-	}
-
-	/*
-	 * Hook the section help content to the Help Sidebar element
+	/**
+	 * Render ignored sites list.
+	 *
+	 * @param mixed $cnt
+	 * @param mixed $websites Websites list.
 	 */
+	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
+		?>
+	<table id="mainwp-per-site-ignored-abandoned-themes" class="ui compact selectable table stackable">
+		<thead>
+			<tr>
+				<th><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+				<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+				<th><?php esc_html_e( 'Theme slug', 'mainwp' ); ?></th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody id="ignored-abandoned-themes-list">
+			<?php if ( 0 < $cnt ) : ?>
+				<?php
+				MainWP_DB::data_seek( $websites, 0 );
+				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+					$decodedIgnoredThemes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+					if ( ! is_array( $decodedIgnoredThemes ) || 0 == count( $decodedIgnoredThemes ) ) {
+						continue;
+					}
+
+					$first = true;
+					foreach ( $decodedIgnoredThemes as $ignoredTheme => $ignoredThemeName ) {
+						?>
+					<tr site-id="<?php echo esc_attr( $website->id ); ?>" theme-slug="<?php echo rawurlencode( $ignoredTheme ); ?>">
+						<?php if ( $first ) : ?>
+						<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+							<?php $first = false; ?>
+						<?php else : ?>
+						<td><div style="display:none;"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a></div></td>
+						<?php endif; ?>
+						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
+						<td><?php echo esc_html( $ignoredTheme ); ?></td>
+						<td class="right aligned">
+						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
+						<?php endif; ?>
+						</td>
+					</tr>
+						<?php
+					}
+				}
+				MainWP_DB::free_result( $websites );
+				?>
+			<?php else : ?>
+			<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
+			<?php endif; ?>
+			</tbody>
+			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( 0 < $cnt ) : ?>
+				<tfoot class="full-width">
+					<tr>
+						<th colspan="999">
+							<a class="ui right floated small green labeled icon button" onClick="return updatesoverview_themes_unignore_abandoned_detail_all();" id="mainwp-unignore-detail-all">
+								<i class="check icon"></i> <?php esc_html_e( 'Unignore All', 'mainwp' ); ?>
+							</a>
+						</th>
+					</tr>
+				</tfoot>
+				<?php endif; ?>
+			<?php endif; ?>
+		</table>	
+		<?php
+	}
+
+
+	/** Hook the section help content to the Help Sidebar element */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'ThemesManage' === $_GET['page'] || 'ThemesInstall' === $_GET['page'] || 'ThemesAutoUpdate' === $_GET['page'] || 'ThemesIgnore' === $_GET['page'] || 'ThemesIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>

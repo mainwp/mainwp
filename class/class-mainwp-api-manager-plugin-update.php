@@ -1,8 +1,18 @@
 <?php
+/**
+ * MainWP API Manager Update Handler
+ *
+ * This class handles updates for MainWP Extension.
+ *
+ * @package MainWP API Manager/Update Handler
+ */
 
+namespace MainWP\Dashboard;
+
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
-} // Exit if accessed directly
+}
 
 /**
  * MainWP API Manager Update Handler
@@ -15,43 +25,66 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Plugin_Update {
 
 	/**
-	 * @var The single instance of the class
+	 * @var $instance The single instance of the class
 	 */
-	protected static $_instance = null;
+	protected static $instance = null;
 
 	/**
+	 * Method instance()
+	 *
 	 * @static
 	 * @return class instance
 	 */
 	public static function instance() {
-		if ( is_null( self::$_instance ) ) {
-			self::$_instance = new self();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
 		}
 
-		return self::$_instance;
+		return self::$instance;
 	}
 
+	/**
+	 * Method __construct()
+	 */
 	public function __construct() {
-		// API data
+
+		// API data.
 	}
 
-	// Update API URL
+
+	/**
+	 * Method create_upgrade_api_url()
+	 *
+	 * @param mixed   $args
+	 * @param boolean $bulk_check
+	 *
+	 * @return URL Build URL
+	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
 		if ( $bulk_check ) {
-			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
 		} else {
-			$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->getUpgradeUrl() ) );
+			$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
 		}
 
 		$query_url = '';
 		foreach ( $args as $key => $value ) {
-			$query_url .= $key . '=' . urlencode( $value ) . '&';
+			$query_url .= $key . '=' . rawurlencode( $value ) . '&';
 		}
 		$query_url = rtrim( $query_url, '&' );
 
-		return $upgrade_url . '&' . $query_url; // http_build_query( $args );
+		return $upgrade_url . '&' . $query_url;
 	}
 
+	/**
+	 * Method update_check()
+	 *
+	 * Returns plugin information in an array.
+	 *
+	 * @param mixed $plugin
+	 *
+	 * @return mixed Plugin Information
+	 */
 	public function update_check( $plugin ) {
 
 		$args = array(
@@ -67,44 +100,71 @@ class MainWP_Api_Manager_Plugin_Update {
 			'extra'              => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
 		);
 
-		// Check for a plugin update
+		// Check for a plugin update.
 		return $this->plugin_information( $args );
 	}
 
+
+	/**
+	 * Methos bulk_update_check()
+	 *
+	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
+	 *
+	 * @param mixed $plugins
+	 *
+	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
+	 */
 	public function bulk_update_check( $plugins ) {
 		$args = array(
 			'request'    => 'bulkupdatecheck',
 			'domain'     => MainWP_Api_Manager::instance()->get_domain(),
-			'extensions' => base64_encode( serialize( $plugins ) ),
+			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
 		);
-		return $this->plugin_information( $args, true ); // bulk update check
+		return $this->plugin_information( $args, true ); // bulk update check.
 	}
 
+
+	/**
+	 * Method request()
+	 *
+	 * Check $args, if there is a response, an object eists & response is not false.
+	 *
+	 * @param mixed $args
+	 *
+	 * @return object $response
+	 */
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';
 
 		$response = $this->plugin_information( $args );
 
-		// If everything is okay return the $response
-		if ( isset( $response ) && is_object( $response ) && $response !== false ) {
+		// If everything is okay return the response.
+		if ( isset( $response ) && is_object( $response ) && false !== $response ) {
 			return $response;
 		}
 	}
 
 	/**
+	 * Method plugin_information()
+	 *
 	 * Sends and receives data to and from the server API
 	 *
 	 * @access public
 	 * @since  1.0.0
+	 * @param mixed  $args
+	 * @param boolen $bulk_check Check if updating in bulk true|false
 	 * @return object $response
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );
 		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
-		$request      = wp_remote_get( $target_url, array(
-			'timeout'   => 50,
-			'sslverify' => $apisslverify,
-		) );
+		$request      = wp_remote_get(
+			$target_url,
+			array(
+				'timeout'   => 50,
+				'sslverify' => $apisslverify,
+			)
+		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {
 			return false;
@@ -112,9 +172,9 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		if ( $bulk_check ) {
 			$response = wp_remote_retrieve_body( $request );
-			$response = unserialize( base64_decode( $response ) );
+			$response = MainWP_Utility::maybe_unserialyze( $response );
 		} else {
-			$response = unserialize( wp_remote_retrieve_body( $request ) );
+			$response = MainWP_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
 		}
 
 		/**
@@ -138,4 +198,4 @@ class MainWP_Api_Manager_Plugin_Update {
 
 }
 
-// End of class
+// End of class.

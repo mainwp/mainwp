@@ -2,41 +2,42 @@
 /**
  * MainWP Security Widget
  *
- * Displays detected security issues on Child Sites
+ * Displays detected security issues on Child Sites.
  */
 
+namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Security_Issues_Widget
  *
- * Detect security issues on CHild Sites & Build Widget
+ * Detect security issues on CHild Sites & Build Widget.
  */
 class MainWP_Security_Issues_Widget {
 
 	/**
-	 * getClassName()
+	 * Method get_class_name()
 	 *
-	 * @return string __CLASS__
+	 * @return string __CLASS__ Class Name
 	 */
-	public static function getClassName() {
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	/**
-	 * renderWidget()
+	 * Method render_widget()
 	 *
-	 * Fetch Child Site issues from db & build widget
+	 * Fetch Child Site issues from db & build widget.
 	 */
-	public static function renderWidget() {
+	public static function render_widget() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql = MainWP_DB::Instance()->getSQLWebsiteById( $current_wpid );
+			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 		} else {
-			$sql = MainWP_DB::Instance()->getSQLWebsitesForCurrentUser();
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
 		}
 
-		$websites = MainWP_DB::Instance()->query( $sql );
+		$websites = MainWP_DB::instance()->query( $sql );
 
 		$total_securityIssues = 0;
 
@@ -46,11 +47,26 @@ class MainWP_Security_Issues_Widget {
 				$total_securityIssues += $website->securityIssues;
 			}
 		}
-		?>
 
+		self::render_issues( $websites, $total_securityIssues );
+	}
+
+	/**
+	 *
+	 * Method render_html_widget().
+	 *
+	 * Render html themes widget for current site
+	 *
+	 * @param mixed $website current site.
+	 * @param mixed $allPlugins all plugins.
+	 *
+	 * @return echo html
+	 */
+	public static function render_issues( $websites, $total_securityIssues ) {
+		?>
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e('Security Issues', 'mainwp'); ?>
-			<div class="sub header"><?php _e( 'Detected security issues', 'mainwp' ); ?></div>
+			<?php esc_html_e( 'Security Issues', 'mainwp' ); ?>
+			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>
 		</h3>
 
 		<div class="ui section hidden divider"></div>
@@ -73,8 +89,8 @@ class MainWP_Security_Issues_Widget {
 				</div>
 			</div>
 			<div class="column right aligned">
-				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php echo __( 'See Details', 'mainwp' ); ?></a>
-				<input type="button" class="fix-all-security-issues ui button green" value="<?php _e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
+				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+				<input type="button" class="fix-all-security-issues ui button green" value="<?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
 			</div>
 		</div>
 
@@ -84,16 +100,13 @@ class MainWP_Security_Issues_Widget {
 			<?php
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-				// if ( !MainWP_Utility::ctype_digit( $website->securityIssues ) || $website->securityIssues == 0 ) {
-				// continue;
-				// }
 				?>
-				<div class="item" siteid="<?php echo $website->id; ?>">
+				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
-				  <div class="column middle aligned">
-					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr($website->id); ?>"><?php echo stripslashes( $website->name ); ?></a>
-				  </div>
-				  <div class="column middle aligned">
+				<div class="column middle aligned">
+					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+				</div>
+				<div class="column middle aligned">
 							<?php
 							if ( $website->securityIssues > 0 ) {
 								?>
@@ -102,18 +115,18 @@ class MainWP_Security_Issues_Widget {
 								</div>
 								<?php
 							} else {
-								echo __( 'No security issues detected.', 'mainwp' );
+								esc_html_e( 'No security issues detected.', 'mainwp' );
 							}
 							?>
-				  </div>
-				  <div class="column right aligned">
-							<a href="admin.php?page=managesites&scanid=<?php echo esc_attr($website->id); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php _e( 'Details', 'mainwp' ); ?></a>
-					  <?php if ( $website->securityIssues == 0 ) { ?>
-					  <input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
+				</div>
+				<div class="column right aligned">
+					<a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
+					<?php if ( 0 == $website->securityIssues ) { ?>
+					<input type="button" class="unfix-all-site-security-issues ui button basic green mini" value="<?php esc_attr_e( 'Unfix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to unfix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } else { ?>
-					  <input type="button" class="fix-all-site-security-issues ui button green mini" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to fix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
+					<input type="button" class="fix-all-site-security-issues ui button green mini" value="<?php esc_attr_e( 'Fix All', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Click here to fix all security issues on the child site.', 'mainwp' ); ?>" data-inverted=""/>
 					<?php } ?>
-				  </div>
+				</div>
 				</div>
 				</div>
 			<?php } ?>
@@ -127,7 +140,7 @@ class MainWP_Security_Issues_Widget {
 		<h2 class="ui icon header">
 			<i class="thumbs up outline icon"></i>
 			<div class="content">
-				<?php _e( 'Well done!', 'mainwp' ); ?>
+				<?php esc_html_e( 'Well done!', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'No security issues detected!', 'mainwp' ); ?></div>
 			</div>
 		</h2>

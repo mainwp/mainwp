@@ -3,10 +3,10 @@
 jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
 {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_add_menu',
         slug: extensionSlug
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function ( response )
     {
@@ -24,10 +24,10 @@ jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
 jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function ()
 {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_remove_menu',
         slug: extensionSlug
-    };
+    } );
 
     jQuery.post( ajaxurl, data, function ( response )
     {
@@ -248,11 +248,11 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
   var pwd = grabingEl.find( '#mainwp_com_password' ).val();
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_testextensionapilogin',
         username: username,
         password: pwd
-    };
+    } );
 
     if ( retring == true ) {
     statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
@@ -312,38 +312,36 @@ extensions_activate_next = function ( pObj ) {
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
   var username = grabingEl.find( '#mainwp_com_username' ).val();
   var pwd = grabingEl.find( '#mainwp_com_password' ).val();
-    var apiEl = pObj;
-    var statusEl = apiEl.find( ".activate-api-status" );
-    var loadingEl = apiEl.find( ".api-feedback" );
-  var apiForm = apiEl.find( '#mainwp-extensions-api-form' );
+  var apiEl = pObj;
+  var statusEl = apiEl.find( ".activate-api-status" );
+  var loadingEl = apiEl.find( ".api-feedback" );
 
-    apiEl.attr( "status", "running" );
 
-    var extensionSlug = apiEl.attr( 'extension-slug' );
-    var data = {
-        action: 'mainwp_extension_grabapikey',
-        username: username,
-        password: pwd,
-        slug: extensionSlug
-    };
+  apiEl.attr( "status", "running" );
 
-    currentActivateThreads++;
+  var extensionSlug = apiEl.attr( 'extension-slug' );
+  var data = mainwp_secure_data( {
+    action: 'mainwp_extension_grabapikey',
+    username: username,
+    password: pwd,
+    slug: extensionSlug
+  } );
 
-    loadingEl.show();
-    loadingEl.find( '.message' ).removeClass( 'red green' );
-    loadingEl.find( '.message' ).html( '<i class="notched circle loading icon"></i>' + __( 'Activating...' ) );
+  currentActivateThreads++;
 
-    if ( apiEl.attr( 'license-status' ) == 'activated' ) {
-          finishedActivateThreads++;
-          currentActivateThreads--;
-          loadingEl.find( '.message' ).addClass( 'green' );
-          loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
-          countSuccessActivation++;
-          extensions_loop_next();
-          return;
-    }
+  loadingEl.show();
+  loadingEl.find( '.message' ).removeClass( 'red green' );
+  loadingEl.find( '.message' ).html( '<i class="notched circle loading icon"></i>' + __( 'Activating...' ) );
 
-    //apiForm.show();
+  if ( apiEl.attr( 'license-status' ) == 'activated' ) {
+    finishedActivateThreads++;
+    currentActivateThreads--;
+    loadingEl.find( '.message' ).addClass( 'green' );
+    loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
+    countSuccessActivation++;
+    extensions_loop_next();
+    return;
+  }
 
     jQuery.post( ajaxurl, data, function ( response ){
           finishedActivateThreads++;
@@ -385,11 +383,11 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
 
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_getpurchased',
         username: username,
         password: pwd
-    };
+    } );
 
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
@@ -463,7 +461,6 @@ mainwp_extension_bulk_install = function () {
 mainwp_extension_bulk_install_next = function () {
     while ( ( extToInstall = jQuery( '.mainwp-installing-extensions input[type="checkbox"][status="queue"]:checked:first' ).closest( '.extension-to-install' ) ) && ( extToInstall.length > 0 ) && ( bulkExtensionsCurrentThreads < bulkExtensionsMaxThreads ) ) {
         mainwp_extension_bulk_install_specific( extToInstall );
-//        mainwp_extension_bulk_activate_license( extToInstall );
     }
 
     if ( ( bulkExtensionsTotal > 0 ) && ( bulkExtensionsFinished == bulkExtensionsTotal ) ) {
@@ -578,10 +575,10 @@ jQuery( document ).on( 'click', '#mainwp-extensions-api-sslverify-certificate', 
     var statusEl = parent.find( 'span.status' );
     var loadingEl = parent.find( "i" );
 
-    var data = {
+    var data = mainwp_secure_data( {
         action: 'mainwp_extension_apisslverifycertificate',
         api_sslverify: jQuery( "#mainwp_api_sslVerifyCertificate" ).val()
-    };
+    } );
 
     statusEl.hide();
     loadingEl.show();

@@ -1,25 +1,41 @@
 <?php
 
 /**
- * MainWP API Settings Page
- *
  * This page handles listing install MainWP Extensions
  * and activating / deactivating license keys
  */
+
+namespace MainWP\Dashboard;
+
+/**
+ * MainWP API Settings Page
+ */
 class MainWP_API_Settings {
 
-	public static function getClassName() {
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	public static function checkUpgrade() {
+	/**
+	 * Method check_upgrade()
+	 *
+	 * Check if Extension has an update.
+	 *
+	 * @return array $output List of results.
+	 */
+	public static function check_upgrade() {
 
-		$extensions = MainWP_Extensions::loadExtensions();
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$output     = array();
 		if ( is_array( $extensions ) ) {
 			$check_exts = array();
 			foreach ( $extensions as $ext ) {
-				if ( isset( $ext['activated_key'] ) && 'Activated' == $ext['activated_key'] ) {
+				if ( isset( $ext['activated_key'] ) && 'Activated' === $ext['activated_key'] ) {
 					$args                               = array();
 					$args['plugin_name']                = $ext['api'];
 					$args['version']                    = $ext['version'];
@@ -48,10 +64,10 @@ class MainWP_API_Settings {
 				$count++;
 				if ( $count == $max_check || $i == $total_check ) {
 					$results = MainWP_Api_Manager_Plugin_Update::instance()->bulk_update_check( $bulk_checks );
-					if ( is_array( $results ) && count( $results ) > 0 ) {
+					if ( is_array( $results ) && 0 < count( $results ) ) {
 						foreach ( $results as $slug => $response ) {
-								$rslt             = new stdClass();
-								$rslt->slug       = $slug;
+							$rslt                 = new \stdClass();
+							$rslt->slug           = $slug;
 							$rslt->latest_version = $response->new_version;
 							$rslt->download_url   = $response->package;
 							$rslt->key_status     = '';
@@ -60,7 +76,7 @@ class MainWP_API_Settings {
 							if ( isset( $response->errors ) ) {
 								$rslt->error = $response->errors;
 							}
-								$output[ $slug ] = $rslt;
+							$output[ $slug ] = $rslt;
 						}
 					}
 					$count       = 0;
@@ -72,9 +88,18 @@ class MainWP_API_Settings {
 		return $output;
 	}
 
-	public static function getUpgradeInformation( $pSlug ) {
+	/**
+	 * Method get_upgrade_information()
+	 *
+	 * Check extension information for an update.
+	 *
+	 * @param mixed $pSlug Extension Slug.
+	 *
+	 * @return array $rslt List of results.
+	 */
+	public static function get_upgrade_information( $pSlug ) {
 
-		$extensions = MainWP_Extensions::loadExtensions();
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$rslt       = null;
 		if ( is_array( $extensions ) ) {
 			foreach ( $extensions as $ext ) {
@@ -89,8 +114,8 @@ class MainWP_API_Settings {
 					$args['software_version'] = $ext['software_version'];
 					$response                 = MainWP_Api_Manager::instance()->update_check( $args );
 					if ( ! empty( $response ) ) {
-						$rslt                 = new stdClass();
-						$rslt->slug           = $ext['api']; // $response->slug
+						$rslt                 = new \stdClass();
+						$rslt->slug           = $ext['api'];
 						$rslt->latest_version = $response->new_version;
 						$rslt->download_url   = $response->package;
 						$rslt->key_status     = '';
@@ -107,8 +132,17 @@ class MainWP_API_Settings {
 		return $rslt;
 	}
 
-	public static function getPluginInformation( $pSlug ) {
-		$extensions = MainWP_Extensions::loadExtensions();
+	/**
+	 * Method get_plugin_information()
+	 *
+	 * Grab extention Information.
+	 *
+	 * @param mixed $pSlug Extension Slug.
+	 *
+	 * @return array $rslt List of results.
+	 */
+	public static function get_plugin_information( $pSlug ) {
+		$extensions = MainWP_Extensions_Handler::load_extensions();
 		$rslt       = null;
 		if ( is_array( $extensions ) ) {
 			foreach ( $extensions as $ext ) {

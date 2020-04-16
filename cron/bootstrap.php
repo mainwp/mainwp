@@ -1,5 +1,17 @@
 <?php
+/**
+ * MainWP bootstrap.
+ *
+ * Set default php.ini variables
+ * check if load wp-load & wp-config exist & include them
+ * else exit due to "Unsupported WordPress Setup".
+ *
+ * @package MainWP/Bootstrap
+ */
 
+// phpcs:disable -- required to support custom wp-config.php file location
+
+// set php.ini variables.
 @ignore_user_abort( true );
 @set_time_limit( 0 );
 $mem = '512M';
@@ -8,6 +20,7 @@ $mem = '512M';
 
 define( 'DOING_CRON', true );
 $included = false;
+
 
 if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 	include_once __DIR__ . '/../../../../wp-load.php';
@@ -18,7 +31,7 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 	if ( count( $matches ) > 0 ) {
 		foreach ( $matches as $match ) {
 			$execute = str_ireplace( 'ABSPATH', 'TMPABSPATH', $match[0] );
-			$execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );
+			$execute = str_ireplace( '__FILE__', "'" . __DIR__ . '/../../../../wp-config.php' . "'", $execute );			
 			eval( $execute );
 			if ( file_exists( TMPABSPATH . 'wp-load.php' ) ) {
 				include_once TMPABSPATH . 'wp-load.php';
@@ -29,6 +42,7 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 	}
 }
 
+// phpcs:enable
 if ( ! $included ) {
 	exit( 'Unsupported WordPress setup' );
 }

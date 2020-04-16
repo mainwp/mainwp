@@ -664,8 +664,8 @@ $.widget( "ui.iviewer", $.ui.mouse, {
             return 0;
         }
 
-        function div(val1,val2) { return val1 / val2 };
-        function mul(val1,val2) { return val1 * val2 };
+        function div(val1,val2) { return val1 / val2 }
+        function mul(val1,val2) { return val1 * val2 }
 
         var func = (value > this.options.zoom_base)?mul:div;
         var sgn = (value > this.options.zoom_base)?1:-1;
@@ -1006,7 +1006,7 @@ $.ui.iviewer.ImageObject = function(do_anim) {
                 var verticalMod = this._swapDimensions ? -1 : 1;
                 this.x(this.x() - verticalMod * this.display_diff() / 2, true);
                 this.y(this.y() + verticalMod * this.display_diff() / 2, true);
-            };
+            }
 
             var cssVal = 'rotate(' + deg + 'deg)',
                 img = this._img;

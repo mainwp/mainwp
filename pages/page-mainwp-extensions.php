@@ -280,7 +280,7 @@ class MainWP_Extensions {
 		}
 	}
 
-	/** Initiate Extensions Suppage Menu.  */
+	/** Initiate Extensions Subpage Menu.  */
 	public static function init_subpages_menu() {
 		if ( empty( self::$extensions ) ) {
 			return;
@@ -500,7 +500,6 @@ class MainWP_Extensions {
 		}
 		wp_send_json( $return );
 	}
-
 
 	/**
 	 * Render page header.

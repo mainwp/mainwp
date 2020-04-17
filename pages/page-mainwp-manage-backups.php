@@ -8,14 +8,23 @@ namespace MainWP\Dashboard;
  * MainWP Manage Backups
  */
 class MainWP_Manage_Backups {
+
+	/**
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/** @var undefined $subPages Subpages variable. */
 	public static $subPages;
 
+	/** @var boolean $hideSubmenuBackups true|false, Whether or not to show the Backups Submenu. */
 	private static $hideSubmenuBackups = false;
 
+	/** @var null Instance variable. */
 	private static $instance = null;
 	
 	/**
@@ -154,7 +163,12 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	/** Instantiate Legacy Backups Menu. */
+	/**
+	 * Instantiate Legacy Backups Menu.
+	 * 
+	 * @param array $subPages Legacy Backup Subpages.
+	 * @param boolean $enableLegacyBackup ture|false, whether or not to enable menu.
+	 */
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
 			MainWP_Menu::add_left_menu(
@@ -264,6 +278,11 @@ class MainWP_Manage_Backups {
 		echo '</div>';
 	}
 
+	/**
+	 * Render Legacy Backups page.
+	 * 
+	 * @return html Legacy Backups html. 
+	 */
 	public static function render_manager() {
 		$backupTask = null;
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
@@ -435,7 +454,14 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	/** Single ow Content. */
+	/**
+	 * Single row Content.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * @param mixed $columns Columns Array.
+	 * 
+	 * @return html Row Content.
+	 */
 	public function single_row( $item, $columns ) {
 		?>
 		<tr>
@@ -454,7 +480,13 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	/** Column Actions. */
+	/**
+	 * Column Actions.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_actions( $item ) {
 
 		$actions = array(
@@ -494,22 +526,46 @@ class MainWP_Manage_Backups {
 		return $out;
 	}
 
-	/** Column Task Name. */
+	/**
+	 * Column Task Name.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_task_name( $item ) {
 		return stripslashes( $item->name );
 	}
 
-	/** Column Type. */
+	/**
+	 * Column Type.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_type( $item ) {
 		return ( 'db' == $item->type ? __( 'DATABASE BACKUP', 'mainwp' ) : __( 'FULL BACKUP', 'mainwp' ) );
 	}
 
-	/** Column Schdule. */
+	/**
+	 * Column Schdule.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_schedule( $item ) {
 		return strtoupper( $item->schedule );
 	}
 
-	/** Column Destination. */
+	/**
+	 * Column Destination.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_destination( $item ) {
 		$extraOutput = apply_filters( 'mainwp_backuptask_column_destination', '', $item->id );
 		if ( '' != $extraOutput ) {
@@ -519,7 +575,13 @@ class MainWP_Manage_Backups {
 		return __( 'SERVER', 'mainwp' );
 	}
 
-	/** Column Websites. */
+	/**
+	 * Column Websites.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_websites( $item ) {
 		if ( 0 == count( $item->the_sites ) ) {
 			echo( '<span style="color: red; font-weight: bold; ">' . count( $item->the_sites ) . '</span>' );
@@ -528,7 +590,13 @@ class MainWP_Manage_Backups {
 		}
 	}
 
-	/** Column Details. */
+	/**
+	 * Column Details.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_details( $item ) {
 		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
 		$output .= '<strong>' . __( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
@@ -549,7 +617,13 @@ class MainWP_Manage_Backups {
 		return $output;
 	}
 
-	/** Column Trigger. */
+	/**
+	 *  Column Trigger.
+	 * 
+	 * @param mixed $item Item to go in column.
+	 * 
+	 * @return html Action content.
+	 */
 	public function column_trigger( $item ) {
 		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
 	}

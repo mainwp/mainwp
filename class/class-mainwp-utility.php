@@ -1406,7 +1406,7 @@ EOT;
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}
-	
+
 	/**
 	 * Method get_openssl_conf()
 	 *
@@ -1426,20 +1426,19 @@ EOT;
 		}
 		return $setup_conf_loc;
 	}
-		
+
 	/**
 	 * Method sync_site_icon()
 	 *
 	 * Get site's icon.
-	 * 
+	 *
 	 * @param mixed $siteId site's id.
 	 * @return array result error or success
-	 * 
 	 */
 	public static function sync_site_icon( $siteId = null ) {
-		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
+		if ( self::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( self::can_edit_website( $website ) ) {
 				$error = '';
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'get_site_icon' );
@@ -1454,10 +1453,10 @@ EOT;
 					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 
-						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+						$hasWPFileSystem = self::get_wp_file_system();
 						global $wp_filesystem;
 
-						$dirs     = MainWP_Utility::get_mainwp_dir();
+						$dirs     = self::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
 							$wp_filesystem->mkdir( $iconsDir, 0777, true );
@@ -1490,5 +1489,5 @@ EOT;
 		return array( 'result' => 'NOSITE' );
 	}
 
-	
+
 }

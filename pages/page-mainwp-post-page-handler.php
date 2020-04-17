@@ -11,7 +11,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_class_name() {
 		return __CLASS__;
 	}
-	
+
 	/**
 	 * Add post meta data defined in $_POST superglobal for post with given ID.
 	 *
@@ -56,9 +56,8 @@ class MainWP_Post_Page_Handler {
 	 * Method ajax_add_meta()
 	 *
 	 * Ajax process to add post meta data
-	 * 	 
+	 *
 	 * @return exit json result
-	 * 
 	 */
 	public static function ajax_add_meta() {
 
@@ -145,7 +144,7 @@ class MainWP_Post_Page_Handler {
 	 * Method get_categories()
 	 *
 	 * Get categories
-	 * 	 
+	 *
 	 * @return exit html result
 	 */
 	public static function get_categories() {
@@ -212,7 +211,7 @@ class MainWP_Post_Page_Handler {
 	 * Method posting()
 	 *
 	 * Create bulk posts on sites
-	 * 	 
+	 *
 	 * @return html result
 	 */
 	public static function posting() { // phpcs:ignore -- complex method
@@ -500,9 +499,8 @@ class MainWP_Post_Page_Handler {
 	 * Method get_post()
 	 *
 	 * Get post from child site to edit
-	 * 	 
+	 *
 	 * @return exit json result
-	 * 
 	 */
 	public static function get_post() {
 		$postId    = $_POST['postId'];
@@ -556,9 +554,8 @@ class MainWP_Post_Page_Handler {
 	 * Method new_post()
 	 *
 	 * Create new post.
-	 * 	 
+	 *
 	 * @return array result
-	 * 
 	 */
 	public static function new_post( $post_data = array() ) {
 		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
@@ -575,10 +572,9 @@ class MainWP_Post_Page_Handler {
 	 * Method create_post()
 	 *
 	 * Create post.
-	 * 	 
+	 *
 	 * @return array result
-	 * 
-	 */	
+	 */
 	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method.
 		global $current_user;
 
@@ -738,9 +734,9 @@ class MainWP_Post_Page_Handler {
 	 * Method add_sticky_handle()
 	 *
 	 * Add post meta
-	 * 	 
-	 * @return int post id	 
-	 */	
+	 *
+	 * @return int post id
+	 */
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {

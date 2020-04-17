@@ -22,7 +22,7 @@ class MainWP_Menu {
 	public static function get_class_name() {
 		return __CLASS__;
 	}
-	
+
 	/**
 	 * Method __construct()
 	 *
@@ -111,7 +111,7 @@ class MainWP_Menu {
 			MainWP_Child_Scan::init_menu();
 		}
 	}
-	
+
 	/**
 	 * Method init_subpages_menu()
 	 *
@@ -159,7 +159,7 @@ class MainWP_Menu {
 		}
 	}
 
-	
+
 	/**
 	 * Method init_subpages_left_menu
 	 *

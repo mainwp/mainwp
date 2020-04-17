@@ -156,7 +156,7 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 * 
+	 *
 	 * phpcs:ignore -- complex method
 	 */
 	public static function render_sites() {
@@ -829,22 +829,22 @@ class MainWP_Updates_Overview {
 	/**
 	 * Render to support global update.
 	 *
-	 * @param bool true|false                     $user_can_update_wordpress permission to update WordPress.
-	 * @param int                                 $total_wp_upgrades total WordPress update.
-	 * @param mixed                               $all_wp_updates all WordPress update list.
-	 * 
-	 * @param bool true|false                     $user_can_update_plugins permission to update plugings.
-	 * @param int                                 $total_plugin_upgrades total WordPress update.
-	 * @param mixed                               $all_plugins_updates all WordPress update list.
-	 * 
-	 * @param bool true|false                     $user_can_update_wordpress permission to update themes.
-	 * @param int                                 $total_theme_upgrades total themes update.
-	 * @param mixed                               $all_themes_updates all themes update list.
-	 * 
-	 * @param mixed $mainwp_show_language_updates MainWP Language Updates.
-	 * @param bool true|false                     $user_can_update_wordpress permission to update languages.
-	 * @param int                                 $total_translation_upgrades total WordPress update.
-	 * @param mixed                               $all_translations_updates all transations update list.
+	 * @param bool true|false $user_can_update_wordpress permission to update WordPress.
+	 * @param int             $total_wp_upgrades total WordPress update.
+	 * @param mixed           $all_wp_updates all WordPress update list.
+	 *
+	 * @param bool true|false $user_can_update_plugins permission to update plugings.
+	 * @param int             $total_plugin_upgrades total WordPress update.
+	 * @param mixed           $all_plugins_updates all WordPress update list.
+	 *
+	 * @param bool true|false $user_can_update_wordpress permission to update themes.
+	 * @param int             $total_theme_upgrades total themes update.
+	 * @param mixed           $all_themes_updates all themes update list.
+	 *
+	 * @param mixed           $mainwp_show_language_updates MainWP Language Updates.
+	 * @param bool true|false $user_can_update_wordpress permission to update languages.
+	 * @param int             $total_translation_upgrades total WordPress update.
+	 * @param mixed           $all_translations_updates all transations update list.
 	 *
 	 * @return echo html
 	 */

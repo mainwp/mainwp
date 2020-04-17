@@ -139,7 +139,7 @@ class MainWP_Plugins {
 		}
 		self::init_left_menu( self::$subPages );
 	}
-	
+
 	/**
 	 * Load the Plugins Page.
 	 */
@@ -192,7 +192,7 @@ class MainWP_Plugins {
 									<?php
 								}
 							}
-						?>
+							?>
 				</div>
 			</div>
 		</div>
@@ -201,9 +201,9 @@ class MainWP_Plugins {
 
 	/**
 	 * Instantiate MainWP main menu Subpages menu.
-	 * 
+	 *
 	 * @param array $subPages Subpages array.
-	 * 
+	 *
 	 * @uses MainWP_Menu::add_left_menu()
 	 * @uses MainWP_Menu::init_subpages_left_menu()
 	 * @uses MainWP_Menu::is_disable_menu_item()
@@ -270,7 +270,7 @@ class MainWP_Plugins {
 
 	/**
 	 * Render MainWP Plugins Page Header.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -341,7 +341,7 @@ class MainWP_Plugins {
 
 	/**
 	 * Render MainWP Plugins Page Footer.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
@@ -487,12 +487,12 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Plugins Table.
-	 * 
+	 *
 	 * @param mixed $keyword Search Terms.
 	 * @param mixed $status active|inactive Whether the plugin is active or inactive.
 	 * @param mixed $groups Selected Child Site Groups.
-	 * @param mixed $sites Selected individual Child Sites. 
-	 * 
+	 * @param mixed $sites Selected individual Child Sites.
+	 *
 	 * @uses MainWP_Cache::init_cache()
 	 * @uses MainWP_Utility::ctype_digit()
 	 * @uses MainWP_DB::instance()
@@ -503,9 +503,9 @@ class MainWP_Plugins {
 	 * @uses MainWP_Utility::get_nice_url()
 	 * @uses MainWP_Cache::add_context()
 	 * @uses MainWP_Cache::add_result()
-	 * 
+	 *
 	 * @return html Plugin Table.
-	 * 
+	 *
 	 * phpcs:ignore -- complex method
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) {
@@ -716,8 +716,9 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Bulk Actions.
+	 *
 	 * @param mixed $status active|inactive|all.
-	 * 
+	 *
 	 * @return html Plugin Bulk Actions Menu.
 	 */
 	public static function render_bulk_actions( $status ) {
@@ -755,7 +756,7 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Manage Plugins Table.
-	 * 
+	 *
 	 * @param array $sites Child Sites array.
 	 * @param array $plugins Plugins array.
 	 * @param array $sitePlugins Site plugins array.
@@ -764,7 +765,7 @@ class MainWP_Plugins {
 	 * @param array $pluginsName Plugin names array.
 	 * @param array $pluginsVersion Installed plugins versions.
 	 * @param array $pluginsRealVersion Latest plugin release version.
-	 * 
+	 *
 	 * @return html Manage plugin table.
 	 */
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
@@ -1068,11 +1069,11 @@ class MainWP_Plugins {
 
 	/**
 	 * Render all active Plugins table.
-	 * 
-	 * @param null $output 
-	 * 
+	 *
+	 * @param null $output
+	 *
 	 * @return void
-	 * 
+	 *
 	 * phpcs:ignore -- not quite complex function
 	 */
 	public static function render_all_active_table( $output = null ) {
@@ -1214,16 +1215,16 @@ class MainWP_Plugins {
 		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
 	}
 
-	
+
 	/**
 	 * Render all active plugins html.
-	 * 
+	 *
 	 * @param array $plugins Plugins array.
 	 * @param array $trustedPlugins Trusted plugins array.
 	 * @param mixed $search_status trust|untrust|ignored.
 	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
 	 * @param array $trustedPluginsNotes Trusted Plugins Notes.
-	 * 
+	 *
 	 * @return html All active plugins table.
 	 */
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
@@ -1360,11 +1361,11 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Global Ignored plugins list.
-	 * 
+	 *
 	 * @param array $ignoredPlugins Ignored plugins array.
 	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
-	 * 
-	 * @return html Ignored Plugins. 
+	 *
+	 * @return html Ignored Plugins.
 	 */
 	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
@@ -1411,16 +1412,17 @@ class MainWP_Plugins {
 			</table>	
 		<?php
 	}
-	
+
 	/**
 	 * Render Per Site Ignored table.
+	 *
 	 * @param mixed $cnt Plugin count.
-	 * @param mixed $websites Child Sites. 
-	 * 
+	 * @param mixed $websites Child Sites.
+	 *
 	 * @return void
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
-	?>
+		?>
 	<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1529,11 +1531,11 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Global Ignored Abandoned table.
-	 * 
+	 *
 	 * @param array $ignoredPlugins Ignored plugins array.
 	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
-	 * 
-	 * @return html Globally Ignored Plugins. 
+	 *
+	 * @return html Globally Ignored Plugins.
 	 */
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
@@ -1583,10 +1585,10 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Per Site Ignored Abandoned Table.
-	 * 
+	 *
 	 * @param mixed $cnt Plugin Count.
-	 * @param mixed $websites Child Sites. 
-	 * 
+	 * @param mixed $websites Child Sites.
+	 *
 	 * @return html Per Site Ignored Abandoned Table.
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {

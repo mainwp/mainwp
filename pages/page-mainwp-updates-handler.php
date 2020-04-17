@@ -20,7 +20,7 @@ class MainWP_Updates_Handler {
 
 	/**
 	 * Check Child Site ID & Update.
-	 * 
+	 *
 	 * @param mixed $id Child Site ID.
 	 */
 	public static function upgrade_site( $id ) {
@@ -55,13 +55,13 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
-	 * Add a plugin or theme to the ignor list. 
-	 * 
+	 * Add a plugin or theme to the ignor list.
+	 *
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $slug Plugin or Theme Slug.
 	 * @param mixed $name Plugin or Theme Name.
 	 * @param mixed $id Child Site ID.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
@@ -89,12 +89,12 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
-	 * Remove a plugin or theme from the ignore list. 
-	 * 
+	 * Remove a plugin or theme from the ignore list.
+	 *
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $slug Plugin or Theme slug.
 	 * @param mixed $id Plugin or Theme name.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
@@ -135,11 +135,11 @@ class MainWP_Updates_Handler {
 
 	/**
 	 * Ignore Plugin or Themes.
-	 * 
+	 *
 	 * @param mixed $type plugin|theme
-	 * @param mixed $slug Plugin or Theme slug. 
+	 * @param mixed $slug Plugin or Theme slug.
 	 * @param mixed $name Plugin or Theme name.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function ignore_plugins_themes( $type, $slug, $name ) {
@@ -176,10 +176,10 @@ class MainWP_Updates_Handler {
 
 	/**
 	 * Unignore Plugins or Themes.
-	 * 
+	 *
 	 * @param mixed $type plugin|themes.
 	 * @param mixed $slug Plugin or Themes slug.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function unignore_plugins_themes( $type, $slug ) {
@@ -226,14 +226,14 @@ class MainWP_Updates_Handler {
 		return 'success';
 	}
 
-	
+
 	/**
-	 * Unignor abandoned plugins or themes. 
-	 * 
+	 * Unignor abandoned plugins or themes.
+	 *
 	 * @param mixed $type plugin|themes.
 	 * @param mixed $slug Plugin or Themes slug.
 	 * @param mixed $id Child Site ID.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
@@ -271,14 +271,14 @@ class MainWP_Updates_Handler {
 
 		return 'success';
 	}
-	
+
 
 	/**
-	 * Unignore abandoned plugins or themes. 
-	 * 
+	 * Unignore abandoned plugins or themes.
+	 *
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $slug Plugin or Themes slug.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function unignore_abandoned_plugins_themes( $type, $slug ) {
@@ -324,15 +324,15 @@ class MainWP_Updates_Handler {
 
 		return 'success';
 	}
-	
+
 	/**
 	 * Dismis Plugin or Theme.
-	 * 
+	 *
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $slug Plugin or Theme slug.
 	 * @param mixed $name Plugin or Theme name.
 	 * @param mixed $id Child Site ID.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
@@ -361,11 +361,11 @@ class MainWP_Updates_Handler {
 
 	/**
 	 * Dismiss plugins or themes.
-	 * 
+	 *
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $slug Plugin or Theme slug.
 	 * @param mixed $name Plugin or Theme name.
-	 * 
+	 *
 	 * @return string success.
 	 */
 	public static function dismiss_plugins_themes( $type, $slug, $name ) {
@@ -401,12 +401,12 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
-	 * Upgrade plugin or theme translations. 
-	 * 
+	 * Upgrade plugin or theme translations.
+	 *
 	 * @param mixed $id Child Site ID.
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $list List of theme or plugin names ( seperated by , )
-	 * 
+	 *
 	 * @throw MainWP_Exception(error).
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
@@ -442,12 +442,12 @@ class MainWP_Updates_Handler {
 
 	/**
 	 * Get plugin or theme slugs.
-	 * 
+	 *
 	 * @param mixed $id Child Site ID.
 	 * @param mixed $type plugin|theme.
-	 * 
+	 *
 	 * @return array List of plugins or themes.
-	 * 
+	 *
 	 * phpcs:ignore -- not quite complex function
 	 */
 	public static function get_plugin_theme_slugs( $id, $type ) {

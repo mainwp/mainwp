@@ -46,9 +46,9 @@ class MainWP_Server_Information_Handler {
 		return false;
 	}
 
-	/** 
-	 * Check if WP environment is Mutisilte or not. 
-	 * 
+	/**
+	 * Check if WP environment is Mutisilte or not.
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function check_if_multisite() {
@@ -60,11 +60,11 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Compair Filesize.
-	 * 
+	 *
 	 * @param mixed $value1
 	 * @param mixed $value2
-	 * @param null $operator
-	 * 
+	 * @param null  $operator
+	 *
 	 * @return void
 	 */
 	public static function filesize_compare( $value1, $value2, $operator = null ) {

@@ -8,17 +8,17 @@ namespace MainWP\Dashboard;
  * MainWP Manage Backups.
  */
 class MainWP_Manage_Backups_Handler {
-	
+
 	/**
 	 * Instance variable.
-	 * 
+	 *
 	 * @var null $instance.
 	 */
 	private static $instance = null;
 
 	/**
 	 * Create instance.
-	 * 
+	 *
 	 * @return self $instance.
 	 */
 	public static function instance() {
@@ -40,8 +40,8 @@ class MainWP_Manage_Backups_Handler {
 
 	/**
 	 * Validate Backup Tasks.
-	 * 
-	 * @param $pBackupTasks Backup tasks. 
+	 *
+	 * @param $pBackupTasks Backup tasks.
 	 *
 	 * @return bool true|false.
 	 */
@@ -206,14 +206,14 @@ class MainWP_Manage_Backups_Handler {
 	}
 
 	/**
-	 * Execute the backup task. 
-	 * 
-	 * @param mixed $task Task to perform
+	 * Execute the backup task.
+	 *
+	 * @param mixed   $task Task to perform
 	 * @param integer $nrOfSites Number of Child Sites to perform the task on.
-	 * @param boolean $updateRun ture|false 
-	 * 
+	 * @param boolean $updateRun ture|false
+	 *
 	 * @return mixed $errorOutput
-	 * 
+	 *
 	 * phpcs:ignore -- not quite complex function
 	 */
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) {
@@ -377,11 +377,11 @@ class MainWP_Manage_Backups_Handler {
 
 	/**
 	 * Prepair Child Site to be backed up.
-	 * 
+	 *
 	 * @param mixed $pTaskId Task ID.
 	 * @param mixed $pSiteId Child Site ID.
 	 * @param mixed $pFileNameUID Filename Eunique ID.
-	 * 
+	 *
 	 * @return self MainWP_Manage_Sites_Handler()
 	 */
 	public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
@@ -414,9 +414,9 @@ class MainWP_Manage_Backups_Handler {
 
 	/**
 	 * Get backup tasks and site ID.
-	 * 
+	 *
 	 * @param mixed $pTaskId Task ID.
-	 * 
+	 *
 	 * @return array $allSites All Sites array.
 	 * @return array $remoteDestinations Remote destinations array.
 	 */

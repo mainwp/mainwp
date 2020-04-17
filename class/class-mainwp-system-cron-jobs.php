@@ -6,21 +6,21 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_System_Cron_Jobs.
- * 
+ *
  * phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
  */
 class MainWP_System_Cron_Jobs {
 
 	/**
 	 * Singleton.
-	 * 
+	 *
 	 * @var null $instance
 	 */
 	private static $instance = null;
 
 	/**
 	 * MainWP Cron Instance.
-	 * 
+	 *
 	 * @return self $instance
 	 */
 	public static function instance() {
@@ -98,8 +98,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Schedual Cron Jobs. 
-	 * 
+	 * Schedual Cron Jobs.
+	 *
 	 * @param mixed $useWPCron Wether or not to use WP_Cron.
 	 * @param mixed $recurrence When cron is going to reoccur.
 	 * @param mixed $cron_hook Cron job hook.
@@ -138,10 +138,10 @@ class MainWP_System_Cron_Jobs {
 
 	/**
 	 * Get current Cron Schedual.
-	 * 
+	 *
 	 * @param array $schedules Array of currently set scheduals.
-	 * 
-	 * @return array $scheduales. 
+	 *
+	 * @return array $scheduales.
 	 */
 	public function get_cron_schedules( $schedules ) {
 		$schedules['5minutely'] = array(
@@ -158,10 +158,10 @@ class MainWP_System_Cron_Jobs {
 
 	/**
 	 * Get Time Stamp from $hh_mm.
-	 * 
+	 *
 	 * @param mixed $hh_mm Global time stamp variable.
-	 * 
-	 * @return time Y-m-d 00:00:59. 
+	 *
+	 * @return time Y-m-d 00:00:59.
 	 */
 	public static function get_timestamp_from_hh_mm( $hh_mm ) {
 		$hh_mm = explode( ':', $hh_mm );
@@ -175,12 +175,12 @@ class MainWP_System_Cron_Jobs {
 		}
 		return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
 	}
-	
+
 	/**
 	 * Get Period of time from $hh_mm.
-	 * 
+	 *
 	 * @param mixed $hh_mm Global time stamp variable.
-	 * 
+	 *
 	 * @return time $_hour * 60 + $_mins.
 	 */
 	public static function get_period_of_time_from_hh_mm( $hh_mm ) {
@@ -200,7 +200,7 @@ class MainWP_System_Cron_Jobs {
 
 	/**
 	 * MainWP Cron Check Update
-	 * 
+	 *
 	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
 	 */
 	public function cron_updates_check() {
@@ -1066,12 +1066,12 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * List of updates to be emailed. 
-	 * 
-	 * @param array $array Array of URLs
-	 * @param array $backupChecks null|Child Site ID.
+	 * List of updates to be emailed.
+	 *
+	 * @param array  $array Array of URLs
+	 * @param array  $backupChecks null|Child Site ID.
 	 * @param string $what disc_sites|null
-	 * 
+	 *
 	 * @return html $output Email Body.
 	 */
 	public function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
@@ -1116,7 +1116,7 @@ class MainWP_System_Cron_Jobs {
 
 	/**
 	 * Cron Ping Childs
-	 * 
+	 *
 	 * This cron job pings the Child Sites.
 	 */
 	public function cron_ping_childs() {

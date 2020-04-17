@@ -8,7 +8,7 @@ namespace MainWP\Dashboard;
  * MainWP Extensions Page
  */
 class MainWP_Extensions {
-	
+
 	/**
 	 * Method get_class_name()
 	 *
@@ -26,7 +26,7 @@ class MainWP_Extensions {
 	public static $extensionsLoaded = false;
 
 	/**
-	 * @var undefined Loaded extensions list. 
+	 * @var undefined Loaded extensions list.
 	 */
 	public static $extensions;
 
@@ -58,9 +58,9 @@ class MainWP_Extensions {
 
 	/**
 	 * Instantiate Extensions Menu
-	 * 
+	 *
 	 * @return void
-	 * 
+	 *
 	 * phpcs:ignore -- not quite complex function
 	 */
 	public static function init_menu() {
@@ -247,7 +247,7 @@ class MainWP_Extensions {
 
 	/**
 	 * Initiate top level Extensions Menues.
-	 * 
+	 *
 	 * @param mixed $extPages List of extention pages.
 	 */
 	public static function init_left_menu( $extPages ) {
@@ -319,12 +319,12 @@ class MainWP_Extensions {
 		<?php
 	}
 
-	
+
 	/**
-	 * Get purchased MainWP Extensions. 
-	 * 
-	 * @return html Extensions list. 
-	 * 
+	 * Get purchased MainWP Extensions.
+	 *
+	 * @return html Extensions list.
+	 *
 	 * phpcs:ignore -- complex method
 	 */
 	public static function get_purchased_exts() {
@@ -503,7 +503,7 @@ class MainWP_Extensions {
 
 	/**
 	 * Render page header.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -511,8 +511,8 @@ class MainWP_Extensions {
 	}
 
 	/**
-	 * Render page footer. 
-	 * 
+	 * Render page footer.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
@@ -533,9 +533,9 @@ class MainWP_Extensions {
 
 	/**
 	 * MainWP Help Content.
-	 * 
+	 *
 	 * Create the MainWP Help Document List for the help component in the sidebar.
-	 * 
+	 *
 	 * @return html MainWP Help Document List.
 	 */
 	public static function mainwp_help_content() {

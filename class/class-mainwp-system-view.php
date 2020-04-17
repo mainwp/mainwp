@@ -219,11 +219,11 @@ class MainWP_System_View {
 
 	/**
 	 * Check if MainWP Extensions are Activated or not.
-	 * 
+	 *
 	 * @param mixed $plugin_slug Plugin Slug.
 	 * @param mixed $plugin_data Plugin Data.
 	 * @param mixed $status Status of plugin activation.
-	 * 
+	 *
 	 * @return html Activation warning message.
 	 */
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
@@ -351,9 +351,9 @@ class MainWP_System_View {
 
 	/**
 	 * Render MainWP Review Request.
-	 * 
+	 *
 	 * @param boolean $current_options false|true Weather or not to display request.
-	 * 
+	 *
 	 * @return self
 	 */
 	public static function check_rating_notice( $current_options ) {
@@ -556,9 +556,9 @@ class MainWP_System_View {
 
 	/**
 	 * Render post updated message.
-	 * 
+	 *
 	 * @param mixed $messages Message to display.
-	 * 
+	 *
 	 * @return string $messages.
 	 */
 	public function post_updated_messages( $messages ) {
@@ -604,9 +604,9 @@ class MainWP_System_View {
 
 	/**
 	 * MainWP Admin body CSS class attributes.
-	 * 
+	 *
 	 * @param mixed $class_string MainWP CSS Class attributes.
-	 * 
+	 *
 	 * @return string $class_string The CSS attributes to add to the page.
 	 */
 	public function admin_body_class( $class_string ) {
@@ -619,9 +619,9 @@ class MainWP_System_View {
 
 	/**
 	 * Render footer content.
-	 * 
-	 * @param mixed $websites List of Child Sites. 
-	 * 
+	 *
+	 * @param mixed $websites List of Child Sites.
+	 *
 	 * @return html MainWP footer.
 	 */
 	public static function render_footer_content( $websites ) {

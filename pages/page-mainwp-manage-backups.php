@@ -26,10 +26,10 @@ class MainWP_Manage_Backups {
 
 	/** @var null Instance variable. */
 	private static $instance = null;
-	
+
 	/**
 	 * Create instance.
-	 * 
+	 *
 	 * @return self $instance.
 	 */
 	public static function instance() {
@@ -69,9 +69,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Instantiate Legacy Backups Menu.
-	 * 
+	 *
 	 * @return void
-	 * 
+	 *
 	 * @deprecated Use 'mainwp_getcustompage_backups' instead.
 	 */
 	public static function init_menu() {
@@ -165,8 +165,8 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Instantiate Legacy Backups Menu.
-	 * 
-	 * @param array $subPages Legacy Backup Subpages.
+	 *
+	 * @param array   $subPages Legacy Backup Subpages.
 	 * @param boolean $enableLegacyBackup ture|false, whether or not to enable menu.
 	 */
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
@@ -212,7 +212,7 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Render MainWP Legacy Backups Page Header.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -270,8 +270,8 @@ class MainWP_Manage_Backups {
 	}
 
 	/**
-	 * Render MainWP Legacy Backups Footer. 
-	 * 
+	 * Render MainWP Legacy Backups Footer.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
@@ -280,8 +280,8 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Render Legacy Backups page.
-	 * 
-	 * @return html Legacy Backups html. 
+	 *
+	 * @return html Legacy Backups html.
 	 */
 	public static function render_manager() {
 		$backupTask = null;
@@ -363,12 +363,12 @@ class MainWP_Manage_Backups {
 			self::render_edit( $backupTask );
 		}
 	}
-	
+
 	/**
 	 * Render MainWP Legacy Backups Table.
-	 * 
+	 *
 	 * @param mixed $backup_items List Item.
-	 * 
+	 *
 	 * @return html Table Content.
 	 */
 	public function display( $backup_items ) {
@@ -456,10 +456,10 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Single row Content.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
 	 * @param mixed $columns Columns Array.
-	 * 
+	 *
 	 * @return html Row Content.
 	 */
 	public function single_row( $item, $columns ) {
@@ -482,9 +482,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Actions.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_actions( $item ) {
@@ -528,9 +528,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Task Name.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_task_name( $item ) {
@@ -539,9 +539,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Type.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_type( $item ) {
@@ -550,9 +550,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Schdule.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_schedule( $item ) {
@@ -561,9 +561,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Destination.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_destination( $item ) {
@@ -577,9 +577,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Websites.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_websites( $item ) {
@@ -592,9 +592,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Column Details.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_details( $item ) {
@@ -619,9 +619,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 *  Column Trigger.
-	 * 
+	 *
 	 * @param mixed $item Item to go in column.
-	 * 
+	 *
 	 * @return html Action content.
 	 */
 	public function column_trigger( $item ) {
@@ -630,9 +630,9 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Render edit.
-	 * 
+	 *
 	 * @param mixed $task Task to edit.
-	 * 
+	 *
 	 * @return html Edit task form.
 	 */
 	public static function render_edit( $task ) {
@@ -670,11 +670,12 @@ class MainWP_Manage_Backups {
 		<?php
 		self::render_footer( 'AddNew' );
 	}
-	
+
 	/**
 	 * Render New edit Form.
+	 *
 	 * @param mixed $task Task to edit.
-	 * 
+	 *
 	 * @return html Form.
 	 */
 	public static function render_new_edit( $task ) {
@@ -770,13 +771,13 @@ class MainWP_Manage_Backups {
 
 	/**
 	 * Render Task Details.
-	 * 
+	 *
 	 * @param mixed $task Task to perform.
 	 * @param mixed $globalArchiveFormatText Global Archived Format Text.
 	 * @param mixed $archiveFormat Archive Format.
 	 * @param mixed $useGlobal Use Global.
 	 * @param mixed $useSite Use Site.
-	 * 
+	 *
 	 * @return html Task details.
 	 */
 	public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) {

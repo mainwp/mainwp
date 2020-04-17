@@ -22,15 +22,15 @@ class MainWP_Plugins_Handler {
 
 	/**
 	 * Plugins Search Handler.
-	 * 
+	 *
 	 * @param mixed $data Search Data.
 	 * @param mixed $website Child Sites.
-	 * @param mixed $output 
-	 * 
+	 * @param mixed $output
+	 *
 	 * @uses MainWP_Error_Helper::get_error_message()
 	 * @uses MainWP_Exception()
 	 * @uses MainWP_Error_Helper::get_error_message()
-	 * 
+	 *
 	 * @return mixed error|array.
 	 */
 	public static function plugins_search_handler( $data, $website, &$output ) {
@@ -114,9 +114,9 @@ class MainWP_Plugins_Handler {
 
 	/**
 	 * Plugin Action handler.
-	 * 
+	 *
 	 * @param mixed $pAction activate|deactivate|delete.
-	 * 
+	 *
 	 * @return mixed error|true
 	 */
 	public static function action( $pAction ) {
@@ -190,7 +190,7 @@ class MainWP_Plugins_Handler {
 
 	/**
 	 * Update Trusted Plugin list.
-	 * 
+	 *
 	 * @param mixed $slug Plugin Slug.
 	 */
 	public static function trust_plugin( $slug ) {
@@ -210,9 +210,9 @@ class MainWP_Plugins_Handler {
 	/**
 	 * Check if automatic daily updates is on and
 	 * the plugin is on the trusted list.
-	 * 
+	 *
 	 * @param mixed $slug Plugin Slug.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function check_auto_update_plugin( $slug ) {
@@ -227,7 +227,7 @@ class MainWP_Plugins_Handler {
 			return false;
 	}
 
-	/** 
+	/**
 	 * Save the trusted plugin note.
 	 */
 	public static function save_trusted_plugin_note() {

@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Plugins Page.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -12,9 +15,17 @@ class MainWP_Plugins {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var undefined $subPages MainWP Plugins Sub Pages.
+	 */
 	public static $subPages;
+
+	/**
+	 * @var undefined $pluginsTable Plugins Table.
+	 */
 	public static $pluginsTable;
 
+	/** Instantiate Hooks. */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Plugins page header via the 'mainwp-pageheader-plugins' action.
@@ -43,6 +54,7 @@ class MainWP_Plugins {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/** Instantiate Main Plugins Menu. */
 	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab',
@@ -70,7 +82,6 @@ class MainWP_Plugins {
 
 			add_action( 'load-' . $page, array( self::get_class_name(), 'load_page' ) );
 		}
-
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Plugins', 'mainwp' ),
@@ -110,7 +121,6 @@ class MainWP_Plugins {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
 		 */
-
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-plugins', array( array() ), '4.0.1', 'mainwp_getsubpages_plugins' );  // @deprecated Use 'mainwp_getsubpages_plugins' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_plugins', $sub_pages );
 
@@ -124,7 +134,10 @@ class MainWP_Plugins {
 		}
 		self::init_left_menu( self::$subPages );
 	}
-
+	
+	/**
+	 * Load the Plugins Page.
+	 */
 	public static function load_page() {
 		self::$pluginsTable = new MainWP_Plugins_Install_List_Table();
 		$pagenum            = self::$pluginsTable->get_pagenum();
@@ -139,6 +152,9 @@ class MainWP_Plugins {
 		}
 	}
 
+	/**
+	 * Instantiate Subpage "tabs".
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Plugins" class="mainwp-submenu-wrapper" xmlns="http://www.w3.org/1999/html">
@@ -171,13 +187,22 @@ class MainWP_Plugins {
 									<?php
 								}
 							}
-							?>
+						?>
 				</div>
 			</div>
 		</div>
 		<?php
 	}
 
+	/**
+	 * Instantiate MainWP main menu Subpages menu.
+	 * 
+	 * @param array $subPages Subpages array.
+	 * 
+	 * @uses MainWP_Menu::add_left_menu()
+	 * @uses MainWP_Menu::init_subpages_left_menu()
+	 * @uses MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -239,6 +264,8 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Render MainWP Plugins Page Header.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -308,12 +335,17 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Render MainWP Plugins Page Footer.
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Render MainWP Plugins Page.
+	 */
 	public static function render() {
 		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
 		$selected_sites  = array();
@@ -409,6 +441,9 @@ class MainWP_Plugins {
 		self::render_footer( 'Manage' );
 	}
 
+	/**
+	 * Render MainWP plugins page search options.
+	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
@@ -445,7 +480,29 @@ class MainWP_Plugins {
 		}
 	}
 
-	// phpcs:ignore -- complex method
+	/**
+	 * Render Plugins Table.
+	 * 
+	 * @param mixed $keyword Search Terms.
+	 * @param mixed $status active|inactive Whether the plugin is active or inactive.
+	 * @param mixed $groups Selected Child Site Groups.
+	 * @param mixed $sites Selected individual Child Sites. 
+	 * 
+	 * @uses MainWP_Cache::init_cache()
+	 * @uses MainWP_Utility::ctype_digit()
+	 * @uses MainWP_DB::instance()
+	 * @uses MainWP_DB::free_result()
+	 * @uses MainWP_DB::fetch_object()
+	 * @uses MainWP_Utility::map_site()
+	 * @uses MainWP_Utility::fetch_urls_authed()
+	 * @uses MainWP_Utility::get_nice_url()
+	 * @uses MainWP_Cache::add_context()
+	 * @uses MainWP_Cache::add_result()
+	 * 
+	 * @return html Plugin Table.
+	 * 
+	 * phpcs:ignore -- complex method
+	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) {
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
@@ -652,6 +709,12 @@ class MainWP_Plugins {
 		return $result;
 	}
 
+	/**
+	 * Render Bulk Actions.
+	 * @param mixed $status active|inactive|all.
+	 * 
+	 * @return html Plugin Bulk Actions Menu.
+	 */
 	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
@@ -685,6 +748,20 @@ class MainWP_Plugins {
 		return $bulkActions;
 	}
 
+	/**
+	 * Render Manage Plugins Table.
+	 * 
+	 * @param array $sites Child Sites array.
+	 * @param array $plugins Plugins array.
+	 * @param array $sitePlugins Site plugins array.
+	 * @param array $pluginsMainWP MainWP plugins array.
+	 * @param array $muPlugins Must use plugins array.
+	 * @param array $pluginsName Plugin names array.
+	 * @param array $pluginsVersion Installed plugins versions.
+	 * @param array $pluginsRealVersion Latest plugin release version.
+	 * 
+	 * @return html Manage plugin table.
+	 */
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
 		?>
 		<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
@@ -755,12 +832,14 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/** Render Install Subpage. */
 	public static function render_install() {
 		self::render_header( 'Install' );
 		self::render_plugins_table();
 		self::render_footer( 'Install' );
 	}
 
+	/** Render Install plugins Table. */
 	public static function render_plugins_table() {
 		global $tab;
 
@@ -868,6 +947,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/** Render Autoupdate SubPage. */
 	public static function render_auto_update() {
 		$cachedAUSearch = null;
 
@@ -981,7 +1061,15 @@ class MainWP_Plugins {
 		self::render_footer( 'AutoUpdate' );
 	}
 
-	// phpcs:ignore -- not quite complex function
+	/**
+	 * Render all active Plugins table.
+	 * 
+	 * @param null $output 
+	 * 
+	 * @return void
+	 * 
+	 * phpcs:ignore -- not quite complex function
+	 */
 	public static function render_all_active_table( $output = null ) {
 		$keyword       = null;
 		$search_status = 'all';
@@ -1121,6 +1209,18 @@ class MainWP_Plugins {
 		self::render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes );
 	}
 
+	
+	/**
+	 * Render all active plugins html.
+	 * 
+	 * @param array $plugins Plugins array.
+	 * @param array $trustedPlugins Trusted plugins array.
+	 * @param mixed $search_status trust|untrust|ignored.
+	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
+	 * @param array $trustedPluginsNotes Trusted Plugins Notes.
+	 * 
+	 * @return html All active plugins table.
+	 */
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
 		?>
 		<table class="ui single line table" id="mainwp-all-active-plugins-table">
@@ -1206,6 +1306,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/** Render Ignore Subpage. */
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();
@@ -1252,6 +1353,14 @@ class MainWP_Plugins {
 		self::render_footer( 'Ignore' );
 	}
 
+	/**
+	 * Render Global Ignored plugins list.
+	 * 
+	 * @param array $ignoredPlugins Ignored plugins array.
+	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
+	 * 
+	 * @return html Ignored Plugins. 
+	 */
 	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
 		<table id="mainwp-globally-ignored-plugins" class="ui compact selectable table stackable">
@@ -1297,9 +1406,16 @@ class MainWP_Plugins {
 			</table>	
 		<?php
 	}
-
+	
+	/**
+	 * Render Per Site Ignored table.
+	 * @param mixed $cnt Plugin count.
+	 * @param mixed $websites Child Sites. 
+	 * 
+	 * @return void
+	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
-		?>
+	?>
 	<table id="mainwp-per-site-ignored-plugins" class="ui compact selectable table stackable">
 			<thead>
 				<tr>
@@ -1367,6 +1483,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/** Render Ignored Abandoned Page. */
 	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB::instance()->get_user_extension();
@@ -1405,6 +1522,7 @@ class MainWP_Plugins {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
+	/** Render Global Ignored Abandoned table. */
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
 		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">
@@ -1451,6 +1569,14 @@ class MainWP_Plugins {
 		<?php
 	}
 
+	/**
+	 * Render Per Site Ignored Abandoned Table.
+	 * 
+	 * @param mixed $cnt Plugin Count.
+	 * @param mixed $websites Child Sites. 
+	 * 
+	 * @return html Per Site Ignored Abandoned Table.
+	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
 		<table id="mainwp-per-site-ignored-abandoned-plugins" class="ui compact selectable table stackable">
@@ -1518,10 +1644,7 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	/*
-	 * Hook the section help content to the Help Sidebar element
-	 */
-
+	/** Hook the section help content to the Help Sidebar element */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>

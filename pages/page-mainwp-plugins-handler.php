@@ -1,17 +1,38 @@
 <?php
+/**
+ * MainWP Plugins Page Handler.
+ */
 namespace MainWP\Dashboard;
 
 /**
  *  MainWP Plugins Handler
  *
- * @uses MainWP_Install_Bulk
+ * @uses MainWP_Install_Bulk()
  */
 class MainWP_Plugins_Handler {
 
+	/**
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Plugins Search Handler.
+	 * 
+	 * @param mixed $data Search Data.
+	 * @param mixed $website Child Sites.
+	 * @param mixed $output 
+	 * 
+	 * @uses MainWP_Error_Helper::get_error_message()
+	 * @uses MainWP_Exception()
+	 * @uses MainWP_Error_Helper::get_error_message()
+	 * 
+	 * @return mixed error|array.
+	 */
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];
@@ -37,18 +58,22 @@ class MainWP_Plugins_Handler {
 		}
 	}
 
+	/** Activate Plugin. */
 	public static function activate_plugins() {
 		self::action( 'activate' );
 	}
 
+	/** Deactivate Plugin */
 	public static function deactivate_plugins() {
 		self::action( 'deactivate' );
 	}
 
+	/** Delete Plugin. */
 	public static function delete_plugins() {
 		self::action( 'delete' );
 	}
 
+	/** Ignore Plugin. */
 	public static function ignore_updates() {
 		$websiteIdEnc = $_POST['websiteId'];
 		$websiteId    = $websiteIdEnc;
@@ -87,6 +112,13 @@ class MainWP_Plugins_Handler {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
+	/**
+	 * Plugin Action handler.
+	 * 
+	 * @param mixed $pAction activate|deactivate|delete.
+	 * 
+	 * @return mixed error|true
+	 */
 	public static function action( $pAction ) {
 		$websiteIdEnc = $_POST['websiteId'];
 		$websiteId    = $websiteIdEnc;
@@ -123,6 +155,7 @@ class MainWP_Plugins_Handler {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
+	/** Trust Plugin $_POST. */
 	public static function trust_post() {
 		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -155,6 +188,11 @@ class MainWP_Plugins_Handler {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
+	/**
+	 * Update Trusted Plugin list.
+	 * 
+	 * @param mixed $slug Plugin Slug.
+	 */
 	public static function trust_plugin( $slug ) {
 		$userExtension  = MainWP_DB::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -169,6 +207,14 @@ class MainWP_Plugins_Handler {
 		MainWP_DB::instance()->update_user_extension( $userExtension );
 	}
 
+	/**
+	 * Check if automatic daily updates is on and
+	 * the plugin is on the trusted list.
+	 * 
+	 * @param mixed $slug Plugin Slug.
+	 * 
+	 * @return boolean true|false.
+	 */
 	public static function check_auto_update_plugin( $slug ) {
 		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
 			return false;
@@ -181,6 +227,9 @@ class MainWP_Plugins_Handler {
 			return false;
 	}
 
+	/** 
+	 * Save the trusted plugin note.
+	 */
 	public static function save_trusted_plugin_note() {
 		$slug                = rawurlencode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );

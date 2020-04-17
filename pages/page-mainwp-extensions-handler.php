@@ -184,6 +184,8 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
+	 * Generate API Password.
+	 * 
 	 * @param integer $length Lenght of password.
 	 * @param boolean $special_chars true|false, allow special characters.
 	 * @param boolean $extra_special_chars true|false, allow extra special characters.
@@ -453,21 +455,42 @@ class MainWP_Extensions_Handler {
 		wp_send_json( $return );
 	}
 
-	/** HTTP Request Reject Unsafe Urls. */
+	/**
+	 * HTTP Request Reject Unsafe Urls.
+	 * 
+	 * @param boolean $r Results.
+	 * @param mixed $url Upgrade Extension URL.
+	 * 
+	 * @return mixed false|$r.
+	 */
 	public static function http_request_reject_unsafe_urls( $r, $url ) {
 		$r['reject_unsafe_urls'] = false;
 
 		return $r;
 	}
 
-	/** No SSL Filter Function. */
+	/**
+	 * No SSL Filter Function.
+	 * 
+	 * @param boolean $r Results.
+	 * @param mixed $url Upgrade Extension URL.
+	 * 
+	 * @return mixed false|$r.
+	 */
 	public static function no_ssl_filter_function( $r, $url ) {
 		$r['sslverify'] = false;
 
 		return $r;
 	}
 
-	/** No SSL Filter Extention Upgrade. */
+	/**
+	 * No SSL Filter Extention Upgrade.
+	 * 
+	 * @param boolean $r Results.
+	 * @param mixed $url Upgrade Extension URL.
+	 * 
+	 * @return mixed false|$r.
+	 */
 	public static function no_ssl_filter_extension_upgrade( $r, $url ) {
 		if ( ( false !== strpos( $url, 'am_download_file=' ) ) && ( false !== strpos( $url, 'am_email=' ) ) ) {
 			$r['sslverify'] = false;
@@ -495,7 +518,13 @@ class MainWP_Extensions_Handler {
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
 
-	/** Install MainWP Extension. */
+	/**
+	 * Install MainWP Extension.
+	 * @param mixed $url MainWP Extension update URL.
+	 * @param boolean $activatePlugin true|false Whether or not to activate extension.
+	 * 
+	 * @return mixed $return
+	 */
 	public static function install_plugin( $url, $activatePlugin = false ) {
 
 		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
@@ -639,12 +668,24 @@ class MainWP_Extensions_Handler {
 		return false;
 	}
 
-	/** Check if MainWP Extension is enabled. */
+	/**
+	 * Check if MainWP Extension is enabled.
+	 * 
+	 * @param mixed $pluginFile MainWP Extension to bo verified.
+	 * 
+	 * @return array 'key' => md5( $pluginFile . '-SNNonceAdder').
+	 */
 	public static function is_extension_enabled( $pluginFile ) {
 		return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
 	}
 
-	/** Create Menu Extension Array. */
+	/**
+	 * Create Menu Extension Array.
+	 * 
+	 * @param mixed $slug menu slug.
+	 * 
+	 * @return array Menu Array.
+	 */
 	public static function added_on_menu( $slug ) {
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
 		if ( ! is_array( $snMenuExtensions ) ) {
@@ -665,7 +706,14 @@ class MainWP_Extensions_Handler {
 		return isset( $extensions[ $plugin_slug ] ) ? true : false;
 	}
 
-	/** Verify MainWP Extension. */
+	/**
+	 * Verify MainWP Extension.
+	 * 
+	 * @param mixed $pluginFile MainWP Extensoin to verify.
+	 * @param mixed $key Child Site Key.
+	 * 
+	 * @return mixed md5( $pluginFile . '-SNNonceAdder' ) == $key
+	 */
 	public static function hook_verify( $pluginFile, $key ) {
 		return ( md5( $pluginFile . '-SNNonceAdder' ) == $key );
 	}

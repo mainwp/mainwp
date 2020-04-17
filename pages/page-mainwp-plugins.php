@@ -11,6 +11,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Plugins {
 
+	/**
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * MainWP Server Information Page Handler
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -7,16 +9,22 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Server_Information_Handler {
 
-
+	/**
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/** Get current MainW Plugin version. */
 	public static function get_current_version() {
 		$currentVersion = get_option( 'mainwp_plugin_version' );
 		return $currentVersion;
 	}
 
+	/** Get current MainWP Dashboard version. */
 	public static function get_mainwp_version() {
 		if ( ( isset( $_SESSION['cachedVersion'] ) ) && ( null !== $_SESSION['cachedVersion'] ) && ( ( $_SESSION['cachedTime'] + ( 60 * 30 ) ) > time() ) ) {
 			return $_SESSION['cachedVersion'];
@@ -38,12 +46,27 @@ class MainWP_Server_Information_Handler {
 		return false;
 	}
 
+	/**
+	 * Check if WP environment is Mutisilte or not.
+	 *
+	 * @return boolean true|false.
+	 */
 	public static function check_if_multisite() {
 		$isMultisite = ! is_multisite() ? true : false;
 
 		return $isMultisite;
 	}
 
+
+	/**
+	 * Compair Filesize.
+	 *
+	 * @param mixed $value1
+	 * @param mixed $value2
+	 * @param null  $operator
+	 *
+	 * @return void
+	 */
 	public static function filesize_compare( $value1, $value2, $operator = null ) {
 		if ( false !== strpos( $value1, 'G' ) ) {
 			$value1 = preg_replace( '/[A-Za-z]/', '', $value1 );

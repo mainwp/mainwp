@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Extension Page
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,13 +9,28 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Extensions {
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @var boolean true|false Extension is loaded.
+	 */
 	public static $extensionsLoaded = false;
+
+	/**
+	 * @var undefined Loaded extensions list.
+	 */
 	public static $extensions;
 
+	/** Instantiate action hooks. */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Extensions page header via the 'mainwp-pageheader-extensions' action.
@@ -38,7 +56,13 @@ class MainWP_Extensions {
 		add_filter( 'mainwp_extensions_apigeneratepassword', array( MainWP_Extensions_Handler::get_class_name(), 'gen_api_password' ), 10, 3 );
 	}
 
-	// phpcs:ignore -- not quite complex function
+	/**
+	 * Instantiate Extensions Menu
+	 *
+	 * @return void
+	 *
+	 * phpcs:ignore -- not quite complex function
+	 */
 	public static function init_menu() {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
@@ -221,6 +245,11 @@ class MainWP_Extensions {
 		self::init_left_menu( $extsPages );
 	}
 
+	/**
+	 * Initiate top level Extensions Menues.
+	 *
+	 * @param mixed $extPages List of extention pages.
+	 */
 	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Menu::add_left_menu(
@@ -251,6 +280,7 @@ class MainWP_Extensions {
 		}
 	}
 
+	/** Initiate Extensions Subpage Menu.  */
 	public static function init_subpages_menu() {
 		if ( empty( self::$extensions ) ) {
 			return;
@@ -289,7 +319,14 @@ class MainWP_Extensions {
 		<?php
 	}
 
-	// phpcs:ignore -- complex method
+
+	/**
+	 * Get purchased MainWP Extensions.
+	 *
+	 * @return html Extensions list.
+	 *
+	 * phpcs:ignore -- complex method
+	 */
 	public static function get_purchased_exts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );
@@ -464,8 +501,9 @@ class MainWP_Extensions {
 		wp_send_json( $return );
 	}
 
-
 	/**
+	 * Render page header.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -473,12 +511,15 @@ class MainWP_Extensions {
 	}
 
 	/**
+	 * Render page footer.
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Extensions_View::render_footer( $shownPage );
 	}
 
+	/** Render Page */
 	public static function render() {
 
 		$params = array(
@@ -490,11 +531,13 @@ class MainWP_Extensions {
 		echo '</div>';
 	}
 
-
-	/*
-	 * Hook the section help content to the Help Sidebar element
+	/**
+	 * MainWP Help Content.
+	 *
+	 * Create the MainWP Help Document List for the help component in the sidebar.
+	 *
+	 * @return html MainWP Help Document List.
 	 */
-
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
 			?>

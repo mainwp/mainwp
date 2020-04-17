@@ -1,19 +1,27 @@
 <?php
-
+/**
+ * MainWP System Cron Jobs.
+ */
 namespace MainWP\Dashboard;
 
-// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
-
+/**
+ * Class MainWP_System_Cron_Jobs.
+ *
+ * phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
+ */
 class MainWP_System_Cron_Jobs {
 
 	/**
 	 * Singleton.
+	 *
+	 * @var null $instance
 	 */
 	private static $instance = null;
 
 	/**
-	 * @static
-	 * @return MainWP_System_Cron_Jobs
+	 * MainWP Cron Instance.
+	 *
+	 * @return self $instance
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -23,9 +31,15 @@ class MainWP_System_Cron_Jobs {
 		return self::$instance;
 	}
 
+	/**
+	 * Method __construct()
+	 */
 	public function __construct() {
 	}
 
+	/**
+	 * Instantiate Cron Jobs.
+	 */
 	public function init_cron_jobs() {
 
 		do_action( 'mainwp_cronload_action' );
@@ -42,16 +56,22 @@ class MainWP_System_Cron_Jobs {
 		$this->init_cron();
 	}
 
+	/**
+	 * Build Cron Jobs Array & initiate via init_wp_cron()
+	 */
 	public function init_cron() {
 
+		// Check wether or not to use MainWP Cron false|1.
 		$useWPCron = ( get_option( 'mainwp_wp_cron' ) === false ) || ( get_option( 'mainwp_wp_cron' ) == 1 );
 
+		// Default Cron Jobs.
 		$jobs = array(
 			'mainwp_cronstats_action'        => 'hourly',
 			'mainwp_cronpingchilds_action'   => 'daily',
 			'mainwp_cronupdatescheck_action' => 'minutely',
 		);
 
+		// Legacy Backup Cron jobs.
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			$jobs = array_merge(
 				$jobs,
@@ -61,7 +81,7 @@ class MainWP_System_Cron_Jobs {
 				)
 			);
 		} else {
-			// unset schedules.
+			// Unset Cron Schedules.
 			$sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
 			if ( $sched ) {
 				wp_unschedule_event( $sched, 'mainwp_cronbackups_action' );
@@ -77,6 +97,13 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
+	/**
+	 * Schedual Cron Jobs.
+	 *
+	 * @param mixed $useWPCron Wether or not to use WP_Cron.
+	 * @param mixed $recurrence When cron is going to reoccur.
+	 * @param mixed $cron_hook Cron job hook.
+	 */
 	public function init_wp_cron( $useWPCron, $recurrence, $cron_hook ) {
 		$sched = wp_next_scheduled( $cron_hook );
 		if ( false == $sched ) {
@@ -90,6 +117,7 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
+	/** Check if WP_Cron is active. */
 	public function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
@@ -108,6 +136,13 @@ class MainWP_System_Cron_Jobs {
 		die( '' );
 	}
 
+	/**
+	 * Get current Cron Schedual.
+	 *
+	 * @param array $schedules Array of currently set scheduals.
+	 *
+	 * @return array $scheduales.
+	 */
 	public function get_cron_schedules( $schedules ) {
 		$schedules['5minutely'] = array(
 			'interval'   => 5 * 60,
@@ -121,8 +156,13 @@ class MainWP_System_Cron_Jobs {
 		return $schedules;
 	}
 
-
-
+	/**
+	 * Get Time Stamp from $hh_mm.
+	 *
+	 * @param mixed $hh_mm Global time stamp variable.
+	 *
+	 * @return time Y-m-d 00:00:59.
+	 */
 	public static function get_timestamp_from_hh_mm( $hh_mm ) {
 		$hh_mm = explode( ':', $hh_mm );
 		$_hour = isset( $hh_mm[0] ) ? intval( $hh_mm[0] ) : 0;
@@ -136,6 +176,13 @@ class MainWP_System_Cron_Jobs {
 		return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
 	}
 
+	/**
+	 * Get Period of time from $hh_mm.
+	 *
+	 * @param mixed $hh_mm Global time stamp variable.
+	 *
+	 * @return time $_hour * 60 + $_mins.
+	 */
 	public static function get_period_of_time_from_hh_mm( $hh_mm ) {
 		$hh_mm = explode( ':', $hh_mm );
 		$_hour = isset( $hh_mm[0] ) ? intval( $hh_mm[0] ) : 0;
@@ -151,7 +198,11 @@ class MainWP_System_Cron_Jobs {
 		return $_hour * 60 + $_mins;
 	}
 
-
+	/**
+	 * MainWP Cron Check Update
+	 *
+	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
+	 */
 	public function cron_updates_check() {
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
@@ -1014,7 +1065,15 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
-
+	/**
+	 * List of updates to be emailed.
+	 *
+	 * @param array  $array Array of URLs
+	 * @param array  $backupChecks null|Child Site ID.
+	 * @param string $what disc_sites|null
+	 *
+	 * @return html $output Email Body.
+	 */
 	public function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
 
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
@@ -1055,7 +1114,11 @@ class MainWP_System_Cron_Jobs {
 		return $output;
 	}
 
-
+	/**
+	 * Cron Ping Childs
+	 *
+	 * This cron job pings the Child Sites.
+	 */
 	public function cron_ping_childs() {
 		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
 
@@ -1081,6 +1144,9 @@ class MainWP_System_Cron_Jobs {
 		MainWP_DB::free_result( $websites );
 	}
 
+	/**
+	 * Execute remaining backup tasks.
+	 */
 	public function cron_backups_continue() {
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -1121,6 +1187,9 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
+	/**
+	 * Execute Backup Tasks.
+	 */
 	public function cron_backups() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return;
@@ -1182,6 +1251,9 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
+	/**
+	 * Grab MainWP Cron Job Statistics.
+	 */
 	public function cron_stats() {
 		MainWP_Logger::instance()->info( 'CRON :: stats' );
 

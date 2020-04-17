@@ -73,7 +73,7 @@ class MainWP_Widget_Themes {
 	 * Render html themes widget for current site
 	 *
 	 * @param mixed $website current site.
-	 * @param mixed $allPlugins all plugins.
+	 * @param mixed $allThemes all themes.
 	 *
 	 * @return echo html
 	 */

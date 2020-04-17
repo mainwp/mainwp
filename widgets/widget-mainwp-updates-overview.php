@@ -156,8 +156,9 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
+	 *
+	 * phpcs:ignore -- complex method
 	 */
-	// phpcs:ignore -- complex method
 	public static function render_sites() {
 
 		$globalView = true;
@@ -531,8 +532,8 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $user_can_update_wordpress permission to update WordPress.
 	 * @param int             $total_wp_upgrades  total number of WordPress update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string          $continue_update  string of continue update.
 	 * @param int             $current_wpid  current site id.
+	 * @param string          $continue_update  string of continue update.
 	 *
 	 * @return echo html
 	 */
@@ -584,8 +585,8 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $user_can_update_plugins permission to update.
 	 * @param int             $total_plugin_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string          $continue_update  string of continue update.
 	 * @param int             $current_wpid  current site id.
+	 * @param string          $continue_update  string of continue update.
 	 *
 	 * @return echo html
 	 */
@@ -639,8 +640,8 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $user_can_update_themes permission to update.
 	 * @param int             $total_theme_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string          $continue_update  string of continue update.
 	 * @param int             $current_wpid  current site id.
+	 * @param string          $continue_update  string of continue update.
 	 *
 	 * @return echo html
 	 */
@@ -694,8 +695,8 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $user_can_update_translation permission to update.
 	 * @param int             $total_translation_upgrades  total number of update.
 	 * @param bool true|false $globalView global view or not.
-	 * @param string          $continue_update  string of continue update.
 	 * @param int             $current_wpid  current site id.
+	 * @param string          $continue_update  string of continue update.
 	 *
 	 * @return echo html
 	 */
@@ -828,10 +829,22 @@ class MainWP_Updates_Overview {
 	/**
 	 * Render to support global update.
 	 *
-	 * @param bool true|false                     $user_can_update_wordpress permission to update WordPress.
-	 * @param int                                 $total_wp_upgrades total WordPress update.
-	 * @param mixed                               $all_wp_updates all WordPress update list.
-	 * @param ... same for plugins, themes, languages
+	 * @param bool true|false $user_can_update_wordpress permission to update WordPress.
+	 * @param int             $total_wp_upgrades total WordPress update.
+	 * @param mixed           $all_wp_updates all WordPress update list.
+	 *
+	 * @param bool true|false $user_can_update_plugins permission to update plugings.
+	 * @param int             $total_plugin_upgrades total WordPress update.
+	 * @param mixed           $all_plugins_updates all WordPress update list.
+	 *
+	 * @param bool true|false $user_can_update_wordpress permission to update themes.
+	 * @param int             $total_theme_upgrades total themes update.
+	 * @param mixed           $all_themes_updates all themes update list.
+	 *
+	 * @param mixed           $mainwp_show_language_updates MainWP Language Updates.
+	 * @param bool true|false $user_can_update_wordpress permission to update languages.
+	 * @param int             $total_translation_upgrades total WordPress update.
+	 * @param mixed           $all_translations_updates all transations update list.
 	 *
 	 * @return echo html
 	 */

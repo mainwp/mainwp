@@ -37,8 +37,9 @@ class MainWP_Connection_Status {
 	 *
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
+	 *
+	 * phpcs:ignore -- complex method
 	 */
-	// phpcs:ignore -- complex method
 	public static function render_sites() {
 		$current_wpid = MainWP_Utility::get_current_wpid();
 

@@ -60,7 +60,6 @@ class MainWP_Extensions {
 	 * Instantiate Extensions Menu
 	 *
 	 * @return void
-	 *	 
 	 */
 	// phpcs:ignore -- not quite complex function
 	public static function init_menu() {
@@ -324,7 +323,6 @@ class MainWP_Extensions {
 	 * Get purchased MainWP Extensions.
 	 *
 	 * @return html Extensions list.
-	 *	 
 	 */
 	// phpcs:ignore -- complex method
 	public static function get_purchased_exts() {

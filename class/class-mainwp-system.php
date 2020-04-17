@@ -525,7 +525,7 @@ class MainWP_System {
 	public function mainwp_cronstats_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_stats();
 	}
-	
+
 	/**
 	 * Method mainwp_cronupdatescheck_action()
 	 *
@@ -534,7 +534,7 @@ class MainWP_System {
 	public function mainwp_cronupdatescheck_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_updates_check_action();
 	}
-	
+
 	public function print_admin_styles( $value = true ) {
 		if ( self::is_mainwp_pages() ) {
 			return false;
@@ -550,7 +550,7 @@ class MainWP_System {
 
 		return false;
 	}
-	
+
 	public function init() {
 
 		global $_mainwp_disable_menus_items;
@@ -662,8 +662,7 @@ class MainWP_System {
 	/**
 	 * Method login_form_redirect()
 	 *
-	 * Login redirect.	 
-	 * 
+	 * Login redirect.
 	 */
 	public function login_form_redirect() {
 		global $redirect_to;
@@ -1266,11 +1265,11 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::render_footer_content( $websites );
-		
+
 		MainWP_System_View::admin_footer();
 
 		MainWP_Menu::init_subpages_menu();
-		
+
 		global $_mainwp_disable_menus_items;
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );

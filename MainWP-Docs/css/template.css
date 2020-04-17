@@ -24,7 +24,7 @@ h1, h2, h3, h4, h5, h6, .brand {
 h2, h3, .detailsbar h1 {
     overflow:    hidden;
     white-space: nowrap;
-    margin:      30px 0 20px 0;
+    margin:      30px 0 20px;
 }
 
 h2:after, h3:after, .detailsbar h1:after {
@@ -38,11 +38,11 @@ h2:after, h3:after, .detailsbar h1:after {
 }
 
 h3 {
-    margin: 10px 0 20px 0;
+    margin: 10px 0 20px;
 }
 
 h4 {
-    margin:    20px 0 10px 0;
+    margin:    20px 0 10px;
     color:     gray;
     font-size: 18.5px;
 }
@@ -163,7 +163,7 @@ footer.row-fluid {
 .content nav {
     text-align:     center;
     border-bottom:  1px solid silver;
-    margin:         5px 0 20px 0;
+    margin:         5px 0 20px;
     padding-bottom: 5px;
 }
 

@@ -213,9 +213,9 @@ class MainWP_Manage_Backups_Handler {
 	 * @param boolean $updateRun ture|false
 	 *
 	 * @return mixed $errorOutput
-	 *
-	 * phpcs:ignore -- not quite complex function
+	 *	 
 	 */
+	// phpcs:ignore -- not quite complex function
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) {
 
 		if ( $updateRun ) {

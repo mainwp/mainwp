@@ -857,9 +857,9 @@ class MainWP_Extensions_Handler {
 	 * @param bool   $for_manager
 	 *
 	 * @return array|bool $output An array of arrays, the inner-array contains the id/url/name/totalsize of the website. False when something goes wrong.
-	 *
-	 * phpcs:ignore -- not quite complex function
+	 *	 
 	 */
+	// phpcs:ignore -- not quite complex function
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
 			return false;

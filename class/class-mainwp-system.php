@@ -116,7 +116,7 @@ class MainWP_System {
 		new MainWP_Hooks();
 		new MainWP_Menu();
 
-		add_action( 'admin_menu', array( &$this, 'init_mainwp_menus' ) );
+		add_action( 'admin_menu', array( MainWP_Menu::get_class_name(), 'init_mainwp_menus' ) );
 		add_filter( 'admin_footer', array( &$this, 'admin_footer' ), 15 );
 		add_action( 'admin_head', array( MainWP_System_View::get_class_name(), 'admin_head' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_styles' ) );
@@ -132,7 +132,7 @@ class MainWP_System {
 		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
 		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
 		add_filter( 'post_updated_messages', array( MainWP_System_View::get_class_name(), 'post_updated_messages' ) );
-		add_action( 'login_form', array( &$this, 'login_form' ) );
+		add_action( 'login_form', array( &$this, 'login_form_redirect' ) );
 		add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
 
 		MainWP_Install_Bulk::init();
@@ -490,131 +490,51 @@ class MainWP_System {
 		return $false;
 	}
 
-	public function mainwp_cronupdatescheck_action() {
-		MainWP_System_Cron_Jobs::instance()->cron_updates_check_action();
-	}
-
-
-	public static function sync_site_icon( $siteId = null ) {
-		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
-				$error = '';
-				try {
-					$information = MainWP_Connect::fetch_url_authed( $website, 'get_site_icon' );
-				} catch ( MainWP_Exception $e ) {
-					$error = $e->getMessage();
-				}
-
-				if ( '' != $error ) {
-					return array( 'error' => $error );
-				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
-					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
-					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
-					if ( ! empty( $content ) ) {
-
-						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
-						global $wp_filesystem;
-
-						$dirs     = MainWP_Utility::get_mainwp_dir();
-						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
-						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
-							$wp_filesystem->mkdir( $iconsDir, 0777, true );
-						}
-						if ( $hasWPFileSystem && ! $wp_filesystem->exists( $iconsDir . 'index.php' ) ) {
-							$wp_filesystem->touch( $iconsDir . 'index.php' );
-						}
-						$filename = basename( $information['faviIconUrl'] );
-						$filename = strtok( $filename, '?' );
-						if ( $filename ) {
-							$filename = 'favi-' . $siteId . '-' . $filename;
-							$size     = file_put_contents( $iconsDir . $filename, $content );
-							if ( $size ) {
-								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
-								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );
-								return array( 'result' => 'success' );
-							} else {
-								return array( 'error' => 'Save icon file failed.' );
-							}
-						}
-						return array( 'undefined_error' => true );
-					} else {
-						return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
-					}
-				} else {
-					return array( 'undefined_error' => true );
-				}
-			}
-		}
-		return array( 'result' => 'NOSITE' );
-	}
-
+	/**
+	 * Method mainwp_cronpingchilds_action()
+	 *
+	 * Run cron ping childs action.
+	 */
 	public function mainwp_cronpingchilds_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_ping_childs();
 	}
 
+	/**
+	 * Method mainwp_cronbackups_continue_action()
+	 *
+	 * Run cron backups continue action.
+	 */
 	public function mainwp_cronbackups_continue_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
 	}
 
+	/**
+	 * Method mainwp_cronbackups_action()
+	 *
+	 * Run cron backups action.
+	 */
 	public function mainwp_cronbackups_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_backups();
 	}
 
+	/**
+	 * Method mainwp_cronstats_action()
+	 *
+	 * Run cron stats action.
+	 */
 	public function mainwp_cronstats_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_stats();
 	}
-
-	public function admin_footer() {
-
-		$this->update_footer( true );
-
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
-			MainWP_Post::init_subpages_menu();
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'managesites' ) ) {
-			MainWP_Manage_Sites::init_subpages_menu();
-		}
-
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-			MainWP_Settings::init_subpages_menu();
-		}
-
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
-			MainWP_Extensions::init_subpages_menu();
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
-			MainWP_Page::init_subpages_menu();
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-			MainWP_Themes::init_subpages_menu();
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-			MainWP_Plugins::init_subpages_menu();
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
-			MainWP_User::init_subpages_menu();
-		}
-		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ManageBackups' ) ) {
-				MainWP_Manage_Backups::init_subpages_menu();
-			}
-		}
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-			MainWP_Settings::init_subpages_menu();
-		}
-		do_action( 'mainwp_admin_menu_sub' );
-		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
-			MainWP_Server_Information::init_subpages_menu();
-		}
-
-		MainWP_System_View::admin_footer();
-
-		global $_mainwp_disable_menus_items;
-
-		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );
+	
+	/**
+	 * Method mainwp_cronupdatescheck_action()
+	 *
+	 * Run cron updates check action.
+	 */
+	public function mainwp_cronupdatescheck_action() {
+		MainWP_System_Cron_Jobs::instance()->cron_updates_check_action();
 	}
-
+	
 	public function print_admin_styles( $value = true ) {
 		if ( self::is_mainwp_pages() ) {
 			return false;
@@ -630,22 +550,7 @@ class MainWP_System {
 
 		return false;
 	}
-
-	public static function get_openssl_conf() {
-
-		if ( defined( 'MAINWP_CRYPT_RSA_OPENSSL_CONFIG' ) ) {
-			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
-		}
-
-		$setup_conf_loc = '';
-		if ( MainWP_Settings::is_local_window_config() ) {
-			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
-		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
-			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
-		}
-		return $setup_conf_loc;
-	}
-
+	
 	public function init() {
 
 		global $_mainwp_disable_menus_items;
@@ -754,7 +659,13 @@ class MainWP_System {
 		}
 	}
 
-	public function login_form() {
+	/**
+	 * Method login_form_redirect()
+	 *
+	 * Login redirect.	 
+	 * 
+	 */
+	public function login_form_redirect() {
 		global $redirect_to;
 		if ( ! isset( $_GET['redirect_to'] ) ) {
 			$redirect_to = get_admin_url() . 'index.php';
@@ -1061,7 +972,7 @@ class MainWP_System {
 		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
 		$this->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
-		MainWP_Post::add_sticky_handle( $post_id );
+		MainWP_Post_Page_Handler::add_sticky_handle( $post_id );
 		do_action( 'mainwp_save_bulkpost', $post_id );
 
 		if ( $pid == $post_id ) {
@@ -1319,7 +1230,7 @@ class MainWP_System {
 		wp_enqueue_script( 'postbox' );
 	}
 
-	public function update_footer( $echo = false ) {
+	public function admin_footer( $echo = false ) {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
 		}
@@ -1354,63 +1265,15 @@ class MainWP_System {
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
 		}
 
-		ob_start();
 		MainWP_System_View::render_footer_content( $websites );
-		$newOutput = ob_get_clean();
+		
+		MainWP_System_View::admin_footer();
 
-		if ( true === $echo ) {
-			echo $newOutput;
-		} else {
-			return $newOutput;
-		}
-	}
+		MainWP_Menu::init_subpages_menu();
+		
+		global $_mainwp_disable_menus_items;
 
-
-	public function init_mainwp_menus() {
-		if ( MainWP_Utility::is_admin() ) {
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
-				MainWP_Updates::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'managesites' ) ) {
-				MainWP_Manage_Sites::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
-				MainWP_Post::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
-				MainWP_Page::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ThemesManage' ) ) {
-				MainWP_Themes::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'PluginsManage' ) ) {
-				MainWP_Plugins::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
-				MainWP_User::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ManageBackups' ) ) {
-				MainWP_Manage_Backups::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
-				MainWP_Bulk_Update_Admin_Passwords::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' ) ) {
-				MainWP_Manage_Groups::init_menu();
-			}
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Settings' ) ) {
-				MainWP_Settings::init_menu();
-			}
-			MainWP_Extensions::init_menu();
-			do_action( 'mainwp_admin_menu' );
-
-			if ( ! MainWP_Menu::is_disable_menu_item( 2, 'ServerInformation' ) ) {
-				MainWP_Server_Information::init_menu();
-			}
-
-			MainWP_About::init_menu();
-			MainWP_Child_Scan::init_menu();
-		}
+		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );
 	}
 
 	public function activation() {

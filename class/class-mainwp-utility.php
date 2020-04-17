@@ -1406,4 +1406,89 @@ EOT;
 			return maybe_unserialize( base64_decode( $data ) );
 		}
 	}
+	
+	/**
+	 * Method get_openssl_conf()
+	 *
+	 * Get dashboard openssl configuration.
+	 */
+	public static function get_openssl_conf() {
+
+		if ( defined( 'MAINWP_CRYPT_RSA_OPENSSL_CONFIG' ) ) {
+			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
+		}
+
+		$setup_conf_loc = '';
+		if ( MainWP_Settings::is_local_window_config() ) {
+			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
+		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
+			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
+		}
+		return $setup_conf_loc;
+	}
+		
+	/**
+	 * Method sync_site_icon()
+	 *
+	 * Get site's icon.
+	 * 
+	 * @param mixed $siteId site's id.
+	 * @return array result error or success
+	 * 
+	 */
+	public static function sync_site_icon( $siteId = null ) {
+		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
+			if ( MainWP_Utility::can_edit_website( $website ) ) {
+				$error = '';
+				try {
+					$information = MainWP_Connect::fetch_url_authed( $website, 'get_site_icon' );
+				} catch ( MainWP_Exception $e ) {
+					$error = $e->getMessage();
+				}
+
+				if ( '' != $error ) {
+					return array( 'error' => $error );
+				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
+					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
+					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
+					if ( ! empty( $content ) ) {
+
+						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+						global $wp_filesystem;
+
+						$dirs     = MainWP_Utility::get_mainwp_dir();
+						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
+						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
+							$wp_filesystem->mkdir( $iconsDir, 0777, true );
+						}
+						if ( $hasWPFileSystem && ! $wp_filesystem->exists( $iconsDir . 'index.php' ) ) {
+							$wp_filesystem->touch( $iconsDir . 'index.php' );
+						}
+						$filename = basename( $information['faviIconUrl'] );
+						$filename = strtok( $filename, '?' );
+						if ( $filename ) {
+							$filename = 'favi-' . $siteId . '-' . $filename;
+							$size     = file_put_contents( $iconsDir . $filename, $content );
+							if ( $size ) {
+								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
+								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );
+								return array( 'result' => 'success' );
+							} else {
+								return array( 'error' => 'Save icon file failed.' );
+							}
+						}
+						return array( 'undefined_error' => true );
+					} else {
+						return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
+					}
+				} else {
+					return array( 'undefined_error' => true );
+				}
+			}
+		}
+		return array( 'result' => 'NOSITE' );
+	}
+
+	
 }

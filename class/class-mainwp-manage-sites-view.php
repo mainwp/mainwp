@@ -1650,7 +1650,7 @@ class MainWP_Manage_Sites_View {
 
 				if ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
-					$conf_loc = MainWP_System::get_openssl_conf();
+					$conf_loc = MainWP_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
 						$conf['config'] = $conf_loc;
 					}
@@ -1750,7 +1750,7 @@ class MainWP_Manage_Sites_View {
 			try {
 				if ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
-					$conf_loc = MainWP_System::get_openssl_conf();
+					$conf_loc = MainWP_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
 						$conf['config'] = $conf_loc;
 					}

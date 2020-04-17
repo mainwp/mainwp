@@ -14,7 +14,7 @@ class MainWP_Post_Handler {
 
 	public static function instance() {
 		if ( null == self::$instance ) {
-			self::$instance = new MainWP_Post_Handler();
+			self::$instance = new self();
 		}
 		return self::$instance;
 	}
@@ -131,7 +131,7 @@ class MainWP_Post_Handler {
 			$this->add_action( 'mainwp_post_restore', array( &$this, 'mainwp_post_restore' ) );
 			$this->add_action( 'mainwp_post_approve', array( &$this, 'mainwp_post_approve' ) );
 		}
-		$this->add_action( 'mainwp_post_addmeta', array( MainWP_Post::get_class_name(), 'ajax_add_meta' ) );
+		$this->add_action( 'mainwp_post_addmeta', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_add_meta' ) );
 		// Page: Pages.
 		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
 			$this->add_action( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
@@ -389,13 +389,13 @@ class MainWP_Post_Handler {
 
 	public function mainwp_get_categories() {
 		$this->secure_request( 'mainwp_get_categories' );
-		MainWP_Post::get_categories();
+		MainWP_Post_Page_Handler::get_categories();
 		die();
 	}
 
 	public function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
-		MainWP_Post::get_post(); // to edit.
+		MainWP_Post_Page_Handler::get_post(); // to edit.
 		die();
 	}
 
@@ -1244,7 +1244,7 @@ class MainWP_Post_Handler {
 			if ( isset( $_POST['siteId'] ) ) {
 				$siteId = intval( $_POST['siteId'] );
 			}
-			$result = MainWP_System::sync_site_icon( $siteId );
+			$result = MainWP_Utility::sync_site_icon( $siteId );
 			wp_send_json( $result );
 		} else {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );

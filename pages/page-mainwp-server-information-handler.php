@@ -133,7 +133,7 @@ class MainWP_Server_Information_Handler {
 
 	public static function get_ssl_warning() {
 		$conf     = array( 'private_key_bits' => 2048 );
-		$conf_loc = MainWP_System::get_openssl_conf();
+		$conf_loc = MainWP_Utility::get_openssl_conf();
 		if ( ! empty( $conf_loc ) ) {
 			$conf['config'] = $conf_loc;
 		}

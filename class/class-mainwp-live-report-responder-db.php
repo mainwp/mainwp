@@ -10,12 +10,11 @@ namespace MainWP\Dashboard;
 /**
  * Class MainWP_Live_Reports_Responder_DB
  *
- * @deprecated moved to external Extension.
- *  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+ * @deprecated moved to external Extension. 
  */
 
-class MainWP_Live_Reports_Responder_DB {
-
+class MainWP_Live_Reports_Responder_DB { 
+//  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
 	private $mainwp_wpcreport_db_version = '5.6';
 	private $table_prefix;
 

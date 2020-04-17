@@ -13,6 +13,17 @@ namespace MainWP\Dashboard;
 class MainWP_Menu {
 
 	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
+	public static function get_class_name() {
+		return __CLASS__;
+	}
+	
+	/**
 	 * Method __construct()
 	 *
 	 * Define MainWP Main Menu Items.
@@ -49,6 +60,106 @@ class MainWP_Menu {
 		}
 	}
 
+	/**
+	 * Method init_mainwp_menus()
+	 *
+	 * Init MainWP menus.
+	 */
+	public static function init_mainwp_menus() {
+		if ( MainWP_Utility::is_admin() ) {
+			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
+				MainWP_Updates::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
+				MainWP_Manage_Sites::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
+				MainWP_Post::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
+				MainWP_Page::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
+				MainWP_Themes::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
+				MainWP_Plugins::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
+				MainWP_User::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
+				MainWP_Manage_Backups::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 3, 'UpdateAdminPasswords' ) ) {
+				MainWP_Bulk_Update_Admin_Passwords::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 3, 'ManageGroups' ) ) {
+				MainWP_Manage_Groups::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+				MainWP_Settings::init_menu();
+			}
+			MainWP_Extensions::init_menu();
+			do_action( 'mainwp_admin_menu' );
+
+			if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
+				MainWP_Server_Information::init_menu();
+			}
+
+			MainWP_About::init_menu();
+			MainWP_Child_Scan::init_menu();
+		}
+	}
+	
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Init subpages MainWP menus.
+	 */
+	public static function init_subpages_menu() {
+
+		if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {
+			MainWP_Post::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'managesites' ) ) {
+			MainWP_Manage_Sites::init_subpages_menu();
+		}
+
+		if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+			MainWP_Settings::init_subpages_menu();
+		}
+
+		if ( ! self::is_disable_menu_item( 2, 'Extensions' ) ) {
+			MainWP_Extensions::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'PageBulkManage' ) ) {
+			MainWP_Page::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'ThemesManage' ) ) {
+			MainWP_Themes::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'PluginsManage' ) ) {
+			MainWP_Plugins::init_subpages_menu();
+		}
+		if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
+			MainWP_User::init_subpages_menu();
+		}
+		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+			if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
+				MainWP_Manage_Backups::init_subpages_menu();
+			}
+		}
+		if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
+			MainWP_Settings::init_subpages_menu();
+		}
+		do_action( 'mainwp_admin_menu_sub' );
+		if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
+			MainWP_Server_Information::init_subpages_menu();
+		}
+	}
+
+	
 	/**
 	 * Method init_subpages_left_menu
 	 *

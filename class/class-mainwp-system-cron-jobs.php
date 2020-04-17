@@ -833,7 +833,7 @@ class MainWP_System_Cron_Jobs {
 					$updatescheckSitesIcon = array();
 				}
 				if ( ! in_array( $website->id, $updatescheckSitesIcon ) ) {
-					MainWP_System::sync_site_icon( $website->id );
+					MainWP_Utility::sync_site_icon( $website->id );
 					$updatescheckSitesIcon[] = $website->id;
 					MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
 				}

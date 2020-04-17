@@ -505,7 +505,6 @@ class MainWP_Plugins {
 	 * @uses MainWP_Cache::add_result()
 	 *
 	 * @return html Plugin Table.
-	 *	 
 	 */
 	// phpcs:ignore -- complex method
 	public static function render_table( $keyword, $status, $groups, $sites ) {
@@ -1073,7 +1072,6 @@ class MainWP_Plugins {
 	 * @param null $output
 	 *
 	 * @return void
-	 *	 
 	 */
 	// phpcs:ignore -- not quite complex function
 	public static function render_all_active_table( $output = null ) {

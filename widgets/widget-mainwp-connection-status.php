@@ -37,7 +37,6 @@ class MainWP_Connection_Status {
 	 *
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
-	 *	 
 	 */
 	// phpcs:ignore -- complex method
 	public static function render_sites() {

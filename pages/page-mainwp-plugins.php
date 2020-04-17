@@ -1522,7 +1522,14 @@ class MainWP_Plugins {
 		self::render_footer( 'IgnoreAbandoned' );
 	}
 
-	/** Render Global Ignored Abandoned table. */
+	/**
+	 * Render Global Ignored Abandoned table.
+	 * 
+	 * @param array $ignoredPlugins Ignored plugins array.
+	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
+	 * 
+	 * @return html Globally Ignored Plugins. 
+	 */
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
 		<table id="mainwp-globally-ignored-abandoned-plugins" class="ui compact selectable table stackable">

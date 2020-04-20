@@ -4,18 +4,18 @@ namespace MainWP\Dashboard;
 /**
  * MainWP Post Handler
  */
-class MainWP_Post_Handler extends MainWP_Handler{
+class MainWP_Post_Handler extends MainWP_Handler {
 
 	private static $instance = null;
-	
+
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
-	
-	public function init() {		
+
+	public function init() {
 		// Page: ManageSites.
 		$this->add_action( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->add_action( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
@@ -67,7 +67,7 @@ class MainWP_Post_Handler extends MainWP_Handler{
 		$this->add_action( 'mainwp_trust_theme', array( &$this, 'mainwp_trust_theme' ) );
 		$this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
 		$this->add_action( 'mainwp_syncerrors_dismiss', array( &$this, 'mainwp_syncerrors_dismiss' ) );
-		
+
 		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			// Page: SecurityIssues.
 			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) );

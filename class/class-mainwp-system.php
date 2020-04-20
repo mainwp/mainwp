@@ -122,15 +122,15 @@ class MainWP_System {
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts' ) );
 		add_action( 'admin_body_class', array( MainWP_System_View::get_class_name(), 'admin_body_class' ) );
-		
-		new MainWP_Bulk_Post();	
-		
+
+		new MainWP_Bulk_Post();
+
 		add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
-		
+
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
 		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
-		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );		
+		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
 		add_action( 'login_form', array( &$this, 'login_form_redirect' ) );
 		add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
 
@@ -709,10 +709,10 @@ class MainWP_System {
 		}
 
 		add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_warning_notice' ) );
-		
+
 		MainWP_Post_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
-		
+
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
 		if ( $use_wp_datepicker ) {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
@@ -1088,7 +1088,7 @@ class MainWP_System {
 	}
 
 	public function apply_filter( $filter, $value = array() ) {
-		
+
 		if ( 'mainwp-getmetaboxes' === $filter ) {
 			$output = apply_filters_deprecated( 'mainwp-getmetaboxes', array( $value ), '4.0.1', 'mainwp_getmetaboxes' );  // @deprecated Use 'mainwp_getmetaboxes' instead.
 		} else {

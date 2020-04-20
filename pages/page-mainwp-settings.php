@@ -693,7 +693,7 @@ class MainWP_Settings {
 
 	/**
 	 * Method get_websites_automatic_update_time()
-	 * 
+	 *
 	 * Get websites automatic update time.
 	 *
 	 * @return mixed array
@@ -721,7 +721,7 @@ class MainWP_Settings {
 		);
 	}
 
-	
+
 	/**
 	 * Returns false or the location of the OpenSSL Lib File.
 	 *

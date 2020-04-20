@@ -9,17 +9,16 @@ class MainWP_Bulk_Post {
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {	
+	public function __construct() {
 		add_action( 'admin_post_mainwp_editpost', array( &$this, 'handle_edit_bulkpost' ) );
 		add_action( 'save_post', array( &$this, 'save_bulkpost' ) );
-		add_action( 'save_post', array( &$this, 'save_bulkpage' ) );		
-		add_action( 'init', array( &$this, 'create_post_type' ) );							
-		add_filter( 'post_updated_messages', array( &$this, 'post_updated_messages' ) );		
+		add_action( 'save_post', array( &$this, 'save_bulkpage' ) );
+		add_action( 'init', array( &$this, 'create_post_type' ) );
+		add_filter( 'post_updated_messages', array( &$this, 'post_updated_messages' ) );
 	}
 
 	/**
 	 * Method  handle_edit_bulkpost().
-	 *	 	 
 	 */
 	public function handle_edit_bulkpost() {
 
@@ -41,9 +40,9 @@ class MainWP_Bulk_Post {
 
 	/**
 	 * Method  redirect_edit_bulkpost().
-	 * 
+	 *
 	 * @param string $location
-	 * @param int $post_id
+	 * @param int    $post_id
 	 * @return string $location
 	 */
 	public function redirect_edit_bulkpost( $location, $post_id ) {
@@ -58,9 +57,9 @@ class MainWP_Bulk_Post {
 
 	/**
 	 * Method  redirect_edit_bulkpage().
-	 * 
+	 *
 	 * @param string $location
-	 * @param int $post_id
+	 * @param int    $post_id
 	 * @return string $location
 	 */
 	public function redirect_edit_bulkpage( $location, $post_id ) {
@@ -73,12 +72,12 @@ class MainWP_Bulk_Post {
 
 		return $location;
 	}
-	
-	
+
+
 	/**
 	 * Method  save_bulkpost().
-	 * 	 
-	 * @param int $post_id	 
+	 *
+	 * @param int $post_id
 	 */
 	public function save_bulkpost( $post_id ) {
 		$_post = get_post( $post_id );
@@ -121,8 +120,8 @@ class MainWP_Bulk_Post {
 
 	/**
 	 * Method  save_bulkpage().
-	 * 	 
-	 * @param int $post_id	 
+	 *
+	 * @param int $post_id
 	 */
 	public function save_bulkpage( $post_id ) {
 
@@ -164,7 +163,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  create_post_type().	 	 
+	 * Method  create_post_type().
 	 */
 	public function create_post_type() {
 		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
@@ -282,5 +281,5 @@ class MainWP_Bulk_Post {
 
 		return $messages;
 	}
-	
+
 }

@@ -554,19 +554,6 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/**
-	 * Render post updated message.
-	 *
-	 * @param mixed $messages Message to display.
-	 *
-	 * @return string $messages.
-	 */
-	public function post_updated_messages( $messages ) {
-		$messages['post'][98] = esc_html__( 'WordPress SEO values have been saved.', 'mainwp' );
-		$messages['post'][99] = esc_html__( 'You have to select the sites you wish to publish to.', 'mainwp' );
-
-		return $messages;
-	}
 
 	/** MainWP Productions Site warning. */
 	public static function mainwp_warning_notice() {

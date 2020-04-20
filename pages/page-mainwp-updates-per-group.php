@@ -21,8 +21,7 @@ class MainWP_Updates_Per_Group {
 	 * Method render_wpcore_updates()
 	 *
 	 * Render WP core updates
-	 *
-	 * @param mixed $user_can_update_wordpress
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_wp_upgrades
 	 * @param mixed $all_groups_sites
@@ -30,7 +29,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $site_offset
 	 * @return html
 	 */
-	public static function render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
+	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
 		?>
 			<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 				<thead>
@@ -40,7 +39,7 @@ class MainWP_Updates_Per_Group {
 						<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 						<th class="no-sort right aligned">
 							<?php
-							if ( $user_can_update_wordpress ) {
+							if ( MainWP_Updates::user_can_update_wp() ) {
 								if ( 0 < $total_wp_upgrades ) {
 									MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
 									?>
@@ -63,7 +62,7 @@ class MainWP_Updates_Per_Group {
 							<td><?php echo stripslashes( $group_name ); ?></td>
 							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( __( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
 							<td class="right aligned">
-								<?php if ( $user_can_update_wordpress ) : ?>
+								<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
 								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the group', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui green button" onClick="return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 								<?php endif; ?>
 							</td>
@@ -113,7 +112,7 @@ class MainWP_Updates_Per_Group {
 													<?php endif; ?>
 												</td>
 												<td class="right aligned">
-													<?php if ( $user_can_update_wordpress ) : ?>
+													<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
 														<?php if ( 0 < count( $wp_upgrades ) ) : ?>
 															<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 														<?php endif; ?>
@@ -125,7 +124,7 @@ class MainWP_Updates_Per_Group {
 								</table>
 							</td>
 						</tr>
-						<input type="hidden" class="element_ui_view_values" elem-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_wp_updates ); ?>" can-update="<?php echo $user_can_update_wordpress ? 1 : 0; ?>">
+						<input type="hidden" class="element_ui_view_values" elem-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_wp_updates ); ?>" can-update="<?php echo MainWP_Updates::user_can_update_wp() ? 1 : 0; ?>">
 					<?php endforeach; ?>
 				</tbody>
 				<tfoot>
@@ -145,8 +144,7 @@ class MainWP_Updates_Per_Group {
 	 * Method render_plugins_updates()
 	 *
 	 * Render Plugins updates
-	 *
-	 * @param mixed $user_can_update_plugins
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_plugin_upgrades
 	 * @param mixed $userExtension
@@ -156,7 +154,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 			<thead>
@@ -167,7 +165,7 @@ class MainWP_Updates_Per_Group {
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php
-						if ( $user_can_update_plugins ) {
+						if ( MainWP_Updates::user_can_update_plugins() ) {
 							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
 								?>
@@ -194,7 +192,7 @@ class MainWP_Updates_Per_Group {
 						<td><?php echo stripslashes( $group_name ); ?></td>
 						<td total-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned" >
-						<?php if ( $user_can_update_plugins ) { ?>
+						<?php if ( MainWP_Updates::user_can_update_plugins() ) { ?>
 							<a href="javascript:void(0)" btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
@@ -260,7 +258,7 @@ class MainWP_Updates_Per_Group {
 											</td>
 											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
-												<?php if ( $user_can_update_plugins ) : ?>
+												<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 													<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
 														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 													<?php endif; ?>
@@ -300,7 +298,7 @@ class MainWP_Updates_Per_Group {
 															<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 																<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 															<?php endif; ?>
-															<?php if ( $user_can_update_plugins ) : ?>
+															<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 																<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php endif; ?>
 															</td>
@@ -323,7 +321,7 @@ class MainWP_Updates_Per_Group {
 							</table>
 						</td>
 					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_plugin_updates ); ?>" can-update="<?php echo $user_can_update_plugins ? 1 : 0; ?>">
+					<input type="hidden" class="element_ui_view_values" elem-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_plugin_updates ); ?>" can-update="<?php echo MainWP_Updates::user_can_update_plugins() ? 1 : 0; ?>">
 				<?php endforeach; ?>
 			</tbody>
 			<tfoot>
@@ -343,8 +341,7 @@ class MainWP_Updates_Per_Group {
 	 * Method render_themes_updates()
 	 *
 	 * Render themes updates
-	 *
-	 * @param mixed $user_can_update_themes
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_theme_upgrades
 	 * @param mixed $userExtension
@@ -354,7 +351,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method
 
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
@@ -366,7 +363,7 @@ class MainWP_Updates_Per_Group {
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php
-						if ( $user_can_update_themes ) {
+						if ( MainWP_Updates::user_can_update_themes() ) {
 							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 							if ( 0 < $total_theme_upgrades ) {
 								?>
@@ -393,7 +390,7 @@ class MainWP_Updates_Per_Group {
 						<td><?php echo stripslashes( $group_name ); ?></td>
 						<td total-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned" >
-						<?php if ( $user_can_update_themes ) { ?>
+						<?php if ( MainWP_Updates::user_can_update_themes() ) { ?>
 						<a href="javascript:void(0)" btn-all-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
@@ -459,7 +456,7 @@ class MainWP_Updates_Per_Group {
 											</td>
 											<td sort-value="<?php echo count( $theme_upgrades ); ?>"><?php echo count( $theme_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
-												<?php if ( $user_can_update_themes ) : ?>
+												<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 													<?php if ( 0 < count( $theme_upgrades ) ) : ?>
 														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 													<?php endif; ?>
@@ -493,7 +490,7 @@ class MainWP_Updates_Per_Group {
 															<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 																<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 															<?php endif; ?>
-															<?php if ( $user_can_update_themes ) : ?>
+															<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 																<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 															<?php endif; ?>
 															</td>
@@ -516,7 +513,7 @@ class MainWP_Updates_Per_Group {
 							</table>
 						</td>
 					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_theme_updates ); ?>" can-update="<?php echo $user_can_update_themes ? 1 : 0; ?>">
+					<input type="hidden" class="element_ui_view_values" elem-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_theme_updates ); ?>" can-update="<?php echo MainWP_Updates::user_can_update_themes() ? 1 : 0; ?>">
 				<?php endforeach; ?>
 			</tbody>
 			<tfoot>
@@ -535,8 +532,7 @@ class MainWP_Updates_Per_Group {
 	 * Method render_trans_update()
 	 *
 	 * Render translations updates
-	 *
-	 * @param mixed $user_can_update_translation
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_translation_upgrades
 	 * @param mixed $all_groups_sites
@@ -544,7 +540,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $site_offset
 	 * @return html
 	 */
-	public static function render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
+	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
 
 		?>
 		<table class="ui stackable single line table" id="mainwp-translations-groups-table">
@@ -555,7 +551,7 @@ class MainWP_Updates_Per_Group {
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php if ( $user_can_update_translation ) : ?>
+						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php if ( 0 < $total_translation_upgrades ) : ?>
 								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 							<?php endif; ?>
@@ -574,7 +570,7 @@ class MainWP_Updates_Per_Group {
 						<td><?php echo stripslashes( $group_name ); ?></td>
 						<td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned">
-						<?php if ( $user_can_update_translation ) { ?>
+						<?php if ( MainWP_Updates::user_can_update_trans() ) { ?>
 							<a href="javascript:void(0)" btn-all-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button"  onClick="return updatesoverview_translations_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
@@ -612,7 +608,7 @@ class MainWP_Updates_Per_Group {
 											<?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
 										</td>
 										<td class="right aligned">
-										<?php if ( $user_can_update_translation ) : ?>
+										<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 											<?php if ( 0 < count( $translation_upgrades ) ) : ?>
 												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 											<?php endif; ?>
@@ -644,7 +640,7 @@ class MainWP_Updates_Per_Group {
 															<?php echo esc_html( $translation_upgrade['version'] ); ?>
 														</td>
 														<td class="right aligned">
-														<?php if ( $user_can_update_translation ) : ?>
+														<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $translation_slug; ?>', <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 														<?php endif; ?>
 														</td>
@@ -659,7 +655,7 @@ class MainWP_Updates_Per_Group {
 							</table>
 						</td>
 					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_translation_updates ); ?>" can-update="<?php echo $user_can_update_translation ? 1 : 0; ?>">
+					<input type="hidden" class="element_ui_view_values" elem-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_translation_updates ); ?>" can-update="<?php echo MainWP_Updates::user_can_update_trans() ? 1 : 0; ?>">
 				<?php endforeach; ?>
 			</tbody>
 			<tfoot>

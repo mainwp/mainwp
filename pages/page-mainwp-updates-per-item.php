@@ -21,8 +21,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_plugins_updates()
 	 *
 	 * Render Plugins updates
-	 *
-	 * @param mixed $user_can_update_plugins
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_plugin_upgrades
 	 * @param mixed $userExtension
@@ -31,7 +30,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
 			<thead>
@@ -43,7 +42,7 @@ class MainWP_Updates_Per_Item {
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php
-						if ( $user_can_update_plugins ) {
+						if ( MainWP_Updates::user_can_update_plugins() ) {
 							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
 								?>
@@ -75,14 +74,14 @@ class MainWP_Updates_Per_Item {
 							<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 								<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 							<?php endif; ?>
-							<?php if ( $user_can_update_plugins ) : ?>
+							<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 								<?php if ( 0 < $cnt ) : ?>
 									<?php
 									if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
 										MainWP_Updates::set_continue_update_html_selector( 'plugins_upgrade_all', $slug );
 									}
 									?>
-									<a href="javascript:void(0)" class="ui mini button green <?php echo self::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 								<?php endif; ?>
 							<?php endif; ?>
 						</td>
@@ -101,8 +100,7 @@ class MainWP_Updates_Per_Item {
 									</tr>
 								</thead>
 								<tbody plugin_slug="<?php echo $plugin_name; ?>">
-									<?php
-									$count_limit_updates = 0;
+									<?php									
 									MainWP_DB::data_seek( $websites, 0 );
 									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 										if ( $website->is_ignorePluginUpdates ) {
@@ -148,7 +146,7 @@ class MainWP_Updates_Per_Item {
 											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 											<?php endif; ?>
-											<?php if ( $user_can_update_plugins ) : ?>
+											<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 												<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											</td>
@@ -179,8 +177,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_themes_updates()
 	 *
 	 * Render themes updates
-	 *
-	 * @param mixed $user_can_update_themes
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_theme_upgrades
 	 * @param mixed $userExtension
@@ -189,7 +186,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method
 		?>
 	<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 		<thead>
@@ -201,7 +198,7 @@ class MainWP_Updates_Per_Item {
 				<th class="no-sort right aligned">
 					<?php MainWP_UI::render_show_all_updates_button(); ?>
 					<?php
-					if ( $user_can_update_themes ) {
+					if ( MainWP_Updates::user_can_update_themes() ) {
 						MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 						if ( 0 < $total_theme_upgrades ) {
 							?>
@@ -229,7 +226,7 @@ class MainWP_Updates_Per_Item {
 						<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 							<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 						<?php endif; ?>
-						<?php if ( $user_can_update_themes ) : ?>
+						<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 							<?php
 							if ( 0 < $cnt ) :
 								if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
@@ -237,7 +234,7 @@ class MainWP_Updates_Per_Item {
 								}
 								?>
 																
-								<a href="javascript:void(0)" class="ui mini button green <?php echo self::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 					</td>
@@ -255,8 +252,7 @@ class MainWP_Updates_Per_Item {
 								</tr>
 							</thead>
 							<tbody theme_slug="<?php echo $theme_name; ?>">
-								<?php
-								$count_limit_updates = 0;
+								<?php								
 								MainWP_DB::data_seek( $websites, 0 );
 								while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 									if ( $website->is_ignoreThemeUpdates ) {
@@ -297,7 +293,7 @@ class MainWP_Updates_Per_Item {
 										<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 											<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 										<?php endif; ?>
-										<?php if ( $user_can_update_themes ) : ?>
+										<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 											<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 										<?php endif; ?>
 										</td>
@@ -329,8 +325,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_trans_update()
 	 *
 	 * Render translations updates
-	 *
-	 * @param mixed $user_can_update_translation
+	 *	 
 	 * @param mixed $websites
 	 * @param mixed $total_translation_upgrades
 	 * @param mixed $userExtension
@@ -338,7 +333,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed $translationsInfo
 	 * @return html
 	 */
-	public static function render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
+	public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
 
 		?>
 	<table class="ui stackable single line table" id="mainwp-translations-sites-table">
@@ -349,7 +344,7 @@ class MainWP_Updates_Per_Item {
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php if ( $user_can_update_translation ) : ?>
+						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php if ( 0 < $total_translation_upgrades ) : ?>
 								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all sites', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Translations', 'mainwp' ); ?></a>
 							<?php endif; ?>
@@ -365,7 +360,7 @@ class MainWP_Updates_Per_Item {
 						<td><?php echo esc_html( $translationsInfo[ $slug ]['name'] ); ?></td>
 						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
 						<td class="right aligned">
-						<?php if ( $user_can_update_translation ) : ?>
+						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php
 							if ( 0 < $cnt ) :
 								if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
@@ -373,7 +368,7 @@ class MainWP_Updates_Per_Item {
 								}
 								?>
 																
-								<a href="javascript:void(0)" class="ui mini button green <?php echo self::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 						</td>
@@ -410,7 +405,7 @@ class MainWP_Updates_Per_Item {
 											</td>
 											<td><?php echo esc_html( $translation_upgrade['version'] ); ?></td>
 											<td class="right aligned">
-											<?php if ( $user_can_update_translation ) : ?>
+											<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 													<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $slug; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 											<?php endif ?>
 											</td>

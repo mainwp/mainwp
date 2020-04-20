@@ -1012,9 +1012,6 @@ class MainWP_Themes {
 				update_option( 'mainwp_themeAutomaticDailyUpdate', $snThemeAutomaticDailyUpdate );
 			}
 
-			$update_time         = MainWP_Utility::get_websites_automatic_update_time();
-			$lastAutomaticUpdate = $update_time['last'];
-			$nextAutomaticUpdate = $update_time['next'];
 			?>
 			<div class="ui alt segment" id="mainwp-theme-auto-updates">
 				<div class="mainwp-main-content">

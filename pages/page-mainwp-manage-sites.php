@@ -579,7 +579,9 @@ class MainWP_Manage_Sites {
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
 
-		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );
+		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
+		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp_getmetaboxes', $extMetaBoxs );
+		
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );

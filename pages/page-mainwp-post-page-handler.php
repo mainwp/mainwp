@@ -605,7 +605,7 @@ class MainWP_Post_Page_Handler {
 				}
 
 				try {
-					$downloadfile = MainWP_Utility::upload_image( $originalImgUrl );
+					$downloadfile = self::upload_image( $originalImgUrl );
 					$localUrl     = $downloadfile['url'];
 
 					$linkToReplaceWith = dirname( $localUrl );
@@ -635,7 +635,7 @@ class MainWP_Post_Page_Handler {
 					foreach ( $post_gallery_images as $gallery ) {
 						if ( isset( $gallery['src'] ) ) {
 							try {
-								$upload = MainWP_Utility::upload_image( $gallery['src'], $gallery, true );
+								$upload = self::upload_image( $gallery['src'], $gallery, true );
 								if ( null !== $upload ) {
 									$replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
 								}
@@ -714,7 +714,7 @@ class MainWP_Post_Page_Handler {
 
 		if ( null !== $post_featured_image ) {
 			try {
-				$upload = MainWP_Utility::upload_image( $post_featured_image );
+				$upload = self::upload_image( $post_featured_image );
 
 				if ( null !== $upload ) {
 					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
@@ -729,6 +729,65 @@ class MainWP_Post_Page_Handler {
 		return $ret;
 	}
 
+	
+	/**
+	 * Method upload_image()
+	 *
+	 * Handle upload image
+	 *
+	 * @param string $img_url.
+	 * @param mixed $img_data.
+	 * 
+	 * @return mixed array of result or null
+	 */
+	public static function upload_image( $img_url, $img_data = array() ) {
+		if ( ! is_array( $img_data ) ) {
+			$img_data = array();
+		}
+		include_once ABSPATH . 'wp-admin/includes/file.php';
+		$upload_dir     = wp_upload_dir();
+		$temporary_file = download_url( $img_url );
+
+		if ( is_wp_error( $temporary_file ) ) {
+			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );
+		} else {
+			$upload_dir     = wp_upload_dir();
+			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
+			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
+			$moved          = @rename( $temporary_file, $local_img_path );
+			if ( $moved ) {
+				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
+				$attachment  = array(
+					'post_mime_type' => $wp_filetype['type'],
+					'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
+					'post_content'   => isset( $img_data['description'] ) && ! empty( $img_data['description'] ) ? $img_data['description'] : '',
+					'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? $img_data['caption'] : '',
+					'post_status'    => 'inherit',
+				);
+				$attach_id   = wp_insert_attachment( $attachment, $local_img_path );
+				require_once ABSPATH . 'wp-admin/includes/image.php';
+				$attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
+				wp_update_attachment_metadata( $attach_id, $attach_data );
+				if ( isset( $img_data['alt'] ) && ! empty( $img_data['alt'] ) ) {
+					update_post_meta( $attach_id, '_wp_attachment_image_alt', $img_data['alt'] );
+				}
+				return array(
+					'id'  => $attach_id,
+					'url' => $local_img_url,
+				);
+			}
+		}
+
+		$hasWPFileSystem = self::get_wp_file_system();
+		global $wp_filesystem;
+
+		if ( $wp_filesystem->exists( $temporary_file ) ) {
+			$wp_filesystem->delete( $temporary_file );
+		}
+
+		return null;
+	}
+	
 
 	/**
 	 * Method add_sticky_handle()

@@ -122,16 +122,15 @@ class MainWP_System {
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_styles' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'admin_enqueue_scripts' ) );
 		add_action( 'admin_body_class', array( MainWP_System_View::get_class_name(), 'admin_body_class' ) );
-		add_action( 'admin_post_mainwp_editpost', array( &$this, 'handle_edit_bulkpost' ) );
-		add_action( 'save_post', array( &$this, 'save_bulkpost' ) );
-		add_action( 'save_post', array( &$this, 'save_bulkpage' ) );
+		
+		new MainWP_Bulk_Post();	
+		
 		add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
-		add_action( 'init', array( &$this, 'create_post_type' ) );
+		
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
 		add_action( 'admin_init', array( $this, 'admin_redirects' ) );
-		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
-		add_filter( 'post_updated_messages', array( MainWP_System_View::get_class_name(), 'post_updated_messages' ) );
+		add_action( 'admin_menu', array( &$this, 'admin_menu' ) );		
 		add_action( 'login_form', array( &$this, 'login_form_redirect' ) );
 		add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
 
@@ -535,13 +534,6 @@ class MainWP_System {
 		MainWP_System_Cron_Jobs::instance()->cron_updates_check_action();
 	}
 
-	public function print_admin_styles( $value = true ) {
-		if ( self::is_mainwp_pages() ) {
-			return false;
-		}
-		return $value;
-	}
-
 	public static function is_mainwp_pages() {
 		$screen = get_current_screen();
 		if ( $screen && strpos( $screen->base, 'mainwp_' ) !== false && strpos( $screen->base, 'mainwp_child_tab' ) === false ) {
@@ -717,7 +709,10 @@ class MainWP_System {
 		}
 
 		add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_warning_notice' ) );
+		
 		MainWP_Post_Handler::instance()->init();
+		MainWP_Post_Backup_Handler::instance()->init();
+		
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
 		if ( $use_wp_datepicker ) {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
@@ -905,24 +900,6 @@ class MainWP_System {
 		}
 	}
 
-	public function handle_edit_bulkpost() {
-
-		$post_id = 0;
-		if ( isset( $_POST['post_ID'] ) ) {
-			$post_id = (int) $_POST['post_ID'];
-		}
-
-		if ( $post_id && isset( $_POST['select_sites_nonce'] ) && wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
-			check_admin_referer( 'update-post_' . $post_id );
-			edit_post();
-
-			$location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $post_id . '&message=1' );
-			$location = apply_filters( 'redirect_post_location', $location, $post_id );
-			wp_safe_redirect( $location );
-			exit();
-		}
-	}
-
 	public function redirect_edit_bulkpost( $location, $post_id ) {
 		if ( $post_id ) {
 			$location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . intval( $post_id ) );
@@ -942,187 +919,6 @@ class MainWP_System {
 		}
 
 		return $location;
-	}
-
-	public function save_bulkpost( $post_id ) {
-		$_post = get_post( $post_id );
-
-		if ( 'bulkpost' !== $_post->post_type ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpost' !== $_POST['post_type'] ) ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( isset( $_POST['mainwp_wpseo_metabox_save_values'] ) && ( ! empty( $_POST['mainwp_wpseo_metabox_save_values'] ) ) ) {
-			return;
-		}
-
-		$pid = $this->metaboxes->select_sites_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_categories_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
-		$this->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
-		MainWP_Post_Page_Handler::add_sticky_handle( $post_id );
-		do_action( 'mainwp_save_bulkpost', $post_id );
-
-		if ( $pid == $post_id ) {
-			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpost' ), 10, 2 );
-		} else {
-			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
-			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
-			die();
-		}
-	}
-
-	public function save_bulkpage( $post_id ) {
-
-		$_post = get_post( $post_id );
-
-		if ( 'bulkpage' !== $_post->post_type ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
-			return;
-		}
-
-		if ( ! isset( $_POST['post_type'] ) || ( 'bulkpage' !== $_POST['post_type'] ) ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( isset( $_POST['mainwp_wpseo_metabox_save_values'] ) && ( ! empty( $_POST['mainwp_wpseo_metabox_save_values'] ) ) ) {
-			return;
-		}
-
-		$pid = $this->metaboxes->select_sites_handle( $post_id, 'bulkpage' );
-		$this->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
-		MainWP_Page::add_status_handle( $post_id );
-
-		do_action( 'mainwp_save_bulkpage', $post_id );
-
-		if ( $pid == $post_id ) {
-			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
-		} else {
-			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
-			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1' );
-			die();
-		}
-	}
-
-	public function create_post_type() {
-		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
-		$labels    = array(
-			'name'               => _x( 'Bulkpost', 'bulkpost' ),
-			'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),
-			'add_new'            => _x( 'Add New', 'bulkpost' ),
-			'add_new_item'       => _x( 'Add New Bulkpost', 'bulkpost' ),
-			'edit_item'          => _x( 'Edit Bulkpost', 'bulkpost' ),
-			'new_item'           => _x( 'New Bulkpost', 'bulkpost' ),
-			'view_item'          => _x( 'View Bulkpost', 'bulkpost' ),
-			'search_items'       => _x( 'Search Bulkpost', 'bulkpost' ),
-			'not_found'          => _x( 'No bulkpost found', 'bulkpost' ),
-			'not_found_in_trash' => _x( 'No bulkpost found in Trash', 'bulkpost' ),
-			'parent_item_colon'  => _x( 'Parent Bulkpost:', 'bulkpost' ),
-			'menu_name'          => _x( 'Bulkpost', 'bulkpost' ),
-		);
-
-		$args = array(
-			'labels'                 => $labels,
-			'hierarchical'           => false,
-			'description'            => 'description...',
-			'supports'               => array(
-				'title',
-				'editor',
-				'excerpt',
-				'thumbnail',
-				'custom-fields',
-				'comments',
-				'revisions',
-			),
-			'public'                 => true,
-			'show_ui'                => true,
-			'show_in_nav_menus'      => false,
-			'publicly_queryable'     => $queryable,
-			'exclude_from_search'    => true,
-			'has_archive'            => false,
-			'query_var'              => false,
-			'can_export'             => false,
-			'rewrite'                => false,
-			'capabilities'           => array(
-				'edit_post'          => 'read',
-				'edit_posts'         => 'read',
-				'edit_others_posts'  => 'read',
-				'publish_posts'      => 'read',
-				'read_post'          => 'read',
-				'read_private_posts' => 'read',
-				'delete_post'        => 'read',
-			),
-		);
-
-		register_post_type( 'bulkpost', $args );
-
-		$labels = array(
-			'name'               => _x( 'Bulkpage', 'bulkpage' ),
-			'singular_name'      => _x( 'Bulkpage', 'bulkpage' ),
-			'add_new'            => _x( 'Add New', 'bulkpage' ),
-			'add_new_item'       => _x( 'Add New Bulkpage', 'bulkpage' ),
-			'edit_item'          => _x( 'Edit Bulkpage', 'bulkpage' ),
-			'new_item'           => _x( 'New Bulkpage', 'bulkpage' ),
-			'view_item'          => _x( 'View Bulkpage', 'bulkpage' ),
-			'search_items'       => _x( 'Search Bulkpage', 'bulkpage' ),
-			'not_found'          => _x( 'No bulkpage found', 'bulkpage' ),
-			'not_found_in_trash' => _x( 'No bulkpage found in Trash', 'bulkpage' ),
-			'parent_item_colon'  => _x( 'Parent Bulkpage:', 'bulkpage' ),
-			'menu_name'          => _x( 'Bulkpage', 'bulkpage' ),
-		);
-
-		$args = array(
-			'labels'                 => $labels,
-			'hierarchical'           => false,
-			'description'            => 'description...',
-			'supports'               => array(
-				'title',
-				'editor',
-				'excerpt',
-				'thumbnail',
-				'custom-fields',
-				'comments',
-				'revisions',
-			),
-			'public'                 => true,
-			'show_ui'                => true,
-			'show_in_nav_menus'      => false,
-			'publicly_queryable'     => $queryable,
-			'exclude_from_search'    => true,
-			'has_archive'            => false,
-			'query_var'              => false,
-			'can_export'             => false,
-			'rewrite'                => false,
-			'capabilities'           => array(
-				'edit_post'          => 'read',
-				'edit_posts'         => 'read',
-				'edit_others_posts'  => 'read',
-				'publish_posts'      => 'read',
-				'read_post'          => 'read',
-				'read_private_posts' => 'read',
-				'delete_post'        => 'read',
-			),
-		);
-
-		register_post_type( 'bulkpage', $args );
 	}
 
 	public function init_session() {
@@ -1292,7 +1088,12 @@ class MainWP_System {
 	}
 
 	public function apply_filter( $filter, $value = array() ) {
-		$output = apply_filters( $filter, $value );
+		
+		if ( 'mainwp-getmetaboxes' === $filter ) {
+			$output = apply_filters_deprecated( 'mainwp-getmetaboxes', array( $value ), '4.0.1', 'mainwp_getmetaboxes' );  // @deprecated Use 'mainwp_getmetaboxes' instead.
+		} else {
+			$output = apply_filters( $filter, $value );
+		}
 
 		if ( ! is_array( $output ) ) {
 			return array();

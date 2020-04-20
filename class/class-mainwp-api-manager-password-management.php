@@ -69,7 +69,7 @@ class MainWP_Api_Manager_Password_Management {
 	 * @param mixed $str String to Encrypt.
 	 */
 	public static function encrypt_string( $str ) {
-		return MainWP_Utility::encrypt( $str, self::$ENCRYPT );
+		return self::encrypt( $str, self::$ENCRYPT );
 	}
 
 	/**
@@ -80,7 +80,47 @@ class MainWP_Api_Manager_Password_Management {
 	 * @param mixed $encrypted Sting to Decrypt.
 	 */
 	public static function decrypt_string( $encrypted ) {
-		return MainWP_Utility::decrypt( $encrypted, self::$ENCRYPT );
+		return self::decrypt( $encrypted, self::$ENCRYPT );
+	}
+	
+	
+	/**
+	 * Encrypt String
+	 *
+	 * Encrypt $encrypted
+	 *
+	 * @param mixed $str String to Encrypt.
+	 * @param mixed $pass String.
+	 */
+	public static function encrypt( $str, $pass ) {
+		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
+		$stra = str_split( $str );
+		foreach ( $stra as $k => $v ) {
+			$tmp        = ord( $v ) + ord( $pass[ $k ] );
+			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
+		}
+
+		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+	}
+
+	/**
+	 * Decrypts String
+	 *
+	 * Decrypts $encrypted
+	 *
+	 * @param mixed $encrypted Sting to Decrypt.
+	 * @param mixed $pass Sting.
+	 */
+	public static function decrypt( $str, $pass ) {
+		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
+		$stra = str_split( $str );
+		foreach ( $stra as $k => $v ) {
+			$tmp        = ord( $v ) - ord( $pass[ $k ] );
+			$stra[ $k ] = chr( 0 > $tmp ? ( $tmp + 256 ) : $tmp );
+		}
+
+		return join( '', $stra );
 	}
 
 }

@@ -19,16 +19,14 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
 		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
-		add_action( 'mainwp_renderImage', array( MainWP_UI::get_class_name(), 'render_image' ), 10, 4 );
+		
 		add_action( 'mainwp_notify_user', array( &$this, 'notify_user' ), 10, 3 );
 		add_action( 'mainwp_activePlugin', array( &$this, 'active_plugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactive_plugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
 		add_action( 'mainwp_deletePlugin', array( &$this, 'delete_plugin' ), 10, 0 );
 		add_action( 'mainwp_deleteTheme', array( &$this, 'delete_theme' ), 10, 0 );
-		add_action( 'mainwp_renderBeginModal', array( MainWP_UI::get_class_name(), 'render_begin_modal' ), 10, 2 );
-		add_action( 'mainwp_renderEndModal', array( MainWP_UI::get_class_name(), 'render_end_modal' ), 10, 2 );
-
+	
 		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ) );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );

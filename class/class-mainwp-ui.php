@@ -512,37 +512,6 @@ class MainWP_UI {
 		echo '</div>';
 	}
 
-	public static function render_begin_modal( $title = '', $others = array() ) {
-		?>
-		<div class="ui modal" id="mainwp-modal-default" tabindex="0">
-			<?php if ( ! empty( $title ) ) { ?>
-			<div class="header"></div>
-			<?php } ?>
-			<div class="ui progress green mainwp-modal-progress">
-				<div class="bar"><div class="progress"></div></div>
-				<div class="label"></div>
-			</div>
-			<div class="scrolling content mainwp-modal-content">
-		<?php
-	}
-
-	public static function render_end_modal( $actions = '', $others = array() ) {
-		?>
-			</div>
-			<div class="actions mainwp-modal-actions">
-			<?php echo $actions; ?>
-				<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close' ); ?></div>
-			</div>
-		</div>
-		<?php
-	}
-
-	public static function render_image( $img, $alt, $class, $height = null ) {
-		?>
-		<img src="<?php echo esc_attr( MAINWP_PLUGIN_URL . 'assets/' . $img ); ?>" class="<?php echo esc_attr( $class ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo esc_attr( null == $height ? '' : 'height="' . $height . '"' ); ?> />
-		<?php
-	}
-
 	// customize WordPress add_meta_box() function.
 	// param $context: lef, right.
 	// phpcs:ignore -- not quite complex function

@@ -972,9 +972,6 @@ class MainWP_Plugins {
 				update_option( 'mainwp_pluginAutomaticDailyUpdate', $snPluginAutomaticDailyUpdate );
 			}
 
-			$update_time         = MainWP_Utility::get_websites_automatic_update_time();
-			$lastAutomaticUpdate = $update_time['last'];
-			$nextAutomaticUpdate = $update_time['next'];
 			?>
 			<div class="ui alt segment" id="mainwp-plugin-auto-updates">
 				<div class="mainwp-main-content">

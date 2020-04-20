@@ -169,49 +169,6 @@ class MainWP_Utility {
 		return $encoded;
 	}
 
-	/**
-	 * Method activated_primary_backup_plugin()
-	 *
-	 * Chek which primary backup plugin is being used.
-	 *
-	 * @param mixed $what Which backup plugin is being use.
-	 * @param mixed $website Website array of information.
-	 *
-	 * @return boolean True|False.
-	 */
-	public static function activated_primary_backup_plugin( $what, $website ) {
-		$plugins = json_decode( $website->plugins, 1 );
-		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
-			return false;
-		}
-
-		$checks = array(
-			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
-			'backupwordpress' => 'backupwordpress/backupwordpress.php',
-			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
-			'updraftplus'     => 'updraftplus/updraftplus.php',
-
-		);
-
-		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
-
-		if ( empty( $slug ) ) {
-			return false;
-		}
-
-		$installed = false;
-
-		foreach ( $plugins as $plugin ) {
-			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
-				if ( $plugin['active'] ) {
-					$installed = true;
-				}
-				break;
-			}
-		}
-
-		return $installed;
-	}
 
 	/**
 	 * Method get_primary_backup()
@@ -262,54 +219,6 @@ class MainWP_Utility {
 
 	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
-	}
-
-	public static function upload_image( $img_url, $img_data = array() ) {
-		if ( ! is_array( $img_data ) ) {
-			$img_data = array();
-		}
-		include_once ABSPATH . 'wp-admin/includes/file.php';
-		$upload_dir     = wp_upload_dir();
-		$temporary_file = download_url( $img_url );
-
-		if ( is_wp_error( $temporary_file ) ) {
-			throw new \Exception( 'Error: ' . $temporary_file->get_error_message() );
-		} else {
-			$upload_dir     = wp_upload_dir();
-			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
-			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
-			$moved          = @rename( $temporary_file, $local_img_path );
-			if ( $moved ) {
-				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
-				$attachment  = array(
-					'post_mime_type' => $wp_filetype['type'],
-					'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
-					'post_content'   => isset( $img_data['description'] ) && ! empty( $img_data['description'] ) ? $img_data['description'] : '',
-					'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? $img_data['caption'] : '',
-					'post_status'    => 'inherit',
-				);
-				$attach_id   = wp_insert_attachment( $attachment, $local_img_path );
-				require_once ABSPATH . 'wp-admin/includes/image.php';
-				$attach_data = wp_generate_attachment_metadata( $attach_id, $local_img_path );
-				wp_update_attachment_metadata( $attach_id, $attach_data );
-				if ( isset( $img_data['alt'] ) && ! empty( $img_data['alt'] ) ) {
-					update_post_meta( $attach_id, '_wp_attachment_image_alt', $img_data['alt'] );
-				}
-				return array(
-					'id'  => $attach_id,
-					'url' => $local_img_url,
-				);
-			}
-		}
-
-		$hasWPFileSystem = self::get_wp_file_system();
-		global $wp_filesystem;
-
-		if ( $wp_filesystem->exists( $temporary_file ) ) {
-			$wp_filesystem->delete( $temporary_file );
-		}
-
-		return null;
 	}
 
 	public static function get_base_dir() {
@@ -551,29 +460,6 @@ class MainWP_Utility {
 
 	public static function trim_slashes( $elem ) {
 		return trim( $elem, '/' );
-	}
-
-	public static function encrypt( $str, $pass ) {
-		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
-		$stra = str_split( $str );
-		foreach ( $stra as $k => $v ) {
-			$tmp        = ord( $v ) + ord( $pass[ $k ] );
-			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
-		}
-
-		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-	}
-
-	public static function decrypt( $str, $pass ) {
-		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
-		$stra = str_split( $str );
-		foreach ( $stra as $k => $v ) {
-			$tmp        = ord( $v ) - ord( $pass[ $k ] );
-			$stra[ $k ] = chr( 0 > $tmp ? ( $tmp + 256 ) : $tmp );
-		}
-
-		return join( '', $stra );
 	}
 
 	/**
@@ -1097,29 +983,6 @@ EOT;
 		return $output;
 	}
 
-	public static function get_websites_automatic_update_time() {
-		$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
-
-		if ( 0 == $lastAutomaticUpdate ) {
-			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
-		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
-			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
-		} else {
-			$nextAutomaticUpdate = self::format_timestamp( self::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
-		}
-
-		if ( 0 == $lastAutomaticUpdate ) {
-			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
-		} else {
-			$lastAutomaticUpdate = self::format_timestamp( self::get_timestamp( $lastAutomaticUpdate ) );
-		}
-
-		return array(
-			'last'   => $lastAutomaticUpdate,
-			'next'   => $nextAutomaticUpdate,
-		);
-	}
-
 	public static function update_option( $option_name, $option_value ) {
 		$success = add_option( $option_name, $option_value, '', 'no' );
 
@@ -1128,16 +991,6 @@ EOT;
 		}
 
 		return $success;
-	}
-
-	public static function fix_option( $option_name ) {
-		global $wpdb;
-		// phpcs:ignore -- unprepared SQL ok.
-		if ( 'yes' === $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name ) ) ) {
-			$option_value = get_option( $option_name );
-			delete_option( $option_name );
-			add_option( $option_name, $option_value, '', 'no' );
-		}
 	}
 
 	public static function get_file_parameter( &$website ) {

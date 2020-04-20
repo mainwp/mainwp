@@ -6,7 +6,40 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Updates {
 
+	/**
+	 * User can ignore updates
+	 *
+	 * @var bool
+	 */
 	public static $user_can_ignore_updates = null;
+	
+	/**
+	 * User can updates translations
+	 *
+	 * @var bool
+	 */
+	public static $user_can_update_trans = null;	
+	
+	/**
+	 * User can updates WP
+	 *
+	 * @var bool
+	 */
+	public static $user_can_update_wp = null;
+	
+	/**
+	 * User can updates themes
+	 *
+	 * @var bool
+	 */
+	public static $user_can_update_themes = null;
+	
+	/**
+	 * User can updates plugins
+	 *
+	 * @var bool
+	 */
+	public static $user_can_update_plugins = null;
 	public static $trusted_label           = '';
 	public static $not_trusted_label       = '';
 	public static $visit_dashboard_title   = '';
@@ -122,7 +155,59 @@ class MainWP_Updates {
 		}
 		return self::$user_can_ignore_updates;
 	}
+	
+	/**
+	 * Method user_can_update_trans()
+	 *
+	 * @param empty
+	 * @return true|false user can update translations.
+	 */
+	public static function user_can_update_trans() {
+		if ( null === self::$user_can_update_trans ) {
+			self::$user_can_update_trans = mainwp_current_user_can( 'dashboard', 'update_translations' );
+		}
+		return self::$user_can_update_trans;
+	}
 
+	/**
+	 * Method user_can_update_wp()
+	 *
+	 * @param empty
+	 * @return true|false user can update WP.
+	 */
+	public static function user_can_update_wp() {
+		if ( null === self::$user_can_update_wp ) {
+			self::$user_can_update_wp = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+		}
+		return self::$user_can_update_wp;
+	}
+	
+	/**
+	 * Method user_can_update_themes()
+	 *
+	 * @param empty
+	 * @return true|false user can update themes.
+	 */
+	public static function user_can_update_themes() {
+		if ( null === self::$user_can_update_themes ) {
+			self::$user_can_update_themes = mainwp_current_user_can( 'dashboard', 'update_themes' );
+		}
+		return self::$user_can_update_themes;
+	}
+	
+	/**
+	 * Method user_can_update_plugins()
+	 *
+	 * @param empty
+	 * @return true|false user can update plugins.
+	 */
+	public static function user_can_update_plugins() {
+		if ( null === self::$user_can_update_plugins ) {
+			self::$user_can_update_plugins = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+		}
+		return self::$user_can_update_plugins;
+	}
+		
 	/**
 	 * Method render()
 	 *
@@ -478,12 +563,8 @@ class MainWP_Updates {
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-		$user_can_update_translation  = mainwp_current_user_can( 'dashboard', 'update_translations' );
-		$user_can_update_wordpress    = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-		$user_can_update_themes       = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_update_plugins      = mainwp_current_user_can( 'dashboard', 'update_plugins' );
-
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );						
+		
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
 		}
@@ -558,10 +639,10 @@ class MainWP_Updates {
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
 					<?php
 					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-						MainWP_Updates_Per_Group::render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
+						MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
 					else :
 						MainWP_DB::data_seek( $websites, 0 );
-						MainWP_Updates_Per_Site::render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades );
+						MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
 					endif;
 					?>
 				</div>
@@ -578,17 +659,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					MainWP_Updates_Per_Site::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
+					MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					MainWP_Updates_Per_Group::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
+					MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					MainWP_Updates_Per_Item::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
+					MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
 				endif;
 				?>
 			</div>
@@ -605,17 +686,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					MainWP_Updates_Per_Site::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
+					MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					MainWP_Updates_Per_Group::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
+					MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					MainWP_Updates_Per_Item::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
+					MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
 				endif;
 				?>
 			</div>
@@ -630,13 +711,13 @@ class MainWP_Updates {
 				<div class="ui <?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="translations-updates">
 					<?php
 					if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
-						MainWP_Updates_Per_Site::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades );
+						MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
 					elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-						MainWP_Updates_Per_Group::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
+						MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
 					else :
 						?>
 						<!-- Per Item -->
-						<?php MainWP_Updates_Per_Item::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
+						<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
 					<?php endif; ?>
 				</div>
 				<?php endif; ?>
@@ -855,7 +936,7 @@ class MainWP_Updates {
 					if ( ! empty( $restorePageSlug ) ) {
 						if ( $enable_legacy_backup ) {
 							$restoreSlug = $restorePageSlug . '&backupid=' . $website->id;
-						} elseif ( MainWP_Utility::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
+						} elseif ( self::activated_primary_backup_plugin( $mainwp_primaryBackup, $website ) ) {
 							$restoreSlug = $restorePageSlug . '&id=' . $website->id;
 						}
 					}
@@ -903,6 +984,50 @@ class MainWP_Updates {
 		<?php
 	}
 
+	/**
+	 * Method activated_primary_backup_plugin()
+	 *
+	 * Chek which primary backup plugin is being used.
+	 *
+	 * @param mixed $what Which backup plugin is being use.
+	 * @param mixed $website Website array of information.
+	 *
+	 * @return boolean True|False.
+	 */
+	public static function activated_primary_backup_plugin( $what, $website ) {
+		$plugins = json_decode( $website->plugins, 1 );
+		if ( ! is_array( $plugins ) || 0 === count( $plugins ) ) {
+			return false;
+		}
+
+		$checks = array(
+			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
+			'backupwordpress' => 'backupwordpress/backupwordpress.php',
+			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
+			'updraftplus'     => 'updraftplus/updraftplus.php',
+
+		);
+
+		$slug = isset( $checks[ $what ] ) ? $checks[ $what ] : '';
+
+		if ( empty( $slug ) ) {
+			return false;
+		}
+
+		$installed = false;
+
+		foreach ( $plugins as $plugin ) {
+			if ( ( is_string( $slug ) && strtolower( $plugin['slug'] ) == $slug ) || ( is_array( $slug ) && in_array( $plugin['slug'], $slug ) ) ) {
+				if ( $plugin['active'] ) {
+					$installed = true;
+				}
+				break;
+			}
+		}
+
+		return $installed;
+	}
+	
 	/**
 	 * Method set_continue_update_html_selector()
 	 *

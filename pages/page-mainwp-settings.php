@@ -538,7 +538,7 @@ class MainWP_Settings {
 
 						$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
-						$update_time         = MainWP_Utility::get_websites_automatic_update_time();
+						$update_time         = self::get_websites_automatic_update_time();
 						$lastAutomaticUpdate = $update_time['last'];
 						$nextAutomaticUpdate = $update_time['next'];
 
@@ -691,6 +691,37 @@ class MainWP_Settings {
 		self::render_footer( '' );
 	}
 
+	/**
+	 * Method get_websites_automatic_update_time()
+	 * 
+	 * Get websites automatic update time.
+	 *
+	 * @return mixed array
+	 */
+	public static function get_websites_automatic_update_time() {
+		$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
+
+		if ( 0 == $lastAutomaticUpdate ) {
+			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
+		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
+			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
+		} else {
+			$nextAutomaticUpdate = MainWP_Utility::format_timestamp( self::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
+		}
+
+		if ( 0 == $lastAutomaticUpdate ) {
+			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
+		} else {
+			$lastAutomaticUpdate = MainWP_Utility::format_timestamp( self::get_timestamp( $lastAutomaticUpdate ) );
+		}
+
+		return array(
+			'last'   => $lastAutomaticUpdate,
+			'next'   => $nextAutomaticUpdate,
+		);
+	}
+
+	
 	/**
 	 * Returns false or the location of the OpenSSL Lib File.
 	 *

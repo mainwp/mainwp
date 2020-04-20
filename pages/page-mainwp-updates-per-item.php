@@ -21,7 +21,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_plugins_updates()
 	 *
 	 * Render Plugins updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_plugin_upgrades
 	 * @param mixed $userExtension
@@ -100,7 +100,7 @@ class MainWP_Updates_Per_Item {
 									</tr>
 								</thead>
 								<tbody plugin_slug="<?php echo $plugin_name; ?>">
-									<?php									
+									<?php
 									MainWP_DB::data_seek( $websites, 0 );
 									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 										if ( $website->is_ignorePluginUpdates ) {
@@ -177,7 +177,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_themes_updates()
 	 *
 	 * Render themes updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_theme_upgrades
 	 * @param mixed $userExtension
@@ -252,7 +252,7 @@ class MainWP_Updates_Per_Item {
 								</tr>
 							</thead>
 							<tbody theme_slug="<?php echo $theme_name; ?>">
-								<?php								
+								<?php
 								MainWP_DB::data_seek( $websites, 0 );
 								while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 									if ( $website->is_ignoreThemeUpdates ) {
@@ -325,7 +325,7 @@ class MainWP_Updates_Per_Item {
 	 * Method render_trans_update()
 	 *
 	 * Render translations updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_translation_upgrades
 	 * @param mixed $userExtension

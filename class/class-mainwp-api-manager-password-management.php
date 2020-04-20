@@ -82,8 +82,8 @@ class MainWP_Api_Manager_Password_Management {
 	public static function decrypt_string( $encrypted ) {
 		return self::decrypt( $encrypted, self::$ENCRYPT );
 	}
-	
-	
+
+
 	/**
 	 * Encrypt String
 	 *

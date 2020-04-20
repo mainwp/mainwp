@@ -12,28 +12,28 @@ class MainWP_Updates {
 	 * @var bool
 	 */
 	public static $user_can_ignore_updates = null;
-	
+
 	/**
 	 * User can updates translations
 	 *
 	 * @var bool
 	 */
-	public static $user_can_update_trans = null;	
-	
+	public static $user_can_update_trans = null;
+
 	/**
 	 * User can updates WP
 	 *
 	 * @var bool
 	 */
 	public static $user_can_update_wp = null;
-	
+
 	/**
 	 * User can updates themes
 	 *
 	 * @var bool
 	 */
 	public static $user_can_update_themes = null;
-	
+
 	/**
 	 * User can updates plugins
 	 *
@@ -155,7 +155,7 @@ class MainWP_Updates {
 		}
 		return self::$user_can_ignore_updates;
 	}
-	
+
 	/**
 	 * Method user_can_update_trans()
 	 *
@@ -181,7 +181,7 @@ class MainWP_Updates {
 		}
 		return self::$user_can_update_wp;
 	}
-	
+
 	/**
 	 * Method user_can_update_themes()
 	 *
@@ -194,7 +194,7 @@ class MainWP_Updates {
 		}
 		return self::$user_can_update_themes;
 	}
-	
+
 	/**
 	 * Method user_can_update_plugins()
 	 *
@@ -207,7 +207,7 @@ class MainWP_Updates {
 		}
 		return self::$user_can_update_plugins;
 	}
-		
+
 	/**
 	 * Method render()
 	 *
@@ -563,8 +563,8 @@ class MainWP_Updates {
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );						
-		
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
 		}
@@ -1027,7 +1027,7 @@ class MainWP_Updates {
 
 		return $installed;
 	}
-	
+
 	/**
 	 * Method set_continue_update_html_selector()
 	 *

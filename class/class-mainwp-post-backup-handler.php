@@ -3,22 +3,22 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Post_Backup_Handler
- * 
+ *
  * Handle Backup Post
  *
- * @deprecated moved to external Extension. 
+ * @deprecated moved to external Extension.
  */
-class MainWP_Post_Backup_Handler extends MainWP_Handler{
+class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	private static $instance = null;
-	
+
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
-	
+
 	public function init() {
 		// Page: ManageBackups.
 		$this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );

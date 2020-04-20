@@ -729,15 +729,15 @@ class MainWP_Post_Page_Handler {
 		return $ret;
 	}
 
-	
+
 	/**
 	 * Method upload_image()
 	 *
 	 * Handle upload image
 	 *
 	 * @param string $img_url.
-	 * @param mixed $img_data.
-	 * 
+	 * @param mixed  $img_data.
+	 *
 	 * @return mixed array of result or null
 	 */
 	public static function upload_image( $img_url, $img_data = array() ) {
@@ -787,7 +787,7 @@ class MainWP_Post_Page_Handler {
 
 		return null;
 	}
-	
+
 
 	/**
 	 * Method add_sticky_handle()

@@ -21,7 +21,7 @@ class MainWP_Updates_Per_Site {
 	 * Method render_wpcore_updates()
 	 *
 	 * Render WP core updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_wp_upgrades
 	 * @return html
@@ -106,7 +106,7 @@ class MainWP_Updates_Per_Site {
 	 * Method render_plugins_updates()
 	 *
 	 * Render Plugins updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_plugin_upgrades
 	 * @param mixed $userExtension
@@ -254,7 +254,7 @@ class MainWP_Updates_Per_Site {
 	 * Method render_themes_updates()
 	 *
 	 * Render Themes updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_theme_upgrades
 	 * @param mixed $userExtension
@@ -396,7 +396,7 @@ class MainWP_Updates_Per_Site {
 	 * Method render_trans_update()
 	 *
 	 * Render translations updates
-	 *	 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $total_translation_upgrades
 	 * @return html

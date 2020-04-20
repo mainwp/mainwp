@@ -6,9 +6,9 @@ namespace MainWP\Dashboard;
  */
 abstract class MainWP_Handler {
 
-	
-	protected $security_nonces;	
-	
+
+	protected $security_nonces;
+
 	// Force Extending class to define this method.
 	abstract protected function init();
 
@@ -55,13 +55,13 @@ abstract class MainWP_Handler {
 
 		return true;
 	}
-	
+
 	public function add_action( $action, $callback ) {
 		add_action( 'wp_ajax_' . $action, $callback );
 		$this->add_security_nonce( $action );
 	}
-	
-	
+
+
 	public function add_security_nonce( $action ) {
 		if ( ! is_array( $this->security_nonces ) ) {
 			$this->security_nonces = array();

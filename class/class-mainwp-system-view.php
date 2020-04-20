@@ -609,7 +609,7 @@ class MainWP_System_View {
 	 *
 	 * @return string $class_string The CSS attributes to add to the page.
 	 */
-	public function admin_body_class( $class_string ) {
+	public static function admin_body_class( $class_string ) {
 		if ( MainWP_System::is_mainwp_pages() ) {
 			$class_string .= ' mainwp-ui mainwp-ui-page ';
 			$class_string .= ' mainwp-ui-leftmenu ';

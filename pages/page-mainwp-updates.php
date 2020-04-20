@@ -6,12 +6,21 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Updates {
 
-	public static $user_can_ignore_unignore_updates = true;
+	public static $user_can_ignore_updates = null;
 	public static $trusted_label                    = '';
 	public static $not_trusted_label                = '';
 	public static $visit_dashboard_title            = '';
 	public static $continue_class                   = '';
+	public static $continue_update      = '';
+	public static $continue_update_slug = '';
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -37,7 +46,15 @@ class MainWP_Updates {
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
-
+	
+	/**
+	 * Method init_menu()
+	 * 
+	 * Render init updates menu
+	 * 	 
+	 * @return
+	 * 
+	 */	
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -81,7 +98,42 @@ class MainWP_Updates {
 	public static function render_footer() {
 		echo '</div>';
 	}
+	
+	/**
+	 * Method render_site_link_dashboard()
+	 * 
+	 * @param object $website the site
+	 * @return html link to dashboard
+	 * 
+	 */
+	public static function render_site_link_dashboard( $website ) {
+		?>
+		<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_html__( 'Visit this dashboard', 'mainwp' ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+		<?php
+	}
+	
+	/**
+	 * Method user_can_ignore_updates()
+	 * 
+	 * @param empty
+	 * @return true|false user can ignore updates or not.
+	 * 
+	 */
+	public static function user_can_ignore_updates() {
+		if ( null === self::$user_can_ignore_updates ) {
+			self::$user_can_ignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		}
+		return self::$user_can_ignore_updates;		
+	}
 
+	/**
+	 * Method render()
+	 * 
+	 * Render updates page
+	 * 	 
+	 * @return
+	 * 
+	 */
 	public static function render() {
 
 		global $current_user;
@@ -142,14 +194,6 @@ class MainWP_Updates {
 				$all_groups[0]       = __( 'Others', 'mainwp' );
 			}
 		}
-
-		$total_themesIgnored  = 0;
-		$total_pluginsIgnored = 0;
-
-		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
-		$decodedIgnoredThemes  = json_decode( $userExtension->ignored_themes, true );
-		$total_pluginsIgnored  = is_array( $decodedIgnoredPlugins ) ? count( $decodedIgnoredPlugins ) : 0;
-		$total_themesIgnored   = is_array( $decodedIgnoredThemes ) ? count( $decodedIgnoredThemes ) : 0;
 
 		$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$decodedDismissedThemes  = json_decode( $userExtension->dismissed_themes, true );
@@ -435,15 +479,12 @@ class MainWP_Updates {
 				$total_offline ++;
 			}
 
-			$total_pluginsIgnored += count( $pluginsIgnored_perSites );
-			$total_themesIgnored  += count( $themesIgnored_perSites );
 		}
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
 		$mainwp_show_language_updates           = get_option( 'mainwp_show_language_updates', 1 );
-		$user_can_update_translation            = mainwp_current_user_can( 'dashboard', 'update_translations' );
-		self::$user_can_ignore_unignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		$user_can_update_translation            = mainwp_current_user_can( 'dashboard', 'update_translations' );		
 		$user_can_update_wordpress              = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
 		$user_can_update_themes                 = mainwp_current_user_can( 'dashboard', 'update_themes' );
 		$user_can_update_plugins                = mainwp_current_user_can( 'dashboard', 'update_plugins' );
@@ -468,16 +509,13 @@ class MainWP_Updates {
 		self::$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
 
 		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
-		$continue_update      = '';
-		$continue_update_slug = '';
-		self::$continue_class = '';
-
+		
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
-				$continue_update = $_GET['continue_update'];
-				if ( 'plugins_upgrade_all' === $continue_update || 'themes_upgrade_all' === $continue_update || 'translations_upgrade_all' === $continue_update ) {
+				self::$continue_update = $_GET['continue_update'];
+				if ( 'plugins_upgrade_all' === self::$continue_update || 'themes_upgrade_all' === self::$continue_update || 'translations_upgrade_all' === self::$continue_update ) {
 					if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-						$continue_update_slug = $_GET['slug'];
+						self::$continue_update_slug = $_GET['slug'];
 					}
 				}
 			}
@@ -525,10 +563,10 @@ class MainWP_Updates {
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
 					<?php
 					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-						self::render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
+						MainWP_Updates_Per_Group::render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
 					else :
 						MainWP_DB::data_seek( $websites, 0 );
-						self::render_wpcore_updates_per_site( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update );
+						MainWP_Updates_Per_Site::render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades );
 					endif;
 					?>
 				</div>
@@ -545,17 +583,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					self::render_plugins_updates_per_site( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $trustedPlugins );
+					MainWP_Updates_Per_Site::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					self::render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
+					MainWP_Updates_Per_Group::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					self::render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $pluginsInfo, $trustedPlugins );
+					MainWP_Updates_Per_Item::render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
 				endif;
 				?>
 			</div>
@@ -572,17 +610,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					self::render_themes_updates_per_site( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $trustedThemes );
+					MainWP_Updates_Per_Site::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					self::render_themes_updates_per_group( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
+					MainWP_Updates_Per_Group::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					self::render_themes_updates_per_item( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $allThemes, $themesInfo, $trustedThemes );
+					MainWP_Updates_Per_Item::render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
 				endif;
 				?>
 			</div>
@@ -597,13 +635,13 @@ class MainWP_Updates {
 				<div class="ui <?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="translations-updates">
 					<?php
 					if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
-						self::render_trans_update_per_site( $user_can_update_translation, $websites, $total_translation_upgrades );
+						MainWP_Updates_Per_Site::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades );
 					elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-						self::render_trans_update_per_group( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
+						MainWP_Updates_Per_Group::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
 					else :
 						?>
 						<!-- Per Item -->
-						<?php self::render_trans_update_per_item( $user_can_update_translation, $websites, $total_translation_upgrades, $userExtension, $continue_update, $allTranslations, $translationsInfo ); ?>						
+						<?php MainWP_Updates_Per_Item::render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
 					<?php endif; ?>
 				</div>
 				<?php endif; ?>
@@ -620,17 +658,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					self::render_abandoned_plugins_per_site( $websites, $decodedDismissedPlugins );
+					MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					self::render_abandoned_plugins_per_group( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
+					MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					self::render_abandoned_plugins_per_item( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
+					MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
 				endif;
 				?>
 			</div>
@@ -647,17 +685,17 @@ class MainWP_Updates {
 					?>
 				<!-- Per Site -->
 					<?php
-					self::render_abandoned_themes_per_site( $websites, $decodedDismissedThemes );
+					MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
 				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
-					self::render_abandoned_themes_per_group( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
+					MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
 				else :
 					?>
 				<!-- Per Item -->
 					<?php
-					self::render_abandoned_themes_per_item(  $websites, $allThemesOutdate, $decodedDismissedThemes  );
+					MainWP_Updates_Per_Item::render_abandoned_themes(  $websites, $allThemesOutdate, $decodedDismissedThemes  );
 					?>
 				
 				<?php endif; ?>
@@ -828,7 +866,9 @@ class MainWP_Updates {
 					}
 					?>
 					<tr>
-						<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
+						<td>
+							<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+						</td>
 						<td id="wp_http_response_code_<?php echo esc_attr( $website->id ); ?>">
 							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
 						</td>
@@ -868,2078 +908,37 @@ class MainWP_Updates {
 		<?php
 	}
 
-	public static function render_wpcore_updates_per_groups( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update, $all_groups_sites, $all_groups, $site_offset ) {
-		?>
-			<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
-				<thead>
-					<tr>
-						<th class="collapsing no-sort"></th>
-						<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-						<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-						<th class="no-sort right aligned">
-							<?php
-							if ( $user_can_update_wordpress ) {
-								if ( 0 < $total_wp_upgrades ) {
-									self::$continue_class = ( 'wpcore_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-									?>
-									<a class="ui green mini basic button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Groups', 'mainwp' ); ?></a>
-									<?php
-								}
-							}
-							?>
-						</th>
-					</tr>
-				</thead>
-				<tbody class="ui accordion"> <!-- per group -->
-				<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-						<?php
-						$total_group_wp_updates = 0;
-						$group_name             = $all_groups[ $group_id ];
-						?>
-						<tr row-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui title">
-							<td  class="accordion-trigger"><i class="icon dropdown"></i></td>
-							<td><?php echo stripslashes( $group_name ); ?></td>
-							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( __( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
-							<td class="right aligned">
-								<?php if ( $user_can_update_wordpress ) : ?>
-								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the group', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui green button" onClick="return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-								<?php endif; ?>
-							</td>
-						</tr>
-						<tr style="display:none">
-							<td colspan="4" class="ui content">
-								<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table mainwp-per-group-table">
-									<thead>
-										<tr>
-											<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-											<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-											<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-											<th class="no-sort"></th>
-										</tr>
-									</thead>
-									<tbody id="update_wrapper_wp_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
-										<?php foreach ( $site_ids as $site_id ) : ?>
-											<?php
-											$seek = $site_offset[ $site_id ];
-											MainWP_DB::data_seek( $websites, $seek );
-											$website = MainWP_DB::fetch_object( $websites );
-											if ( $website->is_ignoreCoreUpdates ) {
-												continue;
-											}
-
-											$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
-
-											if ( ( 0 == count( $wp_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-												continue;
-											}
-
-											$total_group_wp_updates++;
-											?>
-											<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
-												<td>
-													<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php esc_attr_e( 'Go to the child site overview.', 'mainwp' ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-													<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
-												</td>
-												<td>
-													<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-														<?php echo esc_html( $wp_upgrades['current'] ); ?>
-													<?php endif; ?>
-												</td>
-												<td>
-													<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-														<?php echo esc_html( $wp_upgrades['new'] ); ?>
-													<?php endif; ?>
-												</td>
-												<td class="right aligned">
-													<?php if ( $user_can_update_wordpress ) : ?>
-														<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-															<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-														<?php endif; ?>
-													<?php endif; ?>
-												</td>
-											</tr>
-										<?php endforeach; ?>
-									</tbody>
-								</table>
-							</td>
-						</tr>
-						<input type="hidden" class="element_ui_view_values" elem-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_wp_updates ); ?>" can-update="<?php echo $user_can_update_wordpress ? 1 : 0; ?>">
-					<?php endforeach; ?>
-				</tbody>
-				<tfoot>
-					<tr>
-						<th></th>
-						<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-						<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-						<th class="right aligned"></th>
-					</tr>
-				</tfoot>
-			</table>
-		<?php
-	}
-
-	public static function render_wpcore_updates_per_site( $user_can_update_wordpress, $websites, $total_wp_upgrades, $continue_update ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-wordpress-updates-table">
-			<thead>
-				<tr>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Version', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Latest', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="no-sort right aligned">
-						<?php
-						if ( $user_can_update_wordpress ) {
-							if ( 0 < $total_wp_upgrades ) {
-								self::$continue_class = ( 'wpcore_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-								?>
-								<a class="ui green mini basic button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
-								<?php
-							}
-						}
-						?>
-					</th>
-				</tr>
-			</thead>
-			<tbody> <!-- per site or plugin -->
-				<?php
-				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( $website->is_ignoreCoreUpdates ) {
-						continue;
-					}
-
-					$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
-
-					if ( ( 0 === count( $wp_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-						continue;
-					}
-					?>
-				<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
-					<td>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php esc_attr_e( 'Go to the child site overview.', 'mainwp' ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-						<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
-					</td>
-					<td>
-						<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-							<?php echo esc_html( $wp_upgrades['current'] ); ?>
-						<?php endif; ?>
-					</td>
-					<td>
-						<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-							<?php echo esc_html( $wp_upgrades['new'] ); ?>
-						<?php endif; ?>
-					</td>
-					<td class="right aligned">
-						<?php if ( $user_can_update_wordpress ) : ?>
-							<?php if ( 0 < count( $wp_upgrades ) ) : ?>
-								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update', 'mainwp' ) . ' ' . $website->name; ?>" data-inverted="" data-position="left center" class="ui green button mini" onClick="return updatesoverview_upgrade(<?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</td>
-				</tr>
-					<?php
-				}
-				?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Current Version', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'New Version', 'mainwp' ); ?></th>
-					<th class="right aligned">
-					</th>
-				</tr>
-			</tfoot>
-		</table>
+	/**
+	 * Method set_continue_update_html_selector()
+	 * 
+	 * @param string $current_update current update string
+	 * @return 
+	 * 
+	 */
+	public static function set_continue_update_html_selector( $current_update, $slug = false ){
 		
-		<?php
+		$check_slug = true;
+		if ( !empty( $slug ) ) {
+			$check_slug = ( $slug == self::$continue_update_slug ) ? true : false;
+		}
+		
+		if ( $check_slug && $current_update === self::$continue_update )
+			self::$continue_class = 'updatesoverview_continue_update_me';
+		else
+			self::$continue_class = '';
 	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_plugins_updates_per_site( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $trustedPlugins ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="no-sort right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php
-						if ( $user_can_update_plugins ) {
-							self::$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-							if ( 0 < $total_plugin_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
-								<?php
-							}
-						}
-						?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="plugins-updates-global" class="ui accordion">
-				<?php
-				MainWP_DB::data_seek( $websites, 0 );
-				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					if ( $website->is_ignorePluginUpdates ) {
-						continue;
-					}
-					$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-					$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-					if ( is_array( $decodedPremiumUpgrades ) ) {
-						foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-							$premiumUpgrade['premium'] = true;
-
-							if ( 'plugin' === $premiumUpgrade['type'] ) {
-								if ( ! is_array( $plugin_upgrades ) ) {
-									$plugin_upgrades = array();
-								}
-
-								$premiumUpgrade = array_filter( $premiumUpgrade );
-								if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-									$plugin_upgrades[ $crrSlug ] = array();
-								}
-								$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
-							}
-						}
-					}
-					$ignored_plugins = json_decode( $website->ignored_plugins, true );
-					if ( is_array( $ignored_plugins ) ) {
-						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-					}
-
-					$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
-					if ( is_array( $ignored_plugins ) ) {
-						$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-					}
-
-					if ( ( 0 === count( $plugin_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-						continue;
-					}
-					?>
-					<tr class="ui title">
-						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td>
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-						</td>
-						<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><?php echo count( $plugin_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
-						<td class="right aligned">
-						<?php if ( $user_can_update_plugins ) : ?>
-							<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
-								<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-						</td>
-					</tr>
-
-					<tr style="display:none">
-						<td colspan="4" class="ui content">
-							<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
-									</tr>
-								</thead>
-								<tbody class="plugins-bulk-updates" id="wp_plugin_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-									<?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
-										<?php $plugin_name = rawurlencode( $slug ); ?>
-										<tr plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? esc_attr( $plugin_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['Name'] ); ?>
-												</a>
-												<input type="hidden" id="wp_upgraded_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0" />
-											</td>
-											<td><?php echo esc_html( $plugin_upgrade['Version'] ); ?></td>
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
-												</a>
-											</td>
-											<td><?php echo ( in_array( $slug, $trustedPlugins ) ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-											<td class="right aligned">
-												<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-													<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-												<?php endif; ?>
-												<?php if ( $user_can_update_plugins ) : ?>
-													<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo esc_attr( $website->id ); ?>, '<?php echo $plugin_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-												<?php endif; ?>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</td>
-					</tr>
-					<?php
-				}
-				?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?></th>
-					<th class="no-sort right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
+	
+	/**
+	 * Method get_continue_update_html_selector()
+	 * 
+	 * @param 
+	 * @return Get continue update html selector
+	 * 
+	 */
+	public static function get_continue_update_html_selector(){
+		return self::$continue_class;
 	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_plugins_updates_per_group( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="no-sort right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php
-						if ( $user_can_update_plugins ) {
-							self::$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-							if ( 0 < $total_plugin_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
-								<?php
-							}
-						}
-						?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="plugins-updates-global" class="ui accordion">
-				<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-					<?php
-					if ( empty( $site_ids ) ) {
-						continue;
-					}
-
-					$total_group_plugin_updates = 0;
-					$group_name                 = $all_groups[ $group_id ];
-					?>
-					<tr class="title" row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>">
-						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
-						<td total-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
-						<td class="right aligned" >
-						<?php if ( $user_can_update_plugins ) { ?>
-							<a href="javascript:void(0)" btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-						<?php } ?>
-						</td>
-					</tr>
-					<tr row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
-						<td colspan="4" class="content">
-							<table id="mainwp-wordpress-updates-sites-inner-table" class="ui stackable single line grey table mainwp-per-group-table">
-								<thead>
-									<tr>
-										<th class="collapsing no-sort"></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</thead>
-								<tbody  id="update_wrapper_plugin_upgrades_group_<?php echo esc_attr( $group_id ); ?>" >
-									<?php	foreach ( $site_ids as $site_id ) : ?>
-										<?php
-										$seek = $site_offset[ $site_id ];
-										MainWP_DB::data_seek( $websites, $seek );
-
-										$website = MainWP_DB::fetch_object( $websites );
-										if ( $website->is_ignorePluginUpdates ) {
-											continue;
-										}
-
-										$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-										$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-										if ( is_array( $decodedPremiumUpgrades ) ) {
-											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-												$premiumUpgrade['premium'] = true;
-
-												if ( 'plugin' === $premiumUpgrade['type'] ) {
-													if ( ! is_array( $plugin_upgrades ) ) {
-														$plugin_upgrades = array();
-													}
-													$premiumUpgrade              = array_filter( $premiumUpgrade );
-													$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
-												}
-											}
-										}
-
-										$ignored_plugins = json_decode( $website->ignored_plugins, true );
-										if ( is_array( $ignored_plugins ) ) {
-											$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-										}
-
-										$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
-										if ( is_array( $ignored_plugins ) ) {
-											$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-										}
-
-										$total_group_plugin_updates += count( $plugin_upgrades );
-
-										if ( ( 0 === count( $plugin_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-											continue;
-										}
-										?>
-										<tr class="ui title">
-											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-											<td>
-												<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-											</td>
-											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
-											<td class="right aligned">
-												<?php if ( $user_can_update_plugins ) : ?>
-													<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
-														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-													<?php endif; ?>
-												<?php endif; ?>
-											</td>
-										</tr>
-										<tr style="display:none">
-											<td colspan="4" class="content">
-												<table id="mainwp-wordpress-updates-plugins-inner-table" class="ui stackable single line table">
-													<thead>
-														<tr>
-															<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-															<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-															<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-															<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-															<th class="no-sort"></th>
-														</tr>
-													</thead>
-													<tbody class="plugins-bulk-updates"  id="wp_plugin_upgrades_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-													<?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
-														<?php $plugin_name = rawurlencode( $slug ); ?>
-														<tr class="mainwp-plugin-update" plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ) ? 1 : 0; ?>" updated="0">
-															<td>
-																<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-																	<?php echo esc_html( $plugin_upgrade['Name'] ); ?>
-																</a>
-																<input type="hidden" id="wp_upgraded_plugin_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
-															</td>
-															<td><?php echo esc_html( $plugin_upgrade['Version'] ); ?></td>
-															<td>
-																<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-																	<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
-																</a>
-															</td>
-															<td><?php echo ( in_array( $slug, $trustedPlugins ) ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-															<td class="right aligned">
-															<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-																<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-															<?php endif; ?>
-															<?php if ( $user_can_update_plugins ) : ?>
-																<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-															<?php endif; ?>
-															</td>
-														</tr>
-													<?php endforeach; ?>
-													</tbody>
-												</table>
-											</td>
-										</tr>
-									<?php	endforeach; ?>
-								</tbody>
-								<tfoot>
-									<tr>
-										<th class="collapsing no-sort"></th>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</tfoot>
-							</table>
-						</td>
-					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_plugin_updates ); ?>" can-update="<?php echo $user_can_update_plugins ? 1 : 0; ?>">
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-					<th><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?></th>
-					<th class="no-sort right aligned"></th>
-				</tr>
-			</tfoot>
-	</table>	
-		<?php
-	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_plugins_updates_per_item( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $continue_update, $allPlugins, $pluginsInfo, $trustedPlugins ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Plugin', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="no-sort right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php
-						if ( $user_can_update_plugins ) {
-							self::$continue_class = ( 'plugins_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-							if ( 0 < $total_plugin_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
-								<?php
-							}
-						}
-						?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="plugins-updates-global" class="ui accordion">
-				<?php foreach ( $allPlugins as $slug => $val ) : ?>
-					<?php
-					$cnt         = intval( $val['cnt'] );
-					$plugin_name = rawurlencode( $slug );
-					$trusted     = in_array( $slug, $trustedPlugins ) ? 1 : 0;
-					?>
-					<tr class="ui title">
-						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td>
-							<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $pluginsInfo[ $slug ]['slug'] ) . '&url=' . ( isset( $pluginsInfo[ $slug ]['PluginURI'] ) ? rawurlencode( $pluginsInfo[ $slug ]['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $pluginsInfo[ $slug ]['name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-								<?php echo esc_html( $pluginsInfo[ $slug ]['name'] ); ?>
-							</a>
-						</td>
-						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
-						<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-						<td class="right aligned">
-							<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-								<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_plugins_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
-							<?php endif; ?>
-							<?php if ( $user_can_update_plugins ) : ?>
-								<?php if ( 0 < $cnt ) : ?>
-									<?php self::$continue_class = ( 'plugins_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
-									<a href="javascript:void(0)" class="ui mini button green <?php echo self::$continue_class; ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-								<?php endif; ?>
-							<?php endif; ?>
-						</td>
-					</tr>
-
-					<tr style="display:none" class="plugins-bulk-updates" plugin_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-						<td colspan="5" class="ui content">
-							<table id="mainwp-plugins-updates-sites-inner-table" class="ui stackable single line table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
-									</tr>
-								</thead>
-								<tbody plugin_slug="<?php echo $plugin_name; ?>">
-									<?php
-									$count_limit_updates = 0;
-									MainWP_DB::data_seek( $websites, 0 );
-									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-										if ( $website->is_ignorePluginUpdates ) {
-											continue;
-										}
-										$plugin_upgrades        = json_decode( $website->plugin_upgrades, true );
-										$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-										if ( is_array( $decodedPremiumUpgrades ) ) {
-											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-												$premiumUpgrade['premium'] = true;
-												if ( 'plugin' === $premiumUpgrade['type'] ) {
-													if ( ! is_array( $plugin_upgrades ) ) {
-														$plugin_upgrades = array();
-													}
-													$premiumUpgrade              = array_filter( $premiumUpgrade );
-													$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
-												}
-											}
-										}
-
-										$ignored_plugins = json_decode( $website->ignored_plugins, true );
-										if ( is_array( $ignored_plugins ) ) {
-											$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
-										}
-
-										if ( ! isset( $plugin_upgrades[ $slug ] ) ) {
-											continue;
-										}
-										$plugin_upgrade = $plugin_upgrades[ $slug ];
-										?>
-										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-											<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-											<td><?php echo esc_html( $plugin_upgrade['Version'] ); ?></td>
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
-												</a>
-											</td>
-											<td><?php echo ( in_array( $slug, $trustedPlugins ) ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-											<td class="right aligned">
-											<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-											<?php endif; ?>
-											<?php if ( $user_can_update_plugins ) : ?>
-												<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-											<?php endif; ?>
-											</td>
-										</tr>
-										<?php
-									}
-									?>
-								</tbody>
-							</table>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-					<th><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-					<th class="no-sort right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_themes_updates_per_site( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $trustedThemes ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-themes-updates-sites-table">
-		<thead>
-			<tr>
-				<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-				<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="indicator-accordion-sorting handle-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="no-sort right aligned">
-					<?php MainWP_UI::render_show_all_updates_button(); ?>
-					<?php
-					if ( $user_can_update_themes ) {
-						self::$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-						if ( 0 < $total_theme_upgrades ) {
-							?>
-						<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all themes.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites' ); ?></a>
-							<?php
-						}
-					}
-					?>
-				</th>
-			</tr>
-		</thead>
-		<tbody id="themes-updates-global" class="ui accordion">
-			<?php
-			MainWP_DB::data_seek( $websites, 0 );
-			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-				if ( $website->is_ignoreThemeUpdates ) {
-					continue;
-				}
-				$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-				$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-				if ( is_array( $decodedPremiumUpgrades ) ) {
-					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-						$premiumUpgrade['premium'] = true;
-
-						if ( 'theme' === $premiumUpgrade['type'] ) {
-							if ( ! is_array( $theme_upgrades ) ) {
-								$theme_upgrades = array();
-							}
-
-							$premiumUpgrade = array_filter( $premiumUpgrade );
-							if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
-								$theme_upgrades[ $crrSlug ] = array();
-							}
-							$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
-						}
-					}
-				}
-				$ignored_themes = json_decode( $website->ignored_themes, true );
-				if ( is_array( $ignored_themes ) ) {
-					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-				}
-
-				$ignored_themes = json_decode( $userExtension->ignored_themes, true );
-				if ( is_array( $ignored_themes ) ) {
-					$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-				}
-
-				if ( ( 0 === count( $theme_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-					continue;
-				}
-				?>
-				<tr class="ui title">
-					<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-					<td>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-					</td>
-					<td sort-value="<?php echo count( $theme_upgrades ); ?>"><?php echo count( $theme_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
-					<td class="right aligned">
-					<?php if ( $user_can_update_themes ) : ?>
-						<?php if ( 0 < count( $theme_upgrades ) ) : ?>
-							<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-						<?php endif; ?>
-					<?php endif; ?>
-					</td>
-				</tr>
-
-				<tr style="display:none">
-					<td colspan="4" class="ui content">
-						<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody class="themes-bulk-updates" id="wp_theme_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-								<?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
-									<?php $theme_name = rawurlencode( $slug ); ?>
-									<tr theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? esc_attr( $theme_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
-										<td>
-											<?php echo esc_html( $theme_upgrade['Name'] ); ?>
-											<input type="hidden" id="wp_upgraded_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0" />
-										</td>
-										<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-										<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-										<td><?php echo ( in_array( $slug, $trustedThemes ) ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-										<td class="right aligned">
-											<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-												<a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-											<?php endif; ?>
-											<?php if ( $user_can_update_themes ) : ?>
-												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo esc_attr( $website->id ); ?>, '<?php echo $theme_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-											<?php endif; ?>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-				<?php
-			}
-			?>
-		</tbody>
-		<tfoot>
-			<tr>
-				<th class="collapsing no-sort"></th>
-				<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-				<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
-				<th class="no-sort right aligned"></th>
-			</tr>
-		</tfoot>
-	</table>
-		<?php
-	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_themes_updates_per_group( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="no-sort right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php
-						if ( $user_can_update_themes ) {
-							self::$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-							if ( 0 < $total_theme_upgrades ) {
-								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
-								<?php
-							}
-						}
-						?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="themes-updates-global" class="ui accordion">
-				<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-					<?php
-					if ( empty( $site_ids ) ) {
-						continue;
-					}
-
-					$total_group_theme_updates = 0;
-					$group_name                = $all_groups[ $group_id ];
-					?>
-					<tr class="title" row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>">
-						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
-						<td total-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
-						<td class="right aligned" >
-						<?php if ( $user_can_update_themes ) { ?>
-						<a href="javascript:void(0)" btn-all-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-						<?php } ?>
-						</td>
-					</tr>
-					<tr row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
-						<td colspan="4" class="content">
-							<table id="mainwp-wordpress-updates-sites-inner-table" class="ui stackable single line grey table mainwp-per-group-table">
-								<thead>
-									<tr>
-										<th class="collapsing no-sort"></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</thead>
-								<tbody class="accordion" id="update_wrapper_theme_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
-									<?php	foreach ( $site_ids as $site_id ) : ?>
-										<?php
-										$seek = $site_offset[ $site_id ];
-										MainWP_DB::data_seek( $websites, $seek );
-
-										$website = MainWP_DB::fetch_object( $websites );
-										if ( $website->is_ignoreThemeUpdates ) {
-											continue;
-										}
-
-										$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-										$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-										if ( is_array( $decodedPremiumUpgrades ) ) {
-											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-												$premiumUpgrade['premium'] = true;
-
-												if ( 'theme' === $premiumUpgrade['type'] ) {
-													if ( ! is_array( $theme_upgrades ) ) {
-														$theme_upgrades = array();
-													}
-													$premiumUpgrade             = array_filter( $premiumUpgrade );
-													$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
-												}
-											}
-										}
-
-										$ignored_themes = json_decode( $website->ignored_themes, true );
-										if ( is_array( $ignored_themes ) ) {
-											$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-										}
-
-										$ignored_themes = json_decode( $userExtension->ignored_themes, true );
-										if ( is_array( $ignored_themes ) ) {
-											$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-										}
-
-										$total_group_theme_updates += count( $theme_upgrades );
-
-										if ( ( 0 === count( $theme_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-											continue;
-										}
-										?>
-										<tr class="ui title">
-											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-											<td>
-												<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-											</td>
-											<td sort-value="<?php echo count( $theme_upgrades ); ?>"><?php echo count( $theme_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
-											<td class="right aligned">
-												<?php if ( $user_can_update_themes ) : ?>
-													<?php if ( 0 < count( $theme_upgrades ) ) : ?>
-														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-													<?php endif; ?>
-												<?php endif; ?>
-											</td>
-										</tr>
-										<tr style="display:none">
-											<td colspan="4" class="content">
-												<table id="mainwp-wordpress-updates-themes-inner-table" class="ui stackable single line table">
-													<thead>
-														<tr>
-															<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-															<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-															<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-															<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-															<th class="no-sort"></th>
-														</tr>
-													</thead>
-													<tbody class="themes-bulk-updates" id="wp_theme_upgrades_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-													<?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
-														<?php $theme_name = rawurlencode( $slug ); ?>
-														<tr class="mainwp-theme-update" theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? $theme_upgrade['premium'] : 0 ) ? 1 : 0; ?>" updated="0">
-															<td>
-																<?php echo esc_html( $theme_upgrade['Name'] ); ?>
-																<input type="hidden" id="wp_upgraded_theme_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>_<?php echo $theme_name; ?>" value="0"/>
-															</td>
-															<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-															<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-															<td><?php echo ( in_array( $slug, $trustedThemes ) ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-															<td class="right aligned">
-															<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-																<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-															<?php endif; ?>
-															<?php if ( $user_can_update_themes ) : ?>
-																<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-															<?php endif; ?>
-															</td>
-														</tr>
-													<?php endforeach; ?>
-													</tbody>
-												</table>
-											</td>
-										</tr>
-									<?php	endforeach; ?>
-								</tbody>
-								<thead>
-									<tr>
-										<th class="collapsing no-sort"></th>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</thead>
-							</table>
-						</td>
-					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_theme_updates ); ?>" can-update="<?php echo $user_can_update_themes ? 1 : 0; ?>">
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-					<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
-					<th class="no-sort right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	// phpcs:ignore -- not quite complex method
-	public static function render_themes_updates_per_item( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $continue_update, $allThemes, $themesInfo, $trustedThemes ) {
-		?>
-	<table class="ui stackable single line table" id="mainwp-themes-updates-table">
-		<thead>
-			<tr>
-				<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Theme', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="no-sort right aligned">
-					<?php MainWP_UI::render_show_all_updates_button(); ?>
-					<?php
-					if ( $user_can_update_themes ) {
-						self::$continue_class = ( 'themes_global_upgrade_all' === $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-						if ( 0 < $total_theme_upgrades ) {
-							?>
-						<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
-							<?php
-						}
-					}
-					?>
-				</th>
-			</tr>
-		</thead>
-		<tbody id="themes-updates-global" class="ui accordion">
-			<?php foreach ( $allThemes as $slug => $val ) : ?>
-				<?php
-				$cnt        = intval( $val['cnt'] );
-				$theme_name = rawurlencode( $slug );
-				$trusted    = in_array( $slug, $trustedThemes ) ? 1 : 0;
-				?>
-				<tr class="ui title">
-					<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-					<td><?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
-					<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? self::$trusted_label : self::$not_trusted_label ); ?></td>
-					<td class="right aligned">
-						<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-							<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
-						<?php endif; ?>
-						<?php if ( $user_can_update_themes ) : ?>
-							<?php if ( 0 < $cnt ) : ?>
-								<?php self::$continue_class = ( 'themes_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
-								<a href="javascript:void(0)" class="ui mini button green <?php echo self::$continue_class; ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</td>
-				</tr>
-
-				<tr style="display:none" class="themes-bulk-updates" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-					<td colspan="5" class="ui content">
-						<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody theme_slug="<?php echo $theme_name; ?>">
-								<?php
-								$count_limit_updates = 0;
-								MainWP_DB::data_seek( $websites, 0 );
-								while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-									if ( $website->is_ignoreThemeUpdates ) {
-										continue;
-									}
-									$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-									$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-									if ( is_array( $decodedPremiumUpgrades ) ) {
-										foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-											$premiumUpgrade['premium'] = true;
-											if ( 'theme' === $premiumUpgrade['type'] ) {
-												if ( ! is_array( $theme_upgrades ) ) {
-													$theme_upgrades = array();
-												}
-												$premiumUpgrade             = array_filter( $premiumUpgrade );
-												$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
-											}
-										}
-									}
-
-									$ignored_themes = json_decode( $website->ignored_themes, true );
-									if ( is_array( $ignored_themes ) ) {
-										$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-									}
-
-									if ( ! isset( $theme_upgrades[ $slug ] ) ) {
-										continue;
-									}
-									$theme_upgrade = $theme_upgrades[ $slug ];
-									?>
-									<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-										<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-										<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-										<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-										<td class="right aligned">
-										<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-											<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-										<?php endif; ?>
-										<?php if ( $user_can_update_themes ) : ?>
-											<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-										<?php endif; ?>
-										</td>
-									</tr>
-									<?php
-								}
-								?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			<?php endforeach; ?>
-		</tbody>
-		<tfoot>
-			<tr>
-				<th class="collapsing no-sort"></th>
-				<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-				<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
-				<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-				<th class="no-sort right aligned"></th>
-			</tr>
-		</tfoot>
-	</table>	
-		<?php
-	}
-
-	public static function render_trans_update_per_site( $user_can_update_translation, $websites, $total_translation_upgrades ) {
-		?>
-		<table class="ui stackable single line table" id="mainwp-translations-sites-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php if ( $user_can_update_translation ) : ?>
-							<?php if ( 0 < $total_translation_upgrades ) : ?>
-								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="translations-updates-global"  class="ui accordion">
-				<?php
-				MainWP_DB::data_seek( $websites, 0 );
-				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$translation_upgrades = json_decode( $website->translation_upgrades, true );
-					if ( ( 0 === count( $translation_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-						continue;
-					}
-					?>
-					<tr class="title">
-						<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-						<td>
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-						</td>
-						<td sort-value="<?php echo count( $translation_upgrades ); ?>">
-							<?php echo count( $translation_upgrades ); ?> <?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
-						</td>
-						<td class="right aligned">
-						<?php if ( $user_can_update_translation ) : ?>
-							<?php if ( 0 < count( $translation_upgrades ) ) : ?>
-									<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-						</td>
-					</tr>
-
-					<tr style="display:none">
-						<td colspan="4" class="content">
-							<table class="ui stackable single line table" id="mainwp-translations-table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</thead>
-								<tbody class="translations-bulk-updates" id="wp_translation_upgrades_<?php echo esc_attr( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-								<?php foreach ( $translation_upgrades as $translation_upgrade ) : ?>
-									<?php
-									$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
-									$translation_slug = $translation_upgrade['slug'];
-									?>
-									<tr translation_slug="<?php echo $translation_slug; ?>" updated="0">
-										<td>
-											<?php echo esc_html( $translation_name ); ?>
-											<input type="hidden" id="wp_upgraded_translation_<?php echo esc_attr( $website->id ); ?>_<?php echo $translation_slug; ?>" value="0"/>
-										</td>
-										<td>
-											<?php echo esc_html( $translation_upgrade['version'] ); ?>
-										</td>
-										<td class="right aligned">
-											<?php if ( $user_can_update_translation ) { ?>
-												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_translations_upgrade( '<?php echo $translation_slug; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-											<?php } ?>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-								</tbody>
-								<tfoot>
-									<tr>
-										<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</tfoot>
-							</table>
-						</td>
-					</tr>
-					<?php
-				}
-				?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-					<th class="right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_trans_update_per_group( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
-
-		?>
-		<table class="ui stackable single line table" id="mainwp-translations-groups-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php if ( $user_can_update_translation ) : ?>
-							<?php if ( 0 < $total_translation_upgrades ) : ?>
-								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="translations-updates-global" class="ui accordion">
-				<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-					<?php
-					$total_group_translation_updates = 0;
-					$group_name                      = $all_groups[ $group_id ];
-					?>
-					<tr row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui title">
-						<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
-						<td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
-						<td class="right aligned">
-						<?php if ( $user_can_update_translation ) { ?>
-							<a href="javascript:void(0)" btn-all-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button"  onClick="return updatesoverview_translations_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-						<?php } ?>
-						</td>
-					</tr>
-					<tr style="display:none">
-						<td colspan="4" class="ui content">
-							<table class="ui stackable single line grey table mainwp-per-group-table" id="mainwp-translations-sites-table">
-								<thead>
-									<tr>
-										<th class="collapsing no-sort"></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-										<th class="right aligned"></th>
-									</tr>
-								</thead>
-								<tbody class="accordion" id="update_wrapper_translation_upgrades_group_<?php echo esc_attr( $group_id ); ?>" row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>">
-								<?php foreach ( $site_ids as $site_id ) : ?>
-									<?php
-									$seek = $site_offset[ $site_id ];
-									MainWP_DB::data_seek( $websites, $seek );
-									$website                          = MainWP_DB::fetch_object( $websites );
-									$translation_upgrades             = json_decode( $website->translation_upgrades, true );
-									$total_group_translation_updates += count( $translation_upgrades );
-
-									if ( ( 0 === count( $translation_upgrades ) ) && ( '' == $website->sync_errors ) ) {
-										continue;
-									}
-									?>
-									<tr class="ui title">
-										<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-										<td>
-											<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-										</td>
-										<td sort-value="<?php echo count( $translation_upgrades ); ?>">
-											<?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
-										</td>
-										<td class="right aligned">
-										<?php if ( $user_can_update_translation ) : ?>
-											<?php if ( 0 < count( $translation_upgrades ) ) : ?>
-												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-											<?php endif; ?>
-										<?php endif; ?>
-										</td>
-									</tr>
-									<tr style="display:none">
-										<td class="content" colspan="4">
-											<table class="ui stackable single line table" id="mainwp-translations-table">
-												<thead>
-													<tr>
-														<th><?php esc_html_e( 'translationName', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-														<th class="right aligned"></th>
-													</tr>
-												</thead>
-												<tbody id="wp_translation_upgrades_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-												<?php foreach ( $translation_upgrades as $translation_upgrade ) : ?>
-													<?php
-													$translation_name = isset( $translation_upgrade['name'] ) ? $translation_upgrade['name'] : $translation_upgrade['slug'];
-													$translation_slug = $translation_upgrade['slug'];
-													?>
-													<tr class="mainwp-translation-update" translation_slug="<?php echo $translation_slug; ?>" updated="0">
-														<td>
-															<?php echo $translation_name; ?>
-															<input type="hidden" id="wp_upgraded_translation_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>_<?php echo $translation_slug; ?>" value="0"/>
-														</td>
-														<td>
-															<?php echo esc_html( $translation_upgrade['version'] ); ?>
-														</td>
-														<td class="right aligned">
-														<?php if ( $user_can_update_translation ) : ?>
-															<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $translation_slug; ?>', <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-														<?php endif; ?>
-														</td>
-													</tr>
-												<?php endforeach; ?>
-												</tbody>
-											</table>
-										</td>
-									</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</td>
-					</tr>
-					<input type="hidden" class="element_ui_view_values" elem-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_translation_updates ); ?>" can-update="<?php echo $user_can_update_translation ? 1 : 0; ?>">
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-					<th class="right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_trans_update_per_item( $user_can_update_translation, $websites, $total_translation_upgrades, $userExtension, $continue_update, $allTranslations, $translationsInfo ) {
-
-		?>
-	<table class="ui stackable single line table" id="mainwp-translations-sites-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Translation', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-						<?php if ( $user_can_update_translation ) : ?>
-							<?php if ( 0 < $total_translation_upgrades ) : ?>
-								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all sites', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Translations', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</th>
-				</tr>
-			</thead>
-			<tbody id="translations-updates-global" class="ui accordion">
-				<?php foreach ( $allTranslations as $slug => $val ) : ?>
-					<?php $cnt = intval( $val['cnt'] ); ?>
-					<tr class="title">
-						<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-						<td><?php echo esc_html( $translationsInfo[ $slug ]['name'] ); ?></td>
-						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
-						<td class="right aligned">
-						<?php if ( $user_can_update_translation ) : ?>
-							<?php if ( 0 < $cnt ) : ?>
-								<?php self::$continue_class = ( 'translations_upgrade_all' === $continue_update && $continue_update_slug == $slug && MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) ? 'updatesoverview_continue_update_me' : ''; ?>
-								<a href="javascript:void(0)" class="ui mini button green <?php echo self::$continue_class; ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-						</td>
-					</tr>
-					<tr style="display:none">
-						<td colspan="4" class="content">
-							<table class="ui stackable single line table" id="mainwp-translations-sites-table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</thead>
-								<tbody class="translations-bulk-updates" translation_slug="<?php echo $slug; ?>" translation_name="<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>">
-									<?php
-									MainWP_DB::data_seek( $websites, 0 );
-									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-										$translation_upgrades = json_decode( $website->translation_upgrades, true );
-										$translation_upgrade  = null;
-										foreach ( $translation_upgrades as $current_translation_upgrade ) {
-											if ( $current_translation_upgrade['slug'] == $slug ) {
-												$translation_upgrade = $current_translation_upgrade;
-												break;
-											}
-										}
-										if ( null === $translation_upgrade ) {
-											continue;
-										}
-										?>
-										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-											<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-											<td><?php echo esc_html( $translation_upgrade['version'] ); ?></td>
-											<td class="right aligned">
-											<?php if ( $user_can_update_translation ) : ?>
-													<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_translation( <?php echo esc_attr( $website->id ); ?>, '<?php echo $slug; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-											<?php endif ?>
-											</td>
-										</tr>
-										<?php
-									}
-									?>
-								</tbody>
-								<tfoot>
-									<tr>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="collapsing no-sort"></th>
-									</tr>
-								</tfoot>
-							</table>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Translation', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
-					<th class="right aligned"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_abandoned_plugins_per_site( $websites, $decodedDismissedPlugins ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-		<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				</tr>
-			</thead>
-			<tbody class="ui accordion">
-				<?php MainWP_DB::data_seek( $websites, 0 ); ?>
-				<?php
-				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-					$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-
-					if ( ! is_array( $plugins_outdate ) ) {
-						$plugins_outdate = array();
-					}
-
-					$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-					if ( is_array( $pluginsOutdateDismissed ) ) {
-						$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
-					}
-
-					if ( is_array( $decodedDismissedPlugins ) ) {
-						$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
-					}
-
-					if ( 0 === count( $plugins_outdate ) ) {
-						continue;
-					}
-
-					?>
-
-					<tr class="title">
-						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td>
-							<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-						</td>
-						<td class="right aligned" sort-value="<?php echo count( $plugins_outdate ); ?>"><?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?></td>
-					</tr>
-					<tr style="display:none">
-						<td colspan="3" class="content">
-							<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
-									</tr>
-								</thead>
-								<tbody id="wp_plugins_outdate_<?php echo esc_attr( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-									<?php foreach ( $plugins_outdate as $slug => $plugin_outdate ) : ?>
-										<?php
-										$plugin_name              = rawurlencode( $slug );
-										$now                      = new \DateTime();
-										$last_updated             = $plugin_outdate['last_updated'];
-										$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
-										$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-										$outdate_notice           = sprintf( $str_format, $diff_in_days );
-										?>
-										<tr dismissed="0">
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
-												<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
-											</td>
-											<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
-											<td><?php echo $outdate_notice; ?></td>
-											<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
-											<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-											<?php } ?>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</td>
-					</tr>
-					<?php
-				}
-				?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-					<th class="right aligned"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_abandoned_plugins_per_group( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-		<table class="ui stackable single line table" id="mainwp-abandoned-plugins-groups-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				</tr>
-			</thead>
-			<tbody class="ui accordion">
-			<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-				<?php
-				$total_group_plugins_outdate = 0;
-				$group_name                  = $all_groups[ $group_id ];
-				?>
-				<tr row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" class="title">
-					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><?php echo stripslashes( $group_name ); ?></td>
-					<td class="right aligned" total-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
-				</tr>
-				<tr style="display:none" row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>">
-					<td colspan="3" class="content">
-						<table class="ui stackable single line grey table mainwp-per-group-table" id="mainwp-abandoned-plugins-sites-table">
-							<thead>
-								<tr>
-								<th class="collapsing no-sort"></th>
-								<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-								<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-								</tr>
-							</thead>
-							<tbody class="accordion">
-							<?php foreach ( $site_ids as $site_id ) : ?>
-								<?php
-								$seek = $site_offset[ $site_id ];
-								MainWP_DB::data_seek( $websites, $seek );
-
-								$website = MainWP_DB::fetch_object( $websites );
-
-								$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-
-								if ( ! is_array( $plugins_outdate ) ) {
-									$plugins_outdate = array();
-								}
-
-								if ( 0 < count( $plugins_outdate ) ) {
-									$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-									if ( is_array( $pluginsOutdateDismissed ) ) {
-										$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
-									}
-
-									if ( is_array( $decodedDismissedPlugins ) ) {
-										$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
-									}
-								}
-
-								$total_group_plugins_outdate += count( $plugins_outdate );
-								?>
-								<?php if ( 0 < count( $plugins_outdate ) ) : ?>
-								<tr class="ui title">
-									<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-									<td>
-										<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									</td>
-									<td class="right aligned" sort-value="<?php echo count( $plugins_outdate ); ?>">
-										<?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?>
-									</td>
-								</tr>
-								<tr style="display:none">
-									<td colspan="3" class="ui content">
-										<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
-											<thead>
-												<tr>
-													<tr>
-														<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-														<th class="no-sort"></th>
-													</tr>
-												</tr>
-											</thead>
-											<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-												<?php foreach ( $plugins_outdate as $slug => $plugin_outdate ) : ?>
-													<?php
-													$plugin_name              = rawurlencode( $slug );
-													$now                      = new \DateTime();
-													$last_updated             = $plugin_outdate['last_updated'];
-													$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
-													$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-													$outdate_notice           = sprintf( $str_format, $diff_in_days );
-													?>
-													<tr dismissed="0">
-														<td>
-															<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
-															<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
-														</td>
-														<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
-														<td><?php echo $outdate_notice; ?></td>
-														<td class="right aligned" id="wp_dismissbuttons_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>">
-														<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-															<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-														<?php } ?>
-														</td>
-													</tr>
-												<?php endforeach; ?>
-											</tbody>
-										</table>
-									</td>
-								</tr>
-								<?php endif; ?>
-							<?php endforeach; ?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-				<input type="hidden" class="element_ui_view_values" elem-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_plugins_outdate ); ?>" can-update="0">
-			<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-					<th class="right aligned"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_abandoned_plugins_per_item( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-		<table class="ui stackable single line table" id="mainwp-abandoned-plugins-items-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Plugin', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="collapsing no-sort">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-					</th>
-				</tr>
-			</thead>
-			<tbody class="ui accordion">
-			<?php foreach ( $allPluginsOutdate as $slug => $val ) : ?>
-				<?php
-				$cnt         = intval( $val['cnt'] );
-				$plugin_name = rawurlencode( $slug );
-				?>
-				<tr class="title">
-					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $pluginsOutdateInfo[ $slug ]['Name'] ); ?></a></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
-					<td class="right aligned">
-						<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-							<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
-						<?php } ?>
-					</td>
-				</tr>
-				<tr style="display:none">
-					<td colspan="4" class="content">
-						<table class="ui stackable single line table" id="mainwp-abandoned-plugins-sites-table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>" dismissed="0">
-							<?php
-							MainWP_DB::data_seek( $websites, 0 );
-							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-								$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-								if ( ! is_array( $plugins_outdate ) ) {
-									$plugins_outdate = array();
-								}
-
-								if ( 0 < count( $plugins_outdate ) ) {
-									$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-									if ( is_array( $pluginsOutdateDismissed ) ) {
-										$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
-									}
-
-									if ( is_array( $decodedDismissedPlugins ) ) {
-										$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
-									}
-								}
-
-								if ( ! isset( $plugins_outdate[ $slug ] ) ) {
-									continue;
-								}
-
-								$plugin_outdate           = $plugins_outdate[ $slug ];
-								$now                      = new \DateTime();
-								$last_updated             = $plugin_outdate['last_updated'];
-								$plugin_last_updated_date = new \DateTime( '@' . $last_updated );
-								$diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-								$outdate_notice           = sprintf( $str_format, $diff_in_days );
-								?>
-								<tr site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" dismissed="0">
-									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-									<td><?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
-									<td><?php echo $outdate_notice; ?></td>
-									<td class="right aligned">
-									<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-										<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-									<?php endif; ?>
-									</td>
-								</tr>
-								<?php
-							}
-							?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-					<th class="collapsing no-sort"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_abandoned_themes_per_site( $websites, $decodedDismissedThemes ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-	<table class="ui stackable single line table" id="mainwp-abandoned-themes-sites-table">
-		<thead>
-			<tr>
-				<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-				<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-			</tr>
-		</thead>
-		<tbody class="ui accordion">
-			<?php MainWP_DB::data_seek( $websites, 0 ); ?>
-			<?php
-			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-				$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
-
-				if ( is_array( $themes_outdate ) ) {
-					$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
-					if ( is_array( $themesOutdateDismissed ) ) {
-						$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
-					}
-					if ( is_array( $decodedDismissedThemes ) ) {
-						$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
-					}
-				} else {
-					$themes_outdate = array();
-				}
-
-				if ( 0 === count( $themes_outdate ) ) {
-					continue;
-				}
-
-				?>
-				<tr class="title">
-					<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-					<td>
-						<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-					</td>
-					<td class="right aligned" sort-value="<?php echo count( $themes_outdate ); ?>"> <?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?></td>
-				</tr>
-				<tr style="display:none">
-					<td colspan="3" class="content">
-						<table class="ui stackable single line table" id="mainwp-abandoned-themes-table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody id="wp_themes_outdate_<?php echo esc_attr( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-								<?php foreach ( $themes_outdate as $slug => $theme_outdate ) : ?>
-									<?php
-									$theme_name              = rawurlencode( $slug );
-									$now                     = new \DateTime();
-									$last_updated            = $theme_outdate['last_updated'];
-									$theme_last_updated_date = new \DateTime( '@' . $last_updated );
-									$diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-									$outdate_notice          = sprintf( $str_format, $diff_in_days );
-									?>
-									<tr dismissed="0">
-										<td>
-											<?php echo esc_html( $theme_outdate['Name'] ); ?>
-											<input type="hidden" id="wp_dismissed_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0"/>
-										</td>
-										<td><?php echo esc_html( $theme_outdate['Version'] ); ?></td>
-										<td><?php echo $outdate_notice; ?></td>
-										<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
-											<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-											<?php } ?>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-				<?php
-			}
-			?>
-		</tbody>
-		<tfoot>
-			<tr>
-				<th class="collapsing no-sort"></th>
-				<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-				<th class="right aligned"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-			</tr>
-		</tfoot>
-	</table>	
-		<?php
-	}
-
-	public static function render_abandoned_themes_per_group( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-		<table class="ui stackable single line table" id="mainwp-abandoned-themes-groups-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				</tr>
-			</thead>
-			<tbody class="ui accordion">
-			<?php foreach ( $all_groups_sites as $group_id => $site_ids ) : ?>
-				<?php
-				$total_group_themes_outdate = 0;
-				$group_name                 = $all_groups[ $group_id ];
-				?>
-				<tr row-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>" class="title">
-					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><?php echo stripslashes( $group_name ); ?></td>
-					<td class="right aligned" total-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
-				</tr>
-				<tr style="display:none" row-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>">
-					<td colspan="3" class="content">
-						<table class="ui stackable single line grey table mainwp-per-group-table" id="mainwp-abandoned-themes-sites-table">
-							<thead>
-								<tr>
-									<th class="collapsing no-sort"></th>
-									<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Website', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-									<th class="right aligned indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-								</tr>
-							</thead>
-							<tbody class="accordion">
-							<?php foreach ( $site_ids as $site_id ) : ?>
-								<?php
-								$seek = $site_offset[ $site_id ];
-								MainWP_DB::data_seek( $websites, $seek );
-
-								$website = MainWP_DB::fetch_object( $websites );
-
-								$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
-
-								if ( ! is_array( $themes_outdate ) ) {
-									$themes_outdate = array();
-								}
-
-								if ( 0 < count( $themes_outdate ) ) {
-									$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
-									if ( is_array( $themesOutdateDismissed ) ) {
-										$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
-									}
-
-									if ( is_array( $decodedDismissedThemes ) ) {
-										$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
-									}
-								}
-
-								$total_group_themes_outdate += count( $themes_outdate );
-								?>
-								<?php if ( 0 < count( $themes_outdate ) ) : ?>
-								<tr class="ui title">
-									<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-									<td>
-										<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									</td>
-									<td class="right aligned" sort-value="<?php echo count( $themes_outdate ); ?>">
-										<?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?>
-									</td>
-								</tr>
-								<tr style="display:none">
-									<td colspan="3" class="ui content">
-										<table class="ui stackable single line table" id="mainwp-abandoned-themes-table">
-											<thead>
-												<tr>
-													<tr>
-														<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-														<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-														<th class="no-sort"></th>
-													</tr>
-												</tr>
-											</thead>
-											<tbody site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
-												<?php foreach ( $themes_outdate as $slug => $theme_outdate ) : ?>
-													<?php
-													$theme_name              = rawurlencode( $slug );
-													$now                     = new \DateTime();
-													$last_updated            = $theme_outdate['last_updated'];
-													$theme_last_updated_date = new \DateTime( '@' . $last_updated );
-													$diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-													$outdate_notice          = sprintf( $str_format, $diff_in_days );
-													?>
-													<tr dismissed="0">
-														<td>
-															<?php echo esc_html( $theme_outdate['Name'] ); ?>
-															<input type="hidden" id="wp_dismissed_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0"/>
-														</td>
-														<td><?php echo esc_html( $theme_outdate['Version'] ); ?></td>
-														<td><?php echo $outdate_notice; ?></td>
-														<td class="right aligned" id="wp_dismissbuttons_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>">
-															<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-															<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-															<?php } ?>
-														</td>
-													</tr>
-												<?php endforeach; ?>
-											</tbody>
-										</table>
-									</td>
-								</tr>
-								<?php endif; ?>
-							<?php endforeach; ?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-				<input type="hidden" class="element_ui_view_values" elem-uid="uid_themes_outdate_<?php echo esc_attr( $group_id ); ?>" total="<?php echo intval( $total_group_themes_outdate ); ?>" can-update="0">
-			<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
-					<th class="right aligned"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
-	public static function render_abandoned_themes_per_item( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
-		$str_format = __( 'Updated %s days ago', 'mainwp' );
-		?>
-		<table class="ui stackable single line table" id="mainwp-themes-updates-table">
-			<thead>
-				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Theme', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-					<th class="collapsing no-sort">
-						<?php MainWP_UI::render_show_all_updates_button(); ?>
-					</th>
-				</tr>
-			</thead>
-			<tbody class="ui accordion">
-			<?php foreach ( $allThemesOutdate as $slug => $val ) : ?>
-				<?php
-				$cnt        = intval( $val['cnt'] );
-				$theme_name = rawurlencode( $slug );
-				?>
-				<tr class="title">
-					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><?php echo esc_html( $val['name'] ); ?></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
-					<td class="right aligned">
-						<?php if ( self::$user_can_ignore_unignore_updates ) { ?>
-							<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_abandoned_ignore_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $val['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
-						<?php } ?>
-					</td>
-				</tr>
-				<tr style="display:none">
-					<td colspan="4" class="content">
-						<table class="ui stackable single line table" id="mainwp-abandoned-themes-sites-table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Last Update', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody class="abandoned-themes-ignore-global" theme_slug="<?php echo $slug; ?>" theme_name="<?php echo rawurlencode( $val['name'] ); ?>">
-							<?php
-							MainWP_DB::data_seek( $websites, 0 );
-							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-								$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
-								if ( ! is_array( $themes_outdate ) ) {
-									$themes_outdate = array();
-								}
-
-								if ( 0 < count( $themes_outdate ) ) {
-									$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
-									if ( is_array( $themesOutdateDismissed ) ) {
-										$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
-									}
-
-									if ( is_array( $decodedDismissedThemes ) ) {
-										$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
-									}
-								}
-
-								if ( ! isset( $themes_outdate[ $slug ] ) ) {
-									continue;
-								}
-
-								$theme_outdate           = $themes_outdate[ $slug ];
-								$now                     = new \DateTime();
-								$last_updated            = $theme_outdate['last_updated'];
-								$theme_last_updated_date = new \DateTime( '@' . $last_updated );
-								$diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-								$outdate_notice          = sprintf( $str_format, $diff_in_days );
-								?>
-								<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" outdate="1" dismissed="0">
-									<td><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_attr( self::$visit_dashboard_title ); ?>"><?php echo stripslashes( $website->name ); ?></a></td>
-									<td><?php echo esc_html( $theme_outdate['Version'] ); ?></td>
-									<td><?php echo $outdate_notice; ?></td>
-									<td class="right aligned">
-									<?php if ( self::$user_can_ignore_unignore_updates ) : ?>
-										<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_outdate['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
-									<?php endif; ?>
-									</td>
-								</tr>
-								<?php
-							}
-							?>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-			<tfoot>
-				<tr>
-					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-					<th><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
-					<th class="collapsing no-sort"></th>
-				</tr>
-			</tfoot>
-		</table>
-		<?php
-	}
-
+	
 	public static function render_updates_modal() {
 		?>
 		<div class="ui modal" id="updatesoverview-backup-box">

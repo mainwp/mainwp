@@ -7,12 +7,12 @@ namespace MainWP\Dashboard;
 class MainWP_Updates {
 
 	public static $user_can_ignore_updates = null;
-	public static $trusted_label                    = '';
-	public static $not_trusted_label                = '';
-	public static $visit_dashboard_title            = '';
-	public static $continue_class                   = '';
-	public static $continue_update      = '';
-	public static $continue_update_slug = '';
+	public static $trusted_label           = '';
+	public static $not_trusted_label       = '';
+	public static $visit_dashboard_title   = '';
+	public static $continue_class          = '';
+	public static $continue_update         = '';
+	public static $continue_update_slug    = '';
 
 	/**
 	 * Method get_class_name()
@@ -46,15 +46,14 @@ class MainWP_Updates {
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
-	
+
 	/**
 	 * Method init_menu()
-	 * 
+	 *
 	 * Render init updates menu
-	 * 	 
+	 *
 	 * @return
-	 * 
-	 */	
+	 */
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -98,41 +97,38 @@ class MainWP_Updates {
 	public static function render_footer() {
 		echo '</div>';
 	}
-	
+
 	/**
 	 * Method render_site_link_dashboard()
-	 * 
+	 *
 	 * @param object $website the site
 	 * @return html link to dashboard
-	 * 
 	 */
 	public static function render_site_link_dashboard( $website ) {
 		?>
 		<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_html__( 'Visit this dashboard', 'mainwp' ); ?>"><?php echo stripslashes( $website->name ); ?></a>
 		<?php
 	}
-	
+
 	/**
 	 * Method user_can_ignore_updates()
-	 * 
+	 *
 	 * @param empty
 	 * @return true|false user can ignore updates or not.
-	 * 
 	 */
 	public static function user_can_ignore_updates() {
 		if ( null === self::$user_can_ignore_updates ) {
 			self::$user_can_ignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
 		}
-		return self::$user_can_ignore_updates;		
+		return self::$user_can_ignore_updates;
 	}
 
 	/**
 	 * Method render()
-	 * 
+	 *
 	 * Render updates page
-	 * 	 
+	 *
 	 * @return
-	 * 
 	 */
 	public static function render() {
 
@@ -478,16 +474,15 @@ class MainWP_Updates {
 			if ( - 1 === $website->offline_check_result ) {
 				$total_offline ++;
 			}
-
 		}
 
 		$total_upgrades = $total_wp_upgrades + $total_plugin_upgrades + $total_theme_upgrades;
 
-		$mainwp_show_language_updates           = get_option( 'mainwp_show_language_updates', 1 );
-		$user_can_update_translation            = mainwp_current_user_can( 'dashboard', 'update_translations' );		
-		$user_can_update_wordpress              = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-		$user_can_update_themes                 = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_update_plugins                = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+		$user_can_update_translation  = mainwp_current_user_can( 'dashboard', 'update_translations' );
+		$user_can_update_wordpress    = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+		$user_can_update_themes       = mainwp_current_user_can( 'dashboard', 'update_themes' );
+		$user_can_update_plugins      = mainwp_current_user_can( 'dashboard', 'update_plugins' );
 
 		if ( $mainwp_show_language_updates ) {
 			$total_upgrades += $total_translation_upgrades;
@@ -508,8 +503,8 @@ class MainWP_Updates {
 		self::$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
 		self::$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
 
-		$limit_updates_all    = apply_filters( 'mainwp_limit_updates_all', 0 );
-		
+		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
+
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
 				self::$continue_update = $_GET['continue_update'];
@@ -867,7 +862,7 @@ class MainWP_Updates {
 					?>
 					<tr>
 						<td>
-							<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>
 						<td id="wp_http_response_code_<?php echo esc_attr( $website->id ); ?>">
 							<label class="ui red label http-code"><?php echo 'HTTP ' . $website->http_response_code; ?></label>
@@ -910,35 +905,34 @@ class MainWP_Updates {
 
 	/**
 	 * Method set_continue_update_html_selector()
-	 * 
+	 *
 	 * @param string $current_update current update string
-	 * @return 
-	 * 
+	 * @return
 	 */
-	public static function set_continue_update_html_selector( $current_update, $slug = false ){
-		
+	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
+
 		$check_slug = true;
-		if ( !empty( $slug ) ) {
+		if ( ! empty( $slug ) ) {
 			$check_slug = ( $slug == self::$continue_update_slug ) ? true : false;
 		}
-		
-		if ( $check_slug && $current_update === self::$continue_update )
+
+		if ( $check_slug && $current_update === self::$continue_update ) {
 			self::$continue_class = 'updatesoverview_continue_update_me';
-		else
+		} else {
 			self::$continue_class = '';
+		}
 	}
-	
+
 	/**
 	 * Method get_continue_update_html_selector()
-	 * 
-	 * @param 
+	 *
+	 * @param
 	 * @return Get continue update html selector
-	 * 
 	 */
-	public static function get_continue_update_html_selector(){
+	public static function get_continue_update_html_selector() {
 		return self::$continue_class;
 	}
-	
+
 	public static function render_updates_modal() {
 		?>
 		<div class="ui modal" id="updatesoverview-backup-box">

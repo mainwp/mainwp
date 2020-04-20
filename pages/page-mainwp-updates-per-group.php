@@ -5,7 +5,7 @@ namespace MainWP\Dashboard;
  * MainWP Updates Page
  */
 class MainWP_Updates_Per_Group {
-	
+
 	/**
 	 * Method get_class_name()
 	 *
@@ -19,17 +19,16 @@ class MainWP_Updates_Per_Group {
 
 	/**
 	 * Method render_wpcore_updates()
-	 * 
+	 *
 	 * Render WP core updates
-	 * 
-	 * @param mixed $user_can_update_wordpress 
-	 * @param mixed $websites 
+	 *
+	 * @param mixed $user_can_update_wordpress
+	 * @param mixed $websites
 	 * @param mixed $total_wp_upgrades
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
 	 * @param mixed $site_offset
 	 * @return html
-	 * 
 	 */
 	public static function render_wpcore_updates( $user_can_update_wordpress, $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
 		?>
@@ -42,7 +41,7 @@ class MainWP_Updates_Per_Group {
 						<th class="no-sort right aligned">
 							<?php
 							if ( $user_can_update_wordpress ) {
-								if ( 0 < $total_wp_upgrades ) {									
+								if ( 0 < $total_wp_upgrades ) {
 									MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
 									?>
 									<a class="ui green mini basic button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Groups', 'mainwp' ); ?></a>
@@ -100,7 +99,7 @@ class MainWP_Updates_Per_Group {
 											?>
 											<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
 												<td>
-													<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+													<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 													<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
 												</td>
 												<td>
@@ -144,20 +143,19 @@ class MainWP_Updates_Per_Group {
 
 	/**
 	 * Method render_plugins_updates()
-	 * 
+	 *
 	 * Render Plugins updates
-	 * 
-	 * @param mixed $user_can_update_plugins 
-	 * @param mixed $websites 
+	 *
+	 * @param mixed $user_can_update_plugins
+	 * @param mixed $websites
 	 * @param mixed $total_plugin_upgrades
 	 * @param mixed $userExtension
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
 	 * @param mixed $site_offset
-	 * @param mixed $trustedPlugins 
+	 * @param mixed $trustedPlugins
 	 * @return html
-	 * 
-	 */	
+	 */
 	public static function render_plugins_updates( $user_can_update_plugins, $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
@@ -169,8 +167,8 @@ class MainWP_Updates_Per_Group {
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php
-						if ( $user_can_update_plugins ) {							
-							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );							
+						if ( $user_can_update_plugins ) {
+							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
 								?>
 							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
@@ -258,7 +256,7 @@ class MainWP_Updates_Per_Group {
 										<tr class="ui title">
 											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 											<td>
-												<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+												<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 											</td>
 											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
@@ -343,22 +341,21 @@ class MainWP_Updates_Per_Group {
 
 	/**
 	 * Method render_themes_updates()
-	 * 
+	 *
 	 * Render themes updates
-	 * 
-	 * @param mixed $user_can_update_themes 
-	 * @param mixed $websites 
+	 *
+	 * @param mixed $user_can_update_themes
+	 * @param mixed $websites
 	 * @param mixed $total_theme_upgrades
 	 * @param mixed $userExtension
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
 	 * @param mixed $site_offset
-	 * @param mixed $trustedThemes 
+	 * @param mixed $trustedThemes
 	 * @return html
-	 * 
-	 */		
+	 */
 	public static function render_themes_updates( $user_can_update_themes, $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method
-		
+
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
 			<thead>
@@ -369,7 +366,7 @@ class MainWP_Updates_Per_Group {
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php
-						if ( $user_can_update_themes ) {							
+						if ( $user_can_update_themes ) {
 							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 							if ( 0 < $total_theme_upgrades ) {
 								?>
@@ -458,7 +455,7 @@ class MainWP_Updates_Per_Group {
 										<tr class="ui title">
 											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 											<td>
-												<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+												<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 											</td>
 											<td sort-value="<?php echo count( $theme_upgrades ); ?>"><?php echo count( $theme_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
@@ -536,18 +533,17 @@ class MainWP_Updates_Per_Group {
 
 	/**
 	 * Method render_trans_update()
-	 * 
+	 *
 	 * Render translations updates
-	 * 
-	 * @param mixed $user_can_update_translation 
-	 * @param mixed $websites 
-	 * @param mixed $total_translation_upgrades	 
+	 *
+	 * @param mixed $user_can_update_translation
+	 * @param mixed $websites
+	 * @param mixed $total_translation_upgrades
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset	
+	 * @param mixed $site_offset
 	 * @return html
-	 * 
-	 */		
+	 */
 	public static function render_trans_update( $user_can_update_translation, $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
 
 		?>
@@ -610,7 +606,7 @@ class MainWP_Updates_Per_Group {
 									<tr class="ui title">
 										<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 										<td>
-											<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 										</td>
 										<td sort-value="<?php echo count( $translation_upgrades ); ?>">
 											<?php echo _n( 'Update', 'Updates', count( $translation_upgrades ), 'mainwp' ); ?>
@@ -680,18 +676,17 @@ class MainWP_Updates_Per_Group {
 
 	/**
 	 * Method render_abandoned_plugins()
-	 * 
+	 *
 	 * Render abandoned plugins
-	 * 	 
-	 * @param mixed $websites 	 
+	 *
+	 * @param mixed $websites
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset	
-	 * @param mixed $decodedDismissedPlugins	
-	 * 
+	 * @param mixed $site_offset
+	 * @param mixed $decodedDismissedPlugins
+	 *
 	 * @return html
-	 * 
-	 */	
+	 */
 	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>
@@ -755,7 +750,7 @@ class MainWP_Updates_Per_Group {
 								<tr class="ui title">
 									<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 									<td>
-										<?php MainWP_Updates::render_site_link_dashboard( $website ) ?>
+										<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td class="right aligned" sort-value="<?php echo count( $plugins_outdate ); ?>">
 										<?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?>
@@ -822,21 +817,20 @@ class MainWP_Updates_Per_Group {
 		<?php
 	}
 
-	
+
 	/**
 	 * Method render_abandoned_themes()
-	 * 
+	 *
 	 * Render abandoned themes
-	 * 	 
-	 * @param mixed $websites 	 
+	 *
+	 * @param mixed $websites
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset	
-	 * @param mixed $decodedDismissedThemes	
-	 * 
+	 * @param mixed $site_offset
+	 * @param mixed $decodedDismissedThemes
+	 *
 	 * @return html
-	 * 
-	 */	
+	 */
 	public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>

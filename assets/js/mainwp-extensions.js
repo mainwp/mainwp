@@ -186,7 +186,7 @@ function mainwp_extensions_savelogin( pObj, retring ) {
         action: 'mainwp_extension_saveextensionapilogin',
         username: username,
         password: pwd,
-        saveLogin: jQuery( '#extensions_api_savemylogin_chk' ).is( ':checked' ) ? '1' : '0'
+        saveLogin: jQuery( '#extensions_api_savemylogin_chk' ).is( ':checked' ) ? 1 : 0
     } );
 
     if ( retring == true ) {

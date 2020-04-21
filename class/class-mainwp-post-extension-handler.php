@@ -128,7 +128,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 		}
 
 		$result     = json_decode( $test, true );
-		$save_login = ( isset( $_POST['saveLogin'] ) && ( '1' === $_POST['saveLogin'] ) ) ? true : false;
+		$save_login = ( isset( $_POST['saveLogin'] ) && ( 1 == $_POST['saveLogin'] ) ) ? true : false;
 		$return     = array();
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {

@@ -679,7 +679,7 @@ class MainWP_Manage_Sites {
 	public static function render_backup_site( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesBackups' );
-		MainWP_Manage_Sites_View::render_backup_site( $website );
+		MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
 		self::render_footer( 'ManageSitesBackups' );
 	}
 
@@ -717,7 +717,7 @@ class MainWP_Manage_Sites {
 		krsort( $dbBackups );
 		krsort( $fullBackups );
 
-		MainWP_Manage_Sites_View::show_backups( $website, $fullBackups, $dbBackups );
+		MainWP_Manage_Sites_Backup_View::show_backups( $website, $fullBackups, $dbBackups );
 	}
 
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {

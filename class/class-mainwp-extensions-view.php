@@ -100,7 +100,7 @@ class MainWP_Extensions_View {
 
 		$username = '';
 		$password = '';
-		if ( true === get_option( 'mainwp_extensions_api_save_login' ) ) {
+		if ( true == get_option( 'mainwp_extensions_api_save_login' ) ) {
 			$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 			$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
 			$username   = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';

@@ -198,7 +198,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 			}
 			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
-				if ( MainWP_Manage_Sites_Handler::m_reconnect_site( $website ) ) {
+				if ( MainWP_Manage_Sites_View::m_reconnect_site( $website ) ) {
 					WP_CLI::success( '  Reconnected successfully' );
 				} else {
 					WP_CLI::warning( '  Reconnect failed' );

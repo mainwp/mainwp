@@ -3,7 +3,6 @@
  * MainWP Premium Update
  *
  * MainWP Premium Update functions.
- * 
  */
 
 namespace MainWP\Dashboard;

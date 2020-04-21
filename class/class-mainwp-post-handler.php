@@ -16,7 +16,7 @@ class MainWP_Post_Handler extends MainWP_Handler {
 	}
 
 	public function init() {
-		// Page: ManageSites.	
+		// Page: ManageSites.
 		$this->add_action( 'mainwp_notes_save', array( &$this, 'mainwp_notes_save' ) );
 
 		// Page: BulkAddUser.
@@ -533,7 +533,7 @@ class MainWP_Post_Handler extends MainWP_Handler {
 		MainWP_User::do_import();
 	}
 
-	
+
 	// Save note.
 	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );

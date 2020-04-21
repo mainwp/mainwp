@@ -22,7 +22,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	}
 
 	/**
-	 * Init site actions	 
+	 * Init site actions
 	 */
 	public function init() {
 		// Page: ManageSites.
@@ -47,38 +47,37 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 
 		// Widget: RightNow.
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
-
 	}
 
 	/*
 	 * Page: ManageGroups
 	 */
 
-	public function mainwp_group_rename() { 
+	public function mainwp_group_rename() {
 		$this->secure_request( 'mainwp_group_rename' );
 
 		MainWP_Manage_Groups::rename_group();
 	}
 
-	public function mainwp_group_delete() { 
+	public function mainwp_group_delete() {
 		$this->secure_request( 'mainwp_group_delete' );
 
 		MainWP_Manage_Groups::delete_group();
 	}
 
-	public function mainwp_group_add() { 
+	public function mainwp_group_add() {
 		$this->secure_request( 'mainwp_group_add' );
 
 		MainWP_Manage_Groups::add_group();
 	}
 
-	public function mainwp_group_getsites() { 
+	public function mainwp_group_getsites() {
 		$this->secure_request( 'mainwp_group_getsites' );
 
 		die( MainWP_Manage_Groups::get_sites() );
 	}
 
-	public function mainwp_group_updategroup() { 
+	public function mainwp_group_updategroup() {
 		$this->secure_request( 'mainwp_group_updategroup' );
 
 		MainWP_Manage_Groups::update_group();
@@ -89,7 +88,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	 */
 
 	// Check if WP can be added.
-	public function mainwp_checkwp() { 
+	public function mainwp_checkwp() {
 		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
 			MainWP_Manage_Sites_Handler::check_site();
 		} else {
@@ -98,7 +97,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	}
 
 	// Add WP to the database.
-	public function mainwp_addwp() { 
+	public function mainwp_addwp() {
 		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
 			MainWP_Manage_Sites_Handler::add_site();
 		} else {
@@ -106,7 +105,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 		}
 	}
 
-	public function get_site_icon() { 
+	public function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
 			$siteId = null;
 			if ( isset( $_POST['siteId'] ) ) {
@@ -119,7 +118,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 		}
 	}
 
-	public function mainwp_testwp() { 
+	public function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );
 
 		$url               = null;
@@ -178,7 +177,7 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	}
 
 	// Remove a website from MainWP.
-	public function mainwp_removesite() { 
+	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'delete_sites' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
 		}
@@ -189,13 +188,13 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	}
 
 
-	public function mainwp_reconnectwp() { 
+	public function mainwp_reconnectwp() {
 		$this->secure_request( 'mainwp_reconnectwp' );
 
 		MainWP_Manage_Sites_Handler::reconnect_site();
 	}
 
-	public function mainwp_updatechildsite_value() { 
+	public function mainwp_updatechildsite_value() {
 		$this->secure_request( 'mainwp_updatechildsite_value' );
 
 		MainWP_Manage_Sites_Handler::update_child_site_value();
@@ -205,10 +204,10 @@ class MainWP_Post_Site_Handler extends MainWP_Handler {
 	 * Widget: RightNow
 	 */
 
-	public function mainwp_syncsites() { 
+	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismiss_sync_errors( false );
 		MainWP_Updates_Overview::sync_site();
 	}
-	
+
 }

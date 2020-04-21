@@ -713,7 +713,7 @@ class MainWP_System {
 		MainWP_Post_Handler::instance()->init();
 		MainWP_Post_Site_Handler::instance()->init();
 		MainWP_Post_Plugin_Theme_Handler::instance()->init();
-		MainWP_Post_Extension_Handler::instance()->init();		
+		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
 
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );

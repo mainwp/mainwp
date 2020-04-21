@@ -22,7 +22,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	}
 
 	/**
-	 * Init plugins/themes actions	 
+	 * Init plugins/themes actions
 	 */
 	public function init() {
 		// Page: ManageSites.
@@ -63,7 +63,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
 			$this->add_action( 'mainwp_theme_ignore_updates', array( &$this, 'mainwp_theme_ignore_updates' ) );
 		}
-		
+
 		// Page: Plugins.
 		$this->add_action( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
 		$this->add_action( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
@@ -80,7 +80,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 			$this->add_action( 'mainwp_plugin_ignore_updates', array( &$this, 'mainwp_plugin_ignore_updates' ) );
 		}
 		$this->add_action( 'mainwp_trusted_plugin_notes_save', array( &$this, 'mainwp_trusted_plugin_notes_save' ) );
-		
+
 		// Widget: Plugins.
 		$this->add_action( 'mainwp_widget_plugin_activate', array( &$this, 'mainwp_widget_plugin_activate' ) );
 		$this->add_action( 'mainwp_widget_plugin_deactivate', array( &$this, 'mainwp_widget_plugin_deactivate' ) );
@@ -94,42 +94,42 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	/**
 	 * Page: Themes
 	 */
-	public function mainwp_themes_search() { 
+	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
 		MainWP_Cache::init_session();
 		$result = MainWP_Themes::render_table( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
 
-	public function mainwp_theme_activate() { 
+	public function mainwp_theme_activate() {
 		$this->secure_request( 'mainwp_theme_activate' );
 
 		MainWP_Themes_Handler::activate_theme();
 		die();
 	}
 
-	public function mainwp_theme_delete() { 
+	public function mainwp_theme_delete() {
 		$this->secure_request( 'mainwp_theme_delete' );
 
 		MainWP_Themes_Handler::delete_themes();
 		die();
 	}
 
-	public function mainwp_theme_ignore_updates() { 
+	public function mainwp_theme_ignore_updates() {
 		$this->secure_request( 'mainwp_theme_ignore_updates' );
 
 		MainWP_Themes_Handler::ignore_updates();
 		die();
 	}
 
-	public function mainwp_themes_search_all() { 
+	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
 		MainWP_Cache::init_session();
 		MainWP_Themes::render_all_themes_table();
 		die();
 	}
 
-	public function mainwp_trusted_theme_notes_save() { 
+	public function mainwp_trusted_theme_notes_save() {
 		$this->secure_request( 'mainwp_trusted_theme_notes_save' );
 
 		MainWP_Themes_Handler::save_trusted_theme_note();
@@ -139,28 +139,28 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	/**
 	 * Page: Plugins
 	 */
-	public function mainwp_plugins_search() { 
+	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
 		MainWP_Cache::init_session();
 		$result = MainWP_Plugins::render_table( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
 		wp_send_json( $result );
 	}
 
-	public function mainwp_plugins_search_all_active() { 
+	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
 		MainWP_Cache::init_session();
 		MainWP_Plugins::render_all_active_table();
 		die();
 	}
 
-	public function mainwp_plugin_activate() { 
+	public function mainwp_plugin_activate() {
 		$this->secure_request( 'mainwp_plugin_activate' );
 
 		MainWP_Plugins_Handler::activate_plugins();
 		die();
 	}
 
-	public function mainwp_plugin_deactivate() { 
+	public function mainwp_plugin_deactivate() {
 		$this->secure_request( 'mainwp_plugin_deactivate' );
 
 		MainWP_Plugins_Handler::deactivate_plugins();
@@ -174,14 +174,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die();
 	}
 
-	public function mainwp_plugin_ignore_updates() { 
+	public function mainwp_plugin_ignore_updates() {
 		$this->secure_request( 'mainwp_plugin_ignore_updates' );
 
 		MainWP_Plugins_Handler::ignore_updates();
 		die();
 	}
 
-	public function mainwp_trusted_plugin_notes_save() { 
+	public function mainwp_trusted_plugin_notes_save() {
 		$this->secure_request( 'mainwp_trusted_plugin_notes_save' );
 
 		MainWP_Plugins_Handler::save_trusted_plugin_note();
@@ -191,17 +191,17 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	/**
 	 * Widget: Plugins
 	 */
-	public function mainwp_widget_plugin_activate() { 
+	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
 		MainWP_Widget_Plugins::activate_plugin();
 	}
 
-	public function mainwp_widget_plugin_deactivate() { 
+	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
 		MainWP_Widget_Plugins::deactivate_plugin();
 	}
 
-	public function mainwp_widget_plugin_delete() { 
+	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
 		MainWP_Widget_Plugins::delete_plugin();
 	}
@@ -209,12 +209,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	/**
 	 * Widget: Themes
 	 */
-	public function mainwp_widget_theme_activate() { 
+	public function mainwp_widget_theme_activate() {
 		$this->secure_request( 'mainwp_widget_theme_activate' );
 		MainWP_Widget_Themes::activate_theme();
 	}
 
-	public function mainwp_widget_theme_delete() { 
+	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );
 		MainWP_Widget_Themes::delete_theme();
 	}
@@ -223,31 +223,31 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	 * Page: InstallPlugins/Themes
 	 */
 
-	public function mainwp_preparebulkinstallplugintheme() { 
+	public function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkinstallplugintheme' );
 
 		MainWP_Install_Bulk::prepare_install();
 	}
 
-	public function mainwp_installbulkinstallplugintheme() { 
+	public function mainwp_installbulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_installbulkinstallplugintheme' );
 
 		MainWP_Install_Bulk::perform_install();
 	}
 
-	public function mainwp_preparebulkuploadplugintheme() { 
+	public function mainwp_preparebulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkuploadplugintheme' );
 
 		MainWP_Install_Bulk::prepare_upload();
 	}
 
-	public function mainwp_installbulkuploadplugintheme() { 
+	public function mainwp_installbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_installbulkuploadplugintheme' );
 
 		MainWP_Install_Bulk::perform_upload();
 	}
 
-	public function mainwp_cleanbulkuploadplugintheme() { 
+	public function mainwp_cleanbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_cleanbulkuploadplugintheme' );
 
 		MainWP_Install_Bulk::clean_upload();
@@ -257,12 +257,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	 * Page: ManageSites
 	 */
 
-	public function mainwp_ext_prepareinstallplugintheme() { 
+	public function mainwp_ext_prepareinstallplugintheme() {
 
 		do_action( 'mainwp_prepareinstallplugintheme' );
 	}
 
-	public function mainwp_ext_performinstallplugintheme() { 
+	public function mainwp_ext_performinstallplugintheme() {
 
 		do_action( 'mainwp_performinstallplugintheme' );
 	}
@@ -272,7 +272,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 	 */
 
 	// Update a specific WP.
-	public function mainwp_upgradewp() { 
+	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
 		}
@@ -393,7 +393,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		}
 	}
 
-	public function mainwp_ignoreplugintheme() { 
+	public function mainwp_ignoreplugintheme() {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -402,7 +402,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) );
 	}
 
-	public function mainwp_unignoreabandonedplugintheme() { 
+	public function mainwp_unignoreabandonedplugintheme() {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -411,7 +411,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok.
 	}
 
-	public function mainwp_unignoreabandonedpluginsthemes() { 
+	public function mainwp_unignoreabandonedpluginsthemes() {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
@@ -420,7 +420,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
-	public function mainwp_dismissoutdateplugintheme() { 
+	public function mainwp_dismissoutdateplugintheme() {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -429,7 +429,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
 	}
 
-	public function mainwp_dismissoutdatepluginsthemes() { 
+	public function mainwp_dismissoutdatepluginsthemes() {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -442,7 +442,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
-	public function mainwp_unignoreplugintheme() { 
+	public function mainwp_unignoreplugintheme() {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
@@ -451,7 +451,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) );
 	}
 
-	public function mainwp_ignorepluginsthemes() { 
+	public function mainwp_ignorepluginsthemes() {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
 		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -464,7 +464,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
-	public function mainwp_unignorepluginsthemes() { 
+	public function mainwp_unignorepluginsthemes() {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
@@ -473,18 +473,18 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
-	public function mainwp_trust_plugin() { 
+	public function mainwp_trust_plugin() {
 		$this->secure_request( 'mainwp_trust_plugin' );
 
 		MainWP_Plugins_Handler::trust_post();
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	public function mainwp_trust_theme() { 
+	public function mainwp_trust_theme() {
 		$this->secure_request( 'mainwp_trust_theme' );
 
 		MainWP_Themes_Handler::trust_post();
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
-	
+
 }

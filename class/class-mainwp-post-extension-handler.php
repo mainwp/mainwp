@@ -16,17 +16,17 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 	}
 
 	/**
-	 * Init extensions actions	 
+	 * Init extensions actions
 	 */
 	public function init() {
-		
+
 		$this->add_action( 'mainwp_extension_add_menu', array( &$this, 'add_extension_menu' ) );
 		$this->add_action( 'mainwp_extension_remove_menu', array( &$this, 'remove_extension_menu_from_mainwp_menu' ) );
-		
+
 		$this->add_action( 'mainwp_extension_activate', array( &$this, 'activate_extension' ) );
 		$this->add_action( 'mainwp_extension_deactivate', array( &$this, 'deactivate_extension' ) );
 		$this->add_action( 'mainwp_extension_testextensionapilogin', array( &$this, 'test_extensions_api_login' ) );
-		
+
 		if ( mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
 			$this->add_action( 'mainwp_extension_grabapikey', array( &$this, 'grab_extension_api_key' ) );
 			$this->add_action( 'mainwp_extension_saveextensionapilogin', array( &$this, 'save_extensions_api_login' ) );
@@ -34,11 +34,10 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 			$this->add_action( 'mainwp_extension_downloadandinstall', array( &$this, 'download_and_install' ) );
 			$this->add_action( 'mainwp_extension_bulk_activate', array( &$this, 'bulk_activate' ) );
 			$this->add_action( 'mainwp_extension_apisslverifycertificate', array( &$this, 'save_api_ssl_verify' ) );
-		}		
-		
+		}
+
 		// Page: ManageSites.
 		$this->add_action( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
-		
 	}
 
 	public function mainwp_ext_applypluginsettings() {
@@ -47,18 +46,18 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 		} else {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
-	}	
-		
+	}
+
 	/** Ajax add extension menu. */
-	public function add_extension_menu() { 
+	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
 		MainWP_Extensions_Handler::add_extension_menu( $_POST['slug'] );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
-	
-	
+
+
 	/** Activate MainWP Extension. */
-	public function activate_extension() { 
+	public function activate_extension() {
 		$this->check_security( 'mainwp_extension_activate' );
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );
@@ -66,9 +65,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
 		wp_send_json( $result );
 	}
-	
+
 	/** Deactivate MainWP Extension. */
-	public function deactivate_extension() { 
+	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
 		$api    = dirname( $_POST['slug'] );
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
@@ -76,7 +75,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 	}
 
 	/** Grab MainWP Extension API Key. */
-	public function grab_extension_api_key() { 
+	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
@@ -86,7 +85,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 	}
 
 	/** Save MainWP Extensions API Login details for future logins. */
-	public function save_extensions_api_login() { 
+	public function save_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_saveextensionapilogin' );
 		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
 
@@ -155,14 +154,14 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 	}
 
 	/** Save whenther or not to verify MainWP API SSL certificate. */
-	public function save_api_ssl_verify() { 
+	public function save_api_ssl_verify() {
 		$this->check_security( 'mainwp_extension_apisslverifycertificate' );
 		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', intval( $_POST['api_sslverify'] ) );
 		die( wp_json_encode( array( 'saved' => 1 ) ) );
 	}
 
 	/** Test Extension page MainWP.com login details. */
-	public function test_extensions_api_login() { 
+	public function test_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_testextensionapilogin' );
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
@@ -202,10 +201,10 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 		}
 		wp_send_json( $return );
 	}
-	
-	
+
+
 	/** Download & Install MainWP Extension. */
-	public function download_and_install() { 
+	public function download_and_install() {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
 		// phpcs:ignore -- custom setting to install plugin
 		ini_set( 'zlib.output_compression', 'Off' );
@@ -214,7 +213,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
-	
+
 	/** MainWP Extension Bulck Activation. */
 	public function bulk_activate() {
 		$this->check_security( 'mainwp_extension_bulk_activate' );
@@ -229,7 +228,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 	}
 
 	/** Remove Extensions menu from MainWP Menu. */
-	public function remove_extension_menu_from_mainwp_menu() { 
+	public function remove_extension_menu_from_mainwp_menu() {
 		$this->check_security( 'mainwp_extension_remove_menu' );
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
 		if ( ! is_array( $snMenuExtensions ) ) {
@@ -247,5 +246,5 @@ class MainWP_Post_Extension_Handler extends MainWP_Handler {
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
-	
+
 }

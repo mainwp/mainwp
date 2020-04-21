@@ -26,7 +26,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 	}
 
 	/**
-	 * Init backups actions	 
+	 * Init backups actions
 	 */
 	public function init() {
 		// Page: ManageBackups.
@@ -93,8 +93,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup()
-	 * 
-	 * Run backup task	 
+	 *
+	 * Run backup task
 	 */
 	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
@@ -128,8 +128,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_checkpid()
-	 * 
-	 * Check backup task	 
+	 *
+	 * Check backup task
 	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
@@ -156,7 +156,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_download_file()
-	 * 
+	 *
 	 * Download backup file
 	 */
 	public function mainwp_backup_download_file() {
@@ -184,7 +184,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_delete_file()
-	 * 
+	 *
 	 * Delete backup file
 	 */
 	public function mainwp_backup_delete_file() {
@@ -212,7 +212,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_createbackup_getfilesize()
-	 * 
+	 *
 	 * Get create backup file size
 	 */
 	public function mainwp_createbackup_getfilesize() {
@@ -262,7 +262,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_getfilesize()
-	 * 
+	 *
 	 * Get backup file size
 	 */
 	public function mainwp_backup_getfilesize() {
@@ -286,7 +286,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_upload_checkstatus()
-	 * 
+	 *
 	 * Check upload status
 	 */
 	public function mainwp_backup_upload_checkstatus() {
@@ -351,7 +351,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
 	/**
 	 * Method mainwp_backup_upload_getprogress()
-	 * 
+	 *
 	 * Get progress status
 	 */
 	public function mainwp_backup_upload_getprogress() {

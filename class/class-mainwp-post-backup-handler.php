@@ -10,8 +10,14 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Backup_Handler extends MainWP_Handler {
 
+	// Singleton.
+	/** @var $instance MainWP_Post_Backup_Handler */
 	private static $instance = null;
 
+	/**
+	 * @static
+	 * @return MainWP_Post_Backup_Handler
+	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
@@ -19,6 +25,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		return self::$instance;
 	}
 
+	/**
+	 * Init backups actions	 
+	 */
 	public function init() {
 		// Page: ManageBackups.
 		$this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
@@ -45,6 +54,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		if ( mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
 			$this->add_action( 'mainwp_backup', array( &$this, 'mainwp_backup' ) );
 		}
+		$this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
 		$this->add_action( 'mainwp_backup_checkpid', array( &$this, 'mainwp_backup_checkpid' ) );
 		$this->add_action( 'mainwp_createbackup_getfilesize', array( &$this, 'mainwp_createbackup_getfilesize' ) );
 		$this->add_action( 'mainwp_backup_download_file', array( &$this, 'mainwp_backup_download_file' ) );
@@ -81,6 +91,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup()
+	 * 
+	 * Run backup task	 
+	 */
 	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
 
@@ -111,6 +126,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup_checkpid()
+	 * 
+	 * Check backup task	 
+	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
 
@@ -134,6 +154,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup_download_file()
+	 * 
+	 * Download backup file
+	 */
 	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
 
@@ -157,6 +182,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup_delete_file()
+	 * 
+	 * Delete backup file
+	 */
 	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
 
@@ -180,6 +210,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_createbackup_getfilesize()
+	 * 
+	 * Get create backup file size
+	 */
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
 
@@ -225,6 +260,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		die( wp_json_encode( $output ) );
 	}
 
+	/**
+	 * Method mainwp_backup_getfilesize()
+	 * 
+	 * Get backup file size
+	 */
 	public function mainwp_backup_getfilesize() {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
 
@@ -244,6 +284,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup_upload_checkstatus()
+	 * 
+	 * Check upload status
+	 */
 	public function mainwp_backup_upload_checkstatus() {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
 
@@ -304,6 +349,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_backup_upload_getprogress()
+	 * 
+	 * Get progress status
+	 */
 	public function mainwp_backup_upload_getprogress() {
 		$this->secure_request( 'mainwp_backup_upload_getprogress' );
 

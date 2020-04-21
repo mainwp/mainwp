@@ -336,7 +336,7 @@ class MainWP_Setup_Wizard {
 				<li><?php esc_html_e( 'Login to the WordPress site you want to connect <em>(open it in a new browser tab)</em>', 'mainwp' ); ?></li>
 				<li><?php esc_html_e( 'Go to the <strong>WP > Plugins</strong> page', 'mainwp' ); ?></li>
 				<li><?php esc_html_e( 'Click <strong>Add New</strong> to install a new plugin', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'In the <strong>Search Field</strong>, enter “MainWP Child�? and once the plugin shows, click the Install button', 'mainwp' ); ?></li>
+				<li><?php esc_html_e( 'In the <strong>Search Field</strong>, enter “MainWP Child�? and once the plugin shows, click the Install button', 'mainwp' ); ?></li>
 				<li><?php esc_html_e( '<strong>Activate</strong> the plugin', 'mainwp' ); ?></li>
 			</ol>
 			<div class="ui clearing hidden divider"></div>
@@ -852,12 +852,6 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
-	public static function ajax_save_extensions_api_login() {
-		MainWP_Cache::init_session();
-		MainWP_Extensions_Handler::save_extensions_api_login();
-		die();
-	}
-
 	public static function ajax_get_backup_extension() {
 
 		$product_id = trim( $_POST['productId'] );
@@ -925,16 +919,6 @@ class MainWP_Setup_Wizard {
 			}
 		}
 		die( wp_json_encode( $return ) );
-	}
-
-	public static function ajax_download_and_install() {
-
-		if ( ! isset( $_POST['action'] ) || ! isset( $_POST['security'] ) || ! wp_verify_nonce( $_POST['security'], 'MainWPSetup' ) ) {
-			die( 0 );
-		}
-
-		$return = MainWP_Extensions_Handler::install_plugin( $_POST['download_link'], true );
-		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
 
 	public static function ajax_activate_plugin() {

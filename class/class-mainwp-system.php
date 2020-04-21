@@ -711,6 +711,9 @@ class MainWP_System {
 		add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_warning_notice' ) );
 
 		MainWP_Post_Handler::instance()->init();
+		MainWP_Post_Site_Handler::instance()->init();
+		MainWP_Post_Plugin_Theme_Handler::instance()->init();
+		MainWP_Post_Extension_Handler::instance()->init();		
 		MainWP_Post_Backup_Handler::instance()->init();
 
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );

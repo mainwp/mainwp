@@ -13,6 +13,15 @@ abstract class MainWP_Handler {
 	abstract protected function init();
 
 
+	/**
+	 * Method secure_request()
+	 *
+	 * Add security check to request parameter
+	 * 
+	 * @param string   $action
+	 * @param string $query_arg
+	 *	 
+	 */
 	public function secure_request( $action = '', $query_arg = 'security' ) {
 		if ( ! MainWP_Utility::is_admin() ) {
 			die( 0 );
@@ -41,6 +50,16 @@ abstract class MainWP_Handler {
 		}
 	}
 
+	/**
+	 * Method check_security()
+	 *
+	 * Check security request
+	 * 
+	 * @param string   $action
+	 * @param string $query_arg
+	 * 
+	 * @return bool true or false	 
+	 */
 	public function check_security( $action = - 1, $query_arg = 'security' ) {
 		if ( - 1 === $action ) {
 			return false;
@@ -56,12 +75,28 @@ abstract class MainWP_Handler {
 		return true;
 	}
 
+	/**
+	 * Method add_action()
+	 *
+	 * Add ajax action
+	 * 
+	 * @param string   $action
+	 * @param string $callback
+	 *	 
+	 */
 	public function add_action( $action, $callback ) {
 		add_action( 'wp_ajax_' . $action, $callback );
 		$this->add_security_nonce( $action );
 	}
 
-
+	/**
+	 * Method add_security_nonce()
+	 *
+	 * Add security nonce
+	 * 
+	 * @param string   $action	 
+	 *	 
+	 */
 	public function add_security_nonce( $action ) {
 		if ( ! is_array( $this->security_nonces ) ) {
 			$this->security_nonces = array();

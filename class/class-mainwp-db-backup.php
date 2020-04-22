@@ -9,11 +9,10 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_DB
- * 
  */
 class MainWP_DB_Backup extends MainWP_DB {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
-		
+
 	/**
 	 * @static
 	 * instance of this
@@ -36,7 +35,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	// Constructor.
 	public function __construct() {
-		parent::__construct();	
+		parent::__construct();
 	}
 
 	public function get_website_backup_settings( $websiteid ) {

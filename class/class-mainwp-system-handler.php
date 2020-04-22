@@ -10,10 +10,10 @@ class MainWP_System_Handler {
 	/**
 	 * Singleton.
 	 */
-	private static $instance    = null;
-	
+	private static $instance = null;
+
 	private $upgradeVersionInfo = null;
-	
+
 	/**
 	 * @static
 	 * @return MainWP_System
@@ -25,7 +25,7 @@ class MainWP_System_Handler {
 
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Constructor
 	 */
@@ -74,7 +74,7 @@ class MainWP_System_Handler {
 				'hook_manager_get_extensions',
 			)
 		); // @deprecated Use 'mainwp_manager_getextensions' instead.
-		
+
 		add_filter(
 			'mainwp_manager_getextensions',
 			array(
@@ -82,16 +82,15 @@ class MainWP_System_Handler {
 				'hook_manager_get_extensions',
 			)
 		);
-		
+
 		if ( '' != get_option( 'mainwp_upgradeVersionInfo' ) ) {
 			$this->upgradeVersionInfo = get_option( 'mainwp_upgradeVersionInfo' );
-		} 
-
+		}
 	}
 
 	/**
 	 * Method filter_fetch_urls_authed()
-	 * 
+	 *
 	 * Filter fetch urls authed
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
@@ -100,21 +99,21 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method filter_fetch_url_authed()
-	 * 
+	 *
 	 * Filter fetch url authed
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
 	}
-	
+
 	/**
 	 * Method apply_filter()
-	 * 
+	 *
 	 * Apply filter
-	 * 
+	 *
 	 * @param string $filter The filter.
-	 * @param mixed $value Input value.
-	 * 
+	 * @param mixed  $value Input value.
+	 *
 	 * @return mixed Output value.
 	 */
 	public function apply_filters( $filter, $value = array() ) {
@@ -143,10 +142,10 @@ class MainWP_System_Handler {
 
 		return $output;
 	}
-	
+
 	/**
 	 * Method handle_manage_sites_screen_settings()
-	 * 
+	 *
 	 * Handle manage sites screen settings
 	 */
 	public function handle_manage_sites_screen_settings() {
@@ -165,10 +164,10 @@ class MainWP_System_Handler {
 			}
 		}
 	}
-	
+
 	/**
 	 * Method handle_mainwp_tools_settings()
-	 * 
+	 *
 	 * Handle mainwp tools settings
 	 */
 	public function handle_mainwp_tools_settings() {
@@ -208,10 +207,10 @@ class MainWP_System_Handler {
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
 		}
 	}
-	
+
 	/**
 	 * Method handle_settings_post()
-	 * 
+	 *
 	 * Handle settings page saving
 	 */
 	public function handle_settings_post() {
@@ -243,8 +242,8 @@ class MainWP_System_Handler {
 			}
 		}
 	}
-	
-	
+
+
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
 			return $false;
@@ -282,7 +281,7 @@ class MainWP_System_Handler {
 
 		return $false;
 	}
-	
+
 	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
@@ -350,7 +349,7 @@ class MainWP_System_Handler {
 
 		return $transient;
 	}
-	
+
 
 	public static function map_rslt_obj( $pRslt ) {
 		$obj              = new \stdClass();
@@ -395,7 +394,7 @@ class MainWP_System_Handler {
 
 		return $transient;
 	}
-	
+
 	public function upload_file( $file ) {
 		header( 'Content-Description: File Transfer' );
 		if ( MainWP_Utility::ends_with( $file, '.tar.gz' ) ) {
@@ -433,7 +432,7 @@ class MainWP_System_Handler {
 
 		return fclose( $handle );
 	}
-	
+
 	public function activate_extention( $ext_key, $info = array() ) {
 
 		add_filter( 'wp_redirect', array( $this, 'activate_redirect' ) );

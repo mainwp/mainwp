@@ -17,7 +17,7 @@ class MainWP_System {
 	/**
 	 * Singleton.
 	 */
-	private static $instance    = null;	
+	private static $instance = null;
 	public $metaboxes;
 
 	/**
@@ -88,9 +88,9 @@ class MainWP_System {
 		}
 
 		MainWP_Extensions::init();
-		
+
 		$systemHandler = MainWP_System_Handler::instance();
-		
+
 		add_action( 'parse_request', array( &$this, 'parse_request' ) );
 		add_action( 'init', array( &$this, 'localization' ) );
 		add_filter( 'site_transient_update_plugins', array( $systemHandler, 'check_update_custom' ) );
@@ -104,7 +104,7 @@ class MainWP_System {
 		MainWP_Manage_Sites::init();
 		new MainWP_Hooks();
 		new MainWP_Menu();
-		
+
 		add_action( 'admin_menu', array( MainWP_Menu::get_class_name(), 'init_mainwp_menus' ) );
 		add_filter( 'admin_footer', array( &$this, 'admin_footer' ), 15 );
 		add_action( 'admin_head', array( MainWP_System_View::get_class_name(), 'admin_head' ) );
@@ -133,11 +133,9 @@ class MainWP_System {
 
 		add_action( 'after_plugin_row', array( MainWP_System_View::get_class_name(), 'after_extensions_plugin_row' ), 10, 3 );
 
-		
-		
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_activated_check' instead.
 		add_filter( 'mainwp_activated_check', array( &$this, 'activated_check' ) );
-		
+
 		do_action_deprecated( 'mainwp-activated', array(), '4.0.1', 'mainwp_activated'  ); // @deprecated Use 'mainwp_activated' instead.
 
 		do_action( 'mainwp_activated' );
@@ -266,7 +264,7 @@ class MainWP_System {
 		return $this->current_version;
 	}
 
-	
+
 	/**
 	 * Method mainwp_cronpingchilds_action()
 	 *
@@ -362,7 +360,7 @@ class MainWP_System {
 		MainWP_System_Handler::instance()->handle_settings_post();
 	}
 
-	
+
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_Utility::get_mainwp_dir();
@@ -540,7 +538,7 @@ class MainWP_System {
 			}
 		}
 	}
-	
+
 	public function init_session() {
 		if ( isset( $_GET['page'] ) && in_array(
 			$_GET['page'],
@@ -690,13 +688,13 @@ class MainWP_System {
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );
 	}
-	
+
 	/**
 	 * Method activated_check()
-	 * 
+	 *
 	 * Activated check
 	 */
-	public function activated_check() {		
+	public function activated_check() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 		return $this->get_version();
 	}
@@ -712,7 +710,7 @@ class MainWP_System {
 		update_option( 'mainwp_extensions_all_activation_cached', '' );
 	}
 
-	public function update() {		
+	public function update() {
 		MainWP_DB::instance()->install();
 	}
 

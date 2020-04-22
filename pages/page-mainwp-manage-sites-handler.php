@@ -882,8 +882,8 @@ class MainWP_Manage_Sites_Handler {
 
 		die( __( 'Site has been reconnected successfully!', 'mainwp' ) );
 	}
-	
-	
+
+
 	public static function add_site() {
 		$ret     = array();
 		$error   = '';

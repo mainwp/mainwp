@@ -29,6 +29,7 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-getgroups'                   => 'mainwp_getgroups',
 		'mainwp-activated-check'             => 'mainwp_activated_check',
 		'mainwp-extension-available-check'   => '',
+		'mainwp-manager-getextensions'		 => 'mainwp_manager_getextensions'
 	);
 
 	/**
@@ -43,6 +44,7 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-activated-check'             => '4.0.1',
 		'mainwp-extension-available-check'   => '4.0.1',
 		'mainwp-getgroups'                   => '4.0.1',
+		'mainwp-manager-getextensions'       => '4.0.1',
 	);
 
 	/**

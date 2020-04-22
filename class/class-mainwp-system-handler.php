@@ -1,0 +1,456 @@
+<?php
+
+namespace MainWP\Dashboard;
+
+/**
+ * MainWP System Handler.
+ */
+class MainWP_System_Handler {
+
+	/**
+	 * Singleton.
+	 */
+	private static $instance    = null;
+	
+	private $upgradeVersionInfo = null;
+	
+	/**
+	 * @static
+	 * @return MainWP_System
+	 */
+	public static function instance() {
+		if ( null == self::$instance ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+	
+	/**
+	 * Constructor
+	 */
+	public function __construct() {
+		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_extension_enabled_check' instead.
+		add_filter( 'mainwp_extension_enabled_check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_enabled' ) );
+
+		/**
+		 * This hook allows you to get a list of sites via the 'mainwp-getsites' filter.
+		 *
+		 * @link http://codex.mainwp.com/#mainwp-getsites
+		 *
+		 * @see \MainWP_Extensions::hook_get_sites
+		 */
+		add_filter( 'mainwp-getsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sites' ), 10, 5 );     // @deprecated Use 'mainwp_getsites' instead.
+		add_filter( 'mainwp-getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 5 ); // @deprecated Use 'mainwp_getdbsites' instead.
+
+		add_filter( 'mainwp_getsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_sites' ), 10, 5 );
+		add_filter( 'mainwp_getdbsites', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_db_sites' ), 10, 5 );
+
+		/**
+		 * This hook allows you to get a information about groups via the 'mainwp-getgroups' filter.
+		 *
+		 * @link http://codex.mainwp.com/#mainwp-getgroups
+		 *
+		 * @see \MainWP_Extensions::hook_get_groups
+		 */
+		add_filter( 'mainwp-getgroups', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_groups' ), 10, 4 ); // @deprecated Use 'mainwp_getgroups' instead.
+		add_filter( 'mainwp_getgroups', array( MainWP_Extensions_Handler::get_class_name(), 'hook_get_groups' ), 10, 4 );
+		add_action( 'mainwp_fetchurlsauthed', array( &$this, 'filter_fetch_urls_authed' ), 10, 7 );
+		add_filter( 'mainwp_fetchurlauthed', array( &$this, 'filter_fetch_url_authed' ), 10, 6 );
+		add_filter(
+			'mainwp_getdashboardsites',
+			array(
+				MainWP_Extensions_Handler::get_class_name(),
+				'hook_get_dashboard_sites',
+			),
+			10,
+			7
+		);
+
+		add_filter(
+			'mainwp-manager-getextensions',
+			array(
+				MainWP_Extensions_Handler::get_class_name(),
+				'hook_manager_get_extensions',
+			)
+		); // @deprecated Use 'mainwp_manager_getextensions' instead.
+		
+		add_filter(
+			'mainwp_manager_getextensions',
+			array(
+				MainWP_Extensions_Handler::get_class_name(),
+				'hook_manager_get_extensions',
+			)
+		);
+		
+		if ( '' != get_option( 'mainwp_upgradeVersionInfo' ) ) {
+			$this->upgradeVersionInfo = get_option( 'mainwp_upgradeVersionInfo' );
+		} 
+
+	}
+
+	/**
+	 * Method filter_fetch_urls_authed()
+	 * 
+	 * Filter fetch urls authed
+	 */
+	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
+		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
+	}
+
+	/**
+	 * Method filter_fetch_url_authed()
+	 * 
+	 * Filter fetch url authed
+	 */
+	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
+		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
+	}
+	
+	/**
+	 * Method apply_filter()
+	 * 
+	 * Apply filter
+	 * 
+	 * @param string $filter The filter.
+	 * @param mixed $value Input value.
+	 * 
+	 * @return mixed Output value.
+	 */
+	public function apply_filters( $filter, $value = array() ) {
+
+		if ( 'mainwp-getmetaboxes' === $filter ) {
+			$output = apply_filters_deprecated( 'mainwp-getmetaboxes', array( $value ), '4.0.1', 'mainwp_getmetaboxes' );  // @deprecated Use 'mainwp_getmetaboxes' instead.
+		} else {
+			$output = apply_filters( $filter, $value );
+		}
+
+		if ( ! is_array( $output ) ) {
+			return array();
+		}
+		$count = count( $output );
+		for ( $i = 0; $i < $count; $i ++ ) {
+			if ( ! isset( $output[ $i ]['plugin'] ) || ! isset( $output[ $i ]['key'] ) ) {
+				unset( $output[ $i ] );
+				continue;
+			}
+
+			if ( ! MainWP_Extensions_Handler::hook_verify( $output[ $i ]['plugin'], $output[ $i ]['key'] ) ) {
+				unset( $output[ $i ] );
+				continue;
+			}
+		}
+
+		return $output;
+	}
+	
+	/**
+	 * Method handle_manage_sites_screen_settings()
+	 * 
+	 * Handle manage sites screen settings
+	 */
+	public function handle_manage_sites_screen_settings() {
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
+			$hide_cols = array();
+			foreach ( $_POST as $key => $val ) {
+				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
+					$col         = str_replace( 'mainwp_hide_column_', '', $key );
+					$hide_cols[] = $col;
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
+				update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
+			}
+		}
+	}
+	
+	/**
+	 * Method handle_mainwp_tools_settings()
+	 * 
+	 * Handle mainwp tools settings
+	 */
+	public function handle_mainwp_tools_settings() {
+		$update_screen_options = false;
+		if ( 'MainWPTools' === $_GET['page'] ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
+				$update_screen_options = true;
+				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
+				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+
+				$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
+				MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
+				if ( ! $enabled_twit ) {
+					MainWP_Twitter::clear_all_twitter_messages();
+				}
+			}
+		} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
+				$update_screen_options = true;
+			}
+		}
+
+		if ( $update_screen_options ) {
+			$hide_wids = array();
+			if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
+				foreach ( $_POST['mainwp_hide_widgets'] as $value ) {
+					$hide_wids[] = $value;
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
+			}
+
+			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
+			MainWP_Utility::update_option( 'mainwp_show_usersnap', ( ! isset( $_POST['mainwp_show_usersnap'] ) ? 0 : time() ) );
+			MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
+		}
+	}
+	
+	/**
+	 * Method handle_settings_post()
+	 * 
+	 * Handle settings page saving
+	 */
+	public function handle_settings_post() {
+		if ( ! function_exists( 'wp_create_nonce' ) ) {
+			include_once ABSPATH . WPINC . '/pluggable.php';
+		}
+
+		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
+			$this->handle_mainwp_tools_settings();
+			$this->handle_manage_sites_screen_settings();
+		}
+
+		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+			$userExtension            = MainWP_DB::instance()->get_user_extension();
+			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
+			MainWP_DB::instance()->update_user_extension( $userExtension );
+		}
+
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
+			if ( wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+				$updated  = MainWP_Settings::handle_settings_post();
+				$updated |= MainWP_Manage_Sites_Handler::handle_settings_post();
+				$msg      = '';
+				if ( $updated ) {
+					$msg = '&message=saved';
+				}
+				wp_safe_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
+				exit();
+			}
+		}
+	}
+	
+	
+	public function plugins_api_info( $false, $action, $arg ) {
+		if ( 'plugin_information' !== $action ) {
+			return $false;
+		}
+
+		if ( ! isset( $arg->slug ) || ( '' === $arg->slug ) ) {
+			return $false;
+		}
+
+		if ( dirname( MainWP_System::instance()->get_plugin_slug() ) === $arg->slug ) {
+			return $false;
+		}
+
+		$result   = MainWP_Extensions_Handler::get_slugs();
+		$am_slugs = $result['am_slugs'];
+
+		if ( '' !== $am_slugs ) {
+			$am_slugs = explode( ',', $am_slugs );
+			if ( in_array( $arg->slug, $am_slugs ) ) {
+				$info = MainWP_API_Settings::get_plugin_information( $arg->slug );
+				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
+					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
+						$exts_data = MainWP_Extensions_View::get_available_extensions();
+						if ( isset( $exts_data[ $arg->slug ] ) ) {
+							$ext_info                    = $exts_data[ $arg->slug ];
+							$changelog_link              = rtrim( $ext_info['link'], '/' );
+							$info->sections['changelog'] = '<a href="' . $changelog_link . '#tab-changelog" target="_blank">' . $changelog_link . '#tab-changelog</a>';
+						}
+					}
+					return $info;
+				}
+				return $info;
+			}
+		}
+
+		return $false;
+	}
+	
+	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method
+		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
+			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
+			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
+				$plugin_slug = $_POST['plugin'];
+				if ( isset( $extensions[ $plugin_slug ] ) ) {
+					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
+						return $transient;
+					}
+
+					$api_slug = dirname( $plugin_slug );
+					$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
+
+					if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
+						$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+					}
+
+					return $transient;
+				}
+			} elseif ( 'update-selected' === $_POST['action'] && isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ) {
+				$updated = false;
+				foreach ( $_POST['checked'] as $plugin_slug ) {
+					if ( isset( $extensions[ $plugin_slug ] ) ) {
+						if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
+							continue;
+						}
+						$api_slug = dirname( $plugin_slug );
+						$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
+						if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
+
+							$this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
+							$transient->response[ $plugin_slug ]           = self::map_rslt_obj( $rslt );
+							$updated                                       = true;
+						}
+					}
+				}
+				if ( $updated ) {
+					MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', $this->upgradeVersionInfo );
+				}
+
+				return $transient;
+			}
+		}
+
+		if ( empty( $transient->checked ) ) {
+			return $transient;
+		}
+
+		if ( isset( $_GET['do'] ) && 'checkUpgrade' === $_GET['do'] && ( ( time() - $this->upgradeVersionInfo->updated ) > 30 ) ) {
+			$this->check_upgrade();
+		}
+
+		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
+			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
+				if ( ! isset( $rslt->slug ) ) {
+					continue;
+				}
+
+				$plugin_slug = MainWP_Extensions_Handler::get_plugin_slug( $rslt->slug );
+				if ( isset( $transient->checked[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $transient->checked[ $plugin_slug ], '>' ) ) {
+					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+				}
+			}
+		}
+
+		return $transient;
+	}
+	
+
+	public static function map_rslt_obj( $pRslt ) {
+		$obj              = new \stdClass();
+		$obj->slug        = $pRslt->slug;
+		$obj->new_version = $pRslt->latest_version;
+		$obj->url         = 'https://mainwp.com/';
+		$obj->package     = $pRslt->download_url;
+
+		return $obj;
+	}
+
+	private function check_upgrade() {
+		$result = MainWP_API_Settings::check_upgrade();
+		if ( null === $this->upgradeVersionInfo ) {
+			$this->upgradeVersionInfo = new \stdClass();
+		}
+		$this->upgradeVersionInfo->updated = time();
+		if ( ! empty( $result ) ) {
+			$this->upgradeVersionInfo->result = $result;
+		}
+		MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', $this->upgradeVersionInfo );
+	}
+
+	public function pre_check_update_custom( $transient ) {
+		if ( ! isset( $transient->checked ) ) {
+			return $transient;
+		}
+
+		if ( ( null == $this->upgradeVersionInfo ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
+			$this->check_upgrade();
+		}
+
+		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
+			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
+			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
+				$plugin_slug = MainWP_Extensions_Handler::get_plugin_slug( $rslt->slug );
+				if ( isset( $extensions[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
+					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
+				}
+			}
+		}
+
+		return $transient;
+	}
+	
+	public function upload_file( $file ) {
+		header( 'Content-Description: File Transfer' );
+		if ( MainWP_Utility::ends_with( $file, '.tar.gz' ) ) {
+			header( 'Content-Type: application/x-gzip' );
+			header( 'Content-Encoding: gzip' );
+		} else {
+			header( 'Content-Type: application/octet-stream' );
+		}
+		header( 'Content-Disposition: attachment; filename="' . basename( $file ) . '"' );
+		header( 'Expires: 0' );
+		header( 'Cache-Control: must-revalidate' );
+		header( 'Pragma: public' );
+		header( 'Content-Length: ' . filesize( $file ) );
+		while ( ob_get_level() ) {
+			ob_end_clean();
+		}
+		$this->readfile_chunked( $file );
+		exit();
+	}
+
+	public function readfile_chunked( $filename ) {
+		$chunksize = 1024;
+		$handle    = fopen( $filename, 'rb' );
+		if ( false === $handle ) {
+			return false;
+		}
+
+		while ( ! feof( $handle ) ) {
+			$buffer = fread( $handle, $chunksize );
+			echo $buffer;
+			ob_flush();
+			flush();
+			$buffer = null;
+		}
+
+		return fclose( $handle );
+	}
+	
+	public function activate_extention( $ext_key, $info = array() ) {
+
+		add_filter( 'wp_redirect', array( $this, 'activate_redirect' ) );
+
+		if ( is_array( $info ) && isset( $info['product_id'] ) && isset( $info['software_version'] ) ) {
+			$act_info = array(
+				'product_id'         => $info['product_id'],
+				'software_version'   => $info['software_version'],
+				'activated_key'      => 'Deactivated',
+				'instance_id'        => MainWP_Api_Manager_Password_Management::generate_password( 12, false ),
+			);
+			MainWP_Api_Manager::instance()->set_activation_info( $ext_key, $act_info );
+		}
+	}
+
+	public function deactivate_extention( $ext_key ) {
+		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );
+	}
+
+}

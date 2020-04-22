@@ -766,6 +766,7 @@ class MainWP_Extensions_Handler {
 	 * @return void
 	 */
 	public static function hook_manager_get_extensions() {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 		return get_option( 'mainwp_manager_extensions' );
 	}
 

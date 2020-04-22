@@ -291,7 +291,7 @@ class MainWP_System_Cron_Jobs {
 		$checkupdate_websites = MainWP_DB::instance()->get_websites_check_updates( 4 );
 
 		foreach ( $checkupdate_websites as $website ) {
-			if ( ! MainWP_DB::instance()->backup_full_task_running( $website->id ) ) {
+			if ( ! MainWP_DB_Backup::instance()->backup_full_task_running( $website->id ) ) {
 				$websites[] = $website;
 			}
 		}
@@ -1166,7 +1166,7 @@ class MainWP_System_Cron_Jobs {
 
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
-		$tasks = MainWP_DB::instance()->get_backup_tasks_to_complete();
+		$tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
 
 		MainWP_Logger::instance()->debug( 'CRON :: backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
@@ -1179,7 +1179,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		foreach ( $tasks as $task ) {
-			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			if ( $task->completed < $task->last_run ) {
 				MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
 				break;
@@ -1209,15 +1209,15 @@ class MainWP_System_Cron_Jobs {
 		MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
 		$allTasks   = array();
-		$dailyTasks = MainWP_DB::instance()->get_backup_tasks_todo_daily();
+		$dailyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_daily();
 		if ( count( $dailyTasks ) > 0 ) {
 			$allTasks = $dailyTasks;
 		}
-		$weeklyTasks = MainWP_DB::instance()->get_backup_tasks_todo_weekly();
+		$weeklyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_weekly();
 		if ( count( $weeklyTasks ) > 0 ) {
 			$allTasks = array_merge( $allTasks, $weeklyTasks );
 		}
-		$monthlyTasks = MainWP_DB::instance()->get_backup_tasks_todo_monthly();
+		$monthlyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_monthly();
 		if ( count( $monthlyTasks ) > 0 ) {
 			$allTasks = array_merge( $allTasks, $monthlyTasks );
 		}
@@ -1237,13 +1237,13 @@ class MainWP_System_Cron_Jobs {
 			} elseif ( 'monthly' == $task->schedule ) {
 				$threshold = ( 60 * 60 * 24 * 30 );
 			}
-			$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			if ( ( time() - $task->last_run ) < $threshold ) {
 				continue;
 			}
 
 			if ( ! MainWP_Manage_Backups::validate_backup_tasks( array( $task ) ) ) {
-				$task = MainWP_DB::instance()->get_backup_task_by_id( $task->id );
+				$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			}
 
 			$chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );

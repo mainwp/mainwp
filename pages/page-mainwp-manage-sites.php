@@ -579,8 +579,8 @@ class MainWP_Manage_Sites {
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
 
-		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
-		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp_getmetaboxes', $extMetaBoxs );
+		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
+		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
 
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
@@ -665,7 +665,7 @@ class MainWP_Manage_Sites {
 	public static function render_updates( $website ) {
 		MainWP_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesUpdates' );
-		MainWP_Manage_Sites_View::render_updates();
+		MainWP_Manage_Sites_Update_View::render_updates( $website );
 		self::render_footer( 'ManageSitesUpdates' );
 	}
 

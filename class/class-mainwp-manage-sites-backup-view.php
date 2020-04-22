@@ -142,7 +142,7 @@ class MainWP_Manage_Sites_Backup_View {
 					$globalArchiveFormatText = 'Tar BZip2';
 				}
 
-				$backupSettings = MainWP_DB::instance()->get_website_backup_settings( $website->id );
+				$backupSettings = MainWP_DB_Backup::instance()->get_website_backup_settings( $website->id );
 				$archiveFormat  = $backupSettings->archiveFormat;
 				$useGlobal      = ( 'global' === $archiveFormat );
 				?>

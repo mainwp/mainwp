@@ -4,7 +4,7 @@ namespace MainWP\Dashboard;
 /**
  * MainWP Post Handler
  */
-class MainWP_Post_Extension_Handler extends MainWP_Handler {
+class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 	private static $instance = null;
 

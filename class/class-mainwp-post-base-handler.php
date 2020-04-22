@@ -2,12 +2,12 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Post Handler
+ * MainWP Post Base Handler
  */
-abstract class MainWP_Handler {
+abstract class MainWP_Post_Base_Handler {
 
 
-	protected $security_nonces;
+	protected static $security_nonces;
 
 	// Force Extending class to define this method.
 	abstract protected function init();
@@ -95,18 +95,18 @@ abstract class MainWP_Handler {
 	 * @param string $action
 	 */
 	public function add_security_nonce( $action ) {
-		if ( ! is_array( $this->security_nonces ) ) {
-			$this->security_nonces = array();
+		if ( ! is_array( self::$security_nonces ) ) {
+			self::$security_nonces = array();
 		}
 
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
 			include_once ABSPATH . WPINC . '/pluggable.php';
 		}
-		$this->security_nonces[ $action ] = wp_create_nonce( $action );
+		self::$security_nonces[ $action ] = wp_create_nonce( $action );
 	}
 
 	public function get_security_nonces() {
-		return $this->security_nonces;
+		return self::$security_nonces;
 	}
 
 }

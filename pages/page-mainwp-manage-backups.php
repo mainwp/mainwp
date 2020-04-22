@@ -292,14 +292,14 @@ class MainWP_Manage_Backups {
 			}
 			$backupTaskId = $_GET['id'];
 
-			$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
+			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
 			if ( null != $backupTask ) {
 				if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $backupTask ) ) ) {
-					$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
+					$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 				}
 			}
 		}
@@ -314,9 +314,9 @@ class MainWP_Manage_Backups {
 
 		if ( null == $backupTask ) {
 
-			$backup_items = MainWP_DB::instance()->get_backup_tasks_for_user();
+			$backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
 			if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( $backup_items ) ) {
-				$backup_items = MainWP_DB::instance()->get_backup_tasks_for_user();
+				$backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
 			}
 
 			self::render_header( '' );
@@ -724,14 +724,14 @@ class MainWP_Manage_Backups {
 			}
 			$backupTaskId = $_GET['id'];
 
-			$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
+			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
 			if ( null != $backupTask ) {
 				if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $backupTask ) ) ) {
-					$backupTask = MainWP_DB::instance()->get_backup_task_by_id( $backupTaskId );
+					$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 				}
 			}
 		}

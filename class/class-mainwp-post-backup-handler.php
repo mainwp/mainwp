@@ -8,7 +8,7 @@ namespace MainWP\Dashboard;
  *
  * @deprecated moved to external Extension.
  */
-class MainWP_Post_Backup_Handler extends MainWP_Handler {
+class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 	// Singleton.
 	/** @var $instance MainWP_Post_Backup_Handler */

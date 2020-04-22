@@ -118,17 +118,17 @@ class MainWP_Manage_Sites_Handler {
 		}
 
 		$information        = false;
-		$backupTaskProgress = MainWP_DB::instance()->get_backup_task_progress( $taskId, $website->id );
+		$backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 		if ( empty( $backupTaskProgress ) || ( $backupTaskProgress->dtsFetched < $pTask->last_run ) ) {
 			$start = microtime( true );
 			try {
 				$pid = time();
 
 				if ( empty( $backupTaskProgress ) ) {
-					MainWP_DB::instance()->add_backup_task_progress( $taskId, $website->id, array() );
+					MainWP_DB_Backup::instance()->add_backup_task_progress( $taskId, $website->id, array() );
 				}
 
-				MainWP_DB::instance()->update_backup_task_progress(
+				MainWP_DB_Backup::instance()->update_backup_task_progress(
 					$taskId,
 					$website->id,
 					array(
@@ -168,7 +168,7 @@ class MainWP_Manage_Sites_Handler {
 				$stop = microtime( true );
 				// Bigger then 30 seconds means a timeout.
 				if ( 30 < ( $stop - $start ) ) {
-					MainWP_DB::instance()->update_backup_task_progress(
+					MainWP_DB_Backup::instance()->update_backup_task_progress(
 						$taskId,
 						$website->id,
 						array(
@@ -191,7 +191,7 @@ class MainWP_Manage_Sites_Handler {
 				return false;
 			}
 
-			$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+			$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 		} elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
 				$temp = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
@@ -202,7 +202,7 @@ class MainWP_Manage_Sites_Handler {
 			if ( ! empty( $temp ) ) {
 				if ( 'stalled' === $temp['status'] ) {
 					if ( 5 > $backupTaskProgress->attempts ) {
-						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+						$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 
 						try {
 							$information = MainWP_Connect::fetch_url_authed(
@@ -229,7 +229,7 @@ class MainWP_Manage_Sites_Handler {
 							);
 
 							if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-								MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
+								MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
 
 								return false;
 							}
@@ -237,7 +237,7 @@ class MainWP_Manage_Sites_Handler {
 							return false;
 						}
 
-						$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+						$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 					} else {
 						throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 					}
@@ -262,11 +262,11 @@ class MainWP_Manage_Sites_Handler {
 
 					$information['size'] = $temp['size'];
 
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 				}
 			} else {
 				if ( 5 > $backupTaskProgress->attempts ) {
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts ++ ) );
 				} else {
 					throw new MainWP_Exception( 'Backup failed after 5 retries.' );
 				}
@@ -340,7 +340,7 @@ class MainWP_Manage_Sites_Handler {
 						$wp_filesystem->delete( $fullBackup );
 					}
 				}
-				$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
+				$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
 			}
 
 			$localBackupFile = null;
@@ -382,14 +382,14 @@ class MainWP_Manage_Sites_Handler {
 
 					$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
 				} else {
 					$localBackupFile = $backupTaskProgress->downloadedDB;
 				}
 
 				if ( 0 == $backupTaskProgress->downloadedDBComplete ) {
 					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['db'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
 				}
 			}
 
@@ -424,7 +424,7 @@ class MainWP_Manage_Sites_Handler {
 
 					$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
 				} else {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
@@ -453,7 +453,7 @@ class MainWP_Manage_Sites_Handler {
 
 					MainWP_Connect::download_to_file( MainWP_Connect::get_get_data_authed( $website, $information['full'], 'fdl' ), $localBackupFile, $information['size'], $website->http_user, $website->http_pass );
 					MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
-					$backupTaskProgress = MainWP_DB::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
+					$backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
 				}
 			}
 

@@ -4,7 +4,7 @@ namespace MainWP\Dashboard;
 /**
  * MainWP Post Plugin Theme Handler
  */
-class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
+class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	// Singleton.
 	/** @var $instance MainWP_Post_Plugin_Theme_Handler */
@@ -348,7 +348,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Handler {
 			}
 		}
 
-		if ( MainWP_DB::instance()->backup_full_task_running( $websiteId ) ) {
+		if ( MainWP_DB_Backup::instance()->backup_full_task_running( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Backup process in progress on the child site. Please, try again later.', 'mainwp' ) ) ) );
 		}
 

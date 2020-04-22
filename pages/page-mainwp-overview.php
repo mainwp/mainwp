@@ -146,8 +146,8 @@ class MainWP_Overview {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
 		 */
-		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp-getmetaboxes', array() );
-		$extMetaBoxs = MainWP_System::instance()->apply_filter( 'mainwp_getmetaboxes', $extMetaBoxs );
+		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );
+		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );

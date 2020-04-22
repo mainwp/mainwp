@@ -6,10 +6,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Sites_Update_View {
 
-	public static function render_updates( $website ) {	
-		if ( empty( $website ) )
+	public static function render_updates( $website ) {
+		if ( empty( $website ) ) {
 			return;
-		
+		}
+
 		$website_id = $website->id;
 		self::render_individual_updates( $website_id );
 	}

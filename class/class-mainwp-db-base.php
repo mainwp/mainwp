@@ -13,33 +13,33 @@ namespace MainWP\Dashboard;
  * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
  */
 class MainWP_DB_Base {
-	
+
 	/**
 	 * @static
 	 * instance of this
 	 */
 	private static $instance = null;
-	
+
 	// Config.
 	protected $mainwp_db_version = '8.16';
 	// Private.
 	protected $table_prefix;
-	
+
 	/** @var $wpdb wpdb */
 	protected $wpdb;
 
 	// Constructor.
 	public function __construct() {
-		
+
 		self::$instance = $this;
-		
+
 		/** @var $this ->wpdb wpdb */
 		global $wpdb;
 
 		$this->wpdb         = &$wpdb;
 		$this->table_prefix = $wpdb->prefix . 'mainwp_';
 	}
-	
+
 	protected function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
 			MainWP_Logger::instance()->info( __( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );

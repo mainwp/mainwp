@@ -29,7 +29,7 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-getgroups'                   => 'mainwp_getgroups',
 		'mainwp-activated-check'             => 'mainwp_activated_check',
 		'mainwp-extension-available-check'   => '',
-		'mainwp-manager-getextensions'		 => 'mainwp_manager_getextensions'
+		'mainwp-manager-getextensions'       => 'mainwp_manager_getextensions',
 	);
 
 	/**

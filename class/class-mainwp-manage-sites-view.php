@@ -656,7 +656,7 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-	
+
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );

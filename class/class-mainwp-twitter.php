@@ -24,7 +24,6 @@ class MainWP_Twitter {
 		return __CLASS__;
 	}
 
-
 	/**
 	 * Method get_filter()
 	 *

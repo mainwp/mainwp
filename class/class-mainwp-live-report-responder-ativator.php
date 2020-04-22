@@ -4,7 +4,6 @@
  *
  * Legacy Client Reports Extension.
  */
-
 namespace MainWP\Dashboard;
 
 /**
@@ -13,7 +12,6 @@ namespace MainWP\Dashboard;
  * @deprecated moved to external Extension.
  *  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
  */
-
 class MainWP_Live_Report_Responder_Activator {
 
 	protected $mainwpMainActivated = false;

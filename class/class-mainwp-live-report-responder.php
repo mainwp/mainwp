@@ -4,7 +4,6 @@
  *
  * Legacy Client Reports Extension.
  */
-
 namespace MainWP\Dashboard;
 
 /**
@@ -23,13 +22,21 @@ class MainWP_Live_Report_Responder {
 	protected $option;
 	protected $option_handle = 'mainwp_wpcreport_extension';
 
+	/**
+	 * Create Instance.
+	 * 
+	 * @return self $instance
+	 */
 	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
-
+	
+	/**
+	 * Construct method.
+	 */
 	public function __construct() {
 
 		$this->plugin_dir  = plugin_dir_path( __FILE__ );
@@ -43,6 +50,9 @@ class MainWP_Live_Report_Responder {
 		}
 	}
 
+	/**
+	 * Initialize Admin.
+	 */
 	public function admin_init() {
 
 		$translation_array = array( 'dashboard_sitename' => get_bloginfo( 'name' ) );
@@ -50,7 +60,7 @@ class MainWP_Live_Report_Responder {
 		$mwp_creport = new MainWP_Live_Reports();
 		$mwp_creport->admin_init();
 	}
-
+	
 }
 
 // phpcs:enable

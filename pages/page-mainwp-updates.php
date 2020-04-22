@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Updates Page.
+ */
 namespace MainWP\Dashboard;
 
 /**

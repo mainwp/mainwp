@@ -4,7 +4,6 @@
  *
  * Legacy Client Reports Extension.
  */
-
 namespace MainWP\Dashboard;
 
 /**

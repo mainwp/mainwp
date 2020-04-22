@@ -113,10 +113,10 @@ class MainWP_Manage_Backups {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
 		 */
-		
-		$sub_pages = array();
+
+		$sub_pages      = array();
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
-		self::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );		
+		self::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {

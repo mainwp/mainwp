@@ -30,9 +30,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return self::$instance;
 	}
 
-	
+
 	/**
-	 * Constructor	 
+	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct();

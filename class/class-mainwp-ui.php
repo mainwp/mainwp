@@ -75,7 +75,7 @@ class MainWP_UI {
 		<?php
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
 		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
-		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites);
+		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites );
 		self::render_select_sites_group( $groups, $tab_id, $selected_groups );
 		?>
 		<script type="text/javascript">

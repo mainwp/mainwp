@@ -3,12 +3,13 @@
  * MainWP Utility Helper
  *
  * Custom curl functions and PHP filesystem functions.
- *
- * phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+ * 
  */
 
 namespace MainWP\Dashboard;
 
+// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+	
 /**
  * MainWP Utility
  */
@@ -322,92 +323,6 @@ class MainWP_Utility {
 		return $dirs[1] . $userid . '/' . $dir . '/';
 	}
 
-	protected static function str_to_num( $Str, $Check, $Magic ) {
-		$Int32Unit = 4294967296;
-
-		$length = strlen( $Str );
-		for ( $i = 0; $i < $length; $i ++ ) {
-			$Check *= $Magic;
-
-			if ( $Check >= $Int32Unit ) {
-				$Check = ( $Check - $Int32Unit * (int) ( $Check / $Int32Unit ) );
-				$Check = ( $Check < - 2147483648 ) ? ( $Check + $Int32Unit ) : $Check;
-			}
-			$Check += ord( $Str{$i} );
-		}
-
-		return $Check;
-	}
-
-	/*
-	 * Genearate a hash for a url
-	 */
-	protected static function hash_url( $String ) {
-		$Check1 = self::str_to_num( $String, 0x1505, 0x21 );
-		$Check2 = self::str_to_num( $String, 0, 0x1003F );
-
-		$Check1 >>= 2;
-		$Check1   = ( ( $Check1 >> 4 ) & 0x3FFFFC0 ) | ( $Check1 & 0x3F );
-		$Check1   = ( ( $Check1 >> 4 ) & 0x3FFC00 ) | ( $Check1 & 0x3FF );
-		$Check1   = ( ( $Check1 >> 4 ) & 0x3C000 ) | ( $Check1 & 0x3FFF );
-
-		$T1 = ( ( ( ( $Check1 & 0x3C0 ) << 4 ) | ( $Check1 & 0x3C ) ) << 2 ) | ( $Check2 & 0xF0F );
-		$T2 = ( ( ( ( $Check1 & 0xFFFFC000 ) << 4 ) | ( $Check1 & 0x3C00 ) ) << 0xA ) | ( $Check2 & 0xF0F0000 );
-
-		return ( $T1 | $T2 );
-	}
-
-	/*
-	 * genearate a checksum for the hash string
-	 */
-	protected static function check_hash( $Hashnum ) {
-		$CheckByte = 0;
-		$Flag      = 0;
-
-		$HashStr = sprintf( '%u', $Hashnum );
-		$length  = strlen( $HashStr );
-
-		for ( $i = $length - 1; $i >= 0; $i -- ) {
-			$Re = $HashStr{$i};
-			if ( 1 === ( $Flag % 2 ) ) {
-				$Re += $Re;
-				$Re  = (int) ( $Re / 10 ) + ( $Re % 10 );
-			}
-			$CheckByte += $Re;
-			$Flag ++;
-		}
-
-		$CheckByte %= 10;
-		if ( 0 !== $CheckByte ) {
-			$CheckByte = 10 - $CheckByte;
-			if ( 1 === ( $Flag % 2 ) ) {
-				if ( 1 === ( $CheckByte % 2 ) ) {
-					$CheckByte += 9;
-				}
-				$CheckByte >>= 1;
-			}
-		}
-
-		return '7' . $CheckByte . $HashStr;
-	}
-
-	public static function count_recursive( $array, $levels ) {
-		if ( 0 === $levels ) {
-			return count( $array );
-		}
-		$levels --;
-
-		$count = 0;
-		foreach ( $array as $value ) {
-			if ( is_array( $value ) && ( 0 < $levels ) ) {
-				$count += self::count_recursive( $value, $levels - 1 );
-			} else {
-				$count += count( $value );
-			}
-		}
-
-		return $count;
-	}
 
 	public static function sortmulti( $array, $index, $order, $natsort = false, $case_sensitive = false ) {
 		$sorted = array();
@@ -863,6 +778,7 @@ EOT;
 	}
 
 	public static function date( $format ) {
+		// phpcs:ignore -- use local date function
 		return date( $format, self::get_timestamp( time() ) );
 	}
 
@@ -934,20 +850,6 @@ EOT;
 		global $current_user;
 
 		return ( $group->userid == $current_user->ID );
-	}
-
-	public static function can_edit_backuptask( &$task ) {
-		if ( null == $task ) {
-			return false;
-		}
-
-		if ( MainWP_System::instance()->is_single_user() ) {
-			return true;
-		}
-
-		global $current_user;
-
-		return ( $task->userid == $current_user->ID );
 	}
 
 	public static function get_current_wpid() {
@@ -1230,7 +1132,7 @@ EOT;
 		if ( is_array( $var ) || is_object( $var ) ) {
 			//phpcs:ignore -- for debug only
 			return print_r( $var, true );  // @codingStandardsIgnoreLine
-		} elseif ( is_string ( $var ) ) {
+		} elseif ( is_string( $var ) ) {
 			return $var;
 		}
 		return '';

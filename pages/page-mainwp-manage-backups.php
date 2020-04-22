@@ -113,7 +113,10 @@ class MainWP_Manage_Backups {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-backups
 		 */
-		self::$subPages = apply_filters( 'mainwp-getsubpages-backups', array() );
+		
+		$sub_pages = array();
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
+		self::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );		
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
@@ -293,7 +296,7 @@ class MainWP_Manage_Backups {
 			$backupTaskId = $_GET['id'];
 
 			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
-			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
+			if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
@@ -725,7 +728,7 @@ class MainWP_Manage_Backups {
 			$backupTaskId = $_GET['id'];
 
 			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
-			if ( ! MainWP_Utility::can_edit_backuptask( $backupTask ) ) {
+			if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;
 			}
 
@@ -766,7 +769,7 @@ class MainWP_Manage_Backups {
 		$useGlobal     = ( 'global' == $archiveFormat );
 		$useSite       = ( '' == $archiveFormat || 'site' == $archiveFormat );
 
-		self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite  );
+		self::render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite );
 	}
 
 	/**

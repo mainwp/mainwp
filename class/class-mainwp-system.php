@@ -136,7 +136,7 @@ class MainWP_System {
 		add_filter( 'mainwp-activated-check', array( &$this, 'activated_check' ) ); // @deprecated Use 'mainwp_activated_check' instead.
 		add_filter( 'mainwp_activated_check', array( &$this, 'activated_check' ) );
 
-		do_action_deprecated( 'mainwp-activated', array(), '4.0.1', 'mainwp_activated'  ); // @deprecated Use 'mainwp_activated' instead.
+		do_action_deprecated( 'mainwp-activated', array(), '4.0.1', 'mainwp_activated' ); // @deprecated Use 'mainwp_activated' instead.
 
 		do_action( 'mainwp_activated' );
 

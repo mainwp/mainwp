@@ -887,9 +887,9 @@ class MainWP_Manage_Sites_View {
 					</div>
 				</div>
 					
-				<?php do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit'  ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
+				<?php do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
 				
-				<?php do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit'  ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
+				<?php do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
 				
 				<?php do_action( 'mainwp_manage_sites_edit', $website ); ?>
 

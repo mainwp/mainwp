@@ -639,7 +639,7 @@ class MainWP_Updates {
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
 					<?php
 					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-						MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $show_updates_title, $site_offset);
+						MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
 					else :
 						MainWP_DB::data_seek( $websites, 0 );
 						MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
@@ -771,7 +771,7 @@ class MainWP_Updates {
 					?>
 				<!-- Per Item -->
 					<?php
-					MainWP_Updates_Per_Item::render_abandoned_themes(  $websites, $allThemesOutdate, $decodedDismissedThemes  );
+					MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
 					?>
 				
 				<?php endif; ?>

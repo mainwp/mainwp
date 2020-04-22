@@ -452,26 +452,20 @@ class MainWP_Updates_Overview {
 		<?php // Invisible section to support global updates all. ?>
 
 		<?php
-		self::render_global_update(
-
-				$user_can_update_wordpress,
-				$total_wp_upgrades,
-				$all_wp_updates,
-
-				$user_can_update_plugins,
-				$total_plugin_upgrades,
-				$all_plugins_updates,
-
-				$user_can_update_themes,
-				$total_theme_upgrades,
-				$all_themes_updates,
-
-				$mainwp_show_language_updates,
-				$user_can_update_translation,
-				$total_translation_upgrades,
-				$all_translations_updates
-
-			);
+		self::render_global_update( $user_can_update_wordpress,
+			$total_wp_upgrades,
+			$all_wp_updates,
+			$user_can_update_plugins,
+			$total_plugin_upgrades,
+			$all_plugins_updates,
+			$user_can_update_themes,
+			$total_theme_upgrades,
+			$all_themes_updates,
+			$mainwp_show_language_updates,
+			$user_can_update_translation,
+			$total_translation_upgrades,
+			$all_translations_updates
+		);
 
 		self::render_bottom( $websites, $globalView );
 	}

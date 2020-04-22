@@ -355,7 +355,7 @@ class MainWP_Sync {
 
 		// Sync action.
 		if ( ! $error ) {
-			do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.1', 'mainwp_site_synced'  ); // @deprecated Use 'mainwp_site_synced' instead.
+			do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.1', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead.
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
 

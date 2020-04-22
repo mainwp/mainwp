@@ -27,13 +27,13 @@ class MainWP_DB_Backup extends MainWP_DB {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
-
-		self::$instance->test_connection();
-
 		return self::$instance;
 	}
 
-	// Constructor.
+	
+	/**
+	 * Constructor	 
+	 */
 	public function __construct() {
 		parent::__construct();
 	}

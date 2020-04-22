@@ -88,6 +88,27 @@ class MainWP_Manage_Backups_Handler {
 
 		return $nothingChanged;
 	}
+	
+	/**
+	 * Can Edit Backup Task.
+	 *
+	 * @param $task Backup task.
+	 *
+	 * @return bool true|false.
+	 */
+	public static function can_edit_backuptask( &$task ) {
+		if ( null == $task ) {
+			return false;
+		}
+
+		if ( MainWP_System::instance()->is_single_user() ) {
+			return true;
+		}
+
+		global $current_user;
+
+		return ( $task->userid == $current_user->ID );
+	}
 
 	/** Update backup task. */
 	public static function update_backup() {
@@ -102,7 +123,7 @@ class MainWP_Manage_Backups_Handler {
 		$backupId = $_POST['id'];
 		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupId );
 
-		if ( ! MainWP_Utility::can_edit_backuptask( $task ) ) {
+		if ( ! self::can_edit_backuptask( $task ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
 		}
 
@@ -463,7 +484,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function remove_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $_POST['id'] );
-			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
+			if ( self::can_edit_backuptask( $task ) ) {
 				MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
@@ -475,7 +496,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function resume_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $_POST['id'] );
-			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
+			if ( self::can_edit_backuptask( $task ) ) {
 				MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 0 ) );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}
@@ -487,7 +508,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function pause_backup() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $_POST['id'] );
-			if ( MainWP_Utility::can_edit_backuptask( $task ) ) {
+			if ( self::can_edit_backuptask( $task ) ) {
 				MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			}

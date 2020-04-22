@@ -12,7 +12,6 @@ namespace MainWP\Dashboard;
  *
  * @deprecated moved to external Extension.
  */
-
 class MainWP_Live_Reports_Responder_DB {
 //  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
 	private $mainwp_wpcreport_db_version = '5.6';

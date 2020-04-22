@@ -1554,7 +1554,7 @@ updatesoverview_themes_upgrade_int = function ( slug, websiteId, bulkMode )
 };
 
 
-// phpcs:ignore -- complex function
+/* eslint-disable complexity */
 updatesoverview_global_upgrade_all = function ( which )
 {
 
@@ -1805,6 +1805,7 @@ updatesoverview_global_upgrade_all = function ( which )
     }
 
 };
+/* eslint-enable complexity */
 
 updatesoverview_upgrade_all_int = function ( pSitesToUpdate, pSitesToUpgrade, pSitesPluginSlugs, pSitesThemeSlugs, psitesTranslationSlugs )
 {

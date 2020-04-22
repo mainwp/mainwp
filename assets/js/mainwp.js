@@ -3733,7 +3733,7 @@ mainwp_import_users_next = function () {
     }, 'json' );
 };
 
-// phpcs:ignore -- not quite complex method
+/* eslint-disable complexity */
 mainwp_import_users_valid_data = function( decoded_data ) {	
 	
 	var errors = []; // array.
@@ -3791,6 +3791,7 @@ mainwp_import_users_valid_data = function( decoded_data ) {
 	};
 	
 };
+/* eslint-enable complexity */
 
 mainwp_import_users_response = function( response_data ) {
 		var line_num = response_data.line_number;
@@ -6959,6 +6960,7 @@ jQuery( document ).on( 'click', '#mainwp-do-sites-bulk-actions', function () {
 } );
 
 // Manage Sites Bulk Actions
+/* eslint-disable complexity */
 mainwp_managesites_doaction = function ( action ) {
 
   if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' ) {
@@ -7020,6 +7022,7 @@ mainwp_managesites_doaction = function ( action ) {
   return false;
   
 }
+/* eslint-enable complexity */
 
 mainwp_managesites_doaction_open = function( action ) {
 	jQuery( '#mainwp-manage-sites-body-table .check-column INPUT:checkbox:checked' ).each( function () {
@@ -7156,7 +7159,7 @@ mainwp_managesites_bulk_reconnect_specific = function ( pCheckedBox ) {
     return;
 };
 
-// phpcs:ignore  -- complex method
+/* eslint-disable complexity */
 function mainwp_according_table_sorting( pObj ) {
     var table, th, rows, switching, i, x, y, xVal, yVal, campare = false, shouldSwitch = false, dir, switchcount = 0, n, skip = 1;
     table = jQuery(pObj).closest('table')[0];
@@ -7252,6 +7255,7 @@ function mainwp_according_table_sorting( pObj ) {
         jQuery(pObj).addClass('descending');
     }
 }
+/* eslint-enable complexity */
 
 jQuery( document ).ready( function () {
     jQuery( '.handle-accordion-sorting' ).on( 'click', function() {

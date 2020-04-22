@@ -449,7 +449,7 @@ class MainWP_Themes {
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php echo $status; // escaped ?>] );
+				jQuery( '#mainwp_themes_search_by_status' ).dropdown(  'set selected', [<?php echo $status; // escaped. ?>] );
 			} );
 			</script>
 			<?php

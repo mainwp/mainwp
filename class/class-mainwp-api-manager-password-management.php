@@ -108,7 +108,7 @@ class MainWP_Api_Manager_Password_Management {
 	 *
 	 * Decrypts $encrypted
 	 *
-	 * @param mixed $encrypted Sting to Decrypt.
+	 * @param mixed $str Sting to Decrypt.
 	 * @param mixed $pass Sting.
 	 */
 	public static function decrypt( $str, $pass ) {

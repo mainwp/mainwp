@@ -14,12 +14,39 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Live_Report_Responder {
 
+	/**
+	 * @var null $instance Plugin Instance. 
+	 */
 	public static $instance = null;
+
+	/**
+	 * @var string $plugin_handle Plugin Handle.
+	 */
 	public $plugin_handle   = 'mainwp-wpcreport-extension';
+
+	/**
+	 * @var string $plugin_url Plugin Installation URL.
+	 */
 	public static $plugin_url;
-	public $plugin_slug;
+
+	/**
+	 * @var string $plugin_slug Plugin Slug.
+	 */
+	public $plugin_slug; 
+
+	/**
+	 * @var string $plugin_dir Plugin Directory. 
+	 */
 	public $plugin_dir;
-	protected $option;
+
+	/**
+	 * @var mixed $option Option variable.
+	 */
+	protected $option; 
+
+	/**
+	 * @var string $option_handle Option Handle.
+	 */
 	protected $option_handle = 'mainwp_wpcreport_extension';
 
 	/**

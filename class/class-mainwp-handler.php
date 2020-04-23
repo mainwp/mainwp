@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Post Handler.
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -6,17 +9,22 @@ namespace MainWP\Dashboard;
  */
 abstract class MainWP_Handler {
 
-
+	/**
+	 * @var undefined $security_nonces Security Nonce.
+	 */
 	protected $security_nonces;
 
-	// Force Extending class to define this method.
+	/**
+	 * Force Extending class to define this method.
+	 * 
+	 * @return void
+	 */
 	abstract protected function init();
 
-
 	/**
-	 * Method secure_request()
+	 * Secure Request
 	 *
-	 * Add security check to request parameter
+	 * Add security check to request parameter.
 	 *
 	 * @param string $action
 	 * @param string $query_arg
@@ -39,7 +47,7 @@ abstract class MainWP_Handler {
 				$ajaxPosts = array();
 			}
 
-			// If already processed, just quit!
+			// If already processed, just quit.
 			if ( isset( $ajaxPosts[ $action ] ) && ( $ajaxPosts[ $action ] == $_POST['dts'] ) ) {
 				die( wp_json_encode( array( 'error' => __( 'Double request!', 'mainwp' ) ) ) );
 			}
@@ -50,9 +58,9 @@ abstract class MainWP_Handler {
 	}
 
 	/**
-	 * Method check_security()
+	 * Security Check
 	 *
-	 * Check security request
+	 * Check security request.
 	 *
 	 * @param string $action
 	 * @param string $query_arg
@@ -75,9 +83,9 @@ abstract class MainWP_Handler {
 	}
 
 	/**
-	 * Method add_action()
+	 * Add Action
 	 *
-	 * Add ajax action
+	 * Add ajax action.
 	 *
 	 * @param string $action
 	 * @param string $callback
@@ -88,11 +96,11 @@ abstract class MainWP_Handler {
 	}
 
 	/**
-	 * Method add_security_nonce()
+	 * Add Security Nonce
 	 *
-	 * Add security nonce
+	 * Add security nonce to the action.
 	 *
-	 * @param string $action
+	 * @param string $action Action being performed.
 	 */
 	public function add_security_nonce( $action ) {
 		if ( ! is_array( $this->security_nonces ) ) {
@@ -105,6 +113,11 @@ abstract class MainWP_Handler {
 		$this->security_nonces[ $action ] = wp_create_nonce( $action );
 	}
 
+	/**
+	 * Get Security Nonces.
+	 * 
+	 * @return mixed security_nonces. 
+	 */
 	public function get_security_nonces() {
 		return $this->security_nonces;
 	}

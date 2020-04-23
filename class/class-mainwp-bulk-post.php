@@ -1,4 +1,7 @@
 <?php
+/**
+ * MainWP Bulk Post Class
+ */
 namespace MainWP\Dashboard;
 
 /**
@@ -18,7 +21,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  handle_edit_bulkpost().
+	 * Bulkpost Edit Handler.
 	 */
 	public function handle_edit_bulkpost() {
 
@@ -39,7 +42,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  redirect_edit_bulkpost().
+	 * Bulkpost Edit Redirector.
 	 *
 	 * @param string $location
 	 * @param int    $post_id
@@ -56,7 +59,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  redirect_edit_bulkpage().
+	 * Bulkpage Edit Redirector.
 	 *
 	 * @param string $location
 	 * @param int    $post_id
@@ -75,7 +78,7 @@ class MainWP_Bulk_Post {
 
 
 	/**
-	 * Method  save_bulkpost().
+	 * Save Bulkpost.
 	 *
 	 * @param int $post_id
 	 */
@@ -119,7 +122,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  save_bulkpage().
+	 * Save Bulkpage.
 	 *
 	 * @param int $post_id
 	 */
@@ -163,7 +166,7 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  create_post_type().
+	 * Create Post Type.
 	 */
 	public function create_post_type() {
 		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;

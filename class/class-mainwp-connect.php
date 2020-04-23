@@ -1214,14 +1214,14 @@ class MainWP_Connect {
 			}
 
 			return self::m_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
 				throw $e;
 			}
 
 			try {
 				return self::m_fetch_url( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
-			} catch ( Exception $ex ) {
+			} catch ( \Exception $ex ) {
 				throw $e;
 			}
 		}

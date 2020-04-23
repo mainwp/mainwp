@@ -116,7 +116,7 @@ class MainWP_QQ2_File_Uploader {
 							__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
 				);
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			return array( 'error' => $e->getMessage() );
 		}
 	}

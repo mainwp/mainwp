@@ -195,7 +195,7 @@ class MainWP_Manage_Sites_Handler {
 		} elseif ( empty( $backupTaskProgress->fetchResult ) ) {
 			try {
 				$temp = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				// ok!
 			}
 
@@ -876,7 +876,7 @@ class MainWP_Manage_Sites_Handler {
 			} else {
 				throw new \Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			die( 'ERROR ' . $e->getMessage() );
 		}
 

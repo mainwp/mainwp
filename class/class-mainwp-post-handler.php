@@ -503,7 +503,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			$information = MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 
@@ -550,7 +550,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			die( wp_json_encode( array( 'result' => MainWP_Updates_Overview::dismiss_sync_errors() ) ) );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
 		}
 	}
@@ -707,7 +707,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 					update_option( 'mainwp_fixed_security_2022', 1 );
 				}
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$information = array( 'error' => __( 'fetch_url_authed exception', 'mainwp' ) );
 		}
 

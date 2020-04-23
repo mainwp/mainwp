@@ -253,7 +253,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			} else {
 				$output = array();
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$output = array( 'error' => $e->getMessage() );
 		}
 
@@ -454,7 +454,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			wp_send_json( array( 'result' => MainWP_Updates_Overview::check_backups() ) );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			die( wp_json_encode( array( 'error' => $e->getMessage() ) ) );
 		}
 	}

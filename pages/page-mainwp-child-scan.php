@@ -148,7 +148,7 @@ class MainWP_Child_Scan {
 			}
 
 			die( wp_json_encode( array( 'success' => 'mainwp-child-id users found' ) ) );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			die( 'error' );
 		}
 	}

@@ -338,7 +338,7 @@ class MainWP_Manage_Backups_Handler {
 					$errorOutput .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
 					$errorOutput .= $tmpErrorOutput . '<br />';
 				}
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				if ( null == $errorOutput ) {
 					$errorOutput = '';
 				}

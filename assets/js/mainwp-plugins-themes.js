@@ -461,9 +461,7 @@ updatesoverview_upgrade_plugintheme_all = function ( what, id, noCheck ) {
             } );
 
             var siteName = jQuery( "#wp_" + pWhat + "_upgrades_" + pId ).attr('site_name');
-            updatesoverview_upgrade_plugintheme_list_popup(pWhat, pId, siteName, list);
-            // proccessed by popup
-            //updatesoverview_upgrade_plugintheme_list( what, pId, list, true );
+            updatesoverview_upgrade_plugintheme_list_popup(pWhat, pId, siteName, list);            
         }
     }( id, what );
 

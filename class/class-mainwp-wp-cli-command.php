@@ -17,7 +17,7 @@ if ( ! defined( 'WP_CLI' ) ) {
 /**
  * Manage all child sites added to the MainWP Dashboard.
  */
-class MainWP_WP_CLI_Command extends WP_CLI_Command {
+class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 	/**
 	 * Method init()
@@ -34,7 +34,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 	 * Adds the MainWP WP CLI Commands via WP_CLI::add_command
 	 */
 	public static function init_wpcli_commands() {
-		WP_CLI::add_command( 'mainwp', 'MainWP_WP_CLI_Command' );
+		\WP_CLI::add_command( 'mainwp', 'MainWP_WP_CLI_Command' );
 	}
 
 	/**
@@ -139,7 +139,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::warning( '  Sync failed' );
 					$warnings++;
 				}
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
@@ -204,7 +204,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					WP_CLI::warning( '  Reconnect failed' );
 					$warnings++;
 				}
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
@@ -473,7 +473,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					try {
 						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
 							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
@@ -737,7 +737,7 @@ class MainWP_WP_CLI_Command extends WP_CLI_Command {
 					try {
 						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
 						WP_CLI::success( 'Updates completed' );
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
 							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );

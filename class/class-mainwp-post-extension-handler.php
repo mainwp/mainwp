@@ -117,7 +117,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$result = array();
 		try {
 			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( wp_json_encode( $return ) );
 		}
@@ -175,7 +175,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$result = array();
 		try {
 			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( wp_json_encode( $return ) );
 		}

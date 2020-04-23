@@ -980,7 +980,7 @@ class MainWP_System_Cron_Jobs {
 							MainWP_Manage_Sites_Handler::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
 							$sitesCheckCompleted[ $siteId ] = true;
 							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
-						} catch ( Exception $e ) {
+						} catch ( \Exception $e ) {
 							$sitesCheckCompleted[ $siteId ] = false;
 							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
 						}
@@ -1010,7 +1010,7 @@ class MainWP_System_Cron_Jobs {
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						// ok.
 					}
 				}
@@ -1037,7 +1037,7 @@ class MainWP_System_Cron_Jobs {
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
 						}
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						// ok.
 					}
 				}
@@ -1053,7 +1053,7 @@ class MainWP_System_Cron_Jobs {
 
 					try {
 						MainWP_Connect::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
-					} catch ( Exception $e ) {
+					} catch ( \Exception $e ) {
 						// ok.
 					}
 				}
@@ -1137,7 +1137,7 @@ class MainWP_System_Cron_Jobs {
 				}
 
 				wp_remote_get( $url . 'wp-cron.php' );
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				// ok.
 			}
 		}
@@ -1275,7 +1275,7 @@ class MainWP_System_Cron_Jobs {
 					if ( MainWP_Manage_Sites_View::m_reconnect_site( $website ) ) {
 						MainWP_Logger::instance()->info_for_website( $website, 'reconnect', 'Reconnected successfully' );
 					}
-				} catch ( Exception $e ) {
+				} catch ( \Exception $e ) {
 					MainWP_Logger::instance()->warning_for_website( $website, 'reconnect', $e->getMessage() );
 				}
 			}

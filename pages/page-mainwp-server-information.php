@@ -866,16 +866,16 @@ class MainWP_Server_Information {
 				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
-					@show_source( ABSPATH . 'wp-config.php' );
+					show_source( ABSPATH . 'wp-config.php' );
 				} else {
 
-					$files       = @get_included_files();
+					$files       = get_included_files();
 					$configFound = false;
 					if ( is_array( $files ) ) {
 						foreach ( $files as $file ) {
 							if ( stristr( $file, 'wp-config.php' ) ) {
 								$configFound = true;
-								@show_source( $file );
+								show_source( $file );
 								break;
 							}
 						}

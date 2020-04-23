@@ -9,7 +9,7 @@ namespace MainWP\Dashboard;
 /**
  * MainWP_Exception
  */
-class MainWP_Exception extends Exception {
+class MainWP_Exception extends \Exception {
 
 
 	/**

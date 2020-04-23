@@ -622,7 +622,7 @@ class MainWP_Post_Page_Handler {
 					if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
 						$new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
 					}
-				} catch ( Exception $e ) {
+				} catch ( \Exception $e ) {
 					// ok.
 				}
 			}
@@ -639,7 +639,7 @@ class MainWP_Post_Page_Handler {
 								if ( null !== $upload ) {
 									$replaceAttachedIds[ $gallery['id'] ] = $upload['id'];
 								}
-							} catch ( Exception $e ) {
+							} catch ( \Exception $e ) {
 								// ok.
 							}
 						}
@@ -719,7 +719,7 @@ class MainWP_Post_Page_Handler {
 				if ( null !== $upload ) {
 					update_post_meta( $new_post_id, '_thumbnail_id', $upload['id'] );
 				}
-			} catch ( Exception $e ) {
+			} catch ( \Exception $e ) {
 				// ok.
 			}
 		}

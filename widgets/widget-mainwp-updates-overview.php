@@ -100,28 +100,6 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Method render_last_update()
-	 *
-	 * Check when the Child Site was last synced.
-	 */
-	public static function render_last_update() {
-		$currentwp = MainWP_Utility::get_current_wpid();
-		if ( ! empty( $currentwp ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $currentwp );
-			$dtsSync = $website->dtsSync;
-		} else {
-			$dtsSync = MainWP_DB::instance()->get_first_synced_site();
-		}
-
-		if ( 0 == $dtsSync ) {
-			// No settings saved!
-			return;
-		} else {
-			esc_html_e( '(Last completed sync: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $dtsSync ) ) . ')';
-		}
-	}
-
-	/**
 	 * Method sync_site()
 	 *
 	 * Sync Child Site.
@@ -182,7 +160,7 @@ class MainWP_Updates_Overview {
 			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
 
-		$userExtension = MainWP_DB::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
 		$websites      = MainWP_DB::instance()->query( $sql );
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
@@ -400,7 +378,7 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result                   = MainWP_DB::instance()->get_last_sync_status();
+			$result                   = MainWP_DB_Tool::instance()->get_last_sync_status();			
 			$sync_status              = $result['sync_status'];
 			$last_sync                = $result['last_sync'];
 						$last_dtsSync = $result['last_sync'];

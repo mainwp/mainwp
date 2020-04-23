@@ -20,9 +20,7 @@ class MainWP_DB_Base {
 	 * instance of this
 	 */
 	private static $instance = null;
-
-	// Config.
-	protected $mainwp_db_version = '8.16';
+	
 	// Private.
 	protected $table_prefix;
 

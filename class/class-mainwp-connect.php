@@ -675,7 +675,7 @@ class MainWP_Connect {
 					self::lock( $identifier );
 
 					if ( 0 < $minimumDelay ) {
-						$lastRequest = MainWP_DB::instance()->get_last_request_timestamp();
+						$lastRequest = MainWP_DB_Tool::instance()->get_last_request_timestamp();
 						if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 							self::release( $identifier );
 							usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
@@ -687,7 +687,7 @@ class MainWP_Connect {
 						$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 						if ( null != $ip && '' != $ip ) {
-							$lastRequest = MainWP_DB::instance()->get_last_request_timestamp( $ip );
+							$lastRequest = MainWP_DB_Tool::instance()->get_last_request_timestamp( $ip );
 
 							if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
 								self::release( $identifier );
@@ -712,10 +712,10 @@ class MainWP_Connect {
 						$first = false;
 					}
 
-					MainWP_DB::instance()->close_open_requests();
+					MainWP_DB_Tool::instance()->close_open_requests();
 
 					if ( 0 < $maximumRequests ) {
-						$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests();
+						$nrOfOpenRequests = MainWP_DB_Tool::instance()->get_nrof_open_requests();
 						if ( $nrOfOpenRequests >= $maximumRequests ) {
 							self::release( $identifier );
 							usleep( 200000 );
@@ -727,7 +727,7 @@ class MainWP_Connect {
 						$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 						if ( null != $ip && '' != $ip ) {
-							$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests( $ip );
+							$nrOfOpenRequests = MainWP_DB_Tool::instance()->get_nrof_open_requests( $ip );
 							if ( $nrOfOpenRequests >= $maximumIPRequests ) {
 								self::release( $identifier );
 								usleep( 200000 );
@@ -740,7 +740,7 @@ class MainWP_Connect {
 				}
 
 				if ( null != $website ) {
-					MainWP_DB::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
+					MainWP_DB_Tool::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
 				}
 
 				if ( null != $identifier ) {
@@ -750,7 +750,7 @@ class MainWP_Connect {
 				$data = curl_exec( $ch );
 
 				if ( null != $website ) {
-					MainWP_DB::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
+					MainWP_DB_Tool::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
 				}
 
 				if ( null != $handler ) {
@@ -1253,7 +1253,7 @@ class MainWP_Connect {
 				self::lock( $identifier );
 
 				if ( 0 < $minimumDelay ) {
-					$lastRequest = MainWP_DB::instance()->get_last_request_timestamp();
+					$lastRequest = MainWP_DB_Tool::instance()->get_last_request_timestamp();
 					if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 						self::release( $identifier );
 						usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
@@ -1265,7 +1265,7 @@ class MainWP_Connect {
 					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 					if ( null != $ip && '' !== $ip ) {
-						$lastRequest = MainWP_DB::instance()->get_last_request_timestamp( $ip );
+						$lastRequest = MainWP_DB_Tool::instance()->get_last_request_timestamp( $ip );
 
 						if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
 							self::release( $identifier );
@@ -1290,10 +1290,10 @@ class MainWP_Connect {
 					$first = false;
 				}
 
-				MainWP_DB::instance()->close_open_requests();
+				MainWP_DB_Tool::instance()->close_open_requests();
 
 				if ( 0 < $maximumRequests ) {
-					$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests();
+					$nrOfOpenRequests = MainWP_DB_Tool::instance()->get_nrof_open_requests();
 					if ( $nrOfOpenRequests >= $maximumRequests ) {
 						self::release( $identifier );
 						usleep( 200000 );
@@ -1305,7 +1305,7 @@ class MainWP_Connect {
 					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 
 					if ( null != $ip && '' != $ip ) {
-						$nrOfOpenRequests = MainWP_DB::instance()->get_nrof_open_requests( $ip );
+						$nrOfOpenRequests = MainWP_DB_Tool::instance()->get_nrof_open_requests( $ip );
 						if ( $nrOfOpenRequests >= $maximumIPRequests ) {
 							self::release( $identifier );
 							usleep( 200000 );
@@ -1319,7 +1319,7 @@ class MainWP_Connect {
 		}
 
 		if ( null != $website ) {
-			MainWP_DB::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
+			MainWP_DB_Tool::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
 		}
 
 		if ( null != $identifier ) {
@@ -1462,7 +1462,7 @@ class MainWP_Connect {
 		$ip   = gethostbyname( $host );
 
 		if ( null != $website ) {
-			MainWP_DB::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
+			MainWP_DB_Tool::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
 		}
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;

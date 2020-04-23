@@ -291,7 +291,7 @@ class MainWP_Manage_Sites {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
-			$groups = MainWP_DB::instance()->get_groups_for_current_user();
+			$groups = MainWP_DB_Tool::instance()->get_groups_for_current_user();
 			if ( ! is_array( $groups ) ) {
 				$groups = array();
 			}

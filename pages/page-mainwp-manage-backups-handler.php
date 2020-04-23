@@ -72,7 +72,7 @@ class MainWP_Manage_Backups_Handler {
 				$newGroupIds = '';
 				$groupIds    = explode( ',', $backupTask->groups );
 				foreach ( $groupIds as $groupId ) {
-					$group = MainWP_DB::instance()->get_group_by_id( $groupId );
+					$group = MainWP_DB_Tool::instance()->get_group_by_id( $groupId );
 					if ( ! empty( $group ) ) {
 						$newGroupIds .= ',' . $groupId;
 					}
@@ -276,7 +276,7 @@ class MainWP_Manage_Backups_Handler {
 
 		$lastStartNotification = $task->lastStartNotificationSent;
 		if ( $updateRun && ( 1 == get_option( 'mainwp_notificationOnBackupStart' ) ) && ( $lastStartNotification < $task->last_run ) ) {
-			$email = MainWP_DB::instance()->get_user_notification_email( $task->userid );
+			$email = MainWP_DB_Tool::instance()->get_user_notification_email( $task->userid );
 			if ( '' != $email ) {
 				$output = 'A scheduled backup has started with MainWP on ' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( time() ) ) . ' for the following ' . count( $sites ) . ' sites:<br />';
 
@@ -379,7 +379,7 @@ class MainWP_Manage_Backups_Handler {
 			MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
 
 			if ( 1 == get_option( 'mainwp_notificationOnBackupFail' ) ) {
-				$email = MainWP_DB::instance()->get_user_notification_email( $task->userid );
+				$email = MainWP_DB_Tool::instance()->get_user_notification_email( $task->userid );
 				if ( '' != $email ) {
 					$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 					if ( '' != $task->backup_errors ) {

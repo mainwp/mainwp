@@ -224,9 +224,9 @@ class MainWP_System_Handler {
 		}
 
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-			$userExtension            = MainWP_DB::instance()->get_user_extension();
+			$userExtension            = MainWP_DB_Tool::instance()->get_user_extension();
 			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
-			MainWP_DB::instance()->update_user_extension( $userExtension );
+			MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
 		}
 
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {

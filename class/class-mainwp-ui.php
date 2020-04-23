@@ -54,7 +54,7 @@ class MainWP_UI {
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$groups   = MainWP_DB::instance()->get_not_empty_groups( null, $enableOfflineSites );
+		$groups   = MainWP_DB_Tool::instance()->get_not_empty_groups( null, $enableOfflineSites );
 
 		// support staging extension.
 		$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
@@ -359,7 +359,7 @@ class MainWP_UI {
 				<option value="" class="item"><?php esc_html_e( 'All Groups', 'mainwp' ); ?></option>
 				<option <?php echo ( -1 === $g ) ? 'selected' : ''; ?> value="-1" class="item"><?php esc_html_e( 'All Groups', 'mainwp' ); ?></option>
 				<?php
-				$groups = MainWP_DB::instance()->get_groups_for_manage_sites();
+				$groups = MainWP_DB_Tool::instance()->get_groups_for_manage_sites();
 				foreach ( $groups as $group ) {
 					?>
 					<option class="item" <?php echo ( $g == $group->id ) ? 'selected' : ''; ?> value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></option>

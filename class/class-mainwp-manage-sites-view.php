@@ -721,7 +721,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$groups = MainWP_DB::instance()->get_groups_for_current_user();
+		$groups = MainWP_DB_Tool::instance()->get_groups_for_current_user();
 
 		?>
 
@@ -774,7 +774,7 @@ class MainWP_Manage_Sites_View {
 
 				<?php
 
-				$groupsSite  = MainWP_DB::instance()->get_groups_by_website_id( $website->id );
+				$groupsSite  = MainWP_DB_Tool::instance()->get_groups_by_website_id( $website->id );
 				$init_groups = '';
 				foreach ( $groups as $group ) {
 					$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
@@ -1073,7 +1073,7 @@ class MainWP_Manage_Sites_View {
 								}
 							}
 							foreach ( $tmpArr as $tmp ) {
-								$getgroup = MainWP_DB::instance()->get_group_by_name_for_user( trim( $tmp ) );
+								$getgroup = MainWP_DB_Tool::instance()->get_group_by_name( trim( $tmp ) );
 								if ( $getgroup ) {
 									if ( ! in_array( $getgroup->id, $groupids, true ) ) {
 										$groupids[] = $getgroup->id;
@@ -1087,7 +1087,7 @@ class MainWP_Manage_Sites_View {
 						if ( ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) ) {
 							$tmpArr = preg_split( '/[;,]/', $params['groupnames_import'] );
 							foreach ( $tmpArr as $tmp ) {
-								$group = MainWP_DB::instance()->get_group_by_name_for_user( trim( $tmp ) );
+								$group = MainWP_DB_Tool::instance()->get_group_by_name( trim( $tmp ) );
 								if ( $group ) {
 									if ( ! in_array( $group->id, $groupids, true ) ) {
 										$groupids[] = $group->id;

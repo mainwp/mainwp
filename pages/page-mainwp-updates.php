@@ -234,13 +234,13 @@ class MainWP_Updates {
 			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
 
-		$userExtension = MainWP_DB::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
 		$websites      = MainWP_DB::instance()->query( $sql );
 
 		if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) {
 			$site_offset = array();
 			$all_groups  = array();
-			$groups      = MainWP_DB::instance()->get_groups_for_current_user();
+			$groups      = MainWP_DB_Tool::instance()->get_groups_for_current_user();
 			foreach ( $groups as $group ) {
 				$all_groups[ $group->id ] = $group->name;
 			}

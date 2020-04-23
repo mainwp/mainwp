@@ -97,7 +97,7 @@ class MainWP_Hooks {
 				$ret['siteid'] = self::update_wp_site( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
-				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
+				$website                           = MainWP_DB_Tool::instance()->get_websites_by_url( $params['url'] );
 				list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $params );
 
 				if ( '' !== $error ) {
@@ -283,7 +283,7 @@ class MainWP_Hooks {
 
 	public function notify_user( $userId, $subject, $content ) {
 		wp_mail(
-			MainWP_DB::instance()->get_user_notification_email( $userId ),
+			MainWP_DB_Tool::instance()->get_user_notification_email( $userId ),
 			$subject,
 			$content,
 			array(
@@ -298,7 +298,7 @@ class MainWP_Hooks {
 	}
 
 	public function get_user_extension() {
-		return MainWP_DB::instance()->get_user_extension();
+		return MainWP_DB_Tool::instance()->get_user_extension();
 	}
 
 	public function get_website_options( $boolean, $website, $name = '' ) {
@@ -317,7 +317,7 @@ class MainWP_Hooks {
 	}
 
 	public function get_websites_by_url( $url ) {
-		return MainWP_DB::instance()->get_websites_by_url( $url );
+		return MainWP_DB_Tool::instance()->get_websites_by_url( $url );
 	}
 
 	/**

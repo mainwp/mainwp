@@ -18,7 +18,7 @@ class MainWP_Manage_Sites_Update_View {
 
 	public static function render_individual_updates( $id ) {
 		global $current_user;
-		$userExtension = MainWP_DB::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites      = MainWP_DB::instance()->query( $sql );
 

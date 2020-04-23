@@ -613,7 +613,7 @@ class MainWP_System_Cron_Jobs {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );
 			}
 
-			$userExtension = MainWP_DB::instance()->get_user_extension_by_user_id( $userid );
+			$userExtension = MainWP_DB_Tool::instance()->get_user_extension_by_user_id( $userid );
 
 			$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 			if ( ! is_array( $decodedIgnoredPlugins ) ) {

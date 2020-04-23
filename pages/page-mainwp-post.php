@@ -119,7 +119,7 @@ class MainWP_Post {
 
 		wp_enqueue_script(
 			'mainwp-post',
-			MAINWP_PLUGIN_URL . 'assets/js/mainwp-post.js',
+			MAINWP_PLUGIN_URL . 'assets/js/mainwp-post-edit.js',
 			array(
 				'jquery',
 				'postbox',

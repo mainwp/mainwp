@@ -719,7 +719,7 @@ class MainWP_Extensions_Handler {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 
 		if ( isset( $groupid ) ) {
-			$group = MainWP_DB::instance()->get_group_by_id( $groupid );
+			$group = MainWP_DB_Tool::instance()->get_group_by_id( $groupid );
 			if ( ! MainWP_Utility::can_edit_group( $group ) ) {
 				return false;
 			}
@@ -739,7 +739,7 @@ class MainWP_Extensions_Handler {
 			);
 		}
 
-		$groups = MainWP_DB::instance()->get_groups_and_count( null, $for_manager );
+		$groups = MainWP_DB_Tool::instance()->get_groups_and_count( null, $for_manager );
 		$output = array();
 		foreach ( $groups as $group ) {
 			$websites    = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
@@ -810,7 +810,7 @@ class MainWP_Extensions_Handler {
 					return false;
 			}
 
-			$clone_sites = MainWP_DB::instance()->get_websites_by_url( $clone_url );
+			$clone_sites = MainWP_DB_Tool::instance()->get_websites_by_url( $clone_url );
 			if ( $clone_sites ) {
 				$clone_site = current( $clone_sites );
 				if ( $clone_site && $clone_site->is_staging ) {
@@ -849,9 +849,9 @@ class MainWP_Extensions_Handler {
 					$website = MainWP_DB::instance()->get_website_by_id( $id );
 					if ( MainWP_Utility::can_edit_website( $website ) ) {
 						MainWP_Sync::sync_site( $website, false, false );
-						$group = MainWP_DB::instance()->get_group_by_id( $group_id );
+						$group = MainWP_DB_Tool::instance()->get_group_by_id( $group_id );
 						if ( MainWP_Utility::can_edit_group( $group ) ) {
-							MainWP_DB::instance()->update_group_site( $group->id, $id );
+							MainWP_DB_Tool::instance()->update_group_site( $group->id, $id );
 						}
 					}
 				}
@@ -888,7 +888,7 @@ class MainWP_Extensions_Handler {
 			if ( '/' !== substr( $clone_url, - 1 ) ) {
 				$clone_url .= '/';
 			}
-			$clone_sites = MainWP_DB::instance()->get_websites_by_url( $clone_url );
+			$clone_sites = MainWP_DB_Tool::instance()->get_websites_by_url( $clone_url );
 			if ( ! empty( $clone_sites ) ) {
 				$clone_site = current( $clone_sites );
 
@@ -945,7 +945,7 @@ class MainWP_Extensions_Handler {
 
 		global $current_user;
 		if ( ! empty( $newName ) ) {
-			$groupId = MainWP_DB::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ) );
+			$groupId = MainWP_DB_Tool::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ) );
 			do_action( 'mainwp_added_new_group', $groupId );
 			return $groupId;
 		}

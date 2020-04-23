@@ -3,13 +3,12 @@
  * MainWP Utility Helper
  *
  * Custom curl functions and PHP filesystem functions.
- * 
  */
 
 namespace MainWP\Dashboard;
 
 // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
-	
+
 /**
  * MainWP Utility
  */

@@ -9,10 +9,9 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_DB
- * 
  */
 class MainWP_DB extends MainWP_DB_Base {
-	
+
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 		
 	// Config.
@@ -40,7 +39,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	// Constructor.
 	public function __construct() {
-		parent::__construct();		
+		parent::__construct();
 	}
 
 	// Installs new DB.
@@ -279,7 +278,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 	}
 
-	
+
 	public function get_option_view( $extra = array() ) {
 		$view = '(SELECT intwp.id AS wpid,
                          (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,

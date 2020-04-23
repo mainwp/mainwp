@@ -88,7 +88,7 @@ class MainWP_Manage_Backups_Handler {
 
 		return $nothingChanged;
 	}
-	
+
 	/**
 	 * Can Edit Backup Task.
 	 *

@@ -61,10 +61,10 @@ class MainWP_Page {
 		 *
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
 		 */
-		$sub_pages = array();
+		$sub_pages      = array();
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_page', $sub_pages );
-		
+
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
 				if ( isset( $subPage['no_page'] ) && $subPage['no_page'] ) {

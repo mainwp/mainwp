@@ -378,7 +378,7 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result                   = MainWP_DB_Tool::instance()->get_last_sync_status();			
+			$result                   = MainWP_DB_Tool::instance()->get_last_sync_status();
 			$sync_status              = $result['sync_status'];
 			$last_sync                = $result['last_sync'];
 						$last_dtsSync = $result['last_sync'];

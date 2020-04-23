@@ -13,10 +13,10 @@ namespace MainWP\Dashboard;
 class MainWP_DB extends MainWP_DB_Base {
 
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
-		
+
 	// Config.
 	protected $mainwp_db_version = '8.16';
-	
+
 	/**
 	 * @static
 	 * instance of this

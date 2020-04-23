@@ -9,7 +9,6 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_DB_Tool
- * 
  */
 class MainWP_DB_Tool extends MainWP_DB {
 		
@@ -34,7 +33,7 @@ class MainWP_DB_Tool extends MainWP_DB {
 
 	// Constructor.
 	public function __construct() {
-		parent::__construct();		
+		parent::__construct();
 	}
 
 	public function get_last_sync_status( $userId = null ) {

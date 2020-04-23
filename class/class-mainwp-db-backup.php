@@ -134,11 +134,12 @@ class MainWP_DB_Backup extends MainWP_DB {
 	public function add_backup_task( $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename,
 								$template, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat,
 								$maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) {
-		
+
 		// to fix null value.
-		if ( empty($exclude) )
+		if ( empty($exclude) ) {
 			$exclude = '';
-		
+		}
+
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			$values = array(
 				'userid'                         => $userid,
@@ -168,7 +169,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 				'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
 				'maximumFileDescriptors'         => $maximumFileDescriptors,
 			);
-			
+
 			error_log(print_r($values, true));
 
 			if ( $this->wpdb->insert( $this->table_name( 'wp_backup' ), $values ) ) {

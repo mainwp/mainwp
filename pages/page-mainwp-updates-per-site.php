@@ -62,7 +62,7 @@ class MainWP_Updates_Per_Site {
 					}
 					?>
 				<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
-					<td>						
+					<td>
 						<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 						<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
 					</td>
@@ -98,7 +98,6 @@ class MainWP_Updates_Per_Site {
 				</tr>
 			</tfoot>
 		</table>
-		
 		<?php
 	}
 
@@ -709,7 +708,7 @@ class MainWP_Updates_Per_Site {
 				<th class="right aligned"><?php esc_html_e( 'Abandoned', 'mainwp' ); ?></th>
 			</tr>
 		</tfoot>
-	</table>	
+	</table>
 		<?php
 	}
 

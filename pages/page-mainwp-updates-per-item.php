@@ -233,13 +233,11 @@ class MainWP_Updates_Per_Item {
 									MainWP_Updates::set_continue_update_html_selector( 'themes_upgrade_all', $slug );
 								}
 								?>
-																
 								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 					</td>
 				</tr>
-
 				<tr style="display:none" class="themes-bulk-updates" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
 					<td colspan="5" class="ui content">
 						<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table">
@@ -272,7 +270,6 @@ class MainWP_Updates_Per_Item {
 											}
 										}
 									}
-
 									$ignored_themes = json_decode( $website->ignored_themes, true );
 									if ( is_array( $ignored_themes ) ) {
 										$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
@@ -316,10 +313,9 @@ class MainWP_Updates_Per_Item {
 				<th class="no-sort right aligned"></th>
 			</tr>
 		</tfoot>
-	</table>	
+	</table>
 		<?php
 	}
-
 
 	/**
 	 * Method render_trans_update()
@@ -367,7 +363,6 @@ class MainWP_Updates_Per_Item {
 									MainWP_Updates::set_continue_update_html_selector( 'translations_upgrade_all', $slug );
 								}
 								?>
-																
 								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>

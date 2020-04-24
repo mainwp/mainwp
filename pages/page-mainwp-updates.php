@@ -606,9 +606,7 @@ class MainWP_Updates {
 		self::render_twitter_notice();
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $userExtension );
-
 		?>
-		
 	<div class="ui segment" id="mainwp-manage-updates">
 		<?php
 			$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
@@ -679,7 +677,7 @@ class MainWP_Updates {
 			</div>
 			<!-- END WordPress Updates -->
 		<?php } elseif ( 'plugins-updates' === $current_tab ) { ?>
-			<!-- Plugins Updates -->			
+			<!-- Plugins Updates -->
 			<div class="ui active tab" data-tab="plugins-updates">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
@@ -702,7 +700,7 @@ class MainWP_Updates {
 			</div>
 			<!-- END Plugins Updates -->
 		<?php } elseif ( 'themes-updates' === $current_tab ) { ?>
-			<!-- Themes Updates -->			
+			<!-- Themes Updates -->
 			<div class="ui active tab" data-tab="themes-updates">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
@@ -725,7 +723,7 @@ class MainWP_Updates {
 			</div>
 			<!-- END Themes Updates -->
 		<?php } elseif ( 'translations-updates' === $current_tab ) { ?>
-			<!-- Translatinos Updates -->			
+			<!-- Translatinos Updates -->
 			<?php if ( 1 === $mainwp_show_language_updates ) { ?>
 			<div class="ui active tab" data-tab="translations-updates">
 				<?php
@@ -736,7 +734,7 @@ class MainWP_Updates {
 				} else {
 					?>
 					<!-- Per Item -->
-					<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
+					<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>
 				<?php }; ?>
 			</div>
 			<?php }; ?>
@@ -765,7 +763,7 @@ class MainWP_Updates {
 			</div>
 			<!-- END Abandoned Plugins -->
 		<?php } elseif ( 'abandoned-themes' === $current_tab ) { ?>
-			<!-- Abandoned Themes -->			
+			<!-- Abandoned Themes -->
 			<div class="ui active tab" data-tab="abandoned-themes">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
@@ -784,12 +782,10 @@ class MainWP_Updates {
 				<?php
 				MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
 				?>
-								
 			<?php }; ?>
 			</div>
 			<!-- END Abandoned Themes -->
 		<?php }; ?>
-			
 		</div>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {

@@ -1345,10 +1345,7 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<?php
-			self::render_sites_ignored( $cnt, $websites );
-			?>
-						
+			<?php self::render_sites_ignored( $cnt, $websites ); ?>
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
@@ -1404,7 +1401,7 @@ class MainWP_Plugins {
 						</tfoot>
 					<?php endif; ?>
 				<?php endif; ?>
-			</table>	
+			</table>
 		<?php
 	}
 
@@ -1481,7 +1478,7 @@ class MainWP_Plugins {
 					</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>		
+		</table>
 		<?php
 	}
 
@@ -1507,10 +1504,7 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Globally Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<?php
-			self::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins );
-			?>
-						
+			<?php self::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
 			<div class="ui hidden divider"></div>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
@@ -1574,7 +1568,7 @@ class MainWP_Plugins {
 					</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>	
+		</table>
 		<?php
 	}
 

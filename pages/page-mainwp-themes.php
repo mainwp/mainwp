@@ -688,7 +688,6 @@ class MainWP_Themes {
 	 */
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
 		?>
-	
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
@@ -749,8 +748,7 @@ class MainWP_Themes {
 				} );
 			jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
-		</script>		
-			
+		</script>
 		<?php
 	}
 
@@ -1354,19 +1352,13 @@ class MainWP_Themes {
 				<?php esc_html_e( 'Globally Ignored Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<?php
-			self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes );
-			?>
-						
-		<div class="ui hidden divider"></div>
-		<h3 class="ui header">
+			<?php self::render_global_ignored( $ignoredThemes, $decodedIgnoredThemes ); ?>
+			<div class="ui hidden divider"></div>
+			<h3 class="ui header">
 			<?php esc_html_e( 'Per Site Ignored Themes', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
 		</h3>
-		<?php
-			self::render_sites_ignored( $cnt, $websites );
-		?>
-					
+		<?php self::render_sites_ignored( $cnt, $websites ); ?>
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
@@ -1418,7 +1410,7 @@ class MainWP_Themes {
 					</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>	
+		</table>
 		<?php
 	}
 
@@ -1519,18 +1511,13 @@ class MainWP_Themes {
 				<?php esc_html_e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Themes Tolerance date', 'mainwp' ); ?></div>
 			</h3>
-			<?php
-			self::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes );
-			?>
+			<?php self::render_global_ignored_abandoned( $ignoredThemes, $decodedIgnoredThemes ); ?>
 		<div class="ui hidden divider"></div>
 		<h3 class="ui header">
 			<?php esc_html_e( 'Per Site Ignored Abandoned Themes', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
 		</h3>
-			<?php
-			self::render_sites_ignored_abandoned( $cnt, $websites );
-			?>
-					
+			<?php self::render_sites_ignored_abandoned( $cnt, $websites ); ?>
 		</div>
 		<?php
 		self::render_footer( 'IgnoreAbandoned' );
@@ -1653,7 +1640,7 @@ class MainWP_Themes {
 				</tfoot>
 				<?php endif; ?>
 			<?php endif; ?>
-		</table>	
+		</table>
 		<?php
 	}
 

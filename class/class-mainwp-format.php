@@ -1,7 +1,6 @@
 <?php
 /**
  * MainWP Format Utility
- * 
  */
 
 namespace MainWP\Dashboard;
@@ -30,8 +29,8 @@ class MainWP_Format {
 	 * @param string $to_email Send to email.
 	 * @param string $body Email's body.
 	 * @param string $title Email's title.
-	 * @param bool $text_format text format.
-	 * 
+	 * @param bool   $text_format text format.
+	 *
 	 * @return string Formatted content
 	 */
 	public static function format_email( $to_email = null, $body, $title = '', $text_format = false ) {

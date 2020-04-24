@@ -10,7 +10,7 @@ namespace MainWP\Dashboard;
  * Class MainWP_Live_Report_Responder_Activator
  *
  * @deprecated moved to external Extension.
- * 
+ *
  * phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
  */
 class MainWP_Live_Report_Responder_Activator {
@@ -23,27 +23,27 @@ class MainWP_Live_Report_Responder_Activator {
 	/**
 	 * @var boolean $childEnabled Check if MainWP Child plugin is enabled.
 	 */
-	protected $childEnabled        = false;
+	protected $childEnabled = false;
 
 	/**
 	 * @var boolean $childkey Child Site Key, false by default.
 	 */
-	protected $childKey            = false;
+	protected $childKey = false;
 
 	/**
 	 * @var undefined Child File.
 	 */
 	protected $childFile;
-	
+
 	/**
 	 * @var string $plugin_handle Etension Handle.
 	 */
-	protected $plugin_handle    = 'mainwp-client-reports-extension';
+	protected $plugin_handle = 'mainwp-client-reports-extension';
 
 	/**
 	 * @var string $produc_id Extention Name.
 	 */
-	protected $product_id       = 'Managed Client Reports Responder';
+	protected $product_id = 'Managed Client Reports Responder';
 
 	/**
 	 * @var string $software_version Extension version.
@@ -82,7 +82,7 @@ class MainWP_Live_Report_Responder_Activator {
 
 	/**
 	 * Get Child Key.
-	 * 
+	 *
 	 * @return mixed Child Key.
 	 */
 	public function get_child_key() {
@@ -92,7 +92,7 @@ class MainWP_Live_Report_Responder_Activator {
 
 	/**
 	 * Get Child File.
-	 * 
+	 *
 	 * @return mixed Child File.
 	 */
 	public function get_child_file() {

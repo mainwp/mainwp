@@ -20,7 +20,7 @@ class MainWP_DB_Base {
 	 */
 	private static $instance = null;
 
-	/**	 
+	/**
 	 * @var $table_prefix table prefix
 	 */
 	protected $table_prefix;

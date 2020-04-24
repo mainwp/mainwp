@@ -14,7 +14,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
-	/**	 
+	/**
 	 * @var $mainwp_db_version DB version number
 	 */
 	protected $mainwp_db_version = '8.16';
@@ -1094,7 +1094,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			array( 'id' => $websiteid )
 		);
 	}
-	
+
 	public function get_websites_by_url( $url ) {
 		if ( '/' != substr( $url, - 1 ) ) {
 			$url .= '/';

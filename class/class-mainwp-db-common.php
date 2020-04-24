@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * Class MainWP_DB_Common
  */
 class MainWP_DB_Common extends MainWP_DB {
-		
+
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**

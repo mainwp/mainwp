@@ -216,10 +216,10 @@ class MainWP_Updates {
 	 * @return
 	 */
 	public static function render() {
-	
+
 		$websites      = self::get_sites();
-		$userExtension = MainWP_DB_Common::instance()->get_user_extension();	
-		$site_view = $userExtension->site_view;
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		$site_view     = $userExtension->site_view;
 
 		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			$site_offset = array();
@@ -615,8 +615,8 @@ class MainWP_Updates {
 		if ( $enable_http_check ) {
 			self::render_http_checks( $websites );
 		}
-		
-		self::render_tabs( $websites, 
+
+		self::render_tabs( $websites,
 			$current_tab,
 			$all_groups_sites,
 			$all_groups,
@@ -656,11 +656,11 @@ class MainWP_Updates {
 		self::render_footer();
 	}
 
-	public static function render_tabs( $websites, $current_tab, $all_groups_sites, $all_groups, $site_offset, 
-		$userExtension, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, 
+	public static function render_tabs( $websites, $current_tab, $all_groups_sites, $all_groups, $site_offset,
+		$userExtension, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades,
 		$mainwp_show_language_updates, $allTranslations, $translationsInfo, $allPluginsOutdate, $decodedDismissedPlugins,
 		$trustedPlugins, $allPlugins, $pluginsInfo, $trustedThemes, $allThemes, $themesInfo, $decodedDismissedThemes, $allThemesOutdate
-		) {	
+		) {
 		$site_view = $userExtension->site_view;
 		?>
 			<!-- WordPress Updates -->
@@ -847,8 +847,8 @@ class MainWP_Updates {
 		</script>
 		<?php
 	}
-	
-	
+
+
 	/**
 	 * Method get_sites()
 	 *
@@ -856,8 +856,8 @@ class MainWP_Updates {
 	 *
 	 * @return
 	 */
-	public static function get_sites() {		
-		global $current_user;	
+	public static function get_sites() {
+		global $current_user;
 		$current_wpid = MainWP_Utility::get_current_wpid();
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -871,25 +871,25 @@ class MainWP_Updates {
 				}
 			}
 			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
-		}		
+		}
 		return MainWP_DB::instance()->query( $sql );
 	}
-	
+
 	/**
 	 * Method render_header_tabs()
 	 *
 	 * Render header tabs
 	 *
-	 * @param bool $show_language_updates show language update.
+	 * @param bool   $show_language_updates show language update.
 	 * @param string $current_tab current tab.
-	 * @param int $total_wp_upgrades total WP update.
-	 * @param int $total_plugin_upgrades total plugins update.
-	 * @param int $total_theme_upgrades total themes update.
-	 * @param int $total_translation_upgrades total translation update.
-	 * @param int $total_plugins_outdate total plugins outdate.
-	 * @param int $total_themes_outdate total theme outdate.
-	 * @param object $userExtension total user extension object.	 
-	 *   	
+	 * @param int    $total_wp_upgrades total WP update.
+	 * @param int    $total_plugin_upgrades total plugins update.
+	 * @param int    $total_theme_upgrades total themes update.
+	 * @param int    $total_translation_upgrades total translation update.
+	 * @param int    $total_plugins_outdate total plugins outdate.
+	 * @param int    $total_themes_outdate total theme outdate.
+	 * @param object $userExtension total user extension object.
+	 *
 	 * @return html output
 	 */
 	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $userExtension ) {
@@ -960,9 +960,9 @@ class MainWP_Updates {
 	public static function render_http_checks( $websites ) {
 
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );		
-		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
-		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
+		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
+		$customPage           = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
+		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
 		$restorePageSlug = '';
 		if ( empty( $enable_legacy_backup ) && ! empty( $mainwp_primaryBackup ) && is_array( $customPage ) && isset( $customPage['managesites_slug'] ) ) {

@@ -803,8 +803,8 @@ class MainWP_System_Cron_Jobs {
 
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
-			$mail_content     = '';
-			$sendMail = false;
+			$mail_content = '';
+			$sendMail     = false;
 
 			$sitesCheckCompleted = null;
 		if ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ) {
@@ -1015,7 +1015,7 @@ class MainWP_System_Cron_Jobs {
 				$this->send_updates_notification( $email, $mail_content, $text_format, $content_type );
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -1023,58 +1023,58 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method send_http_response_notification().
 	 *
-	 * @param bool $disable_send_noti
+	 * @param bool  $disable_send_noti
 	 * @param mixed $content_type
 	 *
 	 * @return none
 	 */
 	public function send_http_response_notification( $disable_send_noti, $content_type ) {
-		
+
 			$sitesHttpCheckIds = get_option( 'mainwp_automaticUpdate_httpChecks' );
-			if ( ! is_array( $sitesHttpCheckIds ) ) {
-				$sitesHttpCheckIds = array();
-			}
+		if ( ! is_array( $sitesHttpCheckIds ) ) {
+			$sitesHttpCheckIds = array();
+		}
 
 			$mail_offline = '';
 			$sitesOffline = array();
-			if ( count( $sitesHttpCheckIds ) > 0 ) {
-				$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
-			}
-			if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
-				foreach ( $sitesOffline as $site ) {
-					if ( -1 == $site->offline_check_result ) {
-						$mail_offline .= '<li>' . $site->name . ' - [' . $site->url . '] - [' . $site->http_response_code . ']</li>';
-					}
+		if ( count( $sitesHttpCheckIds ) > 0 ) {
+			$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
+		}
+		if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
+			foreach ( $sitesOffline as $site ) {
+				if ( -1 == $site->offline_check_result ) {
+					$mail_offline .= '<li>' . $site->name . ' - [' . $site->url . '] - [' . $site->http_response_code . ']</li>';
 				}
 			}
+		}
 
 			$email = get_option( 'mainwp_updatescheck_mail_email' );
-			if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
-				MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-				$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+		if ( ! $disable_send_noti && ! empty( $email ) && '' != $mail_offline ) {
+			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
+			$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
 							<div></div>
 							<ul>
 							' . $mail_offline . '
 							</ul>
 							<div></div>
 							<div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-				wp_mail(
+			wp_mail(
+				$email,
+				$mail_title = 'MainWP - HTTP response check',
+				MainWP_Format::format_email(
 					$email,
-					$mail_title = 'MainWP - HTTP response check',
-					MainWP_Format::format_email(
-						$email,
-						$mail_offline,
-						$mail_title
-					),
-					array(
-						'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-						$content_type,
-					)
-				);
-			}			
+					$mail_offline,
+					$mail_title
+				),
+				array(
+					'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+					$content_type,
+				)
+			);
+		}
 			MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 	}
-	
+
 	public function send_updates_notification( $email, $content, $text_format, $content_type ) {
 		if ( $text_format ) {
 			$mail_content = 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n"
@@ -1102,7 +1102,7 @@ class MainWP_System_Cron_Jobs {
 			)
 		);
 	}
-	
+
 	/**
 	 * List of updates to be emailed.
 	 *

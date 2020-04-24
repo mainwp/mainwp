@@ -661,9 +661,9 @@ class MainWP_Updates {
 		$mainwp_show_language_updates, $allTranslations, $translationsInfo, $allPluginsOutdate, $decodedDismissedPlugins,
 		$trustedPlugins, $allPlugins, $pluginsInfo, $trustedThemes, $allThemes, $themesInfo, $decodedDismissedThemes, $allThemesOutdate
 		) {
-		
-		$site_view = $userExtension->site_view;	
-		
+
+		$site_view = $userExtension->site_view;
+
 		if ( 'wordpress-updates' === $current_tab ) {
 			?>
 			<!-- WordPress Updates -->
@@ -678,39 +678,39 @@ class MainWP_Updates {
 				?>
 			</div>
 			<!-- END WordPress Updates -->
-		<?php } else if ( 'plugins-updates' === $current_tab ) { ?>
+		<?php } elseif ( 'plugins-updates' === $current_tab ) { ?>
 			<!-- Plugins Updates -->			
 			<div class="ui active tab" data-tab="plugins-updates">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-					?>
+				?>
 					<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
-			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-					?>
+			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				?>
 					<!-- Per Group -->
 					<?php
 					MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
 			} else {
-					?>
+				?>
 					<!-- Per Item -->
 					<?php
 					MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
 			};
-				?>
+			?>
 			</div>
 			<!-- END Plugins Updates -->
-		<?php } else if ( 'themes-updates' === $current_tab ) { ?>
+		<?php } elseif ( 'themes-updates' === $current_tab ) { ?>
 			<!-- Themes Updates -->			
 			<div class="ui active tab" data-tab="themes-updates">
 			<?php
-			if ( MAINWP_VIEW_PER_SITE == $site_view ) { 
+			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
 				?>
 				<!-- Per Site -->
 				<?php
 				MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
-			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 				?>
 				<!-- Per Group -->
 				<?php
@@ -724,14 +724,14 @@ class MainWP_Updates {
 			?>
 			</div>
 			<!-- END Themes Updates -->
-		<?php } else if ( 'translations-updates' === $current_tab ) { ?>
+		<?php } elseif ( 'translations-updates' === $current_tab ) { ?>
 			<!-- Translatinos Updates -->			
 			<?php if ( 1 === $mainwp_show_language_updates ) { ?>
 			<div class="ui active tab" data-tab="translations-updates">
 				<?php
 				if ( MAINWP_VIEW_PER_SITE == $site_view ) {
 					MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
-				} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 					MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
 				} else {
 					?>
@@ -741,7 +741,7 @@ class MainWP_Updates {
 			</div>
 			<?php }; ?>
 			<!-- END Translatinos Updates -->
-		<?php } else if ( 'abandoned-plugins' === $current_tab ) { ?>
+		<?php } elseif ( 'abandoned-plugins' === $current_tab ) { ?>
 			<!-- Abandoned Plugins -->
 			<div class="ui active tab" data-tab="abandoned-plugins">
 			<?php
@@ -750,7 +750,7 @@ class MainWP_Updates {
 				<!-- Per Site -->
 				<?php
 				MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
-			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 				?>
 				<!-- Per Group -->
 				<?php
@@ -764,7 +764,7 @@ class MainWP_Updates {
 			?>
 			</div>
 			<!-- END Abandoned Plugins -->
-		<?php } else if ( 'abandoned-themes' === $current_tab ) { ?>
+		<?php } elseif ( 'abandoned-themes' === $current_tab ) { ?>
 			<!-- Abandoned Themes -->			
 			<div class="ui active tab" data-tab="abandoned-themes">
 			<?php
@@ -773,7 +773,7 @@ class MainWP_Updates {
 				<!-- Per Site -->
 				<?php
 				MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
-			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 				?>
 				<!-- Per Group -->
 				<?php
@@ -783,7 +783,8 @@ class MainWP_Updates {
 				<!-- Per Item -->
 				<?php
 				MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
-				?>				
+				?>
+								
 			<?php }; ?>
 			</div>
 			<!-- END Abandoned Themes -->

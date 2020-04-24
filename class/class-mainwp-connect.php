@@ -3,7 +3,6 @@
  * MainWP Connect
  *
  * MainWP Connect functions.
- * 
  */
 
 namespace MainWP\Dashboard;
@@ -12,9 +11,9 @@ namespace MainWP\Dashboard;
  * MainWP Utility
  */
 class MainWP_Connect {
-	
+
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
-	
+
 	/**
 	 * Method get_class_name()
 	 *

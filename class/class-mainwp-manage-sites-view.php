@@ -282,7 +282,7 @@ class MainWP_Manage_Sites_View {
 				self::get_wp_file_system();
 				global $wp_filesystem;
 
-				$content  = $wp_filesystem->get_contents( $tmp_path );
+				$content = $wp_filesystem->get_contents( $tmp_path );
 
 				$lines          = explode( "\r\n", $content );
 				$default_values = array(

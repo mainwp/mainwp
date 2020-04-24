@@ -6,7 +6,7 @@ namespace MainWP\Dashboard;
  * MainWP System Handler.
  */
 class MainWP_System_Handler {
-	
+
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
 	/**

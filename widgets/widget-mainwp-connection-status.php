@@ -323,8 +323,7 @@ class MainWP_Connection_Status {
 	 */
 	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
 		?>
-			
-			<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
+		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
 					<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
@@ -436,7 +435,7 @@ class MainWP_Connection_Status {
 			<?php } ?>
 				</div>
 			</div>
-		</div>		
+		</div>
 		<?php
 	}
 

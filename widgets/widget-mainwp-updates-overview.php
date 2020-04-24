@@ -405,25 +405,25 @@ class MainWP_Updates_Overview {
 
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
-		?>		
+		?>
 		<?php self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ); ?>
 		<!-- END Total Updates -->
-		
+
 		<?php self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update ); ?>
 		<!-- END WP Updates -->
 		<?php self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END Plugins Updates -->		
+		<!-- END Plugins Updates -->
 		<?php self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update ); ?>
 		<!-- END Themes Updates -->
 
 		<?php if ( 1 == $mainwp_show_language_updates ) : ?>
 			<?php self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END Language Updates -->		
+		<!-- END Language Updates -->
 		<?php endif; ?>
 
 		<?php self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid ); ?>
 		<!-- END Abandoned plugins -->
-		
+
 		<?php self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid ); ?>
 		<!-- END Abandoned themes -->
 
@@ -620,44 +620,41 @@ class MainWP_Updates_Overview {
 		?>
 	<div class="ui grid">
 		<div class="two column row">
-					<div class="column">
-						<div class="ui horizontal statistic">
+			<div class="column">
+				<div class="ui horizontal statistic">
 					<div class="value">
 						<?php echo $total_theme_upgrades; ?>
-						</div>
+					</div>
 					<div class="label">
 						<?php esc_html_e( 'Theme Updates', 'mainwp' ); ?>
 					</div>
-						</div>
-					</div>
+				</div>
+			</div>
 			<div class="right aligned column">
 			<?php
 			if ( $user_can_update_themes ) :
 					$continue_class = ( 'themes_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
-
 				if ( $globalView ) {
 					$detail_themes_up = 'admin.php?page=UpdatesManage&tab=themes-updates';
 				} else {
 					$detail_themes_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=themes-updates';
 				}
-
 				if ( 0 == $total_theme_upgrades ) {
 					?>
-							<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
-
 					?>
-						<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-						<?php
+					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
+					<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<?php
 				}
 				endif;
 			?>
 				</div>
 			</div>
-		</div>	
+		</div>
 		<?php
 	}
 	/**
@@ -675,34 +672,31 @@ class MainWP_Updates_Overview {
 		?>
 	<div class="ui grid">
 		<div class="two column row">
-					<div class="column">
+			<div class="column">
 				<div class="ui horizontal statistic">
 					<div class="value">
 						<?php echo $total_translation_upgrades; ?>
 					</div>
 					<div class="label">
 						<?php esc_html_e( 'Translation Updates', 'mainwp' ); ?>
-							</div>
 					</div>
 				</div>
+			</div>
 			<div class="right aligned column">
 			<?php
 			if ( $user_can_update_translation ) :
-
 				$continue_class = ( 'translations_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
 				if ( $globalView ) {
 					$detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';
 				} else {
 					$detail_trans_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=translations-updates';
 				}
-
 				if ( 0 == $total_translation_upgrades ) {
 					?>
 					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
-
 					?>
 					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -712,7 +706,7 @@ class MainWP_Updates_Overview {
 			?>
 				</div>
 			</div>
-		</div>		
+		</div>
 		<?php
 	}
 
@@ -727,11 +721,9 @@ class MainWP_Updates_Overview {
 	 */
 	public static function render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid ) {
 		?>
-	
 		<div class="ui hidden divider"></div>
 		<div class="ui horizontal divider"><?php esc_html_e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
 		<div class="ui hidden divider"></div>
-
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
@@ -755,7 +747,7 @@ class MainWP_Updates_Overview {
 							<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 					</div>
 			</div>
-		</div>	
+		</div>
 		<?php
 	}
 

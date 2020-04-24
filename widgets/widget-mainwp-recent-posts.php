@@ -81,23 +81,23 @@ class MainWP_Recent_Posts {
 		self::render_top_grid();
 		?>
 		<!-- Published List -->
-		<?php self::render_published_posts( $allPosts, $recent_number ); ?>		
+		<?php self::render_published_posts( $allPosts, $recent_number ); ?>
 		<!-- END Published List -->
 
-		<!-- Draft List -->		
+		<!-- Draft List -->
 		<?php self::render_draft_posts( $allPosts, $recent_number ); ?>
 		<!-- END Draft List -->
 
-		<!-- Pending List -->		
+		<!-- Pending List -->
 		<?php self::render_pending_posts( $allPosts, $recent_number ); ?>
 		<!-- END Pending List -->
 
-		<!-- Future List -->		
-		<?php self::render_future_posts( $allPosts, $recent_number ); ?>			
+		<!-- Future List -->
+		<?php self::render_future_posts( $allPosts, $recent_number ); ?>
 		<!-- END Future List -->
 
-		<!-- Trash List -->		
-		<?php self::render_trash_posts( $allPosts, $recent_number ); ?>			
+		<!-- Trash List -->
+		<?php self::render_trash_posts( $allPosts, $recent_number ); ?>
 		<!-- END Trash List -->
 
 		<div class="ui hidden divider"></div>
@@ -141,7 +141,7 @@ class MainWP_Recent_Posts {
 				</div>
 			</div>
 		</div>
-		<div class="ui section hidden divider"></div>				
+		<div class="ui section hidden divider"></div>
 		<?php
 	}
 
@@ -156,9 +156,7 @@ class MainWP_Recent_Posts {
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
 		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
-
 		?>
-			
 		<div class="recent_posts_published ui tab active" data-tab="published">
 			<?php
 			if ( 0 == count( $recent_posts_published ) ) {
@@ -169,7 +167,7 @@ class MainWP_Recent_Posts {
 					<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
 				</div>
 			</h2>
-				<?php
+			<?php
 			}
 			?>
 			<div class="ui middle aligned divided selection list">
@@ -289,7 +287,7 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
-		</div>	
+		</div>
 		<?php
 	}
 

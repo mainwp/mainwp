@@ -20,19 +20,19 @@ class MainWP_Live_Report_Responder_Activator {
 	protected $mainwpMainActivated = false;
 
 	/** @var boolean $childEnabled Check if MainWP Child plugin is enabled.*/
-	protected $childEnabled        = false;
+	protected $childEnabled = false;
 
 	/** @var boolean $childkey Child Site Key, false by default. */
-	protected $childKey            = false;
+	protected $childKey = false;
 
 	/** @var undefined Child File.*/
 	protected $childFile;
-	
+
 	/** @var string $plugin_handle Etension Handle. */
-	protected $plugin_handle    = 'mainwp-client-reports-extension';
+	protected $plugin_handle = 'mainwp-client-reports-extension';
 
 	/** @var string $produc_id Extention Name. */
-	protected $product_id       = 'Managed Client Reports Responder';
+	protected $product_id = 'Managed Client Reports Responder';
 
 	/** @var string $software_version Extension version. */
 	protected $software_version = '1.1';
@@ -52,7 +52,7 @@ class MainWP_Live_Report_Responder_Activator {
 		}
 	}
 
-    /**
+	/**
 	 * Activate Plugin.
 	 */
 	public function activate_this_plugin() {

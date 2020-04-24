@@ -160,7 +160,7 @@ class MainWP_Themes_Handler {
 
 	/** This is the Bulk Method to Trust A Theme. */
 	public static function trust_post() {
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
@@ -188,7 +188,7 @@ class MainWP_Themes_Handler {
 			}
 		}
 		$userExtension->trusted_themes = wp_json_encode( $trustedThemes );
-		MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 	}
 
 	/** This Method Saves a Trusted theme note. */
@@ -196,14 +196,14 @@ class MainWP_Themes_Handler {
 		$slug               = urldecode( $_POST['slug'] );
 		$note               = stripslashes( $_POST['note'] );
 		$esc_note           = MainWP_Utility::esc_content( $note );
-		$userExtension      = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension      = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );
 		if ( ! is_array( $trustedThemesNotes ) ) {
 			$trustedThemesNotes = array();
 		}
 		$trustedThemesNotes[ $slug ]         = $esc_note;
 		$userExtension->trusted_themes_notes = wp_json_encode( $trustedThemesNotes );
-		MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 	}
 
 }

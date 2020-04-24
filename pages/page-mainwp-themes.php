@@ -1217,7 +1217,7 @@ class MainWP_Themes {
 		}
 		asort( $themes );
 
-		$userExtension        = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$trustedThemes        = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
@@ -1327,7 +1327,7 @@ class MainWP_Themes {
 		/** Render the Themes Ignored Updates Tab. */
 	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$userExtension        = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->ignored_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 
@@ -1500,7 +1500,7 @@ class MainWP_Themes {
 	/** Render the Themes Ignored/Abandoned Tab */
 	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$userExtension        = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension        = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredThemes = json_decode( $userExtension->dismissed_themes, true );
 		$ignoredThemes        = ( is_array( $decodedIgnoredThemes ) && ( 0 < count( $decodedIgnoredThemes ) ) );
 		$cnt                  = 0;

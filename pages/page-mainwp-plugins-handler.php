@@ -157,7 +157,7 @@ class MainWP_Plugins_Handler {
 
 	/** Trust Plugin $_POST. */
 	public static function trust_post() {
-		$userExtension  = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -185,7 +185,7 @@ class MainWP_Plugins_Handler {
 			}
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
-		MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 	}
 
 	/**
@@ -194,7 +194,7 @@ class MainWP_Plugins_Handler {
 	 * @param mixed $slug Plugin Slug.
 	 */
 	public static function trust_plugin( $slug ) {
-		$userExtension  = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -204,7 +204,7 @@ class MainWP_Plugins_Handler {
 			$trustedPlugins[] = rawurlencode( $slug );
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
-		MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 	}
 
 	/**
@@ -219,7 +219,7 @@ class MainWP_Plugins_Handler {
 		if ( 1 != get_option( 'mainwp_automaticDailyUpdate' ) ) {
 			return false;
 		}
-			$userExtension  = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
 			$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( is_array( $trustedPlugins ) && in_array( $slug, $trustedPlugins ) ) {
 			return true;
@@ -234,14 +234,14 @@ class MainWP_Plugins_Handler {
 		$slug                = rawurlencode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );
 		$esc_note            = MainWP_Utility::esc_content( $note );
-		$userExtension       = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );
 		if ( ! is_array( $trustedPluginsNotes ) ) {
 			$trustedPluginsNotes = array();
 		}
 		$trustedPluginsNotes[ $slug ]         = $esc_note;
 		$userExtension->trusted_plugins_notes = wp_json_encode( $trustedPluginsNotes );
-		MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 	}
 
 }

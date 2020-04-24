@@ -940,27 +940,6 @@ updatesoverview_plugins_upgrade_all_upgrade_next = function ()
 };
 
 
-updatesoverview_send_twitt_info = function() {
-    var send = false;
-    if (mainwpParams.enabledTwit == true) {
-        var dateObj = new Date();
-        var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
-        if (countSec <= mainwpParams.maxSecondsTwit) {
-            send = true;
-            var data = mainwp_secure_data( {
-                action:'mainwp_twitter_dashboard_action',
-                actionName: dashboardActionName,
-                countSites: websitesDone,
-                countSeconds: countSec,
-                countItems: couttItemsToUpdate,
-                countRealItems: countRealItemsUpdated
-            } );
-            jQuery.post(ajaxurl, data, function () {                
-            });
-        }
-    }
-    return send;
-};
 
 updatesoverview_check_to_continue_updates = function () {
     var loc_href = location.href;
@@ -2830,6 +2809,600 @@ updatesoverview_ignore_http_response = function ( elem, id ) {
     }, 'json' );
     return false;
 };
+
+updatesoverview_ignore_plugintheme_by_site = function ( what, slug, name, id, pObj ) {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_ignoreplugintheme',
+        type: what,
+        id: id,
+        slug: slug,
+        name: name
+    } );
+
+    jQuery.post( ajaxurl, data, function ( response ) {
+        var parent = jQuery(pObj).closest('tr');
+        if ( response.result ) {
+            jQuery( 'div[' + what + '_slug="' + slug + '"] div[site_id="' + id + '"]' ).attr( 'updated', '-1' ); // ok
+            parent.attr( 'updated', '-1' );
+            parent.find('td:last-child').html(__( 'Ignored' ));
+        } else
+        {
+            parent.find('td:last-child').html( getErrorMessage( response.error ) );
+        }
+    }, 'json' );
+    return false;
+};
+
+// Unignore Plugin / Themse ignored per site
+updatesoverview_unignore_plugintheme_by_site = function ( what, slug, id ) {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignoreplugintheme',
+        type: what,
+        id: id,
+        slug: slug
+    } );
+
+    jQuery.post( ajaxurl, data, function ( pWhat, pSlug, pId ) {
+        return function ( response ) {
+            if ( response.result ) {
+                var siteElement;
+        if ( pWhat == 'plugin' ) {
+          siteElement = jQuery( 'tr[site-id="' + pId + '"][plugin-slug="' + pSlug + '"]' );
+        } else {
+          siteElement = jQuery( 'tr[site-id="' + pId + '"][theme-slug="' + pSlug + '"]' );
+                }
+
+        if ( !siteElement.find( 'div' ).is( ':visible' ) ) {
+                    siteElement.remove();
+                    return;
+                }
+
+                //Check if previous tr is same site..
+                //Check if next tr is same site..
+                var siteAfter = siteElement.next();
+        if ( siteAfter.exists() && ( siteAfter.attr( 'site-id' ) == pId ) )   {
+          siteAfter.find( 'div' ).show();
+                    siteElement.remove();
+                    return;
+                }
+
+                var parent = siteElement.parent();
+                siteElement.remove();
+                if ( parent.children( 'tr' ).size() == 0 ) {
+          parent.append( '<tr><td colspan="999">' + __( 'No ignored %1s', pWhat ) + '</td></tr>' );
+          jQuery( '.mainwp-unignore-detail-all' ).addClass( 'disabled' );
+                }
+            }
+        }
+    }( what, slug, id ), 'json' );
+    return false;
+};
+
+// Unignore all Plugins / Themses ignored per site
+updatesoverview_unignore_plugintheme_by_site_all = function ( what ) {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignoreplugintheme',
+        type: what,
+        id: '_ALL_',
+        slug: '_ALL_'
+    } );
+
+    jQuery.post( ajaxurl, data, function ( pWhat ) {
+        return function ( response ) {
+            if ( response.result ) {
+                var tableElement = jQuery( '#ignored-' + pWhat + 's-list' );
+                tableElement.find( 'tr' ).remove();
+                tableElement.append( '<tr><td colspan="999">' + __( 'No ignored %1s', pWhat ) + '</td></tr>' );
+                jQuery( '.mainwp-unignore-detail-all' ).addClass( 'disabled' );
+            }
+        }
+    }( what ), 'json' );
+    return false;
+};
+
+/**Plugins part**/
+updatesoverview_translations_detail = function ( slug ) {
+    jQuery( 'div[translation_slug="' + slug + '"]' ).toggle( 100, 'linear' );
+    return false;
+};
+
+updatesoverview_plugins_ignore_detail = function ( slug, name, id, obj ) {
+  var msg = __( 'Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name );
+  mainwp_confirm(msg, function(){
+      return updatesoverview_ignore_plugintheme_by_site( 'plugin', slug, name, id, obj );
+  }, false, 1 );
+  return false;
+};
+updatesoverview_plugins_unignore_detail = function ( slug, id ) {
+    return updatesoverview_unignore_plugintheme_by_site( 'plugin', slug, id );
+};
+updatesoverview_plugins_unignore_detail_all = function () {
+    return updatesoverview_unignore_plugintheme_by_site_all( 'plugin' );
+};
+updatesoverview_themes_ignore_detail = function ( slug, name, id, obj ) {
+    var msg = __( 'Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_ignore_plugintheme_by_site( 'theme', slug, name, id, obj );
+    }, false, 1);
+    return false;
+};
+updatesoverview_themes_unignore_detail = function ( slug, id ) {
+    return updatesoverview_unignore_plugintheme_by_site( 'theme', slug, id );
+};
+updatesoverview_themes_unignore_detail_all = function () {
+    return updatesoverview_unignore_plugintheme_by_site_all( 'theme' );
+};
+updatesoverview_plugins_ignore_all = function ( slug, name, obj) {
+    var msg = __( 'Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.', name );
+    mainwp_confirm(msg, function(){
+        var data = mainwp_secure_data( {
+            action: 'mainwp_ignorepluginsthemes',
+            type: 'plugin',
+            slug: slug,
+            name: name
+        } );
+        var parent = jQuery(obj).closest('tr');
+        parent.find('td:last-child').html( __('Ignoring...') );
+        jQuery.post( ajaxurl, data, function ( response ) {
+            if ( response.result ) {
+                parent.find('td:last-child').html( __('Ignored') );
+                jQuery( 'tr[plugin_slug="' + slug + '"]' ).find( 'table tr td:last-child' ).html( __( 'Ignored' ) );
+                jQuery( 'tr[plugin_slug="' + slug + '"]' ).find( 'table tr' ).attr( 'updated', '-1' );
+            }
+        }, 'json' );
+    }, false, 1 );
+    return false;
+};
+
+// Unignore all globally ignored plugins
+updatesoverview_plugins_unignore_globally_all = function () {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignorepluginsthemes',
+        type: 'plugin',
+        slug: '_ALL_'
+    } );
+
+    jQuery.post( ajaxurl, data, function ( response ) {
+        if ( response.result ) {
+            var tableElement = jQuery( '#globally-ignored-plugins-list' );
+            tableElement.find( 'tr' ).remove();
+      jQuery( '#mainwp-unignore-globally-all' ).addClass( 'disabled' );
+      tableElement.append( '<tr><td colspan="999">' + __( 'No ignored plugins.' ) + '</td></tr>' );
+        }
+    }, 'json' );
+    return false;
+};
+
+// Unignore globally ignored plugin
+updatesoverview_plugins_unignore_globally = function ( slug ) {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignorepluginsthemes',
+        type: 'plugin',
+        slug: slug
+    } );
+    jQuery.post( ajaxurl, data, function ( response ) {
+        if ( response.result ) {
+      var ignoreElement = jQuery( '#globally-ignored-plugins-list tr[plugin-slug="' + slug + '"]' );
+            var parent = ignoreElement.parent();
+            ignoreElement.remove();
+            if ( parent.children( 'tr' ).size() == 0 ) {
+        jQuery( '#mainwp-unignore-globally-all' ).addClass( 'disabled' );
+        parent.append( '<tr><td colspan="999">' + __( 'No ignored plugins.' ) + '</td></tr>' );
+            }
+        }
+    }, 'json' );
+    return false;
+};
+
+updatesoverview_themes_ignore_all = function ( slug, name, obj ) {
+    var msg =  __( 'Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name );
+    mainwp_confirm(msg, function(){
+
+        var data = mainwp_secure_data( {
+            action: 'mainwp_ignorepluginsthemes',
+            type: 'theme',
+            slug: slug,
+            name: name
+        } );
+        var parent = jQuery(obj).closest('tr');
+        parent.find('td:last-child').html( __('Ignoring...') );
+        jQuery.post( ajaxurl, data, function ( response ) {
+            if ( response.result ) {
+                parent.find('td:last-child').html( __('Ignored') );
+                jQuery( 'tr[theme_slug="' + slug + '"]' ).find('table tr td:last-child').html( __( 'Ignored' ) );
+                jQuery( 'tr[theme_slug="' + slug + '"]' ).find('table tr').attr( 'updated', '-1' );
+            }
+        }, 'json' );
+    }, false, 1);
+    return false;
+};
+
+// Unignore all globally ignored themes
+updatesoverview_themes_unignore_globally_all = function () {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignorepluginsthemes',
+        type: 'theme',
+        slug: '_ALL_'
+    } );
+
+    jQuery.post( ajaxurl, data, function ( response ) {
+        if ( response.result ) {
+            var tableElement = jQuery( '#globally-ignored-themes-list' );
+            tableElement.find( 'tr' ).remove();
+      jQuery( '#mainwp-unignore-globally-all' ).addClass( 'disabled' );
+      tableElement.append( '<tr><td colspan="999">' + __( 'No ignored themes.' ) + '</td></tr>' );
+        }
+    }, 'json' );
+
+    return false;
+};
+
+// Unignore globally ignored theme
+updatesoverview_themes_unignore_globally = function ( slug ) {
+    var data = mainwp_secure_data( {
+        action: 'mainwp_unignorepluginsthemes',
+        type: 'theme',
+        slug: slug
+    } );
+    jQuery.post( ajaxurl, data, function ( response ) {
+        if ( response.result ) {
+      var ignoreElement = jQuery( '#globally-ignored-themes-list tr[theme-slug="' + slug + '"]' );
+            var parent = ignoreElement.parent();
+            ignoreElement.remove();
+      if ( parent.children( 'tr' ).size() == 0 ){
+        jQuery( '#mainwp-unignore-globally-all' ).addClass( 'disabled' );
+        parent.append( '<tr><td colspan="999">' + __( 'No ignored themes.' ) + '</td></tr>' );
+            }
+        }
+    }, 'json' );
+    return false;
+};
+
+updatesoverview_upgrade_translation = function ( id, slug ) {
+    var msg =  __( 'Are you sure you want to update the translation on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_translations_upgrade_int( slug, id );
+    }, false, 1 );
+};
+
+updatesoverview_translations_upgrade = function ( slug, websiteid ) {
+    var msg =  __( 'Are you sure you want to update the translation on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_translations_upgrade_int( slug, websiteid );
+    }, false, 1 );
+};
+
+updatesoverview_plugins_upgrade = function ( slug, websiteid ) {
+    var msg =  __( 'Are you sure you want to update the plugin on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_plugins_upgrade_int( slug, websiteid );
+    }, false, 1 );
+};
+
+updatesoverview_themes_upgrade = function ( slug, websiteid ) {
+    var msg =  __( 'Are you sure you want to update the theme on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_themes_upgrade_int( slug, websiteid );
+    }, false, 1 );
+};
+
+/** END NEW **/
+
+updatesoverview_wp_sync = function ( websiteid ) {
+    var syncIds = [ ];
+    syncIds.push( websiteid );
+    mainwp_sync_sites_data( syncIds );
+    return false;
+};
+
+
+updatesoverview_group_upgrade_translation = function ( id, slug, groupId ) {
+    return updatesoverview_upgrade_plugintheme( 'translation', id, slug, groupId );
+};
+
+updatesoverview_upgrade_translation_all = function ( id ) {
+    var msg =  __( 'Are you sure you want to update all translations?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_upgrade_plugintheme_all( 'translation', id );
+    }, false, 2 );
+    return false;
+};
+
+updatesoverview_group_upgrade_translation_all = function ( id, groupId ) {
+    var msg = __( 'Are you sure you want to update all translations?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_group_upgrade_plugintheme_all( 'translation', id, false, groupId );
+    }, false, 2 );
+    return false;
+};
+
+updatesoverview_upgrade_plugin = function ( id, slug ) {
+    var msg =  __( 'Are you sure you want to update the plugin on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_upgrade_plugintheme( 'plugin', id, slug );
+    }, false, 1 );
+};
+
+updatesoverview_group_upgrade_plugin = function ( id, slug, groupId ) {
+    return updatesoverview_upgrade_plugintheme( 'plugin', id, slug, groupId );
+};
+
+updatesoverview_upgrade_plugin_all = function ( id ) {
+    var msg = __( 'Are you sure you want to update all plugins?' );
+    mainwp_confirm(msg, function(){
+          return updatesoverview_upgrade_plugintheme_all( 'plugin', id );
+    }, false, 2 );
+    return false;
+};
+
+updatesoverview_group_upgrade_plugin_all = function ( id, groupId ) {
+    var msg = __( 'Are you sure you want to update all plugins?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_group_upgrade_plugintheme_all( 'plugin', id, false, groupId );
+    }, false, 2);
+    return false;
+};
+
+updatesoverview_upgrade_theme = function ( id, slug ) {
+    var msg =  __( 'Are you sure you want to update the theme on the selected site?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_upgrade_plugintheme( 'theme', id, slug );
+    }, false, 1);
+};
+updatesoverview_group_upgrade_theme = function ( id, slug, groupId ) {
+    return updatesoverview_upgrade_plugintheme( 'theme', id, slug, groupId );
+};
+
+updatesoverview_upgrade_theme_all = function ( id ) {
+    var msg = __( 'Are you sure you want to update all themes?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_upgrade_plugintheme_all( 'theme', id );
+    }, false, 2);
+    return false;
+};
+
+updatesoverview_group_upgrade_theme_all = function ( id, groupId ) {
+    var msg = __( 'Are you sure you want to update all themes?' );
+    mainwp_confirm(msg, function(){
+        return updatesoverview_group_upgrade_plugintheme_all( 'theme', id, false, groupId );
+    }, false, 2);
+    return false;
+};
+
+updatesoverview_upgrade_plugintheme = function ( what, id, name, groupId ) {
+    updatesoverview_upgrade_plugintheme_list( what, id, [ name ], false, groupId );
+    return false;
+};
+updatesoverview_upgrade_plugintheme_all = function ( what, id, noCheck ) {
+    // ok: confirmed to do this
+    updatesoverviewContinueAfterBackup = function ( pId, pWhat ) {
+        return function ()
+        {
+            var list = [ ];
+            var slug_att = pWhat + '_slug';
+            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + " tr[updated=0]" ).each( function () {
+                var slug = jQuery(this).attr( slug_att );
+                if ( slug ) {
+                    list.push( slug );
+                }
+            } );
+
+            var siteName = jQuery( "#wp_" + pWhat + "_upgrades_" + pId ).attr('site_name');
+            updatesoverview_upgrade_plugintheme_list_popup(pWhat, pId, siteName, list);            
+        }
+    }( id, what );
+
+    if ( noCheck )
+    {
+        updatesoverviewContinueAfterBackup();
+        return false;
+    }
+
+    var sitesToUpdate = [ ];
+    var siteNames = [ ];
+
+    sitesToUpdate.push( id );
+    siteNames[id] = jQuery( 'tbody[site_id="' + id + '"]' ).attr( 'site_name' );
+
+    return mainwp_updatesoverview_checkBackups( sitesToUpdate, siteNames );
+};
+
+updatesoverview_group_upgrade_plugintheme_all = function ( what, id, noCheck, groupId ) {
+    // ok, confirmed to do this
+    updatesoverviewContinueAfterBackup = function ( pId, pWhat ) {
+        return function ()
+        {
+            var list = [ ];
+            var slug_att = pWhat + '_slug';
+            jQuery( "#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId + " tr[updated=0]" ).each( function () {
+                var slug = jQuery(this).attr( slug_att );
+                if ( slug ) {
+                    list.push( slug );
+                }
+            } );
+
+            // proccessed by popup
+            //updatesoverview_upgrade_plugintheme_list( what, pId, list, true, groupId );
+            var siteName = jQuery( "#wp_" + pWhat + "_upgrades_" + pId + '_group_' + groupId).attr('site_name');
+            updatesoverview_upgrade_plugintheme_list_popup(what, pId, siteName, list );
+        }
+    }( id, what );
+
+    if ( noCheck )
+    {
+        updatesoverviewContinueAfterBackup();
+        return false;
+    }
+
+    var sitesToUpdate = [ ];
+    var siteNames = [ ];
+
+    sitesToUpdate.push( id );
+    siteNames[id] = jQuery( 'tbody[site_id="' + id + '"]' ).attr( 'site_name' );
+
+    return mainwp_updatesoverview_checkBackups( sitesToUpdate, siteNames );
+};
+
+updatesoverview_upgrade_plugintheme_list = function ( what, id, list, noCheck, groupId )
+{
+    updatesoverviewContinueAfterBackup = function ( pWhat, pId, pList, pGroupId ) {
+        return function ()
+        {
+            var strGroup = '';
+            if ( typeof pGroupId !== 'undefined' ) {
+                strGroup = '_group_' + pGroupId;
+            }
+            var newList = [ ];
+
+            for ( var i = pList.length - 1; i >= 0; i-- ) {
+                var item = pList[i];
+                var elem = document.getElementById( 'wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item );
+                if ( elem && elem.value == 0 ) {
+                    var parent = jQuery(elem).closest('tr');
+                    parent.find( 'td:last-child' ).html( '<i class="notched circle loading icon"></i> ' + __( 'Updating. Please wait...' ) );
+                    elem.value = 1;
+                    parent.attr('updated', 1);
+                    newList.push( item );
+                }
+            }
+
+            var dateObj = new Date();
+            starttimeDashboardAction = dateObj.getTime();
+            if (pWhat == 'plugin')
+                dashboardActionName = 'upgrade_all_plugins';
+            else if (pWhat == 'translation')
+                dashboardActionName = 'upgrade_all_translations';
+            else
+                dashboardActionName = 'upgrade_all_themes';            
+            countRealItemsUpdated = 0;
+            couttItemsToUpdate = 0;
+            
+            if ( newList.length > 0 ) {
+                var data = mainwp_secure_data( {
+                    action: 'mainwp_upgradeplugintheme',
+                    websiteId: pId,
+                    type: pWhat,
+                    slug: newList.join( ',' )
+                } );
+                jQuery.post( ajaxurl, data, function ( response ) {
+                    var success = false;
+                    if ( response.error ) {
+                        console.log( response.error );
+                    }
+                    else
+                    {
+                        var res = response.result;
+                        for ( var i = 0; i < newList.length; i++ ) {
+                            var item = newList[i];
+
+                            couttItemsToUpdate++;
+                            var elem = document.getElementById( 'wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item );
+                            var parent = jQuery(elem).closest('tr');
+                            if ( res[item] ) {
+                                parent.find( 'td:last-child' ).html( '<i class="green check icon"></i>');
+                                countRealItemsUpdated++;
+                            } else {
+                                parent.find( 'td:last-child' ).html( '<i class="red times icon"></i>' );
+                            }
+                        }
+                        success = true;
+
+                        if (mainwpParams.enabledTwit == true) {
+                            var dateObj = new Date();
+                            var countSec = (dateObj.getTime() - starttimeDashboardAction) / 1000;
+                            jQuery('#bulk_install_info').html('<i class="fa fa-spinner fa-pulse"></i>');
+                            if (countSec <= mainwpParams.maxSecondsTwit) {
+                                var data = mainwp_secure_data( {
+                                    action: 'mainwp_twitter_dashboard_action',
+                                    actionName: dashboardActionName,
+                                    countSites: 1,
+                                    countSeconds: countSec,
+                                    countItems: couttItemsToUpdate,
+                                    countRealItems: countRealItemsUpdated,
+                                    showNotice: 1
+                                } );
+                                jQuery.post(ajaxurl, data, function (res) {
+                                    if (res && res != '') {
+                                        jQuery('#mainwp-dashboard-info-box').html(res);
+                                        if (typeof twttr !== "undefined")
+                                            twttr.widgets.load();
+                                    } else {
+                                        jQuery('#mainwp-dashboard-info-box').html('');
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    if ( !success ) {
+                        for ( var i = 0; i < newList.length; i++ ) {
+                            var item = newList[i];
+                            var elem = document.getElementById( 'wp_upgraded_' + pWhat + '_' + pId + strGroup + '_' + item );
+                            var parent = jQuery(elem).closest('tr');
+                            //document.getElementById( 'wp_upgrade_' + pWhat + '_' + pId + strGroup + '_' + item ).innerHTML = result;
+                            parent.find( 'td:last-child' ).html( '<i class="red times icon"></i>' );
+                        }
+                    }
+                }, 'json' );
+
+            }
+
+            updatesoverviewContinueAfterBackup = undefined;
+        }
+    }( what, id, list, groupId );
+
+    if ( noCheck )
+    {
+        updatesoverviewContinueAfterBackup();
+        return false;
+    }
+
+    var sitesToUpdate = [ id ];
+    var siteNames = [ ];
+    siteNames[id] = jQuery( 'tbody[site_id="' + id + '"]' ).attr( 'site_name' );
+    return mainwp_updatesoverview_checkBackups( sitesToUpdate, siteNames );
+};
+
+updatesoverview_upgrade_plugintheme_list_popup  = function ( what, pId, pSiteName, list)
+{
+    var updateCount = list.length;
+    if ( updateCount == 0 )
+        return;
+
+    var updateWhat = (what == 'plugin') ? __('plugins') : ( what == 'theme' ? __('themes') : __('translations'));
+
+    mainwpPopup( '#mainwp-sync-sites-modal' ).clearList();
+    mainwpPopup( '#mainwp-sync-sites-modal' ).appendItemsList( decodeURIComponent( pSiteName ) + ' (' + updateCount + ' ' + updateWhat + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + pId + '">' + '<i class="clock outline icon"></i> ' + '</span>' );
+
+    var initData = {
+        title: __( 'Updating all' ),
+        total: 1, // update for one site
+        pMax: 1
+    };
+    updatesoverview_update_popup_init( initData );
+    var data = mainwp_secure_data( {
+        action: 'mainwp_upgradeplugintheme',
+        websiteId: pId,
+        type: what,
+        slug: list.join( ',' )
+    } );
+
+    updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="sync loading icon"></i>' );
+
+    jQuery.post( ajaxurl, data, function ( response ) {
+        if ( response.error ) {
+            updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="red times icon"></i>' );
+        }
+        else
+        {
+            updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pId) );
+        }
+        mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( 1 );
+        setTimeout( function ()
+        {
+            mainwpPopup( '#mainwp-sync-sites-modal' ).close(true);
+        }, 3000 );
+    });
+}
 
 // for semantic ui checkboxes
 jQuery( document ).ready( function () {    

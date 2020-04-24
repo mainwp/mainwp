@@ -1196,7 +1196,7 @@ class MainWP_Plugins {
 		}
 		asort( $plugins );
 
-		$userExtension         = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$trustedPlugins        = json_decode( $userExtension->trusted_plugins, true );
 
@@ -1310,7 +1310,7 @@ class MainWP_Plugins {
 	/** Render Ignore Subpage. */
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$userExtension         = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
 
@@ -1488,7 +1488,7 @@ class MainWP_Plugins {
 	/** Render Ignored Abandoned Page. */
 	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$userExtension         = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
 		$decodedIgnoredPlugins = json_decode( $userExtension->dismissed_plugins, true );
 		$ignoredPlugins        = ( is_array( $decodedIgnoredPlugins ) && ( 0 < count( $decodedIgnoredPlugins ) ) );
 		$cnt                   = 0;

@@ -14,12 +14,14 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
-	// Config.
+	/**	 
+	 * @var $mainwp_db_version DB version number
+	 */
 	protected $mainwp_db_version = '8.16';
 
 	/**
 	 * @static
-	 * instance of this
+	 * @var $instance instance of this
 	 */
 	private static $instance = null;
 
@@ -35,11 +37,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		self::$instance->test_connection();
 
 		return self::$instance;
-	}
-
-	// Constructor.
-	public function __construct() {
-		parent::__construct();
 	}
 
 	// Installs new DB.
@@ -374,7 +371,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->wpdb->suppress_errors( $suppress );
 			}
 		}
-		// delete old columns
+		// delete old columns.
 		if ( version_compare( $currentVersion, '8.16', '<' ) ) {
 			$rankColumns = array(
 				'pagerank',
@@ -962,7 +959,7 @@ class MainWP_DB extends MainWP_DB_Base {
 							'userid' => $userid,
 							'name'   => $this->escape( htmlspecialchars( $groupname ) ),
 						)
-						)
+					)
 					) {
 						$groupids[] = $this->wpdb->insert_id;
 					}
@@ -1096,5 +1093,27 @@ class MainWP_DB extends MainWP_DB_Base {
 			array( 'statsUpdate' => $statsUpdated ),
 			array( 'id' => $websiteid )
 		);
+	}
+	
+	public function get_websites_by_url( $url ) {
+		if ( '/' != substr( $url, - 1 ) ) {
+			$url .= '/';
+		}
+		$where   = '';
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
+		if ( $results ) {
+			return $results;
+		}
+
+		if ( stristr( $url, '/www.' ) ) {
+			// remove www if it's there!
+			$url = str_replace( '/www.', '/', $url );
+		} else {
+			// add www if it's not there!
+			$url = str_replace( 'https://', 'https://www.', $url );
+			$url = str_replace( 'http://', 'http://www.', $url );
+		}
+
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
 	}
 }

@@ -216,31 +216,15 @@ class MainWP_Updates {
 	 * @return
 	 */
 	public static function render() {
+	
+		$websites      = self::get_sites();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();	
+		$site_view = $userExtension->site_view;
 
-		global $current_user;
-		$current_wpid = MainWP_Utility::get_current_wpid();
-
-		if ( $current_wpid ) {
-			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
-		} else {
-			$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
-			$is_staging      = 'no';
-			if ( $staging_enabled ) {
-				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
-				if ( 'staging' === $staging_updates_view ) {
-					$is_staging = 'yes';
-				}
-			}
-			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
-		}
-
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
-		$websites      = MainWP_DB::instance()->query( $sql );
-
-		if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) {
+		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			$site_offset = array();
 			$all_groups  = array();
-			$groups      = MainWP_DB_Tool::instance()->get_groups_for_current_user();
+			$groups      = MainWP_DB_Common::instance()->get_groups_for_current_user();
 			foreach ( $groups as $group ) {
 				$all_groups[ $group->id ] = $group->name;
 			}
@@ -441,7 +425,7 @@ class MainWP_Updates {
 				$total_themes_outdate += count( $themes_outdate );
 			}
 
-			if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
+			if ( MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ) {
 				if ( is_array( $translation_upgrades ) ) {
 					foreach ( $translation_upgrades as $translation_upgrade ) {
 						$slug = esc_html( $translation_upgrade['slug'] );
@@ -631,6 +615,53 @@ class MainWP_Updates {
 		if ( $enable_http_check ) {
 			self::render_http_checks( $websites );
 		}
+		
+		self::render_tabs( $websites, 
+			$current_tab,
+			$all_groups_sites,
+			$all_groups,
+			$site_offset,
+			$userExtension,
+			$total_wp_upgrades,
+			$total_plugin_upgrades,
+			$total_theme_upgrades,
+			$total_translation_upgrades,
+			$mainwp_show_language_updates,
+			$allTranslations,
+			$translationsInfo,
+			$allPluginsOutdate,
+			$decodedDismissedPlugins,
+			$trustedPlugins,
+			$allPlugins,
+			$pluginsInfo,
+			$trustedThemes,
+			$allThemes,
+			$themesInfo,
+			$decodedDismissedThemes,
+			$allThemesOutdate
+		);
+
+		self::render_updates_modal();
+
+		if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
+			?>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				updatesoverview_updates_init_group_view();
+			} );
+		</script>
+			<?php
+		endif;
+
+		self::render_footer();
+	}
+
+	public static function render_tabs( $websites, $current_tab, $all_groups_sites, $all_groups, $site_offset, 
+		$userExtension, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, 
+		$mainwp_show_language_updates, $allTranslations, $translationsInfo, $allPluginsOutdate, $decodedDismissedPlugins,
+		$trustedPlugins, $allPlugins, $pluginsInfo, $trustedThemes, $allThemes, $themesInfo, $decodedDismissedThemes, $allThemesOutdate
+		) {	
+		$site_view = $userExtension->site_view;
 		?>
 			<!-- WordPress Updates -->
 			<?php
@@ -638,7 +669,7 @@ class MainWP_Updates {
 				?>
 				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
 					<?php
-					if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+					if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 						MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
 					else :
 						MainWP_DB::data_seek( $websites, 0 );
@@ -655,12 +686,12 @@ class MainWP_Updates {
 			<?php if ( 'plugins-updates' === $current_tab ) : ?>
 			<div class="ui <?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="plugins-updates">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
+				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
 					?>
 				<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
-				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
@@ -682,12 +713,12 @@ class MainWP_Updates {
 			<?php if ( 'themes-updates' === $current_tab ) : ?>
 			<div class="ui <?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="themes-updates">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
+				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
 					?>
 				<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
-				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
@@ -710,9 +741,9 @@ class MainWP_Updates {
 				<?php if ( 1 === $mainwp_show_language_updates ) : ?>
 				<div class="ui <?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="translations-updates">
 					<?php
-					if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
+					if ( MAINWP_VIEW_PER_SITE == $site_view ) :
 						MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
-					elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+					elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 						MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
 					else :
 						?>
@@ -730,12 +761,12 @@ class MainWP_Updates {
 			<?php if ( 'abandoned-plugins' === $current_tab ) : ?>				
 			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
+				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
 					?>
 				<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
-				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
@@ -757,12 +788,12 @@ class MainWP_Updates {
 			<?php if ( 'abandoned-themes' === $current_tab ) : ?>				
 			<div class="ui <?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-themes">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE == $userExtension->site_view ) :
+				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
 					?>
 				<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
-				elseif ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
+				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
 					?>
 				<!-- Per Group -->
 					<?php
@@ -815,22 +846,52 @@ class MainWP_Updates {
 			} );
 		</script>
 		<?php
-
-		self::render_updates_modal();
-
-		if ( MAINWP_VIEW_PER_GROUP == $userExtension->site_view ) :
-			?>
-		<script type="text/javascript">
-			jQuery( document ).ready( function () {
-				updatesoverview_updates_init_group_view();
-			} );
-		</script>
-			<?php
-		endif;
-
-		self::render_footer();
 	}
-
+	
+	
+	/**
+	 * Method get_sites()
+	 *
+	 * Get sites for updates
+	 *
+	 * @return
+	 */
+	public static function get_sites() {		
+		global $current_user;	
+		$current_wpid = MainWP_Utility::get_current_wpid();
+		if ( $current_wpid ) {
+			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+		} else {
+			$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
+			$is_staging      = 'no';
+			if ( $staging_enabled ) {
+				$staging_updates_view = get_user_option( 'mainwp_staging_options_updates_view', $current_user->ID );
+				if ( 'staging' === $staging_updates_view ) {
+					$is_staging = 'yes';
+				}
+			}
+			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
+		}		
+		return MainWP_DB::instance()->query( $sql );
+	}
+	
+	/**
+	 * Method render_header_tabs()
+	 *
+	 * Render header tabs
+	 *
+	 * @param bool $show_language_updates show language update.
+	 * @param string $current_tab current tab.
+	 * @param int $total_wp_upgrades total WP update.
+	 * @param int $total_plugin_upgrades total plugins update.
+	 * @param int $total_theme_upgrades total themes update.
+	 * @param int $total_translation_upgrades total translation update.
+	 * @param int $total_plugins_outdate total plugins outdate.
+	 * @param int $total_themes_outdate total theme outdate.
+	 * @param object $userExtension total user extension object.	 
+	 *   	
+	 * @return html output
+	 */
 	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $userExtension ) {
 		?>
 		<div id="mainwp-page-navigation-wrapper">
@@ -857,9 +918,9 @@ class MainWP_Updates {
 							<div class="inline field">
 								<label for="mainwp_select_options_siteview"><?php esc_html_e( 'Show updates per ', 'mainwp' ); ?></label>
 								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
-									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
-									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $userExtension->site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
+									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
+									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
+									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
 								</select>
 							</div>
 						</form>
@@ -899,12 +960,8 @@ class MainWP_Updates {
 	public static function render_http_checks( $websites ) {
 
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
-		/*
-		* @deprecated Use 'mainwp_getcustompage_backups' instead.
-		*
-		*/
-		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
+		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );		
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
 		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
 		$restorePageSlug = '';

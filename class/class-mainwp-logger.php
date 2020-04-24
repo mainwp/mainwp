@@ -352,13 +352,13 @@ class MainWP_Logger {
 	 */
 	public static function clear_log() {
 		$logFile = self::instance()->get_log_file();
-		if ( ! @unlink( $logFile, 'r' ) ) {
-			$fh = @fopen( $logFile, 'w' );
+		if ( ! unlink( $logFile, 'r' ) ) {
+			$fh = fopen( $logFile, 'w' );
 			if ( false === $fh ) {
 				return;
 			}
 
-			@fclose( $fh );
+			fclose( $fh );
 		}
 	}
 
@@ -369,7 +369,7 @@ class MainWP_Logger {
 	 */
 	public static function show_log() {
 		$logFile = self::instance()->get_log_file();
-		$fh      = @fopen( $logFile, 'r' );
+		$fh      = fopen( $logFile, 'r' );
 		if ( false === $fh ) {
 			return;
 		}
@@ -418,7 +418,7 @@ class MainWP_Logger {
 			echo '</div></font>';
 		}
 
-		@fclose( $fh );
+		fclose( $fh );
 	}
 
 }

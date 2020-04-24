@@ -264,7 +264,7 @@ class MainWP_Manage_Sites_List_Table {
 							<div class="menu">
 								<div class="item" data-value="-1" ><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 								<?php
-								$groups = MainWP_DB_Tool::instance()->get_groups_for_manage_sites();
+								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
 									<div class="item" data-value="<?php echo $group->id; ?>" ><?php echo stripslashes( $group->name ); ?></div>
@@ -328,7 +328,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function prepare_items( $optimize = true ) {
 
 		if ( null === $this->userExtension ) {
-			$this->userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		}
 
 		$orderby = 'wp.url';

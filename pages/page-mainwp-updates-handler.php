@@ -144,14 +144,14 @@ class MainWP_Updates_Handler {
 	 */
 	public static function ignore_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		if ( 'plugin' === $type ) {
 			$decodedIgnoredPlugins = json_decode( $userExtension->ignored_plugins, true );
 			if ( ! is_array( $decodedIgnoredPlugins ) ) {
 				$decodedIgnoredPlugins = array();
 			}
 			$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
@@ -163,7 +163,7 @@ class MainWP_Updates_Handler {
 				$decodedIgnoredThemes = array();
 			}
 			$decodedIgnoredThemes[ $slug ] = urldecode( $name );
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'         => null,
 					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
@@ -184,7 +184,7 @@ class MainWP_Updates_Handler {
 	 */
 	public static function unignore_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		if ( 'plugin' === $type ) {
 			if ( '_ALL_' === $slug ) {
 				$decodedIgnoredPlugins = array();
@@ -197,7 +197,7 @@ class MainWP_Updates_Handler {
 					unset( $decodedIgnoredPlugins[ $slug ] );
 				}
 			}
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'ignored_plugins'    => wp_json_encode( $decodedIgnoredPlugins ),
@@ -215,7 +215,7 @@ class MainWP_Updates_Handler {
 					unset( $decodedIgnoredThemes[ $slug ] );
 				}
 			}
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'         => null,
 					'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ),
@@ -283,7 +283,7 @@ class MainWP_Updates_Handler {
 	 */
 	public static function unignore_abandoned_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		if ( 'plugin' === $type ) {
 			if ( '_ALL_' === $slug ) {
 				$decodedIgnoredPlugins = array();
@@ -296,7 +296,7 @@ class MainWP_Updates_Handler {
 					unset( $decodedIgnoredPlugins[ $slug ] );
 				}
 			}
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'dismissed_plugins'  => wp_json_encode( $decodedIgnoredPlugins ),
@@ -314,7 +314,7 @@ class MainWP_Updates_Handler {
 					unset( $decodedIgnoredThemes[ $slug ] );
 				}
 			}
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'dismissed_themes'   => wp_json_encode( $decodedIgnoredThemes ),
@@ -370,14 +370,14 @@ class MainWP_Updates_Handler {
 	 */
 	public static function dismiss_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		if ( 'plugin' === $type ) {
 			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
 			if ( ! is_array( $decodedDismissedPlugins ) ) {
 				$decodedDismissedPlugins = array();
 			}
 			$decodedDismissedPlugins[ $slug ] = urldecode( $name );
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'dismissed_plugins'  => wp_json_encode( $decodedDismissedPlugins ),
@@ -389,7 +389,7 @@ class MainWP_Updates_Handler {
 				$decodedDismissedThemes = array();
 			}
 			$decodedDismissedThemes[ $slug ] = urldecode( $name );
-			MainWP_DB_Tool::instance()->update_user_extension(
+			MainWP_DB_Common::instance()->update_user_extension(
 				array(
 					'userid'             => null,
 					'dismissed_themes'   => wp_json_encode( $decodedDismissedThemes ),
@@ -451,7 +451,7 @@ class MainWP_Updates_Handler {
 	// phpcs:ignore -- not quite complex function
 	public static function get_plugin_theme_slugs( $id, $type ) {
 
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id );
 		$websites      = MainWP_DB::instance()->query( $sql );
 		$website       = MainWP_DB::fetch_object( $websites );

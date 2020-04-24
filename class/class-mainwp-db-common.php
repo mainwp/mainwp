@@ -8,9 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_DB_Tool
+ * Class MainWP_DB_Common
  */
-class MainWP_DB_Tool extends MainWP_DB {
+class MainWP_DB_Common extends MainWP_DB {
 		
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 	
@@ -22,18 +22,13 @@ class MainWP_DB_Tool extends MainWP_DB {
 
 	/**
 	 * @static
-	 * @return MainWP_DB_Tool
+	 * @return MainWP_DB_Common
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
-	}
-
-	// Constructor.
-	public function __construct() {
-		parent::__construct();
 	}
 
 	public function get_last_sync_status( $userId = null ) {
@@ -174,28 +169,6 @@ class MainWP_DB_Tool extends MainWP_DB {
 		}
 
 		return $this->wpdb->get_results( 'SELECT DISTINCT(g.id), g.name, count(wp.wpid) FROM ' . $this->table_name( 'group' ) . ' g JOIN ' . $this->table_name( 'wp_group' ) . ' wp ON g.id = wp.groupid JOIN ' . $this->table_name( 'wp' ) . ' wpsite ON wp.wpid = wpsite.id JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.wpid = wp_sync.wpid ' . $where . ' GROUP BY g.id HAVING count(wp.wpid) > 0 ORDER BY g.name', OBJECT_K );
-	}
-
-	public function get_websites_by_url( $url ) {
-		if ( '/' != substr( $url, - 1 ) ) {
-			$url .= '/';
-		}
-		$where   = '';
-		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
-		if ( $results ) {
-			return $results;
-		}
-
-		if ( stristr( $url, '/www.' ) ) {
-			// remove www if it's there!
-			$url = str_replace( '/www.', '/', $url );
-		} else {
-			// add www if it's not there!
-			$url = str_replace( 'https://', 'https://www.', $url );
-			$url = str_replace( 'http://', 'http://www.', $url );
-		}
-
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
 	}
 
 	public function insert_or_update_request_log( $wpid, $ip, $start, $stop ) {

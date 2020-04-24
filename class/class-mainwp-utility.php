@@ -208,7 +208,7 @@ class MainWP_Utility {
 			return null;
 		}
 
-		$userExt = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExt = MainWP_DB_Common::instance()->get_user_extension();
 		if ( '' != $userExt->user_email ) {
 			return $userExt->user_email;
 		}

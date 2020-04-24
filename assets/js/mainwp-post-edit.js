@@ -107,26 +107,6 @@ jQuery(document).ready( function($) {
 	 */
 	window.name = '';
 
-      // moved to mainwp.js  
-    // review for new UI update
-//    jQuery( document ).on( 'click', '#mainwp-category-add-submit', function() {
-//        var newCat = jQuery( '#newcategory' ).val();
-//        if ( jQuery( '#categorychecklist' ).find( 'option[value="' + encodeURIComponent( newCat ) + '"]' ).length > 0 )
-//            return;
-//        jQuery( '#categorychecklist' ).append( '<option value="' + encodeURIComponent( newCat ) + '">' + newCat + '</option>' );
-//        jQuery( '#category-adder' ).addClass( 'wp-hidden-children' );
-//        jQuery( '#newcategory' ).val( '' );
-//    } );
-
-    // Add New Post
-
-    // Show/Hide new category field and button
-//    jQuery( '#category-add-toggle' ).on( 'click', function() {
-//      jQuery( '#newcategory-field' ).toggle();
-//      jQuery( '#mainwp-category-add-submit-field' ).toggle();
-//      return false;
-//    } );
-
     //Show/Hide visibility additional fields
     jQuery( 'input[name="visibility"' ).on( 'change', function() {
       if ( jQuery( this ).val() == 'public' ) {
@@ -166,8 +146,6 @@ jQuery(document).ready( function($) {
 				mm = $('#mm').val(), jj = $('#jj').val(), hh = $('#hh').val(), mn = $('#mn').val();
 
 			attemptedDate = new Date( aa, mm - 1, jj, hh, mn );
-			// originalDate = new Date( $('#hidden_aa').val(), $('#hidden_mm').val() -1, $('#hidden_jj').val(), $('#hidden_hh').val(), $('#hidden_mn').val() );
-//			currentDate = new Date( $('#cur_aa').val(), $('#cur_mm').val() -1, $('#cur_jj').val(), $('#cur_hh').val(), $('#cur_mn').val() );
 
 			// Catch unexpected date problems.
 			if ( attemptedDate.getFullYear() != aa || (1 + attemptedDate.getMonth()) != mm || attemptedDate.getDate() != jj || attemptedDate.getMinutes() != mn ) {

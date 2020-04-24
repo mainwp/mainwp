@@ -334,7 +334,7 @@ class MainWP_Settings {
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
-			$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 			$save_emails   = array();
 			$user_emails   = $_POST['mainwp_options_email'];
 			if ( is_array( $user_emails ) ) {
@@ -352,7 +352,7 @@ class MainWP_Settings {
 			$userExtension->heatMap   = ( ! isset( $_POST['mainwp_options_footprint_heatmap'] ) ? 1 : 0 );
 			$userExtension->pluginDir = '';
 
-			MainWP_DB_Tool::instance()->update_user_extension( $userExtension );
+			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 			if ( MainWP_Utility::is_admin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );

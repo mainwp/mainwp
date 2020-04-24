@@ -484,7 +484,7 @@ class MainWP_Server_Information_Handler {
 		}
 
 		$options_value = array();
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		foreach ( $mainwp_options as $opt => $label ) {
 			$value = get_option( $opt, false );
 			switch ( $opt ) {

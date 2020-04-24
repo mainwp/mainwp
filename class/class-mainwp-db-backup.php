@@ -15,7 +15,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * @static
-	 * instance of this
+	 * @var $instance instance of this
 	 */
 	private static $instance = null;
 
@@ -28,14 +28,6 @@ class MainWP_DB_Backup extends MainWP_DB {
 			self::$instance = new self();
 		}
 		return self::$instance;
-	}
-
-
-	/**
-	 * Constructor
-	 */
-	public function __construct() {
-		parent::__construct();
 	}
 
 	public function get_website_backup_settings( $websiteid ) {

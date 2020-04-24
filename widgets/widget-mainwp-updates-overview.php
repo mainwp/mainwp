@@ -160,7 +160,7 @@ class MainWP_Updates_Overview {
 			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging );
 		}
 
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$websites      = MainWP_DB::instance()->query( $sql );
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
@@ -378,7 +378,7 @@ class MainWP_Updates_Overview {
 		if ( ! $globalView ) {
 			$last_dtsSync = $currentSite->dtsSync;
 		} else {
-			$result                   = MainWP_DB_Tool::instance()->get_last_sync_status();
+			$result                   = MainWP_DB_Common::instance()->get_last_sync_status();
 			$sync_status              = $result['sync_status'];
 			$last_sync                = $result['last_sync'];
 						$last_dtsSync = $result['last_sync'];

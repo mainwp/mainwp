@@ -721,7 +721,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$groups = MainWP_DB_Tool::instance()->get_groups_for_current_user();
+		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 
 		?>
 
@@ -774,7 +774,7 @@ class MainWP_Manage_Sites_View {
 
 				<?php
 
-				$groupsSite  = MainWP_DB_Tool::instance()->get_groups_by_website_id( $website->id );
+				$groupsSite  = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
 				$init_groups = '';
 				foreach ( $groups as $group ) {
 					$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
@@ -886,17 +886,13 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				</div>
-					
-				<?php do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. ?>
-				
-				<?php do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead. ?>
-				
-				<?php do_action( 'mainwp_manage_sites_edit', $website ); ?>
-
-				<?php do_action( 'mainwp_extension_sites_edit', $website ); ?>
-				
-				<?php do_action( 'mainwp_extension_sites_edit_tablerow', $website ); ?>
-
+				<?php 
+				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.				
+				do_action( 'mainwp_manage_sites_edit', $website );
+				do_action( 'mainwp_extension_sites_edit', $website );
+				do_action( 'mainwp_extension_sites_edit_tablerow', $website );
+				?>
 				<div class="ui divider"></div>
 				<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</form>
@@ -1073,7 +1069,7 @@ class MainWP_Manage_Sites_View {
 								}
 							}
 							foreach ( $tmpArr as $tmp ) {
-								$getgroup = MainWP_DB_Tool::instance()->get_group_by_name( trim( $tmp ) );
+								$getgroup = MainWP_DB_Common::instance()->get_group_by_name( trim( $tmp ) );
 								if ( $getgroup ) {
 									if ( ! in_array( $getgroup->id, $groupids, true ) ) {
 										$groupids[] = $getgroup->id;
@@ -1087,7 +1083,7 @@ class MainWP_Manage_Sites_View {
 						if ( ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) ) {
 							$tmpArr = preg_split( '/[;,]/', $params['groupnames_import'] );
 							foreach ( $tmpArr as $tmp ) {
-								$group = MainWP_DB_Tool::instance()->get_group_by_name( trim( $tmp ) );
+								$group = MainWP_DB_Common::instance()->get_group_by_name( trim( $tmp ) );
 								if ( $group ) {
 									if ( ! in_array( $group->id, $groupids, true ) ) {
 										$groupids[] = $group->id;

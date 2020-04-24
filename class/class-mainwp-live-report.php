@@ -523,7 +523,7 @@ class MainWP_Live_Reports {
 				$file      = trim( $file );
 				$file_path = $dir . $file;
 				if ( file_exists( $file_path ) ) {
-					@unlink( $file_path );
+					unlink( $file_path );
 				}
 			}
 		}
@@ -1411,7 +1411,7 @@ class MainWP_Live_Reports {
 					$error = __( 'Error: No Stream or MainWP Client Reports plugin installed.' );
 				}
 			} else {
-				$error = is_array( $information ) ? @implode( '<br>', $information ) : $information;
+				$error = is_array( $information ) ? implode( '<br>', $information ) : $information;
 			}
 			return array( 'error' => $error );
 		}

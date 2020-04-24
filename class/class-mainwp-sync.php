@@ -25,7 +25,7 @@ class MainWP_Sync {
 		if ( null == $pWebsite ) {
 			return false;
 		}
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension_by_user_id( $pWebsite->userid );
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension_by_user_id( $pWebsite->userid );
 		if ( null == $userExtension ) {
 			return false;
 		}

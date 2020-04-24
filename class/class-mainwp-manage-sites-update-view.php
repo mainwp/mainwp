@@ -18,7 +18,7 @@ class MainWP_Manage_Sites_Update_View {
 
 	public static function render_individual_updates( $id ) {
 		global $current_user;
-		$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites      = MainWP_DB::instance()->query( $sql );
 
@@ -134,9 +134,6 @@ class MainWP_Manage_Sites_Update_View {
 
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
 
-		$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
-		$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
-
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
@@ -205,7 +202,7 @@ class MainWP_Manage_Sites_Update_View {
 									<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
 								</a>
 							</td>
-							<td><?php echo ( in_array( $slug, $trustedPlugins, true ) ? $trusted_label : $not_trusted_label ); ?></td>
+							<td><?php echo ( in_array( $slug, $trustedPlugins, true ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
 							<td class="right aligned">
 								<?php if ( $user_can_ignore_unignore ) : ?>
 									<a href="#" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
@@ -234,9 +231,6 @@ class MainWP_Manage_Sites_Update_View {
 	}
 
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
-
-		$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
-		$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
 
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
@@ -300,7 +294,7 @@ class MainWP_Manage_Sites_Update_View {
 								</td>
 								<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
 								<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></a></td>
-								<td><?php echo ( in_array( $slug, $trustedThemes, true ) ? $trusted_label : $not_trusted_label ); ?></td>
+								<td><?php echo ( in_array( $slug, $trustedThemes, true ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
 								<td class="right aligned">
 									<?php if ( $user_can_ignore_unignore ) : ?>
 										<a href="#" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>

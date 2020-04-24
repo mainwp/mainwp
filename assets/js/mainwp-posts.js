@@ -3,8 +3,7 @@
  * MainWP_Page.page
  */
 jQuery( document ).ready( function () {
-    //jQuery( '.mainwp_datepicker' ).datepicker( { dateFormat: "yy-mm-dd" } );
-
+    
 // to fix issue not loaded calendar js library
 if (jQuery( '.ui.calendar' ).length > 0 ) {
             if (mainwpParams.use_wp_datepicker == 1) {
@@ -109,8 +108,6 @@ mainwppage_postAction = function ( elem, what ) {
         postId: pageId,
         websiteId: websiteId
     } );
-//    rowElement.find( '.row-actions' ).hide();
-//    rowElement.find( '.row-actions-working' ).show();
 
     rowElement.html( '<td colspan="99"><i class="notched circle loading icon"></i> Please wait...</td>' );
     jQuery.post( ajaxurl, data, function ( response ) {
@@ -119,9 +116,6 @@ mainwppage_postAction = function ( elem, what ) {
         } else if ( response.result ) {
             rowElement.html( '<td colspan="99"><i class="check circle green icon"></i> ' + response.result + '</td>' );
         }
-//        else {
-//            rowElement.find( '.row-actions-working' ).hide();
-//        }
         countReceived++;
 
         if ( countReceived == countSent ) {
@@ -320,7 +314,6 @@ mainwppost_postAction = function ( elem, what, postType ) {
     }
     data = mainwp_secure_data( data );
 
-    //rowElement.find('td').hide();
     rowElement.html( '<td colspan="99"><i class="notched circle loading icon"></i> Please wait...</td>' );
     jQuery.post( ajaxurl, data, function ( response ) {
         if ( response.error ) {
@@ -337,9 +330,7 @@ mainwppost_postAction = function ( elem, what, postType ) {
                 }
             }
         }
-
         countReceived++;
-
         if ( countReceived == countSent ) {
             countReceived = 0;
             countSent = 0;
@@ -416,8 +407,6 @@ mainwp_fetch_posts = function ( postId, userId ) {
         response = jQuery.trim( response );
         jQuery( '#mainwp-loading-posts-row' ).hide();
         jQuery( '#mainwp_posts_main' ).show();
-//        var matches = ( response == null ? null : response.match( /post\[\]/g ) );
-//        jQuery( '#mainwp_posts_total' ).html( matches == null ? 0 : matches.length );
         jQuery( '#mainwp-posts-table-wrapper' ).empty();
         jQuery( '#mainwp-posts-table-wrapper' ).html( response );
         // re-initialize datatable

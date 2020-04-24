@@ -268,7 +268,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 		if ( isset( $assoc_args['list'] ) ) {
 			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -356,7 +356,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
 			$websites         = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension    = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension    = MainWP_DB_Common::instance()->get_user_extension();
 			$websites_to_list = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -434,7 +434,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			}
 
 			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;
@@ -531,7 +531,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 		if ( isset( $assoc_args['list'] ) ) {
 			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -619,7 +619,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
 			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension       = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 			$websites_to_upgrade = array();
 			while ( $websites && ( $website          = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
@@ -698,7 +698,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			}
 
 			$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-			$userExtension = MainWP_DB_Tool::instance()->get_user_extension();
+			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 			while ( $websites && ( $website      = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 					continue;

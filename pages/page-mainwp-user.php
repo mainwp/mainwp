@@ -1487,7 +1487,7 @@ class MainWP_User {
 		if ( 'site' === $_POST['select_by'] ) {
 			foreach ( $selected_sites as $url ) {
 				if ( ! empty( $url ) ) {
-					$website = MainWP_DB_Tool::instance()->get_websites_by_url( $url );
+					$website = MainWP_DB::instance()->get_websites_by_url( $url );
 					if ( $website ) {
 						$dbwebsites[ $website[0]->id ] = MainWP_Utility::map_site(
 							$website[0],
@@ -1511,7 +1511,7 @@ class MainWP_User {
 			}
 		} else {
 			foreach ( $selected_groups as $group ) {
-				if ( MainWP_DB_Tool::instance()->get_group_by_name( $group ) ) {
+				if ( MainWP_DB_Common::instance()->get_group_by_name( $group ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_name( $group ) );
 					if ( $websites ) {
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {

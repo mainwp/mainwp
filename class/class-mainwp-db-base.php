@@ -16,11 +16,13 @@ class MainWP_DB_Base {
 
 	/**
 	 * @static
-	 * instance of this
+	 * @var $instance instance of this
 	 */
 	private static $instance = null;
 
-	// Private.
+	/**	 
+	 * @var $table_prefix table prefix
+	 */
 	protected $table_prefix;
 
 	/** @var $wpdb wpdb */

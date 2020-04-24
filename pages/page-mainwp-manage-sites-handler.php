@@ -839,7 +839,7 @@ class MainWP_Manage_Sites_Handler {
 
 
 	public static function check_site() {
-		$website = MainWP_DB_Tool::instance()->get_websites_by_url( $_POST['url'] );
+		$website = MainWP_DB::instance()->get_websites_by_url( $_POST['url'] );
 		$ret     = array();
 		if ( MainWP_Utility::can_edit_website( $website ) ) {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
@@ -892,7 +892,7 @@ class MainWP_Manage_Sites_Handler {
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB.
-			$website                           = MainWP_DB_Tool::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
+			$website                           = MainWP_DB::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
 		}
 
@@ -928,7 +928,7 @@ class MainWP_Manage_Sites_Handler {
 			if ( MainWP_Utility::can_edit_website( $website ) ) {
 				$note     = stripslashes( $_POST['note'] );
 				$esc_note = MainWP_Utility::esc_content( $note );
-				MainWP_DB_Tool::instance()->update_note( $website->id, $esc_note );
+				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} else {

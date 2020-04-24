@@ -71,14 +71,13 @@ class MainWP_Manage_Backups {
 	 * Instantiate Legacy Backups Menu.
 	 *
 	 * @return void
-	 *
-	 * @deprecated Use 'mainwp_getcustompage_backups' instead.
+	 *	 
 	 */
 	public static function init_menu() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 
-		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' );
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
 		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
 		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {

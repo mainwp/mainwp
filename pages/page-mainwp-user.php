@@ -1344,12 +1344,15 @@ class MainWP_User {
 
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
-
+		
 		$errors = array();
 		if ( UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			if ( is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = $_FILES['import_user_file_bulkupload']['tmp_name'];
-				$content  = file_get_contents( $tmp_path );
+				$wpFileSystem = MainWP_Utility::get_wp_file_system();
+				global $wp_filesystem;
+		
+				$content  = $wp_filesystem->get_contents( $tmp_path );
 				$lines    = explode( "\r\n", $content );
 
 				if ( is_array( $lines ) && 0 < count( $lines ) ) {

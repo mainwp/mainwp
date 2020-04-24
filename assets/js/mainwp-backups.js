@@ -1225,9 +1225,6 @@ mainwp_managebackups_add = function () {
             'groups[]': selected_groups,
             'sites[]': selected_sites,
             subfolder: jQuery( '#mainwp_managebackups_add_subfolder' ).val(),
-//            remote_destinations: ( jQuery( '#backup_location_remote' ).hasClass( 'mainwp_action_down' ) ? jQuery.map( jQuery( '#backup_destination_list' ).find( 'input[name="remote_destinations[]"]' ), function ( el ) {
-//                return jQuery( el ).val();
-//            } ) : [ ] ),
             filename: jQuery( '#backup_filename' ).val(),
             archiveFormat: jQuery( '#mainwp_archiveFormat' ).val(),
             maximumFileDescriptorsOverride: jQuery( '#mainwp_options_maximumFileDescriptorsOverride_override' ).is( ':checked' ) ? 1 : 0,

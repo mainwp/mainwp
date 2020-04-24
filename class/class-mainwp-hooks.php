@@ -449,7 +449,7 @@ class MainWP_Hooks {
 	}
 
 	public function get_format_email( $body, $email, $title = '' ) {
-		return MainWP_Utility::format_email( $email, $body, $title );
+		return MainWP_Format::format_email( $email, $body, $title );
 	}
 
 	public function active_plugin() {

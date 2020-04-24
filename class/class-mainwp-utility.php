@@ -2,7 +2,6 @@
 /**
  * MainWP Utility Helper
  *
- * Custom curl functions and PHP filesystem functions.
  */
 
 namespace MainWP\Dashboard;
@@ -297,13 +296,13 @@ class MainWP_Utility {
 		} else {
 
 			if ( ! file_exists( $newdir ) ) {
-				@mkdir( $newdir, 0777, true );
+				mkdir( $newdir, 0777, true );
 			}
 
 			if ( null != $dirs[0] . $userid && ! file_exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
-				$file = @fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
-				@fwrite( $file, 'deny from all' );
-				@fclose( $file );
+				$file = fopen( trailingslashit( $dirs[0] . $userid ) . '.htaccess', 'w+' );
+				fwrite( $file, 'deny from all' );
+				fclose( $file );
 			}
 		}
 

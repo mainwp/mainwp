@@ -9,6 +9,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Server_Information_Handler {
 
+	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
+	
 	/**
 	 * Get Class Name.
 	 *

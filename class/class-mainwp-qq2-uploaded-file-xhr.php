@@ -9,6 +9,9 @@ namespace MainWP\Dashboard;
 
 /** Class MainWP_QQ2_Uploaded_File_Xhr. */
 class MainWP_QQ2_Uploaded_File_Xhr {
+	
+	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
+	
 	/**
 	 * Save the file to the specified path
 	 *

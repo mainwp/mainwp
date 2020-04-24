@@ -327,7 +327,7 @@ class MainWP_System_Cron_Jobs {
 
 				update_option( 'mainwp_last_synced_all_sites', time() );
 
-				if ( ! $this->send_updates_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
+				if ( ! $this->send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
 					return;
 				}
 			}
@@ -628,7 +628,7 @@ class MainWP_System_Cron_Jobs {
 				return;
 			}
 
-			if ( 1 !== $mainwpAutomaticDailyUpdate && 1 !== $plugin_automaticDailyUpdat && 1 !== $theme_automaticDailyUpdate ) {
+			if ( 1 !== $mainwpAutomaticDailyUpdate && 1 !== $plugin_automaticDailyUpdate && 1 !== $theme_automaticDailyUpdate ) {
 				return;
 			}
 
@@ -722,7 +722,7 @@ class MainWP_System_Cron_Jobs {
 					MainWP_Logger::instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
 
 					try {
-						MainWP_Connect::fetch_url_authed(
+						$information = MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
@@ -749,7 +749,7 @@ class MainWP_System_Cron_Jobs {
 					}
 
 					try {
-						MainWP_Connect::fetch_url_authed(
+						$information = MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
@@ -790,7 +790,7 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Method send_updates_notification().
+	 * Method send_notification().
 	 *
 	 * @param bool $plugin_automaticDailyUpdate
 	 * @param bool $theme_automaticDailyUpdate
@@ -799,11 +799,11 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 */
-	public function send_updates_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {
+	public function send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {
 
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
-			$mail     = '';
+			$mail_content     = '';
 			$sendMail = false;
 
 			$sitesCheckCompleted = null;
@@ -843,15 +843,15 @@ class MainWP_System_Cron_Jobs {
 				$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
 
 				if ( $text_format ) {
-					$mail .= 'WordPress Plugin Updates' . "\r\n";
-					$mail .= "\r\n";
-					$mail .= $mail_lines;
-					$mail .= "\r\n";
+					$mail_content .= 'WordPress Plugin Updates' . "\r\n";
+					$mail_content .= "\r\n";
+					$mail_content .= $mail_lines;
+					$mail_content .= "\r\n";
 				} else {
-					$mail .= '<div><strong>WordPress Plugin Updates</strong></div>';
-					$mail .= '<ul>';
-					$mail .= $mail_lines;
-					$mail .= '</ul>';
+					$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
+					$mail_content .= '<ul>';
+					$mail_content .= $mail_lines;
+					$mail_content .= '</ul>';
 				}
 			}
 		}
@@ -885,15 +885,15 @@ class MainWP_System_Cron_Jobs {
 				$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate );
 
 				if ( $text_format ) {
-					$mail .= 'WordPress Themes Updates' . "\r\n";
-					$mail .= "\r\n";
-					$mail .= $mail_lines;
-					$mail .= "\r\n";
+					$mail_content .= 'WordPress Themes Updates' . "\r\n";
+					$mail_content .= "\r\n";
+					$mail_content .= $mail_lines;
+					$mail_content .= "\r\n";
 				} else {
-					$mail .= '<div><strong>WordPress Themes Updates</strong></div>';
-					$mail .= '<ul>';
-					$mail .= $mail_lines;
-					$mail .= '</ul>';
+					$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
+					$mail_content .= '<ul>';
+					$mail_content .= $mail_lines;
+					$mail_content .= '</ul>';
 				}
 			}
 		}
@@ -926,15 +926,15 @@ class MainWP_System_Cron_Jobs {
 				$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate );
 
 				if ( $text_format ) {
-					$mail .= 'WordPress Core Updates' . "\r\n";
-					$mail .= "\r\n";
-					$mail .= $mail_lines;
-					$mail .= "\r\n";
+					$mail_content .= 'WordPress Core Updates' . "\r\n";
+					$mail_content .= "\r\n";
+					$mail_content .= $mail_lines;
+					$mail_content .= "\r\n";
 				} else {
-					$mail .= '<div><strong>WordPress Core Updates</strong></div>';
-					$mail .= '<ul>';
-					$mail .= $mail_lines;
-					$mail .= '</ul>';
+					$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
+					$mail_content .= '<ul>';
+					$mail_content .= $mail_lines;
+					$mail_content .= '</ul>';
 				}
 			}
 		}
@@ -944,19 +944,19 @@ class MainWP_System_Cron_Jobs {
 			$sendMail   = true;
 			$mail_lines = $this->print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
 			if ( $text_format ) {
-				$mail .= 'Connection Status' . "\r\n";
-				$mail .= "\r\n";
-				$mail .= $mail_lines;
-				$mail .= "\r\n";
+				$mail_content .= 'Connection Status' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
 			} else {
-				$mail .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> Connection Status </b><br>';
-				$mail .= '<ul>';
-				$mail .= $mail_lines;
-				$mail .= '</ul>';
+				$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> Connection Status </b><br>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
 			}
 		}
 
-			$mail = apply_filters( 'mainwp_daily_digest_content', $mail, $text_format );
+			$mail_content = apply_filters( 'mainwp_daily_digest_content', $mail_content, $text_format );
 
 			MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', '' );
 
@@ -994,7 +994,42 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
+			$this->send_http_response_notification( $disable_send_noti, $content_type );
+		}
 
+			$disabled_notification = apply_filters( 'mainwp_updatescheck_disable_notification_mail', false );
+		if ( $disabled_notification ) {
+			return false;
+		}
+
+		if ( ! $sendMail ) {
+			MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
+
+			return false;
+		}
+
+		if ( ! $disable_send_noti ) {
+			$email = get_option( 'mainwp_updatescheck_mail_email' );
+			MainWP_Logger::instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
+			if ( false !== $email && '' !== $email ) {
+				$this->send_updates_notification( $email, $mail_content, $text_format, $content_type );
+			}
+		}
+		
+		return true;
+	}
+
+
+	/**
+	 * Method send_http_response_notification().
+	 *
+	 * @param bool $disable_send_noti
+	 * @param mixed $content_type
+	 *
+	 * @return none
+	 */
+	public function send_http_response_notification( $disable_send_noti, $content_type ) {
+		
 			$sitesHttpCheckIds = get_option( 'mainwp_automaticUpdate_httpChecks' );
 			if ( ! is_array( $sitesHttpCheckIds ) ) {
 				$sitesHttpCheckIds = array();
@@ -1026,7 +1061,7 @@ class MainWP_System_Cron_Jobs {
 				wp_mail(
 					$email,
 					$mail_title = 'MainWP - HTTP response check',
-					MainWP_Utility::format_email(
+					MainWP_Format::format_email(
 						$email,
 						$mail_offline,
 						$mail_title
@@ -1036,56 +1071,38 @@ class MainWP_System_Cron_Jobs {
 						$content_type,
 					)
 				);
-			}
+			}			
 			MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
-		}
-
-			$disabled_notification = apply_filters( 'mainwp_updatescheck_disable_notification_mail', false );
-		if ( $disabled_notification ) {
-			return false;
-		}
-
-		if ( ! $sendMail ) {
-			MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
-
-			return false;
-		}
-
-		if ( ! $disable_send_noti ) {
-			$email = get_option( 'mainwp_updatescheck_mail_email' );
-			MainWP_Logger::instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
-			if ( false !== $email && '' !== $email ) {
-				if ( $text_format ) {
-					$mail = 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n"
-					. $mail . "\r\n" .
-					'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n";
-				} else {
-					$mail = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>
-								 <div></div>
-								 ' . $mail . '
-								 <div> </div>
-								 <div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
-				}
-				wp_mail(
-					$email,
-					$mail_title = 'Available Updates',
-					MainWP_Utility::format_email(
-						$email,
-						$mail,
-						$mail_title,
-						$text_format
-					),
-					array(
-						'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-						$content_type,
-					)
-				);
-			}
-		}
-			return true;
 	}
-
-
+	
+	public function send_updates_notification( $email, $content, $text_format, $content_type ) {
+		if ( $text_format ) {
+			$mail_content = 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n"
+			. $content . "\r\n" .
+			'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n";
+		} else {
+			$mail_content = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>
+			<div></div>
+			' . $content . '
+			<div> </div>
+			<div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
+		}
+		wp_mail(
+			$email,
+			$mail_title = 'Available Updates',
+			MainWP_Format::format_email(
+				$email,
+				$mail_content,
+				$mail_title,
+				$text_format
+			),
+			array(
+				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+				$content_type,
+			)
+		);
+	}
+	
 	/**
 	 * List of updates to be emailed.
 	 *

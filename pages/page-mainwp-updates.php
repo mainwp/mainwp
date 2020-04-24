@@ -643,7 +643,7 @@ class MainWP_Updates {
 
 		self::render_updates_modal();
 
-		if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
+		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
@@ -651,7 +651,7 @@ class MainWP_Updates {
 			} );
 		</script>
 			<?php
-		endif;
+		};
 
 		self::render_footer();
 	}
@@ -661,155 +661,134 @@ class MainWP_Updates {
 		$mainwp_show_language_updates, $allTranslations, $translationsInfo, $allPluginsOutdate, $decodedDismissedPlugins,
 		$trustedPlugins, $allPlugins, $pluginsInfo, $trustedThemes, $allThemes, $themesInfo, $decodedDismissedThemes, $allThemesOutdate
 		) {
-		$site_view = $userExtension->site_view;
-		?>
+		
+		$site_view = $userExtension->site_view;	
+		
+		if ( 'wordpress-updates' === $current_tab ) {
+			?>
 			<!-- WordPress Updates -->
-			<?php
-			if ( 'wordpress-updates' === $current_tab ) :
-				?>
-				<div class="ui <?php echo( 'wordpress-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="wordpress-updates">
-					<?php
-					if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-						MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
-					else :
-						MainWP_DB::data_seek( $websites, 0 );
-						MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
-					endif;
-					?>
-				</div>
-			<?php endif; ?>
-
-			<!-- END WordPress Updates -->
-
-			<!-- Plugins Updates -->
-
-			<?php if ( 'plugins-updates' === $current_tab ) : ?>
-			<div class="ui <?php echo( 'plugins-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="plugins-updates">
+			<div class="ui active tab" data-tab="wordpress-updates">
 				<?php
-				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
+				if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
+					MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
+				else :
+					MainWP_DB::data_seek( $websites, 0 );
+					MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
+				endif;
+				?>
+			</div>
+			<!-- END WordPress Updates -->
+		<?php } else if ( 'plugins-updates' === $current_tab ) { ?>
+			<!-- Plugins Updates -->			
+			<div class="ui active tab" data-tab="plugins-updates">
+			<?php
+			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
 					?>
-				<!-- Per Site -->
+					<!-- Per Site -->
 					<?php
 					MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
-				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
+			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 					?>
-				<!-- Per Group -->
+					<!-- Per Group -->
 					<?php
 					MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
-				else :
+			} else {
 					?>
-				<!-- Per Item -->
+					<!-- Per Item -->
 					<?php
 					MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
-				endif;
+			};
 				?>
 			</div>
-			<?php endif; ?>
-
 			<!-- END Plugins Updates -->
-
-			<!-- Themes Updates -->
-
-			<?php if ( 'themes-updates' === $current_tab ) : ?>
-			<div class="ui <?php echo( 'themes-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="themes-updates">
-				<?php
-				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
-					?>
-				<!-- Per Site -->
-					<?php
-					MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
-				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-					?>
-				<!-- Per Group -->
-					<?php
-					MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
-				else :
-					?>
-				<!-- Per Item -->
-					<?php
-					MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
-				endif;
+		<?php } else if ( 'themes-updates' === $current_tab ) { ?>
+			<!-- Themes Updates -->			
+			<div class="ui active tab" data-tab="themes-updates">
+			<?php
+			if ( MAINWP_VIEW_PER_SITE == $site_view ) { 
 				?>
+				<!-- Per Site -->
+				<?php
+				MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
+			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				?>
+				<!-- Per Group -->
+				<?php
+				MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
+			} else {
+				?>
+				<!-- Per Item -->
+				<?php
+				MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
+			};
+			?>
 			</div>
-			<?php endif; ?>
-
 			<!-- END Themes Updates -->
-
-			<!-- Translatinos Updates -->
-			
-			<?php if ( 'translations-updates' === $current_tab ) : ?>
-				<?php if ( 1 === $mainwp_show_language_updates ) : ?>
-				<div class="ui <?php echo( 'translations-updates' === $current_tab ? 'active' : '' ); ?> tab" data-tab="translations-updates">
-					<?php
-					if ( MAINWP_VIEW_PER_SITE == $site_view ) :
-						MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
-					elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-						MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
-					else :
-						?>
-						<!-- Per Item -->
-						<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
-					<?php endif; ?>
-				</div>
-				<?php endif; ?>
-			<?php endif; ?>
-
+		<?php } else if ( 'translations-updates' === $current_tab ) { ?>
+			<!-- Translatinos Updates -->			
+			<?php if ( 1 === $mainwp_show_language_updates ) { ?>
+			<div class="ui active tab" data-tab="translations-updates">
+				<?php
+				if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+					MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
+				} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+					MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
+				} else {
+					?>
+					<!-- Per Item -->
+					<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>						
+				<?php }; ?>
+			</div>
+			<?php }; ?>
 			<!-- END Translatinos Updates -->
-
+		<?php } else if ( 'abandoned-plugins' === $current_tab ) { ?>
 			<!-- Abandoned Plugins -->
-
-			<?php if ( 'abandoned-plugins' === $current_tab ) : ?>				
-			<div class="ui <?php echo( 'abandoned-plugins' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-plugins">
-				<?php
-				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
-					?>
-				<!-- Per Site -->
-					<?php
-					MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
-				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-					?>
-				<!-- Per Group -->
-					<?php
-					MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
-				else :
-					?>
-				<!-- Per Item -->
-					<?php
-					MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
-				endif;
+			<div class="ui active tab" data-tab="abandoned-plugins">
+			<?php
+			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
 				?>
-			</div>
-			<?php endif; ?>
-
-			<!-- END Abandoned Plugins -->
-
-			<!-- Abandoned Themes -->
-
-			<?php if ( 'abandoned-themes' === $current_tab ) : ?>				
-			<div class="ui <?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> tab" data-tab="abandoned-themes">
-				<?php
-				if ( MAINWP_VIEW_PER_SITE == $site_view ) :
-					?>
 				<!-- Per Site -->
-					<?php
-					MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
-				elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-					?>
+				<?php
+				MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
+			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				?>
 				<!-- Per Group -->
-					<?php
-					MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
-				else :
-					?>
+				<?php
+				MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
+			} else {
+				?>
 				<!-- Per Item -->
-					<?php
-					MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
-					?>
-				
-				<?php endif; ?>
+				<?php
+				MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
+			};
+			?>
 			</div>
-			<?php endif; ?>
-
+			<!-- END Abandoned Plugins -->
+		<?php } else if ( 'abandoned-themes' === $current_tab ) { ?>
+			<!-- Abandoned Themes -->			
+			<div class="ui active tab" data-tab="abandoned-themes">
+			<?php
+			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+				?>
+				<!-- Per Site -->
+				<?php
+				MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
+			} else if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				?>
+				<!-- Per Group -->
+				<?php
+				MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
+			} else {
+				?>
+				<!-- Per Item -->
+				<?php
+				MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
+				?>				
+			<?php }; ?>
+			</div>
 			<!-- END Abandoned Themes -->
+		<?php }; ?>
+			
 		</div>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {

@@ -289,7 +289,7 @@ class MainWP_Manage_Backups_Handler {
 				$output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
 				$output .= '<strong>Backup type</strong> - ' . ( 'db' == $task->type ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
 				$output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
-				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Utility::format_email( $email, $output, $mail_title ), 'content-type: text/html' );
+				wp_mail( $email, $mail_title = 'A Scheduled Backup has been Started - MainWP', MainWP_Format::format_email( $email, $output, $mail_title ), 'content-type: text/html' );
 				MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'lastStartNotificationSent' => time() ) );
 			}
 		}
@@ -384,7 +384,7 @@ class MainWP_Manage_Backups_Handler {
 					$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 					if ( '' != $task->backup_errors ) {
 						$errorOutput = 'Errors occurred while executing task: <strong>' . $task->name . '</strong><br /><br />' . $task->backup_errors;
-						wp_mail( $email, $mail_title = 'A scheduled backup had an Error - MainWP', MainWP_Utility::format_email( $email, $errorOutput, $mail_title ), 'content-type: text/html' );
+						wp_mail( $email, $mail_title = 'A scheduled backup had an Error - MainWP', MainWP_Format::format_email( $email, $errorOutput, $mail_title ), 'content-type: text/html' );
 
 						MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
 					}

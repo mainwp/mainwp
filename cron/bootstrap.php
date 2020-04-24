@@ -26,7 +26,7 @@ if ( file_exists( __DIR__ . '/../../../../wp-load.php' ) ) {
 	include_once __DIR__ . '/../../../../wp-load.php';
 	$included = true;
 } elseif ( file_exists( __DIR__ . '/../../../../wp-config.php' ) ) {
-	$wp_config = file_get_contents( __DIR__ . '/../../../../wp-config.php' );
+	$wp_config = file_get_contents( __DIR__ . '/../../../../wp-config.php' ); // phpcs:ignore -- used before loading WP
 	preg_match_all( '/.*define[^d].*ABSPATH.*/i', $wp_config, $matches );
 	if ( count( $matches ) > 0 ) {
 		foreach ( $matches as $match ) {

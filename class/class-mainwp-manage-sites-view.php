@@ -886,9 +886,9 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				</div>
-				<?php 
+				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
-				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.				
+				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
 				do_action( 'mainwp_manage_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit_tablerow', $website );

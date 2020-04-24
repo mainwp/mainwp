@@ -71,7 +71,6 @@ class MainWP_Manage_Backups {
 	 * Instantiate Legacy Backups Menu.
 	 *
 	 * @return void
-	 *	 
 	 */
 	public static function init_menu() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );

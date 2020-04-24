@@ -167,7 +167,7 @@ class MainWP_Recent_Posts {
 					<?php esc_html_e( 'No published posts found!', 'mainwp' ); ?>
 				</div>
 			</h2>
-			<?php
+				<?php
 			}
 			?>
 			<div class="ui middle aligned divided selection list">

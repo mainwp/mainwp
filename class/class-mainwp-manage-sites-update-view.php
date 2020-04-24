@@ -15,7 +15,6 @@ class MainWP_Manage_Sites_Update_View {
 		self::render_individual_updates( $website_id );
 	}
 
-
 	public static function render_individual_updates( $id ) {
 		global $current_user;
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -51,7 +50,6 @@ class MainWP_Manage_Sites_Update_View {
 		}
 		MainWP_Manage_Sites_View::render_header_tabs( $active_tab, $active_text, $mainwp_show_language_updates )
 		?>
-				
 		<div class="ui segment" id="mainwp-manage-<?php echo $id; ?>-updates">
 			<?php
 			self::render_wpcore_updates( $website, $active_tab );
@@ -142,7 +140,6 @@ class MainWP_Manage_Sites_Update_View {
 		$user_can_update_plugins  = mainwp_current_user_can( 'dashboard', 'update_plugins' );
 		$user_can_ignore_unignore = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
 		?>
-		
 		<div class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
 				<?php
@@ -226,7 +223,6 @@ class MainWP_Manage_Sites_Update_View {
 				</table>
 			<?php endif; ?>
 			</div>
-		
 		<?php
 	}
 
@@ -501,8 +497,6 @@ class MainWP_Manage_Sites_Update_View {
 				</tbody>
 			</table>
 		</div>
-		
 		<?php
 	}
-
 }

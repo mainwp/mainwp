@@ -70,9 +70,7 @@ class MainWP_UI {
 		}
 		// to fix layout with multi sites selector.
 		$tab_id = wp_rand();
-		?>
-		
-		<?php
+
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
 		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
 		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites );
@@ -115,7 +113,7 @@ class MainWP_UI {
 				<?php endif; ?>
 			</div>
 		</div>
-		<div class="ui divider hidden"></div>	
+		<div class="ui divider hidden"></div>
 		<?php
 	}
 
@@ -169,7 +167,7 @@ class MainWP_UI {
 						?>
 				</div>
 			</div>
-		</div>		
+		</div>
 		<?php
 	}
 
@@ -198,7 +196,7 @@ class MainWP_UI {
 										}
 									}
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">										
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
 										<input onClick="mainwp_site_select(this)" <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>

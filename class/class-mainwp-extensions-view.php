@@ -119,14 +119,13 @@ class MainWP_Extensions_View {
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">
 			<div class="mainwp-main-content">
-			<?php self::render_incompatible_notice(); ?>				
+			<?php self::render_incompatible_notice(); ?>
 			<?php if ( 0 == count( $extensions ) ) : ?>
-				<?php self::render_intro_notice(); ?>				
+				<?php self::render_intro_notice(); ?>
 				<?php
 			else :
 				self::render_search_box( $extensions );
 				?>
-								
 				<div class="ui four stackable cards" id="mainwp-extensions-list">
 				<?php $available_extensions_data = self::get_available_extensions(); ?>
 				<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
@@ -159,7 +158,7 @@ class MainWP_Extensions_View {
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
-			<?php self::render_purchase_notice(); ?>					
+			<?php self::render_purchase_notice(); ?>
 			</div>
 			<div class="mainwp-side-content">
 				<?php self::render_side_box( $username, $password ); ?>
@@ -348,8 +347,7 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_purchase_notice() {
 		?>
-		
-	<div id="mainwp-get-purchased-extensions-modal" class="ui modal">
+		<div id="mainwp-get-purchased-extensions-modal" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Install purchased extensions', 'mainwp' ); ?></div>
 			<div class="scrolling content"></div>
 			<div class="actions">

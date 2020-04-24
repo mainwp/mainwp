@@ -69,7 +69,7 @@ class MainWP_Live_Report_Responder_Activator {
 
 	/**
 	 * Get Child Key.
-	 * 
+	 *
 	 * @return mixed Child Key.
 	 */
 	public function get_child_key() {
@@ -79,7 +79,7 @@ class MainWP_Live_Report_Responder_Activator {
 
 	/**
 	 * Get Child File.
-	 * 
+	 *
 	 * @return mixed Child File.
 	 */
 	public function get_child_file() {

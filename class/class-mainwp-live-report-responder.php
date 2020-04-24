@@ -15,14 +15,14 @@ namespace MainWP\Dashboard;
 class MainWP_Live_Report_Responder {
 
 	/**
-	 * @var null $instance Plugin Instance. 
+	 * @var null $instance Plugin Instance.
 	 */
 	public static $instance = null;
 
 	/**
 	 * @var string $plugin_handle Plugin Handle.
 	 */
-	public $plugin_handle   = 'mainwp-wpcreport-extension';
+	public $plugin_handle = 'mainwp-wpcreport-extension';
 
 	/**
 	 * @var string $plugin_url Plugin Installation URL.
@@ -32,17 +32,17 @@ class MainWP_Live_Report_Responder {
 	/**
 	 * @var string $plugin_slug Plugin Slug.
 	 */
-	public $plugin_slug; 
+	public $plugin_slug;
 
 	/**
-	 * @var string $plugin_dir Plugin Directory. 
+	 * @var string $plugin_dir Plugin Directory.
 	 */
 	public $plugin_dir;
 
 	/**
 	 * @var mixed $option Option variable.
 	 */
-	protected $option; 
+	protected $option;
 
 	/**
 	 * @var string $option_handle Option Handle.
@@ -51,7 +51,7 @@ class MainWP_Live_Report_Responder {
 
 	/**
 	 * Create Instance.
-	 * 
+	 *
 	 * @return self $instance
 	 */
 	public static function get_instance() {
@@ -60,7 +60,7 @@ class MainWP_Live_Report_Responder {
 		}
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Construct method.
 	 */
@@ -87,7 +87,7 @@ class MainWP_Live_Report_Responder {
 		$mwp_creport = new MainWP_Live_Reports();
 		$mwp_creport->admin_init();
 	}
-	
+
 }
 
 // phpcs:enable

@@ -16,7 +16,7 @@ abstract class MainWP_Handler {
 
 	/**
 	 * Force Extending class to define this method.
-	 * 
+	 *
 	 * @return void
 	 */
 	abstract protected function init();
@@ -115,8 +115,8 @@ abstract class MainWP_Handler {
 
 	/**
 	 * Get Security Nonces.
-	 * 
-	 * @return mixed security_nonces. 
+	 *
+	 * @return mixed security_nonces.
 	 */
 	public function get_security_nonces() {
 		return $this->security_nonces;

@@ -16,14 +16,32 @@ class MainWP_Live_Report_Responder {
 
 	// phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
 
+	/** @var null $instance Plugin Instance. */
 	public static $instance = null;
-	public $plugin_handle   = 'mainwp-wpcreport-extension';
+
+	/** @var string $plugin_handle Plugin Handle. */
+	public $plugin_handle = 'mainwp-wpcreport-extension';
+
+	/** @var string $plugin_url Plugin Installation URL. */
 	public static $plugin_url;
+
+	/** @var string $plugin_slug Plugin Slug. */
 	public $plugin_slug;
+
+	/** @var string $plugin_dir Plugin Directory. */
 	public $plugin_dir;
+
+	/** @var mixed $option Option variable. */
 	protected $option;
+
+	/** @var string $option_handle Option Handle. */
 	protected $option_handle = 'mainwp_wpcreport_extension';
 
+	/**
+	 * Create Instance.
+	 *
+	 * @return self $instance
+	 */
 	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
@@ -31,6 +49,9 @@ class MainWP_Live_Report_Responder {
 		return self::$instance;
 	}
 
+	/**
+	 * Construct method.
+	 */
 	public function __construct() {
 
 		$this->plugin_dir  = plugin_dir_path( __FILE__ );
@@ -44,6 +65,9 @@ class MainWP_Live_Report_Responder {
 		}
 	}
 
+	/**
+	 * Initialize Admin.
+	 */
 	public function admin_init() {
 
 		$translation_array = array( 'dashboard_sitename' => get_bloginfo( 'name' ) );

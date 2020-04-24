@@ -11,12 +11,11 @@ namespace MainWP\Dashboard;
  * Class MainWP_Live_Reports
  *
  * @deprecated moved to external Extension.
- 
  */
 class MainWP_Live_Reports {
-	
+
     // phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
-	
+
 	private static $buffer               = array();
 	private static $enabled_piwik        = null;
 	private static $enabled_sucuri       = false;

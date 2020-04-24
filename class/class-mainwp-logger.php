@@ -8,12 +8,11 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Logger
- * 
  */
 class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
-	
+
 	const DISABLED    = - 1;
 	const LOG         = 0;
 	const WARNING     = 1;

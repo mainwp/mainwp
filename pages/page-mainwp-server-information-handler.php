@@ -461,7 +461,7 @@ class MainWP_Server_Information_Handler {
 		return array_slice( $lines, 0, $line_count );
 	}
 
-	
+
 	public static function mainwp_options() { // phpcs:ignore -- not quite complex function.
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),

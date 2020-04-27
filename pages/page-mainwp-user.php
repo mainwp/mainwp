@@ -592,7 +592,7 @@ class MainWP_User {
 		<?php
 	}
 
-	
+
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) { // phpcs:ignore -- not quite complex function.
 		MainWP_Cache::init_cache( 'Users' );
 
@@ -891,7 +891,7 @@ class MainWP_User {
 		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
-	
+
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- not quite complex function.
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
@@ -1153,7 +1153,7 @@ class MainWP_User {
 		<?php
 	}
 
-	
+
 	public static function do_buk_add() { // phpcs:ignore -- not quite complex function.
 		$errors      = array();
 		$errorFields = array();
@@ -1456,7 +1456,7 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
-	
+
 	public static function do_import() { // phpcs:ignore -- not quire complex method.
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();

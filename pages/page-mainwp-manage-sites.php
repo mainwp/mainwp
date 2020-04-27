@@ -562,7 +562,7 @@ class MainWP_Manage_Sites {
 		self::render_footer( $showpage );
 	}
 
-	// add individual meta boxes.	
+	// add individual meta boxes.
 	public static function on_load_page_dashboard() { // phpcs:ignore -- not quite complex method.
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -780,7 +780,7 @@ class MainWP_Manage_Sites {
 		self::render_footer( '' );
 	}
 
-	
+
 	public static function render_manage_sites() { // phpcs:ignore -- complex method.
 		global $current_user;
 

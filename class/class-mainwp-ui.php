@@ -511,7 +511,7 @@ class MainWP_UI {
 	}
 
 	// customize WordPress add_meta_box() function.
-	// param $context: lef, right.	
+	// param $context: lef, right.
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- not quite complex function.
 		global $mainwp_widget_boxes;
 

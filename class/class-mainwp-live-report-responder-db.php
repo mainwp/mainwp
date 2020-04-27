@@ -723,7 +723,7 @@ PRIMARY KEY  (`id`)  ';
 		return false;
 	}
 
-	
+
 	public function update_report( $report ) { // phpcs:ignore -- complex function.
 		/** @var $wpdb wpdb */
 		global $wpdb;

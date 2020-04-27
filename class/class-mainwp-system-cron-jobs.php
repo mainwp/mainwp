@@ -203,7 +203,8 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
 	 */
-	public function cron_updates_check() { // phpcs: ignore -- complex function
+	public function cron_updates_check() {
+		// phpcs: ignore -- complex function
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 
@@ -966,21 +967,21 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_updatescheck_mail_update_themes',
 			'mainwp_updatescheck_mail_ignore_core',
 			'mainwp_updatescheck_mail_ignore_plugins',
-			'mainwp_updatescheck_mail_ignore_themes',			
+			'mainwp_updatescheck_mail_ignore_themes',
 			'mainwp_updatescheck_mail_ignore_core_new',
 			'mainwp_updatescheck_mail_ignore_plugins_new',
 			'mainwp_updatescheck_mail_ignore_themes_new',
 			'mainwp_updatescheck_ready_sendmail',
-			'mainwp_updatescheck_sites_icon'			
+			'mainwp_updatescheck_sites_icon',
 		);
-		
+
 		foreach ( $empty_fields as $field ) {
-			MainWP_Utility::update_option( $field, '' );	
-		}		
-		
+			MainWP_Utility::update_option( $field, '' );
+		}
+
 		MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
 		MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
-		
+
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
 		MainWP_Utility::update_option( 'mainwp_daily_digest_plain_text', $plain_text );
 

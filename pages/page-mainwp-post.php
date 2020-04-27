@@ -591,7 +591,7 @@ class MainWP_Post {
 		<?php
 	}
 
-	
+
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
 
@@ -717,7 +717,7 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
-	
+
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -986,7 +986,7 @@ class MainWP_Post {
 			WHERE meta_key NOT BETWEEN '_' AND '_z'
 			HAVING meta_key NOT LIKE %s
 			ORDER BY meta_key
-			LIMIT %d";			
+			LIMIT %d";
 			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) ); // phpcs:ignore -- unprepared SQL ok.
 		}
 
@@ -1237,7 +1237,7 @@ class MainWP_Post {
 		}
 	}
 
-	
+
 	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- not quite comple method.
 		global $wp_meta_boxes;
 		static $already_sorted = false;

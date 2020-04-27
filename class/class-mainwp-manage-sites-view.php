@@ -117,7 +117,7 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	
+
 	public static function render_header( $shownPage = '', &$subPages = '' ) { // phpcs:ignore -- not quite complex method.
 
 		if ( '' === $shownPage ) {
@@ -1001,7 +1001,7 @@ class MainWP_Manage_Sites_View {
 		return self::add_wp_site( $website, $params );
 	}
 
-	
+
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- not quite complex method.
 		$error   = '';
 		$message = '';

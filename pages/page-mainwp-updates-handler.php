@@ -449,7 +449,7 @@ class MainWP_Updates_Handler {
 	 * @param mixed $type plugin|theme.
 	 *
 	 * @return array List of plugins or themes.
-	 */	
+	 */
 	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- not quite complex function.
 
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();

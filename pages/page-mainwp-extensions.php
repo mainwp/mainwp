@@ -60,7 +60,7 @@ class MainWP_Extensions {
 	 * Instantiate Extensions Menu
 	 *
 	 * @return void
-	 */	
+	 */
 	public static function init_menu() { // phpcs:ignore -- not quite complex function.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
@@ -322,7 +322,7 @@ class MainWP_Extensions {
 	 * Get purchased MainWP Extensions.
 	 *
 	 * @return html Extensions list.
-	 */	
+	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex method.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );

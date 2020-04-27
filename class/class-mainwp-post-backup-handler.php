@@ -230,9 +230,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_createbackup_getfilesize()
 	 *
 	 * Get create backup file size.
-	 * 
+	 *
 	 * @throws \Exception on errors.
-	 * 
 	 */
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
@@ -513,8 +512,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_checkbackups()
 	 *
 	 * Check backup status.
+	 *
 	 * @throws \Exception on errors.
-	 * 
 	 */
 	public function mainwp_checkbackups() {
 		$this->secure_request( 'mainwp_checkbackups' );

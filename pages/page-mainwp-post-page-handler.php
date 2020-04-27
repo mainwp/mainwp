@@ -734,7 +734,7 @@ class MainWP_Post_Page_Handler {
 	 * Method upload_image()
 	 *
 	 * Handle upload image
-	 * 
+	 *
 	 * @throws \Exception error upload file
 	 * @param string $img_url.
 	 * @param mixed  $img_data.

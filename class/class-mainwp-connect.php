@@ -455,7 +455,7 @@ class MainWP_Connect {
 	 * Method fetch_urls_authed()
 	 *
 	 * fetch urls authed
-	 * 
+	 *
 	 * @param mixed $websites
 	 * @param mixed $what
 	 * @param mixed $params
@@ -463,11 +463,12 @@ class MainWP_Connect {
 	 * @param mixed $output
 	 * @param mixed $whatPage
 	 * @param array $others
-	 * @param bool $is_external_hook	 
-	 *  
+	 * @param bool  $is_external_hook
+	 *
 	 * @return bool true|false
 	 */
-	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs: ignore -- complex function
+	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
+		// phpcs: ignore -- complex function
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}

@@ -277,7 +277,7 @@ class MainWP_Live_Reports {
 		}
 		return strtotime( $year_to_send . '-' . $month_to_send . '-' . $day_to_send . ' 23:59:59' );
 	}
-	
+
 	public static function save_report() { // phpcs:ignore -- complex function, deprecated.
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
 			$messages             = array();
@@ -675,7 +675,7 @@ class MainWP_Live_Reports {
 		}
 		return $filtered_reports;
 	}
-	
+
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) { // phpcs:ignore -- complex function, deprecated.
 		$output                  = new \stdClass();
 		$output->filtered_header = $report->header;
@@ -1051,7 +1051,7 @@ class MainWP_Live_Reports {
 		);
 	}
 
-	
+
 	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) { // phpcs:ignore -- complex function.
 
 		if ( null === self::$enabled_ga ) {

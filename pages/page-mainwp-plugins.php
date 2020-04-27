@@ -505,7 +505,7 @@ class MainWP_Plugins {
 	 * @uses MainWP_Cache::add_result()
 	 *
 	 * @return html Plugin Table.
-	 */	
+	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
@@ -1068,7 +1068,7 @@ class MainWP_Plugins {
 	 * @param null $output
 	 *
 	 * @return void
-	 */	
+	 */
 	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
 		$search_status = 'all';

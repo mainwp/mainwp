@@ -596,7 +596,7 @@ class MainWP_Page {
 		return ucfirst( $status );
 	}
 
-	
+
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
@@ -774,7 +774,7 @@ class MainWP_Page {
 		self::render_footer( $what );
 	}
 
-	
+
 	public static function posting() { // phpcs:ignore -- complex function.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {

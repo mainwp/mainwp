@@ -323,7 +323,7 @@ class MainWP_Manage_Sites_List_Table {
 		return ! empty( $this->items );
 	}
 
-	
+
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function.
 
 		if ( null === $this->userExtension ) {
@@ -500,7 +500,7 @@ class MainWP_Manage_Sites_List_Table {
 		$this->total_items = $totalRecords;
 	}
 
-	
+
 	public function get_available_update_siteids() { // phpcs:ignore -- not quite complex function.
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -882,7 +882,7 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
-	
+
 	public function get_datatable_rows() { // phpcs:ignore -- complex function.
 		$all_rows  = array();
 		$info_rows = array();
@@ -1169,7 +1169,7 @@ class MainWP_Manage_Sites_List_Table {
 		echo '</tr>';
 	}
 
-	
+
 	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.
 
 		$total_wp_upgrades     = 0;

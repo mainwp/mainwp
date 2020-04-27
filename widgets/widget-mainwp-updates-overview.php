@@ -134,7 +134,7 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 */	
+	 */
 	public static function render_sites() { // phpcs:ignore -- complex method.
 
 		$globalView = true;
@@ -577,7 +577,7 @@ class MainWP_Updates_Overview {
 				</div>
 			<div class="right aligned column">
 				<?php
-				if ( $user_can_update_plugins ) {						
+				if ( $user_can_update_plugins ) {
 						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 					if ( $globalView ) {
 						$detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
@@ -684,7 +684,7 @@ class MainWP_Updates_Overview {
 			</div>
 			<div class="right aligned column">
 			<?php
-			if ( $user_can_update_translation ) {				
+			if ( $user_can_update_translation ) {
 				MainWP_Updates::set_continue_update_html_selector( 'translations_global_upgrade_all' );
 				if ( $globalView ) {
 					$detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';

@@ -42,7 +42,7 @@ class MainWP_Updates {
 	public static $user_can_update_plugins = null;
 	public static $trusted_label           = '';
 	public static $not_trusted_label       = '';
-	public static $continue_selector          = '';
+	public static $continue_selector       = '';
 	public static $continue_update         = '';
 	public static $continue_update_slug    = '';
 
@@ -285,7 +285,7 @@ class MainWP_Updates {
 		MainWP_DB::data_seek( $websites, 0 );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			
+
 			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 
 			if ( $website->is_ignoreCoreUpdates ) {
@@ -352,7 +352,7 @@ class MainWP_Updates {
 
 				$total_plugin_upgrades += count( $plugin_upgrades );
 			}
-			
+
 			if ( is_array( $theme_upgrades ) ) {
 				$_ignored_themes = json_decode( $website->ignored_themes, true );
 				if ( is_array( $_ignored_themes ) ) {
@@ -366,17 +366,17 @@ class MainWP_Updates {
 
 				$total_theme_upgrades += count( $theme_upgrades );
 			}
-			
-			$themesIgnoredAbandoned_perSites  = array();
-			$ignoredAbandoned_themes = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+
+			$themesIgnoredAbandoned_perSites = array();
+			$ignoredAbandoned_themes         = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
 			if ( is_array( $ignoredAbandoned_themes ) ) {
 				$ignoredAbandoned_themes         = array_filter( $ignoredAbandoned_themes );
 				$themesIgnoredAbandoned_perSites = array_merge( $themesIgnoredAbandoned_perSites, $ignoredAbandoned_themes );
 			}
 
 			$ignoredAbandoned_plugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
-			$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
-			$themes_outdate  = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+			$plugins_outdate          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+			$themes_outdate           = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 
 			if ( is_array( $plugins_outdate ) ) {
 				if ( is_array( $ignoredAbandoned_plugins ) ) {
@@ -528,15 +528,15 @@ class MainWP_Updates {
 
 		$current_tab = '';
 
-		if ( isset( $_GET['tab'] ) ) {	
+		if ( isset( $_GET['tab'] ) ) {
 			$current_tab = $_GET['tab'];
-			if ( !in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates', 'translations-updates', 'abandoned-plugins', 'abandoned-themes', true ) ) ) {
+			if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates', 'translations-updates', 'abandoned-plugins', 'abandoned-themes', true ) ) ) {
 				$current_tab = 'plugins-updates';
-			}			
+			}
 		} else {
 			$current_tab = 'plugins-updates';
 		}
-		
+
 		self::render_header( 'UpdatesManage' );
 
 		self::render_twitter_notice();
@@ -875,7 +875,7 @@ class MainWP_Updates {
 			} );
 		</script>
 		<?php
-				
+
 		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			?>
 			<script type="text/javascript">
@@ -931,7 +931,7 @@ class MainWP_Updates {
 	 *
 	 * @return html output
 	 */
-	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) {		
+	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) {
 		?>
 		<div id="mainwp-page-navigation-wrapper">
 			<div class="ui secondary green pointing menu stackable mainwp-page-navigation">

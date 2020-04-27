@@ -299,7 +299,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-	
+
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- not quite complex method.
 
 		if ( ! isset( $_POST['type'] ) ) {

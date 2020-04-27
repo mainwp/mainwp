@@ -197,7 +197,7 @@ class MainWP_Api_Manager_Key {
 	 *
 	 * @param mixed $args Login Arguments.
 	 * @throws mixed Request error messages.
-	 * @throws mixed Request error codes.
+	 * @throws \Exception Request error codes.
 	 * @return mixed $response
 	 */
 	public function test_login_api( $args ) {

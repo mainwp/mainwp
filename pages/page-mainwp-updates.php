@@ -280,10 +280,7 @@ class MainWP_Updates {
 		$themesInfo       = array();
 
 		$allPluginsOutdate  = array();
-		$pluginsOutdateInfo = array();
-
 		$allThemesOutdate  = array();
-		$themesOutdateInfo = array();
 
 		MainWP_DB::data_seek( $websites, 0 );
 
@@ -480,13 +477,7 @@ class MainWP_Updates {
 							);
 						} else {
 							$allPluginsOutdate[ $slug ]['cnt'] ++;
-						}
-						$pluginsOutdateInfo[ $slug ] = array(
-							'Name'           => esc_html( $plugin_outdate['Name'] ),
-							'last_updated'   => ( isset( $plugin_outdate['last_updated'] ) ? esc_html( $plugin_outdate['last_updated'] ) : 0 ),
-							'info'           => $plugin_outdate,
-							'uri'            => esc_html( $plugin_outdate['PluginURI'] ),
-						);
+						}						
 					}
 				}
 
@@ -502,12 +493,7 @@ class MainWP_Updates {
 							);
 						} else {
 							$allThemesOutdate[ $slug ]['cnt'] ++;
-						}
-						$themesOutdateInfo[ $slug ] = array(
-							'name'           => esc_html( $theme_outdate['Name'] ),
-							'slug'           => dirname( $slug ),
-							'last_updated'   => ( isset( $theme_outdate['last_updated'] ) ? $theme_outdate['last_updated'] : 0 ),
-						);
+						}						
 					}
 				}
 
@@ -557,188 +543,303 @@ class MainWP_Updates {
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 		?>
-	<div class="ui segment" id="mainwp-manage-updates">
+		<div class="ui segment" id="mainwp-manage-updates">
 		<?php
-			$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
+		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
 		if ( $enable_http_check ) {
 			self::render_http_checks( $websites );
 		}
 
-		self::render_tabs( 
-			$websites,
-			$current_tab,
-			$all_groups_sites,
-			$all_groups,
-			$site_offset,
-			$userExtension,
-			$total_wp_upgrades,
-			$total_plugin_upgrades,
-			$total_theme_upgrades,
-			$total_translation_upgrades,
-			$mainwp_show_language_updates,
-			$allTranslations,
-			$translationsInfo,
-			$allPluginsOutdate,
-			$decodedDismissedPlugins,			
-			$allPlugins,
-			$pluginsInfo,			
-			$allThemes,
-			$themesInfo,
-			$decodedDismissedThemes,
-			$allThemesOutdate
-		);
-
+		self::$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
+		self::$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
+		
+		if ( 'wordpress-updates' === $current_tab ) {
+			self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset, $site_view );
+		} else if ( 'plugins-updates' === $current_tab ) {
+			self::render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset, $site_view );
+		} else if ( 'themes-updates' === $current_tab ) {
+			self::render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset, $site_view );
+		} else if ( 'translations-updates' === $current_tab ) {
+			self::render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset, $site_view );
+		} else if ( 'abandoned-plugins' === $current_tab ) {
+			self::render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset, $site_view );
+		} else if ( 'abandoned-themes' === $current_tab ) {
+			self::render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset, $site_view );
+		}
+		?>
+		</div>
+		<?php
+		
+		self::render_js_updates( $site_view );
+		
 		self::render_updates_modal();
 
 		self::render_footer();
 	}
 
-	public static function render_tabs( $websites, $current_tab, $all_groups_sites, $all_groups, $site_offset,
-		$userExtension, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades,
-		$mainwp_show_language_updates, $allTranslations, $translationsInfo, $allPluginsOutdate, $decodedDismissedPlugins,
-		$allPlugins, $pluginsInfo, $allThemes, $themesInfo, $decodedDismissedThemes, $allThemesOutdate
-		) {
-		
-		self::$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
-		self::$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
+	/**
+	 * Method render_wp_update_tab()
+	 *
+	 * Render WP updates tab
+	 *
+	 * @param object $websites
+	 * @param int $total_wp_upgrades
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset, $site_view ) {
+		?>
+			<!-- WordPress Updates -->
+			<div class="ui active tab" data-tab="wordpress-updates">
+				<?php
+				if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+					MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
+				} else { // sites/items view
+					MainWP_DB::data_seek( $websites, 0 );
+					MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
+				};
+				?>
+			</div>
+			<!-- END WordPress Updates -->
+		<?php
+	}
+	
+	/**
+	 * Method render_plugins_update_tab()
+	 *
+	 * Render WP updates tab
+	 *
+	 * @param object $websites
+	 * @param int $total_plugin_upgrades
+	 * @param object $userExtension
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param array $allPlugins
+	 * @param array $pluginsInfo
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset, $site_view ) {
 		
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
+		
+		?>
+		<!-- Plugins Updates -->
+		<div class="ui active tab" data-tab="plugins-updates">
+		<?php
+		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+			?>
+				<!-- Per Site -->
+				<?php
+				MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
+		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			?>
+				<!-- Per Group -->
+				<?php
+				MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
+		} else {
+			?>
+				<!-- Per Item -->
+				<?php
+				MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
+		}
+		?>
+		</div>
+		<!-- END Plugins Updates -->
+		<?php
+	}
 
+	/**
+	 * Method render_plugins_update_tab()
+	 *
+	 * Render themes update tab
+	 *
+	 * @param object $websites
+	 * @param int $total_theme_upgrades
+	 * @param object $userExtension
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param array $allThemes
+	 * @param array $themesInfo
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset, $site_view ) {
+		
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
 		
-		$site_view = $userExtension->site_view;
+		?>
+		<!-- Themes Updates -->
+		<div class="ui active tab" data-tab="themes-updates">
+		<?php
+		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+			?>
+			<!-- Per Site -->
+			<?php
+			MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
+		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			?>
+			<!-- Per Group -->
+			<?php
+			MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
+		} else {
+			?>
+			<!-- Per Item -->
+			<?php
+			MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
+		}
+		?>
+		</div>
+		<!-- END Themes Updates -->
+		<?php
+	}	
 
-		if ( 'wordpress-updates' === $current_tab ) {
-			?>
-			<!-- WordPress Updates -->
-			<div class="ui active tab" data-tab="wordpress-updates">
-				<?php
-				if ( MAINWP_VIEW_PER_GROUP == $site_view ) :
-					MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
-				else :
-					MainWP_DB::data_seek( $websites, 0 );
-					MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
-				endif;
-				?>
-			</div>
-			<!-- END WordPress Updates -->
-		<?php } elseif ( 'plugins-updates' === $current_tab ) { ?>
-			<!-- Plugins Updates -->
-			<div class="ui active tab" data-tab="plugins-updates">
+	/**
+	 * Method render_trans_update_tab()
+	 *
+	 * Render translations update tab
+	 *
+	 * @param object $websites
+	 * @param int $total_translation_upgrades
+	 * @param object $userExtension
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param array $allTranslations
+	 * @param array $translationsInfo
+	 * @param bool $mainwp_show_language_updates
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset, $site_view ) {
+		?>
+		<!-- Translations Updates -->
+		<?php if ( 1 === $mainwp_show_language_updates ) { ?>
+		<div class="ui active tab" data-tab="translations-updates">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-				?>
-					<!-- Per Site -->
-					<?php
-					MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
+				MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
 			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-				?>
-					<!-- Per Group -->
-					<?php
-					MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins );
-			} else {
-				?>
-					<!-- Per Item -->
-					<?php
-					MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
-			};
-			?>
-			</div>
-			<!-- END Plugins Updates -->
-		<?php } elseif ( 'themes-updates' === $current_tab ) { ?>
-			<!-- Themes Updates -->
-			<div class="ui active tab" data-tab="themes-updates">
-			<?php
-			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-				?>
-				<!-- Per Site -->
-				<?php
-				MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
-			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-				?>
-				<!-- Per Group -->
-				<?php
-				MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes );
+				MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
 			} else {
 				?>
 				<!-- Per Item -->
-				<?php
-				MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
-			};
+				<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>
+			<?php } ?>
+		</div>
+		<?php } ?>
+		<!-- END Translations Updates -->
+		<?php
+	}
+	
+	/**
+	 * Method render_abandoned_plugins_tab()
+	 *
+	 * Render abandoned plugins tab
+	 *
+	 * @param object $websites	 	 
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param array $allPluginsOutdate
+	 * @param array $decodedDismissedPlugins	 
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset, $site_view ) {
+		?>
+		<!-- Abandoned Plugins -->
+		<div class="ui active tab" data-tab="abandoned-plugins">
+		<?php
+		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
 			?>
-			</div>
-			<!-- END Themes Updates -->
-		<?php } elseif ( 'translations-updates' === $current_tab ) { ?>
-			<!-- Translatinos Updates -->
-			<?php if ( 1 === $mainwp_show_language_updates ) { ?>
-			<div class="ui active tab" data-tab="translations-updates">
-				<?php
-				if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-					MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
-				} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-					MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset );
-				} else {
-					?>
-					<!-- Per Item -->
-					<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>
-				<?php }; ?>
-			</div>
-			<?php }; ?>
-			<!-- END Translatinos Updates -->
-		<?php } elseif ( 'abandoned-plugins' === $current_tab ) { ?>
-			<!-- Abandoned Plugins -->
-			<div class="ui active tab" data-tab="abandoned-plugins">
+			<!-- Per Site -->
 			<?php
-			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-				?>
-				<!-- Per Site -->
-				<?php
-				MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
-			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-				?>
-				<!-- Per Group -->
-				<?php
-				MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
-			} else {
-				?>
-				<!-- Per Item -->
-				<?php
-				MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
-			};
+			MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
+		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			?>
-			</div>
-			<!-- END Abandoned Plugins -->
-		<?php } elseif ( 'abandoned-themes' === $current_tab ) { ?>
-			<!-- Abandoned Themes -->
-			<div class="ui active tab" data-tab="abandoned-themes">
+			<!-- Per Group -->
 			<?php
-			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-				?>
-				<!-- Per Site -->
-				<?php
-				MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
-			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-				?>
-				<!-- Per Group -->
-				<?php
-				MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
-			} else {
-				?>
-				<!-- Per Item -->
-				<?php
-				MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
-				?>
-			<?php }; ?>
-			</div>
-			<!-- END Abandoned Themes -->
+			MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins );
+		} else {
+			?>
+			<!-- Per Item -->
+			<?php
+			MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
+		};
+		?>
+		</div>
+		<!-- END Abandoned Plugins -->
+		<?php
+	}
+	
+	/**
+	 * Method render_abandoned_themes_tab()
+	 *
+	 * Render abandoned themes tab
+	 *
+	 * @param object $websites	 	 
+	 * @param array $all_groups_sites
+	 * @param array $all_groups
+	 * @param array $allThemesOutdate
+	 * @param array $decodedDismissedThemes	 
+	 * @param int $site_offset
+	 * @param string $site_view
+	 * 
+	 * @return
+	 */
+	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset, $site_view ) {
+		?>
+		<!-- Abandoned Themes -->
+		<div class="ui active tab" data-tab="abandoned-themes">
+		<?php
+		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+			?>
+			<!-- Per Site -->
+			<?php
+			MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
+		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+			?>
+			<!-- Per Group -->
+			<?php
+			MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes );
+		} else {
+			?>
+			<!-- Per Item -->
+			<?php
+			MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
+			?>
 		<?php }; ?>
 		</div>
+		<!-- END Abandoned Themes -->
+		<?php
+	}	
+	
+	/**
+	 * Method render_js_updates()
+	 *
+	 * Render js
+	 *
+	 * @return
+	 */
+	public static function render_js_updates( $site_view ) {		
+		?>		
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
@@ -777,16 +878,16 @@ class MainWP_Updates {
 				
 		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			?>
-		<script type="text/javascript">
-			jQuery( document ).ready( function () {
-				updatesoverview_updates_init_group_view();
-			} );
-		</script>
+			<script type="text/javascript">
+				jQuery( document ).ready( function () {
+					updatesoverview_updates_init_group_view();
+				} );
+			</script>
 			<?php
-		};
+		}
 	}
 
-
+	
 	/**
 	 * Method get_sites()
 	 *

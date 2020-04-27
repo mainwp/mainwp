@@ -16,6 +16,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 	 * Save the file to the specified path
 	 *
 	 * @param $path Path to File.
+	 * @throws \Exception errors 
 	 * @return boolean TRUE on success|False
 	 */
 	public function save( $path ) {
@@ -78,7 +79,14 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 		return $_GET['qqfile'];
 	}
 
-	/** Get the File Size. */
+	/**
+	 * Method get_size()
+	 *
+	 * Get content length.
+	 * 	 
+	 * @throws \Exception error. 	 
+	 * @return int length
+	 */
 	public function get_size() {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {
 			return (int) $_SERVER['CONTENT_LENGTH'];

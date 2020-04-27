@@ -735,7 +735,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * Handle upload image
 	 * 
-	 * @throws Exception error upload file
+	 * @throws \Exception error upload file
 	 * @param string $img_url.
 	 * @param mixed  $img_data.
 	 *
@@ -755,7 +755,7 @@ class MainWP_Post_Page_Handler {
 			$upload_dir     = wp_upload_dir();
 			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
 			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
-			$moved          = @rename( $temporary_file, $local_img_path );
+			$moved          = rename( $temporary_file, $local_img_path );
 			if ( $moved ) {
 				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
 				$attachment  = array(

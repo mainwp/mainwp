@@ -393,7 +393,7 @@ class MainWP_Utility {
 			if ( empty( $creds ) ) {
 				define( 'FS_METHOD', 'direct' );
 			}
-			$init = WP_Filesystem( $creds );
+			$init = \WP_Filesystem( $creds );
 		} else {
 			$init = true;
 		}
@@ -767,7 +767,7 @@ class MainWP_Utility {
 
 	public static function get_child_response( $data ) {
 		if ( is_serialized( $data ) ) {
-			return unserialize( $data, array( 'allowed_classes' => false ) );
+			return unserialize( $data, array( 'allowed_classes' => false ) ); // phpcs:ignore -- to compatible
 		} else {
 			return json_decode( $data, true );
 		}

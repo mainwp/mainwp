@@ -294,7 +294,7 @@ class MainWP_Extensions_Handler {
 		include_once ABSPATH . '/wp-admin/includes/class-wp-upgrader.php';
 		include_once ABSPATH . '/wp-admin/includes/plugin.php';
 
-		$installer          = new WP_Upgrader();
+		$installer          = new \WP_Upgrader();
 		$ssl_verifyhost     = get_option( 'mainwp_sslVerifyCertificate' );
 		$ssl_api_verifyhost = ( ( false === get_option( 'mainwp_api_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
 

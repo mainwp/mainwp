@@ -13,7 +13,7 @@ class MainWP_Manage_Sites_Handler {
 	/**
 	 * @throws MainWP_Exception
 	 */
-	public static function backup_site( $siteid, $pTask, $subfolder ) {
+	public static function backup_site( $siteid, $pTask, $subfolder ) { // phpcs: ignore -- complex function
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
@@ -431,7 +431,7 @@ class MainWP_Manage_Sites_Handler {
 
 				if ( 0 === $backupTaskProgress->downloadedFULLComplete ) {
 					if ( file_exists( $localBackupFile ) ) {
-						$time = @filemtime( $localBackupFile );
+						$time = filemtime( $localBackupFile );
 
 						$minutes = gmdate( 'i', time() );
 						$seconds = gmdate( 's', time() );

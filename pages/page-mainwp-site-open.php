@@ -46,7 +46,7 @@ class MainWP_Site_Open {
 
 		$location = '';
 		if ( isset( $_GET['location'] ) ) {
-			$location = base64_decode( $_GET['location'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$location = base64_decode( $_GET['location'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for HTTP compatible char.
 		}
 
 		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {

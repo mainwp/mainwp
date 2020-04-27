@@ -693,7 +693,7 @@ class MainWP_Manage_Sites {
 		$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
 
 		if ( ! file_exists( $dir . 'index.php' ) ) {
-			@touch( $dir . 'index.php' );
+			touch( $dir . 'index.php' );
 		}
 		$dbBackups   = array();
 		$fullBackups = array();

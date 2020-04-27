@@ -53,8 +53,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 * @global string $term
 	 * @global string $wp_version
 	 */
-	// phpcs:ignore -- complex method
-	public function prepare_items() {
+	public function prepare_items() { // phpcs:ignore -- complex method
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
 		global $tab; // required.

@@ -4,6 +4,7 @@
  *
  * For custom read/write logging file.
  */
+
 namespace MainWP\Dashboard;
 
 /**

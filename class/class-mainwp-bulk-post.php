@@ -1,4 +1,8 @@
 <?php
+/**
+ * MainWP Bulk Post Class
+ */
+
 namespace MainWP\Dashboard;
 
 /**

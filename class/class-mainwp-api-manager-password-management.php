@@ -108,8 +108,8 @@ class MainWP_Api_Manager_Password_Management {
 	 *
 	 * Decrypts $encrypted
 	 *
-	 * @param mixed $encrypted Sting to Decrypt.
-	 * @param mixed $pass Sting.
+	 * @param mixed $str String to Decrypt.
+	 * @param mixed $pass String.
 	 */
 	public static function decrypt( $str, $pass ) {
 		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.

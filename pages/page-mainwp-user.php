@@ -592,8 +592,8 @@ class MainWP_User {
 		<?php
 	}
 
-	// phpcs:ignore -- not quite complex function
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) {
+	
+	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) { // phpcs:ignore -- not quite complex function.
 		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new \stdClass();
@@ -891,8 +891,8 @@ class MainWP_User {
 		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
-	// phpcs:ignore -- not quite complex function
-	public static function action( $pAction, $extra = '' ) {
+	
+	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- not quite complex function.
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
 		$websiteIdEnc = $_POST['websiteId'];
@@ -1153,8 +1153,8 @@ class MainWP_User {
 		<?php
 	}
 
-	// phpcs:ignore -- not quite complex function
-	public static function do_buk_add() {
+	
+	public static function do_buk_add() { // phpcs:ignore -- not quite complex function.
 		$errors      = array();
 		$errorFields = array();
 
@@ -1456,8 +1456,8 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
-	// phpcs:ignore -- not quire complex method
-	public static function do_import() {
+	
+	public static function do_import() { // phpcs:ignore -- not quire complex method.
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();
 			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {

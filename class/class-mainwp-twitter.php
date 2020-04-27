@@ -340,9 +340,8 @@ class MainWP_Twitter {
 	 * @param integer $twId Twitter ID.
 	 *
 	 * @return string Tweet to send.
-	 */
-	// phpcs:ignore -- not quite complex method
-	public static function get_twit_to_send( $what, $twId = 0 ) {
+	 */	
+	public static function get_twit_to_send( $what, $twId = 0 ) { // phpcs:ignore -- not quite complex method.
 
 		$filters = self::get_filter();
 

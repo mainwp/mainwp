@@ -198,7 +198,7 @@ class MainWP_Logger {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			ob_start();
-			// phpcs:ignore -- for debugging
+			// phpcs:ignore -- for debugging.
 			debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
 			$stackTrace = "\n" . ob_get_clean();
 		}

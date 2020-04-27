@@ -128,7 +128,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 								$maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) {
 
 		// to fix null value.
-		if ( empty($exclude) ) {
+		if ( empty( $exclude ) ) {
 			$exclude = '';
 		}
 
@@ -161,8 +161,6 @@ class MainWP_DB_Backup extends MainWP_DB {
 				'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
 				'maximumFileDescriptors'         => $maximumFileDescriptors,
 			);
-
-			error_log(print_r($values, true));
 
 			if ( $this->wpdb->insert( $this->table_name( 'wp_backup' ), $values ) ) {
 				return $this->get_backup_task_by_id( $this->wpdb->insert_id );

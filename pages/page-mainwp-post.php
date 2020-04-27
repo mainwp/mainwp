@@ -591,8 +591,8 @@ class MainWP_Post {
 		<?php
 	}
 
-	// phpcs:ignore -- complex function
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) {
+	
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
 
 		$dbwebsites = array();
@@ -717,8 +717,8 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
-	// phpcs:ignore -- complex method
-	public static function posts_search_handler( $data, $website, &$output ) {
+	
+	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
 			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
@@ -986,9 +986,8 @@ class MainWP_Post {
 			WHERE meta_key NOT BETWEEN '_' AND '_z'
 			HAVING meta_key NOT LIKE %s
 			ORDER BY meta_key
-			LIMIT %d";
-			// phpcs:ignore -- unprepared SQL ok.
-			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) );
+			LIMIT %d";			
+			$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) ); // phpcs:ignore -- unprepared SQL ok.
 		}
 
 		if ( $keys ) {
@@ -1238,8 +1237,8 @@ class MainWP_Post {
 		}
 	}
 
-	// phpcs:ignore -- not quite comple method
-	public static function do_meta_boxes( $screen, $context, $object ) {
+	
+	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- not quite comple method.
 		global $wp_meta_boxes;
 		static $already_sorted = false;
 

@@ -117,8 +117,8 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-	// phpcs:ignore -- not quite complex method
-	public static function render_header( $shownPage = '', &$subPages = '' ) {
+	
+	public static function render_header( $shownPage = '', &$subPages = '' ) { // phpcs:ignore -- not quite complex method.
 
 		if ( '' === $shownPage ) {
 			$shownPage = 'ManageSites';
@@ -1001,8 +1001,8 @@ class MainWP_Manage_Sites_View {
 		return self::add_wp_site( $website, $params );
 	}
 
-	// phpcs:ignore -- not quite complex method
-	public static function add_wp_site( $website, $params = array() ) {
+	
+	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- not quite complex method.
 		$error   = '';
 		$message = '';
 		$id      = 0;

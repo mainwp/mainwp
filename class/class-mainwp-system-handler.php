@@ -284,7 +284,7 @@ class MainWP_System_Handler {
 		return $false;
 	}
 
-	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method
+	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {

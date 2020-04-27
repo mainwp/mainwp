@@ -214,7 +214,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * @return html result
 	 */
-	public static function posting() { // phpcs:ignore -- complex method
+	public static function posting() { // phpcs:ignore -- complex method.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
 			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );
@@ -734,7 +734,8 @@ class MainWP_Post_Page_Handler {
 	 * Method upload_image()
 	 *
 	 * Handle upload image
-	 *
+	 * 
+	 * @throws Exception error upload file
 	 * @param string $img_url.
 	 * @param mixed  $img_data.
 	 *

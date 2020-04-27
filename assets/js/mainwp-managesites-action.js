@@ -71,7 +71,7 @@ mainwp_managesites_doaction = function ( action ) {
   
   return false;
   
-}
+};
 /* eslint-enable complexity */
 
 mainwp_managesites_doaction_open = function( action ) {

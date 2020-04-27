@@ -134,9 +134,8 @@ class MainWP_Updates_Overview {
 	 * Grab available Child Sites updates a build Widget.
 	 *
 	 * @param boolean $isUpdatesPage Check if Updates Page True|False.
-	 */
-	// phpcs:ignore -- complex method
-	public static function render_sites() {
+	 */	
+	public static function render_sites() { // phpcs:ignore -- complex method.
 
 		$globalView = true;
 		global $current_user;
@@ -430,7 +429,8 @@ class MainWP_Updates_Overview {
 		<?php // Invisible section to support global updates all. ?>
 
 		<?php
-		self::render_global_update( $user_can_update_wordpress,
+		self::render_global_update(
+			$user_can_update_wordpress,
 			$total_wp_upgrades,
 			$all_wp_updates,
 			$user_can_update_plugins,
@@ -535,10 +535,10 @@ class MainWP_Updates_Overview {
 						$detail_wp_up = 'admin.php?page=managesites&updateid=' . $current_wpid . '&tab=wordpress-updates';
 					}
 					?>
-					<?php if ( 0 < $total_wp_upgrades ) : ?>
-						<?php $continue_class = ( 'wpcore_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : ''; ?>
+					<?php if ( 0 < $total_wp_upgrades ) : ?>						
+						<?php MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' ); ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php else : ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 						<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -577,8 +577,8 @@ class MainWP_Updates_Overview {
 				</div>
 			<div class="right aligned column">
 				<?php
-				if ( $user_can_update_plugins ) :
-						$continue_class = ( 'plugins_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
+				if ( $user_can_update_plugins ) {						
+						MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 					if ( $globalView ) {
 						$detail_plugins_up = 'admin.php?page=UpdatesManage&tab=plugins-updates';
 					} else {
@@ -594,10 +594,10 @@ class MainWP_Updates_Overview {
 
 						?>
 							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php
 					}
-						endif;
+				};
 				?>
 							</div>
 						</div>
@@ -632,8 +632,8 @@ class MainWP_Updates_Overview {
 			</div>
 			<div class="right aligned column">
 			<?php
-			if ( $user_can_update_themes ) :
-					$continue_class = ( 'themes_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
+			if ( $user_can_update_themes ) {
+				MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 				if ( $globalView ) {
 					$detail_themes_up = 'admin.php?page=UpdatesManage&tab=themes-updates';
 				} else {
@@ -647,10 +647,10 @@ class MainWP_Updates_Overview {
 				} else {
 					?>
 					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="#" onClick="return updatesoverview_global_upgrade_all('theme');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Themes on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				}
-				endif;
+			};
 			?>
 				</div>
 			</div>
@@ -684,8 +684,8 @@ class MainWP_Updates_Overview {
 			</div>
 			<div class="right aligned column">
 			<?php
-			if ( $user_can_update_translation ) :
-				$continue_class = ( 'translations_global_upgrade_all' == $continue_update ) ? 'updatesoverview_continue_update_me' : '';
+			if ( $user_can_update_translation ) {				
+				MainWP_Updates::set_continue_update_html_selector( 'translations_global_upgrade_all' );
 				if ( $globalView ) {
 					$detail_trans_up = 'admin.php?page=UpdatesManage&tab=translations-updates';
 				} else {
@@ -699,10 +699,10 @@ class MainWP_Updates_Overview {
 				} else {
 					?>
 					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo $continue_class; ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="#" onClick="return updatesoverview_global_upgrade_all('translation');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				}
-				endif;
+			};
 			?>
 				</div>
 			</div>

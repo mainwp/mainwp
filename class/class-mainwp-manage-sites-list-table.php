@@ -70,8 +70,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
-	// phpcs:ignore -- not quite complex function
-	public function column_default( $item, $column_name ) {
+	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- not quite complex function.
 
 		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );  // @deprecated Use 'mainwp_sitestable_item' instead.
 		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
@@ -324,8 +323,8 @@ class MainWP_Manage_Sites_List_Table {
 		return ! empty( $this->items );
 	}
 
-	// phpcs:ignore -- complex function
-	public function prepare_items( $optimize = true ) {
+	
+	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function.
 
 		if ( null === $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -501,8 +500,8 @@ class MainWP_Manage_Sites_List_Table {
 		$this->total_items = $totalRecords;
 	}
 
-	// phpcs:ignore -- not quite complex function
-	public function get_available_update_siteids() {
+	
+	public function get_available_update_siteids() { // phpcs:ignore -- not quite complex function.
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
@@ -883,8 +882,8 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
-	// phpcs:ignore -- complex function
-	public function get_datatable_rows() {
+	
+	public function get_datatable_rows() { // phpcs:ignore -- complex function.
 		$all_rows  = array();
 		$info_rows = array();
 		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
@@ -1170,10 +1169,9 @@ class MainWP_Manage_Sites_List_Table {
 		echo '</tr>';
 	}
 
-	// phpcs:ignore -- complex function
-	protected function single_row_columns( $website ) {
+	
+	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.
 
-		$total_updates         = 0;
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;
 		$total_theme_upgrades  = 0;

@@ -299,8 +299,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-	// phpcs:ignore -- not quite complex method
-	public function mainwp_upgrade_plugintheme() { 
+	
+	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- not quite complex method.
 
 		if ( ! isset( $_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );

@@ -112,7 +112,7 @@ class MainWP_Updates_Per_Site {
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-sites-table">
 			<thead>
@@ -260,7 +260,7 @@ class MainWP_Updates_Per_Site {
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-sites-table">
 		<thead>

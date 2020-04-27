@@ -173,7 +173,7 @@ class MainWP_System_Cron_Jobs {
 		if ( $_mins < 0 || $_mins > 59 ) {
 			$_mins = 0;
 		}
-		return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' );
+		return strtotime( date( 'Y-m-d' ) . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- update check at local server time
 	}
 
 	/**
@@ -269,7 +269,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			$websites = array();
-		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) {
+		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
@@ -976,7 +976,7 @@ class MainWP_System_Cron_Jobs {
 			MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_plugins_new', '' );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_mail_ignore_themes_new', '' );
 
-			MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) );
+			MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', '' );
 

@@ -59,9 +59,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * Method render()
 	 *
 	 * Render Admin Passwords Page.
-	 */
-	// phpcs:ignore -- complex method
-	public static function render() {
+	 */	
+	public static function render() { // phpcs:ignore -- complex method.
 		$show_form = true;
 		$errors    = array();
 

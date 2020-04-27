@@ -80,7 +80,7 @@ class MainWP_QQ2_File_Uploader {
 
 		$size = $this->file->get_size();
 
-		if ( $size == 0 ) {
+		if ( 0 == $size ) {
 			return array( 'error' => 'File is empty!' );
 		}
 

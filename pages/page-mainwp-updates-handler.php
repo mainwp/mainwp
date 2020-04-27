@@ -21,6 +21,7 @@ class MainWP_Updates_Handler {
 	/**
 	 * Check Child Site ID & Update.
 	 *
+	 * @throws MainWP_Exception on errors.
 	 * @param mixed $id Child Site ID.
 	 */
 	public static function upgrade_site( $id ) {
@@ -403,6 +404,7 @@ class MainWP_Updates_Handler {
 	/**
 	 * Upgrade plugin or theme translations.
 	 *
+	 * @throws MainWP_Exception on errors.
 	 * @param mixed $id Child Site ID.
 	 * @param mixed $type plugin|theme.
 	 * @param mixed $list List of theme or plugin names ( seperated by , )
@@ -447,9 +449,8 @@ class MainWP_Updates_Handler {
 	 * @param mixed $type plugin|theme.
 	 *
 	 * @return array List of plugins or themes.
-	 */
-	// phpcs:ignore -- not quite complex function
-	public static function get_plugin_theme_slugs( $id, $type ) {
+	 */	
+	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- not quite complex function.
 
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id );

@@ -154,7 +154,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 			<thead>
@@ -351,7 +351,7 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">

@@ -461,8 +461,8 @@ class MainWP_Server_Information_Handler {
 		return array_slice( $lines, 0, $line_count );
 	}
 
-	// phpcs:ignore -- not quite complex function
-	public static function mainwp_options() {
+	
+	public static function mainwp_options() { // phpcs:ignore -- not quite complex function.
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),
 			'mainwp_wp_cron'                         => __( 'Use WP-Cron', 'mainwp' ),

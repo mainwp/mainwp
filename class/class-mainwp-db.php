@@ -422,7 +422,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 		$where = ( null == $userId ? '' : ' wp.userid = ' . $userId );
 		if ( ! $all_access ) {
-			$where .= $this->get_where_allow_access_sites( 'wp' );
+			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
 		}
 		$qry = 'SELECT COUNT(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp WHERE 1 ' . $where;
 
@@ -485,7 +485,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 	public function get_sql_websites() {
-		$where = $this->get_where_allow_access_sites( 'wp' );
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return 'SELECT wp.*,wp_sync.*,wp_optionview.*
                 FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -502,7 +502,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				$where       = ' AND (wp.name LIKE "%' . $search_site . '%" OR wp.url LIKE  "%' . $search_site . '%") ';
 			}
 
-			$where .= $this->get_where_allow_access_sites( 'wp' );
+			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
 
 			if ( $selectgroups ) {
 				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
@@ -554,7 +554,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( ! $for_manager ) {
-			$where .= $this->get_where_allow_access_sites( 'wp', $is_staging );
+			$where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 		}
 
 		if ( 'wp.url' === $orderBy ) {
@@ -631,7 +631,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( ! $for_manager ) {
-			$where .= $this->get_where_allow_access_sites( 'wp', $is_staging );
+			$where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 		}
 
 		if ( 'wp.url' === $orderBy ) {
@@ -676,7 +676,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 
-	public function get_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
+	public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
 
 		if ( empty( $site_table_alias ) ) {
 			$site_table_alias = $this->table_name( 'wp' );
@@ -719,7 +719,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $_where;
 	}
 
-	public function get_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
+	public function get_sql_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
 		// To fix bug run from cron job.
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			return '';
@@ -761,7 +761,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array( 'favi_icon' ) ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
-			$where = $this->get_where_allow_access_sites( 'wp', 'nocheckstaging' );
+			$where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
 			if ( $selectGroups ) {
 				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
                 FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -788,7 +788,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			global $current_user;
 			$userId = $current_user->ID;
 		}
-		$where = $this->get_where_allow_access_sites();
+		$where = $this->get_sql_where_allow_access_sites();
 
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( null != $userId ? ' AND userid = ' . $userId : '' ) . $where, OBJECT );
 	}
@@ -829,7 +829,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
-			$where_allowed = $this->get_where_allow_access_sites( 'wp', $is_staging );
+			$where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 			if ( $selectgroups ) {
 				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
                  FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -1061,13 +1061,13 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 	public function get_websites_check_updates_count() {
-		$where = $this->get_where_allow_access_sites( 'wp' );
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where );
 	}
 
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
-		$where = $this->get_where_allow_access_sites( 'wp' );
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where );
 	}
@@ -1077,13 +1077,13 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 	public function get_websites_check_updates( $limit ) {
-		$where = $this->get_where_allow_access_sites( 'wp' );
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
 	}
 
 	public function get_websites_stats_update_sql() {
-		$where = $this->get_where_allow_access_sites();
+		$where = $this->get_sql_where_allow_access_sites();
 		return 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
 	}
 

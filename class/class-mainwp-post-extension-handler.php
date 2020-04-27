@@ -206,7 +206,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Download & Install MainWP Extension. */
 	public function download_and_install() {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
-		// phpcs:ignore -- custom setting to install plugin
+		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
 
 		$return = MainWP_Extensions_Handler::install_plugin( $_POST['download_link'] );

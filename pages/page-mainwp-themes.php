@@ -466,7 +466,7 @@ class MainWP_Themes {
 	 *
 	 * @return mixed $result Errors|HTML
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function
+	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new \stdClass();
@@ -1106,7 +1106,7 @@ class MainWP_Themes {
 	 *
 	 * @param null $output
 	 */
-	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function
+	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
 		$search_status = 'all';
 

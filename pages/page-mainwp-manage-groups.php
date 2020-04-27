@@ -331,7 +331,7 @@ class MainWP_Manage_Groups {
 	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
-			if ( MainWP_Utility::can_edit_group( $group ) ) {
+			if ( !empty( $group ) ) {
 				$name = $_POST['newName'];
 				if ( '' == $name ) {
 					$name = $group->name;
@@ -351,7 +351,7 @@ class MainWP_Manage_Groups {
 	public static function delete_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
-			if ( MainWP_Utility::can_edit_group( $group ) ) {
+			if ( !empty( $group ) ) {
 				// Remove from DB.
 				$nr = MainWP_DB::instance()->removegroup( $group->id );
 
@@ -404,7 +404,7 @@ class MainWP_Manage_Groups {
 	public static function get_sites() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
-			if ( MainWP_Utility::can_edit_group( $group ) ) {
+			if ( !empty( $group ) ) {
 				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
 				$websiteIds = array();
 				if ( ! empty( $websites ) ) {
@@ -422,7 +422,7 @@ class MainWP_Manage_Groups {
 	public static function update_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
-			if ( MainWP_Utility::can_edit_group( $group ) ) {
+			if ( !empty( $group ) ) {
 				MainWP_DB_Common::instance()->remove_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {
 					foreach ( $_POST['websiteIds'] as $websiteId ) {

@@ -77,7 +77,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			$userid = $current_user->ID;
 		}
 		$where  = ( null != $userid ) ? ' AND userid=' . $userid : '';
-		$where .= $this->get_where_allow_groups();
+		$where .= $this->get_sql_where_allow_groups();
 
 		return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE 1 ' . $where . ' AND name= %s', $this->escape( $name ) ) );
 	}
@@ -103,7 +103,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			$with_staging = 'no';
 		}
 
-		$where .= $this->get_where_allow_groups( '', $with_staging );
+		$where .= $this->get_sql_where_allow_groups( '', $with_staging );
 
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
@@ -114,7 +114,7 @@ class MainWP_DB_Common extends MainWP_DB {
 			global $current_user;
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
-		$where .= $this->get_where_allow_groups();
+		$where .= $this->get_sql_where_allow_groups();
 
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
@@ -146,7 +146,7 @@ class MainWP_DB_Common extends MainWP_DB {
 		}
 
 		if ( ! $for_manager ) {
-			$where .= $this->get_where_allow_groups( 'gr' );
+			$where .= $this->get_sql_where_allow_groups( 'gr' );
 		}
 
 		return $this->wpdb->get_results( 'SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM ' . $this->table_name( 'group' ) . ' gr LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON gr.id = wpgr.groupid WHERE 1 ' . $where . ' GROUP BY gr.id ORDER BY gr.name', OBJECT_K );
@@ -159,7 +159,7 @@ class MainWP_DB_Common extends MainWP_DB {
 		}
 
 		$where  = ' WHERE 1 ';
-		$where .= $this->get_where_allow_groups( 'g' );
+		$where .= $this->get_sql_where_allow_groups( 'g' );
 
 		if ( null != $userid ) {
 			$where .= ' AND g.userid = ' . $userid;

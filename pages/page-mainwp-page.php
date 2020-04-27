@@ -596,8 +596,8 @@ class MainWP_Page {
 		return ucfirst( $status );
 	}
 
-	// phpcs:ignore -- complex function
-	public static function pages_search_handler( $data, $website, &$output ) {
+	
+	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
 			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
@@ -774,8 +774,8 @@ class MainWP_Page {
 		self::render_footer( $what );
 	}
 
-	// phpcs:ignore -- complex function
-	public static function posting() {
+	
+	public static function posting() { // phpcs:ignore -- complex function.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
 			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );

@@ -665,7 +665,7 @@ PRIMARY KEY  (`id`)  ';
 				'token_value'    => $token_value,
 				'site_url'       => $site_url,
 			)
-			)
+		)
 		) {
 			return $this->get_tokens_by( 'id', $token_id, $site_url );
 		}
@@ -723,8 +723,8 @@ PRIMARY KEY  (`id`)  ';
 		return false;
 	}
 
-	// phpcs:ignore -- complex function
-	public function update_report( $report ) {
+	
+	public function update_report( $report ) { // phpcs:ignore -- complex function.
 		/** @var $wpdb wpdb */
 		global $wpdb;
 		$id            = isset( $report['id'] ) ? $report['id'] : 0;

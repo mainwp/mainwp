@@ -30,7 +30,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-table">
 			<thead>
@@ -81,7 +81,7 @@ class MainWP_Updates_Per_Item {
 										MainWP_Updates::set_continue_update_html_selector( 'plugins_upgrade_all', $slug );
 									}
 									?>
-									<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+									<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_plugins_upgrade_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 								<?php endif; ?>
 							<?php endif; ?>
 						</td>
@@ -186,7 +186,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		?>
 	<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 		<thead>
@@ -233,7 +233,7 @@ class MainWP_Updates_Per_Item {
 									MainWP_Updates::set_continue_update_html_selector( 'themes_upgrade_all', $slug );
 								}
 								?>
-								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 					</td>
@@ -363,7 +363,7 @@ class MainWP_Updates_Per_Item {
 									MainWP_Updates::set_continue_update_html_selector( 'translations_upgrade_all', $slug );
 								}
 								?>
-								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_html_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_translations_upgrade_all( '<?php echo $slug; ?>', '<?php echo rawurlencode( $translationsInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 						</td>

@@ -562,9 +562,8 @@ class MainWP_Manage_Sites {
 		self::render_footer( $showpage );
 	}
 
-	// add individual meta boxes.
-	// phpcs:ignore -- not quite complex method
-	public static function on_load_page_dashboard() {
+	// add individual meta boxes.	
+	public static function on_load_page_dashboard() { // phpcs:ignore -- not quite complex method.
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
@@ -781,8 +780,8 @@ class MainWP_Manage_Sites {
 		self::render_footer( '' );
 	}
 
-	// phpcs:ignore -- complex method
-	public static function render_manage_sites() {
+	
+	public static function render_manage_sites() { // phpcs:ignore -- complex method.
 		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {

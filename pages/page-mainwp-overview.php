@@ -139,7 +139,7 @@ class MainWP_Overview {
 	 *
 	 * @param $page Current page.
 	 */
-	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method
+	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method.
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.

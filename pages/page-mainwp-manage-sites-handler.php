@@ -640,8 +640,8 @@ class MainWP_Manage_Sites_Handler {
 		);
 	}
 
-	// phpcs:ignore -- complex method
-	public static function backup( $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp,
+	
+	public static function backup( $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, // phpcs:ignore -- complex method.
 								$excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false,
 								$pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false,
 								$pMaximumFileDescriptors = false, $pLoadFilesBeforeZip = false, $pid = false, $append = false ) {

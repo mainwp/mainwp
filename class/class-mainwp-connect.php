@@ -38,9 +38,8 @@ class MainWP_Connect {
 	 * @param boolean True|null $forceUseIPv4 Option to fource IP4. Default = null.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
-	 */
-	// phpcs:ignore -- complex method
-	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) {
+	 */	
+	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) { // phpcs:ignore -- complex method.
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -1126,8 +1125,8 @@ class MainWP_Connect {
 		return $information;
 	}
 
-	// phpcs:ignore -- not quite complex method
-	public static function maybe_request_premium_updates( $website, $what, $params ) {
+	
+	public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- not quite complex method.
 		$request_update = false;
 		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
 
@@ -1226,9 +1225,8 @@ class MainWP_Connect {
 			}
 		}
 	}
-
-	// phpcs:ignore -- complex method
-	public static function m_fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
+	
+	public static function m_fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, // phpcs:ignore -- complex method.
 							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 

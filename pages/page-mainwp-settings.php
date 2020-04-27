@@ -706,7 +706,7 @@ class MainWP_Settings {
 		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start() || 0 < MainWP_DB::instance()->get_websites_check_updates_count() ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$nextAutomaticUpdate = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) );
+			$nextAutomaticUpdate = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) ); // phpcs:ignore -- run at midnight local time
 		}
 
 		if ( 0 == $lastAutomaticUpdate ) {

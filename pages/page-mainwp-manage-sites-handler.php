@@ -6,14 +6,14 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Sites_Handler {
 
-	public static function get_class_name() {
-		return __CLASS__;
-	}
+public static function get_class_name() {
+	return __CLASS__;
+}
 
 	/**
 	 * @throws MainWP_Exception
 	 */
-<<<<<<< HEAD
+<< << <<< HEAD
 	public static function backup_site( $siteid, $pTask, $subfolder ) { // phpcs: ignore -- complex function.
 =======
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
@@ -970,8 +970,8 @@ class MainWP_Manage_Sites_Handler {
 					global $wp_filesystem;
 
 					$dirs = MainWP_Utility::get_icons_dir();
-					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-						$wp_filesystem->delete( $dirs[0] . $favi );
+					if ( $wp_filesystem->exists( $dirs[ 0 ] . $favi ) ) {
+						$wp_filesystem->delete( $dirs[ 0 ] . $favi );
 					}
 				}
 

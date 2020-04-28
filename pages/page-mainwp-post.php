@@ -415,7 +415,7 @@ class MainWP_Post {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
 
-		//self::render_footer( 'BulkManage' );
+		// self::render_footer( 'BulkManage' );
 	}
 
 	public static function render_search_options() {

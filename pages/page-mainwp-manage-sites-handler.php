@@ -13,7 +13,12 @@ class MainWP_Manage_Sites_Handler {
 	/**
 	 * @throws MainWP_Exception
 	 */
+<<<<<<< HEAD
 	public static function backup_site( $siteid, $pTask, $subfolder ) { // phpcs: ignore -- complex function.
+=======
+	public static function backup_site( $siteid, $pTask, $subfolder ) {
+		// phpcs: ignore -- complex function
+>>>>>>> a8045337e5869e3a9fcc249af93a845dee811c97
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;

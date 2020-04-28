@@ -898,7 +898,7 @@ class MainWP_System_Cron_Jobs {
 		
 		MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
 		MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
-		
+
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
 		MainWP_Utility::update_option( 'mainwp_daily_digest_plain_text', $plain_text );
 

@@ -131,7 +131,7 @@ class MainWP_Extensions_View {
 				<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 						<?php foreach ( $extensions as $extension ) : ?>
 							<?php
-							if ( ! mainwp_current_user_can( 'extension', dirname( $extension['slug'] ) ) ) {
+							if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {
 								continue;
 							}
 

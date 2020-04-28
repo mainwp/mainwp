@@ -287,7 +287,7 @@ class MainWP_Manage_Sites {
 		$showpage = 'AddNew';
 		self::render_header( $showpage );
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
@@ -505,7 +505,7 @@ class MainWP_Manage_Sites {
 	public static function render_bulk_new_site() {
 		$showpage = 'BulkAddNew';
 		self::render_header( $showpage );
-		if ( ! mainwp_current_user_can( 'dashboard', 'add_sites' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'add sites', 'mainwp' ) );
 			return;
 		} else {
@@ -599,14 +599,14 @@ class MainWP_Manage_Sites {
 		}
 
 		// Load the Recent Posts widget.
-		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
 				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
 		// Load the Recent Pages widget.
-		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), self::$page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
@@ -628,7 +628,7 @@ class MainWP_Manage_Sites {
 		}
 
 		// Load the Securtiy Issues widget.
-		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), self::$page, 'right', __( 'Security Issues', 'mainwp' ) );
 			}
@@ -848,7 +848,7 @@ class MainWP_Manage_Sites {
 				$updated = false;
 				// Edit website!
 				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
-					if ( mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+					if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 						// update site.
 						$groupids   = array();
 						$groupnames = array();
@@ -899,7 +899,7 @@ class MainWP_Manage_Sites {
 							'loadFilesBeforeZip'     => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
 						);
 
-						if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+						if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 							$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
 							$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
 							$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;

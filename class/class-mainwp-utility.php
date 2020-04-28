@@ -129,7 +129,7 @@ class MainWP_Utility {
 
 
 	/**
-	 * Method utf8ize()
+	 * Method json_convert_string()
 	 *
 	 * Convert content into utf8 encoding.
 	 *
@@ -137,7 +137,7 @@ class MainWP_Utility {
 	 *
 	 * @return mixed $mixed
 	 */
-	public static function utf8ize( $mixed ) {
+	public static function json_convert_string( $mixed ) {
 		if ( is_array( $mixed ) ) {
 			foreach ( $mixed as $key => $value ) {
 				$mixed[ $key ] = self::utf8ize( $value );
@@ -147,7 +147,7 @@ class MainWP_Utility {
 				return mb_convert_encoding( $mixed, 'UTF-8', 'UTF-8' );
 			}
 		}
-		return $mixed;
+		return $mixed;		
 	}
 
 	/**
@@ -162,12 +162,12 @@ class MainWP_Utility {
 	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
 		$encoded = wp_json_encode( $value, $options, $depth );
 		if ( false === $encoded && $value && json_last_error() == JSON_ERROR_UTF8 ) {
-			$encoded = wp_json_encode( self::utf8ize( $value ), $options, $depth );
+			$encoded = wp_json_encode( self::json_convert_string( $value ), $options, $depth );
 		}
 		return $encoded;
 	}
-
-
+	
+	
 	/**
 	 * Method get_primary_backup()
 	 *

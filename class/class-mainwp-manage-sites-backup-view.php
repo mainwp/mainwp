@@ -16,7 +16,7 @@ class MainWP_Manage_Sites_Backup_View {
 			$output      .= '<div class="ui grid field">';
 			$output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
 			$output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . $downloadLink . '" class="button">Download</a>';
-			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
+			$output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for begin reasons.
 			$output      .= '</div>';
 			$output      .= '</div>';
 		}
@@ -41,7 +41,7 @@ class MainWP_Manage_Sites_Backup_View {
 	}
 
 	public static function render_backup_site( &$website ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
 			mainwp_do_not_have_permissions( __( 'execute backups', 'mainwp' ) );
 			return;
 		}

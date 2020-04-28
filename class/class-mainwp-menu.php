@@ -454,7 +454,7 @@ class MainWP_Menu {
 					$right       = str_replace( 'extension_', '', $right );
 				}
 			}
-			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_can( $right_group, $right ) ) ) {
+			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
 			<a class="item" href="<?php echo esc_url( $href ); ?>"><?php echo esc_html( $title ); ?></a>
 				<?php

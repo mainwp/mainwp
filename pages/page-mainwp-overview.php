@@ -86,7 +86,7 @@ class MainWP_Overview {
 				'2.00001'
 			);
 
-			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
 				add_submenu_page(
 					'mainwp_tab',
 					'MainWP',
@@ -176,7 +176,7 @@ class MainWP_Overview {
 		 * Load the Recent Posts widget
 		 */
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
 				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
@@ -186,7 +186,7 @@ class MainWP_Overview {
 		 * Load the Recent Pages widget
 		 */
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
@@ -206,7 +206,7 @@ class MainWP_Overview {
 		 * Load the Security Issues widget
 		 */
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
 			}
@@ -237,7 +237,7 @@ class MainWP_Overview {
 	 * When the page loads render the body content.
 	 */
 	public function on_show_page() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'global dashboard', 'mainwp' ) );
 			return;
 		}

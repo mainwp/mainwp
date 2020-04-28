@@ -26,7 +26,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		// Widget: RightNow.
 		$this->add_action( 'mainwp_syncerrors_dismiss', array( &$this, 'mainwp_syncerrors_dismiss' ) );
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			// Page: SecurityIssues.
 			$this->add_action( 'mainwp_security_issues_request', array( &$this, 'mainwp_security_issues_request' ) );
 			$this->add_action( 'mainwp_security_issues_fix', array( &$this, 'mainwp_security_issues_fix' ) );
@@ -44,7 +44,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_twitter_dashboard_action', array( &$this, 'mainwp_twitter_dashboard_action' ) );
 
 		// Page: Recent Posts.
-		if ( mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			$this->add_action( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
 			$this->add_action( 'mainwp_post_publish', array( &$this, 'mainwp_post_publish' ) );
 			$this->add_action( 'mainwp_post_trash', array( &$this, 'mainwp_post_trash' ) );
@@ -54,7 +54,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 		$this->add_action( 'mainwp_post_addmeta', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_add_meta' ) );
 		// Page: Pages.
-		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			$this->add_action( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
 			$this->add_action( 'mainwp_page_publish', array( &$this, 'mainwp_page_publish' ) );
 			$this->add_action( 'mainwp_page_trash', array( &$this, 'mainwp_page_trash' ) );

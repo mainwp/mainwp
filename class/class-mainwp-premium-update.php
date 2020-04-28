@@ -153,7 +153,7 @@ class MainWP_Premium_Update {
 
 		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			);
 		}
 

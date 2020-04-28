@@ -370,8 +370,8 @@ class MainWP_Hooks {
 
 	public function hook_current_user_can( $input, $can_type, $which ) {
 
-		if ( function_exists( 'mainwp_current_user_can' ) ) {
-			return mainwp_current_user_can( $can_type, $which );
+		if ( function_exists( 'mainwp_current_user_have_right' ) ) {
+			return mainwp_current_user_have_right( $can_type, $which );
 		}
 
 		return $input;
@@ -489,9 +489,9 @@ class MainWP_Hooks {
 			}
 
 			$error = '';
-			if ( 'plugin' === $type && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
+			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
-			} elseif ( 'theme' === $type && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
+			} elseif ( 'theme' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), false );
 			}
 

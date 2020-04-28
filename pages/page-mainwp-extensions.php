@@ -201,10 +201,10 @@ class MainWP_Extensions {
 
 			$all_extensions[] = $extension;
 			if ( ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug ) ||
-				mainwp_current_user_can( 'extension', dirname( $slug ) )
+				mainwp_current_user_have_right( 'extension', dirname( $slug ) )
 			) {
 				self::$extensions[] = $extension;
-				if ( mainwp_current_user_can( 'extension', dirname( $slug ) ) ) {
+				if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
 					if ( isset( $extension['callback'] ) ) {
 
 						$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
@@ -286,7 +286,7 @@ class MainWP_Extensions {
 		$html = '';
 		if ( isset( self::$extensions ) && is_array( self::$extensions ) ) {
 			foreach ( self::$extensions as $extension ) {
-				if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
+				if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
 					continue;
 				}
 				if ( MainWP_Extensions_Handler::added_on_menu( $extension['slug'] ) ) {

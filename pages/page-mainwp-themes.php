@@ -153,7 +153,7 @@ class MainWP_Themes {
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesManage' ); ?>" class="mainwp-submenu">
 						<?php esc_html_e( 'Manage Themes', 'mainwp' ); ?>
 					</a>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'install_themes' ) ) { ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) { ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesInstall' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=ThemesInstall' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install', 'mainwp' ); ?></a>
 						<?php } ?>
@@ -268,7 +268,7 @@ class MainWP_Themes {
 				'active' => ( 'Manage' === $shownPage ) ? true : false,
 			);
 
-			if ( mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
+			if ( mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
 				$renderItems[] = array(
 					'title'  => __( 'Install', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesInstall',
@@ -767,17 +767,17 @@ class MainWP_Themes {
 			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
 			<div class="menu">
 				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
 					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
 						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
 						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
 					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
 				<?php endif; ?>
 			</div>
@@ -826,7 +826,7 @@ class MainWP_Themes {
 
 	/** Redner the Themes table for the Install Themes Tab. */
 	public static function render_themes_table() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'install_themes' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
 			mainwp_do_not_have_permissions( __( 'install themes', 'mainwp' ) );
 			return;
 		}
@@ -999,7 +999,7 @@ class MainWP_Themes {
 
 		self::render_header( 'AutoUpdate' );
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 			return;
 		} else {
@@ -1387,7 +1387,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
-							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
@@ -1397,7 +1397,7 @@ class MainWP_Themes {
 						<tr><td colspan="999"><?php esc_html_e( 'No ignored themes.', 'mainwp' ); ?></td></tr>
 					<?php endif; ?>
 				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<?php if ( $ignoredThemes ) : ?>
 					<tfoot class="full-width">
 						<tr>
@@ -1458,7 +1458,7 @@ class MainWP_Themes {
 							<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 							<td><?php echo esc_html( $ignoredTheme ); ?></td>
 							<td class="right aligned">
-							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 								<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unigore', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							</td>
@@ -1472,7 +1472,7 @@ class MainWP_Themes {
 					<tr><td colspan="999"><?php esc_html_e( 'No ignored themes', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 			</tbody>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 				<tr>
@@ -1546,7 +1546,7 @@ class MainWP_Themes {
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>
 						<td class="right aligned">
-						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+						<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_abandoned_unignore_globally( '<?php echo rawurlencode( $ignoredTheme ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						</td>
@@ -1556,7 +1556,7 @@ class MainWP_Themes {
 					<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<?php if ( $ignoredThemes ) : ?>
 					<tfoot class="full-width">
 						<tr>
@@ -1613,7 +1613,7 @@ class MainWP_Themes {
 						<td><?php echo esc_html( $ignoredThemeName ); ?></td>
 						<td><?php echo esc_html( $ignoredTheme ); ?></td>
 						<td class="right aligned">
-						<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+						<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 							<a href="#" class="ui mini button" onClick="return updatesoverview_themes_unignore_abandoned_detail( '<?php echo rawurlencode( $ignoredTheme ); ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 						<?php endif; ?>
 						</td>
@@ -1627,7 +1627,7 @@ class MainWP_Themes {
 			<tr><td colspan="999"><?php esc_html_e( 'No ignored abandoned themes.', 'mainwp' ); ?></td></tr>
 			<?php endif; ?>
 			</tbody>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 					<tr>

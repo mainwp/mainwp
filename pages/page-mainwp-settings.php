@@ -399,7 +399,7 @@ class MainWP_Settings {
 
 	/** Render the MainWP Settings Page. */
 	public static function render() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
@@ -755,7 +755,7 @@ class MainWP_Settings {
 
 	/** Render Advanced Options Subpage */
 	public static function render_advanced() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}
@@ -882,7 +882,7 @@ class MainWP_Settings {
 
 	/** Render MainWP Tools SubPage */
 	public static function render_mainwp_tools() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 
 			return;
@@ -983,7 +983,7 @@ class MainWP_Settings {
 
 	/** Render CLient Reports Responder */
 	public static function render_report_responder() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
 			return;
 		}

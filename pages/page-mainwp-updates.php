@@ -84,7 +84,7 @@ class MainWP_Updates {
 	 *
 	 * Render init updates menu
 	 *
-	 * @return
+	 * @return none
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -150,7 +150,7 @@ class MainWP_Updates {
 	 */
 	public static function user_can_ignore_updates() {
 		if ( null === self::$user_can_ignore_updates ) {
-			self::$user_can_ignore_updates = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+			self::$user_can_ignore_updates = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 		}
 		return self::$user_can_ignore_updates;
 	}
@@ -163,7 +163,7 @@ class MainWP_Updates {
 	 */
 	public static function user_can_update_trans() {
 		if ( null === self::$user_can_update_trans ) {
-			self::$user_can_update_trans = mainwp_current_user_can( 'dashboard', 'update_translations' );
+			self::$user_can_update_trans = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
 		}
 		return self::$user_can_update_trans;
 	}
@@ -176,7 +176,7 @@ class MainWP_Updates {
 	 */
 	public static function user_can_update_wp() {
 		if ( null === self::$user_can_update_wp ) {
-			self::$user_can_update_wp = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+			self::$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
 		}
 		return self::$user_can_update_wp;
 	}
@@ -189,7 +189,7 @@ class MainWP_Updates {
 	 */
 	public static function user_can_update_themes() {
 		if ( null === self::$user_can_update_themes ) {
-			self::$user_can_update_themes = mainwp_current_user_can( 'dashboard', 'update_themes' );
+			self::$user_can_update_themes = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
 		}
 		return self::$user_can_update_themes;
 	}
@@ -202,7 +202,7 @@ class MainWP_Updates {
 	 */
 	public static function user_can_update_plugins() {
 		if ( null === self::$user_can_update_plugins ) {
-			self::$user_can_update_plugins = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+			self::$user_can_update_plugins = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
 		}
 		return self::$user_can_update_plugins;
 	}
@@ -212,7 +212,7 @@ class MainWP_Updates {
 	 *
 	 * Render updates page
 	 *
-	 * @return
+	 * @return html render
 	 */
 	public static function render() {
 
@@ -582,14 +582,14 @@ class MainWP_Updates {
 	 *
 	 * Render WP updates tab
 	 *
-	 * @param object $websites
-	 * @param int $total_wp_upgrades
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites the websites
+	 * @param int $total_wp_upgrades total update
+	 * @param array $all_groups_sites all groups of sites
+	 * @param array $all_groups all groups
+	 * @param int $site_offset offset value
+	 * @param string $site_view current view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset, $site_view ) {
 		?>
@@ -598,7 +598,7 @@ class MainWP_Updates {
 				<?php
 				if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 					MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset );
-				} else { // sites/items view
+				} else { // sites/items view.
 					MainWP_DB::data_seek( $websites, 0 );
 					MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
 				};
@@ -613,17 +613,17 @@ class MainWP_Updates {
 	 *
 	 * Render WP updates tab
 	 *
-	 * @param object $websites
-	 * @param int $total_plugin_upgrades
-	 * @param object $userExtension
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param array $allPlugins
-	 * @param array $pluginsInfo
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites the websites
+	 * @param int $total_plugin_upgrades total plugins update
+	 * @param object $userExtension user extension
+	 * @param array $all_groups_sites groups of sites
+	 * @param array $all_groups all groups
+	 * @param array $allPlugins all plugins
+	 * @param array $pluginsInfo all plugins info
+	 * @param int $site_offset offset value
+	 * @param string $site_view current view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset, $site_view ) {
 		
@@ -663,17 +663,17 @@ class MainWP_Updates {
 	 *
 	 * Render themes update tab
 	 *
-	 * @param object $websites
-	 * @param int $total_theme_upgrades
-	 * @param object $userExtension
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param array $allThemes
-	 * @param array $themesInfo
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites the websites
+	 * @param int $total_theme_upgrades total updates
+	 * @param object $userExtension user extension
+	 * @param array $all_groups_sites all groups of sites
+	 * @param array $all_groups all groups
+	 * @param array $allThemes all themes
+	 * @param array $themesInfo all themes info
+	 * @param int $site_offset offset value
+	 * @param string $site_view current site view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset, $site_view ) {
 		
@@ -713,18 +713,18 @@ class MainWP_Updates {
 	 *
 	 * Render translations update tab
 	 *
-	 * @param object $websites
-	 * @param int $total_translation_upgrades
-	 * @param object $userExtension
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param array $allTranslations
-	 * @param array $translationsInfo
-	 * @param bool $mainwp_show_language_updates
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites the websites
+	 * @param int $total_translation_upgrades total updates
+	 * @param object $userExtension user extension
+	 * @param array $all_groups_sites all groups of sites
+	 * @param array $all_groups all groups
+	 * @param array $allTranslations all translations
+	 * @param array $translationsInfo translations info
+	 * @param bool $mainwp_show_language_updates show translation update
+	 * @param int $site_offset offset value
+	 * @param string $site_view current site view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset, $site_view ) {
 		?>
@@ -752,15 +752,15 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned plugins tab
 	 *
-	 * @param object $websites	 	 
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param array $allPluginsOutdate
-	 * @param array $decodedDismissedPlugins	 
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites	the websites 	  
+	 * @param array $all_groups_sites all groups of sites
+	 * @param array $all_groups all groups
+	 * @param array $allPluginsOutdate all outdate plugins
+	 * @param array $decodedDismissedPlugins dismissed outdate plugins	  
+	 * @param int $site_offset offset value
+	 * @param string $site_view current site view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset, $site_view ) {
 		?>
@@ -794,15 +794,15 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned themes tab
 	 *
-	 * @param object $websites	 	 
-	 * @param array $all_groups_sites
-	 * @param array $all_groups
-	 * @param array $allThemesOutdate
-	 * @param array $decodedDismissedThemes	 
-	 * @param int $site_offset
-	 * @param string $site_view
+	 * @param object $websites	the websites 	 
+	 * @param array $all_groups_sites all groups sites
+	 * @param array $all_groups all groups
+	 * @param array $allThemesOutdate all outdate themes
+	 * @param array $decodedDismissedThemes	dismissed themes
+	 * @param int $site_offset offset value
+	 * @param string $site_view current site view
 	 * 
-	 * @return
+	 * @return html render
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset, $site_view ) {
 		?>
@@ -834,12 +834,13 @@ class MainWP_Updates {
 	/**
 	 * Method render_js_updates()
 	 *
-	 * Render js
+	 * Render js for update page
 	 *
-	 * @return
+	 * @param string $site_view current site view
+	 * @return html render
 	 */
 	public static function render_js_updates( $site_view ) {		
-		?>		
+	?>		
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
@@ -893,7 +894,7 @@ class MainWP_Updates {
 	 *
 	 * Get sites for updates
 	 *
-	 * @return
+	 * @return mixed results
 	 */
 	public static function get_sites() {
 		global $current_user;
@@ -1128,7 +1129,7 @@ class MainWP_Updates {
 	 * Method set_continue_update_html_selector()
 	 *
 	 * @param string $current_update current update string
-	 * @return
+	 * @return none
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
 

@@ -53,14 +53,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		// Page: Themes.
 		$this->add_action( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
 		$this->add_action( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
-		if ( mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) {
 			$this->add_action( 'mainwp_theme_activate', array( &$this, 'mainwp_theme_activate' ) );
 		}
-		if ( mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
 			$this->add_action( 'mainwp_theme_delete', array( &$this, 'mainwp_theme_delete' ) );
 		}
 		$this->add_action( 'mainwp_trusted_theme_notes_save', array( &$this, 'mainwp_trusted_theme_notes_save' ) );
-		if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 			$this->add_action( 'mainwp_theme_ignore_updates', array( &$this, 'mainwp_theme_ignore_updates' ) );
 		}
 
@@ -68,15 +68,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_plugins_search', array( &$this, 'mainwp_plugins_search' ) );
 		$this->add_action( 'mainwp_plugins_search_all_active', array( &$this, 'mainwp_plugins_search_all_active' ) );
 
-		if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) {
 			$this->add_action( 'mainwp_plugin_activate', array( &$this, 'mainwp_plugin_activate' ) );
 			$this->add_action( 'mainwp_plugin_deactivate', array( &$this, 'mainwp_plugin_deactivate' ) );
 		}
-		if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) {
 			$this->add_action( 'mainwp_plugin_delete', array( &$this, 'mainwp_plugin_delete' ) );
 		}
 
-		if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 			$this->add_action( 'mainwp_plugin_ignore_updates', array( &$this, 'mainwp_plugin_ignore_updates' ) );
 		}
 		$this->add_action( 'mainwp_trusted_plugin_notes_save', array( &$this, 'mainwp_trusted_plugin_notes_save' ) );
@@ -273,7 +273,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	// Update a specific WP.
 	public function mainwp_upgradewp() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'update_wordpress' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
 		}
 
@@ -306,15 +306,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );
 		}
 
-		if ( 'plugin' === $_POST['type'] && ! mainwp_current_user_can( 'dashboard', 'update_plugins' ) ) {
+		if ( 'plugin' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), $echo = false ) ) ) );
 		}
 
-		if ( 'theme' === $_POST['type'] && ! mainwp_current_user_can( 'dashboard', 'update_themes' ) ) {
+		if ( 'theme' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update themes', 'mainwp' ), $echo = false ) ) ) );
 		}
 
-		if ( 'translation' === $_POST['type'] && ! mainwp_current_user_can( 'dashboard', 'update_translations' ) ) {
+		if ( 'translation' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_translations' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update translations', 'mainwp' ), $echo = false ) ) ) );
 		}
 
@@ -432,7 +432,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_dismissoutdatepluginsthemes() {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 
@@ -454,7 +454,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_ignorepluginsthemes() {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
 		}
 

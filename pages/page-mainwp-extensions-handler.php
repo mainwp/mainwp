@@ -585,7 +585,7 @@ class MainWP_Extensions_Handler {
 			return false;
 		}
 
-		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
+		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
 
@@ -608,7 +608,7 @@ class MainWP_Extensions_Handler {
 				return false;
 			}
 
-			if ( ! mainwp_current_user_can( 'site', $websiteid ) ) {
+			if ( ! mainwp_current_user_have_right( 'site', $websiteid ) ) {
 				return false;
 			}
 
@@ -712,7 +712,7 @@ class MainWP_Extensions_Handler {
 			return false;
 		}
 
-		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_can( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
+		if ( $for_manager && ( ! defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) || ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) ) {
 			return false;
 		}
 

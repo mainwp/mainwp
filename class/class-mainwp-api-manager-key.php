@@ -195,8 +195,7 @@ class MainWP_Api_Manager_Key {
 	 * This function checks the users login information & Tests
 	 * it against the MainWP.com Login Credentials stored on the license server.
 	 *
-	 * @param mixed $args Login Arguments.
-	 * @throws mixed Request error messages.
+	 * @param mixed $args Login Arguments.	 
 	 * @throws \Exception Request error codes.
 	 * @return mixed $response
 	 */

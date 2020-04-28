@@ -60,7 +60,7 @@ class MainWP_Updates_Overview {
 			'timeout'    => 15,
 			'body'       => array(
 				'action'     => $action,
-				'request'    => serialize( $args ),
+				'request'    => serialize( $args ), // phpcs:ignore -- WP org api params
 			),
 		);
 		$request = wp_remote_post( $url, $args );
@@ -397,10 +397,10 @@ class MainWP_Updates_Overview {
 			$lastSyncMsg = __( 'Last successfully completed synchronization: ', 'mainwp' ) . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $last_dtsSync ) );
 		}
 
-		$user_can_update_translation = mainwp_current_user_can( 'dashboard', 'update_translations' );
-		$user_can_update_wordpress   = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
-		$user_can_update_themes      = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_update_plugins     = mainwp_current_user_can( 'dashboard', 'update_plugins' );
+		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
+		$user_can_update_wordpress   = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
+		$user_can_update_themes      = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
+		$user_can_update_plugins     = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
 
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 

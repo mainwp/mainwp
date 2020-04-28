@@ -24,7 +24,7 @@ class MainWP_Manage_Sites_View {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url( 'admin.php?page=managesites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'add_sites' ) ) { ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'add_sites' ) ) { ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'managesites_add_new' ) ) { ?>
 							<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 						<?php } ?>
@@ -146,12 +146,12 @@ class MainWP_Manage_Sites_View {
 			'AddNew' => array(
 				'href'   => 'admin.php?page=managesites&do=new',
 				'title'  => __( 'Add New', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
 			'BulkAddNew' => array(
 				'href'   => 'admin.php?page=managesites&do=bulknew',
 				'title'  => __( 'Import Sites', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'add_sites' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
 			'ManageGroups' => array(
 				'href'   => 'admin.php?page=ManageGroups',
@@ -164,22 +164,22 @@ class MainWP_Manage_Sites_View {
 			'ManageSitesDashboard' => array(
 				'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
 				'title'  => __( 'Overview', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
 			'ManageSitesEdit' => array(
 				'href'   => 'admin.php?page=managesites&id=' . $site_id,
 				'title'  => __( 'Edit', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'edit_sites' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
 			'ManageSitesUpdates' => array(
 				'href'   => 'admin.php?page=managesites&updateid=' . $site_id,
 				'title'  => __( 'Updates', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
 			'ManageSitesBackups' => array(
 				'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
 				'title'  => __( 'Backups', 'mainwp' ),
-				'access' => mainwp_current_user_can( 'dashboard', 'execute_backups' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
 			),
 			'SecurityScan' => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
@@ -610,7 +610,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function render_dashboard( &$website, &$page ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'individual dashboard', 'mainwp' ) );
 			return;
 		}
@@ -661,7 +661,7 @@ class MainWP_Manage_Sites_View {
 
 
 	public static function render_scan_site( &$website ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
 			return;
 		}
@@ -678,7 +678,7 @@ class MainWP_Manage_Sites_View {
 			if ( empty( $website ) ) {
 				return;
 			}
-			if ( mainwp_current_user_can( 'dashboard', 'manage_security_issues' ) ) {
+			if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.1', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
 				do_action( 'mainwp_securityissues_sites', $website );
 			}
@@ -686,7 +686,7 @@ class MainWP_Manage_Sites_View {
 
 			<?php
 			// Hook in MainWP Sucuri Extension.
-			if ( mainwp_current_user_can( 'extension', 'mainwp-sucuri-extension' ) ) {
+			if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
 					do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.1', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
 					do_action( 'mainwp_sucuriscan_sites', $website );
@@ -696,7 +696,7 @@ class MainWP_Manage_Sites_View {
 
 			<?php
 			// Hook in MainWP Wordfence Extension.
-			if ( mainwp_current_user_can( 'extension', 'mainwp-wordfence-extension' ) ) {
+			if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
 					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.1', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
 					do_action( 'mainwp_wordfence_sites', $website );
@@ -710,7 +710,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	public static function render_edit_site( $websiteid, $updated ) {
-		if ( ! mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
 			return;
 		}
@@ -816,7 +816,7 @@ class MainWP_Manage_Sites_View {
 						<input type="checkbox" name="mainwp_automaticDailyUpdate" id="mainwp_automaticDailyUpdate" <?php echo ( 1 == $website->automatic_update ? 'checked="true"' : '' ); ?>><label for="mainwp_automaticDailyUpdate"></label>
 					</div>
 				</div>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<div class="ui grid field">
 						<label class="six wide column middle aligned"><?php esc_html_e( 'Ignore core updates', 'mainwp' ); ?></label>
 						<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if you want to ignore WP Core updates on this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -952,8 +952,8 @@ class MainWP_Manage_Sites_View {
 						MainWP_DB::instance()->update_website_values(
 							$website->id,
 							array(
-								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
-								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
+								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for begin reasons.
+								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for begin reasons.
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
@@ -1104,7 +1104,7 @@ class MainWP_Manage_Sites_View {
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
 						global $current_user;
-						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for benign reasons.
+						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() function is used for begin reasons.
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
 							$message = sprintf( __( '<div class="ui header">Congratulations you have connected %1$s.</div> You can add new sites at anytime from the Add New Site page.', 'mainwp' ), '<strong>' . $params['name'] . '</strong>' );

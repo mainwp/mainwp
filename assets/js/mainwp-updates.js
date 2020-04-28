@@ -939,8 +939,6 @@ updatesoverview_plugins_upgrade_all_upgrade_next = function ()
     updatesoverview_plugins_upgrade_int( slugToUpgrade, websiteId, true, true );
 };
 
-
-
 updatesoverview_check_to_continue_updates = function () {
     var loc_href = location.href;
     if ( limitUpdateAll > 0 && continueUpdatesAll != '' ) {

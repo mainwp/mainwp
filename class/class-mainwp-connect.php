@@ -359,12 +359,12 @@ class MainWP_Connect {
 
 			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$data['nossl'] = 0;
-				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+				openssl_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			} else {
 				$data['nossl'] = 1;
 				$signature     = md5( $what . $data['nonce'] . $website->nosslkey );
 			}
-			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 
 			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 			if ( 5 !== $recent_number ) {
@@ -394,12 +394,12 @@ class MainWP_Connect {
 			$nonce = wp_rand( 0, 9999 );
 			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$nossl = 0;
-				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			} else {
 				$nossl     = 1;
 				$signature = md5( $paramValue . $nonce . $website->nosslkey );
 			}
-			$signature = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$signature = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 
 			$params = array(
 				'login_required'     => 1,
@@ -467,7 +467,7 @@ class MainWP_Connect {
 	 *  
 	 * @return bool true|false
 	 */
-	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs: ignore -- complex function
+	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs: ignore -- complex function.
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}
@@ -1494,7 +1494,7 @@ class MainWP_Connect {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 
 			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'information: [OK]' );
 			return $information;

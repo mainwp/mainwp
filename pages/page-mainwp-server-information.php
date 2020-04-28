@@ -281,7 +281,7 @@ class MainWP_Server_Information {
 	}
 
 	public static function render() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'server information', 'mainwp' );
 
 			return;
@@ -594,7 +594,7 @@ class MainWP_Server_Information {
 
 	public static function render_cron() {
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
 
 			return;
@@ -764,7 +764,7 @@ class MainWP_Server_Information {
 
 	public static function render_error_log_page() {
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'error log', 'mainwp' );
 
 			return;
@@ -848,7 +848,7 @@ class MainWP_Server_Information {
 
 	public static function render_wp_config() {
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
 
 			return;
@@ -953,7 +953,7 @@ class MainWP_Server_Information {
 
 	public static function render_htaccess() {
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
 
 			return;

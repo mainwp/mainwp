@@ -28,7 +28,7 @@ class MainWP_Site_Open {
 	 * either open_site_location or open_site methods.
 	 */
 	public static function render() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'WP-Admin on child sites', 'mainwp' ) );
 
 			return;
@@ -93,7 +93,7 @@ class MainWP_Site_Open {
 
 		$file = '';
 		if ( isset( $_GET['f'] ) ) {
-			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 		}
 
 		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
@@ -150,7 +150,7 @@ class MainWP_Site_Open {
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
 			$postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
-			$postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

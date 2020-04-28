@@ -80,7 +80,7 @@ class MainWP_Manage_Sites_Update_View {
 	}
 
 	public static function render_wpcore_updates( $website, $active_tab ) {
-		$user_can_update_wp = mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
 		?>
 		<div class="ui <?php echo 'WordPress' === $active_tab ? 'active' : ''; ?> tab" data-tab="wordpress">
 				<table class="ui stackable single line table" id="mainwp-wordpress-updates-table">
@@ -137,8 +137,8 @@ class MainWP_Manage_Sites_Update_View {
 			$trustedPlugins = array();
 		}
 
-		$user_can_update_plugins  = mainwp_current_user_can( 'dashboard', 'update_plugins' );
-		$user_can_ignore_unignore = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		$user_can_update_plugins  = mainwp_current_user_have_right( 'dashboard', 'update_plugins' );
+		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 		?>
 		<div class="ui <?php echo 'plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="plugins">
 			<?php if ( ! $website->is_ignorePluginUpdates ) : ?>
@@ -233,8 +233,8 @@ class MainWP_Manage_Sites_Update_View {
 			$trustedThemes = array();
 		}
 
-		$user_can_update_themes   = mainwp_current_user_can( 'dashboard', 'update_themes' );
-		$user_can_ignore_unignore = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		$user_can_update_themes   = mainwp_current_user_have_right( 'dashboard', 'update_themes' );
+		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		?>
 		<div class="ui <?php echo 'themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="themes">
@@ -318,7 +318,7 @@ class MainWP_Manage_Sites_Update_View {
 	}
 
 	public static function render_language_updates( $website, $active_tab ) {
-		$user_can_update_translation = mainwp_current_user_can( 'dashboard', 'update_translations' );
+		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
 		?>
 		<div class="ui <?php echo 'trans' === $active_tab ? 'active' : ''; ?> tab" data-tab="translations">
 			<table class="ui stackable single line table" id="mainwp-translations-table">
@@ -366,7 +366,7 @@ class MainWP_Manage_Sites_Update_View {
 
 	public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
 
-		$user_can_ignore_unignore = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
 		if ( ! is_array( $plugins_outdate ) ) {
@@ -438,7 +438,7 @@ class MainWP_Manage_Sites_Update_View {
 
 	public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {
 
-		$user_can_ignore_unignore = mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' );
+		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
 
 		$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
 		if ( ! is_array( $themes_outdate ) ) {

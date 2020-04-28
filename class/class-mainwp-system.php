@@ -17,8 +17,9 @@ class MainWP_System {
 
 	public static $version = '4.0.7.2';
 
-	/**
-	 * Singleton.
+	/**	 
+	 * @var mixed Singleton
+	 * 
 	 */
 	private static $instance = null;
 	public $metaboxes;
@@ -330,7 +331,7 @@ class MainWP_System {
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
-		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {
+		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 
 			/**
 			 * Check permission level by hook mainwp_currentusercan of Team Control extension
@@ -339,7 +340,7 @@ class MainWP_System {
 			 * @param string $cap capabilities for current user
 			 * @return bool true|false
 			 */
-			function mainwp_current_user_can( $cap_type = '', $cap ) {
+			function mainwp_current_user_have_right( $cap_type = '', $cap ) {
 				global $current_user;
 
 				if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
@@ -535,7 +536,7 @@ class MainWP_System {
 
 		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
 		if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
-			if ( mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
 				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 				die();
 			}

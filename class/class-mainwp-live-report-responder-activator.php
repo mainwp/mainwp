@@ -60,7 +60,7 @@ class MainWP_Live_Report_Responder_Activator {
 		$this->mainwpMainActivated = apply_filters( 'mainwp_activated_check', $this->mainwpMainActivated );
 		$this->childEnabled        = apply_filters( 'mainwp_extension_enabled_check', __FILE__ );
 		$this->childKey            = $this->childEnabled['key'];
-		if ( function_exists( 'mainwp_current_user_can' ) && ! mainwp_current_user_can( 'extension', 'mainwp-client-reports-extension' ) ) {
+		if ( function_exists( 'mainwp_current_user_have_right' ) && ! mainwp_current_user_have_right( 'extension', 'mainwp-client-reports-extension' ) ) {
 			return;
 		}
 

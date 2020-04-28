@@ -112,7 +112,7 @@ class MainWP_User {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) { ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=UserBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Users', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'UserBulkAdd' ) ) { ?>
@@ -207,7 +207,7 @@ class MainWP_User {
 
 		$renderItems = array();
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 			$renderItems[] = array(
 				'title'  => __( 'Manage Users', 'mainwp' ),
 				'href'   => 'admin.php?page=UserBulkManage',
@@ -264,7 +264,7 @@ class MainWP_User {
 	}
 
 	public static function render() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage users', 'mainwp' ) );
 
 			return;
@@ -862,7 +862,7 @@ class MainWP_User {
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			unset( $results );
 			$output->users += self::users_search_handler_renderer( $users, $website );
 			unset( $users );
@@ -1264,7 +1264,7 @@ class MainWP_User {
 			$startTime = time();
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
-					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 					'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 				);
 				$output         = new \stdClass();
@@ -1547,7 +1547,7 @@ class MainWP_User {
 
 		if ( 0 < count( $dbwebsites ) ) {
 			$post_data      = array(
-				'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+				'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 				'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
 			);
 			$output         = new \stdClass();

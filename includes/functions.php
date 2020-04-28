@@ -43,11 +43,12 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 	 *
 	 * @param string $cap_type group or type of capabilities
 	 * @param string $cap capabilities for current user
+	 * 
 	 * @return bool true|false
 	 */
 	function mainwp_current_user_can( $cap_type = '', $cap ) {
-		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_can' ) ) {
-			return MainWP\Dashboard\mainwp_current_user_can( $cap_type, $cap );
+		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
+			return MainWP\Dashboard\mainwp_current_user_have_right( $cap_type, $cap );
 		}
 		// to compatible.
 		if ( has_filter( 'mainwp_currentusercan' ) ) {

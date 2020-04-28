@@ -72,7 +72,7 @@ class MainWP_Plugins {
 				'render',
 			)
 		);
-		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) {
 			$page = add_submenu_page(
 				'mainwp_tab',
 				__( 'Plugins', 'mainwp' ),
@@ -167,7 +167,7 @@ class MainWP_Plugins {
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<a href="<?php echo admin_url( 'admin.php?page=PluginsManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Plugins', 'mainwp' ); ?></a>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) : ?>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsInstall' ) ) : ?>
 							<a href="<?php echo admin_url( 'admin.php?page=PluginsInstall' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Install Plugins', 'mainwp' ); ?></a>
 							<?php endif; ?>
@@ -288,7 +288,7 @@ class MainWP_Plugins {
 			'active' => ( 'Manage' === $shownPage ) ? true : false,
 		);
 
-		if ( mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsInstall' ) ) {
 				$renderItems[] = array(
 					'title'  => __( 'Install', 'mainwp' ),
@@ -727,20 +727,20 @@ class MainWP_Plugins {
 			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
 			<div class="menu">
 		<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
-		<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+		<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
 			<?php if ( 'active' === $status || 'all' === $status ) : ?>
 			<div class="item" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
 			<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
 			<?php endif; ?>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) : ?>
 			<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
 			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 			<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
 		<?php endif; ?>
 		</div>
@@ -847,7 +847,7 @@ class MainWP_Plugins {
 	public static function render_plugins_table() {
 		global $tab;
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'install_plugins' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) {
 			mainwp_do_not_have_permissions( __( 'install plugins', 'mainwp' ) );
 			return;
 		}
@@ -961,7 +961,7 @@ class MainWP_Plugins {
 
 		self::render_header( 'AutoUpdate' );
 
-		if ( ! mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'trust_untrust_updates' ) ) {
 			mainwp_do_not_have_permissions( __( 'trust/untrust updates', 'mainwp' ) );
 		} else {
 			$snPluginAutomaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
@@ -1374,7 +1374,7 @@ class MainWP_Plugins {
 								<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 								<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 								<td class="right aligned">
-									<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+									<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 										<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_globally( '<?php echo rawurlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 									<?php endif; ?>
 								</td>
@@ -1386,7 +1386,7 @@ class MainWP_Plugins {
 						</tr>
 					<?php endif; ?>
 				</tbody>
-				<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<?php if ( $ignoredPlugins ) : ?>
 						<tfoot class="full-width">
 							<tr>
@@ -1449,7 +1449,7 @@ class MainWP_Plugins {
 							<?php endif; ?>
 							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
-							<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+							<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 								<td class="right aligned"><a href="#" class="ui mini button" onClick="return updatesoverview_plugins_unignore_detail( '<?php echo rawurlencode( $ignoredPlugin ); ?>', <?php echo esc_attr( $website->id ); ?> )"> <?php esc_html_e( 'Unignore', 'mainwp' ); ?></a></td>
 							<?php endif; ?>
 						</tr>
@@ -1463,7 +1463,7 @@ class MainWP_Plugins {
 					<tr><td colspan="999"><?php esc_html_e( 'No ignored plugins', 'mainwp' ); ?></td></tr>
 				<?php endif; ?>
 			</tbody>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( 0 < $cnt ) : ?>
 					<tfoot class="full-width">
 						<tr>
@@ -1541,7 +1541,7 @@ class MainWP_Plugins {
 							<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . rawurlencode( dirname( $ignoredPlugin ) ) . '&TB_iframe=true&width=640&height=477'; ?>" target="_blank"><?php echo esc_html( $ignoredPluginName ); ?></a></td>
 							<td><?php echo esc_html( $ignoredPlugin ); ?></td>
 							<td class="right aligned">
-								<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+								<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 									<a href="#" class="ui mini button" onClick="return updatesoverview_plugins_abandoned_unignore_globally( '<?php echo rawurlencode( $ignoredPlugin ); ?>' )"><?php esc_html_e( 'Unignore', 'mainwp' ); ?></a>
 								<?php endif; ?>
 							</td>
@@ -1553,7 +1553,7 @@ class MainWP_Plugins {
 					</tr>
 				<?php endif; ?>
 			</tbody>
-			<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 				<?php if ( $ignoredPlugins ) : ?>
 					<tfoot class="full-width">
 						<tr>
@@ -1628,7 +1628,7 @@ class MainWP_Plugins {
 			</tr>
 		<?php endif; ?>
 		</tbody>
-		<?php if ( mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 			<?php if ( 0 < $cnt ) : ?>
 				<tfoot class="full-width">
 					<tr>

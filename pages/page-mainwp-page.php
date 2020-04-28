@@ -103,7 +103,7 @@ class MainWP_Page {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<?php if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) { ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
 						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) { ?>
 							<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
@@ -229,7 +229,7 @@ class MainWP_Page {
 
 		$renderItems = array();
 
-		if ( mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			$renderItems[] = array(
 				'title'  => __( 'Manage Pages', 'mainwp' ),
 				'href'   => 'admin.php?page=PageBulkManage',
@@ -282,7 +282,7 @@ class MainWP_Page {
 	}
 
 	public static function render() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
@@ -600,7 +600,7 @@ class MainWP_Page {
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
-			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 
 			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
 				$output->errors[ $website->id ] = $pages['error'];
@@ -641,7 +641,7 @@ class MainWP_Page {
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( 'trash' != $page['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons. ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $page['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons. ?>" target="_blank" title="Edit '<?php echo esc_html( $page['title'] ); ?>'?"><?php echo esc_html( $page['title'] ); ?></a>
 								<?php } else { ?>
 									<?php echo esc_html( $page['title'] ); ?>
 								<?php } ?>
@@ -749,7 +749,7 @@ class MainWP_Page {
 	}
 
 	public static function render_bulk_add() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
@@ -759,7 +759,7 @@ class MainWP_Page {
 	}
 
 	public static function render_bulk_edit() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_pages' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
@@ -812,7 +812,7 @@ class MainWP_Page {
 						$selected_sites  = MainWP_Utility::maybe_unserialyze( $val );
 						$val             = get_post_meta( $id, '_selected_groups', true );
 						$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
-						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 						$post_custom     = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
 						$featured_image_id   = get_post_thumbnail_id( $id );
@@ -903,12 +903,12 @@ class MainWP_Page {
 
 						if ( 0 < count( $dbwebsites ) ) {
 							$post_data = array(
-								'new_post'               => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-								'post_custom'            => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-								'post_featured_image'    => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-								'post_gallery_images'    => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
-								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+								'new_post'               => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+								'post_custom'            => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+								'post_featured_image'    => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+								'post_gallery_images'    => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 							);
 							$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
 							MainWP_Connect::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );

@@ -77,7 +77,7 @@ class MainWP_Manage_Groups {
 	}
 
 	public static function render_all_groups() {
-		if ( ! mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage groups', 'mainwp' ) );
 
 			return;

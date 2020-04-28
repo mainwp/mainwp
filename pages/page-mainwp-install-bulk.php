@@ -413,7 +413,7 @@ class MainWP_Install_Bulk {
 
 			$result = $results[1];
 
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for benign reasons.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {

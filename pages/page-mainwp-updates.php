@@ -583,12 +583,12 @@ class MainWP_Updates {
 	 * Render WP updates tab
 	 *
 	 * @param object $websites the websites
-	 * @param int $total_wp_upgrades total update
-	 * @param array $all_groups_sites all groups of sites
-	 * @param array $all_groups all groups
-	 * @param int $site_offset offset value
+	 * @param int    $total_wp_upgrades total update
+	 * @param array  $all_groups_sites all groups of sites
+	 * @param array  $all_groups all groups
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset, $site_view ) {
@@ -614,15 +614,15 @@ class MainWP_Updates {
 	 * Render WP updates tab
 	 *
 	 * @param object $websites the websites
-	 * @param int $total_plugin_upgrades total plugins update
+	 * @param int    $total_plugin_upgrades total plugins update
 	 * @param object $userExtension user extension
-	 * @param array $all_groups_sites groups of sites
-	 * @param array $all_groups all groups
-	 * @param array $allPlugins all plugins
-	 * @param array $pluginsInfo all plugins info
-	 * @param int $site_offset offset value
+	 * @param array  $all_groups_sites groups of sites
+	 * @param array  $all_groups all groups
+	 * @param array  $allPlugins all plugins
+	 * @param array  $pluginsInfo all plugins info
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset, $site_view ) {
@@ -664,15 +664,15 @@ class MainWP_Updates {
 	 * Render themes update tab
 	 *
 	 * @param object $websites the websites
-	 * @param int $total_theme_upgrades total updates
+	 * @param int    $total_theme_upgrades total updates
 	 * @param object $userExtension user extension
-	 * @param array $all_groups_sites all groups of sites
-	 * @param array $all_groups all groups
-	 * @param array $allThemes all themes
-	 * @param array $themesInfo all themes info
-	 * @param int $site_offset offset value
+	 * @param array  $all_groups_sites all groups of sites
+	 * @param array  $all_groups all groups
+	 * @param array  $allThemes all themes
+	 * @param array  $themesInfo all themes info
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset, $site_view ) {
@@ -714,16 +714,16 @@ class MainWP_Updates {
 	 * Render translations update tab
 	 *
 	 * @param object $websites the websites
-	 * @param int $total_translation_upgrades total updates
+	 * @param int    $total_translation_upgrades total updates
 	 * @param object $userExtension user extension
-	 * @param array $all_groups_sites all groups of sites
-	 * @param array $all_groups all groups
-	 * @param array $allTranslations all translations
-	 * @param array $translationsInfo translations info
-	 * @param bool $mainwp_show_language_updates show translation update
-	 * @param int $site_offset offset value
+	 * @param array  $all_groups_sites all groups of sites
+	 * @param array  $all_groups all groups
+	 * @param array  $allTranslations all translations
+	 * @param array  $translationsInfo translations info
+	 * @param bool   $mainwp_show_language_updates show translation update
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset, $site_view ) {
@@ -752,14 +752,14 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned plugins tab
 	 *
-	 * @param object $websites	the websites 	  
-	 * @param array $all_groups_sites all groups of sites
-	 * @param array $all_groups all groups
-	 * @param array $allPluginsOutdate all outdate plugins
-	 * @param array $decodedDismissedPlugins dismissed outdate plugins	  
-	 * @param int $site_offset offset value
+	 * @param object $websites  the websites
+	 * @param array  $all_groups_sites all groups of sites
+	 * @param array  $all_groups all groups
+	 * @param array  $allPluginsOutdate all outdate plugins
+	 * @param array  $decodedDismissedPlugins dismissed outdate plugins
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset, $site_view ) {
@@ -794,14 +794,14 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned themes tab
 	 *
-	 * @param object $websites	the websites 	 
-	 * @param array $all_groups_sites all groups sites
-	 * @param array $all_groups all groups
-	 * @param array $allThemesOutdate all outdate themes
-	 * @param array $decodedDismissedThemes	dismissed themes
-	 * @param int $site_offset offset value
+	 * @param object $websites  the websites
+	 * @param array  $all_groups_sites all groups sites
+	 * @param array  $all_groups all groups
+	 * @param array  $allThemesOutdate all outdate themes
+	 * @param array  $decodedDismissedThemes dismissed themes
+	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 * 
+	 *
 	 * @return html render
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset, $site_view ) {
@@ -839,8 +839,9 @@ class MainWP_Updates {
 	 * @param string $site_view current site view
 	 * @return html render
 	 */
-	public static function render_js_updates( $site_view ) {		
-	?>		
+	public static function render_js_updates( $site_view ) {
+		?>
+			
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {

@@ -17,9 +17,8 @@ class MainWP_System {
 
 	public static $version = '4.0.7.2';
 
-	/**	 
+	/**
 	 * @var mixed Singleton
-	 * 
 	 */
 	private static $instance = null;
 	public $metaboxes;

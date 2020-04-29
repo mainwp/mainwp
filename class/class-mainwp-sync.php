@@ -3,6 +3,8 @@
  * MainWP Sync Handler
  *
  * Handle all syncing between MainWP & Child Site Network.
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;

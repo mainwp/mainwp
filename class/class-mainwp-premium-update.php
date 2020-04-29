@@ -3,6 +3,7 @@
  * MainWP Premium Update
  *
  * MainWP Premium Update functions.
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -153,7 +154,7 @@ class MainWP_Premium_Update {
 
 		if ( ! empty( $website->http_user ) && ! empty( $website->http_pass ) ) {
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+				'Authorization' => 'Basic ' . base64_encode( $website->http_user . ':' . stripslashes( $website->http_pass ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			);
 		}
 

@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Updates Page.
+ * @package     MainWP/Dashboard
+ * 
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -824,7 +830,6 @@ class MainWP_Updates {
 	 */
 	public static function render_js_updates( $site_view ) {
 		?>
-			
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {

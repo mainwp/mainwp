@@ -100,7 +100,7 @@ class MainWP_Api_Manager_Password_Management {
 			$stra[ $k ] = chr( 255 < $tmp ? ( $tmp - 256 ) : $tmp );
 		}
 
-		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+		return base64_encode( join( '', $stra ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 	}
 
 	/**
@@ -112,7 +112,7 @@ class MainWP_Api_Manager_Password_Management {
 	 * @param mixed $pass String.
 	 */
 	public static function decrypt( $str, $pass ) {
-		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
 		$stra = str_split( $str );
 		foreach ( $stra as $k => $v ) {

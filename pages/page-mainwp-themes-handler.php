@@ -5,6 +5,7 @@
  *
  * @package MainWP/Themes
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -35,7 +36,7 @@ class MainWP_Themes_Handler {
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$themes = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
 			if ( isset( $themes['error'] ) ) {
 				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $themes['error'], $website->url ) );

@@ -3,6 +3,8 @@
  * MainWP Connection Status
  *
  * Build the MainWP Overview page Connection Status Widget.
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;

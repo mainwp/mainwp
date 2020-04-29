@@ -6,6 +6,8 @@
  * Child Sites that are added to the MainWP Dashboard.
  *
  * @todo: allow to add or remove child sites
+ * @package     MainWP/Dashboard
+ * 
  */
 namespace MainWP\Dashboard;
 

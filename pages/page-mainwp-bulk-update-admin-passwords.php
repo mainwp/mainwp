@@ -3,6 +3,8 @@
  * Bulk Update Admin Passwords.
  *
  * Handles bulk updating of Administrator Passwords.
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;
@@ -148,7 +150,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				}
 
 				if ( count( $dbwebsites ) > 0 ) {
-					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+					$post_data      = array( 'new_password' => base64_encode( serialize( $new_password ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 					$output         = new \stdClass();
 					$output->ok     = array();
 					$output->errors = array();

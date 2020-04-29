@@ -3,7 +3,10 @@
  * MainWP_QQ2_File_Uploader
  *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
+ * @package     MainWP/Dashboard
+ * 
  */
+
 namespace MainWP\Dashboard;
 
 /** Class MainWP_QQ2_File_Uploader. */

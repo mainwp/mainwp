@@ -37,7 +37,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 	function mainwp_autoload( $class_name ) {
 
 		if ( 0 === strpos( $class_name, 'MainWP\Dashboard' ) ) {
-			// remove the namespace prefix: MainWP\Dashboard\ .
+			// trip the namespace prefix: MainWP\Dashboard\ .
 			$class_name = substr( $class_name, 17 );
 		}
 

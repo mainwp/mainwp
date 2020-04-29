@@ -1,7 +1,9 @@
 <?php
 /**
  * MainWP System Cron Jobs.
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

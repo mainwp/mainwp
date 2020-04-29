@@ -1,7 +1,10 @@
 <?php
 /**
  * MainWP Legacy Backups Page.
+ * @package     MainWP/Dashboard
+ * 
  */
+
 namespace MainWP\Dashboard;
 
 /**

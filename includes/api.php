@@ -1,4 +1,9 @@
 <?php
+/**
+ * MainWP Live Report API functions.
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -59,14 +64,14 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 		return array( 'error' => 'The dashboard is not connected, please reconnect to establish a secure connection.' );
 	}
 
-	$auth = openssl_verify( $action . $securitykey . $timestamp, base64_decode( $signature ), base64_decode( $current_key ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+	$auth = openssl_verify( $action . $securitykey . $timestamp, base64_decode( $signature ), base64_decode( $current_key ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 	if ( 0 === $auth ) {
 		return array( 'error' => 'An error occured while verifying the secure signature.' );
 	} elseif ( -1 === $auth ) {
 		return array( 'error' => 'Authentication failed, please reconnect the dashboard.' );
 	}
 
-	if ( ( 'on' == get_option( 'live-reports-responder-security-id' ) ) && ( get_option( 'live-reports-responder-security-code' ) !== base64_decode( $securitykey ) ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+	if ( ( 'on' == get_option( 'live-reports-responder-security-id' ) ) && ( get_option( 'live-reports-responder-security-code' ) !== base64_decode( $securitykey ) ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		return array( 'error' => 'Invalid security ID.' );
 	}
 
@@ -124,7 +129,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			$report->body               = '';
 			$report->footer             = '';
 			$report->type               = 0;
-			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			$report->sites              = $sites;
 			$report->groups             = '';
 			$report->schedule_nextsend  = 0;
@@ -190,7 +195,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->body               = '';
 				$report->footer             = '';
 				$report->type               = 0;
-				$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+				$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;

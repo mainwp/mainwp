@@ -118,7 +118,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		$args = array(
 			'request'    => 'bulkupdatecheck',
 			'domain'     => MainWP_Api_Manager::instance()->get_domain(),
-			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		);
 		return $this->plugin_information( $args, true ); // bulk update check.
 	}

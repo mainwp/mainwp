@@ -1,11 +1,15 @@
 <?php
 /**
- * MainWP System Notices.
+ * MainWP System View.
+ * 
+ * @package     MainWP/Dashboard
+ * 
  */
+
 namespace MainWP\Dashboard;
 
 /**
- * MainWP System Notices.
+ * MainWP System View.
  */
 class MainWP_System_View {
 
@@ -353,8 +357,7 @@ class MainWP_System_View {
 	 * Render MainWP Review Request.
 	 *
 	 * @param boolean $current_options false|true Weather or not to display request.
-	 *
-	 * @return self
+	 *	 
 	 */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;
@@ -478,7 +481,12 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render Admin Footer. */
+	
+	/**
+	 * Method admin_footer()
+	 *
+	 * Render Admin Footer.
+	 */
 	public static function admin_footer() {
 				
 		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
@@ -493,11 +501,7 @@ class MainWP_System_View {
 				}	
 			);
 		</script>
-
-
 		<?php
-		
-
 		$hide_ref = apply_filters( 'mainwp_open_hide_referrer', false );
 		if ( $hide_ref ) {
 			?>

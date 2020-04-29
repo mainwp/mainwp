@@ -3,6 +3,8 @@
  * MainWP Site Info Widget
  *
  * Build the Child Site Info Widget.
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;

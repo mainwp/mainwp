@@ -1,4 +1,9 @@
 <?php
+/**
+ * MainWP UI.
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

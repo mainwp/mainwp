@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Updates Page.
+ * @package     MainWP/Dashboard
+ * 
+ */
+
 namespace MainWP\Dashboard;
 
 /**

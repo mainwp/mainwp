@@ -1,6 +1,8 @@
 <?php
 /**
  * MainWP Child Scan
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;

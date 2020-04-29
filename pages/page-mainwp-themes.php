@@ -7,6 +7,7 @@
  *
  * @package MainWP/Themes
  */
+
 namespace MainWP\Dashboard;
 
 /**

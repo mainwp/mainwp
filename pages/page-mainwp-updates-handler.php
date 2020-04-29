@@ -1,7 +1,10 @@
 <?php
 /**
  * MainWP Updates Handler.
+ * @package     MainWP/Dashboard
+ * 
  */
+
 namespace MainWP\Dashboard;
 
 /**

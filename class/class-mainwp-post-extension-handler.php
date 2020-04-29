@@ -1,4 +1,10 @@
 <?php
+/**
+ * Post Extension Handler.
+ * @package     MainWP/Dashboard
+ * 
+ */
+
 namespace MainWP\Dashboard;
 
 /**

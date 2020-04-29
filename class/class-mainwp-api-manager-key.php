@@ -4,6 +4,8 @@
  *
  * This class handles user authentication with MainWP.com License Servers
  * and provides the ability to grab license keys automatically.
+ * @package     MainWP/Dashboard
+ * 
  */
 
 namespace MainWP\Dashboard;

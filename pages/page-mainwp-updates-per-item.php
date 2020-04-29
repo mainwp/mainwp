@@ -1,8 +1,12 @@
 <?php
+/**
+ * MainWP Updates Per Item.
+ */
+
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Page
+ * MainWP Updates Per Item.
  */
 class MainWP_Updates_Per_Item {
 

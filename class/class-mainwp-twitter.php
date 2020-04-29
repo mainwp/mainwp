@@ -4,8 +4,8 @@
  *
  * Each time a Child Site is updated, build a Tweet to be sent out to brag
  * that MainWP was used and how fast it was.
+ *
  * @package MainWP/Twitter
- * 
  */
 
 namespace MainWP\Dashboard;

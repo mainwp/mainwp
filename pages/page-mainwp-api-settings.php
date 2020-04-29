@@ -4,7 +4,6 @@
  * and activating / deactivating license keys
  *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

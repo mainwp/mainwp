@@ -820,14 +820,14 @@ class MainWP_System_Cron_Jobs {
 		$sendMail     = false;
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
-			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );			
+			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );
 			if ( '' != $plugin_content ) {
 				$sendMail      = true;
 				$mail_content .= $plugin_content;
 			}
 		}
 
-		if ( ! empty( $theme_automaticDailyUpdate ) ) {						
+		if ( ! empty( $theme_automaticDailyUpdate ) ) {
 			$themes_content = $this->get_mail_content_themes( $sitesCheckCompleted, $text_format );
 			if ( '' != $themes_content ) {
 				$sendMail      = true;
@@ -836,7 +836,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( ! empty( $mainwpAutomaticDailyUpdate ) ) {
-			$core_content .= $this->get_mail_content_wp( $sitesCheckCompleted, $text_format );			
+			$core_content .= $this->get_mail_content_wp( $sitesCheckCompleted, $text_format );
 			if ( '' != $core_content ) {
 				$sendMail      = true;
 				$mail_content .= $core_content;
@@ -944,7 +944,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$mail_content = '';
-		
+
 		if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
 			) {
 			$mail_lines  = '';
@@ -952,7 +952,7 @@ class MainWP_System_Cron_Jobs {
 			$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
 			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate );
 			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
-	
+
 			if ( $text_format ) {
 				$mail_content .= 'WordPress Plugin Updates' . "\r\n";
 				$mail_content .= "\r\n";
@@ -979,7 +979,7 @@ class MainWP_System_Cron_Jobs {
 	 * @return string $mail_content mail content
 	 */
 	public function get_mail_content_themes( $sitesCheckCompleted, $text_format ) {
-		
+
 		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
 		if ( ! is_array( $themesNewUpdate ) ) {
 			$themesNewUpdate = array();
@@ -996,9 +996,9 @@ class MainWP_System_Cron_Jobs {
 		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
 			$notTrustedThemesToUpdate = array();
 		}
-		
+
 		$mail_content = '';
-		
+
 		if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
 			) {
 			$mail_lines  = '';
@@ -1019,7 +1019,7 @@ class MainWP_System_Cron_Jobs {
 				$mail_content .= '</ul>';
 			}
 		}
-		
+
 		return $mail_content;
 	}
 
@@ -1052,7 +1052,7 @@ class MainWP_System_Cron_Jobs {
 			$ignoredCoreToUpdate = array();
 		}
 		$mail_content = '';
-		
+
 		if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
 			$mail_lines  = '';
 			$mail_lines .= $this->print_digest_lines( $coreNewUpdate );
@@ -1072,7 +1072,7 @@ class MainWP_System_Cron_Jobs {
 				$mail_content .= '</ul>';
 			}
 		}
-		
+
 		return $mail_content;
 	}
 

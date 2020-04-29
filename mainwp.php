@@ -9,6 +9,8 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Version:  4.0.7.2
+ * @package MainWP/Dashboard
+ *
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {

@@ -23,7 +23,7 @@ jQuery( document ).ready( function () {
  * Global
  */
 jQuery( document ).ready( function () {
-    jQuery( '.mainwp-row' ).live( {
+    jQuery( '.mainwp-row' ).on( {
         mouseenter: function () {
             rowMouseEnter( this );
         },
@@ -45,43 +45,27 @@ rowMouseLeave = function ( elem ) {
  * Recent posts
  */
 jQuery( document ).ready( function () {
-    jQuery( '.mainwp-post-unpublish' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '.mainwp-post-unpublish', function () {
         postAction( jQuery( this ), 'unpublish' );
         return false;
     } );
-    jQuery( '.mainwp-post-publish' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '.mainwp-post-publish', function () {
         postAction( jQuery( this ), 'publish' );
         return false;
     } );
-    jQuery( '.mainwp-post-trash' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '.mainwp-post-trash', function () {
         postAction( jQuery( this ), 'trash' );
         return false;
     } );
-    jQuery( '.mainwp-post-restore' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '.mainwp-post-restore', function () {
         postAction( jQuery( this ), 'restore' );
         return false;
     } );
-    jQuery( '.mainwp-post-delete' ).live( 'click', function () {
+   jQuery( document ).on( 'click', '.mainwp-post-delete', function () {
         postAction( jQuery( this ), 'delete' );
         return false;
     } );
-    jQuery( '.plugins_actived_lnk' ).live( 'click', function () {
-        showPluginsList( jQuery( this ), true, false );
-        return false;
-    } );
-    jQuery( '.plugins_inactive_lnk' ).live( 'click', function () {
-        showPluginsList( jQuery( this ), false, true );
-        return false;
-    } );
-    jQuery( '.themes_actived_lnk' ).live( 'click', function () {
-        showThemesList( jQuery( this ), true, false );
-        return false;
-    } );
-    jQuery( '.themes_inactive_lnk' ).live( 'click', function () {
-        showThemesList( jQuery( this ), false, true );
-        return false;
-    } );
-
+    
 } );
 
 // Publish, Unpublish, Trash, ... posts and pages
@@ -118,15 +102,15 @@ postAction = function ( elem, what ) {
  * Plugins Widget
  */
 jQuery( document ).ready( function () {
-  jQuery( '.mainwp-plugin-deactivate' ).live( 'click', function () {
+  jQuery( document ).on( 'click', '.mainwp-plugin-deactivate', function () {
     pluginAction( jQuery( this ), 'deactivate' );
     return false;
   } );
-  jQuery( '.mainwp-plugin-activate' ).live( 'click', function () {
+  jQuery( document ).on( 'click', '.mainwp-plugin-activate', function () {
     pluginAction( jQuery( this ), 'activate' );
     return false;
   } );
-  jQuery( '.mainwp-plugin-delete' ).live( 'click', function () {
+  jQuery( document ).on( 'click', '.mainwp-plugin-delete', function () {
     pluginAction( jQuery( this ), 'delete' );
     return false;
   } );
@@ -163,11 +147,11 @@ pluginAction = function ( elem, what ) {
  * Themes Widget
  */
 jQuery( document ).ready( function () {
-  jQuery( '.mainwp-theme-activate' ).live( 'click', function () {
+  jQuery( document ).on( 'click', '.mainwp-theme-activate', function () {
     themeAction( jQuery( this ), 'activate' );
     return false;
   } );
-  jQuery( '.mainwp-theme-delete' ).live( 'click', function () {
+  jQuery( document ).on( 'click', '.mainwp-theme-delete', function () {
     themeAction( jQuery( this ), 'delete' );
     return false;
   } );
@@ -198,62 +182,6 @@ themeAction = function ( elem, what ) {
   }, 'json' );
 
   return false;
-};
-
-showPluginsList = function ( pElement, activate, inactivate ) {
-  var plugins_actived_lnk = pElement.parent().parent().find( ".plugins_actived_lnk" );
-  if ( activate )
-    plugins_actived_lnk.addClass( 'mainwp_action_down' );
-  else
-    plugins_actived_lnk.removeClass( 'mainwp_action_down' );
-
-  var plugins_inactive_lnk = pElement.parent().parent().find( ".plugins_inactive_lnk" );
-  if ( inactivate )
-    plugins_inactive_lnk.addClass( 'mainwp_action_down' );
-  else
-    plugins_inactive_lnk.removeClass( 'mainwp_action_down' );
-
-  var plugins_activate = pElement.parent().parent().find( ".mainwp_plugins_active" );
-  var plugins_inactivate = pElement.parent().parent().find( ".mainwp_plugins_inactive" );
-
-  if ( activate )
-    plugins_activate.show();
-  if ( inactivate )
-    plugins_inactivate.show();
-
-  if ( !activate )
-    plugins_activate.hide();
-  if ( !inactivate )
-    plugins_inactivate.hide();
-};
-
-
-showThemesList = function ( pElement, activate, inactivate ) {
-    var themes_actived_lnk = pElement.parent().parent().find( ".themes_actived_lnk" );
-    if ( activate )
-        themes_actived_lnk.addClass( 'mainwp_action_down' );
-    else
-        themes_actived_lnk.removeClass( 'mainwp_action_down' );
-
-    var themes_inactive_lnk = pElement.parent().parent().find( ".themes_inactive_lnk" );
-    if ( inactivate )
-        themes_inactive_lnk.addClass( 'mainwp_action_down' );
-    else
-        themes_inactive_lnk.removeClass( 'mainwp_action_down' );
-
-    var themes_activate = pElement.parent().parent().find( ".mainwp_themes_active" );
-    var themes_inactivate = pElement.parent().parent().find( ".mainwp_themes_inactive" );
-
-    if ( activate )
-        themes_activate.show();
-    if ( inactivate )
-        themes_inactivate.show();
-
-    if ( !activate )
-        themes_activate.hide();
-    if ( !inactivate )
-        themes_inactivate.hide();
-
 };
 
 // offsetRelative (or, if you prefer, positionRelative)
@@ -408,11 +336,6 @@ feedback = function ( id, text, type, append ) {
       shake_element('#' + id); // shake the error message to get attention :)
 };
 
-hide_error = function ( id ) {
-    var idElement = jQuery( '#' + id );
-    idElement.html( "" );
-    idElement.hide();
-};
 jQuery( document ).ready( function () {
     jQuery( 'div.mainwp-hidden' ).parent().parent().css( "display", "none" );
 } );
@@ -425,11 +348,11 @@ var securityIssues_fixes = [ 'listing', 'wp_version', 'rsd', 'wlw', 'core_update
 jQuery( document ).ready( function () {
   var securityIssueSite = jQuery( '#securityIssueSite' );
   if ( ( securityIssueSite.val() != null ) && ( securityIssueSite.val() != "" ) ) {
-    jQuery( '#securityIssues_fixAll' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#securityIssues_fixAll', function () {
       securityIssues_fix( 'all' );
     } );
 
-    jQuery( '#securityIssues_refresh' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#securityIssues_refresh', function () {
       for ( var i = 0; i < securityIssues_fixes.length; i++ ) {
         var securityIssueCurrentIssue = jQuery( '#' + securityIssues_fixes[i] + '_fix' );
         if ( securityIssueCurrentIssue ) {
@@ -1524,7 +1447,7 @@ jQuery( document ).ready( function () {
         mainwp_managesites_add( event );
     } );
 
-    jQuery( '#mainwp_managesites_bulkadd' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#mainwp_managesites_bulkadd', function () {
         if ( jQuery( '#mainwp_managesites_file_bulkupload' ).val() == '' ) {
             setHtml( '#mainwp-message-zone', __( 'Please enter csv file for upload.' ), false );
         } else {
@@ -1544,7 +1467,7 @@ jQuery( document ).ready( function () {
  * Add new user
  */
 jQuery( document ).ready( function () {
-    jQuery( '#bulk_add_createuser' ).live( 'click', function ( event ) {
+    jQuery( document ).on( 'click', '#bulk_add_createuser', function ( event ) {
         mainwp_createuser( event );
     } );
     jQuery( '#bulk_import_createuser' ).on( 'click', function () {
@@ -1658,7 +1581,7 @@ jQuery( document ).ready( function () {
     } );
 
 // not used?
-    jQuery( '.filter-links li.plugin-install a' ).live( 'click', function ( event ) {
+    jQuery( document ).on( 'click', '.filter-links li.plugin-install a', function ( event ) {
         event.preventDefault();
         jQuery( '.filter-links li.plugin-install a' ).removeClass( 'current' );
         jQuery( this ).addClass( 'current' );
@@ -2212,24 +2135,7 @@ getErrorMessage = function ( pError )
         return pError;
     }
 };
-dateToYMD = function ( date ) {
-    if ( mainwpParams != undefined && mainwpParams['date_format'] != undefined )
-    {
-        var time = moment( date );
-        var format = mainwpParams['date_format'];
-        format = format.replace( 'g', 'h' );
-        format = format.replace( 'i', 'm' );
-        format = format.replace( 'F', 'MMMM' );
-        format = format.replace( 'j', 'D' );
-        format = format.replace( 'Y', 'YYYY' );
-        return time.format( format );
-    }
 
-    var d = date.getDate();
-    var m = date.getMonth() + 1;
-    var y = date.getFullYear();
-    return '' + y + '-' + ( m <= 9 ? '0' + m : m ) + '-' + ( d <= 9 ? '0' + d : d );
-};
 dateToHMS = function ( date ) {
     if ( mainwpParams != undefined && mainwpParams['time_format'] != undefined )
     {

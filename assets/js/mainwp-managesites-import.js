@@ -12,7 +12,7 @@ var import_count_fails = 0;
 jQuery( document ).ready( function () {
     import_total = jQuery( '#mainwp_managesites_total_import' ).val();
     
-    jQuery( '#mainwp_managesites_btn_import' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#mainwp_managesites_btn_import', function () {
         if ( import_stop_by_user == false ) {
             import_stop_by_user = true;
             jQuery( '#mainwp_managesites_import_logging .log' ).append( __( 'Paused import by user.' ) + "\n" );
@@ -30,7 +30,7 @@ jQuery( document ).ready( function () {
         }
     } );
 
-    jQuery( '#mainwp_managesites_btn_save_csv' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#mainwp_managesites_btn_save_csv', function () {
         var fail_data = '';
         jQuery( '#mainwp_managesites_import_fail_logging span' ).each(function(){
             fail_data += jQuery(this).html() + "\r\n";

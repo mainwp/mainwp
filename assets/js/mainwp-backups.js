@@ -629,7 +629,7 @@ backup_upload_file_retry_fail = function ( pData, pSiteId, pFile, pRegexFile, pS
  * Manage backups page
  */
 jQuery( document ).ready( function () {
-    jQuery( '.backup_destination_exclude' ).live( 'click', function ()
+    jQuery( document ).on( 'click', '.backup_destination_exclude', function ()
     {
         jQuery( this ).parent().parent().animate( { height: 0 }, { duration: 'slow', complete: function () {
                 jQuery( this ).remove();
@@ -641,12 +641,12 @@ jQuery( document ).ready( function () {
     jQuery( '#mainwp_managebackups_update' ).on( 'click', function ( event ) {
         mainwp_managebackups_update( event );
     } );
-    jQuery( '.backup_run_now' ).live( 'click', function ()
+    jQuery( document ).on( 'click', '.backup_run_now', function ()
     {
         managebackups_run_now( jQuery( this ) );
         return false;
     } );
-    jQuery( '#managebackups-task-status-close' ).live( 'click', function ()
+    jQuery( document ).on( 'click', '#managebackups-task-status-close', function ()
     {
         backupDownloadRunning = false;
         mainwpPopup( '#managebackups-task-status-box' ).close(true);

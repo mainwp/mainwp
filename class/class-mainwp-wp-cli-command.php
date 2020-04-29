@@ -8,6 +8,7 @@
  * @todo: allow to add or remove child sites
  * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 // Exit if access directly.

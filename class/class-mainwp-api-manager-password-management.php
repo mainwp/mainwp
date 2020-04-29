@@ -6,6 +6,7 @@
  *
  * @package MainWP/MainWP_API_Passwords_Manager
  */
+
 namespace MainWP\Dashboard;
 
 // Exit if accessed directly.

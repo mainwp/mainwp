@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * MainWP functions.
+ * @package MainWP/Dashboard
+ * 
+ */
 
 if ( ! function_exists( 'mainwpdir' ) ) {
 
@@ -17,7 +21,7 @@ if ( ! function_exists( 'mainwpdir' ) ) {
 if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 
 	/**
-	 * Detect permision level & display message to end user.
+	 * Detect permission level & display message to end user.
 	 *
 	 * @param string  $where User's location.
 	 * @param boolean $echo Defines weather or not to echo error message.

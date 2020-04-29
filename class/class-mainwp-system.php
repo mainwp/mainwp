@@ -250,7 +250,7 @@ class MainWP_System {
 	}
 
 	public function parse_request() {
-		include_once MAINWP_PLUGIN_DIR . '/include/api.php';
+		include_once MAINWP_PLUGIN_DIR . 'includes/api.php';
 	}
 
 	public function localization() {
@@ -576,8 +576,7 @@ class MainWP_System {
 		}
 
 		if ( self::is_mainwp_pages() ) {
-			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
-			wp_enqueue_script( 'mainwp-sites-selector', MAINWP_PLUGIN_URL . 'assets/js/mainwp-sites-selector.js', array(), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );			
 			wp_enqueue_script( 'mainwp-managesites-action', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-action.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-managesites-update', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-update.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-managesites-import', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-import.js', array(), $this->current_version, true );

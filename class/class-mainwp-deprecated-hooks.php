@@ -1,5 +1,4 @@
 <?php
-
 /**
  * MainWP Deprecated Hooks
  *

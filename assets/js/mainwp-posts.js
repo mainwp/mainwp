@@ -32,7 +32,7 @@ if (jQuery( '.ui.calendar' ).length > 0 ) {
             }
     }
 
-    jQuery( '#mainwp_show_pages' ).live( 'click', function () {
+    jQuery( document ).on( 'click', '#mainwp_show_pages', function () {
         mainwp_fetch_pages();
     } );
     jQuery( document ).on( 'click', '.page_submitpublish', function () {

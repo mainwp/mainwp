@@ -816,80 +816,30 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
-		if ( ! is_array( $pluginsNewUpdate ) ) {
-			$pluginsNewUpdate = array();
-		}
-		$pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
-		if ( ! is_array( $pluginsToUpdate ) ) {
-			$pluginsToUpdate = array();
-		}
-		$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
-		if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
-			$notTrustedPluginsNewUpdate = array();
-		}
-		$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
-		if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
-			$notTrustedPluginsToUpdate = array();
-		}
-
 		$mail_content = '';
 		$sendMail     = false;
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
-			if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
-			) {
+			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );			
+			if ( '' != $plugin_content ) {
 				$sendMail      = true;
-				$mail_content .= $this->get_mail_content_plugins( $pluginsNewUpdate, $pluginsToUpdate, $sitesCheckCompleted, $notTrustedPluginsNewUpdate, $notTrustedPluginsToUpdate, $text_format );
+				$mail_content .= $plugin_content;
 			}
 		}
 
-		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
-		if ( ! is_array( $themesNewUpdate ) ) {
-			$themesNewUpdate = array();
-		}
-		$themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
-		if ( ! is_array( $themesToUpdate ) ) {
-			$themesToUpdate = array();
-		}
-		$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
-		if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
-			$notTrustedThemesNewUpdate = array();
-		}
-		$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
-		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
-			$notTrustedThemesToUpdate = array();
-		}
-
-		if ( ! empty( $theme_automaticDailyUpdate ) ) {
-			if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
-			) {
+		if ( ! empty( $theme_automaticDailyUpdate ) ) {						
+			$themes_content = $this->get_mail_content_themes( $sitesCheckCompleted, $text_format );
+			if ( '' != $themes_content ) {
 				$sendMail      = true;
-				$mail_content .= $this->get_mail_content_themes( $themesNewUpdate, $themesToUpdate, $sitesCheckCompleted, $notTrustedThemesNewUpdate, $notTrustedThemesToUpdate, $text_format );
+				$mail_content .= $themes_content;
 			}
-		}
-
-		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
-		if ( ! is_array( $coreNewUpdate ) ) {
-			$coreNewUpdate = array();
-		}
-		$coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
-		if ( ! is_array( $coreToUpdate ) ) {
-			$coreToUpdate = array();
-		}
-		$ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
-		if ( ! is_array( $ignoredCoreNewUpdate ) ) {
-			$ignoredCoreNewUpdate = array();
-		}
-		$ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
-		if ( ! is_array( $ignoredCoreToUpdate ) ) {
-			$ignoredCoreToUpdate = array();
 		}
 
 		if ( ! empty( $mainwpAutomaticDailyUpdate ) ) {
-			if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
+			$core_content .= $this->get_mail_content_wp( $sitesCheckCompleted, $text_format );			
+			if ( '' != $core_content ) {
 				$sendMail      = true;
-				$mail_content .= $this->get_mail_content_wp( $coreNewUpdate, $coreToUpdate, $sitesCheckCompleted, $ignoredCoreNewUpdate, $ignoredCoreToUpdate, $text_format );
+				$mail_content .= $core_content;
 			}
 		}
 
@@ -920,7 +870,6 @@ class MainWP_System_Cron_Jobs {
 
 		if ( ! $sendMail ) {
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
-
 			return false;
 		}
 
@@ -932,7 +881,6 @@ class MainWP_System_Cron_Jobs {
 				$this->send_updates_notification( $email, $mail_content, $text_format );
 			}
 		}
-
 		return true;
 	}
 
@@ -971,34 +919,51 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Get mail content for plugins update
 	 *
-	 * @param mixed $pluginsNewUpdate new plugins update
-	 * @param mixed $pluginsToUpdate plugins to update
 	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param mixed $notTrustedPluginsNewUpdate not trusted new plugins update
-	 * @param mixed $notTrustedPluginsToUpdate not trusted plugins to update
 	 * @param bool  $text_format text format
 	 *
 	 * @return string $mail_content mail content
 	 */
-	public function get_mail_content_plugins( $pluginsNewUpdate, $pluginsToUpdate, $sitesCheckCompleted, $notTrustedPluginsNewUpdate, $notTrustedPluginsToUpdate, $text_format ) {
+	public function get_mail_content_plugins( $sitesCheckCompleted, $text_format ) {
 
-		$mail_lines  = '';
-		$mail_lines .= $this->print_digest_lines( $pluginsNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
-		$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
+		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
+		if ( ! is_array( $pluginsNewUpdate ) ) {
+			$pluginsNewUpdate = array();
+		}
+		$pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
+		if ( ! is_array( $pluginsToUpdate ) ) {
+			$pluginsToUpdate = array();
+		}
+		$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
+		if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
+			$notTrustedPluginsNewUpdate = array();
+		}
+		$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
+		if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
+			$notTrustedPluginsToUpdate = array();
+		}
 
 		$mail_content = '';
-		if ( $text_format ) {
-			$mail_content .= 'WordPress Plugin Updates' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= $mail_lines;
-			$mail_content .= "\r\n";
-		} else {
-			$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
-			$mail_content .= '<ul>';
-			$mail_content .= $mail_lines;
-			$mail_content .= '</ul>';
+		
+		if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
+			) {
+			$mail_lines  = '';
+			$mail_lines .= $this->print_digest_lines( $pluginsNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
+			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
+	
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Plugin Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
 		}
 		return $mail_content;
 	}
@@ -1008,34 +973,53 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Get themes update mail content
 	 *
-	 * @param mixed $themesNewUpdate new themes update
-	 * @param mixed $themesToUpdate themes to update
 	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param mixed $notTrustedThemesNewUpdate not trusted new themes update
-	 * @param mixed $notTrustedThemesToUpdate not trusted themes to update
 	 * @param bool  $text_format text format
 	 *
 	 * @return string $mail_content mail content
 	 */
-	public function get_mail_content_themes( $themesNewUpdate, $themesToUpdate, $sitesCheckCompleted, $notTrustedThemesNewUpdate, $notTrustedThemesToUpdate, $text_format ) {
-		$mail_lines  = '';
-		$mail_lines .= $this->print_digest_lines( $themesNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
-		$mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate );
-
-		$mail_content = '';
-		if ( $text_format ) {
-			$mail_content .= 'WordPress Themes Updates' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= $mail_lines;
-			$mail_content .= "\r\n";
-		} else {
-			$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
-			$mail_content .= '<ul>';
-			$mail_content .= $mail_lines;
-			$mail_content .= '</ul>';
+	public function get_mail_content_themes( $sitesCheckCompleted, $text_format ) {
+		
+		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
+		if ( ! is_array( $themesNewUpdate ) ) {
+			$themesNewUpdate = array();
 		}
+		$themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
+		if ( ! is_array( $themesToUpdate ) ) {
+			$themesToUpdate = array();
+		}
+		$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
+		if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
+			$notTrustedThemesNewUpdate = array();
+		}
+		$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
+		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
+			$notTrustedThemesToUpdate = array();
+		}
+		
+		$mail_content = '';
+		
+		if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
+			) {
+			$mail_lines  = '';
+			$mail_lines .= $this->print_digest_lines( $themesNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
+			$mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate );
+
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Themes Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+		
 		return $mail_content;
 	}
 
@@ -1044,36 +1028,51 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Get mail content of WP update
 	 *
-	 * @param mixed $coreNewUpdate new WP new update
-	 * @param mixed $coreToUpdate WP to update
 	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param mixed $ignoredCoreNewUpdate ignored new WP update
-	 * @param mixed $ignoredCoreToUpdate ignored WP to update
 	 * @param bool  $text_format text format
 	 *
 	 * @return string $mail_content mail content
 	 */
-	public function get_mail_content_wp( $coreNewUpdate, $coreToUpdate, $sitesCheckCompleted, $ignoredCoreNewUpdate, $ignoredCoreToUpdate, $text_format ) {
+	public function get_mail_content_wp( $sitesCheckCompleted, $text_format ) {
 
-		$mail_lines  = '';
-		$mail_lines .= $this->print_digest_lines( $coreNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
-		$mail_lines .= $this->print_digest_lines( $ignoredCoreNewUpdate );
-		$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate );
-
-		$mail_content = '';
-
-		if ( $text_format ) {
-			$mail_content .= 'WordPress Core Updates' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= $mail_lines;
-			$mail_content .= "\r\n";
-		} else {
-			$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
-			$mail_content .= '<ul>';
-			$mail_content .= $mail_lines;
-			$mail_content .= '</ul>';
+		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
+		if ( ! is_array( $coreNewUpdate ) ) {
+			$coreNewUpdate = array();
 		}
+		$coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
+		if ( ! is_array( $coreToUpdate ) ) {
+			$coreToUpdate = array();
+		}
+		$ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
+		if ( ! is_array( $ignoredCoreNewUpdate ) ) {
+			$ignoredCoreNewUpdate = array();
+		}
+		$ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
+		if ( ! is_array( $ignoredCoreToUpdate ) ) {
+			$ignoredCoreToUpdate = array();
+		}
+		$mail_content = '';
+		
+		if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
+			$mail_lines  = '';
+			$mail_lines .= $this->print_digest_lines( $coreNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
+			$mail_lines .= $this->print_digest_lines( $ignoredCoreNewUpdate );
+			$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate );
+
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Core Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+		
 		return $mail_content;
 	}
 

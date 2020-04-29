@@ -3,6 +3,7 @@
  * MainWP Client Live Report Responder
  *
  * Legacy Client Reports Extension.
+ *
  * @package     MainWP/Dashboard
  */
 

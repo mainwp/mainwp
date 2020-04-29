@@ -1,6 +1,6 @@
 <?php
 /**
- * This file manages the view for the MainWP Manage Sites Backup Page. 
+ * This file manages the view for the MainWP Manage Sites Backup Page.
  *
  * @package     MainWP/Dashboard
  */

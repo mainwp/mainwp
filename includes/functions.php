@@ -43,7 +43,7 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 	 *
 	 * @param string $cap_type group or type of capabilities
 	 * @param string $cap capabilities for current user
-	 * 
+	 *
 	 * @return bool true|false
 	 */
 	function mainwp_current_user_can( $cap_type = '', $cap ) {

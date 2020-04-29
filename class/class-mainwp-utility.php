@@ -147,7 +147,7 @@ class MainWP_Utility {
 				return mb_convert_encoding( $mixed, 'UTF-8', 'UTF-8' );
 			}
 		}
-		return $mixed;		
+		return $mixed;
 	}
 
 	/**
@@ -166,8 +166,8 @@ class MainWP_Utility {
 		}
 		return $encoded;
 	}
-	
-	
+
+
 	/**
 	 * Method get_primary_backup()
 	 *

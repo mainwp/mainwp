@@ -1,9 +1,8 @@
 <?php
 /**
  * MainWP System View.
- * 
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;
@@ -357,7 +356,6 @@ class MainWP_System_View {
 	 * Render MainWP Review Request.
 	 *
 	 * @param boolean $current_options false|true Weather or not to display request.
-	 *	 
 	 */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;
@@ -481,14 +479,14 @@ class MainWP_System_View {
 		}
 	}
 
-	
+
 	/**
 	 * Method admin_footer()
 	 *
 	 * Render Admin Footer.
 	 */
 	public static function admin_footer() {
-				
+
 		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
 		?>
 		<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">

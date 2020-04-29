@@ -1,6 +1,7 @@
 <?php
 /**
  * MainWP Live Report API functions.
+ *
  * @package     MainWP/Dashboard
  */
 

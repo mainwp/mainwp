@@ -4,8 +4,8 @@
  *
  * Throw this error when MainWP is not detected
  * due to either an HTTP error or if MainWP Child Plugin is not found.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 namespace MainWP\Dashboard;
 

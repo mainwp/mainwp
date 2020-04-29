@@ -3,8 +3,8 @@
  * MainWP Logger
  *
  * For custom read/write logging file.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

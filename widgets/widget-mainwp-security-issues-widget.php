@@ -3,8 +3,8 @@
  * MainWP Security Widget
  *
  * Displays detected security issues on Child Sites.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

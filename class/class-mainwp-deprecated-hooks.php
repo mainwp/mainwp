@@ -4,8 +4,8 @@
  * MainWP Deprecated Hooks
  *
  * Init mainwp deprecated hooks
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

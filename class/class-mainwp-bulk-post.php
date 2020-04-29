@@ -1,8 +1,8 @@
 <?php
 /**
  * MainWP Bulk Post Class
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

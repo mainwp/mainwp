@@ -1,8 +1,8 @@
 <?php
 /**
  * MainWP Server Information Page
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

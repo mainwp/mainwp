@@ -1,8 +1,8 @@
 <?php
 /**
  * MainWP Legacy Backups Handler.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

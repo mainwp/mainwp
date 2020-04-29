@@ -3,9 +3,8 @@
  * MainWP Database Controller
  *
  * This file handles all interactions with the DB.
- * 
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

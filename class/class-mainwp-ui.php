@@ -1,6 +1,7 @@
 <?php
 /**
  * MainWP UI.
+ *
  * @package     MainWP/Dashboard
  */
 

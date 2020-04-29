@@ -3,8 +3,8 @@
  * MainWP Main Menu
  *
  * Build & Render MainWP Main Menu.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

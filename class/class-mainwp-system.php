@@ -1,6 +1,7 @@
 <?php
 /**
  * MainWP System.
+ *
  * @package     MainWP/Dashboard
  */
 
@@ -659,7 +660,7 @@ class MainWP_System {
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
-		}		
+		}
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}
@@ -692,7 +693,7 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::render_footer_content( $websites );
-		MainWP_System_View::admin_footer();		
+		MainWP_System_View::admin_footer();
 		MainWP_Menu::init_subpages_menu();
 		global $_mainwp_disable_menus_items;
 

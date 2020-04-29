@@ -1,6 +1,7 @@
 <?php
 /**
  * Manage Sites View.
+ *
  * @package     MainWP/Dashboard
  */
 

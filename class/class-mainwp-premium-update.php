@@ -3,6 +3,7 @@
  * MainWP Premium Update
  *
  * MainWP Premium Update functions.
+ *
  * @package     MainWP/Dashboard
  */
 

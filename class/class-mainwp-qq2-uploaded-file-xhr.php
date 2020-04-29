@@ -4,8 +4,8 @@
  *
  * DO NOT TOUCH - part of http://github.com/valums/file-uploader ! (@see js/fileuploader.js)
  * Handle file uploads via XMLHttpRequest
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

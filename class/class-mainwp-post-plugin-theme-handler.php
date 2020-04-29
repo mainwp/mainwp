@@ -1,8 +1,8 @@
 <?php
 /**
  * Post Plugin Theme Handler.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

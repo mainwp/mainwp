@@ -1,8 +1,8 @@
 <?php
 /**
  * Manage Sites Handler.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

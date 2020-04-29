@@ -1,6 +1,7 @@
 <?php
 /**
  * This file handles the addintion and updating of Post Meta Boxes.
+ *
  * @package     MainWP/Dashboard
  */
 
@@ -188,7 +189,6 @@ class MainWP_Meta_Boxes {
 	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type.
-	 *	 
 	 */
 	public function add_categories_handle( $post_id, $post_type ) {
 		/**

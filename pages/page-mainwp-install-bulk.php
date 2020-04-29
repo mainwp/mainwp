@@ -2,6 +2,7 @@
 /**
  * This file handles all of the Bulk Installation Methods
  * for Plugins & Themes.
+ *
  * @package     MainWP/Dashboard
  */
 

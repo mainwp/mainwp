@@ -3,8 +3,8 @@
  * MainWP Connect
  *
  * MainWP Connect functions.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

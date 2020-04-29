@@ -1,6 +1,7 @@
 <?php
 /**
  * MainWP Extensions Page Handler
+ *
  * @package     MainWP/Dashboard
  */
 

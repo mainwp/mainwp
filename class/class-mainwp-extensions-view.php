@@ -3,8 +3,8 @@
  * MainWP Extensions View
  *
  * Renders MainWP Extensions Page.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

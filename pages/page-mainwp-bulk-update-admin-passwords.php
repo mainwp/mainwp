@@ -3,8 +3,8 @@
  * Bulk Update Admin Passwords.
  *
  * Handles bulk updating of Administrator Passwords.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

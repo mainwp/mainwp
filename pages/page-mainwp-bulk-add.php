@@ -3,8 +3,8 @@
  * MainWP Bulk Add Handler
  *
  * Handles Bulk addition of Pages, Posts, User Import, User Addition & Admin Users Password.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

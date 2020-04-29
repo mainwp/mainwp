@@ -1,6 +1,7 @@
 <?php
 /**
  * Post Page Handler.
+ *
  * @package     MainWP/Dashboard
  */
 

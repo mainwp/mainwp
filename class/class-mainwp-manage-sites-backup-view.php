@@ -2,9 +2,9 @@
 /**
  * MainWP Manage Sites Backup View
  *
- * Sites Backup View 
+ * Sites Backup View
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

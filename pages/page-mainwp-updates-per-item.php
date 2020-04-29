@@ -1,8 +1,8 @@
 <?php
 /**
  * MainWP Updates Per Item.
+ *
  * @package     MainWP/Dashboard
- * 
  */
 
 namespace MainWP\Dashboard;

@@ -1,7 +1,7 @@
 <?php
 /**
- * MainWP Base Functions. 
- * 
+ * MainWP Base Functions.
+ *
  * Grab MainWP Directory and check for permissions.
  */
 

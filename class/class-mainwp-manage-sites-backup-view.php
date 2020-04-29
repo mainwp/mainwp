@@ -10,13 +10,13 @@ namespace MainWP\Dashboard;
 class MainWP_Manage_Sites_Backup_View {
 
 	/**
-	 * Shows the available backups taken. 
-	 * 
+	 * Shows the available backups taken.
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $fullBackups Full Backups Array.
 	 * @param mixed $dbBackups DB Backups Array.
-	 * 
-	 * @return html Html listing Backups. 
+	 *
+	 * @return html Html listing Backups.
 	 */
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_Utility::get_mainwp_dir();
@@ -53,10 +53,10 @@ class MainWP_Manage_Sites_Backup_View {
 	}
 
 	/**
-	 * Renders the Backup Site Dialog. 
-	 * 
+	 * Renders the Backup Site Dialog.
+	 *
 	 * @param mixed $website Child Site info.
-	 * 
+	 *
 	 * @return html Backup Site html.
 	 */
 	public static function render_backup_site( &$website ) {
@@ -106,11 +106,11 @@ class MainWP_Manage_Sites_Backup_View {
 	}
 
 	/**
-	 * Render Backup Details. 
-	 * 
-	 * @param mixed $websiteid Child Site ID. 
-	 * 
-	 * @return html Backup Details. 
+	 * Render Backup Details.
+	 *
+	 * @param mixed $websiteid Child Site ID.
+	 *
+	 * @return html Backup Details.
 	 */
 	public static function render_backup_details( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -121,10 +121,10 @@ class MainWP_Manage_Sites_Backup_View {
 	}
 
 	/**
-	 * Render Backup Options. 
-	 * 
-	  * @param mixed $websiteid Child Site ID. 
-	 * 
+	 * Render Backup Options.
+	 *
+	 * @param mixed $websiteid Child Site ID.
+	 *
 	 * @return html Backup Options.
 	 */
 	public static function render_backup_options( $websiteid ) {

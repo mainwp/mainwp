@@ -11,12 +11,12 @@ namespace MainWP\Dashboard;
 class MainWP_Manage_Sites_List_Table {
 
 	/** @todo the only variables that seam to be used are $column_headers. */
-	
-	/** @var null $userExtension User Extension. */
-	protected $userExtension = null; 
 
-	/** 
-	 * 
+	/** @var null $userExtension User Extension. */
+	protected $userExtension = null;
+
+	/**
+	 *
 	 * @var $items Items.*/
 	public $items;
 
@@ -28,7 +28,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Method __construct()
-	 * 
+	 *
 	 * Add action to generate tabletop.
 	 */
 	public function __construct() {
@@ -37,7 +37,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get the default primary column name.
-	 * 
+	 *
 	 * @return string Child Site name.
 	 */
 	protected function get_default_primary_column_name() {
@@ -46,9 +46,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Backup Column.
-	 * 
+	 *
 	 * @param mixed $item List of backups.
-	 * 
+	 *
 	 * @return mixed $backupnow_lnk.
 	 */
 	public function column_backup( $item ) {
@@ -99,10 +99,10 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Set the column names.
-	 * 
-	 * @param mixed $item MainWP Sitetable Item.
+	 *
+	 * @param mixed  $item MainWP Sitetable Item.
 	 * @param string $column_name Column name to use.
-	 * 
+	 *
 	 * @return string Column Name.
 	 */
 	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- not quite complex function.
@@ -133,7 +133,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get sortable columns.
-	 * 
+	 *
 	 * @return array $sortable_columns Array of sortable column names.
 	 */
 	public function get_sortable_columns() {
@@ -152,7 +152,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get default columns.
-	 * 
+	 *
 	 * @return array Array of default column names.
 	 */
 	public function get_default_columns() {
@@ -175,8 +175,8 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
-	 * Combine all columns. 
-	 * 
+	 * Combine all columns.
+	 *
 	 * @return array $columns Array of column names.
 	 */
 	public function get_columns() {
@@ -210,8 +210,8 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
-	 * Instantiate Columns. 
-	 * 
+	 * Instantiate Columns.
+	 *
 	 * @return array $init_cols
 	 */
 	public function get_columns_init() {
@@ -222,11 +222,11 @@ class MainWP_Manage_Sites_List_Table {
 		}
 		return $init_cols;
 	}
-	
+
 	/**
 	 * Get column defines.
-	 * 
-	 * @return array $defines 
+	 *
+	 * @return array $defines
 	 */
 	public function get_columns_defines() {
 		$defines   = array();
@@ -255,9 +255,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Method generate_tabletop()
-	 * 
+	 *
 	 * Run the render_manage_sites_table_top menthod.
-	 * 
+	 *
 	 * @return html Table top.
 	 */
 	public function generate_tabletop() {
@@ -266,7 +266,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Create Bulk Actions Drop Down.
-	 * 
+	 *
 	 * @return apply_filters $actions.
 	 */
 	public function get_bulk_actions() {
@@ -292,7 +292,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Render Manage Sites Table Top.
-	 * 
+	 *
 	 * @return html Manage Sites Table Top.
 	 */
 	public function render_manage_sites_table_top() {
@@ -406,7 +406,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Prepair the items to be listed.
-	 * 
+	 *
 	 * @param boolean $optimize true|false Whether or not to optimize.
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function.
@@ -587,7 +587,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get child site ids that have available updates.
-	 * 
+	 *
 	 * @return array $site_ids Array of Child Site ID's that have updates.
 	 */
 	public function get_available_update_siteids() { // phpcs:ignore -- not quite complex function.
@@ -685,9 +685,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Display the table.
-	 * 
+	 *
 	 * @param boolean $optimize true|false Whether or not to optimize.
-	 * 
+	 *
 	 * @return html Sites Table.
 	 */
 	public function display( $optimize = true ) {
@@ -877,6 +877,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Return empty table place holders.
+	 *
 	 * @return html Place holders.
 	 */
 	public function display_rows_or_placeholder() {
@@ -891,7 +892,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get the column count.
-	 * 
+	 *
 	 * @return int Column Count.
 	 */
 	public function get_column_count() {
@@ -901,11 +902,11 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Echo the column headers.
-	 * 
+	 *
 	 * @param boolean $optimize true|false Whether or not to optimise.
-	 * @param boolean $top true|false 
-	 * 
-	 * @return html column headers. 
+	 * @param boolean $top true|false
+	 *
+	 * @return html column headers.
 	 */
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
@@ -952,7 +953,7 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
-	 * Get column info. 
+	 * Get column info.
 	 */
 	protected function get_column_info() {
 
@@ -1003,7 +1004,7 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get table rows.
-	 * 
+	 *
 	 * @return html Rows html.
 	 */
 	public function get_datatable_rows() { // phpcs:ignore -- complex function.
@@ -1257,8 +1258,8 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
-	 * Fetch single row item. 
-	 * 
+	 * Fetch single row item.
+	 *
 	 * @return mixed Single Row Item.
 	 */
 	public function display_rows() {
@@ -1271,10 +1272,10 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Single Row.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
-	 * @return html Html for a single Row. 
+	 *
+	 * @return html Html for a single Row.
 	 */
 	public function single_row( $website ) {
 		$classes = '';
@@ -1307,9 +1308,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Columns for a single row.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return html html for single row columns.
 	 */
 	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.

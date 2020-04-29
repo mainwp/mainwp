@@ -14,9 +14,9 @@ abstract class MainWP_Post_Base_Handler {
 
 	/**
 	 * Method init()
-	 * 
+	 *
 	 * Force Extending class to define this method.
-	 * 
+	 *
 	 * @return void
 	 */
 	abstract protected function init();
@@ -116,7 +116,7 @@ abstract class MainWP_Post_Base_Handler {
 
 	/**
 	 * Return the security nonces.
-	 * 
+	 *
 	 * @return self $security_nonces.
 	 */
 	public function get_security_nonces() {

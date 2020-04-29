@@ -572,14 +572,14 @@ class MainWP_Extensions_Handler {
 
 	/**
 	 * Get Sites.
-	 * 
-	 * @param string $pluginFile Extension plugin file to verify.
-	 * @param string $key The child-key.
-	 * @param int    $websiteid The id of the child site you wish to retrieve.
+	 *
+	 * @param string  $pluginFile Extension plugin file to verify.
+	 * @param string  $key The child-key.
+	 * @param int     $websiteid The id of the child site you wish to retrieve.
 	 * @param boolean $for_manager Check Team Control.
-	 * @param array $others Array of others.
-	 * 
-	 * @return array $output Array of content to output. 
+	 * @param array   $others Array of others.
+	 *
+	 * @return array $output Array of content to output.
 	 */
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -701,10 +701,10 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
-	 * @param string $pluginFile Extension plugin file to verify.
-	 * @param string $key The child-key.
-	 * @param int    $groupid The id of the group you wish to retrieve.
-     * @param boolean $for_manager Check Team Control.
+	 * @param string  $pluginFile Extension plugin file to verify.
+	 * @param string  $key The child-key.
+	 * @param int     $groupid The id of the group you wish to retrieve.
+	 * @param boolean $for_manager Check Team Control.
 	 *
 	 * @return array|bool An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
 	 */

@@ -1,7 +1,7 @@
 <?php
 /**
- * This class extends the MainWP Post Base Handler class 
- * to add support for MainWP Extensions. 
+ * This class extends the MainWP Post Base Handler class
+ * to add support for MainWP Extensions.
  */
 namespace MainWP\Dashboard;
 
@@ -12,16 +12,16 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Public static varibale to hold the instance.
-	 * 
+	 *
 	 * @var null Default value.
 	 */
 	private static $instance = null;
 
 	/**
 	 * Method instance()
-	 * 
-	 * Create public static instance. 
-	 * 
+	 *
+	 * Create public static instance.
+	 *
 	 * @return self $instance.
 	 */
 	public static function instance() {
@@ -58,7 +58,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Apply plugin settings.
-	 * 
+	 *
 	 * @return mixed success|error.
 	 */
 	public function mainwp_ext_applypluginsettings() {

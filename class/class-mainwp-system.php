@@ -652,10 +652,10 @@ class MainWP_System {
 		wp_enqueue_script( 'postbox' );
 	}
 
-	public function admin_footer() {				
+	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
-		}		
+		}
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}
@@ -688,9 +688,9 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::render_footer_content( $websites );
-		
-		MainWP_System_View::admin_footer(); 
-		
+
+		MainWP_System_View::admin_footer();
+
 		MainWP_Menu::init_subpages_menu();
 
 		global $_mainwp_disable_menus_items;
@@ -708,7 +708,7 @@ class MainWP_System {
 		return $this->get_version();
 	}
 
-	public function activation() {		
+	public function activation() {
 		MainWP_DB::instance()->install();
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
 	}

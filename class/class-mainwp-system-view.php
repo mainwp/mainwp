@@ -480,7 +480,7 @@ class MainWP_System_View {
 
 	/** Render Admin Footer. */
 	public static function admin_footer() {
-				
+
 		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
 		?>
 		<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">
@@ -496,7 +496,6 @@ class MainWP_System_View {
 
 
 		<?php
-		
 
 		$hide_ref = apply_filters( 'mainwp_open_hide_referrer', false );
 		if ( $hide_ref ) {

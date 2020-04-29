@@ -1,4 +1,9 @@
 <?php
+/**
+ * MainWP Client Live Report Responder
+ *
+ * Legacy Client Reports Extension.
+ */
 namespace MainWP\Dashboard;
 
 /**

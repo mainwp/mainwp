@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * MainWP Base Functions. 
+ * 
+ * Grab MainWP Directory and check for permissions.
+ */
 
 if ( ! function_exists( 'mainwpdir' ) ) {
 

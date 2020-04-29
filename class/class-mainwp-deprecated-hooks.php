@@ -65,7 +65,6 @@ class MainWP_Deprecated_Hooks {
 	 * __construct
 	 *
 	 * Construct.
-	 *	 
 	 */
 	public function __construct() {
 	}

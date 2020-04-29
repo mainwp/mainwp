@@ -83,8 +83,7 @@ class MainWP_Updates {
 	 * Method init_menu()
 	 *
 	 * Render init updates menu
-	 *
-	 * @return none
+	 *	 
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -211,8 +210,7 @@ class MainWP_Updates {
 	 * Method render()
 	 *
 	 * Render updates page
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render() {
 
@@ -588,8 +586,7 @@ class MainWP_Updates {
 	 * @param array  $all_groups all groups
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset, $site_view ) {
 		?>
@@ -622,8 +619,7 @@ class MainWP_Updates {
 	 * @param array  $pluginsInfo all plugins info
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset, $site_view ) {
 
@@ -672,8 +668,7 @@ class MainWP_Updates {
 	 * @param array  $themesInfo all themes info
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset, $site_view ) {
 
@@ -723,8 +718,7 @@ class MainWP_Updates {
 	 * @param bool   $mainwp_show_language_updates show translation update
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset, $site_view ) {
 		?>
@@ -759,8 +753,7 @@ class MainWP_Updates {
 	 * @param array  $decodedDismissedPlugins dismissed outdate plugins
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset, $site_view ) {
 		?>
@@ -801,8 +794,7 @@ class MainWP_Updates {
 	 * @param array  $decodedDismissedThemes dismissed themes
 	 * @param int    $site_offset offset value
 	 * @param string $site_view current site view
-	 *
-	 * @return html render
+	 *	 
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset, $site_view ) {
 		?>
@@ -837,7 +829,7 @@ class MainWP_Updates {
 	 * Render js for update page
 	 *
 	 * @param string $site_view current site view
-	 * @return html render
+	 * 	 
 	 */
 	public static function render_js_updates( $site_view ) {
 		?>
@@ -1130,7 +1122,7 @@ class MainWP_Updates {
 	 * Method set_continue_update_html_selector()
 	 *
 	 * @param string $current_update current update string
-	 * @return none
+	 * 	 
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
 

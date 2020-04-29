@@ -12,20 +12,47 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Sites_List_Table {
 
+	/** @todo the only variables that seam to be used are $column_headers. */
+
+	/** @var null $userExtension User Extension. */
 	protected $userExtension = null;
+
+	/**
+	 *
+	 * @var $items Items.*/
 	public $items;
+
+	/** @var $total_items Total Items. */
 	public $total_items;
 
+	/** @var $column_headers Column Headers.*/
 	protected $column_headers;
 
+	/**
+	 * Method __construct()
+	 *
+	 * Add action to generate tabletop.
+	 */
 	public function __construct() {
 		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
 	}
 
+	/**
+	 * Get the default primary column name.
+	 *
+	 * @return string Child Site name.
+	 */
 	protected function get_default_primary_column_name() {
 		return 'site';
 	}
 
+	/**
+	 * Backup Column.
+	 *
+	 * @param mixed $item List of backups.
+	 *
+	 * @return mixed $backupnow_lnk.
+	 */
 	public function column_backup( $item ) {
 
 		$lastBackup = MainWP_DB::instance()->get_website_option( $item, 'primary_lasttime_backup' );
@@ -72,6 +99,14 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
+	/**
+	 * Set the column names.
+	 *
+	 * @param mixed  $item MainWP Sitetable Item.
+	 * @param string $column_name Column name to use.
+	 *
+	 * @return string Column Name.
+	 */
 	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- not quite complex function.
 
 		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );  // @deprecated Use 'mainwp_sitestable_item' instead.
@@ -98,6 +133,11 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	/**
+	 * Get sortable columns.
+	 *
+	 * @return array $sortable_columns Array of sortable column names.
+	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
 			'site'                  => array( 'site', false ),
@@ -112,6 +152,11 @@ class MainWP_Manage_Sites_List_Table {
 		return $sortable_columns;
 	}
 
+	/**
+	 * Get default columns.
+	 *
+	 * @return array Array of default column names.
+	 */
 	public function get_default_columns() {
 		return array(
 			'cb'                     => '<input type="checkbox" />',
@@ -131,6 +176,11 @@ class MainWP_Manage_Sites_List_Table {
 		);
 	}
 
+	/**
+	 * Combine all columns.
+	 *
+	 * @return array $columns Array of column names.
+	 */
 	public function get_columns() {
 
 		$columns = $this->get_default_columns();
@@ -161,6 +211,11 @@ class MainWP_Manage_Sites_List_Table {
 		return $columns;
 	}
 
+	/**
+	 * Instantiate Columns.
+	 *
+	 * @return array $init_cols
+	 */
 	public function get_columns_init() {
 		$cols      = $this->get_columns();
 		$init_cols = array();
@@ -170,6 +225,11 @@ class MainWP_Manage_Sites_List_Table {
 		return $init_cols;
 	}
 
+	/**
+	 * Get column defines.
+	 *
+	 * @return array $defines
+	 */
 	public function get_columns_defines() {
 		$defines   = array();
 		$defines[] = array(
@@ -195,10 +255,22 @@ class MainWP_Manage_Sites_List_Table {
 		return $defines;
 	}
 
+	/**
+	 * Method generate_tabletop()
+	 *
+	 * Run the render_manage_sites_table_top menthod.
+	 *
+	 * @return html Table top.
+	 */
 	public function generate_tabletop() {
 		$this->render_manage_sites_table_top();
 	}
 
+	/**
+	 * Create Bulk Actions Drop Down.
+	 *
+	 * @return apply_filters $actions.
+	 */
 	public function get_bulk_actions() {
 
 		$actions = array(
@@ -220,6 +292,11 @@ class MainWP_Manage_Sites_List_Table {
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
 	}
 
+	/**
+	 * Render Manage Sites Table Top.
+	 *
+	 * @return html Manage Sites Table Top.
+	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
@@ -302,6 +379,7 @@ class MainWP_Manage_Sites_List_Table {
 		<?php
 	}
 
+	/** Html output if no Child Sites are connected. */
 	public function no_items() {
 		?>
 		<div class="ui center aligned segment">
@@ -321,11 +399,18 @@ class MainWP_Manage_Sites_List_Table {
 		<?php
 	}
 
+	/**
+	 * Method has_items().
+	 */
 	public function has_items() {
 		return ! empty( $this->items );
 	}
 
-
+	/**
+	 * Prepair the items to be listed.
+	 *
+	 * @param boolean $optimize true|false Whether or not to optimize.
+	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function.
 
 		if ( null === $this->userExtension ) {
@@ -502,7 +587,11 @@ class MainWP_Manage_Sites_List_Table {
 		$this->total_items = $totalRecords;
 	}
 
-
+	/**
+	 * Get child site ids that have available updates.
+	 *
+	 * @return array $site_ids Array of Child Site ID's that have updates.
+	 */
 	public function get_available_update_siteids() { // phpcs:ignore -- not quite complex function.
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -596,6 +685,13 @@ class MainWP_Manage_Sites_List_Table {
 		return $site_ids;
 	}
 
+	/**
+	 * Display the table.
+	 *
+	 * @param boolean $optimize true|false Whether or not to optimize.
+	 *
+	 * @return html Sites Table.
+	 */
 	public function display( $optimize = true ) {
 
 		$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
@@ -781,6 +877,11 @@ class MainWP_Manage_Sites_List_Table {
 		<?php
 	}
 
+	/**
+	 * Return empty table place holders.
+	 *
+	 * @return html Place holders.
+	 */
 	public function display_rows_or_placeholder() {
 		if ( $this->has_items() ) {
 			$this->display_rows();
@@ -791,11 +892,24 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	/**
+	 * Get the column count.
+	 *
+	 * @return int Column Count.
+	 */
 	public function get_column_count() {
 		list ( $columns ) = $this->get_column_info();
 		return count( $columns );
 	}
 
+	/**
+	 * Echo the column headers.
+	 *
+	 * @param boolean $optimize true|false Whether or not to optimise.
+	 * @param boolean $top true|false
+	 *
+	 * @return html column headers.
+	 */
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
 
@@ -840,6 +954,9 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	/**
+	 * Get column info.
+	 */
 	protected function get_column_info() {
 
 		if ( isset( $this->column_headers ) && is_array( $this->column_headers ) ) {
@@ -878,13 +995,20 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
+	/**
+	 * Clear Items.
+	 */
 	public function clear_items() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
 			MainWP_DB::free_result( $this->items );
 		}
 	}
 
-
+	/**
+	 * Get table rows.
+	 *
+	 * @return html Rows html.
+	 */
 	public function get_datatable_rows() { // phpcs:ignore -- complex function.
 		$all_rows  = array();
 		$info_rows = array();
@@ -1135,6 +1259,11 @@ class MainWP_Manage_Sites_List_Table {
 		);
 	}
 
+	/**
+	 * Fetch single row item.
+	 *
+	 * @return mixed Single Row Item.
+	 */
 	public function display_rows() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
 			while ( $this->items && ( $item = MainWP_DB::fetch_array( $this->items ) ) ) {
@@ -1143,6 +1272,13 @@ class MainWP_Manage_Sites_List_Table {
 		}
 	}
 
+	/**
+	 * Single Row.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @return html Html for a single Row.
+	 */
 	public function single_row( $website ) {
 		$classes = '';
 		if ( isset( $website['groups'] ) && ! empty( $website['groups'] ) ) {
@@ -1172,6 +1308,13 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 
+	/**
+	 * Columns for a single row.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @return html html for single row columns.
+	 */
 	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.
 
 		$total_wp_upgrades     = 0;

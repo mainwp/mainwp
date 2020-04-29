@@ -1,6 +1,6 @@
 <?php
 /**
- * Post Base Handler.
+ * This class handles the security for MainWP Post.
  *
  * @package     MainWP/Dashboard
  */
@@ -12,10 +12,16 @@ namespace MainWP\Dashboard;
  */
 abstract class MainWP_Post_Base_Handler {
 
-
+	/** Protected static variable to hold security nounces. */
 	protected static $security_nonces;
 
-	// Force Extending class to define this method.
+	/**
+	 * Method init()
+	 *
+	 * Force Extending class to define this method.
+	 *
+	 * @return void
+	 */
 	abstract protected function init();
 
 
@@ -58,7 +64,7 @@ abstract class MainWP_Post_Base_Handler {
 	/**
 	 * Method check_security()
 	 *
-	 * Check security request
+	 * Check security request.
 	 *
 	 * @param string $action
 	 * @param string $query_arg
@@ -83,7 +89,7 @@ abstract class MainWP_Post_Base_Handler {
 	/**
 	 * Method add_action()
 	 *
-	 * Add ajax action
+	 * Add ajax action.
 	 *
 	 * @param string $action
 	 * @param string $callback
@@ -96,7 +102,7 @@ abstract class MainWP_Post_Base_Handler {
 	/**
 	 * Method add_security_nonce()
 	 *
-	 * Add security nonce
+	 * Add security nonce.
 	 *
 	 * @param string $action
 	 */
@@ -111,6 +117,11 @@ abstract class MainWP_Post_Base_Handler {
 		self::$security_nonces[ $action ] = wp_create_nonce( $action );
 	}
 
+	/**
+	 * Return the security nonces.
+	 *
+	 * @return self $security_nonces.
+	 */
 	public function get_security_nonces() {
 		return self::$security_nonces;
 	}

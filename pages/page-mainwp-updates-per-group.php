@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Updates Page.
+ * MainWP Updates Per Group.
  *
  * @package     MainWP/Dashboard
  */
@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Page
+ * MainWP Updates Per Group.
  */
 class MainWP_Updates_Per_Group {
 

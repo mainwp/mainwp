@@ -1,6 +1,6 @@
 <?php
 /**
- * Post Backup Handler.
+ * This class handles the MainWP Post Backups.
  *
  * @package     MainWP/Dashboard
  */
@@ -21,6 +21,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	private static $instance = null;
 
 	/**
+	 * Create public static instance.
+	 *
 	 * @static
 	 * @return MainWP_Post_Backup_Handler
 	 */

@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Updates Per Site.
+ * MainWP Updates Per Site
  *
  * @package     MainWP/Dashboard
  */

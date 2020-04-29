@@ -1,6 +1,7 @@
 <?php
 /**
- * Post Extension Handler.
+ * This class extends the MainWP Post Base Handler class
+ * to add support for MainWP Extensions.
  *
  * @package     MainWP/Dashboard
  */
@@ -12,8 +13,20 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
+	/**
+	 * Public static varibale to hold the instance.
+	 *
+	 * @var null Default value.
+	 */
 	private static $instance = null;
 
+	/**
+	 * Method instance()
+	 *
+	 * Create public static instance.
+	 *
+	 * @return self $instance.
+	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
@@ -46,6 +59,11 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
 	}
 
+	/**
+	 * Apply plugin settings.
+	 *
+	 * @return mixed success|error.
+	 */
 	public function mainwp_ext_applypluginsettings() {
 		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
 			MainWP_Manage_Sites_Handler::apply_plugin_settings();
@@ -60,7 +78,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Extensions_Handler::add_extension_menu( $_POST['slug'] );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
-
 
 	/** Activate MainWP Extension. */
 	public function activate_extension() {
@@ -207,7 +224,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		}
 		wp_send_json( $return );
 	}
-
 
 	/** Download & Install MainWP Extension. */
 	public function download_and_install() {

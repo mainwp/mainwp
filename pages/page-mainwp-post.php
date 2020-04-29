@@ -415,7 +415,7 @@ class MainWP_Post {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
 
-		//self::render_footer( 'BulkManage' );
+		self::render_footer( 'BulkManage' );
 	}
 
 	public static function render_search_options() {
@@ -483,8 +483,9 @@ class MainWP_Post {
 					<option value="any"><?php esc_html_e( 'All post types', 'mainwp' ); ?></option>
 					<option value="post"><?php esc_html_e( 'Post', 'mainwp' ); ?></option>
 					<?php
+					$default_post_types = apply_filters( 'mainwp_custom_post_types_default', array() );
 					foreach ( get_post_types( array( '_builtin' => false ) ) as $key ) {
-						if ( ! in_array( $key, MainWPCustomPostType::$default_post_types ) ) {
+						if ( ! in_array( $key, $default_post_types ) ) {
 							echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
 						}
 					}

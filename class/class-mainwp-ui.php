@@ -309,7 +309,7 @@ class MainWP_UI {
 			</div>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-					jQuery( '.ui.sticky' ).sticky();
+				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.sidebar' ).sidebar( {
 						transition: 'overlay'

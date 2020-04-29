@@ -65,7 +65,7 @@ class MainWP_Site_Info {
 			'group'                 => __( 'Groups', 'mainwp' ),
 		);
 
-		self::render_info();
+		self::render_info( $website, $website_info, $child_site_info );
 
 		MainWP_DB::free_result( $websites );
 	}

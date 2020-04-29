@@ -480,24 +480,23 @@ class MainWP_System_View {
 
 	/** Render Admin Footer. */
 	public static function admin_footer() {
+				
+		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
+		?>
+		<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">
 
-		if ( MainWP_System::is_mainwp_pages() ) {
-			$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
-			?>
-			<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">
-
-			<script type="text/javascript">
-				jQuery( document ).ready(
-					function ()
-					{
-						jQuery( '#adminmenu #collapse-menu' ).hide();
-					}
-				);
-			</script>
+		<script type="text/javascript">
+			jQuery( document ).ready(
+				function ()
+				{
+					jQuery( '#adminmenu #collapse-menu' ).hide();					
+				}	
+			);
+		</script>
 
 
-			<?php
-		}
+		<?php
+		
 
 		$hide_ref = apply_filters( 'mainwp_open_hide_referrer', false );
 		if ( $hide_ref ) {

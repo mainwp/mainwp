@@ -1,6 +1,8 @@
 <?php
 /**
  * This class handles the MainWP Post Backups.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

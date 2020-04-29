@@ -93,7 +93,7 @@ class MainWP_Site_Open {
 
 		$file = '';
 		if ( isset( $_GET['f'] ) ) {
-			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );
@@ -150,7 +150,7 @@ class MainWP_Site_Open {
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
 			$postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
-			$postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$postdata['open_location'] = base64_encode( $open_location ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>

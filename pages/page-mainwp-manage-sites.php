@@ -1,4 +1,10 @@
 <?php
+/**
+ * Manage Sites.
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

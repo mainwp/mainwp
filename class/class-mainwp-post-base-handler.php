@@ -1,7 +1,10 @@
 <?php
 /**
  * This class handles the security for MainWP Post.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

@@ -1,6 +1,8 @@
 <?php
 /**
  * MainWP Format Utility
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

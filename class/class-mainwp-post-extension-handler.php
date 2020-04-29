@@ -2,7 +2,10 @@
 /**
  * This class extends the MainWP Post Base Handler class
  * to add support for MainWP Extensions.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

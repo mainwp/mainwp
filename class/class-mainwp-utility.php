@@ -1,6 +1,8 @@
 <?php
 /**
  * MainWP Utility Helper
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

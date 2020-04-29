@@ -1,4 +1,10 @@
 <?php
+/**
+ * Manage Sites Update View.
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

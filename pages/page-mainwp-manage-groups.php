@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Manage Groups.
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

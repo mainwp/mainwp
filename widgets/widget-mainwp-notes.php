@@ -3,6 +3,8 @@
  * MainWP Notes Widget
  *
  * Display current Child Site Notes.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

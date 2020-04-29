@@ -4,6 +4,8 @@
  * MainWP Deprecated Hooks
  *
  * Init mainwp deprecated hooks
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -65,8 +67,6 @@ class MainWP_Deprecated_Hooks {
 	 * __construct
 	 *
 	 * Construct.
-	 *
-	 * @return none
 	 */
 	public function __construct() {
 	}

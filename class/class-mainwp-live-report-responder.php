@@ -3,6 +3,8 @@
  * MainWP Client Live Reports
  *
  * Legacy Client Reports Extension.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

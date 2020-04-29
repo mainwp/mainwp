@@ -1,7 +1,10 @@
 <?php
 /**
  * MainWP Extension Page
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

@@ -2,7 +2,10 @@
 /**
  * This file handles all of the Bulk Installation Methods
  * for Plugins & Themes.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -413,7 +416,7 @@ class MainWP_Install_Bulk {
 
 			$result = $results[1];
 
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {

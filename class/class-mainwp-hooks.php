@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Hooks
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

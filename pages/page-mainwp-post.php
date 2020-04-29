@@ -1,4 +1,10 @@
 <?php
+/**
+ * MainWP Post Page.
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -415,7 +421,7 @@ class MainWP_Post {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
 
-		// self::render_footer( 'BulkManage' );
+		self::render_footer( 'BulkManage' );
 	}
 
 	public static function render_search_options() {
@@ -483,8 +489,9 @@ class MainWP_Post {
 					<option value="any"><?php esc_html_e( 'All post types', 'mainwp' ); ?></option>
 					<option value="post"><?php esc_html_e( 'Post', 'mainwp' ); ?></option>
 					<?php
+					$default_post_types = apply_filters( 'mainwp_custom_post_types_default', array() );
 					foreach ( get_post_types( array( '_builtin' => false ) ) as $key ) {
-						if ( ! in_array( $key, MainWPCustomPostType::$default_post_types ) ) {
+						if ( ! in_array( $key, $default_post_types ) ) {
 							echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
 						}
 					}
@@ -720,7 +727,7 @@ class MainWP_Post {
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
 				$output->errors[ $website->id ] = $posts['error'];
@@ -788,7 +795,7 @@ class MainWP_Post {
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>
-									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons. ?>" target="_blank">
+									<a class="row-title" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website->id ); ?>&location=<?php echo base64_encode( 'post.php?post=' . $post['id'] . '&action=edit' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" target="_blank">
 										<?php echo esc_html( $post['title'] ); ?>
 									</a>
 								<?php
@@ -1558,7 +1565,7 @@ class MainWP_Post {
 		<?php
 		$categories = array();
 		if ( $post ) {
-			$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			$categories = explode( ',', $categories );
 		}
 		if ( ! is_array( $categories ) ) {
@@ -1754,7 +1761,7 @@ class MainWP_Post {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
 		}
 		$output->results[ $website->id ] = $posts;

@@ -1,7 +1,10 @@
 <?php
 /**
  * MainWP System Cron Jobs.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -937,9 +940,7 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method clear_fields().
 	 *
-	 * clear settings field values
-	 *
-	 * @return none
+	 * Clear settings field values
 	 */
 	public static function clear_fields() {
 		$empty_fields = array(
@@ -1109,8 +1110,6 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @param bool $disable_send_noti disable notification
 	 * @param bool $text_format text format
-	 *
-	 * @return none
 	 */
 	public function send_http_response_notification( $disable_send_noti, $text_format ) {
 
@@ -1173,8 +1172,6 @@ class MainWP_System_Cron_Jobs {
 	 * @param mixed $email admin email
 	 * @param mixed $content mail content
 	 * @param bool  $text_format text format
-	 *
-	 * @return none
 	 */
 	public function send_updates_notification( $email, $content, $text_format ) {
 

@@ -3,6 +3,8 @@
  * MainWP Client Live Reports
  *
  * Legacy Client Reports Extension.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -468,8 +470,8 @@ class MainWP_Live_Reports {
 				}
 			}
 
-			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
-			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( 'schedule' === $_POST['mwp_creport_report_submit_action'] ) {
 				$report['scheduled'] = 1;
@@ -980,7 +982,7 @@ class MainWP_Live_Reports {
 		}
 		$post_data = array(
 			'mwp_action'     => 'save_sucuri_stream',
-			'result'         => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			'result'         => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			'scan_status'    => $scan_status,
 		);
 		global $mainwpLiveReportResponderActivator;
@@ -1391,8 +1393,8 @@ class MainWP_Live_Reports {
 		global $mainwpLiveReportResponderActivator;
 		$post_data = array(
 			'mwp_action'     => 'get_stream',
-			'sections'       => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
-			'other_tokens'   => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			'sections'       => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			'other_tokens'   => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			'date_from'      => $report->date_from,
 			'date_to'        => $report->date_to,
 		);

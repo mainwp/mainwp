@@ -1,6 +1,8 @@
 <?php
 /**
  * MainWP Updates Per Site
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

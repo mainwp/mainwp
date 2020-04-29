@@ -3,6 +3,8 @@
  * MainWP Site Info Widget
  *
  * Build the Child Site Info Widget.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -65,7 +67,7 @@ class MainWP_Site_Info {
 			'group'                 => __( 'Groups', 'mainwp' ),
 		);
 
-		self::render_info();
+		self::render_info( $website, $website_info, $child_site_info );
 
 		MainWP_DB::free_result( $websites );
 	}

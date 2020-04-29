@@ -1,4 +1,10 @@
 <?php
+/**
+ * Post Handler.
+ *
+ * @package     MainWP/Dashboard
+ */
+
 namespace MainWP\Dashboard;
 
 /**

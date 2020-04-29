@@ -3,7 +3,10 @@
  * Search Cache Handler
  *
  * Handles all search content.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

@@ -3,7 +3,10 @@
  * Extends MainWP Exception
  *
  * Grabs $extra and stores it in $messageExtra.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**

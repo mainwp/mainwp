@@ -1,6 +1,8 @@
 <?php
 /**
  * Plugin Installer List Table class.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

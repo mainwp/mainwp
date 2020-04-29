@@ -1,7 +1,10 @@
 <?php
 /**
  * This file handles the addintion and updating of Post Meta Boxes.
+ *
+ * @package     MainWP/Dashboard
  */
+
 namespace MainWP\Dashboard;
 
 /**
@@ -114,7 +117,7 @@ class MainWP_Meta_Boxes {
 		$categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
 		if ( empty( $categories ) || ! is_array( $categories ) || ( is_array( $categories ) && 1 == count( $categories ) && empty( $categories[0] ) ) ) {
 			if ( $post ) {
-				$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode function is used for begin reasons.
+				$categories = base64_decode( get_post_meta( $post->ID, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for http encoding compatible.
 				$categories = explode( ',', $categories );
 			}
 		}
@@ -186,8 +189,6 @@ class MainWP_Meta_Boxes {
 	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $post_type Post Type.
-	 *
-	 * @return self
 	 */
 	public function add_categories_handle( $post_id, $post_type ) {
 		/**
@@ -217,7 +218,7 @@ class MainWP_Meta_Boxes {
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type ) {
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
-				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				do_action( 'mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category'] );
 			}
 
@@ -270,7 +271,7 @@ class MainWP_Meta_Boxes {
 	 * @return void
 	 */
 	private function add_extra( $title, $saveto, $prefix, $post ) {
-		$extra = base64_decode( get_post_meta( $post->ID, $saveto, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode function is used for begin reasons.
+		$extra = base64_decode( get_post_meta( $post->ID, $saveto, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for http encoding compatible.
 		?>
 		<input type="hidden" name="<?php echo esc_attr( $prefix ); ?>_nonce" value="<?php echo esc_attr( wp_create_nonce( $prefix . '_' . $post->ID ) ); ?>"/>
 		<input type="text" name="<?php echo esc_attr( $prefix ); ?>" value="<?php echo esc_attr( $extra ); ?>"/>
@@ -326,9 +327,9 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
-			update_post_meta( $post_id, $saveto, base64_encode( $_POST[ $prefix ] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			update_post_meta( $post_id, $saveto, base64_encode( $_POST[ $prefix ] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
-			return base64_encode( $_POST[ $prefix ] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode function is used for begin reasons.
+			return base64_encode( $_POST[ $prefix ] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		return $post_id;

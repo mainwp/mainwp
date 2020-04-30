@@ -986,7 +986,7 @@ class MainWP_Settings {
 	 * 
 	 * Generate a random string.
 	 * 
-	 * @param integer $length Leght of final string.
+	 * @param integer $length Lenght of final string.
 	 * 
 	 * @return string $randomString Random String.
 	 */

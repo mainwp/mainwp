@@ -230,8 +230,8 @@ class MainWP_Updates {
 
 		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			$site_offset_for_groups = array();
-			$all_groups  = array();
-			$groups      = MainWP_DB_Common::instance()->get_groups_for_current_user();
+			$all_groups             = array();
+			$groups                 = MainWP_DB_Common::instance()->get_groups_for_current_user();
 			foreach ( $groups as $group ) {
 				$all_groups[ $group->id ] = $group->name;
 			}
@@ -274,7 +274,7 @@ class MainWP_Updates {
 		$total_plugin_upgrades      = 0;
 		$total_translation_upgrades = 0;
 		$total_theme_upgrades       = 0;
-		$total_sync_errors          = 0;				
+		$total_sync_errors          = 0;
 		$total_plugins_outdate      = 0;
 		$total_themes_outdate       = 0;
 
@@ -494,15 +494,14 @@ class MainWP_Updates {
 						}
 					}
 				}
-
 			}
 
 			if ( '' != $website->sync_errors ) {
 				$total_sync_errors ++;
-			}			
+			}
 		}
 		// End of While.
-		
+
 		MainWP_Utility::array_sort( $allTranslations, 'name' );
 		MainWP_Utility::array_sort( $allPlugins, 'name' );
 		MainWP_Utility::array_sort( $allThemes, 'name' );

@@ -980,7 +980,7 @@ class MainWP_Settings {
 			exit();
 		}
 	}
-	
+
 	public static function generate_random_string( $length = 8 ) {
 
 		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -997,7 +997,7 @@ class MainWP_Settings {
 		return $randomString;
 	}
 
-	
+
 	/** Render CLient Reports Responder */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {

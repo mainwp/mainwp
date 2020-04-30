@@ -19,7 +19,7 @@ class MainWP_Page {
 	}
 
 	public static $subPages;
-	public static $load_page;	
+	public static $load_page;
 
 	public static function init() {
 		/**

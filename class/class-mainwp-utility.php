@@ -142,7 +142,7 @@ class MainWP_Utility {
 	public static function json_convert_string( $mixed ) {
 		if ( is_array( $mixed ) ) {
 			foreach ( $mixed as $key => $value ) {
-				$mixed[ $key ] = self::utf8ize( $value );
+				$mixed[ $key ] = self::json_convert_string( $value );
 			}
 		} elseif ( is_string( $mixed ) ) {
 			if ( function_exists( 'mb_convert_encoding' ) ) {
@@ -739,22 +739,6 @@ class MainWP_Utility {
 		$page = $screen->id;
 
 		return $page;
-	}
-
-	public static function generate_random_string( $length = 8 ) {
-
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-		$charactersLength = strlen( $characters );
-
-		$randomString = '';
-
-		for ( $i = 0; $i < $length; $i++ ) {
-
-			$randomString .= $characters[ wp_rand( 0, $charactersLength - 1 ) ];
-		}
-
-		return $randomString;
 	}
 
 	public static function value_to_string( $var ) {

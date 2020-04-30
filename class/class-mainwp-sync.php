@@ -133,8 +133,7 @@ class MainWP_Sync {
 			'categories'             => $emptyArray,
 			'offline_check_result'   => $offline_check_result,
 		);
-		$websiteSyncValues = array(
-			'uptodate'       => 0,
+		$websiteSyncValues = array(			
 			'sync_errors'    => $sync_errors,
 			'version'        => 0,
 		);
@@ -322,8 +321,7 @@ class MainWP_Sync {
 		}
 
 		if ( ! $done ) {
-			if ( isset( $information['wpversion'] ) ) {
-				$websiteSyncValues['uptodate'] = 1;
+			if ( isset( $information['wpversion'] ) ) {				
 				$done                          = true;
 			} elseif ( isset( $information['error'] ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $information['error'] . ']' );

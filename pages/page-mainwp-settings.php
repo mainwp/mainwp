@@ -980,7 +980,24 @@ class MainWP_Settings {
 			exit();
 		}
 	}
+	
+	public static function generate_random_string( $length = 8 ) {
 
+		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+		$charactersLength = strlen( $characters );
+
+		$randomString = '';
+
+		for ( $i = 0; $i < $length; $i++ ) {
+
+			$randomString .= $characters[ wp_rand( 0, $charactersLength - 1 ) ];
+		}
+
+		return $randomString;
+	}
+
+	
 	/** Render CLient Reports Responder */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
@@ -1006,7 +1023,7 @@ class MainWP_Settings {
 							}
 							update_option( 'live-report-responder-siteurl', $siteurl );
 							update_option( 'live-report-responder-provideaccess', ( isset( $_POST['live_reponder_provideaccess'] ) ) ? $_POST['live_reponder_provideaccess'] : '' );
-							$security_token = MainWP_Utility::generate_random_string();
+							$security_token = self::generate_random_string();
 							update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? $_POST['requireUniqueSecurityId'] : '' );
 							update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
 							echo '<div class="ui green message"><i class="close icon"></i>' . __( 'Settings have been saved successfully!', 'mainwp' ) . '</div>';

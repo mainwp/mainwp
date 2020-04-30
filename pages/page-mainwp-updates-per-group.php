@@ -32,10 +32,10 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $total_wp_upgrades
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @return html
 	 */
-	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
+	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 		?>
 			<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 				<thead>
@@ -87,7 +87,7 @@ class MainWP_Updates_Per_Group {
 									<tbody id="update_wrapper_wp_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
 										<?php foreach ( $site_ids as $site_id ) : ?>
 											<?php
-											$seek = $site_offset[ $site_id ];
+											$seek = $site_offset_for_groups[ $site_id ];
 											MainWP_DB::data_seek( $websites, $seek );
 											$website = MainWP_DB::fetch_object( $websites );
 											if ( $website->is_ignoreCoreUpdates ) {
@@ -156,11 +156,11 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $userExtension
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @param mixed $trustedPlugins
 	 * @return html
 	 */
-	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
+	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
 		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
 			<thead>
@@ -217,7 +217,7 @@ class MainWP_Updates_Per_Group {
 								<tbody  id="update_wrapper_plugin_upgrades_group_<?php echo esc_attr( $group_id ); ?>" >
 									<?php	foreach ( $site_ids as $site_id ) : ?>
 										<?php
-										$seek = $site_offset[ $site_id ];
+										$seek = $site_offset_for_groups[ $site_id ];
 										MainWP_DB::data_seek( $websites, $seek );
 
 										$website = MainWP_DB::fetch_object( $websites );
@@ -353,11 +353,11 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $userExtension
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @param mixed $trustedThemes
 	 * @return html
 	 */
-	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
@@ -415,7 +415,7 @@ class MainWP_Updates_Per_Group {
 								<tbody class="accordion" id="update_wrapper_theme_upgrades_group_<?php echo esc_attr( $group_id ); ?>">
 									<?php	foreach ( $site_ids as $site_id ) : ?>
 										<?php
-										$seek = $site_offset[ $site_id ];
+										$seek = $site_offset_for_groups[ $site_id ];
 										MainWP_DB::data_seek( $websites, $seek );
 
 										$website = MainWP_DB::fetch_object( $websites );
@@ -543,10 +543,10 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $total_translation_upgrades
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @return html
 	 */
-	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset ) {
+	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 
 		?>
 		<table class="ui stackable single line table" id="mainwp-translations-groups-table">
@@ -595,7 +595,7 @@ class MainWP_Updates_Per_Group {
 								<tbody class="accordion" id="update_wrapper_translation_upgrades_group_<?php echo esc_attr( $group_id ); ?>" row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>">
 								<?php foreach ( $site_ids as $site_id ) : ?>
 									<?php
-									$seek = $site_offset[ $site_id ];
+									$seek = $site_offset_for_groups[ $site_id ];
 									MainWP_DB::data_seek( $websites, $seek );
 									$website                          = MainWP_DB::fetch_object( $websites );
 									$translation_upgrades             = json_decode( $website->translation_upgrades, true );
@@ -684,12 +684,12 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $websites
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @param mixed $decodedDismissedPlugins
 	 *
 	 * @return html
 	 */
-	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedPlugins ) {
+	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui stackable single line table" id="mainwp-abandoned-plugins-groups-table">
@@ -724,7 +724,7 @@ class MainWP_Updates_Per_Group {
 							<tbody class="accordion">
 							<?php foreach ( $site_ids as $site_id ) : ?>
 								<?php
-								$seek = $site_offset[ $site_id ];
+								$seek = $site_offset_for_groups[ $site_id ];
 								MainWP_DB::data_seek( $websites, $seek );
 
 								$website = MainWP_DB::fetch_object( $websites );
@@ -828,12 +828,12 @@ class MainWP_Updates_Per_Group {
 	 * @param mixed $websites
 	 * @param mixed $all_groups_sites
 	 * @param mixed $all_groups
-	 * @param mixed $site_offset
+	 * @param mixed $site_offset_for_groups
 	 * @param mixed $decodedDismissedThemes
 	 *
 	 * @return html
 	 */
-	public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset, $decodedDismissedThemes ) {
+	public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
 		?>
 		<table class="ui stackable single line table" id="mainwp-abandoned-themes-groups-table">
@@ -868,7 +868,7 @@ class MainWP_Updates_Per_Group {
 							<tbody class="accordion">
 							<?php foreach ( $site_ids as $site_id ) : ?>
 								<?php
-								$seek = $site_offset[ $site_id ];
+								$seek = $site_offset_for_groups[ $site_id ];
 								MainWP_DB::data_seek( $websites, $seek );
 
 								$website = MainWP_DB::fetch_object( $websites );

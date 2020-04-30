@@ -19,7 +19,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * @var $mainwp_db_version DB version number
 	 */
-	protected $mainwp_db_version = '8.16';
+	protected $mainwp_db_version = '8.17';
 
 	/**
 	 * @static
@@ -315,8 +315,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				'totalsize',
 				'dbsize',
 				'extauth',
-				'last_post_gmt',
-				'uptodate',
+				'last_post_gmt',				
 				'sync_errors',
 				'dtsSync',
 				'dtsSyncStart',
@@ -374,7 +373,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			}
 		}
 		// delete old columns.
-		if ( version_compare( $currentVersion, '8.16', '<' ) ) {
+		if ( version_compare( $currentVersion, '8.17', '<' ) ) {
 			$rankColumns = array(
 				'pagerank',
 				'indexed',
@@ -390,6 +389,13 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
 				$this->wpdb->suppress_errors( $suppress );
 			}
+		
+			$syncColumns = array( 'uptodate' );		
+			foreach ( $syncColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}			
 		}
 	}
 

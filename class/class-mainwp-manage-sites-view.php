@@ -1015,7 +1015,8 @@ class MainWP_Manage_Sites_View {
 	 * Reconnect Chid Site.
 	 *
 	 * @param mixed $website Child Site.
-	 *
+	 * @throws Exception on errors.
+	 * 
 	 * @return boolean true|false.
 	 */
 	public static function m_reconnect_site( $website ) {

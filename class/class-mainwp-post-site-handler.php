@@ -58,10 +58,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 	}
 
-
-	// Page: ManageGroups
-
-
 	/**
 	 * Method mainwp_group_rename()
 	 *
@@ -116,9 +112,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 		MainWP_Manage_Groups::update_group();
 	}
-
-
-	// Page: ManageSites
 
 	/**
 	 * Method mainwp_checkwp()

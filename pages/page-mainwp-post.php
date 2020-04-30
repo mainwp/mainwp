@@ -745,7 +745,7 @@ class MainWP_Post {
 				}
 				reset( $posts );
 
-				$connections_ids = apply_filters( 'mainwp_custom_post_types_get_post_connections', false, $website->id, $child_post_ids );				
+				$connections_ids = apply_filters( 'mainwp_custom_post_types_get_post_connections', false, $website->id, $child_post_ids );
 				if ( ! empty( $connections_ids ) ) {
 					foreach ( $connections_ids as $key ) {
 						$child_to_dash_array[ $key->child_post_id ] = $key->dash_post_id;

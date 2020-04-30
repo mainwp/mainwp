@@ -315,7 +315,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				'totalsize',
 				'dbsize',
 				'extauth',
-				'last_post_gmt',				
+				'last_post_gmt',
 				'sync_errors',
 				'dtsSync',
 				'dtsSyncStart',
@@ -389,13 +389,13 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
 				$this->wpdb->suppress_errors( $suppress );
 			}
-		
-			$syncColumns = array( 'uptodate' );		
+
+			$syncColumns = array( 'uptodate' );
 			foreach ( $syncColumns as $column ) {
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
 				$this->wpdb->suppress_errors( $suppress );
-			}			
+			}
 		}
 	}
 

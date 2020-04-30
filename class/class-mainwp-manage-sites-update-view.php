@@ -1,8 +1,8 @@
 <?php
 /**
- * Manage Sites Update View.
+ * MainWP Manage Sites Update View.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,6 +12,16 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Sites_Update_View {
 
+	/**
+	 * Method render_updates()
+	 * 
+	 * If empty do nothing else grab the Child Sites ID and pass it to 
+	 * method render_individual_updates().
+	 * 
+	 * @param mixed $website Child Site Info.
+	 * 
+	 * @return self render_individual_updates()
+	 */
 	public static function render_updates( $website ) {
 		if ( empty( $website ) ) {
 			return;
@@ -21,6 +31,15 @@ class MainWP_Manage_Sites_Update_View {
 		self::render_individual_updates( $website_id );
 	}
 
+	/**
+	 * Method render_individual_updates()
+	 * 
+	 * Render Plugin updates Tab.
+	 * 
+	 * @param mixed $id Child Site ID.
+	 * 
+	 * @return html Invidivual updates html.
+	 */
 	public static function render_individual_updates( $id ) {
 		global $current_user;
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -85,6 +104,16 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_wpcore_updates()
+	 * 
+	 * Render the WordPress Updates Tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * 
+	 * @return html WordPress Updates Tab.
+	 */
 	public static function render_wpcore_updates( $website, $active_tab ) {
 		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
 		?>
@@ -136,6 +165,17 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_plugins_updates()
+	 * 
+	 * Render the Plugin Updates Tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * @param mixed $userExtension MainWP trusted plugin data.
+	 * 
+	 * @return html Plugin Updates Tab.
+	 */
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
 
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -232,6 +272,17 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_themes_updates()
+	 * 
+	 * Render the Themes Updates Tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * @param mixed $userExtension MainWP trusted themes data.
+	 * 
+	 * @return html Themes Updates Tab.
+	 */
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
 
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
@@ -323,6 +374,16 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_language_updates()
+	 * 
+	 * Render the Language Updates Tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * 
+	 * @return html Language Updates Tab.
+	 */
 	public static function render_language_updates( $website, $active_tab ) {
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
 		?>
@@ -370,6 +431,17 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_abandoned_plugins()
+	 * 
+	 * Render the Abandoned Plugin Tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * @param mixed $userExtension MainWP trusted plugin data.
+	 * 
+	 * @return html Abandoned Plugins Tab.
+	 */
 	public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
 
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );
@@ -442,6 +514,17 @@ class MainWP_Manage_Sites_Update_View {
 		<?php
 	}
 
+	/**
+	 * Method render_abandoned_themes()
+	 * 
+	 * Render the Abandoned Themes tab.
+	 * 
+	 * @param mixed $website Child Site info.
+	 * @param mixed $active_tab Current active tab.
+	 * @param mixed $userExtension MainWP trusted themes data.
+	 * 
+	 * @return html Abandoned Themes Tab.
+	 */
 	public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {
 
 		$user_can_ignore_unignore = mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' );

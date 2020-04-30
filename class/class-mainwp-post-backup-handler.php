@@ -2,7 +2,7 @@
 /**
  * This class handles the MainWP Post Backups.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -16,15 +16,14 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
-	// Singleton.
-	/** @var $instance MainWP_Post_Backup_Handler */
+	/** @var $instance Singleton MainWP_Post_Backup_Handler. */
 	private static $instance = null;
 
 	/**
 	 * Create public static instance.
 	 *
 	 * @static
-	 * @return MainWP_Post_Backup_Handler
+	 * @return self $instance MainWP_Post_Backup_Handler.
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -427,7 +426,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		MainWP_Manage_Backups_Handler::add_backup();
 	}
-
 
 	/**
 	 * Method mainwp_updatebackup()

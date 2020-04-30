@@ -1,24 +1,27 @@
 <?php
 /**
- * Post Site Handler.
+ *  MainWP Post Site Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Post Handler
+ * MainWP Post Site Handler.
  */
 class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
-	// Singleton.
-	/** @var $instance MainWP_Post_Site_Handler */
+	/** @var $instance Singleton MainWP_Post_Site_Handler */
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 * 
+	 * Create MainWP Post Site Handler instance.
+	 * 
 	 * @static
-	 * @return MainWP_Post_Site_Handler
+	 * @return self $instance MainWP_Post_Site_Handler.
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -55,45 +58,73 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
 	}
 
-	/*
-	 * Page: ManageGroups
-	 */
+	
+	// Page: ManageGroups
+	
 
+	/**
+	 * Method mainwp_group_rename()
+	 * 
+	 * Rename Group.
+	 */
 	public function mainwp_group_rename() {
 		$this->secure_request( 'mainwp_group_rename' );
 
 		MainWP_Manage_Groups::rename_group();
 	}
 
+	/**
+	 * Method mainwp_group_delete()
+	 * 
+	 * Delete Group.
+	 */
 	public function mainwp_group_delete() {
 		$this->secure_request( 'mainwp_group_delete' );
 
 		MainWP_Manage_Groups::delete_group();
 	}
 
+	/**
+	 * Method mainwp_group_add()
+	 * 
+	 * Add Group.
+	 */
 	public function mainwp_group_add() {
 		$this->secure_request( 'mainwp_group_add' );
 
 		MainWP_Manage_Groups::add_group();
 	}
 
+	/**
+	 * Method mainwp_group_getsites()
+	 * 
+	 * Get Child Sites in group.
+	 */
 	public function mainwp_group_getsites() {
 		$this->secure_request( 'mainwp_group_getsites' );
 
 		die( MainWP_Manage_Groups::get_sites() );
 	}
 
+	/**
+	 * Method mainwp_group_updategroup()
+	 * 
+	 * Update Group.
+	 */
 	public function mainwp_group_updategroup() {
 		$this->secure_request( 'mainwp_group_updategroup' );
 
 		MainWP_Manage_Groups::update_group();
 	}
 
-	/*
-	 * Page: ManageSites
-	 */
+	
+	// Page: ManageSites
 
-	// Check if WP can be added.
+	/**
+	 * Method mainwp_checkwp()
+	 * 
+	 * Check if WP can be added.
+	 */
 	public function mainwp_checkwp() {
 		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
 			MainWP_Manage_Sites_Handler::check_site();
@@ -102,7 +133,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-	// Add WP to the database.
+	/**
+	 * Method mainwp_addwp()
+	 * 
+	 * Add WP to the database.
+	 */
 	public function mainwp_addwp() {
 		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
 			MainWP_Manage_Sites_Handler::add_site();
@@ -111,6 +146,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
+	/**
+	 * Method get_site_icon()
+	 * 
+	 * Get Child Site Favicon.
+	 */
 	public function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
 			$siteId = null;
@@ -124,6 +164,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_testwp()
+	 * 
+	 * Test if Child Site can be reached.
+	 * 
+	 * @return $rslt
+	 */
 	public function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );
 
@@ -182,7 +229,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( $rslt );
 	}
 
-	// Remove a website from MainWP.
+	/**
+	 * Method mainwp_removesite()
+	 * 
+	 * Remove a website from MainWP.
+	 */
 	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'delete sites', 'mainwp' ), false ) ) ) );
@@ -193,23 +244,33 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Manage_Sites_Handler::remove_site();
 	}
 
-
+	/**
+	 * Method mainwp_reconnectwp()
+	 * 
+	 * Reconnect to Child Site.
+	 */
 	public function mainwp_reconnectwp() {
 		$this->secure_request( 'mainwp_reconnectwp' );
 
 		MainWP_Manage_Sites_Handler::reconnect_site();
 	}
 
+	/**
+	 * Method mainwp_updatechildsite_value()
+	 * 
+	 * Update Child Site value.
+	 */
 	public function mainwp_updatechildsite_value() {
 		$this->secure_request( 'mainwp_updatechildsite_value' );
 
 		MainWP_Manage_Sites_Handler::update_child_site_value();
 	}
 
-	/*
-	 * Widget: RightNow
+	/**
+	 * Method mainwp_syncsites()
+	 * 
+	 * Sync Child Sites. 
 	 */
-
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismiss_sync_errors( false );

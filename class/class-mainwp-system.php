@@ -2,7 +2,7 @@
 /**
  * MainWP System.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -16,33 +16,40 @@ const MAINWP_VIEW_PER_GROUP        = 2;
 // phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
 
 /**
- * MainWP System class
+ * MainWP System class.
  */
 class MainWP_System {
 
+	/**
+	 * @var string $version Plugin Version Number.
+	 */
 	public static $version = '4.0.7.2';
 
 	/**
-	 * @var mixed Singleton
+	 * @var mixed Singleton.
 	 */
 	private static $instance = null;
+
+	/**
+	 * @var mixed Metaboxes.
+	 */
 	public $metaboxes;
 
 	/**
-	 * The plugin current version
-	 *
-	 * @var string
+	 * @var string The plugin current version.
 	 */
 	private $current_version = null;
 
 	/**
 	 * Plugin Slug (plugin_directory/plugin_file.php)
 	 *
-	 * @var string
+	 * @var string $plugin_slug Plugin Slug.
 	 */
 	private $plugin_slug;
 
 	/**
+	 * Plugin Instance.
+	 *
 	 * @static
 	 * @return MainWP_System
 	 */
@@ -50,6 +57,13 @@ class MainWP_System {
 		return self::$instance;
 	}
 
+	/**
+	 * Method __construct()
+	 *
+	 * Run any time MainWP_System is called.
+	 *
+	 * @param mixed $mainwp_plugin_file Plugin Slug.
+	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
 		$this->load_all_options();
@@ -170,6 +184,13 @@ class MainWP_System {
 		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
 	}
 
+	/**
+	 * Method load_all_options()
+	 *
+	 * Load all wp_options data.
+	 *
+	 * @return array $alloptions Array of all options.
+	 */
 	public function load_all_options() {
 		global $wpdb;
 
@@ -249,14 +270,31 @@ class MainWP_System {
 		return $alloptions;
 	}
 
+	/**
+	 * Method parse_request()
+	 *
+	 * Includes api.php.
+	 */
 	public function parse_request() {
 		include_once MAINWP_PLUGIN_DIR . 'includes/api.php';
 	}
 
+	/**
+	 * Method localization()
+	 *
+	 * Loads plugin language files.
+	 */
 	public function localization() {
 		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
 	}
 
+	/**
+	 * Method wp_mail_failed()
+	 *
+	 * Check if there has been a wp mail failer.
+	 *
+	 * @param $error Array of error messages.
+	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
 		if ( is_object( $error ) && empty( $mail_failed ) ) {
@@ -268,10 +306,16 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method get_version()
+	 *
+	 * Get current plugin version.
+	 *
+	 * @return string Current plugin version.
+	 */
 	public function get_version() {
 		return $this->current_version;
 	}
-
 
 	/**
 	 * Method mainwp_cronpingchilds_action()
@@ -318,6 +362,13 @@ class MainWP_System {
 		MainWP_System_Cron_Jobs::instance()->cron_updates_check();
 	}
 
+	/**
+	 * Method is_mainwp_pages()
+	 *
+	 * Get the current page and check it for "mainwp_".
+	 *
+	 * @return boolean ture|false.
+	 */
 	public static function is_mainwp_pages() {
 		$screen = get_current_screen();
 		if ( $screen && strpos( $screen->base, 'mainwp_' ) !== false && strpos( $screen->base, 'mainwp_child_tab' ) === false ) {
@@ -327,6 +378,11 @@ class MainWP_System {
 		return false;
 	}
 
+	/**
+	 * Method init()
+	 *
+	 * Instantiate Plugin.
+	 */
 	public function init() {
 
 		global $_mainwp_disable_menus_items;
@@ -368,7 +424,11 @@ class MainWP_System {
 		MainWP_System_Handler::instance()->handle_settings_post();
 	}
 
-
+	/**
+	 * Method parse_init()
+	 *
+	 * Initiate plugin installation & then run the Quick Setup Wizard.
+	 */
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_Utility::get_mainwp_dir();
@@ -410,12 +470,25 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method activate_redirection()
+	 *
+	 * Redirect after activating MainWP Extension.
+	 *
+	 * @param mixed $location Location to redirect to.
+	 *
+	 * @return $location Admin URL + the page to redirect to.
+	 */
 	public function activate_redirect( $location ) {
 		$location = admin_url( 'admin.php?page=Extensions' );
 		return $location;
 	}
 
-
+	/**
+	 * Method admin_init()
+	 *
+	 * Do nothing if current user is not an Admin else display the page.
+	 */
 	public function admin_init() {
 		if ( ! MainWP_Utility::is_admin() ) {
 			return;
@@ -501,6 +574,11 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method admin_redirects()
+	 *
+	 * MainWP admin redirects.
+	 */
 	public function admin_redirects() {
 		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || defined( 'DOING_AJAX' ) ) {
 			return;
@@ -547,6 +625,11 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method init_session()
+	 *
+	 * Chck witch page & initiate a session.
+	 */
 	public function init_session() {
 		if ( isset( $_GET['page'] ) && in_array(
 			$_GET['page'],
@@ -565,6 +648,15 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method admin_enqueue_scripts()
+	 *
+	 * Enqueue all Mainwp Admin Scripts.
+	 *
+	 * @param mixed $hook
+	 *
+	 * @return html Script Meta Tags to include on page.
+	 */
 	public function admin_enqueue_scripts( $hook ) {
 
 		$load_cust_scripts = false;
@@ -607,6 +699,15 @@ class MainWP_System {
 		wp_enqueue_script( 'mainwp-jqueryfiletree', MAINWP_PLUGIN_URL . 'assets/js/jqueryFileTree.js', array(), $this->current_version, true );
 	}
 
+	/**
+	 * Method admin_enqueue_styles()
+	 *
+	 * Enqueue all Mainwp Admin Styles.
+	 *
+	 * @param mixed $hook
+	 *
+	 * @return html Styles Meta Tags to include on page.
+	 */
 	public function admin_enqueue_styles( $hook ) {
 		global $wp_version;
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
@@ -639,6 +740,11 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method admin_menu()
+	 *
+	 * Add Bulk Post/Pages menue.
+	 */
 	public function admin_menu() {
 		global $menu;
 		foreach ( $menu as $k => $item ) {
@@ -650,12 +756,22 @@ class MainWP_System {
 		}
 	}
 
+	/**
+	 * Method enqueue_postbox_scripts()
+	 *
+	 * Enqueue postbox scripts.
+	 */
 	public static function enqueue_postbox_scripts() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
 	}
 
+	/**
+	 * Method admin_footer()
+	 *
+	 * Create MainWP admin footer.
+	 */
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
@@ -702,34 +818,68 @@ class MainWP_System {
 	/**
 	 * Method activated_check()
 	 *
-	 * Activated check
+	 * Activated check.
 	 */
 	public function activated_check() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
 		return $this->get_version();
 	}
 
+	/**
+	 * method activation()
+	 *
+	 * Activate MainWP.
+	 */
 	public function activation() {
 		MainWP_DB::instance()->install();
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
 	}
 
+	/**
+	 * method deactivation()
+	 *
+	 * Deactivate MainWP.
+	 */
 	public function deactivation() {
 		update_option( 'mainwp_extensions_all_activation_cached', '' );
 	}
 
+	/**
+	 * method update()
+	 *
+	 * Update MainWP.
+	 */
 	public function update() {
 		MainWP_DB::instance()->install();
 	}
 
+	/**
+	 * Method is_single_user()
+	 *
+	 * Check if single user environment.
+	 *
+	 * @return boolean true|false.
+	 */
 	public function is_single_user() {
 		return true;
 	}
 
+	/**
+	 * Method is_multi_user()
+	 *
+	 * Check if multi user environment.
+	 *
+	 * @return boolean trure|false.
+	 */
 	public function is_multi_user() {
 		return ! $this->is_single_user();
 	}
 
+	/**
+	 * Method get_plugin_slug()
+	 *
+	 * Get MainWP Plugin Slug.
+	 */
 	public function get_plugin_slug() {
 		return $this->plugin_slug;
 	}

@@ -2,7 +2,7 @@
 /**
  * Post Page Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -14,6 +14,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Page_Handler {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -26,7 +31,6 @@ class MainWP_Post_Page_Handler {
 	 * @param int $post_ID
 	 * @return int|bool
 	 */
-
 	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
 
@@ -561,6 +565,8 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * Create new post.
 	 *
+	 * @param array $post_data Array of post data.
+	 *
 	 * @return array result
 	 */
 	public static function new_post( $post_data = array() ) {
@@ -578,6 +584,14 @@ class MainWP_Post_Page_Handler {
 	 * Method create_post()
 	 *
 	 * Create post.
+	 *
+	 * @param mixed $new_post Post type.
+	 * @param mixed $post_custom Custom Post.
+	 * @param mixed $post_category Post Category.
+	 * @param mixed $post_featured_image Post Featured Image.
+	 * @param mixed $upload_dir Child Site upload directory.
+	 * @param mixed $post_tags Post tags.
+	 * @param mixed $post_gallery_images Post Gallery Images.
 	 *
 	 * @return array result
 	 */
@@ -739,13 +753,13 @@ class MainWP_Post_Page_Handler {
 	/**
 	 * Method upload_image()
 	 *
-	 * Handle upload image
+	 * Handle upload image.
 	 *
-	 * @throws \Exception error upload file
-	 * @param string $img_url.
-	 * @param mixed  $img_data.
+	 * @throws \Exception error upload file.
+	 * @param string $img_url URL for the image.
+	 * @param array  $img_data Array of image data.
 	 *
-	 * @return mixed array of result or null
+	 * @return mixed array of result or null.
 	 */
 	public static function upload_image( $img_url, $img_data = array() ) {
 		if ( ! is_array( $img_data ) ) {
@@ -795,13 +809,14 @@ class MainWP_Post_Page_Handler {
 		return null;
 	}
 
-
 	/**
 	 * Method add_sticky_handle()
 	 *
-	 * Add post meta
+	 * Add post meta.
 	 *
-	 * @return int post id
+	 * @param mixed $post_id Post ID.
+	 *
+	 * @return int $post_id Post ID.
 	 */
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );

@@ -2,13 +2,13 @@
 /**
  * MainWP Post Page.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Posts Page
+ * MainWP Posts Page.
  *
  * @uses MainWP_Bulk_Add
  */

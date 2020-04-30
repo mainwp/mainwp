@@ -2,7 +2,7 @@
 /**
  * MainWP Updates Page.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,45 +12,35 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Updates {
 
-	/**
-	 * User can ignore updates
-	 *
-	 * @var bool
-	 */
+	/** @var bool User can ignore updates. */
 	public static $user_can_ignore_updates = null;
 
-	/**
-	 * User can updates translations
-	 *
-	 * @var bool
-	 */
+	/** @var bool User can updates translations. */
 	public static $user_can_update_trans = null;
 
-	/**
-	 * User can updates WP
-	 *
-	 * @var bool
-	 */
+	/** @var bool User can updates WP. */
 	public static $user_can_update_wp = null;
 
-	/**
-	 * User can updates themes
-	 *
-	 * @var bool
-	 */
+	/** @var bool User can updates themes. */
 	public static $user_can_update_themes = null;
 
-	/**
-	 * User can updates plugins
-	 *
-	 * @var bool
-	 */
+	/** @var bool User can updates plugins. */
 	public static $user_can_update_plugins = null;
-	public static $trusted_label           = '';
-	public static $not_trusted_label       = '';
-	public static $continue_selector       = '';
-	public static $continue_update         = '';
-	public static $continue_update_slug    = '';
+
+	/** @var string Placeholder for trusted label. */
+	public static $trusted_label = '';
+
+	/** @var string Placeholder for not trusted label. */
+	public static $not_trusted_label = '';
+
+	/** @var string Placeholder for continue selector. */
+	public static $continue_selector = '';
+
+	/** @var string Placeholder for continue update. */
+	public static $continue_update = '';
+
+	/** @var string Placeholder for continue update slug. */
+	public static $continue_update_slug = '';
 
 	/**
 	 * Method get_class_name()
@@ -63,6 +53,11 @@ class MainWP_Updates {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method init()
+	 *
+	 * Instantiate MainWP Updates Page.
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Post page header via the 'mainwp-pageheader-updates' action.
@@ -116,7 +111,14 @@ class MainWP_Updates {
 	}
 
 	/**
+	 * method render_header()
+	 *
+	 * Set the MainWP Update page page title and pass it off to
+	 * method MainWP_UI::render_top_header()
+	 *
 	 * @param string $shownPage The page slug shown at this moment
+	 *
+	 * @return array $params Array containing the page title.
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -128,7 +130,11 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_footer()
+	 *
+	 * Close the page container.
+	 *
+	 * @return html Container closing tag.
 	 */
 	public static function render_footer() {
 		echo '</div>';
@@ -960,6 +966,13 @@ class MainWP_Updates {
 		<?php
 	}
 
+	/**
+	 * Method render_twitter_notice()
+	 *
+	 * Render the twitter bragger message.
+	 *
+	 * @return html Twitter bragger html.
+	 */
 	public static function render_twitter_notice() {
 
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
@@ -986,6 +999,15 @@ class MainWP_Updates {
 		}
 	}
 
+	/**
+	 * Method render_http_checks()
+	 *
+	 * Render the HTTP Check html content.
+	 *
+	 * @param mixed $websites Child Sites.
+	 *
+	 * @return html HTTP Check content.
+	 */
 	public static function render_http_checks( $websites ) {
 
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
@@ -1117,7 +1139,10 @@ class MainWP_Updates {
 	/**
 	 * Method set_continue_update_html_selector()
 	 *
-	 * @param string $current_update current update string
+	 * @param string  $current_update current update string
+	 * @param boolean $slug Whether to update slug.
+	 *
+	 * @return string updatesoverview_continue_update_me or empty string.
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
 
@@ -1143,6 +1168,13 @@ class MainWP_Updates {
 		return self::$continue_selector;
 	}
 
+	/**
+	 * Method render_updates_modal()
+	 *
+	 * Display the updates modal window during updates.
+	 *
+	 * @return html Updates Modal Window.
+	 */
 	public static function render_updates_modal() {
 		?>
 		<div class="ui modal" id="updatesoverview-backup-box">
@@ -1158,9 +1190,12 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Hook the section help content to the Help Sidebar element
+	 * Method mainwp_help_content()
+	 *
+	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
+	 *
+	 * @return html Help box content.
 	 */
-
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) {
 			?>

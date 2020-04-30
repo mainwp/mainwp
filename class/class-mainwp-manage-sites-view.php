@@ -1,17 +1,24 @@
 <?php
 /**
- * Manage Sites View.
+ * MainWP Manage Sites View.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites View
+ * MainWP Manage Sites View.
  */
 class MainWP_Manage_Sites_View {
 
+	/**
+	 * Method init_menu()
+	 *
+	 * Initiate Sites sub menu.
+	 *
+	 * @return add_submenu_page()
+	 */
 	public static function init_menu() {
 		return add_submenu_page(
 			'mainwp_tab',
@@ -23,6 +30,13 @@ class MainWP_Manage_Sites_View {
 		);
 	}
 
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * @param array $subPages Sub pages array
+	 *
+	 * @return html Sites sub page menu.
+	 */
 	public static function init_subpages_menu( &$subPages ) {
 		?>
 		<div id="menu-mainwp-Sites" class="mainwp-submenu-wrapper">
@@ -61,6 +75,15 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
+	/**
+	 * Method init_left_menu()
+	 *
+	 * Initiate left Sites menu.
+	 *
+	 * @param array $subPages Sub pages array
+	 *
+	 * @return MainWP_Menu::add_left_menu()
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu(
@@ -123,7 +146,14 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
-
+	/**
+	 * Method render_header()
+	 *
+	 * Build Sites page header.
+	 *
+	 * @param string $shownPage Current Page.
+	 * @param string $subPages Sites subpages.
+	 */
 	public static function render_header( $shownPage = '', &$subPages = '' ) { // phpcs:ignore -- not quite complex method.
 
 		if ( '' === $shownPage ) {
@@ -270,11 +300,27 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
+	/**
+	 * Method render_footer()
+	 *
+	 * Close the page container.
+	 *
+	 * @param string $shownPage Current Page.
+	 * @param string $subPages Sites subpages.
+	 *
+	 * @return html Close container.
+	 */
 	public static function render_footer( $shownPage, &$subPages ) {
 		echo '</div>';
 	}
 
-
+	/**
+	 * Method render_import_sites()
+	 *
+	 * Render import sites dialog.
+	 *
+	 * @return html Import site dialog.
+	 */
 	public static function render_import_sites() {
 		?>
 		<div id="mainwp-importing-sites" class="ui active inverted dimmer" style="display:none">
@@ -386,6 +432,13 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
+	/**
+	 * Method render_sync_exts_settings()
+	 *
+	 * Render sync extension settings.
+	 *
+	 * @return html $html
+	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.1', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
 		$sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
@@ -397,7 +450,7 @@ class MainWP_Manage_Sites_View {
 
 			<h3 class="ui dividing header">
 				<?php esc_html_e( ' Extensions Settings Synchronization', 'mainwp' ); ?>
-				<div class="sub header"><?php esc_html_e( 'You have Extensions installed that require an additional plugin to be installed on this new Child site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+				<div class="sub header"><?php esc_html_e( 'You have Extensions installed that require an additional plugin to be installed on this new Child Site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
 			</h3>
 
 			<?php
@@ -453,6 +506,13 @@ class MainWP_Manage_Sites_View {
 		}
 	}
 
+	/**
+	 * Method render_settings()
+	 *
+	 * Render Site Settings.
+	 *
+	 * @return html Site Settings.
+	 */
 	public static function render_settings() {
 
 		$backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
@@ -615,6 +675,16 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
+	/**
+	 * Method render_dashboard()
+	 *
+	 * Render individual Child Site Overview page.
+	 *
+	 * @param mixed $website Child Site.
+	 * @param mixed $page Page to render.
+	 *
+	 * @return html Sites Overview Page.
+	 */
 	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
 			mainwp_do_not_have_permissions( __( 'individual dashboard', 'mainwp' ) );
@@ -633,6 +703,17 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
+	/**
+	 * Method render_header_tabs()
+	 *
+	 * Render Sites sub page header tabs.
+	 *
+	 * @param mixed $active_tab Currently active tab.
+	 * @param mixed $active_text Currently active drop down text.
+	 * @param mixed $show_language_updates Whether or not to show translations.
+	 *
+	 * @return html Header sub page header tabs.
+	 */
 	public static function render_header_tabs( $active_tab, $active_text, $show_language_updates ) {
 		?>
 		<div class="mainwp-sub-header">
@@ -665,7 +746,15 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
-
+	/**
+	 * Method render_scan_site()
+	 *
+	 * Render Security Scan sub page.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @return html Security Scan sub page.
+	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
@@ -678,7 +767,7 @@ class MainWP_Manage_Sites_View {
 			<h3 class="ui dividing header"><?php esc_html_e( 'Basic Security Check', 'mainwp' ); ?></h3>
 
 			<?php
-			// Recnder security check issues.
+			// Render security check issues.
 			$websiteid = isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ? $_GET['scanid'] : null;
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
@@ -715,6 +804,16 @@ class MainWP_Manage_Sites_View {
 		<?php
 	}
 
+	/**
+	 * Method render_edit_site()
+	 *
+	 * Render individual Child Site Edit sub page.
+	 *
+	 * @param mixed $websiteid Child Site ID.
+	 * @param mixed $updated Site settings updated check.
+	 *
+	 * @return html Edit Child Site sub page.
+	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 			mainwp_do_not_have_permissions( __( 'edit sites', 'mainwp' ) );
@@ -909,6 +1008,16 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 	}
+
+	/**
+	 * Method m_reconnect_site()
+	 *
+	 * Reconnect Chid Site.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @return boolean true|false.
+	 */
 	public static function m_reconnect_site( $website ) {
 		if ( MainWP_Utility::can_edit_website( $website ) ) {
 			try {
@@ -986,6 +1095,15 @@ class MainWP_Manage_Sites_View {
 		return false;
 	}
 
+	/**
+	 * Method add_site()
+	 *
+	 * Add Child Site.
+	 *
+	 * @param mixed $website Child Site.
+	 *
+	 * @return self add_wp_site()
+	 */
 	public static function add_site( $website ) {
 
 		$params['url']               = $_POST['managesites_add_wpurl'];
@@ -1007,7 +1125,16 @@ class MainWP_Manage_Sites_View {
 		return self::add_wp_site( $website, $params );
 	}
 
-
+	/**
+	 * Medthod add_wp_site()
+	 *
+	 * Add new Child Site.
+	 *
+	 * @param mixed $website Child Site.
+	 * @param array $params Array of new Child Site to add.
+	 *
+	 * @return array $message, $error, $id
+	 */
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- not quite complex method.
 		$error   = '';
 		$message = '';

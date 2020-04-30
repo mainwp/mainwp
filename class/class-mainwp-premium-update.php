@@ -4,14 +4,17 @@
  *
  * MainWP Premium Update functions.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
+
 /**
- * MainWP Utility
+ * MainWP Premium Updates
+ *
+ * Check for premium plugin updates.
  */
 class MainWP_Premium_Update {
 
@@ -26,6 +29,16 @@ class MainWP_Premium_Update {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method check_premium_updates()
+	 *
+	 * Check for Premium Plugin updates.
+	 *
+	 * @param array $updates Array of updates.
+	 * @param mixed $type Type of update. theme|plugin
+	 *
+	 * @return boolean true|false.
+	 */
 	public static function check_premium_updates( $updates, $type ) {
 
 		if ( ! is_array( $updates ) || empty( $updates ) ) {
@@ -96,6 +109,16 @@ class MainWP_Premium_Update {
 		return false;
 	}
 
+	/**
+	 * Method check_request_update_premium()
+	 *
+	 * Check if any updates are on the premiums list.
+	 *
+	 * @param mixed $list List of updates.
+	 * @param mixed $type Type of update. plugin|theme.
+	 *
+	 * @return boolean true|false.
+	 */
 	public static function check_request_update_premium( $list, $type ) {
 
 		$updates = explode( ',', $list );
@@ -142,6 +165,16 @@ class MainWP_Premium_Update {
 		return false;
 	}
 
+	/**
+	 * Method redirect_request_site()
+	 *
+	 * Redirect to requested Site.
+	 *
+	 * @param mixed $website Child Site.
+	 * @param mixed $where_url page to redirerct to.
+	 *
+	 * @return respose $reponse http response.
+	 */
 	public static function redirect_request_site( $website, $where_url ) {
 
 		$request_url = MainWP_Connect::get_get_data_authed( $website, $where_url );
@@ -169,6 +202,17 @@ class MainWP_Premium_Update {
 		return $reponse;
 	}
 
+	/**
+	 * Method request_premiums_update()
+	 *
+	 * Request to update plugin or theme.
+	 *
+	 * @param mixed $website Child Site to update.
+	 * @param mixed $type Type of update, plugin|theme.
+	 * @param mixed $list list of plugins & themes installed.
+	 *
+	 * @return mixed null|true.
+	 */
 	public static function request_premiums_update( $website, $type, $list ) {
 		if ( 'plugin' === $type ) {
 			$where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list;
@@ -181,6 +225,16 @@ class MainWP_Premium_Update {
 		return true;
 	}
 
+	/**
+	 * Method try_to_detect_premiums_update()
+	 *
+	 * Try to detect if pugin and themes are premium.
+	 *
+	 * @param mixed $website Child Site.
+	 * @param mixed $type Type of update, plugin|theme.
+	 *
+	 * @return mixed false|self::redirect_request_site()
+	 */
 	public static function try_to_detect_premiums_update( $website, $type ) {
 		if ( 'plugin' === $type ) {
 			$where_url = 'plugins.php?_detect_plugins_updates=yes';

@@ -3,6 +3,7 @@
  * MainWP Base Functions.
  *
  * Grab MainWP Directory and check for permissions.
+ *
  * @package     MainWP/Dashboard
  */
 

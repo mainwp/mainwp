@@ -704,12 +704,16 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
+	 * Method hook_get_groups()
+	 * 
+	 * Get Child Sites within groups & store them in an array.
+	 * 
 	 * @param string  $pluginFile Extension plugin file to verify.
 	 * @param string  $key The child-key.
 	 * @param int     $groupid The id of the group you wish to retrieve.
 	 * @param boolean $for_manager Check Team Control.
 	 *
-	 * @return array|bool An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
+	 * @return array|bool $output|false An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
 	 */
 	public static function hook_get_groups( $pluginFile, $key, $groupid, $for_manager = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {

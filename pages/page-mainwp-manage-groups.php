@@ -2,7 +2,7 @@
 /**
  * MainWP Manage Groups.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,10 +12,22 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Manage_Groups {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method init_menu()
+	 *
+	 * Add Groups Sub Menu.
+	 *
+	 * @return string Groups.
+	 */
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -30,6 +42,13 @@ class MainWP_Manage_Groups {
 		);
 	}
 
+	/**
+	 * Method get_group_list_content()
+	 * 
+	 * Get group list contents.
+	 * 
+	 * @return array $group Array of group data.
+	 */
 	public static function get_group_list_content() {
 
 		$groups = MainWP_DB_Common::instance()->get_groups_and_count();
@@ -39,6 +58,15 @@ class MainWP_Manage_Groups {
 		}
 	}
 
+	/**
+	 * Metod create_group_item()
+	 * 
+	 * Group Data Table Row.
+	 * 
+	 * @param array $group Array of group data. 
+	 * 
+	 * @return html Group data table Row.
+	 */
 	private static function create_group_item( $group ) {
 		?>
 		<tr group-id="<?php echo esc_attr( $group->id ); ?>" class="mainwp-group-row">
@@ -68,6 +96,13 @@ class MainWP_Manage_Groups {
 		<?php
 	}
 
+	/**
+	 * Method get_website_list_content()
+	 * 
+	 * Get the Child Site list content.
+	 * 
+	 * @return html Single Child Site Name & Checkbox.
+	 */
 	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
@@ -82,6 +117,13 @@ class MainWP_Manage_Groups {
 		MainWP_DB::free_result( $websites );
 	}
 
+	/**
+	 * Method render_all_groups()
+	 * 
+	 * Render MainWP Groups Table.
+	 * 
+	 * @return html MainWP Groups Table.
+	 */
 	public static function render_all_groups() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage groups', 'mainwp' ) );
@@ -334,6 +376,13 @@ class MainWP_Manage_Groups {
 		<?php
 	}
 
+	/** 
+	 * Method rename_group()
+	 * 
+	 * Rename the selected group.
+	 * 
+	 * @return result $group->name.
+	 */
 	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
@@ -354,6 +403,13 @@ class MainWP_Manage_Groups {
 		}
 	}
 
+	/**
+	 * Method delete_group()
+	 * 
+	 * Delete the selected group.
+	 * 
+	 * @return result OK|ERROR
+	 */
 	public static function delete_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
@@ -369,6 +425,17 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
+	/**
+	 * Method check_group_name()
+	 * 
+	 * Check if group name already exists
+	 * if it does add a number to the end of it.
+	 * 
+	 * @param mixed $groupName Given Group Name.
+	 * @param null $groupId Group ID.
+	 * 
+	 * @return string $groupName Group name + count # if group has bn found.
+	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
 		if ( '' == $groupName ) {
 			$groupName = __( 'New group', 'mainwp' );
@@ -395,6 +462,13 @@ class MainWP_Manage_Groups {
 		return $groupName . ( null == $cnt ? '' : ' (' . $cnt . ')' );
 	}
 
+	/**
+	 * Method add_group()
+	 * 
+	 * Add Group.
+	 * 
+	 * @return do_action|die mainwp_added_new_group|Error =1.
+	 */
 	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
@@ -407,6 +481,13 @@ class MainWP_Manage_Groups {
 		die( wp_json_encode( array( 'error' => 1 ) ) );
 	}
 
+	/**
+	 * Method get_sites()
+	 * 
+	 * Get Child Sites by Group ID. 
+	 * 
+	 * @return mixed $websiteIds|ERROR Child Site ID or Error is returned.
+	 */
 	public static function get_sites() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
@@ -425,6 +506,13 @@ class MainWP_Manage_Groups {
 		die( 'ERROR' );
 	}
 
+	/**
+	 * Method update_group()
+	 * 
+	 * Update groups Sites.
+	 * 
+	 * @return boolean true|false.
+	 */
 	public static function update_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );

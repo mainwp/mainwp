@@ -705,9 +705,9 @@ class MainWP_Extensions_Handler {
 
 	/**
 	 * Method hook_get_groups()
-	 * 
+	 *
 	 * Get Child Sites within groups & store them in an array.
-	 * 
+	 *
 	 * @param string  $pluginFile Extension plugin file to verify.
 	 * @param string  $key The child-key.
 	 * @param int     $groupid The id of the group you wish to retrieve.

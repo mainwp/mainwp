@@ -14,12 +14,12 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_updates()
-	 * 
-	 * If empty do nothing else grab the Child Sites ID and pass it to 
+	 *
+	 * If empty do nothing else grab the Child Sites ID and pass it to
 	 * method render_individual_updates().
-	 * 
+	 *
 	 * @param mixed $website Child Site Info.
-	 * 
+	 *
 	 * @return self render_individual_updates()
 	 */
 	public static function render_updates( $website ) {
@@ -33,11 +33,11 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_individual_updates()
-	 * 
+	 *
 	 * Render Plugin updates Tab.
-	 * 
+	 *
 	 * @param mixed $id Child Site ID.
-	 * 
+	 *
 	 * @return html Invidivual updates html.
 	 */
 	public static function render_individual_updates( $id ) {
@@ -106,12 +106,12 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_wpcore_updates()
-	 * 
+	 *
 	 * Render the WordPress Updates Tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
-	 * 
+	 *
 	 * @return html WordPress Updates Tab.
 	 */
 	public static function render_wpcore_updates( $website, $active_tab ) {
@@ -167,13 +167,13 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_plugins_updates()
-	 * 
+	 *
 	 * Render the Plugin Updates Tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-	 * 
+	 *
 	 * @return html Plugin Updates Tab.
 	 */
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
@@ -274,13 +274,13 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_themes_updates()
-	 * 
+	 *
 	 * Render the Themes Updates Tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-	 * 
+	 *
 	 * @return html Themes Updates Tab.
 	 */
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
@@ -376,12 +376,12 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_language_updates()
-	 * 
+	 *
 	 * Render the Language Updates Tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
-	 * 
+	 *
 	 * @return html Language Updates Tab.
 	 */
 	public static function render_language_updates( $website, $active_tab ) {
@@ -433,13 +433,13 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_abandoned_plugins()
-	 * 
+	 *
 	 * Render the Abandoned Plugin Tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-	 * 
+	 *
 	 * @return html Abandoned Plugins Tab.
 	 */
 	public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
@@ -516,13 +516,13 @@ class MainWP_Manage_Sites_Update_View {
 
 	/**
 	 * Method render_abandoned_themes()
-	 * 
+	 *
 	 * Render the Abandoned Themes tab.
-	 * 
+	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-	 * 
+	 *
 	 * @return html Abandoned Themes Tab.
 	 */
 	public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {

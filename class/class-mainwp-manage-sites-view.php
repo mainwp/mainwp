@@ -14,9 +14,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method init_menu()
-	 * 
+	 *
 	 * Initiate Sites sub menu.
-	 * 
+	 *
 	 * @return add_submenu_page()
 	 */
 	public static function init_menu() {
@@ -32,9 +32,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method init_subpages_menu()
-	 * 
+	 *
 	 * @param array $subPages Sub pages array
-	 * 
+	 *
 	 * @return html Sites sub page menu.
 	 */
 	public static function init_subpages_menu( &$subPages ) {
@@ -77,11 +77,11 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method init_left_menu()
-	 * 
+	 *
 	 * Initiate left Sites menu.
-	 * 
+	 *
 	 * @param array $subPages Sub pages array
-	 * 
+	 *
 	 * @return MainWP_Menu::add_left_menu()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
@@ -148,9 +148,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_header()
-	 * 
+	 *
 	 * Build Sites page header.
-	 * 
+	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
 	 */
@@ -302,13 +302,13 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_footer()
-	 * 
-	 * Close the page container. 
-	 * 
+	 *
+	 * Close the page container.
+	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
-	 * 
-	 * @return html Close container. 
+	 *
+	 * @return html Close container.
 	 */
 	public static function render_footer( $shownPage, &$subPages ) {
 		echo '</div>';
@@ -316,9 +316,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_import_sites()
-	 * 
-	 * Render import sites dialog. 
-	 * 
+	 *
+	 * Render import sites dialog.
+	 *
 	 * @return html Import site dialog.
 	 */
 	public static function render_import_sites() {
@@ -434,9 +434,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_sync_exts_settings()
-	 * 
+	 *
 	 * Render sync extension settings.
-	 * 
+	 *
 	 * @return html $html
 	 */
 	public static function render_sync_exts_settings() {
@@ -508,9 +508,9 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_settings()
-	 * 
+	 *
 	 * Render Site Settings.
-	 * 
+	 *
 	 * @return html Site Settings.
 	 */
 	public static function render_settings() {
@@ -677,12 +677,12 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_dashboard()
-	 * 
-	 * Render individual Child Site Overview page. 
-	 * 
+	 *
+	 * Render individual Child Site Overview page.
+	 *
 	 * @param mixed $website Child Site.
 	 * @param mixed $page Page to render.
-	 * 
+	 *
 	 * @return html Sites Overview Page.
 	 */
 	public static function render_dashboard( &$website, &$page ) {
@@ -705,13 +705,13 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_header_tabs()
-	 * 
+	 *
 	 * Render Sites sub page header tabs.
-	 * 
+	 *
 	 * @param mixed $active_tab Currently active tab.
 	 * @param mixed $active_text Currently active drop down text.
 	 * @param mixed $show_language_updates Whether or not to show translations.
-	 * 
+	 *
 	 * @return html Header sub page header tabs.
 	 */
 	public static function render_header_tabs( $active_tab, $active_text, $show_language_updates ) {
@@ -748,11 +748,11 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_scan_site()
-	 * 
-	 * Render Security Scan sub page. 
-	 * 
+	 *
+	 * Render Security Scan sub page.
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return html Security Scan sub page.
 	 */
 	public static function render_scan_site( &$website ) {
@@ -806,12 +806,12 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method render_edit_site()
-	 * 
-	 * Render individual Child Site Edit sub page. 
-	 * 
+	 *
+	 * Render individual Child Site Edit sub page.
+	 *
 	 * @param mixed $websiteid Child Site ID.
 	 * @param mixed $updated Site settings updated check.
-	 * 
+	 *
 	 * @return html Edit Child Site sub page.
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
@@ -1011,11 +1011,11 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method m_reconnect_site()
-	 * 
+	 *
 	 * Reconnect Chid Site.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function m_reconnect_site( $website ) {
@@ -1097,11 +1097,11 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Method add_site()
-	 * 
+	 *
 	 * Add Child Site.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return self add_wp_site()
 	 */
 	public static function add_site( $website ) {
@@ -1127,12 +1127,12 @@ class MainWP_Manage_Sites_View {
 
 	/**
 	 * Medthod add_wp_site()
-	 * 
+	 *
 	 * Add new Child Site.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * @param array $params Array of new Child Site to add. 
-	 * 
+	 * @param array $params Array of new Child Site to add.
+	 *
 	 * @return array $message, $error, $id
 	 */
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- not quite complex method.

@@ -565,8 +565,8 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * Create new post.
 	 *
-	 * @param array  $post_data Array of post data.
-	 * 
+	 * @param array $post_data Array of post data.
+	 *
 	 * @return array result
 	 */
 	public static function new_post( $post_data = array() ) {
@@ -584,15 +584,15 @@ class MainWP_Post_Page_Handler {
 	 * Method create_post()
 	 *
 	 * Create post.
-	 * 
+	 *
 	 * @param mixed $new_post Post type.
 	 * @param mixed $post_custom Custom Post.
 	 * @param mixed $post_category Post Category.
 	 * @param mixed $post_featured_image Post Featured Image.
 	 * @param mixed $upload_dir Child Site upload directory.
-	 * @param mixed $post_tags Post tags. 
+	 * @param mixed $post_tags Post tags.
 	 * @param mixed $post_gallery_images Post Gallery Images.
-	 * 
+	 *
 	 * @return array result
 	 */
 	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method.
@@ -757,7 +757,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * @throws \Exception error upload file.
 	 * @param string $img_url URL for the image.
-	 * @param array $img_data Array of image data. 
+	 * @param array  $img_data Array of image data.
 	 *
 	 * @return mixed array of result or null.
 	 */
@@ -813,9 +813,9 @@ class MainWP_Post_Page_Handler {
 	 * Method add_sticky_handle()
 	 *
 	 * Add post meta.
-	 * 
+	 *
 	 * @param mixed $post_id Post ID.
-	 * 
+	 *
 	 * @return int $post_id Post ID.
 	 */
 	public static function add_sticky_handle( $post_id ) {

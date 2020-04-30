@@ -49,7 +49,7 @@ class MainWP_System {
 
 	/**
 	 * Plugin Instance.
-	 * 
+	 *
 	 * @static
 	 * @return MainWP_System
 	 */
@@ -59,9 +59,9 @@ class MainWP_System {
 
 	/**
 	 * Method __construct()
-	 * 
+	 *
 	 * Run any time MainWP_System is called.
-	 * 
+	 *
 	 * @param mixed $mainwp_plugin_file Plugin Slug.
 	 */
 	public function __construct( $mainwp_plugin_file ) {
@@ -186,10 +186,10 @@ class MainWP_System {
 
 	/**
 	 * Method load_all_options()
-	 * 
+	 *
 	 * Load all wp_options data.
-	 * 
-	 * @return array $alloptions Array of all options. 
+	 *
+	 * @return array $alloptions Array of all options.
 	 */
 	public function load_all_options() {
 		global $wpdb;
@@ -269,10 +269,10 @@ class MainWP_System {
 
 		return $alloptions;
 	}
-	
+
 	/**
 	 * Method parse_request()
-	 * 
+	 *
 	 * Includes api.php.
 	 */
 	public function parse_request() {
@@ -281,7 +281,7 @@ class MainWP_System {
 
 	/**
 	 * Method localization()
-	 * 
+	 *
 	 * Loads plugin language files.
 	 */
 	public function localization() {
@@ -290,10 +290,10 @@ class MainWP_System {
 
 	/**
 	 * Method wp_mail_failed()
-	 * 
+	 *
 	 * Check if there has been a wp mail failer.
-	 * 
-	 * @param $error Array of error messages. 
+	 *
+	 * @param $error Array of error messages.
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -308,9 +308,9 @@ class MainWP_System {
 
 	/**
 	 * Method get_version()
-	 * 
+	 *
 	 * Get current plugin version.
-	 * 
+	 *
 	 * @return string Current plugin version.
 	 */
 	public function get_version() {
@@ -364,9 +364,9 @@ class MainWP_System {
 
 	/**
 	 * Method is_mainwp_pages()
-	 * 
+	 *
 	 * Get the current page and check it for "mainwp_".
-	 * 
+	 *
 	 * @return boolean ture|false.
 	 */
 	public static function is_mainwp_pages() {
@@ -380,7 +380,7 @@ class MainWP_System {
 
 	/**
 	 * Method init()
-	 * 
+	 *
 	 * Instantiate Plugin.
 	 */
 	public function init() {
@@ -426,7 +426,7 @@ class MainWP_System {
 
 	/**
 	 * Method parse_init()
-	 * 
+	 *
 	 * Initiate plugin installation & then run the Quick Setup Wizard.
 	 */
 	public function parse_init() {
@@ -472,11 +472,11 @@ class MainWP_System {
 
 	/**
 	 * Method activate_redirection()
-	 * 
+	 *
 	 * Redirect after activating MainWP Extension.
-	 * 
+	 *
 	 * @param mixed $location Location to redirect to.
-	 * 
+	 *
 	 * @return $location Admin URL + the page to redirect to.
 	 */
 	public function activate_redirect( $location ) {
@@ -486,7 +486,7 @@ class MainWP_System {
 
 	/**
 	 * Method admin_init()
-	 * 
+	 *
 	 * Do nothing if current user is not an Admin else display the page.
 	 */
 	public function admin_init() {
@@ -576,7 +576,7 @@ class MainWP_System {
 
 	/**
 	 * Method admin_redirects()
-	 * 
+	 *
 	 * MainWP admin redirects.
 	 */
 	public function admin_redirects() {
@@ -627,7 +627,7 @@ class MainWP_System {
 
 	/**
 	 * Method init_session()
-	 * 
+	 *
 	 * Chck witch page & initiate a session.
 	 */
 	public function init_session() {
@@ -650,11 +650,11 @@ class MainWP_System {
 
 	/**
 	 * Method admin_enqueue_scripts()
-	 * 
+	 *
 	 * Enqueue all Mainwp Admin Scripts.
-	 * 
+	 *
 	 * @param mixed $hook
-	 * 
+	 *
 	 * @return html Script Meta Tags to include on page.
 	 */
 	public function admin_enqueue_scripts( $hook ) {
@@ -701,11 +701,11 @@ class MainWP_System {
 
 	/**
 	 * Method admin_enqueue_styles()
-	 * 
+	 *
 	 * Enqueue all Mainwp Admin Styles.
-	 * 
+	 *
 	 * @param mixed $hook
-	 * 
+	 *
 	 * @return html Styles Meta Tags to include on page.
 	 */
 	public function admin_enqueue_styles( $hook ) {
@@ -742,7 +742,7 @@ class MainWP_System {
 
 	/**
 	 * Method admin_menu()
-	 * 
+	 *
 	 * Add Bulk Post/Pages menue.
 	 */
 	public function admin_menu() {
@@ -758,7 +758,7 @@ class MainWP_System {
 
 	/**
 	 * Method enqueue_postbox_scripts()
-	 * 
+	 *
 	 * Enqueue postbox scripts.
 	 */
 	public static function enqueue_postbox_scripts() {
@@ -769,7 +769,7 @@ class MainWP_System {
 
 	/**
 	 * Method admin_footer()
-	 * 
+	 *
 	 * Create MainWP admin footer.
 	 */
 	public function admin_footer() {
@@ -827,7 +827,7 @@ class MainWP_System {
 
 	/**
 	 * method activation()
-	 * 
+	 *
 	 * Activate MainWP.
 	 */
 	public function activation() {
@@ -837,7 +837,7 @@ class MainWP_System {
 
 	/**
 	 * method deactivation()
-	 * 
+	 *
 	 * Deactivate MainWP.
 	 */
 	public function deactivation() {
@@ -846,7 +846,7 @@ class MainWP_System {
 
 	/**
 	 * method update()
-	 * 
+	 *
 	 * Update MainWP.
 	 */
 	public function update() {
@@ -855,9 +855,9 @@ class MainWP_System {
 
 	/**
 	 * Method is_single_user()
-	 * 
+	 *
 	 * Check if single user environment.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public function is_single_user() {
@@ -866,9 +866,9 @@ class MainWP_System {
 
 	/**
 	 * Method is_multi_user()
-	 * 
+	 *
 	 * Check if multi user environment.
-	 * 
+	 *
 	 * @return boolean trure|false.
 	 */
 	public function is_multi_user() {
@@ -877,7 +877,7 @@ class MainWP_System {
 
 	/**
 	 * Method get_plugin_slug()
-	 * 
+	 *
 	 * Get MainWP Plugin Slug.
 	 */
 	public function get_plugin_slug() {

@@ -55,7 +55,7 @@ class MainWP_Updates {
 
 	/**
 	 * Method init()
-	 * 
+	 *
 	 * Instantiate MainWP Updates Page.
 	 */
 	public static function init() {
@@ -112,12 +112,12 @@ class MainWP_Updates {
 
 	/**
 	 * method render_header()
-	 * 
-	 * Set the MainWP Update page page title and pass it off to 
+	 *
+	 * Set the MainWP Update page page title and pass it off to
 	 * method MainWP_UI::render_top_header()
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
-	 * 
+	 *
 	 * @return array $params Array containing the page title.
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -131,9 +131,9 @@ class MainWP_Updates {
 
 	/**
 	 * Method render_footer()
-	 * 
+	 *
 	 * Close the page container.
-	 * 
+	 *
 	 * @return html Container closing tag.
 	 */
 	public static function render_footer() {
@@ -968,9 +968,9 @@ class MainWP_Updates {
 
 	/**
 	 * Method render_twitter_notice()
-	 * 
+	 *
 	 * Render the twitter bragger message.
-	 * 
+	 *
 	 * @return html Twitter bragger html.
 	 */
 	public static function render_twitter_notice() {
@@ -1001,11 +1001,11 @@ class MainWP_Updates {
 
 	/**
 	 * Method render_http_checks()
-	 * 
-	 * Render the HTTP Check html content. 
-	 * 
-	 * @param mixed $websites Child Sites. 
-	 * 
+	 *
+	 * Render the HTTP Check html content.
+	 *
+	 * @param mixed $websites Child Sites.
+	 *
 	 * @return html HTTP Check content.
 	 */
 	public static function render_http_checks( $websites ) {
@@ -1139,9 +1139,9 @@ class MainWP_Updates {
 	/**
 	 * Method set_continue_update_html_selector()
 	 *
-	 * @param string $current_update current update string
+	 * @param string  $current_update current update string
 	 * @param boolean $slug Whether to update slug.
-	 * 
+	 *
 	 * @return string updatesoverview_continue_update_me or empty string.
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
@@ -1170,10 +1170,10 @@ class MainWP_Updates {
 
 	/**
 	 * Method render_updates_modal()
-	 * 
+	 *
 	 * Display the updates modal window during updates.
-	 * 
-	 * @return html Updates Modal Window. 
+	 *
+	 * @return html Updates Modal Window.
 	 */
 	public static function render_updates_modal() {
 		?>
@@ -1191,9 +1191,9 @@ class MainWP_Updates {
 
 	/**
 	 * Method mainwp_help_content()
-	 * 
+	 *
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
-	 * 
+	 *
 	 * @return html Help box content.
 	 */
 	public static function mainwp_help_content() {

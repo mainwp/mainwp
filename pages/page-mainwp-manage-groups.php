@@ -44,9 +44,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method get_group_list_content()
-	 * 
+	 *
 	 * Get group list contents.
-	 * 
+	 *
 	 * @return array $group Array of group data.
 	 */
 	public static function get_group_list_content() {
@@ -60,11 +60,11 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Metod create_group_item()
-	 * 
+	 *
 	 * Group Data Table Row.
-	 * 
-	 * @param array $group Array of group data. 
-	 * 
+	 *
+	 * @param array $group Array of group data.
+	 *
 	 * @return html Group data table Row.
 	 */
 	private static function create_group_item( $group ) {
@@ -98,9 +98,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method get_website_list_content()
-	 * 
+	 *
 	 * Get the Child Site list content.
-	 * 
+	 *
 	 * @return html Single Child Site Name & Checkbox.
 	 */
 	public static function get_website_list_content() {
@@ -119,9 +119,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method render_all_groups()
-	 * 
+	 *
 	 * Render MainWP Groups Table.
-	 * 
+	 *
 	 * @return html MainWP Groups Table.
 	 */
 	public static function render_all_groups() {
@@ -376,11 +376,11 @@ class MainWP_Manage_Groups {
 		<?php
 	}
 
-	/** 
+	/**
 	 * Method rename_group()
-	 * 
+	 *
 	 * Rename the selected group.
-	 * 
+	 *
 	 * @return result $group->name.
 	 */
 	public static function rename_group() {
@@ -405,9 +405,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method delete_group()
-	 * 
+	 *
 	 * Delete the selected group.
-	 * 
+	 *
 	 * @return result OK|ERROR
 	 */
 	public static function delete_group() {
@@ -427,13 +427,13 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method check_group_name()
-	 * 
+	 *
 	 * Check if group name already exists
 	 * if it does add a number to the end of it.
-	 * 
+	 *
 	 * @param mixed $groupName Given Group Name.
-	 * @param null $groupId Group ID.
-	 * 
+	 * @param null  $groupId Group ID.
+	 *
 	 * @return string $groupName Group name + count # if group has bn found.
 	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
@@ -464,9 +464,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method add_group()
-	 * 
+	 *
 	 * Add Group.
-	 * 
+	 *
 	 * @return do_action|die mainwp_added_new_group|Error =1.
 	 */
 	public static function add_group() {
@@ -483,9 +483,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method get_sites()
-	 * 
-	 * Get Child Sites by Group ID. 
-	 * 
+	 *
+	 * Get Child Sites by Group ID.
+	 *
 	 * @return mixed $websiteIds|ERROR Child Site ID or Error is returned.
 	 */
 	public static function get_sites() {
@@ -508,9 +508,9 @@ class MainWP_Manage_Groups {
 
 	/**
 	 * Method update_group()
-	 * 
+	 *
 	 * Update groups Sites.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function update_group() {

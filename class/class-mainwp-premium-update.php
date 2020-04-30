@@ -13,8 +13,8 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Premium Updates
- * 
- * Check for premium plugin updates. 
+ *
+ * Check for premium plugin updates.
  */
 class MainWP_Premium_Update {
 
@@ -31,12 +31,12 @@ class MainWP_Premium_Update {
 
 	/**
 	 * Method check_premium_updates()
-	 * 
+	 *
 	 * Check for Premium Plugin updates.
-	 * 
-	 * @param array $updates Array of updates. 
+	 *
+	 * @param array $updates Array of updates.
 	 * @param mixed $type Type of update. theme|plugin
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function check_premium_updates( $updates, $type ) {
@@ -111,12 +111,12 @@ class MainWP_Premium_Update {
 
 	/**
 	 * Method check_request_update_premium()
-	 * 
-	 * Check if any updates are on the premiums list. 
-	 * 
-	 * @param mixed $list List of updates. 
+	 *
+	 * Check if any updates are on the premiums list.
+	 *
+	 * @param mixed $list List of updates.
 	 * @param mixed $type Type of update. plugin|theme.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function check_request_update_premium( $list, $type ) {
@@ -167,13 +167,13 @@ class MainWP_Premium_Update {
 
 	/**
 	 * Method redirect_request_site()
-	 * 
+	 *
 	 * Redirect to requested Site.
-	 * 
-	 * @param mixed $website Child Site. 
+	 *
+	 * @param mixed $website Child Site.
 	 * @param mixed $where_url page to redirerct to.
-	 * 
-	 * @return respose $reponse http response. 
+	 *
+	 * @return respose $reponse http response.
 	 */
 	public static function redirect_request_site( $website, $where_url ) {
 
@@ -204,13 +204,13 @@ class MainWP_Premium_Update {
 
 	/**
 	 * Method request_premiums_update()
-	 * 
-	 * Request to update plugin or theme. 
-	 * 
+	 *
+	 * Request to update plugin or theme.
+	 *
 	 * @param mixed $website Child Site to update.
 	 * @param mixed $type Type of update, plugin|theme.
-	 * @param mixed $list list of plugins & themes installed. 
-	 * 
+	 * @param mixed $list list of plugins & themes installed.
+	 *
 	 * @return mixed null|true.
 	 */
 	public static function request_premiums_update( $website, $type, $list ) {
@@ -227,12 +227,12 @@ class MainWP_Premium_Update {
 
 	/**
 	 * Method try_to_detect_premiums_update()
-	 * 
+	 *
 	 * Try to detect if pugin and themes are premium.
-	 * 
-	 * @param mixed $website Child Site. 	
+	 *
+	 * @param mixed $website Child Site.
 	 * @param mixed $type Type of update, plugin|theme.
-	 * 
+	 *
 	 * @return mixed false|self::redirect_request_site()
 	 */
 	public static function try_to_detect_premiums_update( $website, $type ) {

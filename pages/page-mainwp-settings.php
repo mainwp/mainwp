@@ -950,7 +950,7 @@ class MainWP_Settings {
 		self::render_footer( 'MainWPTools' );
 	}
 
-	/** Export Child Sites and save as .csv file */
+	/** Export Child Sites and save as .csv file. */
 	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'export_sites' ) ) {
 
@@ -981,6 +981,15 @@ class MainWP_Settings {
 		}
 	}
 
+	/**
+	 * Method generate_random_string()
+	 * 
+	 * Generate a random string.
+	 * 
+	 * @param integer $length Leght of final string.
+	 * 
+	 * @return string $randomString Random String.
+	 */
 	public static function generate_random_string( $length = 8 ) {
 
 		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';

@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
  * MainWP Manage Sites Page
  */
 class MainWP_Manage_Sites {
-	
+
 	/**
 	 * Get Class Name
 	 *
@@ -23,7 +23,7 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * @static
-	 * @var undefined Sub pages. 
+	 * @var undefined Sub pages.
 	 */
 	public static $subPages;
 
@@ -34,7 +34,7 @@ class MainWP_Manage_Sites {
 	public static $page;
 
 	/**
-	 * @static 
+	 * @static
 	 * @var array $enable_widgets Widgets to enable.
 	 */
 	private static $enable_widgets = array(
@@ -55,8 +55,8 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method init()
-	 * 
-	 * Initiate Manage Sites. 
+	 *
+	 * Initiate Manage Sites.
 	 */
 	public static function init() {
 		/**
@@ -93,12 +93,12 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method on_screen_layout_columns()
-	 * 
+	 *
 	 * Columns to display.
-	 * 
+	 *
 	 * @param mixed $columns Columns to display.
 	 * @param mixed $screen Current page.
-	 * 
+	 *
 	 * @return array $columns
 	 */
 	public static function on_screen_layout_columns( $columns, $screen ) {
@@ -178,9 +178,9 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::init_subpages_menu( self::$subPages );
 	}
 
-	/** 
+	/**
 	 * Method on_load_page()
-	 * 
+	 *
 	 * Run on page load.
 	 */
 	public static function on_load_page() {
@@ -205,9 +205,9 @@ class MainWP_Manage_Sites {
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 	}
 
-	/** 
+	/**
 	 * Method on_load_sunpages()
-	 * 
+	 *
 	 * Run on subpage load.
 	 */
 	public static function on_load_subpages() {
@@ -218,9 +218,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_header()
-	 * 
-	 * Render page header. 
-	 * 
+	 *
+	 * Render page header.
+	 *
 	 * @param string $shownPage Current page slug.
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -229,9 +229,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_footer()
-	 * 
+	 *
 	 * Render page footer.
-	 * 
+	 *
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_footer( $shownPage ) {
@@ -240,11 +240,11 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method screen_options()
-	 * 
+	 *
 	 * Create Screen Options button.
-	 * 
+	 *
 	 * @param $input Screen Options Button HTML.
-	 * 
+	 *
 	 * @return html Screen Options Button.
 	 */
 	public static function screen_options( $input ) {
@@ -254,11 +254,11 @@ class MainWP_Manage_Sites {
 				</a>';
 	}
 
-	/** 
+	/**
 	 * Method render_screen_options()
-	 * 
+	 *
 	 * Render Screen Options Modal.
-	 * 
+	 *
 	 * @return html Screen Options modal window.
 	 */
 	public static function render_screen_options() {
@@ -345,7 +345,7 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method display_rows()
-	 * 
+	 *
 	 * Display table rows.
 	 */
 	public static function display_rows() {
@@ -358,9 +358,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_new_site()
-	 * 
+	 *
 	 * Render add new site page.
-	 * 
+	 *
 	 * @return html Add new site html.
 	 */
 	public static function render_new_site() {
@@ -591,7 +591,7 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_bulk_new_site()
-	 * 
+	 *
 	 * Render Import Sites - bulk new site modal.
 	 */
 	public static function render_bulk_new_site() {
@@ -656,7 +656,7 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method on_load_page_dashboard()
-	 * 
+	 *
 	 * Add individual meta boxes.
 	 */
 	public static function on_load_page_dashboard() { // phpcs:ignore -- not quite complex method.
@@ -759,9 +759,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_updates()
-	 * 
+	 *
 	 * Render updates.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_updates( $website ) {
@@ -773,9 +773,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_dashboard()
-	 * 
+	 *
 	 * Render Manage Sites Dashboard.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_dashboard( $website ) {
@@ -787,9 +787,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_backup_site()
-	 * 
-	 * Render Manage Sites Backups. 
-	 * 
+	 *
+	 * Render Manage Sites Backups.
+	 *
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_backup_site( $website ) {
@@ -801,9 +801,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_scan_site()
-	 * 
-	 * Render Security Scan. 
-	 * 
+	 *
+	 * Render Security Scan.
+	 *
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_scan_site( $website ) {
@@ -815,9 +815,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method show_backups()
-	 * 
+	 *
 	 * Render Backups.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
 	 */
 	public static function show_backups( &$website ) {
@@ -852,12 +852,12 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_all_sites()
-	 * 
-	 * Render manage sites content. 
-	 * 
+	 *
+	 * Render manage sites content.
+	 *
 	 * @param boolean $showDelete true|false Show delete option.
 	 * @param boolean $showAddNew true|false Show add new option.
-	 * 
+	 *
 	 * @return html Manage Sites Content.
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
@@ -923,7 +923,7 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_manage_sites()
-	 * 
+	 *
 	 * Render Manage Sites Page.
 	 */
 	public static function render_manage_sites() { // phpcs:ignore -- complex method.
@@ -1063,9 +1063,9 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method render_edit_site()
-	 * 
+	 *
 	 * Render edit site.
-	 * 
+	 *
 	 * @param mixed $websiteid Child Site ID.
 	 * @param mixed $updated Updated.
 	 */
@@ -1080,11 +1080,11 @@ class MainWP_Manage_Sites {
 
 	/**
 	 * Method on_edit_site()
-	 * 
+	 *
 	 * Render on edit.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return js Script to update site.
 	 */
 	public static function on_edit_site( $website ) {

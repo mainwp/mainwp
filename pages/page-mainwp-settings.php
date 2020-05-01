@@ -983,11 +983,11 @@ class MainWP_Settings {
 
 	/**
 	 * Method generate_random_string()
-	 * 
+	 *
 	 * Generate a random string.
-	 * 
+	 *
 	 * @param integer $length Lenght of final string.
-	 * 
+	 *
 	 * @return string $randomString Random String.
 	 */
 	public static function generate_random_string( $length = 8 ) {

@@ -53,7 +53,7 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method check_if_multisite()
-	 * 
+	 *
 	 * Check if WP environment is Mutisilte or not.
 	 *
 	 * @return boolean true|false.
@@ -66,7 +66,7 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method filesize_compare()
-	 * 
+	 *
 	 * Compare Filesize.
 	 *
 	 * @param mixed $value1
@@ -95,12 +95,12 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method curlssl_compare()
-	 * 
+	 *
 	 * Compare cURL SSL Version.
-	 * 
+	 *
 	 * @param mixed $value
-	 * @param null $operator
-	 * 
+	 * @param null  $operator
+	 *
 	 * @return mixed false|version
 	 */
 	public static function curlssl_compare( $value, $operator = null ) {
@@ -113,9 +113,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_file_system_method()
-	 * 
-	 * Get file system method. 
-	 * 
+	 *
+	 * Get file system method.
+	 *
 	 * @return string $fs File System Method.
 	 */
 	public static function get_file_system_method() {
@@ -126,9 +126,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_loaded_php_extensions()
-	 * 
+	 *
 	 * Get loaded PHP Extensions.
-	 * 
+	 *
 	 * @return string Comma separrated extention list.
 	 */
 	public static function get_loaded_php_extensions() {
@@ -139,9 +139,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_wordpress_memory_limit()
-	 * 
+	 *
 	 * Get the WP_MEMORY_LIMIT value.
-	 * 
+	 *
 	 * @return mixed WP_MEMORY_LIMIT WordPress Memmory Limit.
 	 */
 	public static function get_wordpress_memory_limit() {
@@ -150,9 +150,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_curl_version()
-	 * 
+	 *
 	 * Get current cURL Version.
-	 * 
+	 *
 	 * @return mixed $curlversion['version'] Currently installed cURL Version.
 	 */
 	public static function get_curl_version() {
@@ -163,9 +163,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_curl_ssl_version()
-	 * 
+	 *
 	 * Get current SSL Version installed.
-	 * 
+	 *
 	 * @return mixed $curlversion['ssl_version'] Currently installed SSL version.
 	 */
 	public static function get_curl_ssl_version() {
@@ -176,9 +176,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_wordpress_version()
-	 * 
+	 *
 	 * Get current WordPress Version
-	 * 
+	 *
 	 * @return mixed $wp_version Current installed WordPress version
 	 */
 	public static function get_wordpress_version() {
@@ -189,10 +189,10 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_ssl_support()
-	 * 
+	 *
 	 * Get SSL Support.
-	 * 
-	 * @return mixed Open SSL Extentions loaded. 
+	 *
+	 * @return mixed Open SSL Extentions loaded.
 	 */
 	public static function get_ssl_support() {
 		return extension_loaded( 'openssl' );
@@ -200,9 +200,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_ssl_warning()
-	 * 
+	 *
 	 * Get any SSL Warning Messages.
-	 * 
+	 *
 	 * @return string SSL Error message.
 	 */
 	public static function get_ssl_warning() {
@@ -221,9 +221,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method is_openssl_config_warning()
-	 * 
+	 *
 	 * Check if open ssl is configured correctly.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function is_openssl_config_warning() {
@@ -238,9 +238,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_curl_support()
-	 * 
+	 *
 	 * Get cURL Version.
-	 * 
+	 *
 	 * @return string cURL Version.
 	 */
 	public static function get_curl_support() {
@@ -249,9 +249,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 *  Method get_curl_timeout()
-	 * 
+	 *
 	 * Get cURL_Timeout value.
-	 * 
+	 *
 	 * @return string cURL_Timeout value.
 	 */
 	public static function get_curl_timeout() {
@@ -260,9 +260,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 *  Method get_php_version()
-	 * 
+	 *
 	 * Get PHP Version.
-	 * 
+	 *
 	 * @return string phpversion().
 	 */
 	public static function get_php_version() {
@@ -271,9 +271,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_max_execution_time()
-	 * 
+	 *
 	 * Get MAX_EXECUTION_TIME.
-	 * 
+	 *
 	 * @return string MAX_EXECUTION_TIME.
 	 */
 	public static function get_max_execution_time() {
@@ -282,9 +282,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_max_execution_time()
-	 * 
+	 *
 	 * Get MAX_INPUT_TIME.
-	 * 
+	 *
 	 * @return string MAX_EXECUTION_TIME.
 	 */
 	public static function get_max_input_time() {
@@ -293,9 +293,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_max_execution_time()
-	 * 
+	 *
 	 * Get MAX_UPLOAD_FILESIZE.
-	 * 
+	 *
 	 * @return string MAX_UPLOAD_FILESIZE.
 	 */
 	public static function get_upload_max_filesize() {
@@ -304,9 +304,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_max_execution_time()
-	 * 
+	 *
 	 * Get MAX_POST_SIZE.
-	 * 
+	 *
 	 * @return string MAX_POST_SIZE.
 	 */
 	public static function get_post_max_size() {
@@ -315,9 +315,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_mysql_version()
-	 * 
+	 *
 	 * Get MySql Version.
-	 * 
+	 *
 	 * @return string MySQL Version.
 	 */
 	public static function get_mysql_version() {
@@ -326,9 +326,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_memory_limit()
-	 * 
+	 *
 	 * Get PHP_MEMORY_LIMIT.
-	 * 
+	 *
 	 * @return string PHP_MEMORY_LIMIT.
 	 */
 	public static function get_php_memory_limit() {
@@ -337,11 +337,11 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_os()
-	 * 
+	 *
 	 * Get Host OS.
-	 * 
+	 *
 	 * @param boolean $return = false.
-	 * 
+	 *
 	 * @return mixed PHP_OS.
 	 */
 	public static function get_os( $return = false ) {
@@ -354,9 +354,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_architecture()
-	 * 
+	 *
 	 * Get PHP_INT_SIZE.
-	 * 
+	 *
 	 * @return string PHP_INT_SIZE * 8bit.
 	 */
 	public static function get_architecture() {
@@ -368,10 +368,10 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method memory_usage()
-	 * 
+	 *
 	 * Get currently used memory.
-	 * 
-	 * @return string $memory_usage Currently used memory. 
+	 *
+	 * @return string $memory_usage Currently used memory.
 	 */
 	public static function memory_usage() {
 		if ( function_exists( 'memory_get_usage' ) ) {
@@ -384,9 +384,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_output_buffer_size()
-	 * 
+	 *
 	 * Get putput buffer size.
-	 * 
+	 *
 	 * @return string Current output buffer Size.
 	 */
 	public static function get_output_buffer_size() {
@@ -395,9 +395,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_safe_mode()
-	 * 
+	 *
 	 * Get PHP Safe Mode.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function get_php_safe_mode() {
@@ -414,9 +414,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_sql_mode()
-	 * 
+	 *
 	 * Get SQL Mode.
-	 * 
+	 *
 	 * @return string $sql_mode Curret SQL Mode.
 	 */
 	public static function get_sql_mode() {
@@ -433,9 +433,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_allow_url_fopen()
-	 * 
+	 *
 	 * Check if PHP fopen is allowed.
-	 * 
+	 *
 	 * @return string $allow_url_fopen YES|NO.
 	 */
 	public static function get_php_allow_url_fopen() {
@@ -449,9 +449,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_exif()
-	 * 
+	 *
 	 * Check if PHP Exif is enabled.
-	 * 
+	 *
 	 * @return string $exif YES|NO.
 	 */
 	public static function get_php_exif() {
@@ -465,9 +465,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_iptc()
-	 * 
+	 *
 	 * Check if iptcparse is enabled.
-	 * 
+	 *
 	 * @return string $iptc YES|NO.
 	 */
 	public static function get_php_iptc() {
@@ -481,9 +481,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_php_xml()
-	 * 
+	 *
 	 * Check if PHP XML Parser is enabled.
-	 * 
+	 *
 	 * @return string $xml YES|NO.
 	 */
 	public static function get_php_xml() {
@@ -497,9 +497,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_gateway_interface()
-	 * 
-	 * Get server gateway interface. 
-	 * 
+	 *
+	 * Get server gateway interface.
+	 *
 	 * @return string GATEWAY_INTERFACE|EMPTYSTRING.
 	 */
 	public static function get_server_gateway_interface() {
@@ -508,9 +508,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method  get_server_ip()
-	 * 
+	 *
 	 * Get server IP address.
-	 * 
+	 *
 	 * @return string $_SERVER['SERVER_ADDR'].
 	 */
 	public static function get_server_ip() {
@@ -519,11 +519,11 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_name()
-	 * 
+	 *
 	 * Get server name.
-	 * 
+	 *
 	 * @param boolean $return = false.
-	 * 
+	 *
 	 * @return string $_SERVER['SERVER_NAME'].
 	 */
 	public static function get_server_name( $return = false ) {
@@ -536,11 +536,11 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_software()
-	 * 
-	 * Get server software. 
-	 * 
+	 *
+	 * Get server software.
+	 *
 	 * @param boolean $return = false.
-	 * 
+	 *
 	 * @return string $_SERVER['SERVER_SOFTWARE'].
 	 */
 	public static function get_server_software( $return = false ) {
@@ -553,11 +553,11 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method is_apache_server_software()
-	 * 
+	 *
 	 * Check if server software is apache.
-	 * 
+	 *
 	 * @param boolean $return = false.
-	 * 
+	 *
 	 * @return boolean True|false.
 	 */
 	public static function is_apache_server_software( $return = false ) {
@@ -567,9 +567,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_protocol()
-	 * 
+	 *
 	 * Get server protocol.
-	 * 
+	 *
 	 * @return string $_SERVER['SERVER_PROTOCOL'].
 	 */
 	public static function get_server_protocol() {
@@ -578,9 +578,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_request_time()
-	 * 
-	 * Get server request time. 
-	 * 
+	 *
+	 * Get server request time.
+	 *
 	 * @return string $_SERVER['REQUEST_TIME'].
 	 */
 	public static function get_server_request_time() {
@@ -590,9 +590,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_http_accept()
-	 * 
+	 *
 	 * Get server http accept.
-	 * 
+	 *
 	 * @return string $_SERVER['HTTP_ACCEPT'].
 	 */
 	public static function get_server_http_accept() {
@@ -601,9 +601,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_accept_charset()
-	 * 
+	 *
 	 * Get server accepted character set.
-	 * 
+	 *
 	 * @return string $_SERVER['HTTP_ACCEPT_CHARSET']|N/A.
 	 */
 	public static function get_server_accept_charset() {
@@ -616,9 +616,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_http_host()
-	 * 
+	 *
 	 * Get http host.
-	 * 
+	 *
 	 * @return string $_SERVER['HTTP_HOST'].
 	 */
 	public static function get_http_host() {
@@ -627,9 +627,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_complete_url()
-	 * 
+	 *
 	 * Get complete url.
-	 * 
+	 *
 	 * @return string $_SERVER['HTTP_REFERER'].
 	 */
 	public static function get_complete_url() {
@@ -638,9 +638,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_user_agent()
-	 * 
+	 *
 	 * Get user agent.
-	 * 
+	 *
 	 * @return string $_SERVER['HTTP_USER_AGENT'].
 	 */
 	public static function get_user_agent() {
@@ -649,9 +649,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_https()
-	 * 
+	 *
 	 * Check if https is enabled.
-	 * 
+	 *
 	 * @return string ON|OFF.
 	 */
 	public static function get_https() {
@@ -664,9 +664,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method server_self_connect()
-	 * 
-	 * Check server self connect. 
-	 * 
+	 *
+	 * Check server self connect.
+	 *
 	 * @return string $test_result.
 	 */
 	public static function server_self_connect() {
@@ -701,9 +701,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_remote_address()
-	 * 
-	 * Get server remote address. 
-	 * 
+	 *
+	 * Get server remote address.
+	 *
 	 * @return string $_SERVER['REMOTE_ADDR'].
 	 */
 	public static function get_remote_address() {
@@ -712,9 +712,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_remote_host()
-	 * 
+	 *
 	 * Get server remote host.
-	 * 
+	 *
 	 * @return string $_SERVER['REMOTE_HOST']|N/A.
 	 */
 	public static function get_remote_host() {
@@ -727,9 +727,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_remote_port()
-	 * 
+	 *
 	 * Get server remote port.
-	 * 
+	 *
 	 * @return string $_SERVER['REMOTE_PORT'].
 	 */
 	public static function get_remote_port() {
@@ -738,9 +738,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_script_file_name()
-	 * 
+	 *
 	 * Get server script filename.
-	 * 
+	 *
 	 * @return string $_SERVER['SCRIPT_FILENAME'].
 	 */
 	public static function get_script_file_name() {
@@ -749,9 +749,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_server_port()
-	 * 
+	 *
 	 * Get server port.
-	 * 
+	 *
 	 * @return string $_SERVER['SERVER_PORT'].
 	 */
 	public static function get_server_port() {
@@ -760,9 +760,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_current_page_uri()
-	 * 
+	 *
 	 * Get current page URI.
-	 * 
+	 *
 	 * @return string $_SERVER['REQUEST_URI'].
 	 */
 	public static function get_current_page_uri() {
@@ -771,9 +771,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method get_wp_root()
-	 * 
+	 *
 	 * Get WP Root Path.
-	 * 
+	 *
 	 * @return string ABSPATH.
 	 */
 	public static function get_wp_root() {
@@ -782,9 +782,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method time_compare()
-	 * 
+	 *
 	 * Compair time.
-	 * 
+	 *
 	 * @param mixed $a
 	 * @param mixed $b
 	 */
@@ -799,13 +799,13 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method last_lines()
-	 * 
+	 *
 	 * Get line count.
-	 * 
-	 * @param mixed $path
-	 * @param mixed $line_count
+	 *
+	 * @param mixed   $path
+	 * @param mixed   $line_count
 	 * @param integer $block_size
-	 * 
+	 *
 	 * @return string Line Count.
 	 */
 	public static function last_lines( $path, $line_count, $block_size = 512 ) {
@@ -849,9 +849,9 @@ class MainWP_Server_Information_Handler {
 
 	/**
 	 * Method mainwp_options()
-	 * 
-	 * Get MainWP Set Options. 
-	 * 
+	 *
+	 * Get MainWP Set Options.
+	 *
 	 * @return array $options_value MainWP Options array.
 	 */
 	public static function mainwp_options() { // phpcs:ignore -- not quite complex function.

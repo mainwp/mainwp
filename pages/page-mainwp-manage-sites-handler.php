@@ -19,7 +19,7 @@ class MainWP_Manage_Sites_Handler {
 	/**
 	 * Method check_site()
 	 *
-	 * Check to add site	 
+	 * Check to add site
 	 *
 	 * @return mixed send json encode data
 	 */

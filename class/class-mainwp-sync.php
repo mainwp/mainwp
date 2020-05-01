@@ -360,7 +360,7 @@ class MainWP_Sync {
 
 		return ( ! $error );
 	}
-		
+
 	/**
 	 * Method sync_site_icon()
 	 *

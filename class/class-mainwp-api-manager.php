@@ -17,7 +17,6 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Api_Manager {
 
-
 	/**
 	 * @var string Upgrade Url
 	 */

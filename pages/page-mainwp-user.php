@@ -2,7 +2,7 @@
 /**
  * MainWP Users Page
  *
- * This page is used to Manage Users on child sites
+ * This page is used to Manage Users on child sites.
  *
  * @package MainWP/User
  */
@@ -12,15 +12,30 @@ namespace MainWP\Dashboard;
 /**
  * MainWP User Page
  *
- * @uses MainWP_Bulk_Add
+ * @uses page-mainwp-bulk-add::MainWP_Bulk_Add()
  */
 class MainWP_User {
+	
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @static
+	 * @var undefined Sub pages to display.
+	 */
 	public static $subPages;
 
+	/**
+	 * Method init()
+	 * 
+	 * Initiate users page.
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the User page header via the 'mainwp-pageheader-user' action.
@@ -49,6 +64,11 @@ class MainWP_User {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/**
+	 * Method init_menu()
+	 * 
+	 * Initiate menu.
+	 */
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -106,6 +126,13 @@ class MainWP_User {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/**
+	 * Method init_subpages_menu()
+	 * 
+	 * Initiate sub pages menue.
+	 * 
+	 * @return html Sub Pages Menu.
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Users" class="mainwp-submenu-wrapper">
@@ -142,6 +169,14 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * Method init_left_menu()
+	 * 
+	 * Initiate Users Menu.
+	 * 
+	 * @param array $subPages Sub pages array.
+	 * @param integer $level What level to display on.
+	 */
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -197,6 +232,10 @@ class MainWP_User {
 	}
 
 	/**
+	 * Method render_header()
+	 * 
+	 * Render Users page header. 
+	 * 
 	 * @param string $shownPage The page slug shown at this moment
 	 */
 	public static function render_header( $shownPage = '' ) {
@@ -257,12 +296,23 @@ class MainWP_User {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_footer()
+	 * 
+	 * Render Users page footer. Closes the page container.
+	 * 
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage = '' ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method render()
+	 * 
+	 * Render manage users dashboard.
+	 * 
+	 * @return html Users page.
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage users', 'mainwp' ) );
@@ -377,6 +427,13 @@ class MainWP_User {
 		self::render_footer( '' );
 	}
 
+	/**
+	 * Method render_search_options()
+	 * 
+	 * Render User page search.
+	 * 
+	 * @return html User page Search.
+	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
@@ -409,6 +466,13 @@ class MainWP_User {
 		}
 	}
 
+	/**
+	 * Method render_update_users()
+	 * 
+	 * Render Edit Users Modal window.
+	 * 
+	 * @return html Edit user modal.
+	 */
 	public static function render_update_users() {
 
 		$editable_roles = array(
@@ -542,6 +606,19 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * Method render_table()
+	 * 
+	 * Render Users Table.
+	 * 
+	 * @param boolean $cached true|false Cached or not
+	 * @param string $role Current user role.
+	 * @param string $groups Current user groups
+	 * @param string $sites Current Child Sites the user is on.
+	 * @param null $search Search field.
+	 * 
+	 * @return html User table.
+	 */
 	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
 		?>
 		<table id="mainwp-users-table" class="ui tablet stackable single line table" style="width:100%">
@@ -592,7 +669,16 @@ class MainWP_User {
 		<?php
 	}
 
-
+	/**
+	 * Method render_table_body()
+	 * 
+	 * Render the table body.
+	 * 
+	 * @param string $role User Role.
+	 * @param string $groups Usr Group.
+	 * @param string $sites Users Sites.
+	 * @param null $search Search field.
+	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) { // phpcs:ignore -- not quite complex function.
 		MainWP_Cache::init_cache( 'Users' );
 
@@ -782,6 +868,13 @@ class MainWP_User {
 		}
 	}
 
+	/**
+	 * Method render_cache_not_found()
+	 * 
+	 * Render when cache is not found.
+	 * 
+	 * @return html Html to display when Searrch field is empty.
+	 */
 	public static function render_cache_not_found() {
 		ob_start();
 		?>
@@ -792,6 +885,13 @@ class MainWP_User {
 		MainWP_Cache::add_body( 'Users', $newOutput );
 	}
 
+	/**
+	 * Method get_role()
+	 * 
+	 * Get the selected users current role.
+	 * 
+	 * @param string $role Selected Users Role.
+	 */
 	private static function get_role( $role ) {
 		if ( is_array( $role ) ) {
 			$allowed_roles = array( 'subscriber', 'administrator', 'editor', 'author', 'contributor' );
@@ -811,7 +911,17 @@ class MainWP_User {
 
 		return ucfirst( $role );
 	}
-
+	
+	/**
+	 * Method users_search_handler_renderer()
+	 * 
+	 * Render Search results. 
+	 * 
+	 * @param array $users Users array.
+	 * @param array $website Child Sites array.
+	 * 
+	 * @return html Search results table.
+	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
 
@@ -859,6 +969,15 @@ class MainWP_User {
 		return $return;
 	}
 
+	/**
+	 * Method user_search_handler()
+	 * 
+	 * Handle user search.
+	 * 
+	 * @param mixed $data Search data.
+	 * @param mixed $website Child Site 
+	 * @param mixed $output Output to pass to self::users_search_handler_renderer()
+	 */
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -871,27 +990,56 @@ class MainWP_User {
 		}
 	}
 
+	/** 
+	 * Method delete()
+	 * 
+	 * Delete user.
+	 */
 	public static function delete() {
 		self::action( 'delete' );
 		die( wp_json_encode( array( 'result' => __( 'User has been deleted', 'mainwp' ) ) ) );
 	}
-
+	
+	/** 
+	 * Method edit()
+	 * 
+	 * Edit user.
+	 */
 	public static function edit() {
 		$information = self::action( 'edit' );
 		wp_send_json( $information );
 	}
 
+	/** 
+	 * Method update_user()
+	 * 
+	 * Update user.
+	 */
 	public static function update_user() {
 		self::action( 'update_user' );
 		die( wp_json_encode( array( 'result' => __( 'User has been updated', 'mainwp' ) ) ) );
 	}
-
+	
+	/** 
+	 * Method update_password()
+	 * 
+	 * Update users password.
+	 */
 	public static function update_password() {
 		self::action( 'update_password' );
 		die( wp_json_encode( array( 'result' => __( 'User password has been updated', 'mainwp' ) ) ) );
 	}
 
-
+	/**
+	 * Method action()
+	 * 
+	 * User action. 
+	 * 
+	 * @param mixed $pAction Action to perform delete|update_user|update_password
+	 * @param string $extra Additional Roles to add if any.
+	 * 
+	 * @return mixed $information User update info that is returned.
+	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- not quite complex function.
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
@@ -976,6 +1124,13 @@ class MainWP_User {
 		return $information;
 	}
 
+	/**
+	 * Method render_bulk_add()
+	 * 
+	 * Render Bulk Add Users form.
+	 * 
+	 * @return html bulk add users form.
+	 */
 	public static function render_bulk_add() {
 		self::render_header( 'Add' );
 		?>
@@ -1105,6 +1260,13 @@ class MainWP_User {
 		self::render_footer( 'Add' );
 	}
 
+	/**
+	 * Method render_bulk_import_users()
+	 * 
+	 * Render Bulk Import Users form.
+	 * 
+	 * @return html bulk Import users form.
+	 */
 	public static function render_bulk_import_users() {
 		if ( isset( $_FILES['import_user_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			self::render_bulk_upload();
@@ -1122,6 +1284,11 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
+	/**
+	 * Method render_import_users()
+	 * 
+	 * Render Import Users page.
+	 */
 	public static function render_import_users() {
 		?>
 		<div class="ui segment" id="mainwp-import-sites">
@@ -1153,7 +1320,11 @@ class MainWP_User {
 		<?php
 	}
 
-
+	/**
+	 * Method do_bulk_add()
+	 * 
+	 * Bulk User addition $_POST Handler.
+	 */
 	public static function do_buk_add() { // phpcs:ignore -- not quite complex function.
 		$errors      = array();
 		$errorFields = array();
@@ -1303,6 +1474,11 @@ class MainWP_User {
 		}
 	}
 
+	/**
+	 * Method render_twitter_notice()
+	 * 
+	 * Render twitter bragger notice.
+	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$twitters = MainWP_Twitter::get_twitter_notice( 'create_new_user' );
@@ -1321,6 +1497,16 @@ class MainWP_User {
 		}
 	}
 
+	/**
+	 * Method render_bulk_add_modal()
+	 * 
+	 * Render Bulk User addition Modal window.
+	 * 
+	 * @param mixed $dbwebsites Child sites list.
+	 * @param mixed $output Modal window content.
+	 * 
+	 * @return html New user Modal Window.
+	 */
 	public static function render_bulk_add_modal( $dbwebsites, $output ) {
 		?>
 		<div id="mainwp-creating-new-user-modal" class="ui modal">
@@ -1342,6 +1528,13 @@ class MainWP_User {
 		<?php
 	}
 
+	/**
+	 * Method render_bulk_upload()
+	 * 
+	 * Render Import Users Modal window.
+	 * 
+	 * @return html Import Users Modal Window.
+	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
 
@@ -1456,7 +1649,11 @@ class MainWP_User {
 		self::render_footer( 'Import' );
 	}
 
-
+	/**
+	 * Method do_import()
+	 * 
+	 * User Import $_POST handler.
+	 */
 	public static function do_import() { // phpcs:ignore -- not quire complex method.
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();
@@ -1590,10 +1787,11 @@ class MainWP_User {
 		die( wp_json_encode( $ret ) );
 	}
 
-	/*
-	 * Hook the section help content to the Help Sidebar element
+	/**
+	 * Method mainwp_help_content()
+     *
+	 * Hook the section help content to the Help Sidebar element.
 	 */
-
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
 			?>

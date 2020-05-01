@@ -979,7 +979,7 @@ class MainWP_Updates_Overview {
 						while ( false !== ( $file = readdir( $dh ) ) ) {
 							if ( '.' != $file && '..' != $file ) {
 								$theFile = $dir . $file;
-								if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+								if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
 									$lastBackup = filemtime( $theFile );
 								}
 							}

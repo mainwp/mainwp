@@ -150,7 +150,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			if ( isset( $_POST['siteId'] ) ) {
 				$siteId = intval( $_POST['siteId'] );
 			}
-			$result = MainWP_Utility::sync_site_icon( $siteId );
+			$result = MainWP_Sync::sync_site_icon( $siteId );
 			wp_send_json( $result );
 		} else {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );

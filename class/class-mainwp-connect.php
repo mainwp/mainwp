@@ -1610,16 +1610,8 @@ class MainWP_Connect {
 			}
 		}
 	}
-
-	public static function get_file_content( $url ) {
-		$data = self::file_get_contents_curl( $url );
-		if ( empty( $data ) ) {
-			return false;
-		}
-		return $data;
-	}
-
-	protected static function file_get_contents_curl( $url ) {
+	
+	protected static function get_file_content( $url ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
 

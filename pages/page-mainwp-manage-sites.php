@@ -834,9 +834,9 @@ class MainWP_Manage_Sites {
 				while ( false !== ( $file = readdir( $dh ) ) ) {
 					if ( '.' !== $file && '..' !== $file ) {
 						$theFile = $dir . $file;
-						if ( MainWP_Utility::is_sql_file( $file ) ) {
+						if ( MainWP_Backup_Handler::is_sql_file( $file ) ) {
 							$dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-						} elseif ( MainWP_Utility::is_archive( $file ) ) {
+						} elseif ( MainWP_Backup_Handler::is_archive( $file ) ) {
 							$fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
 						}
 					}

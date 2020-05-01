@@ -307,7 +307,7 @@ class MainWP_Manage_Backups_Handler {
 			try {
 				$subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
-				$backupResult = MainWP_Manage_Sites_Handler::backup_site( $siteid, $task, $subfolder );
+				$backupResult = MainWP_Backup_Handler::backup_site( $siteid, $task, $subfolder );
 
 				if ( false === $backupResult ) {
 					continue;
@@ -431,7 +431,7 @@ class MainWP_Manage_Backups_Handler {
 			$archiveFormat                  = $backupTask->archiveFormat;
 		}
 
-		return MainWP_Manage_Sites_Handler::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
+		return MainWP_Backup_Handler::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 	}
 
 	/**

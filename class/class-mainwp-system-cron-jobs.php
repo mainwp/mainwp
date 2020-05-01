@@ -561,7 +561,7 @@ class MainWP_System_Cron_Jobs {
 					$updatescheckSitesIcon = array();
 				}
 				if ( ! in_array( $website->id, $updatescheckSitesIcon ) ) {
-					MainWP_Utility::sync_site_icon( $website->id );
+					MainWP_Sync::sync_site_icon( $website->id );
 					$updatescheckSitesIcon[] = $website->id;
 					MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
 				}
@@ -682,7 +682,7 @@ class MainWP_System_Cron_Jobs {
 							while ( ( $file = readdir( $dh ) ) !== false ) {
 								if ( '.' !== $file && '..' !== $file ) {
 									$theFile = $dir . $file;
-									if ( MainWP_Utility::is_archive( $file ) && ! MainWP_Utility::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
+									if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
 										$lastBackup = $wp_filesystem->mtime( $theFile );
 									}
 								}
@@ -704,8 +704,8 @@ class MainWP_System_Cron_Jobs {
 						}
 
 						try {
-							$result = MainWP_Manage_Sites_Handler::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-							MainWP_Manage_Sites_Handler::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
+							$result = MainWP_Backup_Handler::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
+							MainWP_Backup_Handler::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
 							$sitesCheckCompleted[ $siteId ] = true;
 							MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
 						} catch ( \Exception $e ) {

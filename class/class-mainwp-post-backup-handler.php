@@ -90,7 +90,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			$ret = array( 'result' => MainWP_Manage_Sites_Handler::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) );
+			$ret = array( 'result' => MainWP_Backup_Handler::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) );
 			wp_send_json( $ret );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -127,7 +127,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 			$excludedFolder = implode( ',', $excludedFolder );
 
-			$result = MainWP_Manage_Sites_Handler::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 === $_POST['maximumFileDescriptorsOverride'] ), ( 1 === $_POST['maximumFileDescriptorsAuto'] ), ( isset( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( 1 === $_POST['append'] ) ) );
+			$result = MainWP_Backup_Handler::backup( $_POST['site_id'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $excludedFolder, $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $_POST['filename'], isset( $_POST['fileNameUID'] ) ? $_POST['fileNameUID'] : '', $_POST['archiveFormat'], ( isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 === $_POST['maximumFileDescriptorsOverride'] ), ( 1 === $_POST['maximumFileDescriptorsAuto'] ), ( isset( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : '' ), ( isset( $_POST['loadFilesBeforeZip'] ) ? $_POST['loadFilesBeforeZip'] : '' ), $_POST['pid'], ( isset( $_POST['append'] ) && ( 1 === $_POST['append'] ) ) );
 			wp_send_json( array( 'result' => $result ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
@@ -158,7 +158,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			wp_send_json( MainWP_Manage_Sites_Handler::backup_check_pid( $_POST['site_id'], $_POST['pid'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'] ) );
+			wp_send_json( MainWP_Backup_Handler::backup_check_pid( $_POST['site_id'], $_POST['pid'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'] ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -188,7 +188,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			die( wp_json_encode( array( 'result' => MainWP_Manage_Sites_Handler::backup_download_file( $_POST['site_id'], $_POST['type'], $_POST['url'], $_POST['local'] ) ) ) );
+			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_download_file( $_POST['site_id'], $_POST['type'], $_POST['url'], $_POST['local'] ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -218,7 +218,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( __( 'Invalid request!', 'mainwp' ) );
 			}
 
-			die( wp_json_encode( array( 'result' => MainWP_Manage_Sites_Handler::backup_delete_file( $_POST['site_id'], $_POST['file'] ) ) ) );
+			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $_POST['site_id'], $_POST['file'] ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(

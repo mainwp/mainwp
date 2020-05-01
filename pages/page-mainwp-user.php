@@ -1325,7 +1325,7 @@ class MainWP_User {
 	 *
 	 * Bulk User addition $_POST Handler.
 	 */
-	public static function do_buk_add() { // phpcs:ignore -- not quite complex function.
+	public static function do_bulk_add() { // phpcs:ignore -- not quite complex function.
 		$errors      = array();
 		$errorFields = array();
 

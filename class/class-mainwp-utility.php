@@ -125,7 +125,7 @@ class MainWP_Utility {
 	 *
 	 * @return boolean True|False.
 	 */
-	private static function is_domain_valid( $url ) {
+	public static function is_domain_valid( $url ) {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
 
@@ -524,17 +524,6 @@ class MainWP_Utility {
 		return $success;
 	}
 
-	public static function get_file_parameter( &$website ) {
-		if ( ! isset( $website->version ) || empty( $website->version ) ) {
-			return 'file';
-		}
-		if ( 0 > version_compare( '0.29.13', $website->version ) ) {
-			return 'f';
-		}
-
-		return 'file';
-	}
-
 	public static function remove_preslash_spaces( $text ) {
 		while ( stristr( $text, ' /' ) ) {
 			$text = str_replace( ' /', '/', $text );
@@ -669,35 +658,6 @@ class MainWP_Utility {
 		if ( isset( $status[ $notice_id ] ) ) {
 			return false;
 		}
-		return true;
-	}
-
-	public static function reset_user_cookie( $what, $value = '' ) {
-		global $current_user;
-		$user_id = $current_user->ID;
-		if ( $user_id ) {
-			$reset_cookies = get_option( 'mainwp_reset_user_cookies' );
-			if ( ! is_array( $reset_cookies ) ) {
-				$reset_cookies = array();
-			}
-
-			if ( ! isset( $reset_cookies[ $user_id ] ) || ! isset( $reset_cookies[ $user_id ][ $what ] ) ) {
-				$reset_cookies[ $user_id ][ $what ] = 1;
-				self::update_option( 'mainwp_reset_user_cookies', $reset_cookies );
-				update_user_option( $user_id, 'mainwp_saved_user_cookies', array() );
-
-				return false;
-			}
-
-			$user_cookies = get_user_option( 'mainwp_saved_user_cookies' );
-			if ( ! is_array( $user_cookies ) ) {
-				$user_cookies = array();
-			}
-			if ( ! isset( $user_cookies[ $what ] ) ) {
-				return false;
-			}
-		}
-
 		return true;
 	}
 

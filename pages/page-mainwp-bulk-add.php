@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  *
  * @used-by MainWP_Page::BulkAddPage
  * @used-by MainWP_Post::BulkAddPost
- * @used-by MainWP_User::do_buk_add
+ * @used-by MainWP_User::do_bulk_add
  * @used-by MainWP_User::do_import
  * @used-by MainWP_Bulk_Update_Admin_Passwords::BulkAddUser
  */

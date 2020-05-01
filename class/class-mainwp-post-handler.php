@@ -411,27 +411,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * not used
-	 */
-	public function mainwp_reset_usercookies() {
-		$this->secure_request();
-
-		global $current_user;
-		$user_id = $current_user->ID;
-		if ( $user_id && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
-			$user_cookies = get_user_option( 'mainwp_saved_user_cookies' );
-			if ( ! is_array( $user_cookies ) ) {
-				$user_cookies = array();
-			}
-			if ( ! isset( $user_cookies[ $_POST['what'] ] ) ) {
-				$user_cookies[ $_POST['what'] ] = 1;
-				update_user_option( $user_id, 'mainwp_saved_user_cookies', $user_cookies );
-			}
-		}
-		die( 1 );
-	}
-
-	/**
 	 * Page: SecurityIssues
 	 */
 	public function mainwp_security_issues_request() {
@@ -529,7 +508,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( ! $this->check_security( 'mainwp_bulkadduser' ) ) {
 			die( 'ERROR ' . wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		MainWP_User::do_buk_add();
+		MainWP_User::do_bulk_add();
 		die();
 	}
 

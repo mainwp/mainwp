@@ -117,7 +117,7 @@ class MainWP_Site_Open {
 			$url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
 			$url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-			$postdata         = MainWP_Connect::get_get_data_authed( $website, $file, MainWP_Utility::get_file_parameter( $website ), true );
+			$postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true );
 			$postdata['size'] = $size;
 			?>
 			<form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">

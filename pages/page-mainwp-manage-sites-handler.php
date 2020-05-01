@@ -163,7 +163,7 @@ class MainWP_Manage_Sites_Handler {
 					'file_descriptors'      => $maximumFileDescriptors,
 					'loadFilesBeforeZip'    => $loadFilesBeforeZip,
 					'pid'                   => $pid,
-					MainWP_Utility::get_file_parameter( $website ) => $file,
+					'f'						=> $file,
 				);
 
 				MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
@@ -227,7 +227,7 @@ class MainWP_Manage_Sites_Handler {
 									'loadFilesBeforeZip' => $loadFilesBeforeZip,
 									'pid'                => $backupTaskProgress->pid,
 									'append'             => '1',
-									MainWP_Utility::get_file_parameter( $website ) => $temp['file'],
+									'f'					=> $temp['file'],
 								),
 								false,
 								false,
@@ -761,7 +761,7 @@ class MainWP_Manage_Sites_Handler {
 			'file_descriptors_auto'                        => $maximumFileDescriptorsAuto,
 			'file_descriptors'                             => $maximumFileDescriptors,
 			'loadFilesBeforeZip'                           => $loadFilesBeforeZip,
-			MainWP_Utility::get_file_parameter( $website ) => $file,
+			'f'												=> $file,
 			'fileUID'                                      => $pFileNameUID,
 			'pid'                                          => $pid,
 			'append'                                       => ( $append ? 1 : 0 ),

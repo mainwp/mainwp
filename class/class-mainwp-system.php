@@ -82,9 +82,6 @@ class MainWP_System {
 
 			if ( empty( $currentVersion ) ) {
 				MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
-			} elseif ( version_compare( $currentVersion, $this->current_version, '<' ) ) {
-				update_option( 'mainwp_reset_user_tips', array() );
-				MainWP_Utility::update_option( 'mainwp_reset_user_cookies', array() );
 			} else {
 				delete_option( 'mainwp_getting_started' );
 			}
@@ -831,7 +828,7 @@ class MainWP_System {
 	 * Activate MainWP.
 	 */
 	public function activation() {
-		MainWP_DB::instance()->install();
+		MainWP_Install::instance()->install();
 		MainWP_Utility::update_option( 'mainwp_activated', 'yes' );
 	}
 
@@ -850,7 +847,7 @@ class MainWP_System {
 	 * Update MainWP.
 	 */
 	public function update() {
-		MainWP_DB::instance()->install();
+		MainWP_Install::instance()->install();
 	}
 
 	/**

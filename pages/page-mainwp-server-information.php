@@ -1,26 +1,42 @@
 <?php
 /**
- * MainWP Server Information Page
+ * MainWP Server Information Page.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Server Information Page
+ * MainWP Server Information Page.
  */
 class MainWP_Server_Information {
 
 	const WARNING = 1;
 	const ERROR   = 2;
 
+	/**
+	 * @static
+	 * @var $subPages Server Information sub pages.
+	 */
 	public static $subPages;
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method init_menu()
+	 *
+	 * Initiate Server Informaion subPage menu.
+	 *
+	 * @return html Server Information subPage menu html.
+	 */
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -101,7 +117,9 @@ class MainWP_Server_Information {
 				)
 			);
 		}
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.1', 'mainwp_getsubpages_server' );  // @deprecated Use 'mainwp_getsubpages_server' instead.
+
+		/** @deprecated Use 'mainwp_getsubpages_server' instead. */
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.1', 'mainwp_getsubpages_server' );
 		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -115,6 +133,13 @@ class MainWP_Server_Information {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Render Sub Pages Menu.
+	 *
+	 * @return html Subpages Menu.
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-ServerInformation" class="mainwp-submenu-wrapper">
@@ -160,6 +185,13 @@ class MainWP_Server_Information {
 		<?php
 	}
 
+	/**
+	 * Method init_left_menu()
+	 *
+	 * Initiate Server Information left menu.
+	 *
+	 * @param array $subPages Array of subpages.
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -228,6 +260,15 @@ class MainWP_Server_Information {
 		}
 	}
 
+	/**
+	 * Method render_header()
+	 *
+	 * Render Server Information header.
+	 *
+	 * @param string $shownPage Current page.
+	 *
+	 * @return html Server Information header html.
+	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
 				'title' => __( 'Server Information', 'mainwp' ),
@@ -281,10 +322,24 @@ class MainWP_Server_Information {
 			echo '<div class="ui segment">';
 	}
 
+	/**
+	 * Method render_footer()
+	 *
+	 * @param string $shownPage Page that is shown.
+	 *
+	 * @return html Page closing tag.
+	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Render Server Information page.
+	 *
+	 * @return html Server Information html.
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'server information', 'mainwp' );
@@ -556,6 +611,13 @@ class MainWP_Server_Information {
 		self::render_footer( '' );
 	}
 
+	/**
+	 * Method render_quick_setup_system_check()
+	 *
+	 * Render MainWP system requirements check.
+	 *
+	 * @return html  MainWP system requirements check html.
+	 */
 	public static function render_quick_setup_system_check() {
 		?>
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
@@ -579,10 +641,13 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	/*
-	 * Compare the detected MainWP Dashboard version agains the verion in WP.org
+	/**
+	 * Method get_mainwp_version_check()
+	 *
+	 * Compare the detected MainWP Dashboard version agains the verion in WP.org.
+	 *
+	 * @return mixed Pass|self::get_warning_html().
 	 */
-
 	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
 		$latest  = MainWP_Server_Information_Handler::get_mainwp_version();
@@ -593,10 +658,13 @@ class MainWP_Server_Information {
 		}
 	}
 
-	/*
+	/**
+	 * Method render_cron()
+	 *
 	 * Render the Cron Schedule page
+	 *
+	 * @return html Cron Schedual Page html.
 	 */
-
 	public static function render_cron() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -663,9 +731,12 @@ class MainWP_Server_Information {
 	}
 
 	/**
+	 * Method check_directory_mainwp_directory()
+	 *
 	 * Check if the ../wp-content/uploads/mainwp/ directory is writable
+	 *
+	 * @return boolean true|false.
 	 */
-
 	public static function check_directory_mainwp_directory() {
 		$dirs = MainWP_Utility::get_mainwp_dir();
 		$path = $dirs[0];
@@ -692,7 +763,21 @@ class MainWP_Server_Information {
 	}
 
 	/**
+	 * Method
 	 * Print the directory check row.
+	 */
+	/**
+	 * Method render_directory_row()
+	 *
+	 * Render the directory check row.
+	 *
+	 * @param mixed $pName path name
+	 * @param mixed $pCheck Path Check.
+	 * @param mixed $pResult Path result.
+	 * @param mixed $pPassed Rath Passed
+	 * @param int   $errorType Global variable self::WARNING = 1.
+	 *
+	 * @return mixed html|True.
 	 */
 	public static function render_directory_row( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
 		?>
@@ -706,6 +791,23 @@ class MainWP_Server_Information {
 		return true;
 	}
 
+	/**
+	 * Method render_row()
+	 *
+	 * Render Row.
+	 *
+	 * @param mixed  $pConfig Config Path.
+	 * @param mixed  $pCompare Compair Path.
+	 * @param mixed  $pVersion
+	 * @param mixed  $pGetter
+	 * @param string $pExtraText
+	 * @param null   $pExtraCompare
+	 * @param null   $pExtraVersion
+	 * @param null   $whatType curlSSL Type.
+	 * @param int    $errorType Global variable self::WARNING = 1.
+	 *
+	 * @return html Row html.
+	 */
 	public static function render_row( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $pGetter ) );
 		?>
@@ -726,6 +828,23 @@ class MainWP_Server_Information {
 		<?php
 	}
 
+	/**
+	 * Method render_row_with_description()
+	 *
+	 * Render row with description.
+	 *
+	 * @param mixed     $pConfig
+	 * @param mixed     $pCompare
+	 * @param mixed     $pVersion
+	 * @param mixed     $pGetter
+	 * @param string    $pExtraText
+	 * @param null      $pExtraCompare
+	 * @param null      $pExtraVersion
+	 * @param null      $whatType
+	 * @param undefined $errorType
+	 *
+	 * @return html Row with description html.
+	 */
 	public static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( self::get_class_name(), $pGetter ) );
 		?>
@@ -746,6 +865,13 @@ class MainWP_Server_Information {
 		<?php
 	}
 
+	/**
+	 * Method get_file_system_method_check()
+	 *
+	 * Check if file system method is direct.
+	 *
+	 * @return mixed html|self::get_warning_html().
+	 */
 	public static function get_file_system_method_check() {
 		$fsmethod = MainWP_Server_Information_Handler::get_file_system_method();
 		if ( 'direct' === $fsmethod ) {
@@ -755,7 +881,11 @@ class MainWP_Server_Information {
 		}
 	}
 
-	/*
+	/**
+	 * Method render_error_log_page()
+	 *
+	 * Render Error Log page.
+	 *
 	 * Plugin Name: Error Log Dashboard Widget
 	 * Plugin URI: http://wordpress.org/extend/plugins/error-log-dashboard-widget/
 	 * Description: Robust zero-configuration and low-memory way to keep an eye on error log.
@@ -766,7 +896,6 @@ class MainWP_Server_Information {
 
 	 * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
 	 */
-
 	public static function render_error_log_page() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -792,6 +921,13 @@ class MainWP_Server_Information {
 		self::render_footer( 'ErrorLog' );
 	}
 
+	/**
+	 * Method render_error_log()
+	 *
+	 * Render error log page.
+	 *
+	 * @return html Error log page html.
+	 */
 	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
@@ -851,6 +987,13 @@ class MainWP_Server_Information {
 		}
 	}
 
+	/**
+	 * Method render_wp_config()
+	 *
+	 * Render the wp comfig page.
+	 *
+	 * @return html WP Config page html.
+	 */
 	public static function render_wp_config() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -897,6 +1040,13 @@ class MainWP_Server_Information {
 		self::render_footer( 'WPConfig' );
 	}
 
+	/**
+	 * Method render_action_logs()
+	 *
+	 * Render action logs page.
+	 *
+	 * @return html Action logs html.
+	 */
 	public static function render_action_logs() {
 		self::render_header( 'Action logs' );
 
@@ -956,6 +1106,13 @@ class MainWP_Server_Information {
 		self::render_footer( 'Action logs' );
 	}
 
+	/**
+	 * Method render_htaccess()
+	 *
+	 * Render htaccess page.
+	 *
+	 * @return html Htaccess page html.
+	 */
 	public static function render_htaccess() {
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -983,7 +1140,13 @@ class MainWP_Server_Information {
 		self::render_footer( '.htaccess' );
 	}
 
-	// Check for the disabled php functions.
+	/**
+	 * Method php_disabled_functions()
+	 *
+	 * Check for disable PHP Functions.
+	 *
+	 * @return html Disabled functions list.
+	 */
 	public static function php_disabled_functions() {
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( '' !== $disabled_functions ) {
@@ -998,6 +1161,13 @@ class MainWP_Server_Information {
 		}
 	}
 
+	/**
+	 * Method display_mainwp_options()
+	 *
+	 * Render MainWP Settings 'Options'.
+	 *
+	 * @return html MainWP Settings html.
+	 */
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();
 		foreach ( $options as $option ) {
@@ -1005,6 +1175,15 @@ class MainWP_Server_Information {
 		}
 	}
 
+	/**
+	 * Method get_warning_html()
+	 *
+	 * Render PHP Warning HTML.
+	 *
+	 * @param int $errorType Global variable self::WARNING = 1.
+	 *
+	 * @return html PHP Warning html.
+	 */
 	private static function get_warning_html( $errorType = self::WARNING ) {
 		if ( self::WARNING == $errorType ) {
 			return '<div class="ui yellow basic label"><i class="exclamation circle icon"></i> ' . __( 'Warning', 'mainwp' ) . '</div>';

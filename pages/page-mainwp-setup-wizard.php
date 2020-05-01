@@ -24,19 +24,36 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Setup_Wizard {
 
-	private $step  = '';
+	/** @var string $step Step user is on. */
+	private $step = '';
+
+	/** @var array $steps Array of available steps. */
 	private $steps = array();
 
+	/**
+	 * Method __construct()
+	 *
+	 * Initiate menus.
+	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );
 		add_action( 'admin_init', array( $this, 'admin_init' ), 999 );
 	}
 
-
+	/**
+	 * Method admin_menus()
+	 *
+	 * Add Quick Setup Wizard page.
+	 */
 	public function admin_menus() {
 		add_dashboard_page( '', '', 'manage_options', 'mainwp-setup', '' );
 	}
 
+	/**
+	 * Medthod admin_init()
+	 *
+	 * Initiate Quick Setup Wizard page.
+	 */
 	public function admin_init() {
 		if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) {
 			return;
@@ -105,6 +122,15 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method get_next_step_link()
+	 *
+	 * Get the link for the next step.
+	 *
+	 * @param string $step Next step link.
+	 *
+	 * @return string Link for next step.
+	 */
 	public function get_next_step_link( $step = '' ) {
 		if ( ! empty( $step ) && isset( $step, $this->steps ) ) {
 			return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $step ) ) );
@@ -113,6 +139,15 @@ class MainWP_Setup_Wizard {
 		return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) + 1 ] ) ) );
 	}
 
+	/**
+	 * Method get_back_step_link()
+	 *
+	 * Get the link for the previouse step.
+	 *
+	 * @param string $step Previouse step link.
+	 *
+	 * @return string Link for previouse step.
+	 */
 	public function get_back_step_link( $step = '' ) {
 		if ( ! empty( $step ) && isset( $step, $this->steps ) ) {
 			return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $step ) ) );
@@ -121,6 +156,13 @@ class MainWP_Setup_Wizard {
 		return esc_url_raw( remove_query_arg( 'noregister', add_query_arg( 'step', $keys[ array_search( $this->step, array_keys( $this->steps ) ) - 1 ] ) ) );
 	}
 
+	/**
+	 * Method setup_wizard_header()
+	 *
+	 * Render Setup Wizard's header.
+	 *
+	 * @return html Setup Wizard's Header.
+	 */
 	public function setup_wizard_header() {
 		?>
 		<!DOCTYPE html>
@@ -141,6 +183,13 @@ class MainWP_Setup_Wizard {
 				<?php
 	}
 
+	/**
+	 * Method setup_wizard_footer()
+	 *
+	 * Render Setup Wizard's footer.
+	 *
+	 * @return html Setup Wizard's footer.
+	 */
 	public function setup_wizard_footer() {
 		?>
 				</div>
@@ -165,6 +214,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method setup_wizard_steps()
+	 *
+	 * Render Setup Wizards Steps.
+	 *
+	 * @return html Setup Wizard's Steps.
+	 */
 	public function setup_wizard_steps() {
 		$ouput_steps = $this->steps;
 		array_shift( $ouput_steps );
@@ -192,6 +248,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method setup_wizard_content()
+	 *
+	 * Render setup Wizard's current step view.
+	 *
+	 * @return html Setup Wizard's current step content.
+	 */
 	public function setup_wizard_content() {
 		echo '<div class="mainwp-quick-setup-wizard-steps-content" style="float:right; width:72%;">';
 		call_user_func( $this->steps[ $this->step ]['view'] );
@@ -199,6 +262,13 @@ class MainWP_Setup_Wizard {
 		echo '<div class="ui clearing hidden divider"></div>';
 	}
 
+	/**
+	 * Method mwp_setup_introduction()
+	 *
+	 * First start message after activation.
+	 *
+	 * @return html First Start Introduction Message.
+	 */
 	public function mwp_setup_introduction() {
 		$this->mwp_setup_ready_actions();
 		?>
@@ -215,6 +285,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_installation()
+	 *
+	 * Render Installation Step.
+	 *
+	 * @return html Installation step.
+	 */
 	public function mwp_setup_installation() {
 		$hostingType = get_option( 'mwp_setup_installationHostingType' );
 		$systemType  = get_option( 'mwp_setup_installationSystemType' );
@@ -283,6 +360,11 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_installation_save()
+	 *
+	 * Installation Step save to DB.
+	 */
 	public function mwp_setup_installation_save() {
 		check_admin_referer( 'mwp-setup' );
 
@@ -303,6 +385,13 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method  mwp_setup_system_requirements()
+	 *
+	 * Render System Requirments Step.
+	 *
+	 * @return html System Requirements html.
+	 */
 	public function mwp_setup_system_requirements() {
 		$hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		$system_type  = get_option( 'mwp_setup_installationSystemType' );
@@ -324,6 +413,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_install_mainwp_child()
+	 *
+	 * Render Install MainWP Child Plugin on Child Site Step.
+	 *
+	 * @return html Add first Child Site html content.
+	 */
 	public function mwp_setup_install_mainwp_child() {
 		?>
 		<h1><?php esc_html_e( 'Add Your First WordPress Site To Your Dashboard', 'mainwp' ); ?></h1>
@@ -349,6 +445,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_connect_first_site()
+	 *
+	 * Render Install first Child Site Step form.
+	 *
+	 * @return html Add first Child Site html form.
+	 */
 	public function mwp_setup_connect_first_site() {
 		?>
 		<h1><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
@@ -412,6 +515,13 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_hosting()
+	 *
+	 * Redner Hosting Setup step form.
+	 *
+	 * @return html Hosting setup form.
+	 */
 	public function mwp_setup_hosting() {
 		$installation_hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		$system_type               = get_option( 'mwp_setup_installationSystemType' );
@@ -484,6 +594,11 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_hosting_save()
+	 *
+	 * Save hosting form data.
+	 */
 	public function mwp_setup_hosting_save() {
 		check_admin_referer( 'mwp-setup' );
 		$type_hosting              = $_POST['mwp_setup_type_hosting'];
@@ -503,6 +618,13 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method mwp_setup_optimization()
+	 *
+	 * Render Optimization step.
+	 *
+	 * @return html Optimization step html.
+	 */
 	public function mwp_setup_optimization() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -540,6 +662,11 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_optimization_save()
+	 *
+	 * Save Optimization form data.
+	 */
 	public function mwp_setup_optimization_save() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -567,6 +694,13 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method mwp_setup_notification()
+	 *
+	 * Render Notifications Step.
+	 *
+	 * @return html Notifications step html.
+	 */
 	public function mwp_setup_notification() {
 		$important_notification = get_option( 'mwp_setup_importantNotification', false );
 		$user_emails            = MainWP_Utility::get_notification_email();
@@ -629,6 +763,11 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_notification_save()
+	 *
+	 * Save Notifications form data.
+	 */
 	public function mwp_setup_notification_save() {
 		check_admin_referer( 'mwp-setup' );
 		$important_notification = ( ! isset( $_POST['mwp_setup_options_important_notification'] ) ? 0 : 1 );
@@ -654,6 +793,13 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method mwp_setup_backup()
+	 *
+	 * Render Backups Step.
+	 *
+	 * @return html Backups Step html.
+	 */
 	public function mwp_setup_backup() {
 
 		$planning_backup = get_option( 'mwp_setup_planningBackup', 0 );
@@ -755,6 +901,11 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_backup_save()
+	 *
+	 * Save Backup step form data.
+	 */
 	public function mwp_setup_backup_save() {
 		$planning_backup = ( ! isset( $_POST['mwp_setup_planning_backup'] ) ? 0 : 1 );
 		$backup_method   = isset( $_POST['mwp_setup_backup_method'] ) ? $_POST['mwp_setup_backup_method'] : '';
@@ -773,6 +924,11 @@ class MainWP_Setup_Wizard {
 		}
 	}
 
+	/**
+	 * Method mwp_setup_purchase_extension_save()
+	 *
+	 * MainWP Extensions login.
+	 */
 	public function mwp_setup_purchase_extension_save() {
 		MainWP_Cache::init_session();
 
@@ -852,6 +1008,13 @@ class MainWP_Setup_Wizard {
 		exit;
 	}
 
+	/**
+	 * Method ajax_get_backup_extension()
+	 *
+	 * Ajax get backup extention.
+	 *
+	 * @return mixed SUCCESS|ERROR.
+	 */
 	public static function ajax_get_backup_extension() {
 
 		$product_id = trim( $_POST['productId'] );
@@ -921,6 +1084,13 @@ class MainWP_Setup_Wizard {
 		die( wp_json_encode( $return ) );
 	}
 
+	/**
+	 * Method ajax_activate_plugin()
+	 *
+	 * Ajax Activate Plugin.
+	 *
+	 * @return string SUCCESS|FAILED.
+	 */
 	public static function ajax_activate_plugin() {
 
 		if ( ! isset( $_POST['action'] ) || ! isset( $_POST['security'] ) || ! wp_verify_nonce( $_POST['security'], 'MainWPSetup' ) ) {
@@ -939,6 +1109,13 @@ class MainWP_Setup_Wizard {
 		die( 'FAILED' );
 	}
 
+	/**
+	 * Method ajax_grab_api_key()
+	 *
+	 * Ajax grab api key.
+	 *
+	 * @return json $result Returned API key.
+	 */
 	public static function ajax_grab_api_key() {
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
@@ -949,6 +1126,13 @@ class MainWP_Setup_Wizard {
 		wp_send_json( $result );
 	}
 
+	/**
+	 * Method mwp_setup_install_extension()
+	 *
+	 * Setup & install extentions Step.
+	 *
+	 * @return html Extentions setup form.
+	 */
 	public function mwp_setup_install_extension() {
 		$backup_method  = get_option( 'mwp_setup_primaryBackup' );
 		$ext_product_id = '';
@@ -1037,16 +1221,34 @@ class MainWP_Setup_Wizard {
 		<?php
 	}
 
+	/**
+	 * Method mwp_setup_install_extension_save()
+	 *
+	 * Save setup install extentions form.
+	 */
 	public function mwp_setup_install_extension_save() {
 		check_admin_referer( 'mwp-setup' );
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}
 
+	/**
+	 * Method mwp_setup_ready_actions()
+	 *
+	 * Delete option 'mainwp_run_quick_setup' when Quick Wizard
+	 * Setup is completed.
+	 */
 	private function mwp_setup_ready_actions() {
 		delete_option( 'mainwp_run_quick_setup' );
 	}
 
+	/**
+	 * Method mwp_setup_ready()
+	 *
+	 * Render MainWp Dashboard Ready message.
+	 *
+	 * @return html MainWP Dashboard is ready message.
+	 */
 	public function mwp_setup_ready() {
 		?>
 		<div class="ui hidden divider"></div>

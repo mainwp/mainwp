@@ -549,7 +549,7 @@ class MainWP_System_Cron_Jobs {
 				do_action( 'mainwp_daily_digest_action', $website, $text_format );
 
 				$user  = get_userdata( $website->userid );
-				$email = MainWP_Utility::get_notification_email( $user );
+				$email = MainWP_System_Utility::get_notification_email( $user );
 				MainWP_Utility::update_option( 'mainwp_updatescheck_mail_email', $email );
 				MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsAutomaticSync' => time() ) );
 				MainWP_DB::instance()->update_website_option( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
@@ -662,7 +662,7 @@ class MainWP_System_Cron_Jobs {
 					}
 				}
 
-				$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+				$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 				global $wp_filesystem;
 
@@ -675,7 +675,7 @@ class MainWP_System_Cron_Jobs {
 							continue;
 						}
 
-						$dir        = MainWP_Utility::get_mainwp_specific_dir( $siteId );
+						$dir        = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
 						$dh         = opendir( $dir );
 						$lastBackup = - 1;
 						if ( $wp_filesystem->exists( $dir ) && $dh ) {

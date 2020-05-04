@@ -353,7 +353,7 @@ class MainWP_Settings {
 			$userExtension->pluginDir = '';
 
 			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
-			if ( MainWP_Utility::is_admin() ) {
+			if ( MainWP_System_Utility::is_admin() ) {
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
@@ -427,7 +427,7 @@ class MainWP_Settings {
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter your email address(es) to receive email notifications from your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
 								<div class="mainwp-multi-emails">
 									<?php
-									$user_emails = MainWP_Utility::get_notification_email();
+									$user_emails = MainWP_System_Utility::get_notification_email();
 									$user_emails = explode( ',', $user_emails );
 									$i           = 0;
 									foreach ( $user_emails as $email ) {

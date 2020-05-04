@@ -68,7 +68,7 @@ class MainWP_Menu {
 	 * Init MainWP menus.
 	 */
 	public static function init_mainwp_menus() {
-		if ( MainWP_Utility::is_admin() ) {
+		if ( MainWP_System_Utility::is_admin() ) {
 			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
 				MainWP_Updates::init_menu();
 			}

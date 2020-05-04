@@ -39,7 +39,7 @@ class MainWP_Plugins_Handler {
 	public static function plugins_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result  = $results[1];
-			$plugins = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$plugins = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
 			if ( isset( $plugins['error'] ) ) {
 				$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( $plugins['error'], $website->url ) );
@@ -87,7 +87,7 @@ class MainWP_Plugins_Handler {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
@@ -132,7 +132,7 @@ class MainWP_Plugins_Handler {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 

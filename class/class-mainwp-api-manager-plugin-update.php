@@ -172,9 +172,9 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		if ( $bulk_check ) {
 			$response = wp_remote_retrieve_body( $request );
-			$response = MainWP_Utility::maybe_unserialyze( $response );
+			$response = MainWP_System_Utility::maybe_unserialyze( $response );
 		} else {
-			$response = MainWP_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
+			$response = MainWP_System_Utility::maybe_unserialyze( wp_remote_retrieve_body( $request ) );
 		}
 
 		/**

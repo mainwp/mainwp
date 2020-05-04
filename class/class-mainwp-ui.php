@@ -28,14 +28,14 @@ class MainWP_UI {
 		if ( $postId ) {
 
 			$sites_val         = get_post_meta( $postId, '_selected_sites', true );
-			$selected_websites = MainWP_Utility::maybe_unserialyze( $sites_val );
+			$selected_websites = MainWP_System_Utility::maybe_unserialyze( $sites_val );
 
 			if ( '' == $selected_websites ) {
 				$selected_websites = array();
 			}
 
 			$groups_val      = get_post_meta( $postId, '_selected_groups', true );
-			$selected_groups = MainWP_Utility::maybe_unserialyze( $groups_val );
+			$selected_groups = MainWP_System_Utility::maybe_unserialyze( $groups_val );
 
 			if ( '' == $selected_groups ) {
 				$selected_groups = array();
@@ -521,7 +521,7 @@ class MainWP_UI {
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- not quite complex function.
 		global $mainwp_widget_boxes;
 
-		$page = MainWP_Utility::get_page_id( $screen );
+		$page = MainWP_System_Utility::get_page_id( $screen );
 
 		if ( empty( $page ) ) {
 			return;
@@ -601,7 +601,7 @@ class MainWP_UI {
 		global $mainwp_widget_boxes;
 		static $already_sorted = false;
 
-		$page = MainWP_Utility::get_page_id( $screen );
+		$page = MainWP_System_Utility::get_page_id( $screen );
 
 		if ( empty( $page ) ) {
 			return;

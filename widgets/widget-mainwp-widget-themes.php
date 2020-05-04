@@ -42,7 +42,7 @@ class MainWP_Widget_Themes {
 	 * @param none
 	 */
 	public static function render_widget() {
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;
 		}
@@ -200,7 +200,7 @@ class MainWP_Widget_Themes {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
 

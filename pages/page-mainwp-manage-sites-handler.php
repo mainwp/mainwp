@@ -26,7 +26,7 @@ class MainWP_Manage_Sites_Handler {
 	public static function check_site() {
 		$website = MainWP_DB::instance()->get_websites_by_url( $_POST['url'] );
 		$ret     = array();
-		if ( MainWP_Utility::can_edit_website( $website ) ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
@@ -110,7 +110,7 @@ class MainWP_Manage_Sites_Handler {
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$note     = stripslashes( $_POST['note'] );
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
@@ -126,7 +126,7 @@ class MainWP_Manage_Sites_Handler {
 	public static function remove_site() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['id'] );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';
 
 				// deactive child plugin on live site only,
@@ -145,11 +145,11 @@ class MainWP_Manage_Sites_Handler {
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
 
-					$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+					$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 					global $wp_filesystem;
 
-					$dirs = MainWP_Utility::get_icons_dir();
+					$dirs = MainWP_System_Utility::get_icons_dir();
 					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
 						$wp_filesystem->delete( $dirs[0] . $favi );
 					}
@@ -178,7 +178,7 @@ class MainWP_Manage_Sites_Handler {
 	}
 
 	public static function handle_settings_post() {
-		if ( MainWP_Utility::is_admin() ) {
+		if ( MainWP_System_Utility::is_admin() ) {
 			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
@@ -233,7 +233,7 @@ class MainWP_Manage_Sites_Handler {
 	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['site_id'] );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error    = '';
 				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';
 				try {

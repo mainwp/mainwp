@@ -64,10 +64,10 @@ class MainWP_Manage_Sites_List_Table {
 			return $backupnow_lnk;
 		}
 
-		$dir        = MainWP_Utility::get_mainwp_specific_dir( $item['id'] );
+		$dir        = MainWP_System_Utility::get_mainwp_specific_dir( $item['id'] );
 		$lastbackup = 0;
 
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
 

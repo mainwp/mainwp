@@ -257,9 +257,9 @@ class MainWP_Post_Page_Handler {
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );
 							$val             = get_post_meta( $id, '_selected_sites', true );
-							$selected_sites  = MainWP_Utility::maybe_unserialyze( $val );
+							$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
 							$val             = get_post_meta( $id, '_selected_groups', true );
-							$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
+							$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
 
 							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
@@ -525,7 +525,7 @@ class MainWP_Post_Page_Handler {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
@@ -799,7 +799,7 @@ class MainWP_Post_Page_Handler {
 			}
 		}
 
-		$hasWPFileSystem = self::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 
 		if ( $wp_filesystem->exists( $temporary_file ) ) {

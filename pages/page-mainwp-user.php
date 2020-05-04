@@ -981,7 +981,7 @@ class MainWP_User {
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$users  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$users  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
 			$output->users += self::users_search_handler_renderer( $users, $website );
 			unset( $users );
@@ -1057,7 +1057,7 @@ class MainWP_User {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => __( 'You can not edit this website!', 'mainwp' ) ) ) );
 		}
 
@@ -1542,7 +1542,7 @@ class MainWP_User {
 		if ( UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			if ( is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path     = $_FILES['import_user_file_bulkupload']['tmp_name'];
-				$wpFileSystem = MainWP_Utility::get_wp_file_system();
+				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
 				$content = $wp_filesystem->get_contents( $tmp_path );

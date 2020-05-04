@@ -882,7 +882,7 @@ class MainWP_Updates {
 	 */
 	public static function get_sites() {
 		global $current_user;
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		} else {

@@ -22,7 +22,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @return html Html listing Backups.
 	 */
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
-		$mwpDir = MainWP_Utility::get_mainwp_dir();
+		$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 		$mwpDir = $mwpDir[0];
 
 		$output = '';

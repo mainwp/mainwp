@@ -331,7 +331,7 @@ class MainWP_Manage_Sites_View {
 		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
-				self::get_wp_file_system();
+				MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
 				$content = $wp_filesystem->get_contents( $tmp_path );
@@ -821,7 +821,7 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
 
@@ -1020,7 +1020,7 @@ class MainWP_Manage_Sites_View {
 	 * @return boolean true|false.
 	 */
 	public static function m_reconnect_site( $website ) {
-		if ( MainWP_Utility::can_edit_website( $website ) ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			try {
 				if ( MainWP_Sync::sync_site( $website, true ) ) {
 					return true;
@@ -1028,7 +1028,7 @@ class MainWP_Manage_Sites_View {
 
 				if ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
-					$conf_loc = MainWP_Utility::get_openssl_conf();
+					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
 						$conf['config'] = $conf_loc;
 					}
@@ -1146,7 +1146,7 @@ class MainWP_Manage_Sites_View {
 			try {
 				if ( function_exists( 'openssl_pkey_new' ) ) {
 					$conf     = array( 'private_key_bits' => 2048 );
-					$conf_loc = MainWP_Utility::get_openssl_conf();
+					$conf_loc = MainWP_System_Utility::get_openssl_conf();
 					if ( ! empty( $conf_loc ) ) {
 						$conf['config'] = $conf_loc;
 					}

@@ -411,7 +411,7 @@ class MainWP_Live_Reports {
 				$report['footer'] = trim( $_POST['mainwp_creport_report_footer'] );
 			}
 
-			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 			global $wp_filesystem;
 
 			$creport_dir = apply_filters( 'mainwp_getspecificdir', 'client_report/' );
@@ -651,8 +651,8 @@ class MainWP_Live_Reports {
 		global $mainwpLiveReportResponderActivator;
 		$websites = array();
 
-		$sel_sites  = MainWP_Utility::maybe_unserialyze( $report->sites );
-		$sel_groups = MainWP_Utility::maybe_unserialyze( $report->groups );
+		$sel_sites  = MainWP_System_Utility::maybe_unserialyze( $report->sites );
+		$sel_groups = MainWP_System_Utility::maybe_unserialyze( $report->groups );
 
 		if ( ! is_array( $sel_sites ) ) {
 			$sel_sites = array();
@@ -766,7 +766,7 @@ class MainWP_Live_Reports {
 
 			if ( ! empty( $allowed_tokens ) ) {
 				$newarrayallowedtokens = array();
-				$tokensarray           = MainWP_Utility::maybe_unserialyze( stripslashes( $allowed_tokens ) );
+				$tokensarray           = MainWP_System_Utility::maybe_unserialyze( stripslashes( $allowed_tokens ) );
 				foreach ( $tokensarray as $key => $t ) {
 					$newarrayallowedtokens[ $key ] = '[' . $t . ']';
 				}
@@ -802,7 +802,7 @@ class MainWP_Live_Reports {
 
 			if ( ! empty( $allowed_tokens ) ) {
 				$newarrayallowedtokens = array();
-				$tokensarray           = MainWP_Utility::maybe_unserialyze( stripslashes( $allowed_tokens ) );
+				$tokensarray           = MainWP_System_Utility::maybe_unserialyze( stripslashes( $allowed_tokens ) );
 				foreach ( $tokensarray as $key => $t ) {
 					$newarrayallowedtokens[ $key ] = '[' . $t . ']';
 				}

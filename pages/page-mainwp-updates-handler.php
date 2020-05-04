@@ -32,7 +32,7 @@ class MainWP_Updates_Handler {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
 				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
@@ -71,7 +71,7 @@ class MainWP_Updates_Handler {
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$slug = urldecode( $slug );
 				if ( 'plugin' === $type ) {
 					$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
@@ -115,7 +115,7 @@ class MainWP_Updates_Handler {
 				MainWP_DB::free_result( $websites );
 			} elseif ( MainWP_Utility::ctype_digit( $id ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $id );
-				if ( MainWP_Utility::can_edit_website( $website ) ) {
+				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 					$slug = urldecode( $slug );
 					if ( 'plugin' === $type ) {
 						$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
@@ -254,7 +254,7 @@ class MainWP_Updates_Handler {
 				MainWP_DB::free_result( $websites );
 			} elseif ( MainWP_Utility::ctype_digit( $id ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $id );
-				if ( MainWP_Utility::can_edit_website( $website ) ) {
+				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 					$slug = urldecode( $slug );
 					if ( 'plugin' === $type ) {
 						$decodedIgnoredPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
@@ -342,7 +342,7 @@ class MainWP_Updates_Handler {
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$slug = urldecode( $slug );
 				if ( 'plugin' === $type ) {
 					$decodedDismissedPlugins = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
@@ -417,7 +417,7 @@ class MainWP_Updates_Handler {
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$information = MainWP_Connect::fetch_url_authed(
 					$website,
 					( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),

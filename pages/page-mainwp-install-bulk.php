@@ -47,7 +47,7 @@ class MainWP_Install_Bulk {
 				$sizeLimit = 2 * 1024 * 1024; // 2MB = max allowed.
 
 				$uploader = new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
-				$path     = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
+				$path     = MainWP_System_Utility::get_mainwp_specific_dir( 'bulk' );
 
 				$result = $uploader->handle_upload( $path, true );
 				// to pass data through iframe you will need to encode all html tags.
@@ -141,7 +141,7 @@ class MainWP_Install_Bulk {
 		} else {
 			$url = $_POST['url'];
 
-			$mwpDir = MainWP_Utility::get_mainwp_dir();
+			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpUrl = $mwpDir[1];
 			if ( stristr( $url, $mwpUrl ) ) {
 				$fullFile = $mwpDir[0] . str_replace( $mwpUrl, '', $url );
@@ -317,7 +317,7 @@ class MainWP_Install_Bulk {
 		$output['urls'] = array();
 
 		foreach ( $_POST['files'] as $file ) {
-			$output['urls'][] = MainWP_Utility::get_download_url( 'bulk', $file );
+			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
@@ -380,10 +380,10 @@ class MainWP_Install_Bulk {
 	 * @return json array( 'ok' => true ) & die.
 	 */
 	public static function clean_upload() {
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 
-		$path = MainWP_Utility::get_mainwp_specific_dir( 'bulk' );
+		$path = MainWP_System_Utility::get_mainwp_specific_dir( 'bulk' );
 		if ( $wp_filesystem->exists( $path ) ) {
 			$dh = opendir( $path );
 			if ( $dh ) {
@@ -417,7 +417,7 @@ class MainWP_Install_Bulk {
 			$result = $results[1];
 
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) );
+			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
 				$output->ok[ $website->id ] = array( $website->name );

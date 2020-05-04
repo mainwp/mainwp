@@ -1497,7 +1497,7 @@ class MainWP_Connect {
 			throw new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
-			$information = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'information: [OK]' );
 			return $information;
@@ -1514,7 +1514,7 @@ class MainWP_Connect {
 
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 
 		if ( $wp_filesystem->exists( $file ) && ( ( false === $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
@@ -1570,11 +1570,11 @@ class MainWP_Connect {
 
 	public static function init_cookiesdir() {
 
-			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 			global $wp_filesystem;
 
-			$dirs      = MainWP_Utility::get_mainwp_dir();
+			$dirs      = MainWP_System_Utility::get_mainwp_dir();
 			$cookieDir = $dirs[0] . 'cookies';
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -1651,7 +1651,7 @@ class MainWP_Connect {
 
 		if ( ! empty( $favi ) ) {
 			if ( false !== strpos( $favi, 'favi-' . intval( $website->id ) . '-' ) ) {
-				$dirs = MainWP_Utility::get_icons_dir();
+				$dirs = MainWP_System_Utility::get_icons_dir();
 				if ( file_exists( $dirs[0] . $favi ) ) {
 					$faviurl = $dirs[1] . $favi;
 				} else {

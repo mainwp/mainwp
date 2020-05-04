@@ -41,7 +41,7 @@ class MainWP_Connection_Status {
 	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
 	 */
 	public static function render_sites() { // phpcs:ignore -- complex method.
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );

@@ -71,7 +71,7 @@ class MainWP_Logger {
 	 * @return void
 	 */
 	private function __construct() {
-		$this->logDirectory = MainWP_Utility::get_mainwp_dir();
+		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
 		$this->logDirectory = $this->logDirectory[0];
 
 		$enabled = get_option( 'mainwp_actionlogs' );

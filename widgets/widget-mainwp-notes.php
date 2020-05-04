@@ -31,7 +31,7 @@ class MainWP_Notes {
 	 * Grab Child Site Notes & Render Widget.
 	 */
 	public static function render() {
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( ! MainWP_Utility::ctype_digit( $current_wpid ) ) {
 			return;

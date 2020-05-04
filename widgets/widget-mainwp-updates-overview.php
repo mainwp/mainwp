@@ -139,7 +139,7 @@ class MainWP_Updates_Overview {
 
 		$globalView = true;
 		global $current_user;
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
 			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -947,7 +947,7 @@ class MainWP_Updates_Overview {
 			return true;
 		}
 
-		$primaryBackup                = MainWP_Utility::get_primary_backup();
+		$primaryBackup                = MainWP_System_Utility::get_primary_backup();
 		$global_backup_before_upgrade = get_option( 'mainwp_backup_before_upgrade' );
 
 		$mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
@@ -970,7 +970,7 @@ class MainWP_Updates_Overview {
 				}
 				$output['primary_backup'] = $primaryBackup;
 			} else {
-				$dir = MainWP_Utility::get_mainwp_specific_dir( $siteId );
+				$dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
 				// Check if backup ok.
 				$lastBackup = - 1;
 				if ( file_exists( $dir ) ) {

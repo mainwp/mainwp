@@ -284,7 +284,7 @@ class MainWP_Extensions_Handler {
 	 */
 	public static function install_plugin( $url, $activatePlugin = false ) {
 
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
 
@@ -456,7 +456,7 @@ class MainWP_Extensions_Handler {
 			return null;
 		}
 
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
@@ -510,7 +510,7 @@ class MainWP_Extensions_Handler {
 
 		try {
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-			if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 				throw new MainWP_Exception( 'You can not edit this website.' );
 			}
 
@@ -608,7 +608,7 @@ class MainWP_Extensions_Handler {
 		if ( isset( $websiteid ) && ( null != $websiteid ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 
-			if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+			if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 				return false;
 			}
 
@@ -855,7 +855,7 @@ class MainWP_Extensions_Handler {
 				$group_id = get_option( 'mainwp_stagingsites_group_id' );
 				if ( $group_id ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $id );
-					if ( MainWP_Utility::can_edit_website( $website ) ) {
+					if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 						MainWP_Sync::sync_site( $website, false, false );
 						$group = MainWP_DB_Common::instance()->get_group_by_id( $group_id );
 						if ( ! empty( $group ) ) {
@@ -916,13 +916,13 @@ class MainWP_Extensions_Handler {
 				return false;
 			}
 
-			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 			global $wp_filesystem;
 
 			$favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
 			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
-				$dirs = MainWP_Utility::get_icons_dir();
+				$dirs = MainWP_System_Utility::get_icons_dir();
 				if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
 					$wp_filesystem->delete( $dirs[0] . $favi );
 				}

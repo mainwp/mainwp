@@ -45,7 +45,7 @@ class MainWP_Recent_Posts {
 
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30.
 
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
@@ -588,7 +588,7 @@ class MainWP_Recent_Posts {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
@@ -632,7 +632,7 @@ class MainWP_Recent_Posts {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( 'FAIL' );
 		}
 

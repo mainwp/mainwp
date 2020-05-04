@@ -32,7 +32,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 			return false;
 		}
 
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 

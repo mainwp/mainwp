@@ -727,7 +727,7 @@ class MainWP_Post {
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$posts  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
 				$output->errors[ $website->id ] = $posts['error'];
@@ -926,7 +926,7 @@ class MainWP_Post {
 
 		if ( is_serialized( $entry['meta_value'] ) ) {
 			if ( is_serialized_string( $entry['meta_value'] ) ) {
-				$entry['meta_value'] = MainWP_Utility::maybe_unserialyze( $entry['meta_value'] );
+				$entry['meta_value'] = MainWP_System_Utility::maybe_unserialyze( $entry['meta_value'] );
 			} else {
 				--$count;
 				return '';
@@ -1761,7 +1761,7 @@ class MainWP_Post {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
-			$posts  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$posts  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			unset( $results );
 		}
 		$output->results[ $website->id ] = $posts;

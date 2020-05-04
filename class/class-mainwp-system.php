@@ -428,7 +428,7 @@ class MainWP_System {
 	 */
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
-			$mwpDir = MainWP_Utility::get_mainwp_dir();
+			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $_REQUEST['mwpdl'] );
 
@@ -436,7 +436,7 @@ class MainWP_System {
 				return;
 			}
 
-			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 			global $wp_filesystem;
 
@@ -445,7 +445,7 @@ class MainWP_System {
 				exit();
 			}
 		} elseif ( isset( $_GET['page'] ) ) {
-			if ( MainWP_Utility::is_admin() ) {
+			if ( MainWP_System_Utility::is_admin() ) {
 				switch ( $_GET['page'] ) {
 					case 'mainwp-setup':
 						new MainWP_Setup_Wizard();
@@ -487,7 +487,7 @@ class MainWP_System {
 	 * Do nothing if current user is not an Admin else display the page.
 	 */
 	public function admin_init() {
-		if ( ! MainWP_Utility::is_admin() ) {
+		if ( ! MainWP_System_Utility::is_admin() ) {
 			return;
 		}
 
@@ -776,7 +776,7 @@ class MainWP_System {
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		if ( $current_wpid ) {
 			$website  = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 			$websites = array( $website );

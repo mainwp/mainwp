@@ -521,7 +521,7 @@ class MainWP_Manage_Groups {
 				if ( isset( $_POST['websiteIds'] ) ) {
 					foreach ( $_POST['websiteIds'] as $websiteId ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-						if ( MainWP_Utility::can_edit_website( $website ) ) {
+						if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 							MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
 						}
 					}

@@ -19,10 +19,10 @@ class MainWP_QQ2_Uploaded_File_Form {
 	 * @return boolean TRUE on success|false on failer.
 	 */
 	public function save( $path ) {
-		$wpFileSystem = MainWP_Utility::get_wp_file_system();
+		$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 		if ( false != $wpFileSystem ) {
-			$path  = str_replace( MainWP_Utility::get_base_dir(), '', $path );
+			$path  = str_replace( MainWP_System_Utility::get_base_dir(), '', $path );
 			$moved = $wpFileSystem->put_contents( $path, $wp_filesystem->get_contents( $_FILES['qqfile']['tmp_name'] ) );
 		} else {
 			$moved = move_uploaded_file( $_FILES['qqfile']['tmp_name'], $path );

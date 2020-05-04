@@ -606,7 +606,7 @@ class MainWP_Page {
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
-			$pages  = MainWP_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$pages  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
 				$output->errors[ $website->id ] = $pages['error'];
@@ -815,9 +815,9 @@ class MainWP_Page {
 					if ( $_post ) {
 						$selected_by     = get_post_meta( $id, '_selected_by', true );
 						$val             = get_post_meta( $id, '_selected_sites', true );
-						$selected_sites  = MainWP_Utility::maybe_unserialyze( $val );
+						$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
 						$val             = get_post_meta( $id, '_selected_groups', true );
-						$selected_groups = MainWP_Utility::maybe_unserialyze( $val );
+						$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
 						$post_slug       = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 						$post_custom     = get_post_custom( $id );
 						include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';

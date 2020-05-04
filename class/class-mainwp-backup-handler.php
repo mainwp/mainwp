@@ -290,10 +290,10 @@ class MainWP_Backup_Handler {
 		} elseif ( 'full' === $type && ! $information['full'] ) {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
-			$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 			global $wp_filesystem;
 
-			$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
+			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
 			$wp_filesystem->mkdir( $dir, 0777, true );
 
@@ -480,7 +480,7 @@ class MainWP_Backup_Handler {
 	}
 
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 
 		$dir = dirname( $pFile ) . '/';
@@ -594,7 +594,7 @@ class MainWP_Backup_Handler {
 				$websiteCleanUrl
 			);
 
-			$dir = MainWP_Utility::get_mainwp_specific_dir( $pSiteId );
+			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $pSiteId );
 
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
@@ -671,7 +671,7 @@ class MainWP_Backup_Handler {
 		$subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
 		$subfolder = MainWP_Utility::normalize_filename( $subfolder );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			throw new MainWP_Exception( 'You are not allowed to backup this site' );
 		}
 
@@ -792,7 +792,7 @@ class MainWP_Backup_Handler {
 			}
 			$backup_result['subfolder'] = $subfolder;
 
-			$dir = MainWP_Utility::get_mainwp_specific_dir( $pSiteId );
+			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $pSiteId );
 
 			$fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );

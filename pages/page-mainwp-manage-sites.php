@@ -212,7 +212,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function on_load_subpages() {
 		if ( isset( $_GET['id'] ) && $_GET['id'] ) {
-			MainWP_Utility::set_current_wpid( $_GET['id'] );
+			MainWP_System_Utility::set_current_wpid( $_GET['id'] );
 		}
 	}
 
@@ -765,7 +765,7 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_updates( $website ) {
-		MainWP_Utility::set_current_wpid( $website->id );
+		MainWP_System_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesUpdates' );
 		MainWP_Manage_Sites_Update_View::render_updates( $website );
 		self::render_footer( 'ManageSitesUpdates' );
@@ -779,7 +779,7 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_dashboard( $website ) {
-		MainWP_Utility::set_current_wpid( $website->id );
+		MainWP_System_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesDashboard' );
 		MainWP_Manage_Sites_View::render_dashboard( $website, self::$page );
 		self::render_footer( 'ManageSitesDashboard' );
@@ -793,7 +793,7 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_backup_site( $website ) {
-		MainWP_Utility::set_current_wpid( $website->id );
+		MainWP_System_Utility::set_current_wpid( $website->id );
 		self::render_header( 'ManageSitesBackups' );
 		MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
 		self::render_footer( 'ManageSitesBackups' );
@@ -807,7 +807,7 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 */
 	public static function render_scan_site( $website ) {
-		MainWP_Utility::set_current_wpid( $website->id );
+		MainWP_System_Utility::set_current_wpid( $website->id );
 		self::render_header( 'SecurityScan' );
 		MainWP_Manage_Sites_View::render_scan_site( $website );
 		self::render_footer( 'SecurityScan' );
@@ -821,7 +821,7 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 */
 	public static function show_backups( &$website ) {
-		$dir = MainWP_Utility::get_mainwp_specific_dir( $website->id );
+		$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
 		if ( ! file_exists( $dir . 'index.php' ) ) {
 			touch( $dir . 'index.php' );
@@ -944,7 +944,7 @@ class MainWP_Manage_Sites {
 				$websiteid = $_GET['backupid'];
 
 				$backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-				if ( MainWP_Utility::can_edit_website( $backupwebsite ) ) {
+				if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) ) {
 					self::render_backup_site( $backupwebsite );
 
 					return;
@@ -956,7 +956,7 @@ class MainWP_Manage_Sites {
 			$websiteid = $_GET['scanid'];
 
 			$scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_Utility::can_edit_website( $scanwebsite ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) ) {
 				self::render_scan_site( $scanwebsite );
 
 				return;
@@ -967,7 +967,7 @@ class MainWP_Manage_Sites {
 			$websiteid = $_GET['dashboard'];
 
 			$dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_Utility::can_edit_website( $dashboardWebsite ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
 				self::render_dashboard( $dashboardWebsite );
 
 				return;
@@ -977,7 +977,7 @@ class MainWP_Manage_Sites {
 		if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
 			$websiteid      = $_GET['updateid'];
 			$updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_Utility::can_edit_website( $updatesWebsite ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) ) {
 				self::render_updates( $updatesWebsite );
 				return;
 			}
@@ -987,7 +987,7 @@ class MainWP_Manage_Sites {
 			$websiteid = $_GET['id'];
 
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 
 				global $current_user;
 				$updated = false;
@@ -1071,7 +1071,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( $websiteid ) {
-			MainWP_Utility::set_current_wpid( $websiteid );
+			MainWP_System_Utility::set_current_wpid( $websiteid );
 		}
 		self::render_header( 'ManageSitesEdit' );
 		MainWP_Manage_Sites_View::render_edit_site( $websiteid, $updated );

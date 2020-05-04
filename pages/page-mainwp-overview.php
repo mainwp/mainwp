@@ -73,7 +73,7 @@ class MainWP_Overview {
 
 	/** Add MainWP Overview top level menu. */
 	public function on_admin_menu() {
-		if ( MainWP_Utility::is_admin() ) {
+		if ( MainWP_System_Utility::is_admin() ) {
 			global $current_user;
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
 			$this->dashBoard = add_menu_page(
@@ -199,7 +199,7 @@ class MainWP_Overview {
 		 * Load the Connection Status widget
 		 */
 
-		if ( ! MainWP_Utility::get_current_wpid() ) {
+		if ( ! MainWP_System_Utility::get_current_wpid() ) {
 			if ( self::$enable_widgets['connection_status'] ) {
 				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, 'left', __( 'Connection Status', 'mainwp' ) );
 			}
@@ -273,7 +273,7 @@ class MainWP_Overview {
 	 */
 	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {
 
-		$current_wp_id = MainWP_Utility::get_current_wpid();
+		$current_wp_id = MainWP_System_Utility::get_current_wpid();
 		$website       = null;
 		if ( ! empty( $current_wp_id ) ) {
 			$website = $websites[0];
@@ -364,7 +364,7 @@ class MainWP_Overview {
 		</div>
 	</div>
 	<script type="text/javascript">
-		var page_sortablewidgets = '<?php echo esc_js( MainWP_Utility::get_page_id( $screen->id ) ); ?>';
+		var page_sortablewidgets = '<?php echo esc_js( MainWP_System_Utility::get_page_id( $screen->id ) ); ?>';
 		jQuery( document ).ready( function( $ ) {
 
 			var $mainwp_drake = dragula( [document.getElementById( 'mainwp-grid-left' ),

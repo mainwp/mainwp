@@ -34,7 +34,7 @@ abstract class MainWP_Post_Base_Handler {
 	 * @param string $query_arg
 	 */
 	public function secure_request( $action = '', $query_arg = 'security' ) {
-		if ( ! MainWP_Utility::is_admin() ) {
+		if ( ! MainWP_System_Utility::is_admin() ) {
 			die( 0 );
 		}
 		if ( '' === $action ) {

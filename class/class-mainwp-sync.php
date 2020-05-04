@@ -64,7 +64,7 @@ class MainWP_Sync {
 				}
 			}
 
-			$primaryBackup = MainWP_Utility::get_primary_backup();
+			$primaryBackup = MainWP_System_Utility::get_primary_backup();
 
 			$othersData = apply_filters_deprecated( 'mainwp-sync-others-data', array( array(), $pWebsite ), '4.0.1', 'mainwp_sync_others_data' );  // @deprecated Use 'mainwp_sync_others_data' instead.
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
@@ -372,7 +372,7 @@ class MainWP_Sync {
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( MainWP_Utility::can_edit_website( $website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'get_site_icon' );
@@ -387,10 +387,10 @@ class MainWP_Sync {
 					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 
-						$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+						$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 						global $wp_filesystem;
 
-						$dirs     = MainWP_Utility::get_mainwp_dir();
+						$dirs     = MainWP_System_Utility::get_mainwp_dir();
 						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
 							$wp_filesystem->mkdir( $iconsDir, 0777, true );
@@ -402,7 +402,7 @@ class MainWP_Sync {
 						$filename = strtok( $filename, '?' );
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							$size     = file_put_contents( $iconsDir . $filename, $content );
+							$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore -- 
 							if ( $size ) {
 								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );

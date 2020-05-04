@@ -39,7 +39,7 @@ class MainWP_Security_Issues {
 			$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 		}
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return;
 		}
 		?>
@@ -257,7 +257,7 @@ class MainWP_Security_Issues {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 
@@ -277,7 +277,7 @@ class MainWP_Security_Issues {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 
@@ -301,7 +301,7 @@ class MainWP_Security_Issues {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';
 		}
 

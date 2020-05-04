@@ -13,16 +13,16 @@ namespace MainWP\Dashboard;
 class MainWP_Hooks {
 
 	public function __construct() {
-		add_filter( 'mainwp_getspecificdir', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
+		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
 		add_action( 'mainwp_prepareinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'prepare_install' ) );
 		add_action( 'mainwp_performinstallplugintheme', array( MainWP_Install_Bulk::get_class_name(), 'perform_install' ) );
-		add_filter( 'mainwp_getwpfilesystem', array( MainWP_Utility::get_class_name(), 'get_wp_file_system' ) );
-		add_filter( 'mainwp_getspecificurl', array( MainWP_Utility::get_class_name(), 'get_mainwp_specific_url' ), 10, 1 );
-		add_filter( 'mainwp_getdownloadurl', array( MainWP_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
+		add_filter( 'mainwp_getwpfilesystem', array( MainWP_System_Utility::get_class_name(), 'get_wp_file_system' ) );
+		add_filter( 'mainwp_getspecificurl', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_url' ), 10, 1 );
+		add_filter( 'mainwp_getdownloadurl', array( MainWP_System_Utility::get_class_name(), 'get_download_url' ), 10, 2 );
 		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 
@@ -51,7 +51,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
 		add_filter( 'mainwp_getmetaboxes', array( &$this, 'get_meta_boxes' ), 10, 0 );
-		add_filter( 'mainwp_getnotificationemail', array( MainWP_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
+		add_filter( 'mainwp_getnotificationemail', array( MainWP_System_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
@@ -130,14 +130,14 @@ class MainWP_Hooks {
 		if ( empty( $site ) ) {
 			return array( 'error' => __( 'Not found the website', 'mainwp' ) );
 		}
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem ) {
 			$favi = MainWP_DB::instance()->get_website_option( $site, 'favi_icon', '' );
 			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $site->id . '-' ) ) ) {
-				$dirs = MainWP_Utility::get_icons_dir();
+				$dirs = MainWP_System_Utility::get_icons_dir();
 				if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
 					$wp_filesystem->delete( $dirs[0] . $favi );
 				}
@@ -209,7 +209,7 @@ class MainWP_Hooks {
 			return 0;
 		}
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return 0;
 		}
 
@@ -385,12 +385,12 @@ class MainWP_Hooks {
 
 	public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
 
-		$dirs = MainWP_Utility::get_mainwp_dir();
+		$dirs = MainWP_System_Utility::get_mainwp_dir();
 
 		$newdir = $dirs[0] . ( null != $dir ? $dir . DIRECTORY_SEPARATOR : '' );
 		$url    = $dirs[1] . '/' . $dir . '/';
 
-		$hasWPFileSystem = MainWP_Utility::get_wp_file_system();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 		global $wp_filesystem;
 
@@ -507,7 +507,7 @@ class MainWP_Hooks {
 
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-				if ( MainWP_Utility::can_edit_website( $website ) ) {
+				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 					$information = MainWP_Connect::fetch_url_authed(
 						$website,
 						'upgradeplugintheme',

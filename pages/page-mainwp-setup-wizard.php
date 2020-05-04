@@ -703,7 +703,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_notification() {
 		$important_notification = get_option( 'mwp_setup_importantNotification', false );
-		$user_emails            = MainWP_Utility::get_notification_email();
+		$user_emails            = MainWP_System_Utility::get_notification_email();
 		$user_emails            = explode( ',', $user_emails );
 		$i                      = 0;
 		?>

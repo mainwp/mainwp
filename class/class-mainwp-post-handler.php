@@ -674,7 +674,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $website_id );
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			die( wp_json_encode( array( 'error' => array( 'message' => __( 'You cannot edit this website.', 'mainwp' ) ) ) ) );
 		}
 

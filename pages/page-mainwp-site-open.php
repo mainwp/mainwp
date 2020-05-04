@@ -40,7 +40,7 @@ class MainWP_Site_Open {
 		$id      = intval( $_GET['websiteid'] );
 		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			exit();
 		}
 
@@ -87,7 +87,7 @@ class MainWP_Site_Open {
 		$id      = intval( $_GET['websiteid'] );
 		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-		if ( ! MainWP_Utility::can_edit_website( $website ) ) {
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			exit();
 		}
 

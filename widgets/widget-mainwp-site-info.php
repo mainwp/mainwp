@@ -40,7 +40,7 @@ class MainWP_Site_Info {
 	 * Grab Child Site Info and render.
 	 */
 	public static function render_site_info() {
-		$current_wpid = MainWP_Utility::get_current_wpid();
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
 		if ( empty( $current_wpid ) ) {
 			return;
 		}

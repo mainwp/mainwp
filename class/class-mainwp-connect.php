@@ -471,10 +471,10 @@ class MainWP_Connect {
 	 */
 	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) {
 		// phpcs: ignore -- complex function.
-		
-		// current complexity is the only way to achieve desired results, 
-		// pull request solutions appreciated		
-		
+
+		// current complexity is the only way to achieve desired results,
+		// pull request solutions appreciated
+
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
 		}

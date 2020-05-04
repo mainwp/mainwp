@@ -222,10 +222,10 @@ class MainWP_Updates {
 	 *
 	 * Render updates page
 	 */
-	public static function render() {		
-		// current complexity is the only way to achieve desired results, 
+	public static function render() {
+		// current complexity is the only way to achieve desired results,
 		// pull request solutions appreciated
-		
+
 		$websites      = self::get_sites();
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$site_view     = $userExtension->site_view;

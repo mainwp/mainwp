@@ -206,12 +206,11 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
 	 */
-	public function cron_updates_check() {				
+	public function cron_updates_check() {
 		// phpcs: ignore -- complex function.
-				
-		// current complexity is the only way to achieve desired results, 
+
+		// current complexity is the only way to achieve desired results,
 		// pull request solutions appreciated
-		
 
 		MainWP_Logger::instance()->info( 'CRON :: updates check' );
 

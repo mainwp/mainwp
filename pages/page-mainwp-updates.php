@@ -216,7 +216,7 @@ class MainWP_Updates {
 		}
 		return self::$user_can_update_plugins;
 	}
-			
+
 	/**
 	 * Method render()
 	 *

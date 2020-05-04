@@ -1,4 +1,6 @@
-/*eslint complexity: ["error", 100]*/
+/* eslint complexity: ["error", 100] */
+// current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
 jQuery( document ).ready( function () {
 
     // review for new UI update

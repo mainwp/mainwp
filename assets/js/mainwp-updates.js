@@ -1,4 +1,4 @@
-
+/*eslint complexity: ["error", 100]*/
 // Init Per Group data
 updatesoverview_updates_init_group_view = function() {
   jQuery( '.element_ui_view_values' ).each( function () {

@@ -1,3 +1,4 @@
+/*eslint complexity: ["error", 100]*/
 /* global _mainwpThemeSettings, confirm */
 window.wp = window.wp || { };
 

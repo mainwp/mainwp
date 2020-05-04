@@ -1,3 +1,4 @@
+/*eslint complexity: ["error", 100]*/
 jQuery( document ).ready( function () {
 
     // review for new UI update

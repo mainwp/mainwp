@@ -537,7 +537,7 @@ class MainWP_System_Handler {
 	 * @param mixed $ext_key Extension API Key.
 	 * @param array $info Extension Info.
 	 */
-	public function activate_extention( $ext_key, $info = array() ) {
+	public function activate_extension( $ext_key, $info = array() ) {
 
 		add_filter( 'wp_redirect', array( $this, 'activate_redirect' ) );
 
@@ -559,7 +559,7 @@ class MainWP_System_Handler {
 	 *
 	 * @param mixed $ext_key Exnension API Key.
 	 */
-	public function deactivate_extention( $ext_key ) {
+	public function deactivate_extension( $ext_key ) {
 		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );
 	}
 

@@ -1011,7 +1011,7 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method ajax_get_backup_extension()
 	 *
-	 * Ajax get backup extention.
+	 * Ajax get backup extension.
 	 *
 	 * @return mixed SUCCESS|ERROR.
 	 */
@@ -1129,7 +1129,7 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method mwp_setup_install_extension()
 	 *
-	 * Setup & install extentions Step.
+	 * Setup & install extensions Step.
 	 *
 	 * @return html Extentions setup form.
 	 */
@@ -1224,7 +1224,7 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method mwp_setup_install_extension_save()
 	 *
-	 * Save setup install extentions form.
+	 * Save setup install extensions form.
 	 */
 	public function mwp_setup_install_extension_save() {
 		check_admin_referer( 'mwp-setup' );

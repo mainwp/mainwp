@@ -82,6 +82,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Activate MainWP Extension. */
 	public function activate_extension() {
 		$this->check_security( 'mainwp_extension_activate' );
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );
 		$api_email = trim( $_POST['email'] );
@@ -92,6 +93,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Deactivate MainWP Extension. */
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api    = dirname( $_POST['slug'] );
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
 		wp_send_json( $result );

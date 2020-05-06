@@ -249,7 +249,7 @@ class MainWP_Extensions {
 	/**
 	 * Initiate top level Extensions Menues.
 	 *
-	 * @param mixed $extPages List of extention pages.
+	 * @param mixed $extPages List of extension pages.
 	 */
 	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {

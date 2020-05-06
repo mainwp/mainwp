@@ -34,6 +34,16 @@ class MainWP_Deprecated_Hooks {
 	);
 
 	/**
+	 * Array of deprecated actions. Format of 'old' => 'new'.
+	 *
+	 * @var array
+	 */
+	public $deprecated_actions = array(
+		'mainwp_activate_extention'                    => 'mainwp_activate_extension',
+		'mainwp_deactivate_extention'                  => 'mainwp_deactivate_extension'		
+	);
+	
+	/**
 	 * Array of versions of deprecated hooks.
 	 *
 	 * @var array
@@ -46,6 +56,8 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-extension-available-check'   => '4.0.1',
 		'mainwp-getgroups'                   => '4.0.1',
 		'mainwp-manager-getextensions'       => '4.0.1',
+		'mainwp_activate_extention'			=> '4.0.1',
+		'mainwp_deactivate_extention'		=> '4.0.1',
 	);
 
 	/**
@@ -91,6 +103,9 @@ class MainWP_Deprecated_Hooks {
 		if ( isset( $this->deprecated_filters[ $old_hook ] ) ) {
 			return $this->deprecated_filters[ $old_hook ];
 		}
+		if ( isset( $this->deprecated_actions[ $old_hook ] ) ) {
+			return $this->deprecated_actions[ $old_hook ];
+		}
 		return false;
 	}
 
@@ -107,7 +122,7 @@ class MainWP_Deprecated_Hooks {
 	/**
 	 * If the filter is Deprecated, display a deprecated notice.
 	 */
-	public static function maybe_handle_deprecated_filter() {
+	public static function maybe_handle_deprecated_hook() {
 		$current_hook = current_filter();
 		$new_hook     = self::instance()->get_replacement_hooks( $current_hook );
 		if ( false !== $new_hook ) {

@@ -153,7 +153,7 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Grab extention API Key
+	 * Grab extension API Key
 	 *
 	 * This function checks the users login information & grabs the update URL
 	 * for the specific extension & returns the API Key.

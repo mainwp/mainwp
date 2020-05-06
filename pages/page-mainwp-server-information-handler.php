@@ -129,7 +129,7 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get loaded PHP Extensions.
 	 *
-	 * @return string Comma separrated extention list.
+	 * @return string Comma separrated extension list.
 	 */
 	public static function get_loaded_php_extensions() {
 		$extensions = get_loaded_extensions();

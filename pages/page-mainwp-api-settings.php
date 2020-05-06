@@ -136,7 +136,7 @@ class MainWP_API_Settings {
 	/**
 	 * Method get_plugin_information()
 	 *
-	 * Grab extention Information.
+	 * Grab extension Information.
 	 *
 	 * @param mixed $pSlug Extension Slug.
 	 *

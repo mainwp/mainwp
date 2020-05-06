@@ -493,8 +493,11 @@ class MainWP_System {
 			return;
 		}
 
-		add_action( 'mainwp_activate_extention', array( MainWP_System_Handler::instance(), 'activate_extention' ), 10, 2 );
-		add_action( 'mainwp_deactivate_extention', array( MainWP_System_Handler::instance(), 'deactivate_extention' ), 10, 1 );
+		add_action( 'mainwp_activate_extention', array( MainWP_System_Handler::instance(), 'activate_extension' ), 10, 2 ); // @deprecated Use 'mainwp_activate_extension' instead.
+		add_action( 'mainwp_deactivate_extention', array( MainWP_System_Handler::instance(), 'deactivate_extension' ), 10, 1 ); // @deprecated Use 'mainwp_deactivate_extension' instead.
+
+		add_action( 'mainwp_activate_extension', array( MainWP_System_Handler::instance(), 'activate_extension' ), 10, 2 );
+		add_action( 'mainwp_deactivate_extension', array( MainWP_System_Handler::instance(), 'deactivate_extension' ), 10, 1 );
 
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
@@ -820,7 +823,7 @@ class MainWP_System {
 	 * Activated check.
 	 */
 	public function activated_check() {
-		MainWP_Deprecated_Hooks::maybe_handle_deprecated_filter();
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		return $this->get_version();
 	}
 

@@ -2,7 +2,7 @@
 /**
  * Post Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,8 +12,19 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
+	/**
+	 * @var mixed Singleton.
+	 */
 	private static $instance = null;
 
+	/**
+	 * Method instance()
+	 * 
+	 * Create a public static instance.
+	 *
+	 * @static
+	 * @return MainWP_Post_Handler
+	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
@@ -21,6 +32,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		return self::$instance;
 	}
 
+	/**
+	 * Initiate all actions.
+	 */
 	public function init() {
 		// Page: ManageSites.
 		$this->add_action( 'mainwp_notes_save', array( &$this, 'mainwp_notes_save' ) );
@@ -99,6 +113,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) );
 	}
 
+	/**
+	 * Method mainwp_childscan()
+	 * 
+	 * Scan Child Site.
+	 * 
+	 * @return mixed MainWP_Child_Scan::scan()|error.
+	 */
 	public function mainwp_childscan() {
 		if ( $this->check_security( 'mainwp_childscan', 'security' ) ) {
 			MainWP_Child_Scan::scan();
@@ -107,7 +128,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-	// Hide the installation warning.
+	/**
+	 * Method mainwp_installation_warning_hide()
+	 * 
+	 * Hide the installation warning.
+	 */
 	public function mainwp_installation_warning_hide() {
 		$this->secure_request( 'mainwp_installation_warning_hide' );
 
@@ -116,7 +141,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Page: Users
+	 * Method mainwp_users_search()
+	 * 
+	 * Search Post handler,
+	 * Page: User.
 	 */
 	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
@@ -126,111 +154,166 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Page: Posts
+	 * Method mainwp_posts_search()
+	 * 
+	 * Search Post handler,
+	 * Page: Posts.
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
-
 		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? $_POST['post_type'] : 'post' );
-
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
-
 		MainWP_Cache::init_session();
-
 		MainWP_Post::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['postId'], $_POST['userId'], $post_type, $_POST['search_on'] );
-
 		die();
 	}
-
-	public function mainwp_get_categories() {
-		$this->secure_request( 'mainwp_get_categories' );
-		MainWP_Post_Page_Handler::get_categories();
-		die();
-	}
-
-	public function mainwp_post_get_edit() {
-		$this->secure_request( 'mainwp_post_get_edit' );
-		MainWP_Post_Page_Handler::get_post(); // to edit.
-		die();
-	}
-
 	/**
-	 * Page: Pages
+	 * Method mainwp_pages_search()
+	 * 
+	 * Search Post handler,
+	 * Page: Pages.
 	 */
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
-
 		MainWP_Cache::init_session();
-
 		MainWP_Page::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search_on'] );
 		die();
 	}
 
 	/**
-	 * Page: Users
+	 * Method mainwp_get_categories()
+	 * 
+	 * Get post/page categories.
 	 */
-	public function mainwp_user_delete() {
-		$this->secure_request( 'mainwp_user_delete' );
-
-		MainWP_User::delete();
-	}
-
-	public function mainwp_user_edit() {
-		$this->secure_request( 'mainwp_user_edit' );
-
-		MainWP_User::edit();
-	}
-
-	public function mainwp_user_update_password() {
-		$this->secure_request( 'mainwp_user_update_password' );
-
-		MainWP_User::update_password();
-	}
-
-	public function mainwp_user_update_user() {
-		$this->secure_request( 'mainwp_user_update_user' );
-
-		MainWP_User::update_user();
+	public function mainwp_get_categories() {
+		$this->secure_request( 'mainwp_get_categories' );
+		MainWP_Post_Page_Handler::get_categories();
+		die();
 	}
 
 	/**
-	 * Page: Recent Posts
+	 * Method mainwp_post_get_edit()
+	 * 
+	 * Get post to edit.
+	 */
+	public function mainwp_post_get_edit() {
+		$this->secure_request( 'mainwp_post_get_edit' );
+		MainWP_Post_Page_Handler::get_post();
+		die();
+	}
+
+	/**
+	 * Method mainwp_user_delete()
+	 * 
+	 * Delete User from Child Site,
+	 * Page: Users.
+	 */
+	public function mainwp_user_delete() {
+		$this->secure_request( 'mainwp_user_delete' );
+		MainWP_User::delete();
+	}
+
+	/**
+	 * Method mainwp_user_edit()
+	 * 
+	 * Edit User from Child Site,
+	 * Page: Users.
+	 */
+	public function mainwp_user_edit() {
+		$this->secure_request( 'mainwp_user_edit' );
+		MainWP_User::edit();
+	}
+
+	/**
+	 * Method mainwp_user_update_password(
+	 * 
+	 * Update User passowrd from Child Site,
+	 * Page: Users.
+	 */
+	public function mainwp_user_update_password() {
+		$this->secure_request( 'mainwp_user_update_password' );
+		MainWP_User::update_password();
+	}
+
+	/**
+	 * Method mainwp_user_update_user()
+	 * 
+	 * Update User from Child Site,
+	 * Page: Users.
+	 */
+	public function mainwp_user_update_user() {
+		$this->secure_request( 'mainwp_user_update_user' );
+		MainWP_User::update_user();
+	}
+	
+	/**
+	 * Method mainwp_post_unpublish()
+	 * 
+	 * Unpublish post from Child Site,
+	 * Page: Recent Posts.
 	 */
 	public function mainwp_post_unpublish() {
 		$this->secure_request( 'mainwp_post_unpublish' );
-
 		MainWP_Recent_Posts::unpublish();
 	}
 
+	/**
+	 * Method mainwp_post_publish()
+	 * 
+	 * Publish post on Child Site,
+	 * Page: Recent Posts
+	 */
 	public function mainwp_post_publish() {
 		$this->secure_request( 'mainwp_post_publish' );
-
 		MainWP_Recent_Posts::publish();
 	}
 
+	/**
+	 * Method mainwp_post_approve()
+	 * 
+	 * Approve post on Child Site,
+	 * Page: Recent Posts.
+	 */
 	public function mainwp_post_approve() {
 		$this->secure_request( 'mainwp_post_approve' );
-
 		MainWP_Recent_Posts::approve();
 	}
 
+	/**
+	 * Method mainwp_post_trash()
+	 * 
+	 * Trash post on Child Site,
+	 * Page: Recent Posts
+	 */
 	public function mainwp_post_trash() {
 		$this->secure_request( 'mainwp_post_trash' );
 
 		MainWP_Recent_Posts::trash();
 	}
 
+	/**
+	 * Method mainwp_post_delete()
+	 * 
+	 * Delete post on Child Site,
+	 * Page: Recent Posts.
+	 */
 	public function mainwp_post_delete() {
 		$this->secure_request( 'mainwp_post_delete' );
 
 		MainWP_Recent_Posts::delete();
 	}
 
+	/**
+	 * Method mainwp_post_restore()
+	 * 
+	 * Restore post, 
+	 * Page: Recent Posts.
+	 */
 	public function mainwp_post_restore() {
 		$this->secure_request( 'mainwp_post_restore' );
 
@@ -238,39 +321,66 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Page: Recent Pages
+	 * Method mainwp_page_unpublish()
+	 * 
+	 * Unpublish page,
+	 * Page: Recent Pages.
 	 */
 	public function mainwp_page_unpublish() {
 		$this->secure_request( 'mainwp_page_unpublish' );
-
 		MainWP_Page::unpublish();
 	}
 
+	/**
+	 * Method mainwp_page_publish()
+	 * 
+	 * Publish page,
+	 * Page: Recent Pages.
+	 */
 	public function mainwp_page_publish() {
 		$this->secure_request( 'mainwp_page_publish' );
-
 		MainWP_Page::publish();
 	}
 
+	/**
+	 * Method mainwp_page_trash()
+	 * 
+	 * Trash page,
+	 * Page: Recent Pages.
+	 */
 	public function mainwp_page_trash() {
 		$this->secure_request( 'mainwp_page_trash' );
-
 		MainWP_Page::trash();
 	}
 
+	/**
+	 * Method mainwp_page_delete()
+	 * 
+	 * Delete page,
+	 * Page: Recent Pages.
+	 */
 	public function mainwp_page_delete() {
 		$this->secure_request( 'mainwp_page_delete' );
-
 		MainWP_Page::delete();
 	}
 
+	/**
+	 * Method mainwp_page_restor()
+	 * 
+	 * Restore page,
+	 * Page: Recent Pages.
+	 */
 	public function mainwp_page_restore() {
 		$this->secure_request( 'mainwp_page_restore' );
-
 		MainWP_Page::restore();
 	}
 
-	// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
+	/**
+	 * Method mainwp_notice_status_update()
+	 * 
+	 * Hide after installtion notices, 
+	 * (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
+	 */
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
@@ -292,6 +402,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 1 );
 	}
 
+	/**
+	 * Method mainwp_status_saving()
+	 * 
+	 * Save last_sync_sites time() or mainwp_status_saved_values.
+	 */
 	public function mainwp_status_saving() {
 		$this->secure_request( 'mainwp_status_saving' );
 		$values = get_option( 'mainwp_status_saved_values' );
@@ -318,6 +433,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'ok' );
 	}
 
+	/**
+	 * Method ajax_widget_order()
+	 * 
+	 * Update saved widget order.
+	 */
 	public function ajax_widgets_order() {
 
 		$this->secure_request( 'mainwp_widgets_order' );
@@ -329,6 +449,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( -1 );
 	}
 
+	/**
+	 * Method ajax_mainwp_save_settings()
+	 * 
+	 * Update saved MainWP Settings.
+	 */
 	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
 		$option_name = 'mainwp_' . $_POST['name'];
@@ -339,6 +464,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'ok' );
 	}
 
+	/**
+	 * Method mainwp_leftmenu_filter_group()
+	 * 
+	 * MainWP left menu filter by group.
+	 */
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
 		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
@@ -354,6 +484,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( '' );
 	}
 
+	/**
+	 * Method mainwp_dismiss_twit()
+	 * 
+	 * Dismiss the twitter bragger.
+	 */
 	public function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
 
@@ -365,6 +500,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 1 );
 	}
 
+	/**
+	 * Method dismiss_activate_notice()
+	 * 
+	 * Dismiss activate notice.
+	 */
 	public function dismiss_activate_notice() {
 		$this->secure_request( 'mainwp_dismiss_activate_notice' );
 
@@ -381,6 +521,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 1 );
 	}
 
+	/**
+	 * Method mainwp_twitter_dashboard_action()
+	 * 
+	 * Post handler for twitter bragger. 
+	 * 
+	 * @return mixed $html|$success
+	 */
 	public function mainwp_twitter_dashboard_action() {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
 
@@ -411,7 +558,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Page: SecurityIssues
+	 * Method mainwp_security_issues_request()
+	 * 
+	 * Post hander for,
+	 * Page: SecurityIssues.
 	 */
 	public function mainwp_security_issues_request() {
 		$this->secure_request( 'mainwp_security_issues_request' );
@@ -432,6 +582,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
+	/**
+	 * Method  mainwp_security_issues_fix()
+	 * 
+	 * Post hander for 'fix issues',
+	 * Page: SecurityIssues.
+	 */
 	public function mainwp_security_issues_fix() {
 		$this->secure_request( 'mainwp_security_issues_fix' );
 
@@ -451,6 +607,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
+	/**
+	 * Method  mainwp_security_issues_unfix()
+	 * 
+	 * Post hander for 'unfix issues',
+	 * Page: SecurityIssues.
+	 */
 	public function mainwp_security_issues_unfix() {
 		$this->secure_request( 'mainwp_security_issues_unfix' );
 
@@ -470,7 +632,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-
+	/**
+	 * Method ajax_disconnect_site()
+	 * 
+	 * Disconnect Child Site.
+	 */
 	public function ajax_disconnect_site() {
 		$this->secure_request( 'mainwp_disconnect_site' );
 
@@ -495,15 +661,23 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( $information );
 	}
 
+	/**
+	 * Method ajax_display_rows()
+	 * 
+	 * Display rows via ajax,
+	 * Page: Manage Sites.
+	 */
 	public function ajax_display_rows() {
 		$this->secure_request( 'mainwp_manage_display_rows' );
 		MainWP_Manage_Sites::display_rows();
 	}
 
-	/*
-	 * Page: BulkAddUser
+	/**
+	 * Method mainwp_bulkadduser()
+	 * 
+	 * Bulk Add User for,
+	 * Page: BulkAddUser.
 	 */
-
 	public function mainwp_bulkadduser() {
 		if ( ! $this->check_security( 'mainwp_bulkadduser' ) ) {
 			die( 'ERROR ' . wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -512,25 +686,35 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die();
 	}
 
+	/**
+	 * Method mainwp_importuser()
+	 * 
+	 * Import user.
+	 */
 	public function mainwp_importuser() {
 		$this->secure_request( 'mainwp_importuser' );
-
 		MainWP_User::do_import();
 	}
 
-
-	// Save note.
+	/**
+	 * Method mainwp_notes_save()
+	 * 
+	 * Post handler for save notes on,
+	 * Page: Manage Sites.
+	 */
 	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );
-
 		MainWP_Manage_Sites_Handler::save_note();
 	}
 
-	/*
-	 * Widget: RightNow
+	/**
+	 * Method mainwp_syncerrors_dismiss()
+	 * 
+	 * Dismis Syncerrors for,
+	 * Widget: RightNow.
 	 */
-
 	public function mainwp_syncerrors_dismiss() {
+
 		$this->secure_request( 'mainwp_syncerrors_dismiss' );
 
 		try {
@@ -540,7 +724,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-
+	/**
+	 * Method mainwp_events_notice_hide()
+	 * 
+	 * Hide events notice.
+	 */
 	public function mainwp_events_notice_hide() {
 		$this->secure_request( 'mainwp_events_notice_hide' );
 
@@ -570,6 +758,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'ok' );
 	}
 
+	/**
+	 * Method mainwp_showhide_sections()
+	 * 
+	 * Show/Hide sections.
+	 */
 	public function mainwp_showhide_sections() {
 		if ( isset( $_POST['sec'] ) && isset( $_POST['status'] ) ) {
 			$opts = get_option( 'mainwp_opts_showhide_sections' );
@@ -583,6 +776,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'failed' );
 	}
 
+	/**
+	 * Method mainwp_saving_status()
+	 * 
+	 * MainWP Saving Status.
+	 */
 	public function mainwp_saving_status() {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( $_REQUEST['nonce'], 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
@@ -602,6 +800,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'ok' );
 	}
 
+	/**
+	 * Method mainwp_recheck_http()
+	 * 
+	 * Recheck Child Site http status code & message.
+	 */
 	public function mainwp_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
@@ -637,6 +840,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		);
 	}
 
+	/**
+	 * Method mainwp_ignore_http_response()
+	 * 
+	 * Ignore Child Site https response.
+	 */
 	public function mainwp_ignore_http_response() {
 		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
@@ -655,6 +863,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'ok' => 1 ) ) );
 	}
 
+	/**
+	 * Method mainwp_autoupdate_and_trust_child()
+	 * 
+	 * Set MainWP Child Plugin to Trusted & AutoUpdate.
+	 */
 	public function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );
 		if ( get_option( 'mainwp_automaticDailyUpdate' ) != 1 ) {
@@ -664,6 +877,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		die( 'ok' );
 	}
 
+	/**
+	 * Method mainwp_force_destroy_sessions()
+	 * 
+	 * Force destroy sessions.
+	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );
 

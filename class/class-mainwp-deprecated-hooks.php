@@ -40,9 +40,9 @@ class MainWP_Deprecated_Hooks {
 	 */
 	public $deprecated_actions = array(
 		'mainwp_activate_extention'                    => 'mainwp_activate_extension',
-		'mainwp_deactivate_extention'                  => 'mainwp_deactivate_extension'		
+		'mainwp_deactivate_extention'                  => 'mainwp_deactivate_extension',
 	);
-	
+
 	/**
 	 * Array of versions of deprecated hooks.
 	 *
@@ -56,8 +56,8 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-extension-available-check'   => '4.0.1',
 		'mainwp-getgroups'                   => '4.0.1',
 		'mainwp-manager-getextensions'       => '4.0.1',
-		'mainwp_activate_extention'			=> '4.0.1',
-		'mainwp_deactivate_extention'		=> '4.0.1',
+		'mainwp_activate_extention'          => '4.0.1',
+		'mainwp_deactivate_extention'        => '4.0.1',
 	);
 
 	/**

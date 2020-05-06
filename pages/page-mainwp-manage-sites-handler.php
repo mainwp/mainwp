@@ -2,16 +2,21 @@
 /**
  * Manage Sites Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites Handler Page
+ * MainWP Manage Sites Handler Page.
  */
 class MainWP_Manage_Sites_Handler {
 
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
@@ -19,7 +24,7 @@ class MainWP_Manage_Sites_Handler {
 	/**
 	 * Method check_site()
 	 *
-	 * Check to add site
+	 * Check to add site.
 	 *
 	 * @return mixed send json encode data
 	 */
@@ -51,6 +56,13 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( $ret ) );
 	}
 
+	/**
+	 * Method reconnect_site()
+	 *
+	 * Try to recconnect to Child Site.
+	 *
+	 * @return string TROW|ERROR|SUCCESS
+	 */
 	public static function reconnect_site() {
 		$siteId = $_POST['siteid'];
 
@@ -69,6 +81,13 @@ class MainWP_Manage_Sites_Handler {
 	}
 
 
+	/**
+	 * Method add_site()
+	 *
+	 * Add new Child Site.
+	 *
+	 * @return json  $ret
+	 */
 	public static function add_site() {
 		$ret     = array();
 		$error   = '';
@@ -96,6 +115,13 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( $ret ) );
 	}
 
+	/**
+	 * Method apply_plugin_settings()
+	 *
+	 * Apply plugin settings.
+	 *
+	 * @return json error
+	 */
 	public static function apply_plugin_settings() {
 		$site_id      = $_POST['siteId'];
 		$ext_dir_slug = $_POST['ext_dir_slug'];
@@ -107,6 +133,13 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 	}
 
+	/**
+	 * Method save_note()
+	 *
+	 * Save Child Site Note.
+	 *
+	 * @return json result|errors|undefined_error
+	 */
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
@@ -123,14 +156,23 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( array( 'undefined_error' => true ) ) );
 	}
 
+	/**
+	 * Method remove_site()
+	 *
+	 * Try to remove Child Site.
+	 *
+	 * @return json error|SUCCESS|REMOVED|undefined_error|NOSITE
+	 */
 	public static function remove_site() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['id'] );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';
 
-				// deactive child plugin on live site only,
-				// do not deactive child on staging site, it will deactive child plugin of source site.
+				/**
+				 * Deactive child plugin on live site only,
+				 * DO NOT deactive child on staging site, it will deactive child plugin of source site.
+				 */
 				if ( ! $website->is_staging ) {
 					try {
 						$information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
@@ -141,7 +183,7 @@ class MainWP_Manage_Sites_Handler {
 					$information['removed'] = true;
 				}
 
-				// delete icon file.
+				// Delete icon file.
 				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
 
@@ -177,6 +219,13 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
+	/**
+	 * Method handle_settings_post()
+	 *
+	 * Update Child Site Settings.
+	 *
+	 * @return boolean true|false
+	 */
 	public static function handle_settings_post() {
 		if ( MainWP_System_Utility::is_admin() ) {
 			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
@@ -230,6 +279,13 @@ class MainWP_Manage_Sites_Handler {
 		return false;
 	}
 
+	/**
+	 * Method update_child_site_value()
+	 *
+	 * Update Child Site ID.
+	 *
+	 * @return json error|SUCCESS|undefined_error|NO_SIDE_ID
+	 */
 	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $_POST['site_id'] );

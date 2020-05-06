@@ -4,7 +4,7 @@
  *
  * This file handles install MainWP DB.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -28,6 +28,10 @@ class MainWP_Install extends MainWP_DB_Base {
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 *
+	 * Return public static instance.
+	 *
 	 * @static
 	 * @return MainWP_DB
 	 */
@@ -41,7 +45,13 @@ class MainWP_Install extends MainWP_DB_Base {
 		return self::$instance;
 	}
 
-	// Installs new DB.
+	/**
+	 * Method install()
+	 *
+	 * Installs the new DB.
+	 *
+	 * @return void
+	 */
 	public function install() {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
@@ -277,9 +287,18 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method post_update()
+	 *
+	 * Update MainWP DB.
+	 *
+	 * @return void
+	 */
 	public function post_update() {
+
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
+
 		if ( false === $currentVersion ) {
 			return;
 		}

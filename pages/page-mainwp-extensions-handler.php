@@ -478,9 +478,9 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $handle
 	 * @param mixed $output
 	 *
-	 * @uses MainWP_Utility::fetch_urls_authed()
+	 * @uses MainWP_Connect::fetch_urls_authed()
 	 *
-	 * @return mixed false|MainWP_Utility::fetch_urls_authed
+	 * @return mixed false|MainWP_Connect::fetch_urls_authed()
 	 */
 	public static function hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {

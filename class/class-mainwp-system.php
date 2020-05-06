@@ -48,7 +48,9 @@ class MainWP_System {
 	private $plugin_slug;
 
 	/**
-	 * Plugin Instance.
+	 * Method instance()
+	 *
+	 * Create a public static instance.
 	 *
 	 * @static
 	 * @return MainWP_System

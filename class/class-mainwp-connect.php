@@ -4,7 +4,7 @@
  *
  * MainWP Connect functions.
  *
- * @package     MainWP/Dashboard
+ * @package  MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -539,10 +539,9 @@ class MainWP_Connect {
 				if ( isset( $params ) && isset( $params['new_post'] ) ) {
 					$_new_post = $params['new_post'];
 
-					/*
-					* @deprecated Use 'mainwp_pre_posting_posts' instead.
-					*
-					*/
+					/**
+					 * @deprecated Use 'mainwp_pre_posting_posts' instead.
+					 */
 					$params = apply_filters_deprecated(
 						'mainwp-pre-posting-posts',
 						array(

@@ -19,9 +19,16 @@ class MainWP_System_Handler {
 	 */
 	private static $instance = null;
 
+	/**
+	 * @var null Upgrade Version Info.
+	 */
 	private $upgradeVersionInfo = null;
 
 	/**
+	 * Method instance()
+	 * 
+	 * Create public static instance. 
+	 * 
 	 * @static
 	 * @return MainWP_System
 	 */
@@ -74,13 +81,16 @@ class MainWP_System_Handler {
 			7
 		);
 
+		/**
+		 * @deprecated Use 'mainwp_manager_getextensions' instead.
+		 */
 		add_filter(
 			'mainwp-manager-getextensions',
 			array(
 				MainWP_Extensions_Handler::get_class_name(),
 				'hook_manager_get_extensions',
 			)
-		); // @deprecated Use 'mainwp_manager_getextensions' instead.
+		);
 
 		add_filter(
 			'mainwp_manager_getextensions',
@@ -98,7 +108,17 @@ class MainWP_System_Handler {
 	/**
 	 * Method filter_fetch_urls_authed()
 	 *
-	 * Filter fetch urls authed
+	 * Filter fetch authorized urls.
+	 * 
+	 * @param mixed $pluginFile MainWP Extention.
+	 * @param mixed $key MainWP Licence Key.
+	 * @param mixed $dbwebsites Child Sites.
+	 * @param mixed $what 
+	 * @param mixed $params
+	 * @param mixed $handle
+	 * @param mixed $output
+	 * 
+	 * @return void
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
@@ -107,7 +127,16 @@ class MainWP_System_Handler {
 	/**
 	 * Method filter_fetch_url_authed()
 	 *
-	 * Filter fetch url authed
+	 * Filter fetch Authorized URL.
+	 * 
+	 * @param mixed $pluginFile
+	 * @param mixed $key
+	 * @param mixed $websiteId
+	 * @param mixed $what
+	 * @param mixed $params
+	 * @param null $raw_response
+	 * 
+	 * @return void
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
@@ -218,7 +247,7 @@ class MainWP_System_Handler {
 	/**
 	 * Method handle_settings_post()
 	 *
-	 * Handle settings page saving
+	 * Handle saving settings page.
 	 */
 	public function handle_settings_post() {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
@@ -250,7 +279,17 @@ class MainWP_System_Handler {
 		}
 	}
 
-
+	/**
+	 * Method plugins_api_info()
+	 * 
+	 * Get MainWP Extension api information.
+	 * 
+	 * @param mixed $false
+	 * @param mixed $action Action being performed.
+	 * @param mixed $arg Action arguments. Should be the plugin slug.
+	 * 
+	 * @return mixed $info|$false
+	 */
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
 			return $false;
@@ -289,6 +328,15 @@ class MainWP_System_Handler {
 		return $false;
 	}
 
+	/**
+	 * Method check_update_custom()
+	 * 
+	 * Check MainWP Exensions for updates.
+	 * 
+	 * @param mixed $transient
+	 * 
+	 * @return mixed $transient
+	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
@@ -358,6 +406,15 @@ class MainWP_System_Handler {
 	}
 
 
+	/**
+	 * Method map_rslt_obj()
+	 * 
+	 * Map resulting object.
+	 * 
+	 * @param mixed $pRslt
+	 * 
+	 * @return object $obj.
+	 */
 	public static function map_rslt_obj( $pRslt ) {
 		$obj              = new \stdClass();
 		$obj->slug        = $pRslt->slug;
@@ -368,6 +425,11 @@ class MainWP_System_Handler {
 		return $obj;
 	}
 
+	/**
+	 * Method check_upgrade()
+	 * 
+	 * Check if Extension has an update.
+	 */
 	private function check_upgrade() {
 		$result = MainWP_API_Settings::check_upgrade();
 		if ( null === $this->upgradeVersionInfo ) {
@@ -380,6 +442,15 @@ class MainWP_System_Handler {
 		MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', $this->upgradeVersionInfo );
 	}
 
+	/**
+	 * Method pre_check_update_custom()
+	 * 
+	 * Pre-check for extension updates.
+	 * 
+	 * @param mixed $transient
+	 * 
+	 * @return mixed $transient
+	 */
 	public function pre_check_update_custom( $transient ) {
 		if ( ! isset( $transient->checked ) ) {
 			return $transient;
@@ -402,6 +473,15 @@ class MainWP_System_Handler {
 		return $transient;
 	}
 
+	/**
+	 * Method upload_file()
+	 * 
+	 * Upload a file.
+	 * 
+	 * @param mixed $file File to upload.
+	 * 
+	 * @return void
+	 */
 	public function upload_file( $file ) {
 		header( 'Content-Description: File Transfer' );
 		if ( MainWP_Utility::ends_with( $file, '.tar.gz' ) ) {
@@ -422,6 +502,15 @@ class MainWP_System_Handler {
 		exit();
 	}
 
+	/**
+	 * Method readfile_chunked()
+	 * 
+	 * Read Chunked File.
+	 * 
+	 * @param mixed $filename Name of file.
+	 * 
+	 * @return mixed echo $buffer|false|$handle.
+	 */
 	public function readfile_chunked( $filename ) {
 		$chunksize = 1024;
 		$handle    = fopen( $filename, 'rb' );
@@ -440,6 +529,14 @@ class MainWP_System_Handler {
 		return fclose( $handle );
 	}
 
+	/**
+	 * Method activate_extension()
+	 * 
+	 * Activate MainWP Extension.
+	 * 
+	 * @param mixed $ext_key Extension API Key.
+	 * @param array $info Extension Info.
+	 */
 	public function activate_extention( $ext_key, $info = array() ) {
 
 		add_filter( 'wp_redirect', array( $this, 'activate_redirect' ) );
@@ -455,6 +552,13 @@ class MainWP_System_Handler {
 		}
 	}
 
+	/**
+	 * Method deactivate_extension()
+	 * 
+	 * Deactivate MaiNWP Extension.
+	 * 
+	 * @param mixed $ext_key Exnension API Key.
+	 */
 	public function deactivate_extention( $ext_key ) {
 		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );
 	}

@@ -58,7 +58,7 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method reconnect_site()
-	 * 
+	 *
 	 * Try to recconnect to Child Site.
 	 *
 	 * @return string TROW|ERROR|SUCCESS
@@ -83,9 +83,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method add_site()
-	 * 
+	 *
 	 * Add new Child Site.
-	 * 
+	 *
 	 * @return json  $ret
 	 */
 	public static function add_site() {
@@ -117,9 +117,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method apply_plugin_settings()
-	 * 
+	 *
 	 * Apply plugin settings.
-	 * 
+	 *
 	 * @return json error
 	 */
 	public static function apply_plugin_settings() {
@@ -135,9 +135,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method save_note()
-	 * 
+	 *
 	 * Save Child Site Note.
-	 * 
+	 *
 	 * @return json result|errors|undefined_error
 	 */
 	public static function save_note() {
@@ -158,9 +158,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method remove_site()
-	 * 
+	 *
 	 * Try to remove Child Site.
-	 * 
+	 *
 	 * @return json error|SUCCESS|REMOVED|undefined_error|NOSITE
 	 */
 	public static function remove_site() {
@@ -221,9 +221,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method handle_settings_post()
-	 * 
+	 *
 	 * Update Child Site Settings.
-	 * 
+	 *
 	 * @return boolean true|false
 	 */
 	public static function handle_settings_post() {
@@ -281,9 +281,9 @@ class MainWP_Manage_Sites_Handler {
 
 	/**
 	 * Method update_child_site_value()
-	 * 
+	 *
 	 * Update Child Site ID.
-	 * 
+	 *
 	 * @return json error|SUCCESS|undefined_error|NO_SIDE_ID
 	 */
 	public static function update_child_site_value() {

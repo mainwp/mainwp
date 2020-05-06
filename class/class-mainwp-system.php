@@ -49,7 +49,7 @@ class MainWP_System {
 
 	/**
 	 * Method instance()
-	 * 
+	 *
 	 * Create a public static instance.
 	 *
 	 * @static

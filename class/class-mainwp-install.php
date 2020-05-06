@@ -29,9 +29,9 @@ class MainWP_Install extends MainWP_DB_Base {
 
 	/**
 	 * Method instance()
-	 * 
-	 * Return public static instance. 
-	 * 
+	 *
+	 * Return public static instance.
+	 *
 	 * @static
 	 * @return MainWP_DB
 	 */
@@ -47,9 +47,9 @@ class MainWP_Install extends MainWP_DB_Base {
 
 	/**
 	 * Method install()
-	 * 
+	 *
 	 * Installs the new DB.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function install() {
@@ -289,9 +289,9 @@ class MainWP_Install extends MainWP_DB_Base {
 
 	/**
 	 * Method post_update()
-	 * 
+	 *
 	 * Update MainWP DB.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function post_update() {

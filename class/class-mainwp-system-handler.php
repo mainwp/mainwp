@@ -26,9 +26,9 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method instance()
-	 * 
-	 * Create public static instance. 
-	 * 
+	 *
+	 * Create public static instance.
+	 *
 	 * @static
 	 * @return MainWP_System
 	 */
@@ -109,15 +109,15 @@ class MainWP_System_Handler {
 	 * Method filter_fetch_urls_authed()
 	 *
 	 * Filter fetch authorized urls.
-	 * 
+	 *
 	 * @param mixed $pluginFile MainWP Extention.
 	 * @param mixed $key MainWP Licence Key.
 	 * @param mixed $dbwebsites Child Sites.
-	 * @param mixed $what 
+	 * @param mixed $what
 	 * @param mixed $params
 	 * @param mixed $handle
 	 * @param mixed $output
-	 * 
+	 *
 	 * @return void
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
@@ -128,14 +128,14 @@ class MainWP_System_Handler {
 	 * Method filter_fetch_url_authed()
 	 *
 	 * Filter fetch Authorized URL.
-	 * 
+	 *
 	 * @param mixed $pluginFile
 	 * @param mixed $key
 	 * @param mixed $websiteId
 	 * @param mixed $what
 	 * @param mixed $params
-	 * @param null $raw_response
-	 * 
+	 * @param null  $raw_response
+	 *
 	 * @return void
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
@@ -281,13 +281,13 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method plugins_api_info()
-	 * 
+	 *
 	 * Get MainWP Extension api information.
-	 * 
+	 *
 	 * @param mixed $false
 	 * @param mixed $action Action being performed.
 	 * @param mixed $arg Action arguments. Should be the plugin slug.
-	 * 
+	 *
 	 * @return mixed $info|$false
 	 */
 	public function plugins_api_info( $false, $action, $arg ) {
@@ -330,11 +330,11 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method check_update_custom()
-	 * 
+	 *
 	 * Check MainWP Exensions for updates.
-	 * 
+	 *
 	 * @param mixed $transient
-	 * 
+	 *
 	 * @return mixed $transient
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method.
@@ -408,11 +408,11 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method map_rslt_obj()
-	 * 
+	 *
 	 * Map resulting object.
-	 * 
+	 *
 	 * @param mixed $pRslt
-	 * 
+	 *
 	 * @return object $obj.
 	 */
 	public static function map_rslt_obj( $pRslt ) {
@@ -427,7 +427,7 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method check_upgrade()
-	 * 
+	 *
 	 * Check if Extension has an update.
 	 */
 	private function check_upgrade() {
@@ -444,11 +444,11 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method pre_check_update_custom()
-	 * 
+	 *
 	 * Pre-check for extension updates.
-	 * 
+	 *
 	 * @param mixed $transient
-	 * 
+	 *
 	 * @return mixed $transient
 	 */
 	public function pre_check_update_custom( $transient ) {
@@ -475,11 +475,11 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method upload_file()
-	 * 
+	 *
 	 * Upload a file.
-	 * 
+	 *
 	 * @param mixed $file File to upload.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function upload_file( $file ) {
@@ -504,11 +504,11 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method readfile_chunked()
-	 * 
+	 *
 	 * Read Chunked File.
-	 * 
+	 *
 	 * @param mixed $filename Name of file.
-	 * 
+	 *
 	 * @return mixed echo $buffer|false|$handle.
 	 */
 	public function readfile_chunked( $filename ) {
@@ -531,9 +531,9 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method activate_extension()
-	 * 
+	 *
 	 * Activate MainWP Extension.
-	 * 
+	 *
 	 * @param mixed $ext_key Extension API Key.
 	 * @param array $info Extension Info.
 	 */
@@ -554,9 +554,9 @@ class MainWP_System_Handler {
 
 	/**
 	 * Method deactivate_extension()
-	 * 
+	 *
 	 * Deactivate MaiNWP Extension.
-	 * 
+	 *
 	 * @param mixed $ext_key Exnension API Key.
 	 */
 	public function deactivate_extention( $ext_key ) {

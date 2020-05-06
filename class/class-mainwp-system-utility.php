@@ -93,9 +93,9 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_base_dir()
-	 * 
+	 *
 	 * Get the base upload directory.
-	 * 
+	 *
 	 * @return string basedir/
 	 */
 	public static function get_base_dir() {
@@ -106,7 +106,7 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_icons_dir()
-	 * 
+	 *
 	 * Get MainWP icons directory,
 	 * if it doesn't exist create it.
 	 *
@@ -130,10 +130,10 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_mainwp_dir()
-	 * 
-	 * Get the MainWP directory, 
+	 *
+	 * Get the MainWP directory,
 	 * if it doesn't exite create it.
-	 * 
+	 *
 	 * @return array $dir, $url
 	 */
 	public static function get_mainwp_dir() {
@@ -155,10 +155,10 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_download_dir()
-	 * 
+	 *
 	 * @param mixed $what What url.
 	 * @param mixed $filename File Name.
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function get_download_url( $what, $filename ) {
@@ -172,14 +172,14 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_mainwp_specific_dir()
-	 * 
-	 * Get MainWP Specific directory, 
+	 *
+	 * Get MainWP Specific directory,
 	 * if it doesn't exist create it.
-	 * 
+	 *
 	 * Update .htaccess.
-	 * 
+	 *
 	 * @param null $dir Current MainWP directory.
-	 * 
+	 *
 	 * @return string $newdir
 	 */
 	public static function get_mainwp_specific_dir( $dir = null ) {
@@ -225,11 +225,11 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_mainwp_specific_url()
-	 * 
+	 *
 	 * get MainWP specific URL.
-	 * 
+	 *
 	 * @param mixed $dir MainWP Directory.
-	 * 
+	 *
 	 * @return string MainWP URL.
 	 */
 	public static function get_mainwp_specific_url( $dir ) {
@@ -246,9 +246,9 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_wp_file_system()
-	 * 
+	 *
 	 * Get WP file system & define Global Variable FS_METHOD.
-	 * 
+	 *
 	 * @return boolean $init True.
 	 */
 	public static function get_wp_file_system() {
@@ -277,11 +277,11 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method can_edit_website()
-	 * 
+	 *
 	 * Check if current user can edit Child Site.
-	 * 
+	 *
 	 * @param mixed $website Child Site.
-	 * 
+	 *
 	 * @return mixed true|false|userid
 	 */
 	public static function can_edit_website( &$website ) {
@@ -300,9 +300,9 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_current_wpid()
-	 * 
+	 *
 	 * Get current Child Site ID.
-	 * 
+	 *
 	 * @return string $current_user->current_site_id Current Child Site ID.
 	 */
 	public static function get_current_wpid() {
@@ -313,9 +313,9 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method set_current_wpid()
-	 * 
+	 *
 	 * Set the current Child Site ID.
-	 * 
+	 *
 	 * @param mixed $wpid Child Site ID.
 	 */
 	public static function set_current_wpid( $wpid ) {
@@ -325,11 +325,11 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_page_id()
-	 * 
+	 *
 	 * Get current Page ID.
-	 * 
+	 *
 	 * @param null $screen Current Screen ID.
-	 * 
+	 *
 	 * @return string $page Current page ID.
 	 */
 	public static function get_page_id( $screen = null ) {
@@ -351,11 +351,11 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method get_child_response()
-	 * 
+	 *
 	 * Get response from Child Site.
-	 * 
+	 *
 	 * @param mixed $data
-	 * 
+	 *
 	 * @return json $data|true
 	 */
 	public static function get_child_response( $data ) {
@@ -368,12 +368,12 @@ class MainWP_System_Utility {
 
 	/**
 	 * Method maybe_unserialyze()
-	 * 
+	 *
 	 * Check if $data is serialized,
 	 * if it isn't then base64_decode it.
-	 * 
+	 *
 	 * @param mixed $data Data to check.
-	 * 
+	 *
 	 * @return mixed $data.
 	 */
 	public static function maybe_unserialyze( $data ) {

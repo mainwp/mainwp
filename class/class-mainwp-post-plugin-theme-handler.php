@@ -2,7 +2,7 @@
 /**
  * Post Plugin Theme Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,11 +12,14 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
-	// Singleton.
-	/** @var $instance MainWP_Post_Plugin_Theme_Handler */
+	/** @var $instance Singlton MainWP_Post_Plugin_Theme_Handler. */
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 * 
+	 * Create public static instance. 
+	 * 
 	 * @static
 	 * @return MainWP_Post_Plugin_Theme_Handler
 	 */
@@ -98,7 +101,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Page: Themes
+	 * Method mainwp_themes_search()
+	 * 
+	 * Search handler for,
+	 * Page: Themes.
+	 * 
+	 * @return json $result Search results.
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
@@ -107,27 +115,48 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( $result );
 	}
 
+	/**
+	 * Method mainwp_theme_activate()
+	 * 
+	 * Activate Theme,
+	 * Page: Themes.
+	 */
 	public function mainwp_theme_activate() {
 		$this->secure_request( 'mainwp_theme_activate' );
-
 		MainWP_Themes_Handler::activate_theme();
 		die();
 	}
 
+	/**
+	 * Method mainwp_theme_delete()
+	 * 
+	 * Delete Theme,
+	 * Page: Themes.
+	 */
 	public function mainwp_theme_delete() {
 		$this->secure_request( 'mainwp_theme_delete' );
-
 		MainWP_Themes_Handler::delete_themes();
 		die();
 	}
-
+	
+	/**
+	 * Method mainwp_theme_ignore_updates()
+	 * 
+	 * Ignore theme updates,
+	 * Page: Themes.
+	 */
 	public function mainwp_theme_ignore_updates() {
 		$this->secure_request( 'mainwp_theme_ignore_updates' );
-
 		MainWP_Themes_Handler::ignore_updates();
 		die();
 	}
 
+	/**
+	 * Method mainwp_themes_search_all()
+	 * 
+	 * Search ALL handler for,
+	 * Page: Themes.
+	 */
 	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
 		MainWP_Cache::init_session();
@@ -135,15 +164,25 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die();
 	}
 
+	/**
+	 * Method mainwp_trusted_theme_notes_save()
+	 * 
+	 * Save trusted theme notes,
+	 * Page: Themes.
+	 */
 	public function mainwp_trusted_theme_notes_save() {
 		$this->secure_request( 'mainwp_trusted_theme_notes_save' );
-
 		MainWP_Themes_Handler::save_trusted_theme_note();
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
 	/**
-	 * Page: Plugins
+	 * Method mainwp_plugins_search()
+	 * 
+	 * Search handler for,
+	 * Page: Plugins.
+	 * 
+	 * @return json $result Search results.
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
@@ -152,132 +191,214 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( $result );
 	}
 
+	/**
+	 * Method mainwp_plugins_search_all_active()
+	 * 
+	 * Search all Active handler for,
+	 * Page: Plugins.
+	 */
 	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
 		MainWP_Cache::init_session();
 		MainWP_Plugins::render_all_active_table();
 		die();
 	}
-
+	
+	/**
+	 * Method mainwp_plugin_activate()
+	 * 
+	 * Activate plugins,
+	 * Page: Plugins.
+	 */
 	public function mainwp_plugin_activate() {
 		$this->secure_request( 'mainwp_plugin_activate' );
-
 		MainWP_Plugins_Handler::activate_plugins();
 		die();
 	}
 
+	/**
+	 * Method mainwp_plugin_deactivate()
+	 * 
+	 * Deactivate plugins,
+	 * Page: Plugins.
+	 */
 	public function mainwp_plugin_deactivate() {
 		$this->secure_request( 'mainwp_plugin_deactivate' );
-
 		MainWP_Plugins_Handler::deactivate_plugins();
 		die();
 	}
 
+	/**
+	 * Method mainwp_plugin_delete()
+	 * 
+	 * Delete plugins,
+	 * Page: Plugins.
+	 */
 	public function mainwp_plugin_delete() {
 		$this->secure_request( 'mainwp_plugin_delete' );
-
 		MainWP_Plugins_Handler::delete_plugins();
 		die();
 	}
 
+	/**
+	 * Method mainwp_plugin_ignore_updates()
+	 * 
+	 * Ignore plugins updates,
+	 * Page: Plugins.
+	 */
 	public function mainwp_plugin_ignore_updates() {
 		$this->secure_request( 'mainwp_plugin_ignore_updates' );
-
 		MainWP_Plugins_Handler::ignore_updates();
 		die();
 	}
 
+	/**
+	 * Method mainwp_trusted_plugin_notes_save()
+	 * 
+	 * Save trusted plugin notes,
+	 * Page: Plugins.
+	 */
 	public function mainwp_trusted_plugin_notes_save() {
 		$this->secure_request( 'mainwp_trusted_plugin_notes_save' );
-
 		MainWP_Plugins_Handler::save_trusted_plugin_note();
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
 	/**
-	 * Widget: Plugins
+	 * Method mainwp_widget_plugin_activate()
+	 * 
+	 * Activate plugin,
+	 * Widget: Plugins.
 	 */
 	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
 		MainWP_Widget_Plugins::activate_plugin();
 	}
 
+	/**
+	 * Method mainwp_widget_plugin_deactivate()
+	 * 
+	 * Deactivate plugin,
+	 * Widget: Plugins.
+	 */
 	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
 		MainWP_Widget_Plugins::deactivate_plugin();
 	}
 
+	/**
+	 * Method mainwp_widget_plugin_delete()
+	 * 
+	 * Delete plugin,
+	 * Widget: Plugins.
+	 */
 	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
 		MainWP_Widget_Plugins::delete_plugin();
 	}
 
 	/**
-	 * Widget: Themes
+	 * Method mainwp_widget_plugin_activate()
+	 * 
+	 * Activate theme,
+	 * Widget: Themes.
 	 */
 	public function mainwp_widget_theme_activate() {
 		$this->secure_request( 'mainwp_widget_theme_activate' );
 		MainWP_Widget_Themes::activate_theme();
 	}
 
+	/**
+	 * Method mainwp_widget_plugin_delete()
+	 * 
+	 * Delete theme,
+	 * Widget: Themes.
+	 */
 	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );
 		MainWP_Widget_Themes::delete_theme();
 	}
 
-	/*
-	 * Page: InstallPlugins/Themes
+	/**
+	 * Method mainwp_preparebulkinstallplugintheme()
+	 * 
+	 * Prepair bulk installation of plugins & themes,
+	 * Page: InstallPlugins/Themes.
 	 */
-
 	public function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkinstallplugintheme' );
-
 		MainWP_Install_Bulk::prepare_install();
 	}
 
+	/**
+	 * Method mainwp_installbulkinstallplugintheme()
+	 * 
+	 * Installation of plugins & themes,
+	 * Page: InstallPlugins/Themes.
+	 */
 	public function mainwp_installbulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_installbulkinstallplugintheme' );
-
 		MainWP_Install_Bulk::perform_install();
 	}
 
+	/**
+	 * Method mainwp_preparebulkuploadplugintheme()
+	 * 
+	 * Prepair bulk upload of plugins & themes,
+	 * Page: InstallPlugins/Themes.
+	 */
 	public function mainwp_preparebulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkuploadplugintheme' );
-
 		MainWP_Install_Bulk::prepare_upload();
 	}
 
+	/**
+	 * Method mainwp_installbulkuploadplugintheme()
+	 * 
+	 * Bulk upload of plugins & themes,
+	 * Page: InstallPlugins/Themes.
+	 */
 	public function mainwp_installbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_installbulkuploadplugintheme' );
-
 		MainWP_Install_Bulk::perform_upload();
 	}
 
+	/**
+	 * Method mainwp_cleanbulkuploadplugintheme()
+	 * 
+	 * Clean upload of plugins & themes,
+	 * Page: InstallPlugins/Themes.
+	 */
 	public function mainwp_cleanbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_cleanbulkuploadplugintheme' );
-
 		MainWP_Install_Bulk::clean_upload();
 	}
 
-	/*
-	 * Page: ManageSites
+	/** 
+	 * Method mainwp_ext_prepareinstallplugintheme()
+	 * 
+	 * Prepair Installation of plugins & themes,
+	 * Page: ManageSites.
 	 */
-
 	public function mainwp_ext_prepareinstallplugintheme() {
-
 		do_action( 'mainwp_prepareinstallplugintheme' );
 	}
 
+	/** 
+	 * Method mainwp_ext_performinstallplugintheme()
+	 * 
+	 * Installation of plugins & themes,
+	 * Page: ManageSites.
+	 */
 	public function mainwp_ext_performinstallplugintheme() {
-
 		do_action( 'mainwp_performinstallplugintheme' );
 	}
 
-	/*
-	 * Widget: RightNow
+	/**
+	 * Method mainwp_upgradewp()
+	 * 
+	 * Update a specific WP core.
 	 */
-
-	// Update a specific WP.
 	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
 			die( wp_json_encode( array( 'error' => mainwp_do_not_have_permissions( __( 'update WordPress', 'mainwp' ), $echo = false ) ) ) );
@@ -305,7 +426,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
-
+	/**
+	 * Method mainwp_upgrade_plugintheme()
+	 * 
+	 * Update plugin or theme.
+	 */
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- not quite complex method.
 
 		if ( ! isset( $_POST['type'] ) ) {
@@ -338,7 +463,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			if ( $chunk_support ) {
 				$max_update = apply_filters( 'mainwp_update_plugintheme_max', false, $websiteId );
 				if ( empty( $max_update ) ) {
-					$chunk_support = false; // there is not hook so disable chunk update support.
+					$chunk_support = false; // there is no hook so disable chunk update support.
 				}
 			}
 			if ( $chunk_support ) {
@@ -399,6 +524,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 	}
 
+	/**
+	 * Method mainwp_ignoreplugintheme()
+	 * 
+	 * Ignore plugin or theme.
+	 */
 	public function mainwp_ignoreplugintheme() {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
@@ -408,6 +538,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) );
 	}
 
+	/**
+	 * Method mainwp_unignoreabandonedplugintheme()
+	 * 
+	 * Unignore abandoned plugin or theme.
+	 */
 	public function mainwp_unignoreabandonedplugintheme() {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
@@ -417,6 +552,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok.
 	}
 
+	/**
+	 * Method mainwp_unignoreabandonedpluginthemes()
+	 * 
+	 * Unignore abandoned plugins or themes.
+	 */
 	public function mainwp_unignoreabandonedpluginsthemes() {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
@@ -426,6 +566,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_dismissoutdateplugintheme()
+	 * 
+	 * Dismiss outdated plugin or theme.
+	 */
 	public function mainwp_dismissoutdateplugintheme() {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
@@ -435,6 +580,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_dismissoutdatepluginthemes()
+	 * 
+	 * Dismiss outdated plugins or themes.
+	 */
 	public function mainwp_dismissoutdatepluginsthemes() {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
@@ -448,6 +598,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_unignoreplugintheme()
+	 * 
+	 * Unignore plugin or theme.
+	 */
 	public function mainwp_unignoreplugintheme() {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
@@ -457,6 +612,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_ignorepluginthemes()
+	 * 
+	 * Ignore plugins or themes.
+	 */
 	public function mainwp_ignorepluginsthemes() {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );
 
@@ -470,6 +630,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_unignorepluginthemes()
+	 * 
+	 * Unignore plugins or themes.
+	 */
 	public function mainwp_unignorepluginsthemes() {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
@@ -479,6 +644,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
 	}
 
+	/**
+	 * Method mainwp_trust_plugin()
+	 * 
+	 * Trust plugin.
+	 */
 	public function mainwp_trust_plugin() {
 		$this->secure_request( 'mainwp_trust_plugin' );
 
@@ -486,6 +656,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
+	/**
+	 * Method mainwp_trust_theme()
+	 * 
+	 * Trust theme.
+	 */
 	public function mainwp_trust_theme() {
 		$this->secure_request( 'mainwp_trust_theme' );
 

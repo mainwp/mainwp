@@ -1,8 +1,8 @@
 <?php
 /**
- * Manage Backup Handler.
+ * MainWP Backup Handler.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,12 +12,29 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Backup_Handler {
 
+	/**
+	 * Method get_class_name()
+	 * 
+	 * Get Class Name.
+	 *
+	 * @return string __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	/**
+	 * Method  backup_site()
+	 * 
+	 * Backup Child Site.
+	 * 
+	 * @param mixed $siteid Child Site ID.
+	 * @param mixed $pTask Task to perform.
+	 * @param mixed $subfolder Subfolder to place backup.
+	 * 
 	 * @throws MainWP_Exception
+	 * 
+	 * @return mixed $backup_result
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		// phpcs: ignore -- complex function.
@@ -479,6 +496,18 @@ class MainWP_Backup_Handler {
 		return $backup_result;
 	}
 
+	/**
+	 * Method backup_download_file()
+	 * 
+	 * Download backup file.
+	 * 
+	 * @param mixed $pSiteId Child Site ID.
+	 * @param mixed $pType full|db Type of backup.
+	 * @param mixed $pUrl Backup location.
+	 * @param mixed $pFile Backup File.
+	 * 
+	 * @return boolean true|false
+	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
@@ -549,6 +578,16 @@ class MainWP_Backup_Handler {
 		return true;
 	}
 
+	/**
+	 * Method backup_delete_file()
+	 * 
+	 * Delete backup file.
+	 * 
+	 * @param mixed $pSiteId Child Site ID
+	 * @param mixed $pFile File to delete.
+	 * 
+	 * @return boolean true
+	 */
 	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 		MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
@@ -556,6 +595,19 @@ class MainWP_Backup_Handler {
 		return true;
 	}
 
+	/**
+	 * Method backup_check_pid()
+	 * 
+	 * Check backup pid.
+	 * 
+	 * @param mixed $pSiteId Child Site id.
+	 * @param mixed $pid Backup pid.
+	 * @param mixed $type full|db Type of backup.
+	 * @param mixed $subfolder Subfolder for backup.
+	 * @param mixed $pFilename Backups filename
+	 * 
+	 * @return array $status, $result.
+	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
 
@@ -646,11 +698,52 @@ class MainWP_Backup_Handler {
 		);
 	}
 
-
-	public static function backup( $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, // phpcs:ignore -- complex method.
-								$excludezip, $pFilename = null, $pFileNameUID = '', $pArchiveFormat = false,
-								$pMaximumFileDescriptorsOverride = false, $pMaximumFileDescriptorsAuto = false,
-								$pMaximumFileDescriptors = false, $pLoadFilesBeforeZip = false, $pid = false, $append = false ) {
+	/**
+	 * Method backup()
+	 * 
+	 * Backup Child Site.
+	 * 
+	 * @param mixed $pSiteId Child Site ID.
+	 * @param mixed $pType full|db Typ of backup.
+	 * @param mixed $pSubfolder Subfolder to store backup.
+	 * @param mixed $pExclude Exclusion list.
+	 * @param mixed $excludebackup Exclued backup files. 
+	 * @param mixed $excludecache Exclude cache files.
+	 * @param mixed $excludenonwp Exclude no WP Files.
+	 * @param mixed $excludezip Exclude Zip files
+	 * @param null $pFilename Name of backup file.
+	 * @param string $pFileNameUID File name unique ID.
+	 * @param boolean $pArchiveFormat Achive format.
+	 * @param boolean $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
+	 * @param boolean $pMaximumFileDescriptorsAuto Auto maximum file descriptors.
+	 * @param boolean $pMaximumFileDescriptors Maximum file decriptors.
+	 * @param boolean $pLoadFilesBeforeZip Load files before zip.
+	 * @param boolean $pid Backup pid.
+	 * @param boolean $append Append to backup.
+	 * 
+	 * @throw MainWP_Exception
+	 * 
+	 * @return mixed $backup_result
+	 */
+	public static function backup( 
+		$pSiteId, 
+		$pType, 
+		$pSubfolder, 
+		$pExclude, 
+		$excludebackup, 
+		$excludecache, 
+		$excludenonwp,
+		$excludezip, 
+		$pFilename = null, 
+		$pFileNameUID = '', 
+		$pArchiveFormat = false,
+		$pMaximumFileDescriptorsOverride = false, 
+		$pMaximumFileDescriptorsAuto = false,
+		$pMaximumFileDescriptors = false, 
+		$pLoadFilesBeforeZip = false, 
+		$pid = false, 
+		$append = false ) {
+			
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
@@ -843,18 +936,57 @@ class MainWP_Backup_Handler {
 		}
 	}
 		
+	/**
+	 * Method is_archive()
+	 * 
+	 * Check if Archive.
+	 * 
+	 * @param mixed $pFileName File to check.
+	 * @param string $pPrefix File prefix.
+	 * @param string $pSuffix File suffix.
+	 * 
+	 * @return mixed Files that are archives.
+	 */
 	public static function is_archive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
 		return preg_match( '/' . $pPrefix . '(.*).(zip|tar|tar.gz|tar.bz2)' . $pSuffix . '$/', $pFileName );
 	}
 
+	/**
+	 * Method is_sql_file()
+	 * 
+	 * Check if file is SQL.
+	 * 
+	 * @param mixed $pFileName File to check.
+	 * 
+	 * @return mixed SQL Files.
+	 */
 	public static function is_sql_file( $pFileName ) {
 		return preg_match( '/(.*).sql$/', $pFileName ) || self::is_sql_archive( $pFileName );
 	}
 
+	/**
+	 * Method is_sql_archive()
+	 * 
+	 * Check if is SQL Archive.
+	 * 
+	 * @param mixed $pFileName File to check.
+	 * 
+	 * @return mixed SQL archive.
+	 */
 	public static function is_sql_archive( $pFileName ) {
 		return preg_match( '/(.*).sql.(zip|tar|tar.gz|tar.bz2)$/', $pFileName );
 	}
 
+	/**
+	 * Method get_current_archive_extension()
+	 * 
+	 * Get extention of current Archive.
+	 * 
+	 * @param boolean $website true|false
+	 * @param boolean|string $task true|false|global|site
+	 * 
+	 * @return mixed $archiveFormat Format of Archive.
+	 */
 	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;
 		if ( false != $task ) {
@@ -891,6 +1023,15 @@ class MainWP_Backup_Handler {
 		return $archiveFormat;
 	}
 
+	/**
+	 * Method get_real_extension()
+	 * 
+	 * Get full file extention.
+	 * 
+	 * @param mixed $path Path to file.
+	 * 
+	 * @return mixed $check|pathinfo()
+	 */
 	public static function get_real_extension( $path ) {
 		$checks = array( '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2' );
 		foreach ( $checks as $check ) {

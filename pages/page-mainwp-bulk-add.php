@@ -22,7 +22,7 @@ class MainWP_Bulk_Add {
 
 	/**
 	 * Method get_class_name()
-	 * 
+	 *
 	 * Get Class Name.
 	 *
 	 * @return string __CLASS__

@@ -17,9 +17,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method instance()
-	 * 
-	 * Create public static instance. 
-	 * 
+	 *
+	 * Create public static instance.
+	 *
 	 * @static
 	 * @return MainWP_Post_Plugin_Theme_Handler
 	 */
@@ -102,10 +102,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_themes_search()
-	 * 
+	 *
 	 * Search handler for,
 	 * Page: Themes.
-	 * 
+	 *
 	 * @return json $result Search results.
 	 */
 	public function mainwp_themes_search() {
@@ -117,7 +117,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_theme_activate()
-	 * 
+	 *
 	 * Activate Theme,
 	 * Page: Themes.
 	 */
@@ -129,7 +129,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_theme_delete()
-	 * 
+	 *
 	 * Delete Theme,
 	 * Page: Themes.
 	 */
@@ -138,10 +138,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Themes_Handler::delete_themes();
 		die();
 	}
-	
+
 	/**
 	 * Method mainwp_theme_ignore_updates()
-	 * 
+	 *
 	 * Ignore theme updates,
 	 * Page: Themes.
 	 */
@@ -153,7 +153,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_themes_search_all()
-	 * 
+	 *
 	 * Search ALL handler for,
 	 * Page: Themes.
 	 */
@@ -166,7 +166,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_trusted_theme_notes_save()
-	 * 
+	 *
 	 * Save trusted theme notes,
 	 * Page: Themes.
 	 */
@@ -178,10 +178,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_plugins_search()
-	 * 
+	 *
 	 * Search handler for,
 	 * Page: Plugins.
-	 * 
+	 *
 	 * @return json $result Search results.
 	 */
 	public function mainwp_plugins_search() {
@@ -193,7 +193,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_plugins_search_all_active()
-	 * 
+	 *
 	 * Search all Active handler for,
 	 * Page: Plugins.
 	 */
@@ -203,10 +203,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Plugins::render_all_active_table();
 		die();
 	}
-	
+
 	/**
 	 * Method mainwp_plugin_activate()
-	 * 
+	 *
 	 * Activate plugins,
 	 * Page: Plugins.
 	 */
@@ -218,7 +218,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_plugin_deactivate()
-	 * 
+	 *
 	 * Deactivate plugins,
 	 * Page: Plugins.
 	 */
@@ -230,7 +230,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_plugin_delete()
-	 * 
+	 *
 	 * Delete plugins,
 	 * Page: Plugins.
 	 */
@@ -242,7 +242,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_plugin_ignore_updates()
-	 * 
+	 *
 	 * Ignore plugins updates,
 	 * Page: Plugins.
 	 */
@@ -254,7 +254,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_trusted_plugin_notes_save()
-	 * 
+	 *
 	 * Save trusted plugin notes,
 	 * Page: Plugins.
 	 */
@@ -266,7 +266,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_widget_plugin_activate()
-	 * 
+	 *
 	 * Activate plugin,
 	 * Widget: Plugins.
 	 */
@@ -277,7 +277,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_widget_plugin_deactivate()
-	 * 
+	 *
 	 * Deactivate plugin,
 	 * Widget: Plugins.
 	 */
@@ -288,7 +288,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_widget_plugin_delete()
-	 * 
+	 *
 	 * Delete plugin,
 	 * Widget: Plugins.
 	 */
@@ -299,7 +299,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_widget_plugin_activate()
-	 * 
+	 *
 	 * Activate theme,
 	 * Widget: Themes.
 	 */
@@ -310,7 +310,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_widget_plugin_delete()
-	 * 
+	 *
 	 * Delete theme,
 	 * Widget: Themes.
 	 */
@@ -321,7 +321,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_preparebulkinstallplugintheme()
-	 * 
+	 *
 	 * Prepair bulk installation of plugins & themes,
 	 * Page: InstallPlugins/Themes.
 	 */
@@ -332,7 +332,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_installbulkinstallplugintheme()
-	 * 
+	 *
 	 * Installation of plugins & themes,
 	 * Page: InstallPlugins/Themes.
 	 */
@@ -343,7 +343,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_preparebulkuploadplugintheme()
-	 * 
+	 *
 	 * Prepair bulk upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
 	 */
@@ -354,7 +354,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_installbulkuploadplugintheme()
-	 * 
+	 *
 	 * Bulk upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
 	 */
@@ -365,7 +365,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_cleanbulkuploadplugintheme()
-	 * 
+	 *
 	 * Clean upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
 	 */
@@ -374,9 +374,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Install_Bulk::clean_upload();
 	}
 
-	/** 
+	/**
 	 * Method mainwp_ext_prepareinstallplugintheme()
-	 * 
+	 *
 	 * Prepair Installation of plugins & themes,
 	 * Page: ManageSites.
 	 */
@@ -384,9 +384,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		do_action( 'mainwp_prepareinstallplugintheme' );
 	}
 
-	/** 
+	/**
 	 * Method mainwp_ext_performinstallplugintheme()
-	 * 
+	 *
 	 * Installation of plugins & themes,
 	 * Page: ManageSites.
 	 */
@@ -396,7 +396,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_upgradewp()
-	 * 
+	 *
 	 * Update a specific WP core.
 	 */
 	public function mainwp_upgradewp() {
@@ -428,7 +428,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_upgrade_plugintheme()
-	 * 
+	 *
 	 * Update plugin or theme.
 	 */
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- not quite complex method.
@@ -526,7 +526,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_ignoreplugintheme()
-	 * 
+	 *
 	 * Ignore plugin or theme.
 	 */
 	public function mainwp_ignoreplugintheme() {
@@ -540,7 +540,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_unignoreabandonedplugintheme()
-	 * 
+	 *
 	 * Unignore abandoned plugin or theme.
 	 */
 	public function mainwp_unignoreabandonedplugintheme() {
@@ -554,7 +554,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_unignoreabandonedpluginthemes()
-	 * 
+	 *
 	 * Unignore abandoned plugins or themes.
 	 */
 	public function mainwp_unignoreabandonedpluginsthemes() {
@@ -568,7 +568,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_dismissoutdateplugintheme()
-	 * 
+	 *
 	 * Dismiss outdated plugin or theme.
 	 */
 	public function mainwp_dismissoutdateplugintheme() {
@@ -582,7 +582,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_dismissoutdatepluginthemes()
-	 * 
+	 *
 	 * Dismiss outdated plugins or themes.
 	 */
 	public function mainwp_dismissoutdatepluginsthemes() {
@@ -600,7 +600,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_unignoreplugintheme()
-	 * 
+	 *
 	 * Unignore plugin or theme.
 	 */
 	public function mainwp_unignoreplugintheme() {
@@ -614,7 +614,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_ignorepluginthemes()
-	 * 
+	 *
 	 * Ignore plugins or themes.
 	 */
 	public function mainwp_ignorepluginsthemes() {
@@ -632,7 +632,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_unignorepluginthemes()
-	 * 
+	 *
 	 * Unignore plugins or themes.
 	 */
 	public function mainwp_unignorepluginsthemes() {
@@ -646,7 +646,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_trust_plugin()
-	 * 
+	 *
 	 * Trust plugin.
 	 */
 	public function mainwp_trust_plugin() {
@@ -658,7 +658,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Method mainwp_trust_theme()
-	 * 
+	 *
 	 * Trust theme.
 	 */
 	public function mainwp_trust_theme() {

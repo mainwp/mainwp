@@ -4,7 +4,7 @@
  *
  * This file handles all interactions with the DB.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -18,11 +18,15 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * @static
-	 * instance of this
+	 * @var self|null $instance 
 	 */
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 * 
+	 * Create public static instance.
+	 * 
 	 * @static
 	 * @return MainWP_DB_Common
 	 */
@@ -33,6 +37,15 @@ class MainWP_DB_Common extends MainWP_DB {
 		return self::$instance;
 	}
 
+	/**
+	 * Method get_last_sync_status()
+	 * 
+	 * Get last sync status.
+	 * 
+	 * @param string|null $userId User ID.
+	 * 
+	 * @return string $return all_synced|not_synced|last_sync
+	 */
 	public function get_last_sync_status( $userId = null ) {
 		$sql      = $this->get_sql_websites_for_current_user();
 		$websites = $this->query( $sql );
@@ -73,6 +86,16 @@ class MainWP_DB_Common extends MainWP_DB {
 		return $return;
 	}
 
+	/**
+	 * Method get_group_by_name()
+	 * 
+	 * Get group by name.
+	 * 
+	 * @param mixed $name Group name.
+	 * @param null $userid user ID.
+	 * 
+	 * @return (object|null) Database query result for chosen group name or null on failure
+	 */
 	public function get_group_by_name( $name, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;
@@ -84,6 +107,15 @@ class MainWP_DB_Common extends MainWP_DB {
 		return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE 1 ' . $where . ' AND name= %s', $this->escape( $name ) ) );
 	}
 
+	/**
+	 * Method get_group_by_id()
+	 * 
+	 * Get group by ID.
+	 * 
+	 * @param mixed $id Group ID.
+	 * 
+	 * @return (object|null) Database query result for chosen Group ID or null on failure.
+	 */
 	public function get_group_by_id( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE id= %d', $id ) );
@@ -92,6 +124,13 @@ class MainWP_DB_Common extends MainWP_DB {
 		return null;
 	}
 
+	/**
+	 * Method get_groups_for_manage_sites()
+	 * 
+	 * Get groups for mananged sites.
+	 * 
+	 * @return (object|null) Database query result for Managed Sites Groups or null on failure.
+	 */
 	public function get_groups_for_manage_sites() {
 		$where = ' 1 ';
 		if ( MainWP_System::instance()->is_multi_user() ) {
@@ -110,6 +149,13 @@ class MainWP_DB_Common extends MainWP_DB {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
 
+	/**
+	 * Method get_groups_for_current_user()
+	 * 
+	 * Get groups for current user.
+	 * 
+	 * @return (object|null) Database query result for Current User Groups or null on failure.
+	 */
 	public function get_groups_for_current_user() {
 		$where = ' 1 ';
 		if ( MainWP_System::instance()->is_multi_user() ) {
@@ -121,6 +167,15 @@ class MainWP_DB_Common extends MainWP_DB {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE ' . $where . ' ORDER BY name', OBJECT_K );
 	}
 
+	/**
+	 * Method get_groups_by_website_id()
+	 * 
+	 * Get groups by website ID.
+	 * 
+	 * @param mixed $websiteid Child Site ID.
+	 * 
+	 * @return (object|null) Database query result for groups by website ID or null on failure.
+	 */
 	public function get_groups_by_website_id( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 			return $this->wpdb->get_results(
@@ -135,6 +190,16 @@ class MainWP_DB_Common extends MainWP_DB {
 		return null;
 	}
 
+	/**
+	 * Medthod get_groups_and_count()
+	 * 
+	 * Get groups and count.
+	 * 
+	 * @param null $userid Current user ID.
+	 * @param boolean $for_manager Default: false.
+	 * 
+	 * @return (object|null) Database query result for groups and count or null on failure.
+	 */
 	public function get_groups_and_count( $userid = null, $for_manager = false ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;

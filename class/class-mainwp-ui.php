@@ -2,7 +2,7 @@
 /**
  * MainWP UI.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -23,6 +23,23 @@ class MainWP_UI {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method select_sites_box()
+	 * 
+	 * Select sites box.
+	 * 
+	 * @param string $type Input type, radio.
+	 * @param boolean $show_group Whether or not to show group, Default: true.
+	 * @param boolean $show_select_all Whe
+	 * @param string $class
+	 * @param string $style
+	 * @param array $selected_websites
+	 * @param array $selected_groups
+	 * @param boolean $enableOfflineSites
+	 * @param integer $postId
+	 * 
+	 * @return void
+	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( $postId ) {

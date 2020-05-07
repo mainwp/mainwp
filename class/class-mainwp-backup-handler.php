@@ -980,7 +980,7 @@ class MainWP_Backup_Handler {
 	/**
 	 * Method get_current_archive_extension()
 	 * 
-	 * Get extention of current Archive.
+	 * Get extension of current Archive.
 	 * 
 	 * @param boolean $website true|false
 	 * @param boolean|string $task true|false|global|site
@@ -1026,7 +1026,7 @@ class MainWP_Backup_Handler {
 	/**
 	 * Method get_real_extension()
 	 * 
-	 * Get full file extention.
+	 * Get full file extension.
 	 * 
 	 * @param mixed $path Path to file.
 	 * 

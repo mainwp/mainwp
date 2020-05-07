@@ -221,12 +221,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_not_empty_groups()
-	 * 
-	 * Get non-empty groups. 
-	 * 
-	 * @param null $userid Current user ID.
+	 *
+	 * Get non-empty groups.
+	 *
+	 * @param null    $userid Current user ID.
 	 * @param boolean $enableOfflineSites Include offline sites? Default: true.
-	 * 
+	 *
 	 * @return (object|null) Database query result for non-empty groups or null on failure.
 	 */
 	public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
@@ -250,14 +250,14 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method insert_or_update_request_log()
-	 * 
+	 *
 	 * Insert or update request log.
-	 * 
+	 *
 	 * @param mixed $wpid WordPress ID.
 	 * @param mixed $ip IP address.
 	 * @param mixed $start Start time.
 	 * @param mixed $stop Stop Time.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function insert_or_update_request_log( $wpid, $ip, $start, $stop ) {
@@ -283,9 +283,9 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method close_open_requests()
-	 * 
+	 *
 	 * Close open request.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function close_open_requests() {
@@ -295,11 +295,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_nrof_open_requests()
-	 * 
+	 *
 	 * Get number of requests.
-	 * 
+	 *
 	 * @param null $ip IP Address.
-	 * 
+	 *
 	 * @return (string|null) Database query result for number of requests or null on failure.
 	 */
 	public function get_nrof_open_requests( $ip = null ) {
@@ -312,11 +312,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_last_request_timestamp()
-	 * 
+	 *
 	 * Get timestamp of last request sent.
-	 * 
+	 *
 	 * @param null $ip Child Site IP address, default: null.
-	 * 
+	 *
 	 * @return (int|null) Database query result for timestamp of last request sent or null on failure.
 	 */
 	public function get_last_request_timestamp( $ip = null ) {
@@ -329,10 +329,10 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method update_group_site()
-	 * 
+	 *
 	 * @param mixed $groupId Group ID.
 	 * @param mixed $websiteId Child Site ID.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function update_group_site( $groupId, $websiteId ) {
@@ -347,12 +347,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method add_group()
-	 * 
+	 *
 	 * Add group.
-	 * 
+	 *
 	 * @param mixed $userid Current User ID.
 	 * @param mixed $name Name of group to add.
-	 * 
+	 *
 	 * @return boolean true
 	 */
 	public function add_group( $userid, $name ) {
@@ -374,11 +374,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method remove_group()
-	 * 
+	 *
 	 * Remove group.
-	 * 
+	 *
 	 * @param mixed $groupid Group ID.
-	 * 
+	 *
 	 * @return (int|boolean) Group that was deleted or false on failer.
 	 */
 	public function remove_group( $groupid ) {
@@ -394,12 +394,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method update_note()
-	 * 
+	 *
 	 * Update Note.
-	 * 
+	 *
 	 * @param mixed $websiteid Child Site ID.
 	 * @param mixed $note Note data.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function update_note( $websiteid, $note ) {
@@ -408,12 +408,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method update_group()
-	 * 
+	 *
 	 * Update group.
-	 * 
+	 *
 	 * @param mixed $groupid Group ID.
 	 * @param mixed $groupname Group Name.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public function update_group( $groupid, $groupname ) {
@@ -429,11 +429,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_user_notification_email()
-	 * 
+	 *
 	 * Get user notification email.
-	 * 
+	 *
 	 * @param mixed $userid Current user ID.
-	 * 
+	 *
 	 * @return string $user_email User email address.
 	 */
 	public function get_user_notification_email( $userid ) {
@@ -452,9 +452,9 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_user_extension()
-	 * 
+	 *
 	 * Get user extension.
-	 * 
+	 *
 	 * @return boolean|int false|get_user_extension_by_user_id()
 	 */
 	public function get_user_extension() {
@@ -475,11 +475,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_user_extension_by_user_id()
-	 * 
+	 *
 	 * Get user extension by user id.
-	 * 
+	 *
 	 * @param mixed $userid Current user ID.
-	 * 
+	 *
 	 * @return object $row User extension.
 	 */
 	public function get_user_extension_by_user_id( $userid ) {
@@ -498,11 +498,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method create_user_extension()
-	 * 
+	 *
 	 * Create user extension
-	 * 
+	 *
 	 * @param mixed $userId Current user ID.
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function create_user_extension( $userId ) {
@@ -523,11 +523,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method update_user_extension()
-	 * 
+	 *
 	 * Update user extension.
-	 * 
+	 *
 	 * @param mixed $userExtension User extention to update.
-	 * 
+	 *
 	 * @return object $row User extension.
 	 */
 	public function update_user_extension( $userExtension ) {

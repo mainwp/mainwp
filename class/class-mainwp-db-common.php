@@ -18,15 +18,15 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * @static
-	 * @var self|null $instance 
+	 * @var self|null $instance
 	 */
 	private static $instance = null;
 
 	/**
 	 * Method instance()
-	 * 
+	 *
 	 * Create public static instance.
-	 * 
+	 *
 	 * @static
 	 * @return MainWP_DB_Common
 	 */
@@ -39,11 +39,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_last_sync_status()
-	 * 
+	 *
 	 * Get last sync status.
-	 * 
+	 *
 	 * @param string|null $userId User ID.
-	 * 
+	 *
 	 * @return string $return all_synced|not_synced|last_sync
 	 */
 	public function get_last_sync_status( $userId = null ) {
@@ -88,12 +88,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_group_by_name()
-	 * 
+	 *
 	 * Get group by name.
-	 * 
+	 *
 	 * @param mixed $name Group name.
-	 * @param null $userid user ID.
-	 * 
+	 * @param null  $userid user ID.
+	 *
 	 * @return (object|null) Database query result for chosen group name or null on failure
 	 */
 	public function get_group_by_name( $name, $userid = null ) {
@@ -109,11 +109,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_group_by_id()
-	 * 
+	 *
 	 * Get group by ID.
-	 * 
+	 *
 	 * @param mixed $id Group ID.
-	 * 
+	 *
 	 * @return (object|null) Database query result for chosen Group ID or null on failure.
 	 */
 	public function get_group_by_id( $id ) {
@@ -126,9 +126,9 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_groups_for_manage_sites()
-	 * 
+	 *
 	 * Get groups for mananged sites.
-	 * 
+	 *
 	 * @return (object|null) Database query result for Managed Sites Groups or null on failure.
 	 */
 	public function get_groups_for_manage_sites() {
@@ -151,9 +151,9 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_groups_for_current_user()
-	 * 
+	 *
 	 * Get groups for current user.
-	 * 
+	 *
 	 * @return (object|null) Database query result for Current User Groups or null on failure.
 	 */
 	public function get_groups_for_current_user() {
@@ -169,11 +169,11 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Method get_groups_by_website_id()
-	 * 
+	 *
 	 * Get groups by website ID.
-	 * 
+	 *
 	 * @param mixed $websiteid Child Site ID.
-	 * 
+	 *
 	 * @return (object|null) Database query result for groups by website ID or null on failure.
 	 */
 	public function get_groups_by_website_id( $websiteid ) {
@@ -192,12 +192,12 @@ class MainWP_DB_Common extends MainWP_DB {
 
 	/**
 	 * Medthod get_groups_and_count()
-	 * 
+	 *
 	 * Get groups and count.
-	 * 
-	 * @param null $userid Current user ID.
+	 *
+	 * @param null    $userid Current user ID.
 	 * @param boolean $for_manager Default: false.
-	 * 
+	 *
 	 * @return (object|null) Database query result for groups and count or null on failure.
 	 */
 	public function get_groups_and_count( $userid = null, $for_manager = false ) {

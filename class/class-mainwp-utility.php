@@ -1,8 +1,8 @@
 <?php
 /**
- * MainWP Utility Helper
+ * MainWP Utility Helper.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -10,10 +10,14 @@ namespace MainWP\Dashboard;
 // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
 /**
- * MainWP Utility
+ * MainWP Utility.
  */
 class MainWP_Utility {
 
+	/**
+	 * @static
+	 * @var (null|true) $enabled_wp_seo If Yoast SEO is enabled return true else return null.
+	 */
 	public static $enabled_wp_seo = null;
 
 	/**
@@ -109,7 +113,6 @@ class MainWP_Utility {
 		return filter_var( $url, FILTER_VALIDATE_URL );
 	}
 
-
 	/**
 	 * Method json_convert_string()
 	 *
@@ -149,10 +152,32 @@ class MainWP_Utility {
 		return $encoded;
 	}
 
+	/**
+	 * Method ctype_digit() 
+	 * 
+	 * Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise. 
+	 * 
+	 * @param mixed $str String to check.
+	 * 
+	 * @return boolean Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise. 
+	 */
 	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
 	}
 
+	/**
+	 * Method sortmulti()
+	 * 
+	 * Sort the given array, Acending, Decending or by Natural Order.
+	 * 
+	 * @param mixed $array Array to sort.
+	 * @param mixed $index Index of array.
+	 * @param mixed $order Acending or Decending order.
+	 * @param boolean $natsort Sort an array using a "natural order" algorithm. Default: false.
+	 * @param boolean $case_sensitive If case sensitive return true else return false. Default: false.
+	 * 
+	 * @return array $sorted Return the sorted array.
+	 */
 	public static function sortmulti( $array, $index, $order, $natsort = false, $case_sensitive = false ) {
 		$sorted = array();
 		if ( is_array( $array ) && 0 < count( $array ) ) {
@@ -189,6 +214,17 @@ class MainWP_Utility {
 		return $sorted;
 	}
 
+	/**
+	 * Method get_sub_array_having()
+	 * 
+	 * Get sub array. 
+	 * 
+	 * @param mixed $array Array to traverse.
+	 * @param mixed $index Index of array.
+	 * @param mixed $value Array values.
+	 * 
+	 * void array $output Sub array.
+	 */
 	public static function get_sub_array_having( $array, $index, $value ) {
 		$output = array();
 		if ( is_array( $array ) && 0 < count( $array ) ) {
@@ -202,14 +238,39 @@ class MainWP_Utility {
 		return $output;
 	}
 
+	/**
+	 * Method trim_slashes()
+	 * 
+	 * Trim stashes from element.
+	 * 
+	 * @param mixed $elem Element to trim.
+	 * 
+	 * @return string Return string with no slashes.
+	 */
 	public static function trim_slashes( $elem ) {
 		return trim( $elem, '/' );
 	}
 
+	/**
+	 * Method sanitize()
+	 * 
+	 * Sanitize given string.
+	 * 
+	 * @param mixed $str String to sanitize.
+	 * 
+	 * @return string Sanitized string.
+	 */
 	public static function sanitize( $str ) {
 		return preg_replace( '/[\\\\\/\:"\*\?\<\>\|]+/', '', $str );
 	}
 
+	/**
+	 * Method end_session()
+	 * 
+	 * End a session.
+	 * 
+	 * @return void
+	 */
 	public static function end_session() {
 		session_write_close();
 		if ( 0 < ob_get_length() ) {
@@ -217,21 +278,59 @@ class MainWP_Utility {
 		}
 	}
 
+	/**
+	 * Method get_timestamp()
+	 * 
+	 * Get time stamp in gmt_offset.
+	 * 
+	 * @param mixed $timestamp Time stamp to convert.
+	 * 
+	 * @return string Time stamp in general mountain time offset.
+	 */
 	public static function get_timestamp( $timestamp ) {
 		$gmtOffset = get_option( 'gmt_offset' );
 
 		return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
 	}
 
+	/**
+	 * Method date()
+	 * 
+	 * Show date in given format.
+	 * 
+	 * @param mixed $format Format to display date in.
+	 * 
+	 * @return string Date.
+	 */
 	public static function date( $format ) {
 		// phpcs:ignore -- use local date function.
 		return date( $format, self::get_timestamp( time() ) );
 	}
 
+	/**
+	 * Method format_timestamp()
+	 * 
+	 * Format the given timestamp.
+	 * 
+	 * @param mixed $timestamp Timestamp to format.
+	 * 
+	 * @return string Formatted timestamp.
+	 */
 	public static function format_timestamp( $timestamp ) {
 		return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
 	}
 
+	/**
+	 * Method human_filesize()
+	 * 
+	 * Convert to human readable file size format,
+	 * (B|kB|MB|GB|TB|PB|EB|ZB|YB).
+	 * 
+	 * @param mixed $bytes File in bytes.
+	 * @param integer $decimals Number of decimals to output.
+	 * 
+	 * @return string Human readable file size.
+	 */
 	public static function human_filesize( $bytes, $decimals = 2 ) {
 		$size   = array( 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' );
 		$factor = floor( ( strlen( $bytes ) - 1 ) / 3 );
@@ -239,6 +338,16 @@ class MainWP_Utility {
 		return sprintf( "%.{$decimals}f", $bytes / pow( 1024, $factor ) ) . @$size[ $factor ];
 	}
 
+	/**
+	 * Method map_site()
+	 * 
+	 * Map Site.
+	 * 
+	 * @param mixed $website Website to map.
+	 * @param mixed $keys Keys to map.
+	 * 
+	 * @return object $outputSite Mapped site.
+	 */
 	public static function map_site( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
@@ -248,6 +357,16 @@ class MainWP_Utility {
 		return (object) $outputSite;
 	}
 
+	/**
+	 * Method map_site_array()
+	 * 
+	 * Map Site array.
+	 * 
+	 * @param mixed $website Website to map.
+	 * @param mixed $keys Keys to map.
+	 * 
+	 * @return object $outputSite Mapped site.
+	 */
 	public static function map_site_array( &$website, $keys ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
@@ -257,6 +376,16 @@ class MainWP_Utility {
 		return $outputSite;
 	}
 
+	/**
+	 * Method sec2hms()
+	 * 
+	 * Convert seconds to Hours:Minutes.
+	 * 
+	 * @param mixed $sec Time in seconds.
+	 * @param boolean $padHours Hpurs to pad.
+	 * 
+	 * @return string $hms Time in Hours:Minutes.
+	 */
 	public static function sec2hms( $sec, $padHours = false ) {
 
 		$hms     = '';
@@ -270,6 +399,16 @@ class MainWP_Utility {
 		return $hms;
 	}
 
+	/**
+	 * Method array_merge()
+	 * 
+	 * Merge two given arrays into one.
+	 * 
+	 * @param mixed $arr1 First array.
+	 * @param mixed $arr2 Second array.
+	 * 
+	 * @return array Merged Array.
+	 */
 	public static function array_merge( $arr1, $arr2 ) {
 		if ( ! is_array( $arr1 ) && ! is_array( $arr2 ) ) {
 			return array();
@@ -292,6 +431,16 @@ class MainWP_Utility {
 		return $output;
 	}
 
+	/**
+	 * Method update_option()
+	 * 
+	 * Update option.
+	 * 
+	 * @param mixed $option_name Option name.
+	 * @param mixed $option_value Option value.
+	 * 
+	 * @return (boolean) False if value was not updated and true if value was updated.
+	 */
 	public static function update_option( $option_name, $option_value ) {
 		$success = add_option( $option_name, $option_value, '', 'no' );
 
@@ -302,6 +451,15 @@ class MainWP_Utility {
 		return $success;
 	}
 
+	/**
+	 * Method remove_preslash_spaces()
+	 * 
+	 * Remove spaces before slashes.
+	 * 
+	 * @param string $text String to strip.
+	 * 
+	 * @return string $text Cleaned string.
+	 */
 	public static function remove_preslash_spaces( $text ) {
 		while ( stristr( $text, ' /' ) ) {
 			$text = str_replace( ' /', '/', $text );
@@ -310,21 +468,58 @@ class MainWP_Utility {
 		return $text;
 	}
 
+	/**
+	 * Method remove_http_prefix()
+	 * 
+	 * Remove http prefixes from given url.
+	 * 
+	 * @param mixed $pUrl Given URL.
+	 * @param (boolean) $pTrimSlashes Whether or not to trim slashes. Default is false.
+	 * 
+	 * @return void
+	 */
 	public static function remove_http_prefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
 	}
 
+	/**
+	 * Method remove_http_www_prefix()
+	 * 
+	 * Remove 'www.' from given URL.
+	 * 
+	 * @param mixed $pUrl Given URL.
+	 * 
+	 * @return string Cleaned URL.
+	 */
 	public static function remove_http_www_prefix( $pUrl ) {
 		$pUrl = self::remove_http_prefix( $pUrl, true );
 		return str_replace( 'www', '', $pUrl );
 	}
 
+	/**
+	 * Method sanitize_file_name()
+	 * 
+	 * Sanitize file names.
+	 * 
+	 * @param mixed $filename File name to sanitize.
+	 * 
+	 * @return string Sanitized filename.
+	 */
 	public static function sanitize_file_name( $filename ) {
 		$filename = str_replace( array( '|', '/', '\\', ' ', ':' ), array( '-', '-', '-', '-', '-' ), $filename );
 
 		return sanitize_file_name( $filename );
 	}
 
+	/**
+	 * Method normalize_filename()
+	 * 
+	 * Normalize filename.
+	 * 
+	 * @param mixed $s Filename to normalize.
+	 * 
+	 * @return string $s Normalised filename.
+	 */
 	public static function normalize_filename( $s ) {
 		$s = preg_replace( '@\x{00c4}@u', 'A', $s );
 		$s = preg_replace( '@\x{00d6}@u', 'O', $s );
@@ -340,6 +535,17 @@ class MainWP_Utility {
 	}
 
 
+	/**
+	 * Method esc_content()
+	 * 
+	 * Escape content,
+	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2).
+	 * 
+	 * @param mixed $content Content to escape.
+	 * @param string $type Type of content. Default = note.
+	 * 
+	 * @return string Filtered content containing only the allowed HTML.
+	 */
 	public static function esc_content( $content, $type = 'note' ) {
 		if ( 'note' === $type ) {
 
@@ -369,6 +575,16 @@ class MainWP_Utility {
 		return $content;
 	}
 
+	/**
+	 * Method show_mainwp_message()
+	 * 
+	 * Check whenther or not to show the MainWP Message.
+	 *
+	 * @param mixed $type Type of message.
+	 * @param mixed $notice_id Notice ID.
+	 * 
+	 * @return boolean true|false.
+	 */
 	public static function show_mainwp_message( $type, $notice_id ) {
 		$status = get_user_option( 'mainwp_notice_saved_status' );
 		if ( ! is_array( $status ) ) {
@@ -380,7 +596,17 @@ class MainWP_Utility {
 		return true;
 	}
 
-
+	/**
+	 * Method array_sort()
+	 * 
+	 * Sort given array by given flags.
+	 * 
+	 * @param mixed $array Array to sort.
+	 * @param mixed $key Array key.
+	 * @param string $sort_flag Flags to sort by. Default = SORT_STRING.
+	 * 
+	 * @return array Sorted array.
+	 */
 	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
 		$sorter = array();
 		$ret    = array();
@@ -395,6 +621,13 @@ class MainWP_Utility {
 		$array = $ret;
 	}
 
+	/**
+	 * Method enabled_wp_seo()
+	 * 
+	 * Check if Yoast SEO is enabled.
+	 * 
+	 * @return boolean true|false.
+	 */
 	public static function enabled_wp_seo() {
 		if ( null === self::$enabled_wp_seo ) {
 			self::$enabled_wp_seo = is_plugin_active( 'wordpress-seo-extension/wordpress-seo-extension.php' );
@@ -402,6 +635,15 @@ class MainWP_Utility {
 		return self::$enabled_wp_seo;
 	}
 
+	/**
+	 * Method value_to_string()
+	 * 
+	 * Value to string.
+	 * 
+	 * @param mixed $var Value to convert to string.
+	 * 
+	 * @return string Value that has been converted into a string.
+	 */
 	public static function value_to_string( $var ) {
 		if ( is_array( $var ) || is_object( $var ) ) {
 			//phpcs:ignore -- for debug only
@@ -412,6 +654,13 @@ class MainWP_Utility {
 		return '';
 	}
 
+	/**
+	 * Method render_mainwp_nonce()
+	 * 
+	 * Render MainWP nonce.
+	 * 
+	 * @return string Nonce field HTML markup.
+	 */
 	public static function render_mainwp_nonce() {
 		wp_nonce_field( 'mainwp-admin-nonce' );
 	}

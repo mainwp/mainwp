@@ -1,8 +1,7 @@
 <?php
 /**
- * This File handles the Themes SubPage.
  * MainWP Themes Page
- *
+ * 
  * This page is used to Manage Themes on Child Sites
  *
  * @package MainWP/Themes
@@ -27,7 +26,7 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * @var $subPages Array of SubPages.
+	 * @var array $subPages Array of SubPages.
 	 */
 	public static $subPages;
 

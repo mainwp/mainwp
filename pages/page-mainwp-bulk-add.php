@@ -21,9 +21,11 @@ namespace MainWP\Dashboard;
 class MainWP_Bulk_Add {
 
 	/**
-	 * Get Class Name
+	 * Method get_class_name()
 	 *
-	 * @return string __CLASS__
+	 * Get Class Name.
+	 *
+	 * @return object __CLASS__
 	 */
 	public static function get_class_name() {
 		return __CLASS__;

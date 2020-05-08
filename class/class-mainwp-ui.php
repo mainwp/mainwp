@@ -2,7 +2,7 @@
 /**
  * MainWP UI.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -23,6 +23,23 @@ class MainWP_UI {
 		return __CLASS__;
 	}
 
+	/**
+	 * Method select_sites_box()
+	 *
+	 * Select sites box.
+	 *
+	 * @param string  $type Input type, radio.
+	 * @param boolean $show_group Whether or not to show group, Default: true.
+	 * @param boolean $show_select_all Whether to show select all.
+	 * @param string  $class Default = ''.
+	 * @param string  $style Default = ''.
+	 * @param array   $selected_websites Selected Child Sites.
+	 * @param array   $selected_groups Selecte Groups.
+	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param integer $postId Post Meta ID.
+	 *
+	 * @return void
+	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( $postId ) {
@@ -49,6 +66,22 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method select_sites_box_body()
+	 *
+	 * Select sites box Body.
+	 *
+	 * @param array   $selected_websites Child Site that are selected.
+	 * @param array   $selected_groups Group that are selected.
+	 * @param string  $type Selector type.
+	 * @param boolean $show_group Whether or not to show group, Default: true.
+	 * @param boolean $show_select_all Whether or not to show select all, Default: true.
+	 * @param boolean $updateQty Whether or not to update quantity, Default = false.
+	 * @param boolean $enableOfflineSites Whether or not to enable offline sites, Default: true.
+	 * @param integer $postId Post ID.
+	 *
+	 * @return void Injects js to handle menu & passes off variables to other methods.
+	 */
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 
 		if ( 'all' !== $selected_websites && ! is_array( $selected_websites ) ) {
@@ -90,6 +123,19 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_select_sites_header()
+	 *
+	 * Render selected sites header.
+	 *
+	 * @param mixed   $tab_id Datatab ID.
+	 * @param boolean $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param mixed   $selected_groups Selected groups.
+	 *
+	 * @todo Move to view folder.
+	 *
+	 * @return void Render the header html.
+	 */
 	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups ) {
 		?>
 	<div id="mainwp-select-sites-footer">
@@ -123,6 +169,18 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_select_sites()
+	 *
+	 * @param mixed   $websites Child sites to render.
+	 * @param string  $type Selector type.
+	 * @param mixed   $tab_id Datatab ID.
+	 * @param mixed   $selected_websites Selected Child Sites.
+	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param mixed   $edit_site_id Child Site ID to edit.
+	 *
+	 * @return void Render Select Sites html.
+	 */
 	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
 		?>
 		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
@@ -177,6 +235,17 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_select_sites_staging()
+	 *
+	 * Render selected staging sites.
+	 *
+	 * @param boolean $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param mixed   $tab_id Datatab ID.
+	 * @param mixed   $selected_websites Selected Child Sites.
+	 *
+	 * @return void Render selected staging sites html.
+	 */
 	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites ) {
 		if ( $staging_enabled ) :
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
@@ -230,6 +299,17 @@ class MainWP_UI {
 		endif;
 	}
 
+	/**
+	 * Method render_select_sites_group()
+	 *
+	 * Render selected sites group.
+	 *
+	 * @param array $groups Array of groups.
+	 * @param mixed $tab_id Datatab ID.
+	 * @param mixed $selected_groups Selected groups.
+	 *
+	 * @return void Render selected sites group html.
+	 */
 	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ) {
 		?>
 		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
@@ -264,6 +344,15 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_top_header()
+	 *
+	 * Render top header.
+	 *
+	 * @param array $params Page parameters.
+	 *
+	 * @return void Render page top header html.
+	 */
 	public static function render_top_header( $params = array() ) {
 
 		$title = isset( $params['title'] ) ? $params['title'] : '';
@@ -329,6 +418,15 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_second_top_header()
+	 *
+	 * Render second top header.
+	 *
+	 * @param string $which Current page.
+	 *
+	 * @return void Render second top header html.
+	 */
 	public static function render_second_top_header( $which = '' ) {
 		do_action( 'mainwp_before_subheader' );
 		if ( has_action( 'mainwp_subheader_actions' ) || 'overview' === $which || 'managesites' === $which ) {
@@ -352,6 +450,13 @@ class MainWP_UI {
 		do_action( 'mainwp_after_subheader' );
 	}
 
+	/**
+	 * Method gen_groups_sites_selection()
+	 *
+	 * Generate group sites selection box.
+	 *
+	 * @return void Render group sites selection box.
+	 */
 	public static function gen_groups_sites_selection() {
 		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::instance()->query( $sql );
@@ -400,7 +505,14 @@ class MainWP_UI {
 		MainWP_DB::free_result( $websites );
 	}
 
-
+	/**
+	 * Method render_header_actions()
+	 *
+	 * Render header action buttons,
+	 * (Sync|Add|Options|Community|User|Updates).
+	 *
+	 * @return void Render header action buttons html.
+	 */
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();
 		$website_id  = '';
@@ -467,6 +579,16 @@ class MainWP_UI {
 		return $output;
 	}
 
+	/**
+	 * Method render_page_navigation()
+	 *
+	 * Render page navigation.
+	 *
+	 * @param array $subitems [access, active, style].
+	 * @param null  $name_caller Menu Name.
+	 *
+	 * @return void Render page navigation html.
+	 */
 	public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
 
 		/**
@@ -505,19 +627,47 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_header()
+	 *
+	 * Render page title.
+	 *
+	 * @param string $title Page title.
+	 *
+	 * @return void Render page title and hidden divider html.
+	 */
 	public static function render_header( $title = '' ) {
 		self::render_top_header( array( 'title' => $title ) );
 		echo '<div class="ui hidden clearing fitted divider"></div>';
 		echo '<div class="wrap">';
 	}
 
+	/**
+	 * Method render_footer()
+	 *
+	 * Render page footer.
+	 *
+	 * @return void Render closing tags for page container.
+	 */
 	public static function render_footer() {
 		echo '</div>';
 		echo '</div>';
 	}
 
-	// customize WordPress add_meta_box() function.
-	// param $context: lef, right.
+	/**
+	 * Method add_widget_box()
+	 *
+	 * Customize WordPress add_meta_box() function.
+	 *
+	 * @param mixed       $id
+	 * @param mixed       $callback
+	 * @param null        $screen Current page.
+	 * @param string|null $context right|null. If 3 columns then = 'middle'.
+	 * @param null        $title Widget title.
+	 * @param string      $priority high|core|default|low, Default: default.
+	 *
+	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
+	 */
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- not quite complex function.
 		global $mainwp_widget_boxes;
 
@@ -596,7 +746,17 @@ class MainWP_UI {
 		);
 	}
 
-	// customize WordPress do_meta_boxes() function.
+	/**
+	 * Method do_widget_boxes()
+	 *
+	 * Customize WordPress do_meta_boxes() function.
+	 *
+	 * @param mixed       $screen Current page.
+	 * @param string|null $context right|null. If 3 columns then = 'middle'.
+	 * @param string      $object Empty string.
+	 *
+	 * @return void Renders widget container box.
+	 */
 	public static function do_widget_boxes( $screen, $context = null, $object = '' ) {
 		global $mainwp_widget_boxes;
 		static $already_sorted = false;
@@ -659,6 +819,13 @@ class MainWP_UI {
 		}
 	}
 
+	/**
+	 * Method render_empty_bulk_actions()
+	 *
+	 * Render empty bulk actions when drop down is disabled.
+	 *
+	 * @return void Render disabled bulk actions drop down.
+	 */
 	public static function render_empty_bulk_actions() {
 		?>
 		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
@@ -670,6 +837,15 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_modal_install_plugin_theme()
+	 *
+	 * Render modal window for installing plugins & themes.
+	 *
+	 * @param string $what Which window to render, plugin|theme.
+	 *
+	 * @return void Modal Window html.
+	 */
 	public static function render_modal_install_plugin_theme( $what = 'plugin' ) {
 		?>
 		<div id="plugintheme-installation-progress-modal" class="ui modal">
@@ -690,18 +866,41 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method render_show_all_updates_button()
+	 *
+	 * Render show all updates button.
+	 *
+	 * @return void Render Show All Updates button html.
+	 */
 	public static function render_show_all_updates_button() {
 		?>
 		<a href="javascript:void(0)" class="ui mini button trigger-all-accordion"><?php esc_html_e( 'Show All Updates', 'mainwp' ); ?></a>
 		<?php
 	}
 
+	/**
+	 * Method render_sorting_icons()
+	 *
+	 * Render sorting up & down icons.
+	 *
+	 * @return void Render Sort up & down incon html.
+	 */
 	public static function render_sorting_icons() {
 		?>
 		<i class="sort icon"></i><i class="sort up icon"></i><i class="sort down icon">
 		<?php
 	}
 
+	/**
+	 * Method render_modal_edit_notes()
+	 *
+	 * Render modal window for edit notes.
+	 *
+	 * @param string $what What modal window to render. Default = site.
+	 *
+	 * @return void
+	 */
 	public static function render_modal_edit_notes( $what = 'site' ) {
 		?>
 		<div id="mainwp-notes" class="ui modal">
@@ -736,6 +935,13 @@ class MainWP_UI {
 		<?php
 	}
 
+	/**
+	 * Method usersnap_integration()
+	 *
+	 * Integrate UserSnap.
+	 *
+	 * @return boolean True, Inject UserSnap meta data. False if $showtime is false.
+	 */
 	public static function usersnap_integration() {
 
 		$showtime = get_option( 'mainwp_show_usersnap', false );
@@ -769,6 +975,15 @@ class MainWP_UI {
 		return true;
 	}
 
+	/**
+	 * Method render_screen_options()
+	 *
+	 * Render modal window for Screen Options.
+	 *
+	 * @param boolean $setting_page Default: True. Widgets that you want to hide in the MainWP Overview page.
+	 *
+	 * @return void  Render modal window for Screen Options html.
+	 */
 	public static function render_screen_options( $setting_page = true ) {
 
 		$default_widgets = array(

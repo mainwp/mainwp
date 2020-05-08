@@ -4,7 +4,7 @@
  *
  * This file handles all interactions with the DB.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -17,11 +17,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * @static
-	 * @var $instance instance of this
+	 * @var (self|null) $instance Instance of MainWP_DB_Backup or null.
 	 */
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 *
+	 * Create public static instance.
+	 *
 	 * @static
 	 * @return MainWP_DB
 	 */
@@ -32,6 +36,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return self::$instance;
 	}
 
+	/**
+	 * Method get_website_backup_settings()
+	 * 
+	 * Get Child Site backup settings.
+	 * 
+	 * @param mixed $websiteid Child Site ID.
+	 * 
+	 * @return (object|null) Database query result for Child Site backup settings or null on failure
+	 */
 	public function get_website_backup_settings( $websiteid ) {
 		if ( ! MainWP_Utility::ctype_digit( $websiteid ) ) {
 			return null;
@@ -40,6 +53,17 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return $this->get_row_result( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_settings_backup' ) . ' WHERE wpid = %d ', $websiteid ) );
 	}
 
+	/**
+	 * Method update_backup_task_progress()
+	 * 
+	 * Update backup tasuk progress.
+	 * 
+	 * @param mixed $task_id Task ID.
+	 * @param mixed $wp_id Child Site ID.
+	 * @param mixed $values Values to update.
+	 * 
+	 * @return void get_backup_task_progres()
+	 */
 	public function update_backup_task_progress( $task_id, $wp_id, $values ) {
 		$this->wpdb->update(
 			$this->table_name( 'wp_backup_progress' ),
@@ -53,6 +77,17 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return $this->get_backup_task_progress( $task_id, $wp_id );
 	}
 
+	/**
+	 * Method add_backup_task_progress()
+	 * 
+	 * Add backup task progress.
+	 * 
+	 * @param mixed $task_id Task ID.
+	 * @param mixed $wp_id Child Site ID.
+	 * @param mixed $information Task info to add.
+	 * 
+	 * @return (array|null) $this->get_backup_task_progress() or null on failure
+	 */
 	public function add_backup_task_progress( $task_id, $wp_id, $information ) {
 		$values = array(
 			'task_id'        => $task_id,
@@ -71,6 +106,16 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return null;
 	}
 
+	/**
+	 * Method get_backup_task_progress()
+	 * 
+	 * Get backup task progress.
+	 * 
+	 * @param mixed $task_id Task ID.
+	 * @param mixed $wp_id Child Site ID.
+	 * 
+	 * @return (array|null) Backup Progress or null on failer.
+	 */
 	public function get_backup_task_progress( $task_id, $wp_id ) {
 		$progress = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id= %d AND wp_id = %d ', $task_id, $wp_id ) );
 
@@ -81,6 +126,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return $progress;
 	}
 
+	/**
+	 * Method backup_full_task_running()
+	 * 
+	 * Check if full backup task is running. 
+	 * 
+	 * @param mixed $wp_id Child Site ID.
+	 * 
+	 * @return boolean true|false.
+	 */
 	public function backup_full_task_running( $wp_id ) {
 
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -103,14 +157,41 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method remove_backup_task()
+	 * 
+	 * Remove backup task.
+	 * 
+	 * @param mixed $id Task ID.
+	 * 
+	 * @return void
+	 */
 	public function remove_backup_task( $id ) {
 		$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE id = %d', $id ) );
 	}
 
+	/**
+	 * Method get_backup_task_by_id()
+	 * 
+	 * Get backup task by id.
+	 * 
+	 * @param mixed $id Task ID.
+	 * 
+	 * @return (object|null) Database query result for Backup Task or null on failure
+	 */
 	public function get_backup_task_by_id( $id ) {
 		return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE id= %d ', $id ) );
 	}
 
+	/**
+	 * Method get_backup_tasks_for_user()
+	 * 
+	 * Get backup tasks for current user.
+	 * 
+	 * @param string $orderBy Task order.
+	 * 
+	 * @return (object|null) Database query result for backup tasks for current user or null on failer.
+	 */
 	public function get_backup_tasks_for_user( $orderBy = 'name' ) {
 		if ( MainWP_System::instance()->is_single_user() ) {
 			return $this->get_backup_tasks( null, $orderBy );
@@ -120,14 +201,68 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 		return $this->get_backup_tasks( $current_user->ID, $orderBy );
 	}
-
+	
+	/**
+	 * Method get_backup_tasks()
+	 * 
+	 * Get backup tasks for current user.
+	 * 
+	 * @param null $userid Current user ID.
+	 * @param string $orderBy Task order.
+	 * 
+	 * @return (object|null) Database query result for backup tasks for current user or null on failer.
+	 */
 	public function get_backup_tasks( $userid = null, $orderBy = null ) {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE ' . ( null == $userid ? '' : 'userid= ' . $userid . ' AND ' ) . ' template = 0 ' . ( null != $orderBy ? 'ORDER BY ' . $orderBy : '' ), OBJECT );
 	}
 
-	public function add_backup_task( $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder, $filename,
-								$template, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat,
-								$maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) {
+	/**
+	 * Method add_backup_task()
+	 * 
+	 * Add backup task.
+	 * 
+	 * @param mixed $userid Current user ID.
+	 * @param mixed $name Name of backup.
+	 * @param mixed $schedule Backup schedual.
+	 * @param mixed $type Type of backup, full|db.
+	 * @param mixed $exclude Files or directories to exclude.
+	 * @param mixed $sites Child Sites to backup.
+	 * @param mixed $groups Groups to backup.
+	 * @param mixed $subfolder Folder the backups are going into.
+	 * @param mixed $filename Filename of the backups.
+	 * @param mixed $template Backup template.
+	 * @param mixed $excludebackup Backup files to exclude.
+	 * @param mixed $excludecache Cache files to exclude.
+	 * @param mixed $excludenonwp Non-wp files to exclude.
+	 * @param mixed $excludezip Archives to exclude.
+	 * @param mixed $archiveFormat Format to store backups in.
+	 * @param mixed $maximumFileDescriptorsOverride Overide maximum file descriptors.
+	 * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
+	 * @param mixed $maximumFileDescriptors Maximum file descriptors.
+	 * @param mixed $loadFilesBeforeZip Load files before Zip.
+	 * 
+	 * @return (int|false) The number of rows added, or false on error.
+	 */
+	public function add_backup_task( 
+		$userid, 
+		$name, 
+		$schedule, 
+		$type, 
+		$exclude, 
+		$sites, 
+		$groups, 
+		$subfolder, 
+		$filename, 
+		$template, 
+		$excludebackup, 
+		$excludecache, 
+		$excludenonwp, 
+		$excludezip, 
+		$archiveFormat, 
+		$maximumFileDescriptorsOverride, 
+		$maximumFileDescriptorsAuto, 
+		$maximumFileDescriptors, 
+		$loadFilesBeforeZip ) {
 
 		// to fix null value.
 		if ( empty( $exclude ) ) {
@@ -172,9 +307,54 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
-	public function update_backup_task( $id, $userid, $name, $schedule, $type, $exclude, $sites, $groups, $subfolder,
-									$filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat,
-									$maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) {
+	/**
+	 * Method update_backup_task()
+	 * 
+	 * Update backup task.
+	 * 
+	 * @param mixed $userid Current user ID.
+	 * @param mixed $name Name of backup.
+	 * @param mixed $schedule Backup schedual.
+	 * @param mixed $type Type of backup, full|db.
+	 * @param mixed $exclude Files or directories to exclude.
+	 * @param mixed $sites Child Sites to backup.
+	 * @param mixed $groups Groups to backup.
+	 * @param mixed $subfolder Folder the backups are going into.
+	 * @param mixed $filename Filename of the backups.
+	 * @param mixed $template Backup template.
+	 * @param mixed $excludebackup Backup files to exclude.
+	 * @param mixed $excludecache Cache files to exclude.
+	 * @param mixed $excludenonwp Non-wp files to exclude.
+	 * @param mixed $excludezip Archives to exclude.
+	 * @param mixed $archiveFormat Format to store backups in.
+	 * @param mixed $maximumFileDescriptorsOverride Overide maximum file descriptors.
+	 * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
+	 * @param mixed $maximumFileDescriptors Maximum file descriptors.
+	 * @param mixed $loadFilesBeforeZip Load files before Zip.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
+	public function update_backup_task( 
+		$userid, 
+		$name, 
+		$schedule, 
+		$type, 
+		$exclude, 
+		$sites, 
+		$groups, 
+		$subfolder, 
+		$filename, 
+		$template, 
+		$excludebackup, 
+		$excludecache, 
+		$excludenonwp, 
+		$excludezip, 
+		$archiveFormat, 
+		$maximumFileDescriptorsOverride, 
+		$maximumFileDescriptorsAuto, 
+		$maximumFileDescriptors, 
+		$loadFilesBeforeZip ) {
+
 		if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update(
 				$this->table_name( 'wp_backup' ),
@@ -205,6 +385,16 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_backup_task_with_values()
+	 * 
+	 * Update backup task with values.
+	 * 
+	 * @param mixed $id Task ID. 
+	 * @param mixed $values values to update.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_backup_task_with_values( $id, $values ) {
 		if ( ! is_array( $values ) ) {
 			return false;
@@ -213,6 +403,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return $this->wpdb->update( $this->table_name( 'wp_backup' ), $values, array( 'id' => $id ) );
 	}
 
+	/**
+	 * Method update_backup_run()
+	 * 
+	 * Update backup run.
+	 * 
+	 * @param mixed $id Task ID.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_backup_run( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update(
@@ -229,6 +428,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_backup_run_manually()
+	 * 
+	 * Update backup run manually.
+	 * 
+	 * @param mixed $id Task ID.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_backup_run_manually( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => time() ), array( 'id' => $id ) );
@@ -237,6 +445,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_backup_completed()
+	 * 
+	 * Update backup completed()
+	 * 
+	 * @param mixed $id Task ID.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_backup_completed( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'completed' => time() ), array( 'id' => $id ) );
@@ -245,6 +462,16 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method  update_backup_errors()
+	 * 
+	 * Update backup errors.
+	 * 
+	 * @param mixed $id Task ID.
+	 * @param mixed $errors Backup errors.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_backup_errors( $id, $errors ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			if ( '' === $errors ) {
@@ -259,6 +486,16 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_completed_sites()
+	 * 
+	 * Update completed sites.
+	 * 
+	 * @param mixed $id Task ID. 
+	 * @param mixed $completedSites Completed sites.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_completed_sites( $id, $completedSites ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'completed_sites' => wp_json_encode( $completedSites ) ), array( 'id' => $id ) );
@@ -267,18 +504,46 @@ class MainWP_DB_Backup extends MainWP_DB {
 		return false;
 	}
 
+	/**
+	 * Method get_backup_tasks_to_complete()
+	 * 
+	 * Get backup tasks to complete.
+	 * 
+	 * @return object Backup tasks.
+	 */
 	public function get_backup_tasks_to_complete() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
 	}
 
+	/**
+	 * Method get_backup_tasks_todo_daily()
+	 * 
+	 * Get daily backup tasks.
+	 * 
+	 * @return object Backup tasks.
+	 */
 	public function get_backup_tasks_todo_daily() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="daily" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 ), OBJECT );
 	}
 
+	/**
+	 * Method get_backup_tasks_todo_weekly()
+	 * 
+	 * Get weekly backup tasks.
+	 * 
+	 * @return object Backup tasks.
+	 */
 	public function get_backup_tasks_todo_weekly() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="weekly" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 * 7 ), OBJECT );
 	}
 
+	/**
+	 * Method get_backup_tasks_todo_monthly()
+	 * 
+	 * Get monthly backup tasks.
+	 * 
+	 * @return object Backup tasks.
+	 */
 	public function get_backup_tasks_todo_monthly() {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE paused = 0 AND schedule="monthly" AND ' . time() . ' - last_run >= ' . ( 60 * 60 * 24 * 30 ), OBJECT );
 	}

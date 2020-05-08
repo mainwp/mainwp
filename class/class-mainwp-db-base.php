@@ -4,7 +4,7 @@
  *
  * This file handles all interactions with the DB.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -17,31 +17,40 @@ class MainWP_DB_Base {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
+	 * Private static instance.
+	 *
 	 * @static
-	 * @var $instance instance of this
+	 * @var $instance  MainWP_DB_Base.
 	 */
 	private static $instance = null;
 
-	/**
-	 * @var $table_prefix table prefix
-	 */
+	/** @var string $table_prefix Table prefix. */
 	protected $table_prefix;
 
-	/** @var $wpdb wpdb */
+	/** @var mixed $wpdb WordPress Database. */
 	protected $wpdb;
 
-	// Constructor.
+	/**
+	 * Method __construct()
+	 *
+	 * Contructor.
+	 */
 	public function __construct() {
 
 		self::$instance = $this;
 
-		/** @var $this ->wpdb wpdb */
+		/** @var mixed $wpdb Global WordPress Database. */
 		global $wpdb;
 
 		$this->wpdb         = &$wpdb;
 		$this->table_prefix = $wpdb->prefix . 'mainwp_';
 	}
 
+	/**
+	 * Method test_connection()
+	 *
+	 * Test db connection.
+	 */
 	protected function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {
 			MainWP_Logger::instance()->info( __( 'Trying to reconnect WordPress database connection...', 'mainwp' ) );
@@ -49,15 +58,38 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method table_name()
+	 *
+	 * Create entire Table Name.
+	 *
+	 * @param mixed $suffix Table Suffix.
+	 * @param null  $tablePrefix Table Prefix.
+	 *
+	 * @return string Table Name.
+	 */
 	protected function table_name( $suffix, $tablePrefix = null ) {
 		return ( null == $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
 	}
 
-
+	/**
+	 * Method get_my_sql_version()
+	 *
+	 * Get MySQL Version.
+	 */
 	public function get_my_sql_version() {
 		return $this->wpdb->get_var( 'SHOW VARIABLES LIKE "version"', 1 );
 	}
 
+	/**
+	 * Method get_row_result()
+	 *
+	 * Get row result.
+	 *
+	 * @param mixed $sql SQL Query.
+	 *
+	 * @return mixed null|Row
+	 */
 	public function get_row_result( $sql ) {
 		if ( null == $sql ) {
 			return null;
@@ -66,6 +98,15 @@ class MainWP_DB_Base {
 		return $this->wpdb->get_row( $sql, OBJECT );
 	}
 
+	/**
+	 * Method get_results_result()
+	 *
+	 * Get Results of result.
+	 *
+	 * @param mixed $sql SQL query.
+	 *
+	 * @return mixed null|get_results()
+	 */
 	public function get_results_result( $sql ) {
 		if ( null == $sql ) {
 			return null;
@@ -74,6 +115,15 @@ class MainWP_DB_Base {
 		return $this->wpdb->get_results( $sql, OBJECT_K );
 	}
 
+	/**
+	 * Method query()
+	 *
+	 * SQL Query.
+	 *
+	 * @param mixed $sql SQL Query.
+	 *
+	 * @return mixed false|$result.
+	 */
 	public function query( $sql ) {
 		if ( null == $sql ) {
 			return false;
@@ -88,6 +138,15 @@ class MainWP_DB_Base {
 		return $result;
 	}
 
+	/**
+	 * Method escape()
+	 *
+	 * Escape SQL Data.
+	 *
+	 * @param mixed $data
+	 *
+	 * @return mixed Escapped SQL Data.
+	 */
 	protected function escape( $data ) {
 		if ( function_exists( 'esc_sql' ) ) {
 			return esc_sql( $data );
@@ -96,7 +155,14 @@ class MainWP_DB_Base {
 		}
 	}
 
-	// Support old & new versions of WordPress (3.9+).
+	/**
+	 * Method use_mysqli()
+	 *
+	 * Use MySQLi,
+	 * Support old & new versions of WordPress (3.9+).
+	 *
+	 * @return boolean|self false|$instance Instance of \mysqli
+	 */
 	public static function use_mysqli() {
 		/** @var $this ->wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {
@@ -105,6 +171,15 @@ class MainWP_DB_Base {
 		return ( self::$instance->wpdb->dbh instanceof \mysqli );
 	}
 
+	/**
+	 * Method ping()
+	 *
+	 * Ping MySQLi.
+	 *
+	 * @param mixed $link
+	 *
+	 * @return mixed \mysqli_ping
+	 */
 	public static function ping( $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_ping( $link );
@@ -113,6 +188,16 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method m_query()
+	 *
+	 * MySQLi Query.
+	 *
+	 * @param mixed $query
+	 * @param mixed $link
+	 *
+	 * @return mixed \mysqli_query
+	 */
 	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_query( $link, $query );
@@ -121,6 +206,15 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method fetch_object()
+	 *
+	 * Fetch Object.
+	 *
+	 * @param mixed $result
+	 *
+	 * @return boolean|mixed false| \mysqli_fetch_object
+	 */
 	public static function fetch_object( $result ) {
 		if ( false === $result ) {
 			return false;
@@ -133,6 +227,15 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method free_result()
+	 *
+	 * MySQLi Free Result.
+	 *
+	 * @param mixed $result
+	 *
+	 * @return boolean|mixed false| \mysqli_free_result
+	 */
 	public static function free_result( $result ) {
 		if ( false === $result ) {
 			return false;
@@ -145,6 +248,16 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method data_seek()
+	 *
+	 * MySQLi Data Seek.
+	 *
+	 * @param mixed $result
+	 * @param mixed $offset
+	 *
+	 * @return boolean|mixed false| \mysqli_data_seek
+	 */
 	public static function data_seek( $result, $offset ) {
 		if ( false === $result ) {
 			return false;
@@ -157,6 +270,16 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method fetch_array()
+	 *
+	 * MySQLi Fetch Array.
+	 *
+	 * @param mixed $result
+	 * @param null  $result_type
+	 *
+	 * @return boolean|mixed false| \mysqli_fetch_array
+	 */
 	public static function fetch_array( $result, $result_type = null ) {
 		if ( false === $result ) {
 			return false;
@@ -169,6 +292,16 @@ class MainWP_DB_Base {
 		}
 	}
 
+
+	/**
+	 * Method num_rows()
+	 *
+	 * MySQLi Numb Rows.
+	 *
+	 * @param mixed $result
+	 *
+	 * @return boolean|mixed false| \mysqli_num_rows
+	 */
 	public static function num_rows( $result ) {
 		if ( false === $result ) {
 			return 0;
@@ -181,6 +314,15 @@ class MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method is_result()
+	 *
+	 * Return instance of \mysqli_result
+	 *
+	 * @param mixed $result
+	 *
+	 * @return boolean|mixed false| \mysqli_result
+	 */
 	public static function is_result( $result ) {
 		if ( false === $result ) {
 			return false;

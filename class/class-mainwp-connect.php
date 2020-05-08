@@ -4,7 +4,7 @@
  *
  * MainWP Connect functions.
  *
- * @package  MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -221,7 +221,7 @@ class MainWP_Connect {
 	 *
 	 * Grab HTTP Error code 100 - 505 & convert to String representation of error.
 	 *
-	 * @param int $httpCode Returned HTTP Code from CURL.
+	 * @param int $httpCode Returned HTTP Code from cURL.
 	 *
 	 * @return mixed null|Error String.
 	 */
@@ -305,7 +305,6 @@ class MainWP_Connect {
 		return false;
 	}
 
-
 	/**
 	 * Method is_website_available()
 	 *
@@ -339,15 +338,16 @@ class MainWP_Connect {
 		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 	}
 
-
 	/**
-	 * Method  get_post_data_authed()
+	 * Method get_post_data_authed()
+	 *
+	 * Get authorized $_POST data & build query.
 	 *
 	 * @param mixed $website Array of Child Site Info.
-	 * @param mixed $what
-	 * @param null  $params
+	 * @param mixed $what What we are posting.
+	 * @param null  $params Post parameters.
 	 *
-	 * @return void
+	 * @return mixed null|http_build_query()
 	 */
 	public static function get_post_data_authed( &$website, $what, $params = null ) {
 		if ( $website && '' != $what ) {
@@ -390,6 +390,18 @@ class MainWP_Connect {
 		return null;
 	}
 
+	/**
+	 * Method get_get_data_authed()
+	 *
+	 * Get authorized $_GET data & build query.
+	 *
+	 * @param mixed   $website Child Site data.
+	 * @param mixed   $paramValue OpenSSL parameter.
+	 * @param string  $paramName Parameter name.
+	 * @param boolean $asArray true|false Default is false.
+	 *
+	 * @return mixed $url
+	 */
 	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
@@ -438,6 +450,18 @@ class MainWP_Connect {
 		return rtrim( $url, '&' );
 	}
 
+	/**
+	 * Method get_post_data_not_authed()
+	 *
+	 * Get not authorized $_POST data.
+	 *
+	 * @param mixed $url Child site URL.
+	 * @param mixed $admin Admin Username.
+	 * @param mixed $what What function to perform.
+	 * @param null  $params Function parameters.
+	 *
+	 * @return mixed null|http_build_query()
+	 */
 	public static function get_post_data_not_authed( $url, $admin, $what, $params = null ) {
 		if ( '' != $url && '' != $admin && '' != $what ) {
 			$data             = array();
@@ -456,7 +480,7 @@ class MainWP_Connect {
 	/**
 	 * Method fetch_urls_authed()
 	 *
-	 * fetch urls authed
+	 * Fethech authorized URLs.
 	 *
 	 * @param mixed $websites
 	 * @param mixed $what
@@ -819,10 +843,9 @@ class MainWP_Connect {
 			if ( isset( $params ) && isset( $params['new_post'] ) ) {
 				$_new_post = $params['new_post'];
 
-				/*
-				* @deprecated Use 'mainwp_pre_posting_posts' instead.
-				*
-				*/
+				/**
+				 * @deprecated Use 'mainwp_pre_posting_posts' instead.
+				 */
 				$params = apply_filters_deprecated(
 					'mainwp-pre-posting-posts',
 					array(
@@ -987,7 +1010,15 @@ class MainWP_Connect {
 		return true;
 	}
 
-
+	/**
+	 * Method get_resource_id()
+	 *
+	 * Get resource id.
+	 *
+	 * @param mixed $resource The given resource.
+	 *
+	 * @return $result Resource ID only.
+	 */
 	public static function get_resource_id( $resource ) {
 		if ( ! is_resource( $resource ) ) {
 			return false;
@@ -1000,7 +1031,15 @@ class MainWP_Connect {
 		return $result;
 	}
 
-
+	/**
+	 * Method get_lock_identifier(
+	 *
+	 * Get lock identifier.
+	 *
+	 * @param mixed $pLockName Provided Lock Name.
+	 *
+	 * @return mixed false|sem_get()|@fopen
+	 */
 	public static function get_lock_identifier( $pLockName ) {
 		if ( ( null == $pLockName ) || ( false == $pLockName ) ) {
 			return false;
@@ -1020,7 +1059,15 @@ class MainWP_Connect {
 		return false;
 	}
 
-
+	/**
+	 * Method lock()
+	 *
+	 * Use sem_acquire or @flock to lock the $pIdentifier.
+	 *
+	 * @param mixed $pIdentifier
+	 *
+	 * @return mixed false|sem_acquire()|@flock
+	 */
 	public static function lock( $pIdentifier ) {
 		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
 			return false;
@@ -1043,6 +1090,15 @@ class MainWP_Connect {
 		return false;
 	}
 
+	/**
+	 * Method release()
+	 *
+	 * Use sem_release or @flock, @fclose to unlock $pIdentifier.
+	 *
+	 * @param mixed $pIdentifier
+	 *
+	 * @return mixed false|sem_release()|@flock
+	 */
 	public static function release( $pIdentifier ) {
 		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
 			return false;
@@ -1058,8 +1114,28 @@ class MainWP_Connect {
 		return false;
 	}
 
-	public static function fetch_url_authed( &$website, $what, $params = null, $checkConstraints = false, $pForceFetch = false,
-								$pRetryFailed = true, $rawResponse = null ) {
+	/**
+	 * Method  fetch_url_authed()
+	 *
+	 * @param mixed   $website
+	 * @param mixed   $what
+	 * @param null    $params
+	 * @param boolean $checkConstraints
+	 * @param boolean $pForceFetch
+	 * @param boolean $pRetryFailed
+	 * @param null    $rawResponse
+	 *
+	 * @return mixed $information
+	 */
+	public static function fetch_url_authed(
+		&$website,
+		$what,
+		$params = null,
+		$checkConstraints = false,
+		$pForceFetch = false,
+		$pRetryFailed = true,
+		$rawResponse = null ) {
+
 		if ( ! is_array( $params ) ) {
 			$params = array();
 		}
@@ -1145,7 +1221,15 @@ class MainWP_Connect {
 		return $information;
 	}
 
-
+	/**
+	 * Method maybe_request_premium_updates()
+	 *
+	 * @param mixed $website Child Site info.
+	 * @param mixed $what stats|upgradeplugintheme What function to perform.
+	 * @param mixed $params plugin|theme Update Type.
+	 *
+	 * @return mixed $request_update
+	 */
 	public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- not quite complex method.
 		$request_update = false;
 		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
@@ -1200,8 +1284,36 @@ class MainWP_Connect {
 		return $request_update;
 	}
 
-	public static function fetch_url_not_authed( $url, $admin, $what, $params = null, $pForceFetch = false,
-									$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
+	/**
+	 * Method fetch_url_not_authed()
+	 *
+	 * Fetch not authorized URL.
+	 *
+	 * @param mixed   $url URL to fetch from.
+	 * @param mixed   $admin Admin name.
+	 * @param mixed   $what What function to perform.
+	 * @param null    $params Function paramerters.
+	 * @param boolean $pForceFetch true|false Whether or not to force the fetch.
+	 * @param null    $verifyCertificate Verify the SSL Certificate.
+	 * @param null    $http_user htaccess username.
+	 * @param null    $http_pass htaccess password.
+	 * @param integer $sslVersion SSL version to check for.
+	 * @param array   $others Other functions to perform.
+	 *
+	 * @return mixed self::fetch_url()
+	 */
+	public static function fetch_url_not_authed(
+		$url,
+		$admin,
+		$what,
+		$params = null,
+		$pForceFetch = false,
+		$verifyCertificate = null,
+		$http_user = null,
+		$http_pass = null,
+		$sslVersion = 0,
+		$others = array() ) {
+
 		if ( empty( $params ) ) {
 			$params = array();
 		}
@@ -1217,9 +1329,40 @@ class MainWP_Connect {
 		return self::fetch_url( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
 	}
 
-	public static function fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false,
-						$verifyCertificate = null, $pRetryFailed = true, $http_user = null, $http_pass = null, $sslVersion = 0,
-						$others = array() ) {
+	/**
+	 * Method fetch_url()
+	 *
+	 * Fetch URL.
+	 *
+	 * @param mixed   $website Child Site info.
+	 * @param mixed   $url URL to fetch from.
+	 * @param mixed   $postdata Post data to fetch.
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
+	 * @param boolean $pForceFetch true|false Whether or not to force fetch.
+	 * @param null    $verifyCertificate Verify SSL Certificate.
+	 * @param boolean $pRetryFailed ture|false Whether or not the Retry has failed.
+	 * @param null    $http_user htaccess username.
+	 * @param null    $http_pass htaccess password.
+	 * @param integer $sslVersion SSL version.
+	 * @param array   $others Other functions to perform.
+	 *
+	 * @throw \Exception
+	 *
+	 * @return mixed self::m_fetch_url()
+	 */
+	public static function fetch_url(
+		&$website,
+		$url,
+		$postdata,
+		$checkConstraints = false,
+		$pForceFetch = false,
+		$verifyCertificate = null,
+		$pRetryFailed = true,
+		$http_user = null,
+		$http_pass = null,
+		$sslVersion = 0,
+		$others = array() ) {
+
 		$start = time();
 
 		try {
@@ -1246,8 +1389,36 @@ class MainWP_Connect {
 		}
 	}
 
-	public static function m_fetch_url( &$website, $url, $postdata, $checkConstraints = false, $pForceFetch = false, // phpcs:ignore -- complex method.
-							$verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array() ) {
+	/**
+	 * Method m_fetch_url()
+	 *
+	 * @param mixed   $website Child Site info.
+	 * @param mixed   $url URL to fetch from.
+	 * @param mixed   $postdata Post data to fetch.
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
+	 * @param boolean $pForceFetch true|false Whether or not to force fetch.
+	 * @param null    $verifyCertificate Verify SSL Certificate.
+	 * @param null    $http_user htaccess username.
+	 * @param null    $http_pass htaccess password.
+	 * @param integer $sslVersion SSL version.
+	 * @param array   $others Other functions to perform.
+	 *
+	 * @throw MainWP_Exception
+	 *
+	 * @return mixed $data, $information.
+	 */
+	public static function m_fetch_url(
+		&$website,
+		$url,
+		$postdata,
+		$checkConstraints = false,
+		$pForceFetch = false,
+		$verifyCertificate = null,
+		$http_user = null,
+		$http_pass = null,
+		$sslVersion = 0,
+		$others = array() ) { // phpcs:ignore -- complex method.
+
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
@@ -1513,6 +1684,17 @@ class MainWP_Connect {
 		}
 	}
 
+	/**
+	 * Method download_to_file()
+	 *
+	 * Download to file.
+	 *
+	 * @param mixed   $url Download URL.
+	 * @param mixed   $file File to download to.
+	 * @param boolean $size Size of file.
+	 * @param null    $http_user htaccess username.
+	 * @param null    $http_pass htaccess password.
+	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -1569,6 +1751,11 @@ class MainWP_Connect {
 		fclose( $fp );
 	}
 
+	/**
+	 * Method init_coockiesdir()
+	 *
+	 * Initiate cookies directory.
+	 */
 	public static function init_cookiesdir() {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -1612,6 +1799,15 @@ class MainWP_Connect {
 		}
 	}
 
+	/**
+	 * Method get_file_content()
+	 *
+	 * Get contents of file.
+	 *
+	 * @param mixed $url File Location.
+	 *
+	 * @return mixed false|$data
+	 */
 	protected static function get_file_content( $url ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
@@ -1646,6 +1842,15 @@ class MainWP_Connect {
 		}
 	}
 
+	/**
+	 * Method get_favico_url()
+	 *
+	 * Get Child Site favicon URL.
+	 *
+	 * @param mixed $website Child Site info.
+	 *
+	 * @return mixed $faviurl Favicon URL.
+	 */
 	public static function get_favico_url( $website ) {
 		$favi    = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
 		$faviurl = '';

@@ -2,7 +2,7 @@
 /**
  * MainWP Page.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -14,13 +14,30 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Page {
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/** @var object Subpages of Page. */
 	public static $subPages;
+
+	/** @var object Pages to load. */
 	public static $load_page;
 
+	/**
+	 * Method init()
+	 *
+	 * Initiate page.
+	 *
+	 * @return void
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Page page header via the 'mainwp-pageheader-page' action.
@@ -49,6 +66,13 @@ class MainWP_Page {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
 	}
 
+	/**
+	 * Method init_menu()
+	 *
+	 * Initiate Menu.
+	 *
+	 * @return void Initiated menus.
+	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
@@ -85,6 +109,13 @@ class MainWP_Page {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/**
+	 * Method on_load_add_edit()
+	 *
+	 * Add edit on load bulk posts.
+	 *
+	 * @return void Returns post to edit.
+	 */
 	public static function on_load_add_edit() {
 
 		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) {
@@ -103,6 +134,13 @@ class MainWP_Page {
 		MainWP_Post::on_load_bulkpost( $post_id );
 	}
 
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Initiate subpages menu.
+	 *
+	 * @return void Sub menus.
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Pages" class="mainwp-submenu-wrapper">
@@ -135,6 +173,15 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * Method init_left_menu()
+	 *
+	 * Initiate left menu.
+	 *
+	 * @param array $subPages Left menu sub pages.
+	 *
+	 * @return void Initiate left menu.
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu(
@@ -173,11 +220,23 @@ class MainWP_Page {
 		}
 	}
 
+	/**
+	 * Method on_load_page()
+	 *
+	 * On page load.
+	 */
 	public static function on_load_page() {
 		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
 		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
 	}
 
+	/**
+	 * Method get_manage_columns()
+	 *
+	 * Get columns to display.
+	 *
+	 * @return array Columns to display.
+	 */
 	public static function get_manage_columns() {
 		$colums = array(
 			'title'              => 'Title',
@@ -201,6 +260,13 @@ class MainWP_Page {
 		return $colums;
 	}
 
+	/**
+	 * Method admin_head()
+	 *
+	 * Add current screen ID to html header.
+	 *
+	 * @return void Inject js pagenow variable containing the current page id.
+	 */
 	public static function admin_head() {
 		global $current_screen;
 		?>
@@ -208,6 +274,16 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * Method get_hidden_columns()
+	 *
+	 * Get hidden columns.
+	 *
+	 * @param mixed $hidden Columns that are hidden.
+	 * @param mixed $screen Current page.
+	 *
+	 * @return string Hidden columns.
+	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
 		if ( $screen && 'mainwp_page_PageBulkManage' == $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
@@ -215,6 +291,15 @@ class MainWP_Page {
 		return $hidden;
 	}
 
+	/**
+	 * Method add_status_handle()
+	 *
+	 * Add edit post status handle.
+	 *
+	 * @param mixed $post_id Post ID.
+	 *
+	 * @return string Post id with status handle added to it.
+	 */
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpage' == $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
@@ -224,7 +309,14 @@ class MainWP_Page {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_header()
+	 *
+	 * Render page header.
+	 *
+	 * @param string $shownPage Current page. BulkManage|BulkAdd|BulkEdit
+	 * @param null   $post_id Post ID.
+	 *
+	 * @return void MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 
@@ -281,12 +373,25 @@ class MainWP_Page {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_footer()
+	 *
+	 * Render page footer.
+	 *
+	 * @param string $shownPage Current page. BulkManage|BulkAdd|BulkEdit
+	 *
+	 * @return void Close page container element.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Render Bulk Page Manager.
+	 *
+	 * @return void Render MainWP Bulk Page Manager.
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
@@ -369,6 +474,13 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * Method render_search_options()
+	 *
+	 * Render search options box.
+	 *
+	 * @return void Output the page search options box
+	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
@@ -451,6 +563,22 @@ class MainWP_Page {
 		}
 	}
 
+	/**
+	 * Method render_table()
+	 *
+	 * Render Manage page table.
+	 *
+	 * @param mixed  $cached Cached search body.
+	 * @param string $keyword Search keywords.
+	 * @param string $dtsstart Date & time of Session start time.
+	 * @param string $dtsstop Date & time of Session stop time.
+	 * @param string $status Page status.
+	 * @param string $groups Groups to display.
+	 * @param string $sites Site URLS.
+	 * @param string $search_on Site on all sites. Default = all.
+	 *
+	 * @return void Page table html.
+	 */
 	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all' ) {
 		?>
 		<div id="mainwp_pages_error"></div>
@@ -517,6 +645,21 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * Method render_table_body()
+	 *
+	 * Render table body.
+	 *
+	 * @param mixed  $keyword Search keywords.
+	 * @param mixed  $dtsstart Date & time of Session start.
+	 * @param mixed  $dtsstop Date & time of Session stop.
+	 * @param mixed  $status Page statuses.
+	 * @param mixed  $groups Groups to display.
+	 * @param mixed  $sites Site URLS.
+	 * @param string $search_on Site on all sites. Default = all.
+	 *
+	 * @return void Output table body.
+	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
 		MainWP_Cache::init_cache( 'Page' );
@@ -595,6 +738,16 @@ class MainWP_Page {
 		}
 	}
 
+	/**
+	 * Method get_status()
+	 *
+	 * Get page status. If the page status is
+	 * 'publish' change it to 'Published'.
+	 *
+	 * @param mixed $status Page Status.
+	 *
+	 * @return string Page status.
+	 */
 	private static function get_status( $status ) {
 		if ( 'publish' == $status ) {
 			return 'Published';
@@ -603,6 +756,17 @@ class MainWP_Page {
 	}
 
 
+	/**
+	 * Method pages_search_handler()
+	 *
+	 * Pages Search handler.
+	 *
+	 * @param mixed $data Search data.
+	 * @param mixed $website Child Site ID to search on.
+	 * @param mixed $output Search output.
+	 *
+	 * @return void Search box html.
+	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
 			$result = $results[1];
@@ -729,31 +893,74 @@ class MainWP_Page {
 		}
 	}
 
+	/**
+	 * Method publish()
+	 *
+	 * Publish page.
+	 *
+	 * @return (string|false) Page has been published string, or false if it cannot be encoded.
+	 */
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
 		die( wp_json_encode( array( 'result' => 'Page has been published!' ) ) );
 	}
 
+	/**
+	 * Method unpublish()
+	 *
+	 * Unpublish page.
+	 *
+	 * @return (string|false) Page has been unpublished string, or false if it cannot be encoded.
+	 */
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
 		die( wp_json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
 	}
 
+	/**
+	 * Method trash()
+	 *
+	 * Trash page.
+	 *
+	 * @return (string|false) Page has been moved to trash string, or false if it cannot be encoded.
+	 */
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
 		die( wp_json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
 	}
 
+	/**
+	 * Method delete()
+	 *
+	 * Delete page.
+	 *
+	 * @return (string|false) Page has been permanently deleted string, or false if it cannot be encoded.
+	 */
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
 		die( wp_json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
 	}
 
+	/**
+	 * Method restore()
+	 *
+	 * Restore page.
+	 *
+	 * @return (string|false) Page has been restored string, or false if it cannot be encoded.
+	 */
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
 		die( wp_json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
+	/**
+	 * Method render_bulk_add()
+	 *
+	 * Check if user has the rights to manage pages,
+	 * grab the post id and pass onto render_addedit() method.
+	 *
+	 * @return null|self::render_addedit()
+	 */
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
@@ -764,6 +971,14 @@ class MainWP_Page {
 		self::render_addedit( $post_id, 'BulkAdd' );
 	}
 
+	/**
+	 * Method render_bulk_edit()
+	 *
+	 * Check if user has the rights to manage pages,
+	 * grab the post id and pass onto render_addedit() method.
+	 *
+	 * @return null|self::render_addedit()
+	 */
 	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
@@ -774,13 +989,29 @@ class MainWP_Page {
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
+	/**
+	 * Method render_addedit()
+	 *
+	 * Render bulk posts page.
+	 *
+	 * @param mixed $post_id Post ID.
+	 * @param mixed $what Current page.
+	 *
+	 * @return void Display page header, bulkpost body & footer.
+	 */
 	public static function render_addedit( $post_id, $what ) {
 		self::render_header( $what, $post_id );
 		MainWP_Post::render_bulkpost( $post_id, 'bulkpage' );
 		self::render_footer( $what );
 	}
 
-
+	/**
+	 * Method posting()
+	 *
+	 * Render Posting page modal window.
+	 *
+	 * @return void Posting page modal window html.
+	 */
 	public static function posting() { // phpcs:ignore -- complex function.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
@@ -1005,6 +1236,13 @@ class MainWP_Page {
 		<?php
 	}
 
+	/**
+	 * Method render_twitter_notice()
+	 *
+	 * Render twitter notice.
+	 *
+	 * @return void Output twitter notice.
+	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
 			$twitters = MainWP_Twitter::get_twitter_notice( 'new_page' );
@@ -1024,7 +1262,11 @@ class MainWP_Page {
 	}
 
 	/**
+	 * Method mainwp_help_content()
+	 *
 	 * Hook the section help content to the Help Sidebar element
+	 *
+	 * @return void Help section html.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PageBulkManage' == $_GET['page'] || 'PageBulkAdd' == $_GET['page'] ) ) {

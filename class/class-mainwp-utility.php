@@ -25,7 +25,7 @@ class MainWP_Utility {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return object
+	 * @return object __CLASS__
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
@@ -107,6 +107,8 @@ class MainWP_Utility {
 	 *
 	 * Check $url against FILTER_VALIDATE_URL.
 	 *
+	 * @param mixed $url Domain to check.
+	 * 
 	 * @return boolean True|False.
 	 */
 	public static function is_domain_valid( $url ) {

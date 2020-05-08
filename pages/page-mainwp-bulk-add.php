@@ -25,7 +25,7 @@ class MainWP_Bulk_Add {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return string __CLASS__
+	 * @return object __CLASS__
 	 */
 	public static function get_class_name() {
 		return __CLASS__;

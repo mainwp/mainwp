@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Themes Page
- * 
+ *
  * This page is used to Manage Themes on Child Sites
  *
  * @package MainWP/Themes

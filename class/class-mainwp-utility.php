@@ -108,7 +108,7 @@ class MainWP_Utility {
 	 * Check $url against FILTER_VALIDATE_URL.
 	 *
 	 * @param mixed $url Domain to check.
-	 * 
+	 *
 	 * @return boolean True|False.
 	 */
 	public static function is_domain_valid( $url ) {
@@ -155,13 +155,13 @@ class MainWP_Utility {
 	}
 
 	/**
-	 * Method ctype_digit() 
-	 * 
-	 * Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise. 
-	 * 
+	 * Method ctype_digit()
+	 *
+	 * Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise.
+	 *
 	 * @param mixed $str String to check.
-	 * 
-	 * @return boolean Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise. 
+	 *
+	 * @return boolean Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise.
 	 */
 	public static function ctype_digit( $str ) {
 		return ( is_string( $str ) || is_int( $str ) || is_float( $str ) ) && preg_match( '/^\d+\z/', $str );
@@ -169,15 +169,15 @@ class MainWP_Utility {
 
 	/**
 	 * Method sortmulti()
-	 * 
+	 *
 	 * Sort the given array, Acending, Decending or by Natural Order.
-	 * 
-	 * @param mixed $array Array to sort.
-	 * @param mixed $index Index of array.
-	 * @param mixed $order Acending or Decending order.
+	 *
+	 * @param mixed   $array Array to sort.
+	 * @param mixed   $index Index of array.
+	 * @param mixed   $order Acending or Decending order.
 	 * @param boolean $natsort Sort an array using a "natural order" algorithm. Default: false.
 	 * @param boolean $case_sensitive If case sensitive return true else return false. Default: false.
-	 * 
+	 *
 	 * @return array $sorted Return the sorted array.
 	 */
 	public static function sortmulti( $array, $index, $order, $natsort = false, $case_sensitive = false ) {
@@ -218,13 +218,13 @@ class MainWP_Utility {
 
 	/**
 	 * Method get_sub_array_having()
-	 * 
-	 * Get sub array. 
-	 * 
+	 *
+	 * Get sub array.
+	 *
 	 * @param mixed $array Array to traverse.
 	 * @param mixed $index Index of array.
 	 * @param mixed $value Array values.
-	 * 
+	 *
 	 * void array $output Sub array.
 	 */
 	public static function get_sub_array_having( $array, $index, $value ) {
@@ -242,11 +242,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method trim_slashes()
-	 * 
+	 *
 	 * Trim stashes from element.
-	 * 
+	 *
 	 * @param mixed $elem Element to trim.
-	 * 
+	 *
 	 * @return string Return string with no slashes.
 	 */
 	public static function trim_slashes( $elem ) {
@@ -255,11 +255,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method sanitize()
-	 * 
+	 *
 	 * Sanitize given string.
-	 * 
+	 *
 	 * @param mixed $str String to sanitize.
-	 * 
+	 *
 	 * @return string Sanitized string.
 	 */
 	public static function sanitize( $str ) {
@@ -268,9 +268,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method end_session()
-	 * 
+	 *
 	 * End a session.
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function end_session() {
@@ -282,11 +282,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method get_timestamp()
-	 * 
+	 *
 	 * Get time stamp in gmt_offset.
-	 * 
+	 *
 	 * @param mixed $timestamp Time stamp to convert.
-	 * 
+	 *
 	 * @return string Time stamp in general mountain time offset.
 	 */
 	public static function get_timestamp( $timestamp ) {
@@ -297,11 +297,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method date()
-	 * 
+	 *
 	 * Show date in given format.
-	 * 
+	 *
 	 * @param mixed $format Format to display date in.
-	 * 
+	 *
 	 * @return string Date.
 	 */
 	public static function date( $format ) {
@@ -311,11 +311,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method format_timestamp()
-	 * 
+	 *
 	 * Format the given timestamp.
-	 * 
+	 *
 	 * @param mixed $timestamp Timestamp to format.
-	 * 
+	 *
 	 * @return string Formatted timestamp.
 	 */
 	public static function format_timestamp( $timestamp ) {
@@ -324,13 +324,13 @@ class MainWP_Utility {
 
 	/**
 	 * Method human_filesize()
-	 * 
+	 *
 	 * Convert to human readable file size format,
 	 * (B|kB|MB|GB|TB|PB|EB|ZB|YB).
-	 * 
-	 * @param mixed $bytes File in bytes.
+	 *
+	 * @param mixed   $bytes File in bytes.
 	 * @param integer $decimals Number of decimals to output.
-	 * 
+	 *
 	 * @return string Human readable file size.
 	 */
 	public static function human_filesize( $bytes, $decimals = 2 ) {
@@ -342,12 +342,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method map_site()
-	 * 
+	 *
 	 * Map Site.
-	 * 
+	 *
 	 * @param mixed $website Website to map.
 	 * @param mixed $keys Keys to map.
-	 * 
+	 *
 	 * @return object $outputSite Mapped site.
 	 */
 	public static function map_site( &$website, $keys ) {
@@ -361,12 +361,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method map_site_array()
-	 * 
+	 *
 	 * Map Site array.
-	 * 
+	 *
 	 * @param mixed $website Website to map.
 	 * @param mixed $keys Keys to map.
-	 * 
+	 *
 	 * @return object $outputSite Mapped site.
 	 */
 	public static function map_site_array( &$website, $keys ) {
@@ -380,12 +380,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method sec2hms()
-	 * 
+	 *
 	 * Convert seconds to Hours:Minutes.
-	 * 
-	 * @param mixed $sec Time in seconds.
+	 *
+	 * @param mixed   $sec Time in seconds.
 	 * @param boolean $padHours Hpurs to pad.
-	 * 
+	 *
 	 * @return string $hms Time in Hours:Minutes.
 	 */
 	public static function sec2hms( $sec, $padHours = false ) {
@@ -403,12 +403,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method array_merge()
-	 * 
+	 *
 	 * Merge two given arrays into one.
-	 * 
+	 *
 	 * @param mixed $arr1 First array.
 	 * @param mixed $arr2 Second array.
-	 * 
+	 *
 	 * @return array Merged Array.
 	 */
 	public static function array_merge( $arr1, $arr2 ) {
@@ -435,12 +435,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method update_option()
-	 * 
+	 *
 	 * Update option.
-	 * 
+	 *
 	 * @param mixed $option_name Option name.
 	 * @param mixed $option_value Option value.
-	 * 
+	 *
 	 * @return (boolean) False if value was not updated and true if value was updated.
 	 */
 	public static function update_option( $option_name, $option_value ) {
@@ -455,11 +455,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method remove_preslash_spaces()
-	 * 
+	 *
 	 * Remove spaces before slashes.
-	 * 
+	 *
 	 * @param string $text String to strip.
-	 * 
+	 *
 	 * @return string $text Cleaned string.
 	 */
 	public static function remove_preslash_spaces( $text ) {
@@ -472,12 +472,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method remove_http_prefix()
-	 * 
+	 *
 	 * Remove http prefixes from given url.
-	 * 
-	 * @param mixed $pUrl Given URL.
+	 *
+	 * @param mixed     $pUrl Given URL.
 	 * @param (boolean) $pTrimSlashes Whether or not to trim slashes. Default is false.
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function remove_http_prefix( $pUrl, $pTrimSlashes = false ) {
@@ -486,11 +486,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method remove_http_www_prefix()
-	 * 
+	 *
 	 * Remove 'www.' from given URL.
-	 * 
+	 *
 	 * @param mixed $pUrl Given URL.
-	 * 
+	 *
 	 * @return string Cleaned URL.
 	 */
 	public static function remove_http_www_prefix( $pUrl ) {
@@ -500,11 +500,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method sanitize_file_name()
-	 * 
+	 *
 	 * Sanitize file names.
-	 * 
+	 *
 	 * @param mixed $filename File name to sanitize.
-	 * 
+	 *
 	 * @return string Sanitized filename.
 	 */
 	public static function sanitize_file_name( $filename ) {
@@ -515,11 +515,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method normalize_filename()
-	 * 
+	 *
 	 * Normalize filename.
-	 * 
+	 *
 	 * @param mixed $s Filename to normalize.
-	 * 
+	 *
 	 * @return string $s Normalised filename.
 	 */
 	public static function normalize_filename( $s ) {
@@ -539,13 +539,13 @@ class MainWP_Utility {
 
 	/**
 	 * Method esc_content()
-	 * 
+	 *
 	 * Escape content,
 	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2).
-	 * 
-	 * @param mixed $content Content to escape.
+	 *
+	 * @param mixed  $content Content to escape.
 	 * @param string $type Type of content. Default = note.
-	 * 
+	 *
 	 * @return string Filtered content containing only the allowed HTML.
 	 */
 	public static function esc_content( $content, $type = 'note' ) {
@@ -579,12 +579,12 @@ class MainWP_Utility {
 
 	/**
 	 * Method show_mainwp_message()
-	 * 
+	 *
 	 * Check whenther or not to show the MainWP Message.
 	 *
 	 * @param mixed $type Type of message.
 	 * @param mixed $notice_id Notice ID.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function show_mainwp_message( $type, $notice_id ) {
@@ -600,13 +600,13 @@ class MainWP_Utility {
 
 	/**
 	 * Method array_sort()
-	 * 
+	 *
 	 * Sort given array by given flags.
-	 * 
-	 * @param mixed $array Array to sort.
-	 * @param mixed $key Array key.
+	 *
+	 * @param mixed  $array Array to sort.
+	 * @param mixed  $key Array key.
 	 * @param string $sort_flag Flags to sort by. Default = SORT_STRING.
-	 * 
+	 *
 	 * @return array Sorted array.
 	 */
 	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
@@ -625,9 +625,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method enabled_wp_seo()
-	 * 
+	 *
 	 * Check if Yoast SEO is enabled.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public static function enabled_wp_seo() {
@@ -639,11 +639,11 @@ class MainWP_Utility {
 
 	/**
 	 * Method value_to_string()
-	 * 
+	 *
 	 * Value to string.
-	 * 
+	 *
 	 * @param mixed $var Value to convert to string.
-	 * 
+	 *
 	 * @return string Value that has been converted into a string.
 	 */
 	public static function value_to_string( $var ) {
@@ -658,9 +658,9 @@ class MainWP_Utility {
 
 	/**
 	 * Method render_mainwp_nonce()
-	 * 
+	 *
 	 * Render MainWP nonce.
-	 * 
+	 *
 	 * @return string Nonce field HTML markup.
 	 */
 	public static function render_mainwp_nonce() {

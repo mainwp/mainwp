@@ -2,7 +2,7 @@
 /**
  * MainWP Hooks
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -12,6 +12,13 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Hooks {
 
+	/**
+	 * Method __contruct()
+	 * 
+	 * Initialize MainWP_Hooks actions/filters upon creation of the object.
+	 * 
+	 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
+	 */
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
 		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
@@ -37,11 +44,12 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
 
-		/*
-		 *  @deprecated 4.0.7. Please use `mainwp_get_error_message`.
+		/**
+		 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
 		 */
 		add_filter( 'mainwp_getErrorMessage', array( &$this, 'get_error_message' ), 10, 2 );
 		add_filter( 'mainwp_get_error_message', array( &$this, 'get_error_message' ), 10, 2 );
+
 		add_filter( 'mainwp_getwebsitesbygroupids', array( &$this, 'hook_get_websites_by_group_ids' ), 10, 2 );
 
 		add_filter( 'mainwp_cache_getcontext', array( &$this, 'cache_getcontext' ) );
@@ -71,29 +79,63 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 	}
 
+	/**
+	 * Method mainwp_log_debug()
+	 * 
+	 * MainWP debug log.
+	 * 
+	 * @param mixed $pText Debug text.
+	 * 
+	 * @return string Debug text.
+	 */
 	public function mainwp_log_debug( $pText ) {
 		MainWP_Logger::instance()->debug( $pText );
 	}
 
+	/**
+	 * Method mainwp_log_info()
+	 * 
+	 * MainWP Log Info.
+	 * 
+	 * @param mixed $pText Info Text.
+	 * 
+	 * @return string Info Text.
+	 */
 	public function mainwp_log_info( $pText ) {
 		MainWP_Logger::instance()->info( $pText );
 	}
 
+	/**
+	 * Method mainwp_log_warning()
+	 * 
+	 * MainWP Log Warning.
+	 * 
+	 * @param mixed $pText Warning Text.
+	 * 
+	 * @return string Warning Text.
+	 */
 	public function mainwp_log_warning( $pText ) {
 		MainWP_Logger::instance()->warning( $pText );
 	}
 
+	/**
+	 * Method enqueue_meta_boxes_scripts()
+	 * 
+	 * Enqueue Scripts for all Meta boxes.
+	 */
 	public function enqueue_meta_boxes_scripts() {
 		MainWP_System::enqueue_postbox_scripts();
 	}
 
 	/**
-	 * Hook to add site
+	 * Method mainwp_add_site()
+	 * 
+	 * Hook to add Child Site.
 	 *
 	 * @since 3.2.2
 	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site
 	 *
-	 * @return array
+	 * @return array $ret data fields: response, siteid.
 	 */
 	public function mainwp_add_site( $params ) {
 		$ret = array();
@@ -117,6 +159,15 @@ class MainWP_Hooks {
 		return $ret;
 	}
 
+	/**
+	 * Method hook_delete_site()
+	 * 
+	 * Hook to delete Child Site. 
+	 * 
+	 * @param boolean $site_id Child Site ID.
+	 * 
+	 * @return (boolean|array) Return false if empty and return array error - Site not found | result - SUCCESS.
+	 */
 	public function hook_delete_site( $site_id = false ) {
 
 		if ( empty( $site_id ) ) {
@@ -150,29 +201,49 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Hook to clone site
+	 * Method filter_clone_site()
+	 * 
+	 * Hook to clone site.
 	 *
 	 * @since 3.4.4
-	 * @param $pluginFile, $key, $websiteid, $cloneid
-	 *
-	 * @return array
+	 * @param mixed $pluginFile Plugin file.
+	 * @param mixed $key Key.
+	 * @param mixed $websiteid Child Site ID.
+	 * @param mixed $cloneid Cloan ID
+	 * @param mixed $clone_url Cloan URL.
+	 * @param boolean $force_update Force the update, true|false, Default: false.
+	 * 
+	 * @return array Site array to clone.
 	 */
 	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
 		return MainWP_Extensions_Handler::hook_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
 	}
 
-
+	/**
+	 * Method filter_delete_clone_site()
+	 * 
+	 * Hook to delete cloaned Child Site.
+	 * 
+	 * @param mixed $pluginFile Plugin file.
+	 * @param mixed $key Key.
+	 * @param string $clone_url Cloan URL.
+	 * @param boolean $clone_site_id Cloan Site ID.
+	 * 
+	 * @return array Site array to delete.
+	 */
 	public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
 		return MainWP_Extensions_Handler::hook_delete_clone_site( $pluginFile, $key, $clone_url, $clone_site_id );
 	}
 
 	/**
-	 * Hook to edit site
+	 * Method mainwp_edit_site()
+	 * 
+	 * Hook to edit Child Site.
 	 *
 	 * @since 3.2.2
 	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id
 	 *
-	 * @return array
+	 * @return int $ret Child site ID.
 	 */
 	public function mainwp_edit_site( $params ) {
 		$ret = array();

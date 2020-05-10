@@ -587,7 +587,7 @@ class MainWP_UI {
 	 * @param array $subitems [access, active, style].
 	 * @param null  $name_caller Menu Name.
 	 *
-	 * @return void Render page navigation html.
+	 * @return string Render page navigation html.
 	 */
 	public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
 

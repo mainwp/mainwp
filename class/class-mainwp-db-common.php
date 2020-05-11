@@ -344,20 +344,20 @@ class MainWP_DB_Common extends MainWP_DB {
 			)
 		);
 	}
-	
+
 	/**
 	 * Method clear_group()
 	 *
 	 * Clear sites in group.
 	 *
-	 * @param mixed $groupId ID of group.	 
+	 * @param mixed $groupId ID of group.
 	 *
 	 * @return boolean true
 	 */
 	public function clear_group( $groupId ) {
 		$this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE groupid=' . $groupId );
 	}
-	
+
 
 	/**
 	 * Method add_group()

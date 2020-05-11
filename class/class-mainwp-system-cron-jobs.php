@@ -802,7 +802,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 */
-	public function send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {		
+	public function send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {
 
 		MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
@@ -853,12 +853,12 @@ class MainWP_System_Cron_Jobs {
 		$plain_text = apply_filters( 'mainwp_text_format_email', false );
 		MainWP_Utility::update_option( 'mainwp_daily_digest_plain_text', $plain_text );
 
-		$disable_send_noti = apply_filters_deprecated( 'mainwp_updatescheck_disable_sendmail', array( false ), '4.0.8', 'mainwp_updatescheck_disable_notification_mail' );		
-		
+		$disable_send_noti = apply_filters_deprecated( 'mainwp_updatescheck_disable_sendmail', array( false ), '4.0.8', 'mainwp_updatescheck_disable_notification_mail' );
+
 		$disabled_notification = apply_filters( 'mainwp_updatescheck_disable_notification_mail', $disable_send_noti );
-		
+
 		$this->clear_fields();
-		
+
 		if ( $disabled_notification ) {
 			return false;
 		}
@@ -867,16 +867,16 @@ class MainWP_System_Cron_Jobs {
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
 			return false;
 		}
-		
-		if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {			
+
+		if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
 			$sitesHttpCheckIds = get_option( 'mainwp_automaticUpdate_httpChecks' );
 			$this->send_http_response_notification( $sitesHttpCheckIds, $text_format );
 			MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 		}
-		
+
 		$email = get_option( 'mainwp_updatescheck_mail_email' );
 		MainWP_Logger::instance()->debug( 'CRON :: updates check :: send mail to ' . $email );
-		
+
 		if ( false !== $email && '' !== $email ) {
 			$mail_content = apply_filters( 'mainwp_daily_digest_content', $mail_content, $text_format );
 			$this->send_updates_notification( $email, $mail_content, $text_format );
@@ -1110,24 +1110,24 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @param bool $sitesHttpCheckIds sites ids
 	 * @param bool $text_format text format
-	 * 
-	 * @return bool False if failed  
+	 *
+	 * @return bool False if failed
 	 */
 	public function send_http_response_notification( $sitesHttpCheckIds, $text_format ) {
 
 		if ( ! is_array( $sitesHttpCheckIds ) || empty( $sitesHttpCheckIds ) ) {
 			return false;
 		}
-		
+
 		if ( $text_format ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
 		} else {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		$mail_offline = '';		
-		$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );		
-		
+		$mail_offline = '';
+		$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
+
 		if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
 			foreach ( $sitesOffline as $site ) {
 				if ( -1 == $site->offline_check_result ) {
@@ -1137,7 +1137,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$email = get_option( 'mainwp_updatescheck_mail_email' );
-		
+
 		if ( ! empty( $email ) && '' != $mail_offline ) {
 			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
 			$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
@@ -1161,7 +1161,6 @@ class MainWP_System_Cron_Jobs {
 				)
 			);
 		}
-	
 	}
 
 	/**

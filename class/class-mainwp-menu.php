@@ -231,9 +231,9 @@ class MainWP_Menu {
 	 * Build Top Level Menu
 	 *
 	 * @param array   $params Menu Item parameters.
-	 * @param integer $level Menu Item Level
+	 * @param integer $level Menu Item Level 1 or 2.
 	 *
-	 * @return array $mainwp_leftmenu[], $_mainwp_menu_active_slugs[].
+	 * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
 	 */
 	public static function add_left_menu( $params = array(), $level = 1 ) {
 

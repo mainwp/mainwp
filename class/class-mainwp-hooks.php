@@ -256,6 +256,19 @@ class MainWP_Hooks {
 		return $ret;
 	}
 
+	/**
+	 * Method hook_add_sub_left_menu()
+	 * 
+	 * Hook to add MainWP Left Menu item.
+	 * 
+	 * @param mixed $title Menu title.
+	 * @param mixed $slug Menu Slug.
+	 * @param mixed $href Menu link.
+	 * @param integer $level Menu Level.
+	 * @param string $parent_key Parent menu.
+	 * 
+	 * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
+	 */
 	public function hook_add_sub_left_menu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
 		$item = array(
 			'title'      => $title,
@@ -266,6 +279,15 @@ class MainWP_Hooks {
 		MainWP_Menu::add_left_menu( $item, $level );
 	}
 
+	/**
+	 * Method update_wp_site()
+	 * 
+	 * Update Child Site.
+	 * 
+	 * @param mixed $params Udate parameters. 
+	 * 
+	 * @return int Child Site ID on success and return 0 on failer.
+	 */
 	public static function update_wp_site( $params ) {
 		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
 			return 0;
@@ -316,6 +338,16 @@ class MainWP_Hooks {
 		return $website->id;
 	}
 
+	/**
+	 * Method get_activate_extension_notice()
+	 * 
+	 * Check for inactive MainWP Extensions &
+	 * return an activation warning message.
+	 * 
+	 * @param mixed $pluginFile MainWP Extension to check.
+	 * 
+	 * @return string Activation notice. 
+	 */
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions_Handler::is_extension_activated( $pluginFile );
 		if ( $active ) {
@@ -333,28 +365,90 @@ class MainWP_Hooks {
 		return sprintf( __( 'You have a MainWP extension that does not have an active API entered. This means you will not receive updates or support. Please visit the %1$sExtensions%2$s page and enter your API key.', 'mainwp' ), '<a href="admin.php?page=Extensions">', '</a>' );
 	}
 
+	/**
+	 * Method cache_getcontext()
+	 * 
+	 * Get cached search context for given page. 
+	 * 
+	 * @param string $page Current MainWP Page.
+	 * 
+	 * @return array Cached Search Array.
+	 */
 	public function cache_getcontext( $page ) {
 		return MainWP_Cache::get_cached_context( $page );
 	}
 
+	/**
+	 * Method cache_echo_body()
+	 * 
+	 * Echo Cached Search Body. 
+	 * 
+	 * @param string $page Current MainWP Page.
+	 * 
+	 *  @return string Cached Seach body html.
+	 */
 	public function cache_echo_body( $page ) {
 		MainWP_Cache::echo_body( $page );
 	}
 
+	/**
+	 * Method cache_init()
+	 * 
+	 * Initiate search session variables for the current page. 
+	 * 
+	 * @param string $page Current MainWP Page.
+	 * 
+	 * @return void
+	 */
 	public function cache_init( $page ) {
 		MainWP_Cache::init_cache( $page );
 	}
 
+	/**
+	 * Method cache_add_context()
+	 * 
+	 * Add time & Search Context session variable.
+	 * 
+	 * @param string $page Current MainWP Page.
+	 * @param mixed $context Time of search.
+	 * 
+	 * @return void
+	 */
 	public function cache_add_context( $page, $context ) {
 		MainWP_Cache::add_context( $page, $context );
 	}
 
+	/**
+	 * Method cache_add_body()
+	 * 
+	 * Add Search Body Session variable.
+	 * 
+	 * @param string $page Current MainWP Page.
+	 * @param mixed $body Search body.
+	 * 
+	 * @return void
+	 */
 	public function cache_add_body( $page, $body ) {
 		MainWP_Cache::add_body( $page, $body );
 	}
 
-	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true,
-								$class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
+	/**
+	 * Method select_sites_box()
+	 * 
+	 * Select sites box.
+	 * 
+	 * @param string $title Input title.
+	 * @param string $type Input type, radio.
+	 * @param boolean $show_group Whether or not to show group, Default: true.
+	 * @param boolean $show_select_all Whether to show select all.
+	 * @param string $class Default = ''.
+	 * @param string $style Default = ''.
+	 * @param array $selected_websites Selected Child Sites.
+	 * @param array $selected_groups Selected Groups.
+	 * 
+	 * @return string MainWP Select Sites Box html.
+	 */
+	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
 	}
 

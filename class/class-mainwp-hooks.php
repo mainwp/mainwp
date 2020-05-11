@@ -545,8 +545,8 @@ class MainWP_Hooks {
 	 *
 	 * @since 3.4.4
 	 * @param object $sites Child Sites object.
-	 * @param array $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
-	 * 
+	 * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+	 *
 	 * @return array $output All posts data array.
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
@@ -593,11 +593,11 @@ class MainWP_Hooks {
 	 * Method mainwp_current_user_have_right()
 	 *
 	 * Check permission level by hook mainwp_currentusercan of Team Control extension
-	 *	
-	 * @param mixed $input Return value holder.
+	 *
+	 * @param mixed  $input Return value holder.
 	 * @param string $can_type group or type of capabilities.
-     * @param string $which Which function to perform.
-	 * 
+	 * @param string $which Which function to perform.
+	 *
 	 * @return (bool) $input Return true if the user can and false if they can not.
 	 */
 	public function hook_current_user_can( $input, $can_type, $which ) {
@@ -611,13 +611,13 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_mainwp_dir()
-	 * 
+	 *
 	 * Hook to get MainWP Directory.
-	 * 
-	 * @param boolean $false 
-	 * @param null $dir WP files system diectories.
+	 *
+	 * @param boolean $false
+	 * @param null    $dir WP files system diectories.
 	 * @param boolean $direct_access Return true if Direct access file system. Default: false.
-	 * 
+	 *
 	 * @return array $newdir, $url.
 	 */
 	public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
@@ -681,9 +681,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method is_multi_user()
-	 * 
+	 *
 	 * Hook to check if multi user.
-	 * 
+	 *
 	 * @return (bool) true|false.
 	 */
 	public function is_multi_user() {
@@ -692,13 +692,12 @@ class MainWP_Hooks {
 
 	/**
 	 * Method filter_qq2_file_uploader()
-	 * 
+	 *
 	 * Hook to create new MainWP_QQ2_File_Uploader() class.
-	 * 
+	 *
 	 * @param mixed $allowedExtensions Allowed files extentions.
 	 * @param mixed $sizeLimit Maximum file size allowed to be uploaded.
-	 * 
-	 * 
+	 *
 	 * @return (bool) Return true on upload false on failer.
 	 */
 	public function filter_qq2_file_uploader( $allowedExtensions, $sizeLimit ) {
@@ -708,9 +707,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_meta_boxes()
-	 * 
+	 *
 	 * Hook to get meta boxes.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function get_meta_boxes() {
@@ -719,13 +718,13 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_format_email()
-	 * 
+	 *
 	 * Hook to format email.
-	 * 
-	 * @param mixed $body Email body.
-	 * @param mixed $email Email address. 
+	 *
+	 * @param mixed  $body Email body.
+	 * @param mixed  $email Email address.
 	 * @param string $title Email title.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function get_format_email( $body, $email, $title = '' ) {
@@ -734,9 +733,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method active_plugin()
-	 * 
+	 *
 	 * Hook to activate plugins.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function active_plugin() {
@@ -746,9 +745,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method deactive_plugin()
-	 * 
+	 *
 	 * Hook to deactivate plugins.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function deactive_plugin() {
@@ -758,9 +757,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method delete_plugin()
-	 * 
+	 *
 	 * Hook to delete plugins.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function delete_plugin() {
@@ -770,9 +769,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method delete_theme()
-	 * 
+	 *
 	 * Hook to delete theme()
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function delete_theme() {
@@ -782,9 +781,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method upgrade_plugin_theme()
-	 * 
+	 *
 	 * Hook to update theme.
-	 * 
+	 *
 	 * @return (string|bool) Return error or true.
 	 */
 	public function upgrade_plugin_theme() {
@@ -841,12 +840,12 @@ class MainWP_Hooks {
 
 	/**
 	 * Method hook_get_websites_by_group_ids()
-	 * 
+	 *
 	 * Hook to get Child Sites by group ID.
-	 * 
+	 *
 	 * @param mixed $ids Group IDs.
-	 * @param null $userId Current user ID.
-	 * 
+	 * @param null  $userId Current user ID.
+	 *
 	 * @return (object|null) Database query result for get Child Sites by group ID or null on failure.
 	 */
 	public function hook_get_websites_by_group_ids( $ids, $userId = null ) {

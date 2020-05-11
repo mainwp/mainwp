@@ -22,9 +22,9 @@ class MainWP_Error_Helper {
 	 *
 	 * Check for http error and or "nomainwp" error.
 	 *
-	 * @param mixed $pException
+	 * @param object $pException Exception object.
 	 *
-	 * @return @error Error message.
+	 * @return string $error Error message.
 	 */
 	public static function get_error_message( $pException ) {
 		$error = $pException->getMessage();

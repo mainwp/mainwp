@@ -393,6 +393,8 @@ class MainWP_System {
 		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 
 			/**
+			 * Method mainwp_current_user_have_right()
+			 * 
 			 * Check permission level by hook mainwp_currentusercan of Team Control extension
 			 *
 			 * @param string $cap_type group or type of capabilities

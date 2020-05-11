@@ -407,7 +407,7 @@ class MainWP_Hooks {
 	/**
 	 * Method cache_add_context()
 	 * 
-	 * Add time & Search Context session variable.
+	 * Hook to add time & Search Context session variable.
 	 * 
 	 * @param string $page Current MainWP Page.
 	 * @param mixed $context Time of search.
@@ -421,7 +421,7 @@ class MainWP_Hooks {
 	/**
 	 * Method cache_add_body()
 	 * 
-	 * Add Search Body Session variable.
+	 * Hook to add Search Body Session variable.
 	 * 
 	 * @param string $page Current MainWP Page.
 	 * @param mixed $body Search body.
@@ -435,7 +435,7 @@ class MainWP_Hooks {
 	/**
 	 * Method select_sites_box()
 	 * 
-	 * Select sites box.
+	 * Hook to select sites box.
 	 * 
 	 * @param string $title Input title.
 	 * @param string $type Input type, radio.
@@ -452,6 +452,17 @@ class MainWP_Hooks {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
 	}
 
+	/**
+	 * Method notify_user()
+	 * 
+	 * Hook to send user a notification via wp_mail()
+	 * 
+	 * @param mixed $userId User ID.
+	 * @param mixed $subject Email Subject.
+	 * @param mixed $content Email Content.
+	 * 
+	 * @return (bool) Whether the email contents were sent successfully.
+	 */
 	public function notify_user( $userId, $subject, $content ) {
 		wp_mail(
 			MainWP_DB_Common::instance()->get_user_notification_email( $userId ),
@@ -464,14 +475,42 @@ class MainWP_Hooks {
 		);
 	}
 
+	/**
+	 * Method get_error_message()
+	 * 
+	 * Hook to get error message. 
+	 * 
+	 * @param object $msg Error message. 
+	 * @param object $extra HTTP error message.
+	 * 
+	 * @return string Error message.
+	 */
 	public function get_error_message( $msg, $extra ) {
 		return MainWP_Error_Helper::get_error_message( new MainWP_Exception( $msg, $extra ) );
 	}
 
+	/**
+	 * Method get_user_extension()
+	 * 
+	 * Hook to get user extension.
+	 * 
+	 * @return object $row User extension.
+	 */
 	public function get_user_extension() {
 		return MainWP_DB_Common::instance()->get_user_extension();
 	}
 
+	/**
+	 * Method get_website_option()
+	 * 
+	 * Hook to get Child site wp_options.
+	 * 
+	 * @param mixed $boolean
+	 * @param array $website Child Site array.
+	 * @param string $name Option table name.
+	 * 
+	 * @return (string|null) Database query result (as string), or null on failure
+	 */
 	public function get_website_options( $boolean, $website, $name = '' ) {
 
 		if ( empty( $name ) ) {
@@ -487,17 +526,28 @@ class MainWP_Hooks {
 		return MainWP_DB::instance()->get_website_option( $website, $name );
 	}
 
+	/**
+	 * Method get_websites_by_url()
+	 * 
+	 * Hook to get Child Site by URL.
+	 * 
+	 * @param mixed $url Child Site URL.
+	 * 
+	 * @return (array|object|null) Database query results.
+	 */
 	public function get_websites_by_url( $url ) {
 		return MainWP_DB::instance()->get_websites_by_url( $url );
 	}
 
 	/**
-	 * Hook to get posts from sites
+	 * Method hook_get_all_posts()
+	 * Hook to get posts from sites.
 	 *
 	 * @since 3.4.4
-	 * @param $pluginFile, $key, $sites, $post_data
-	 * @param array       $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type
-	 * @return array
+	 * @param array $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+	 * @param object $sites Child Sites object.
+	 * 
+	 * @return array $output All posts data array.
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
@@ -539,6 +589,17 @@ class MainWP_Hooks {
 		return $output;
 	}
 
+	/**
+	 * Method mainwp_current_user_have_right()
+	 * 
+	 * Check permission level by hook mainwp_currentusercan of Team Control extension
+	 *	
+	 * @param mixed $input Return value holder.
+	 * @param string $cap_type group or type of capabilities
+     * @param string $cap capabilities for current user
+	 * 
+	 * @return (bool) $input Return true if the user can and false if they can not.
+	*/
 	public function hook_current_user_can( $input, $can_type, $which ) {
 
 		if ( function_exists( 'mainwp_current_user_have_right' ) ) {

@@ -97,6 +97,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $this->wpdb->get_var( $qry );
 	}
 
+	/**
+	 * Method get_website_option()
+	 * 
+	 * Get Child site wp_options.
+	 * 
+	 * @param array $website Child Site array.
+	 * @param mixed $option Child Site wp_options table name.
+	 * 
+	 * @return (string|null) Database query result (as string), or null on failure
+	 */
 	public function get_website_option( $website, $option ) {
 
 		if ( is_array( $website ) ) {
@@ -762,7 +772,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			array( 'id' => $websiteid )
 		);
 	}
-
+	//(array|object|null) Database query results
 	public function get_websites_by_url( $url ) {
 		if ( '/' != substr( $url, - 1 ) ) {
 			$url .= '/';

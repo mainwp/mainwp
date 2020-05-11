@@ -61,7 +61,7 @@ class MainWP_Cache {
 	 * Set Search body Session Variable.
 	 *
 	 * @param string $page Current MainWP Page.
-	 * @param mixed $body Search body.
+	 * @param mixed  $body Search body.
 	 *
 	 * @return void
 	 */

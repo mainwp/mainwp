@@ -258,15 +258,15 @@ class MainWP_Hooks {
 
 	/**
 	 * Method hook_add_sub_left_menu()
-	 * 
+	 *
 	 * Hook to add MainWP Left Menu item.
-	 * 
-	 * @param mixed $title Menu title.
-	 * @param mixed $slug Menu Slug.
-	 * @param mixed $href Menu link.
+	 *
+	 * @param mixed   $title Menu title.
+	 * @param mixed   $slug Menu Slug.
+	 * @param mixed   $href Menu link.
 	 * @param integer $level Menu Level.
-	 * @param string $parent_key Parent menu.
-	 * 
+	 * @param string  $parent_key Parent menu.
+	 *
 	 * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
 	 */
 	public function hook_add_sub_left_menu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
@@ -281,11 +281,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method update_wp_site()
-	 * 
+	 *
 	 * Update Child Site.
-	 * 
-	 * @param mixed $params Udate parameters. 
-	 * 
+	 *
+	 * @param mixed $params Udate parameters.
+	 *
 	 * @return int Child Site ID on success and return 0 on failer.
 	 */
 	public static function update_wp_site( $params ) {
@@ -340,13 +340,13 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_activate_extension_notice()
-	 * 
+	 *
 	 * Check for inactive MainWP Extensions &
 	 * return an activation warning message.
-	 * 
+	 *
 	 * @param mixed $pluginFile MainWP Extension to check.
-	 * 
-	 * @return string Activation notice. 
+	 *
+	 * @return string Activation notice.
 	 */
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions_Handler::is_extension_activated( $pluginFile );
@@ -367,11 +367,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method cache_getcontext()
-	 * 
-	 * Get cached search context for given page. 
-	 * 
+	 *
+	 * Get cached search context for given page.
+	 *
 	 * @param string $page Current MainWP Page.
-	 * 
+	 *
 	 * @return array Cached Search Array.
 	 */
 	public function cache_getcontext( $page ) {
@@ -380,11 +380,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method cache_echo_body()
-	 * 
-	 * Echo Cached Search Body. 
-	 * 
+	 *
+	 * Echo Cached Search Body.
+	 *
 	 * @param string $page Current MainWP Page.
-	 * 
+	 *
 	 *  @return string Cached Seach body html.
 	 */
 	public function cache_echo_body( $page ) {
@@ -393,11 +393,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method cache_init()
-	 * 
-	 * Initiate search session variables for the current page. 
-	 * 
+	 *
+	 * Initiate search session variables for the current page.
+	 *
 	 * @param string $page Current MainWP Page.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function cache_init( $page ) {
@@ -406,12 +406,12 @@ class MainWP_Hooks {
 
 	/**
 	 * Method cache_add_context()
-	 * 
+	 *
 	 * Hook to add time & Search Context session variable.
-	 * 
+	 *
 	 * @param string $page Current MainWP Page.
-	 * @param mixed $context Time of search.
-	 * 
+	 * @param mixed  $context Time of search.
+	 *
 	 * @return void
 	 */
 	public function cache_add_context( $page, $context ) {
@@ -420,12 +420,12 @@ class MainWP_Hooks {
 
 	/**
 	 * Method cache_add_body()
-	 * 
+	 *
 	 * Hook to add Search Body Session variable.
-	 * 
+	 *
 	 * @param string $page Current MainWP Page.
-	 * @param mixed $body Search body.
-	 * 
+	 * @param mixed  $body Search body.
+	 *
 	 * @return void
 	 */
 	public function cache_add_body( $page, $body ) {
@@ -434,18 +434,18 @@ class MainWP_Hooks {
 
 	/**
 	 * Method select_sites_box()
-	 * 
+	 *
 	 * Hook to select sites box.
-	 * 
-	 * @param string $title Input title.
-	 * @param string $type Input type, radio.
+	 *
+	 * @param string  $title Input title.
+	 * @param string  $type Input type, radio.
 	 * @param boolean $show_group Whether or not to show group, Default: true.
 	 * @param boolean $show_select_all Whether to show select all.
-	 * @param string $class Default = ''.
-	 * @param string $style Default = ''.
-	 * @param array $selected_websites Selected Child Sites.
-	 * @param array $selected_groups Selected Groups.
-	 * 
+	 * @param string  $class Default = ''.
+	 * @param string  $style Default = ''.
+	 * @param array   $selected_websites Selected Child Sites.
+	 * @param array   $selected_groups Selected Groups.
+	 *
 	 * @return string MainWP Select Sites Box html.
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
@@ -454,13 +454,13 @@ class MainWP_Hooks {
 
 	/**
 	 * Method notify_user()
-	 * 
+	 *
 	 * Hook to send user a notification via wp_mail()
-	 * 
+	 *
 	 * @param mixed $userId User ID.
 	 * @param mixed $subject Email Subject.
 	 * @param mixed $content Email Content.
-	 * 
+	 *
 	 * @return (bool) Whether the email contents were sent successfully.
 	 */
 	public function notify_user( $userId, $subject, $content ) {
@@ -477,12 +477,12 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_error_message()
-	 * 
-	 * Hook to get error message. 
-	 * 
-	 * @param object $msg Error message. 
+	 *
+	 * Hook to get error message.
+	 *
+	 * @param object $msg Error message.
 	 * @param object $extra HTTP error message.
-	 * 
+	 *
 	 * @return string Error message.
 	 */
 	public function get_error_message( $msg, $extra ) {
@@ -491,9 +491,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_user_extension()
-	 * 
+	 *
 	 * Hook to get user extension.
-	 * 
+	 *
 	 * @return object $row User extension.
 	 */
 	public function get_user_extension() {
@@ -502,13 +502,13 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_website_option()
-	 * 
+	 *
 	 * Hook to get Child site wp_options.
-	 * 
-	 * @param mixed $boolean
-	 * @param array $website Child Site array.
+	 *
+	 * @param mixed  $boolean
+	 * @param array  $website Child Site array.
 	 * @param string $name Option table name.
-	 * 
+	 *
 	 * @return (string|null) Database query result (as string), or null on failure
 	 */
 	public function get_website_options( $boolean, $website, $name = '' ) {
@@ -528,11 +528,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method get_websites_by_url()
-	 * 
+	 *
 	 * Hook to get Child Site by URL.
-	 * 
+	 *
 	 * @param mixed $url Child Site URL.
-	 * 
+	 *
 	 * @return (array|object|null) Database query results.
 	 */
 	public function get_websites_by_url( $url ) {
@@ -544,9 +544,9 @@ class MainWP_Hooks {
 	 * Hook to get posts from sites.
 	 *
 	 * @since 3.4.4
-	 * @param array $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+	 * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
 	 * @param object $sites Child Sites object.
-	 * 
+	 *
 	 * @return array $output All posts data array.
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
@@ -591,15 +591,15 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_current_user_have_right()
-	 * 
+	 *
 	 * Check permission level by hook mainwp_currentusercan of Team Control extension
-	 *	
-	 * @param mixed $input Return value holder.
+	 *
+	 * @param mixed  $input Return value holder.
 	 * @param string $cap_type group or type of capabilities
-     * @param string $cap capabilities for current user
-	 * 
+	 * @param string $cap capabilities for current user
+	 *
 	 * @return (bool) $input Return true if the user can and false if they can not.
-	*/
+	 */
 	public function hook_current_user_can( $input, $can_type, $which ) {
 
 		if ( function_exists( 'mainwp_current_user_have_right' ) ) {

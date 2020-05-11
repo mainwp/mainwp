@@ -873,7 +873,7 @@ class MainWP_System {
 	 *
 	 * Check if multi user environment.
 	 *
-	 * @return boolean trure|false.
+	 * @return boolean true|false.
 	 */
 	public function is_multi_user() {
 		return ! $this->is_single_user();

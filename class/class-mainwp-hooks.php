@@ -14,9 +14,9 @@ class MainWP_Hooks {
 
 	/**
 	 * Method __contruct()
-	 * 
+	 *
 	 * Initialize MainWP_Hooks actions/filters upon creation of the object.
-	 * 
+	 *
 	 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
 	 */
 	public function __construct() {
@@ -81,11 +81,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_log_debug()
-	 * 
+	 *
 	 * MainWP debug log.
-	 * 
+	 *
 	 * @param mixed $pText Debug text.
-	 * 
+	 *
 	 * @return string Debug text.
 	 */
 	public function mainwp_log_debug( $pText ) {
@@ -94,11 +94,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_log_info()
-	 * 
+	 *
 	 * MainWP Log Info.
-	 * 
+	 *
 	 * @param mixed $pText Info Text.
-	 * 
+	 *
 	 * @return string Info Text.
 	 */
 	public function mainwp_log_info( $pText ) {
@@ -107,11 +107,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_log_warning()
-	 * 
+	 *
 	 * MainWP Log Warning.
-	 * 
+	 *
 	 * @param mixed $pText Warning Text.
-	 * 
+	 *
 	 * @return string Warning Text.
 	 */
 	public function mainwp_log_warning( $pText ) {
@@ -120,7 +120,7 @@ class MainWP_Hooks {
 
 	/**
 	 * Method enqueue_meta_boxes_scripts()
-	 * 
+	 *
 	 * Enqueue Scripts for all Meta boxes.
 	 */
 	public function enqueue_meta_boxes_scripts() {
@@ -129,7 +129,7 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_add_site()
-	 * 
+	 *
 	 * Hook to add Child Site.
 	 *
 	 * @since 3.2.2
@@ -161,11 +161,11 @@ class MainWP_Hooks {
 
 	/**
 	 * Method hook_delete_site()
-	 * 
-	 * Hook to delete Child Site. 
-	 * 
+	 *
+	 * Hook to delete Child Site.
+	 *
 	 * @param boolean $site_id Child Site ID.
-	 * 
+	 *
 	 * @return (boolean|array) Return false if empty and return array error - Site not found | result - SUCCESS.
 	 */
 	public function hook_delete_site( $site_id = false ) {
@@ -202,17 +202,17 @@ class MainWP_Hooks {
 
 	/**
 	 * Method filter_clone_site()
-	 * 
+	 *
 	 * Hook to clone site.
 	 *
 	 * @since 3.4.4
-	 * @param mixed $pluginFile Plugin file.
-	 * @param mixed $key Key.
-	 * @param mixed $websiteid Child Site ID.
-	 * @param mixed $cloneid Cloan ID
-	 * @param mixed $clone_url Cloan URL.
+	 * @param mixed   $pluginFile Plugin file.
+	 * @param mixed   $key Key.
+	 * @param mixed   $websiteid Child Site ID.
+	 * @param mixed   $cloneid Cloan ID
+	 * @param mixed   $clone_url Cloan URL.
 	 * @param boolean $force_update Force the update, true|false, Default: false.
-	 * 
+	 *
 	 * @return array Site array to clone.
 	 */
 	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
@@ -221,14 +221,14 @@ class MainWP_Hooks {
 
 	/**
 	 * Method filter_delete_clone_site()
-	 * 
+	 *
 	 * Hook to delete cloaned Child Site.
-	 * 
-	 * @param mixed $pluginFile Plugin file.
-	 * @param mixed $key Key.
-	 * @param string $clone_url Cloan URL.
+	 *
+	 * @param mixed   $pluginFile Plugin file.
+	 * @param mixed   $key Key.
+	 * @param string  $clone_url Cloan URL.
 	 * @param boolean $clone_site_id Cloan Site ID.
-	 * 
+	 *
 	 * @return array Site array to delete.
 	 */
 	public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
@@ -237,7 +237,7 @@ class MainWP_Hooks {
 
 	/**
 	 * Method mainwp_edit_site()
-	 * 
+	 *
 	 * Hook to edit Child Site.
 	 *
 	 * @since 3.2.2

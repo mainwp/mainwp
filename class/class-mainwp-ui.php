@@ -34,11 +34,11 @@ class MainWP_UI {
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
-	 * @param array   $selected_groups Selecte Groups.
+	 * @param array   $selected_groups Selected Groups.
 	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
 	 *
-	 * @return void
+	 * @return string MainWP Select Sites Box html.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
@@ -587,7 +587,7 @@ class MainWP_UI {
 	 * @param array $subitems [access, active, style].
 	 * @param null  $name_caller Menu Name.
 	 *
-	 * @return void Render page navigation html.
+	 * @return string Render page navigation html.
 	 */
 	public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
 

@@ -14,12 +14,30 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post {
 
+	/**
+	 * Method get_class_name()
+	 *
+	 * Get Class Name.
+	 *
+	 * @return object __CLASS__
+	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
+	/**
+	 * @static
+	 * @var undefined Public static variable for subPages.
+	 */
 	public static $subPages;
 
+	/**
+	 * Method init()
+	 *
+	 * Initiate Page.
+	 *
+	 * @return void
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Post page header via the 'mainwp-pageheader-post' action.
@@ -50,6 +68,13 @@ class MainWP_Post {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
+	/**
+	 * Method ini_menu()
+	 *
+	 * Initiate Page menu.
+	 *
+	 * @return void
+	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
 		add_action( 'load-' . $_page, array( self::get_class_name(), 'on_load_page' ) );
@@ -97,11 +122,27 @@ class MainWP_Post {
 		self::init_left_menu( self::$subPages );
 	}
 
+	/**
+	 * Method on_load_page()
+	 *
+	 * Used during init_menu() to get the class names of,
+	 * admin_head and get_hidden_columns.
+	 *
+	 * @return void
+	 */
 	public static function on_load_page() {
 		add_action( 'admin_head', array( self::get_class_name(), 'admin_head' ) );
 		add_filter( 'hidden_columns', array( self::get_class_name(), 'get_hidden_columns' ), 10, 3 );
 	}
 
+	/**
+	 * Method on_load_add_edit()
+	 *
+	 * Get the post ID,
+	 * pass it to method on_load_bulkpost().
+	 *
+	 * @return void self::on_load_bulkpost( $post_id ).
+	 */
 	public static function on_load_add_edit() {
 		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) {
 			global $_mainwp_default_post_to_edit;
@@ -119,6 +160,17 @@ class MainWP_Post {
 		self::on_load_bulkpost( $post_id );
 	}
 
+	/**
+	 * Method on_load_bulkpost()
+	 *
+	 * For the given post ID, this method Enqueues all scripts, styles, settings,
+	 * and templates necessary to use all media JS APIs, then retrieves post data.
+	 *
+	 * @param mixed $post_id Given post ID.
+	 *
+	 * @return void (WP_Post|array|null) Sets the Global variable $GLOBALS['post'],
+	 * Type corresponding to $output on success or null on failure. When $output is OBJECT, a WP_Post instance is returned.
+	 */
 	public static function on_load_bulkpost( $post_id ) {
 
 		wp_enqueue_media( array( 'post' => $post_id ) );
@@ -142,6 +194,13 @@ class MainWP_Post {
 		$GLOBALS['post'] = $_post;
 	}
 
+	/**
+	 * Method get_manage_columns()
+	 *
+	 * Get columns to display.
+	 *
+	 * @return array $colums Array of columns to display on the page.
+	 */
 	public static function get_manage_columns() {
 		$colums = array(
 			'title'                     => __( 'Title', 'mainwp' ),
@@ -169,6 +228,14 @@ class MainWP_Post {
 		return $colums;
 	}
 
+	/**
+	 * Method admin_head()
+	 *
+	 * Grab the current_screen ID, set the pagenow JS variable,
+	 * and render the JS HTML Meta tag.
+	 *
+	 * @return void Render the Post pagenow header tag.
+	 */
 	public static function admin_head() {
 		global $current_screen;
 		?>
@@ -176,6 +243,16 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * Method get_hidden_columns()
+	 *
+	 * Get the currently hidden page columns.
+	 *
+	 * @param mixed $hidden User option value.
+	 * @param mixed $screen Current screen ID.
+	 *
+	 * @return (mixed) $hidden User option value on success, false on failure.
+	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
 		if ( $screen && 'mainwp_page_PostBulkManage' === $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
@@ -183,6 +260,13 @@ class MainWP_Post {
 		return $hidden;
 	}
 
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Initiate subpages menu.
+	 *
+	 * @return void Render subpages menu.
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Posts" class="mainwp-submenu-wrapper">
@@ -215,6 +299,15 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * Method init_left_menu()
+	 *
+	 * Initiate left menu.
+	 *
+	 * @param array $subPages Array of subPages to add to the Post left menu.
+	 *
+	 * @return void Menu arrays are assed on to MainWP_Menu::init_subpages_left_menu() & MainWP_Menu::init_left_menu().
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu(
@@ -254,6 +347,17 @@ class MainWP_Post {
 		}
 	}
 
+	/**
+	 * Method admin_post_thumbnail_html()
+	 *
+	 * Grab the post thumbnail html.
+	 *
+	 * @param mixed $content Admin post thumbnail HTML markup.
+	 * @param mixed $post_id Post ID.
+	 * @param mixed $thumbnail_id Thumbnail ID.
+	 *
+	 * @return string html
+	 */
 	public static function admin_post_thumbnail_html( $content, $post_id, $thumbnail_id ) {
 		$_post = get_post( $post_id );
 
@@ -269,7 +373,12 @@ class MainWP_Post {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_header()
+	 *
+	 * @param string $shownPage Current page slug.
+	 * @param null   $post_id BulkEdit Post ID.
+	 *
+	 * @return string Render page navigation html.
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
@@ -325,12 +434,25 @@ class MainWP_Post {
 	}
 
 	/**
-	 * @param string $shownPage The page slug shown at this moment
+	 * Method render_footer()
+	 *
+	 * Render page footer.
+	 *
+	 * @param string $shownPage Current page slug.
+	 *
+	 * @return string Close page container.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Render the page content.
+	 *
+	 * @return string Post page html content.
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
@@ -424,6 +546,13 @@ class MainWP_Post {
 		self::render_footer( 'BulkManage' );
 	}
 
+	/**
+	 * Method render_search_options()
+	 *
+	 * Search form for Post page.
+	 *
+	 * @return string Search box html.
+	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
@@ -522,6 +651,25 @@ class MainWP_Post {
 		}
 	}
 
+	/**
+	 * Method render_table()
+	 *
+	 * Render Posts table.
+	 *
+	 * @param boolean $cached Show cached data or not. Default: true.
+	 * @param mixed   $keyword Search keywords.
+	 * @param mixed   $dtsstart Date & time of Session start.
+	 * @param mixed   $dtsstop Date & time of Session stop.
+	 * @param mixed   $status Page statuses.
+	 * @param mixed   $groups Groups to display.
+	 * @param mixed   $sites Site URLS.
+	 * @param integer $postId Post ID.
+	 * @param integer $userId Current user ID.
+	 * @param string  $post_type Post type.
+	 * @param string  $search_on Site on all sites. Default = all.
+	 *
+	 * @return string Post table html.
+	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
 
@@ -597,7 +745,24 @@ class MainWP_Post {
 		<?php
 	}
 
-
+	/**
+	 * Method render_table_body()
+	 *
+	 * Render Posts table body.
+	 *
+	 * @param mixed   $keyword Search keywords.
+	 * @param mixed   $dtsstart Date & time of Session start.
+	 * @param mixed   $dtsstop Date & time of Session stop.
+	 * @param mixed   $status Page statuses.
+	 * @param mixed   $groups Groups to display.
+	 * @param mixed   $sites Site URLS.
+	 * @param integer $postId Post ID.
+	 * @param integer $userId Current user ID.
+	 * @param string  $post_type Post type.
+	 * @param string  $search_on Site on all sites. Default = all.
+	 *
+	 * @return string Post table body html.
+	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
 
@@ -715,6 +880,15 @@ class MainWP_Post {
 		}
 	}
 
+	/**
+	 * Method get_status()
+	 *
+	 * Get Post status.
+	 *
+	 * @param mixed $status Post status.
+	 *
+	 * @return string $status Post status.
+	 */
 	private static function get_status( $status ) {
 		if ( 'publish' === $status ) {
 			return 'Published';
@@ -723,7 +897,17 @@ class MainWP_Post {
 		return ucfirst( $status );
 	}
 
-
+	/**
+	 * Method posts_search_handler()
+	 *
+	 * Post page search handler.
+	 *
+	 * @param mixed $data Search data.
+	 * @param mixed $website Child Sites ID.
+	 * @param mixed $output Html to output.
+	 *
+	 * @return string Returned search results html.
+	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result = $results[1];
@@ -898,19 +1082,20 @@ class MainWP_Post {
 		}
 	}
 
-
 	/**
+	 * Method list_meta_row()
+	 *
 	 * Outputs a single row of public meta data in the Custom Fields meta box.
 	 *
 	 * @since 2.5.0
 	 *
-	 * @staticvar string $update_nonce
-	 *
-	 * @param array $entry
-	 * @param int   $count
-	 * @return string
+	 * @param array $entry Post array.
+	 * @param int   $count Counter variable.
+	 * @return string $r Custom Fields meta box HTML.
 	 */
 	public static function list_meta_row( $entry, &$count ) {
+
+		/** @static @var string $update_nonce Nonce to be sent along with each post update. */
 		static $update_nonce = '';
 
 		if ( is_protected_meta( $entry['meta_key'], 'post' ) ) {
@@ -950,8 +1135,9 @@ class MainWP_Post {
 		return $r;
 	}
 
-
 	/**
+	 * Method meta_form()
+	 *
 	 * Prints the form in the Custom Fields meta box.
 	 *
 	 * @since 1.2.0
@@ -959,6 +1145,8 @@ class MainWP_Post {
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param WP_Post $pos Optional. The post being edited.
+	 *
+	 * @return string Custom Fields meta box form html.
 	 */
 	public static function meta_form( $pos = null ) {
 		global $wpdb;
@@ -1043,11 +1231,13 @@ class MainWP_Post {
 	}
 
 	/**
+	 * Method post_custom_meta_box()
+	 *
 	 * Display custom fields form fields.
 	 *
 	 * @since 2.6.0
 	 *
-	 * @param object $post
+	 * @param object $post Current post object.
 	 */
 	public static function post_custom_meta_box( $post ) {
 		?>
@@ -1075,7 +1265,6 @@ class MainWP_Post {
 		</div>
 		<?php
 	}
-
 
 	/**
 	 * Output HTML for the post thumbnail meta-box.
@@ -1166,11 +1355,33 @@ class MainWP_Post {
 		return apply_filters( 'mainwp_admin_post_thumbnail_html', $html, $_post->ID, $thumbnail_id );
 	}
 
+	/**
+	 * Method post_thumbnail_meta_box()
+	 *
+	 * Renders the post thumbnail meta box.
+	 *
+	 * @param mixed $pos Post ID.
+	 *
+	 * @return string Post thumbnail HTML.
+	 */
 	public static function post_thumbnail_meta_box( $pos ) {
 		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
 		echo self::wp_post_thumbnail_html( $thumbnail_id, $pos->ID );
 	}
 
+	/**
+	 * Method touch_time()
+	 *
+	 * Add time stamps to Post for screen readers.
+	 *
+	 * @param object  $post Current Post object.
+	 * @param integer $edit Whether or not this is an edit or new post.
+	 * @param integer $for_post
+	 * @param integer $tab_index Tabindex position.
+	 * @param integer $multi
+	 *
+	 * @return string Hidden time stamps html.
+	 */
 	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
 		global $wp_locale;
 
@@ -1243,8 +1454,19 @@ class MainWP_Post {
 		}
 	}
 
-
+	/**
+	 * Method do_meta_boxes()
+	 *
+	 * Render meta boxes.
+	 *
+	 * @param mixed $screen Current page tab.
+	 * @param mixed $context
+	 * @param mixed $object
+	 *
+	 * @return string Metabox html
+	 */
 	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- not quite comple method.
+
 		global $wp_meta_boxes;
 		static $already_sorted = false;
 
@@ -1357,6 +1579,16 @@ class MainWP_Post {
 		return $i;
 	}
 
+	/**
+	 * Method render_bulkpost()
+	 *
+	 * Render bulkpost to edit.
+	 *
+	 * @param mixed $post_id Post ID.
+	 * @param mixed $input_type Post type.
+	 *
+	 * @return string Edit bulk post html.
+	 */
 	public static function render_bulkpost( $post_id, $input_type ) {
 		$post = get_post( $post_id );
 
@@ -1558,6 +1790,15 @@ class MainWP_Post {
 		self::render_footer( 'BulkAdd' );
 	}
 
+	/**
+	 * Method render_categories()
+	 *
+	 * Render Select Categories form
+	 *
+	 * @param object $post Post object.
+	 *
+	 * @return string Search post categories html.
+	 */
 	public static function render_categories( $post ) {
 		?>
 		<div class="mainwp-search-options">
@@ -1628,6 +1869,16 @@ class MainWP_Post {
 		<?php
 	}
 
+	/**
+	 * Method render_post_fields()
+	 *
+	 * Render Featured Image & Post Options fields.
+	 *
+	 * @param object $post Post object.
+	 * @param mixed  $post_type Post type.
+	 *
+	 * @return string Render Featured Image & Post Options fields html.
+	 */
 	public static function render_post_fields( $post, $post_type ) {
 		?>
 		<div class="mainwp-search-options mainwp-post-featured-image" id="postimagediv">
@@ -1731,6 +1982,14 @@ class MainWP_Post {
 			<?php
 	}
 
+	/**
+	 * Method render_bulk_add()
+	 *
+	 * Check if user has rights,
+	 * render the bulk add tab.
+	 *
+	 * @return string Bulk add tab html.
+	 */
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
@@ -1742,6 +2001,14 @@ class MainWP_Post {
 		self::render_addedit( $post_id, 'BulkAdd' );
 	}
 
+	/**
+	 * Method render_bulk_edit()
+	 *
+	 * Check if user has rights,
+	 * render the bulk edit tab.
+	 *
+	 * @return string Bulk edit tab html.
+	 */
 	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage posts', 'mainwp' ) );
@@ -1751,12 +2018,33 @@ class MainWP_Post {
 		self::render_addedit( $post_id, 'BulkEdit' );
 	}
 
+	/**
+	 * Method render_bulk_addedit()
+	 *
+	 * Render both the Add & Edit tabs.
+	 *
+	 * @param mixed $post_id Post ID.
+	 * @param mixed $what What tab is active.
+	 *
+	 * @return string Bulk add or edit tab html.
+	 */
 	public static function render_addedit( $post_id, $what ) {
 		self::render_header( $what, $post_id );
 		self::render_bulkpost( $post_id, 'bulkpost' );
 		self::render_footer( $what );
 	}
 
+	/**
+	 * Method hook_posts_search_handler()
+	 *
+	 * Hook Posts Search handler.
+	 *
+	 * @param mixed  $data Search data.
+	 * @param object $website Child Site object.
+	 * @param mixed  $output
+	 *
+	 * @return array
+	 */
 	public static function hook_posts_search_handler( $data, $website, &$output ) {
 		$posts = array();
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1767,6 +2055,13 @@ class MainWP_Post {
 		$output->results[ $website->id ] = $posts;
 	}
 
+	/**
+	 * Method mainwp_help_content()
+	 *
+	 * Attatch MainWP help content.
+	 *
+	 * @return string Help content html.
+	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {
 			?>

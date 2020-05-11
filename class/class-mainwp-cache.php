@@ -58,10 +58,10 @@ class MainWP_Cache {
 	/**
 	 * Method add_body()
 	 *
-	 * Set body Session Variable.
+	 * Set Search body Session Variable.
 	 *
-	 * @param mixed $page
-	 * @param mixed $body
+	 * @param string $page Current MainWP Page.
+	 * @param mixed  $body Search body.
 	 *
 	 * @return void
 	 */
@@ -76,7 +76,7 @@ class MainWP_Cache {
 	 *
 	 * @param mixed $page
 	 *
-	 * @return mixed $cachedSearch
+	 * @return array $cachedSearch Cached Search array.
 	 */
 	public static function get_cached_context( $page ) {
 		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
@@ -102,7 +102,7 @@ class MainWP_Cache {
 	 * Grab & echo cached search body.
 	 *
 	 * @param mixed $page
-	 * @return $body
+	 * @return string Cached Seach body html.
 	 */
 	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {

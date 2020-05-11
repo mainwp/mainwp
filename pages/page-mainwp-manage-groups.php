@@ -415,7 +415,7 @@ class MainWP_Manage_Groups {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( ! empty( $group ) ) {
 				// Remove from DB.
-				$nr = MainWP_DB::instance()->removegroup( $group->id );
+				$nr = MainWP_DB::instance()->remove_group( $group->id );
 
 				if ( $nr > 0 ) {
 					die( 'OK' );
@@ -517,7 +517,7 @@ class MainWP_Manage_Groups {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
 			if ( ! empty( $group ) ) {
-				MainWP_DB_Common::instance()->remove_group( $group->id );
+				MainWP_DB_Common::instance()->clear_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {
 					foreach ( $_POST['websiteIds'] as $websiteId ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );

@@ -28,11 +28,11 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render WP core updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_wp_upgrades
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
+	 * @param object $websites the websites.
+	 * @param int    $total_wp_upgrades total update.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
 	 * @return html
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
@@ -151,13 +151,13 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render Plugins updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_plugin_upgrades
-	 * @param mixed $userExtension
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
-	 * @param mixed $trustedPlugins
+	 * @param object $websites the websites.
+	 * @param int    $total_plugin_upgrades total plugin updates.
+	 * @param mixed  $userExtension
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param array  $trustedPlugins all plugins trusted by user.
 	 * @return html
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
@@ -338,7 +338,7 @@ class MainWP_Updates_Per_Group {
 					<th class="no-sort right aligned"></th>
 				</tr>
 			</tfoot>
-	</table>	
+	</table>
 		<?php
 	}
 
@@ -348,13 +348,13 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render themes updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_theme_upgrades
-	 * @param mixed $userExtension
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
-	 * @param mixed $trustedThemes
+	 * @param object $websites the websites.
+	 * @param int    $total_theme_upgrades total themes updates.
+	 * @param mixed  $userExtension
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param array  $trustedThemes all themes trusted by user.
 	 * @return html
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
@@ -539,11 +539,11 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render translations updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_translation_upgrades
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
+	 * @param object $websites the websites.
+	 * @param int    $total_translation_upgrades total translation updates.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
 	 * @return html
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
@@ -681,11 +681,11 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render abandoned plugins
 	 *
-	 * @param mixed $websites
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
-	 * @param mixed $decodedDismissedPlugins
+	 * @param object $websites the websites.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param array  $decodedDismissedPlugins all dismissed plugins.
 	 *
 	 * @return html
 	 */
@@ -825,11 +825,11 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * Render abandoned themes
 	 *
-	 * @param mixed $websites
-	 * @param mixed $all_groups_sites
-	 * @param mixed $all_groups
-	 * @param mixed $site_offset_for_groups
-	 * @param mixed $decodedDismissedThemes
+	 * @param object $websites the websites.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param array  $decodedDismissedThemes all dismissed themes.
 	 *
 	 * @return html
 	 */

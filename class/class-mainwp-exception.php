@@ -24,10 +24,10 @@ class MainWP_Exception extends \Exception {
 	/**
 	 * Method __construct()
 	 *
-	 * Grab Exception Message.
+	 * Grab Exception Message upon creation of the object.
 	 *
-	 * @param mixed $message
-	 * @param null  $extra
+	 * @param mixed $message Exception message.
+	 * @param null  $extra Any HTTP Errors.
 	 */
 	public function __construct( $message, $extra = null ) {
 		parent::__construct( $message );
@@ -37,7 +37,7 @@ class MainWP_Exception extends \Exception {
 	/**
 	 * Method get_message_extra()
 	 *
-	 * @return $messageExtra
+	 * @return $messageExtra Extra messages.
 	 */
 	public function get_message_extra() {
 		return $this->messageExtra;

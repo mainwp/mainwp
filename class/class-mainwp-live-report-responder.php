@@ -4,15 +4,13 @@
  *
  * Legacy Client Reports Extension.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Live_Report_Responder
- *
- * @deprecated moved to external Extension.
+ * Class MainWP_Live_Report_Responder.
  */
 class MainWP_Live_Report_Responder {
 

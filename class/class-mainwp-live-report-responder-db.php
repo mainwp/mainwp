@@ -4,7 +4,7 @@
  *
  * Legacy Client Reports Extension.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -43,274 +43,274 @@ class MainWP_Live_Reports_Responder_DB {
 			'title'  => 'Default Basic Report',
 			'header' => '<img style="float:left" src="' . $default_report_logo . '" alt="default-report-logo" width="300" height="56" /><br/><br/>Hello [client.contact.name],',
 			'body'   => '<h3>Activity report for the [client.site.url]:</h3>
-<h3>Plugins</h3>
-<strong>Installed Plugins:</strong> [plugin.installed.count]
-<strong>Activated Plugins:</strong> [plugin.activated.count]
-<strong>Edited Plugins:</strong> [plugin.edited.count]
-<strong>Deactivated Plugins:</strong> [plugin.deactivated.count]
-<strong>Updated Plugins:</strong> [plugin.updated.count]
-<strong>Deleted Plugins:</strong> [plugin.deleted.count]
-<h3>Themes</h3>
-<strong>Installed Themes:</strong> [theme.installed.count]
-<strong>Activated Themes:</strong> [theme.activated.count]
-<strong>Edited Themes:</strong> [theme.edited.count]
-<strong>Updated Themes:</strong> [theme.updated.count]
-<strong>Deleted Themes:</strong> [theme.deleted.count]
-<h3>Posts</h3>
-<strong>Created Posts: </strong> [post.created.count]
-<strong>Updated Posts: </strong> [post.updated.count]
-<strong>Trashed Posts: </strong> [post.trashed.count]
-<strong>Deleted Posts: </strong> [post.deleted.count]
-<strong>Restored Posts: </strong> [post.restored.count]
-<h3>Pages</h3>
-<strong>Created Pages:</strong> [page.created.count]
-<strong>Updated Pages:</strong> [page.updated.count]
-<strong>Trashed Pages:</strong> [page.trashed.count]
-<strong>Deleted Pages:</strong> [page.deleted.count]
-<strong>Restored Pages: </strong> [page.restored.count]
-<h3>Users</h3>
-<strong>Created Users:</strong> [user.created.count]
-<strong>Updated Users:</strong> [user.updated.count]
-<strong>Deleted Users:</strong> [user.deleted.count]
-<h3>Comments</h3>
-<strong>Created Comments:</strong> [commet.created.count]
-<strong>Trashed Comments:</strong> [comment.trashed.count]
-<strong>Deleted Comments:</strong> [comment.deleted.count]
-<strong>Edited Comments:</strong> [comment.edited.count]
-<strong>Restored Comments:</strong> [comment.restored.count]
-<strong>Approved Comments:</strong> [comment.approved.count]
-<strong>Spammed Comments:</strong> [comment.spam.count]
-<strong>Replied Comments:</strong> [comment.replied.count]
-<h3>Media</h3>
-<strong>Uploaded Media:</strong> [media.uploaded.count]
-<strong>Updated Media:</strong> [media.updated.count]
-<strong>Deleted Media:</strong> [media.deleted.count]
-<h3>Widgets</h3>
-<strong>Added Widgets:</strong> [widget.added.count]
-<strong>Updated Widgets:</strong> [widget.updated.count]
-<strong>Deleted Widgets:</strong> [widget.deleted.count]
-<h3>Menus</h3>
-<strong>Created Menus:</strong> [menu.created.count]
-<strong>Updated Menus:</strong> [menu.updated.count]
-<strong>Deleted Menus:</strong> [menu.deleted.count]
-<h3>WordPress</h3>
-<strong>WordPress Updates:</strong> [wordpress.updated.count]',
+			<h3>Plugins</h3>
+			<strong>Installed Plugins:</strong> [plugin.installed.count]
+			<strong>Activated Plugins:</strong> [plugin.activated.count]
+			<strong>Edited Plugins:</strong> [plugin.edited.count]
+			<strong>Deactivated Plugins:</strong> [plugin.deactivated.count]
+			<strong>Updated Plugins:</strong> [plugin.updated.count]
+			<strong>Deleted Plugins:</strong> [plugin.deleted.count]
+			<h3>Themes</h3>
+			<strong>Installed Themes:</strong> [theme.installed.count]
+			<strong>Activated Themes:</strong> [theme.activated.count]
+			<strong>Edited Themes:</strong> [theme.edited.count]
+			<strong>Updated Themes:</strong> [theme.updated.count]
+			<strong>Deleted Themes:</strong> [theme.deleted.count]
+			<h3>Posts</h3>
+			<strong>Created Posts: </strong> [post.created.count]
+			<strong>Updated Posts: </strong> [post.updated.count]
+			<strong>Trashed Posts: </strong> [post.trashed.count]
+			<strong>Deleted Posts: </strong> [post.deleted.count]
+			<strong>Restored Posts: </strong> [post.restored.count]
+			<h3>Pages</h3>
+			<strong>Created Pages:</strong> [page.created.count]
+			<strong>Updated Pages:</strong> [page.updated.count]
+			<strong>Trashed Pages:</strong> [page.trashed.count]
+			<strong>Deleted Pages:</strong> [page.deleted.count]
+			<strong>Restored Pages: </strong> [page.restored.count]
+			<h3>Users</h3>
+			<strong>Created Users:</strong> [user.created.count]
+			<strong>Updated Users:</strong> [user.updated.count]
+			<strong>Deleted Users:</strong> [user.deleted.count]
+			<h3>Comments</h3>
+			<strong>Created Comments:</strong> [commet.created.count]
+			<strong>Trashed Comments:</strong> [comment.trashed.count]
+			<strong>Deleted Comments:</strong> [comment.deleted.count]
+			<strong>Edited Comments:</strong> [comment.edited.count]
+			<strong>Restored Comments:</strong> [comment.restored.count]
+			<strong>Approved Comments:</strong> [comment.approved.count]
+			<strong>Spammed Comments:</strong> [comment.spam.count]
+			<strong>Replied Comments:</strong> [comment.replied.count]
+			<h3>Media</h3>
+			<strong>Uploaded Media:</strong> [media.uploaded.count]
+			<strong>Updated Media:</strong> [media.updated.count]
+			<strong>Deleted Media:</strong> [media.deleted.count]
+			<h3>Widgets</h3>
+			<strong>Added Widgets:</strong> [widget.added.count]
+			<strong>Updated Widgets:</strong> [widget.updated.count]
+			<strong>Deleted Widgets:</strong> [widget.deleted.count]
+			<h3>Menus</h3>
+			<strong>Created Menus:</strong> [menu.created.count]
+			<strong>Updated Menus:</strong> [menu.updated.count]
+			<strong>Deleted Menus:</strong> [menu.deleted.count]
+			<h3>WordPress</h3>
+			<strong>WordPress Updates:</strong> [wordpress.updated.count]',
 		);
 
 		$this->default_reports[] = array(
 			'title'  => 'Default Full Report',
 			'header' => '<img style="float:left" src="' . $default_report_logo . '" alt="default-report-logo" width="300" height="56" /><br/><br/><br/>Hello [client.contact.name],',
 			'body'   => '<h3>Activity report for the [client.site.url]:</h3>
-<h3>Plugins</h3>
-<strong>[plugin.installed.count] Plugins Installed</strong>
-[section.plugins.installed]
-([plugin.installed.date]) [plugin.name] by [plugin.installed.author];
-[/section.plugins.installed]
+			<h3>Plugins</h3>
+			<strong>[plugin.installed.count] Plugins Installed</strong>
+			[section.plugins.installed]
+			([plugin.installed.date]) [plugin.name] by [plugin.installed.author];
+			[/section.plugins.installed]
 
-<strong>[plugin.activated.count] Plugins Activated</strong>
-[section.plugins.activated]
-([plugin.activated.date]) [plugin.name] by [plugin.activated.author];
-[/section.plugins.activated]
+			<strong>[plugin.activated.count] Plugins Activated</strong>
+			[section.plugins.activated]
+			([plugin.activated.date]) [plugin.name] by [plugin.activated.author];
+			[/section.plugins.activated]
 
-<strong>[plugin.edited.count] Plugins Edited</strong>
-[section.plugins.edited]
-([plugin.edited.date]) [plugin.name] by [plugin.edited.author];
-[/section.plugins.edited]
+			<strong>[plugin.edited.count] Plugins Edited</strong>
+			[section.plugins.edited]
+			([plugin.edited.date]) [plugin.name] by [plugin.edited.author];
+			[/section.plugins.edited]
 
-<strong>[plugin.deactivated.count] Plugins Deactivated</strong>
-[section.plugins.deactivated]
-([plugin.deactivated.date]) [plugin.name] by [plugin.deactivated.author];
-[/section.plugins.deactivated]
+			<strong>[plugin.deactivated.count] Plugins Deactivated</strong>
+			[section.plugins.deactivated]
+			([plugin.deactivated.date]) [plugin.name] by [plugin.deactivated.author];
+			[/section.plugins.deactivated]
 
-<strong>[plugin.updated.count] Plugins Updated</strong>
-[section.plugins.updated]
-([plugin.updated.date]) [plugin.name] by [plugin.updated.author] - [plugin.old.version] to [plugin.current.version];
-[/section.plugins.updated]
+			<strong>[plugin.updated.count] Plugins Updated</strong>
+			[section.plugins.updated]
+			([plugin.updated.date]) [plugin.name] by [plugin.updated.author] - [plugin.old.version] to [plugin.current.version];
+			[/section.plugins.updated]
 
-<strong>[plugin.deleted.count] Plugins Deleted</strong>
-[section.plugins.deleted]
-([plugin.deleted.date]) [plugin.name] by [plugin.deleted.author];
-[/section.plugins.deleted]
-<h3>Themes</h3>
-<strong>[theme.installed.count] Themes Installed</strong>
-[section.themes.installed]
-([theme.installed.date]) [theme.name] by [theme.installed.author];
-[/section.themes.installed]
+			<strong>[plugin.deleted.count] Plugins Deleted</strong>
+			[section.plugins.deleted]
+			([plugin.deleted.date]) [plugin.name] by [plugin.deleted.author];
+			[/section.plugins.deleted]
+			<h3>Themes</h3>
+			<strong>[theme.installed.count] Themes Installed</strong>
+			[section.themes.installed]
+			([theme.installed.date]) [theme.name] by [theme.installed.author];
+			[/section.themes.installed]
 
-<strong>[theme.activated.count] Themes Activated</strong>
-[section.themes.activated]
-([theme.activated.date]) [theme.name] by [theme.activated.author];
-[/section.themes.activated]
+			<strong>[theme.activated.count] Themes Activated</strong>
+			[section.themes.activated]
+			([theme.activated.date]) [theme.name] by [theme.activated.author];
+			[/section.themes.activated]
 
-<strong>[theme.edited.count] Themes Edited</strong>
-[section.themes.edited]
-([theme.edited.date]) [theme.name] by [theme.edited.author];
-[/section.themes.edited]
+			<strong>[theme.edited.count] Themes Edited</strong>
+			[section.themes.edited]
+			([theme.edited.date]) [theme.name] by [theme.edited.author];
+			[/section.themes.edited]
 
-<strong>[theme.updated.count] Themes Updated</strong>
-[section.themes.updated]
-([theme.updated.date]) [theme.name] by [theme.updated.author] - [theme.old.version] to [theme.current.version] ;
-[/section.themes.updated]
+			<strong>[theme.updated.count] Themes Updated</strong>
+			[section.themes.updated]
+			([theme.updated.date]) [theme.name] by [theme.updated.author] - [theme.old.version] to [theme.current.version] ;
+			[/section.themes.updated]
 
-<strong>[theme.deleted.count] Themes Deleted</strong>
-[section.themes.deleted]
-([theme.deleted.date]) [theme.name] by [theme.deleted.author];
-[/section.themes.deleted]
-<h3>Posts</h3>
-<strong>[post.created.count] Created Posts</strong>
-[section.posts.created]
-([post.created.date]) [post.title] by [post.created.author];
-[/section.posts.created]
+			<strong>[theme.deleted.count] Themes Deleted</strong>
+			[section.themes.deleted]
+			([theme.deleted.date]) [theme.name] by [theme.deleted.author];
+			[/section.themes.deleted]
+			<h3>Posts</h3>
+			<strong>[post.created.count] Created Posts</strong>
+			[section.posts.created]
+			([post.created.date]) [post.title] by [post.created.author];
+			[/section.posts.created]
 
-<strong>[post.updated.count] Updated Posts</strong>
-[section.posts.updated]
-([post.updated.date]) [post.title] by [post.updated.author];
-[/section.posts.updated]
+			<strong>[post.updated.count] Updated Posts</strong>
+			[section.posts.updated]
+			([post.updated.date]) [post.title] by [post.updated.author];
+			[/section.posts.updated]
 
-<strong>[post.trashed.count] Trashed Posts</strong>
-[section.posts.trashed]
-([post.trashed.date]) [post.title] by [post.trashed.author];
-[/section.posts.trashed]
+			<strong>[post.trashed.count] Trashed Posts</strong>
+			[section.posts.trashed]
+			([post.trashed.date]) [post.title] by [post.trashed.author];
+			[/section.posts.trashed]
 
-<strong>[post.deleted.count] Deleted Posts</strong>
-[section.posts.deleted]
-([post.deleted.date]) [post.title] by [post.deleted.author];
-[/section.posts.deleted]
+			<strong>[post.deleted.count] Deleted Posts</strong>
+			[section.posts.deleted]
+			([post.deleted.date]) [post.title] by [post.deleted.author];
+			[/section.posts.deleted]
 
-<strong>[post.restored.count] Restored Posts</strong>
-[section.posts.restored]
-([post.restored.date]) [post.title] by [post.restored.author];
-[/section.posts.restored]
-<h3>Pages</h3>
-<strong>[page.created.count] Created Pages</strong>
-[section.pages.created]
-([page.created.date]) [page.title] by [page.created.author];
-[/section.pages.created]
+			<strong>[post.restored.count] Restored Posts</strong>
+			[section.posts.restored]
+			([post.restored.date]) [post.title] by [post.restored.author];
+			[/section.posts.restored]
+			<h3>Pages</h3>
+			<strong>[page.created.count] Created Pages</strong>
+			[section.pages.created]
+			([page.created.date]) [page.title] by [page.created.author];
+			[/section.pages.created]
 
-<strong>[page.updated.count] Updated Pages</strong>
-[section.pages.updated]
-([page.updated.date]) [page.title] by [post.page.author];
-[/section.page.updated]
+			<strong>[page.updated.count] Updated Pages</strong>
+			[section.pages.updated]
+			([page.updated.date]) [page.title] by [post.page.author];
+			[/section.page.updated]
 
-<strong>[page.trashed.count] Trashed Pages</strong>
-[section.pages.trashed]
-([page.trashed.date]) [page.title] by [page.trashed.author];
-[/section.pages.trashed]
+			<strong>[page.trashed.count] Trashed Pages</strong>
+			[section.pages.trashed]
+			([page.trashed.date]) [page.title] by [page.trashed.author];
+			[/section.pages.trashed]
 
-<strong>[page.deleted.count] Deleted Pages</strong>
-[section.pages.deleted]
-([page.deleted.date]) [page.title] by [page.deleted.author];
-[/section.pages.deleted]
+			<strong>[page.deleted.count] Deleted Pages</strong>
+			[section.pages.deleted]
+			([page.deleted.date]) [page.title] by [page.deleted.author];
+			[/section.pages.deleted]
 
-<strong>[page.restored.count] Restored Pages</strong>
-[section.pages.restored]
-([page.restored.date]) [page.title] by [page.restored.author];
-[/section.pages.restored]
-<h3>Users</h3>
-<strong>[user.created.count] Created Users</strong>
-[section.users.created]
-([user.created.date]) [user.name] ([user.created.role]) by [user.created.author];
-[/section.users.created]
+			<strong>[page.restored.count] Restored Pages</strong>
+			[section.pages.restored]
+			([page.restored.date]) [page.title] by [page.restored.author];
+			[/section.pages.restored]
+			<h3>Users</h3>
+			<strong>[user.created.count] Created Users</strong>
+			[section.users.created]
+			([user.created.date]) [user.name] ([user.created.role]) by [user.created.author];
+			[/section.users.created]
 
-<strong>[user.updated.count] Updated Users</strong>
-[section.users.updated]
-([user.updated.date]) [user.name] ([user.updated.role]) by [user.updated.author];
-[/section.users.updated]
+			<strong>[user.updated.count] Updated Users</strong>
+			[section.users.updated]
+			([user.updated.date]) [user.name] ([user.updated.role]) by [user.updated.author];
+			[/section.users.updated]
 
-<strong>[user.deleted.count] Deleted Users</strong>
-[section.users.deleted]
-([user.deleted.date]) [user.name] by [user.deleted.author];
-[/section.users.deleted]
-<h3>Comments</h3>
-<strong>[comment.created.count] Created Comments</strong>
-[section.comments.created]
-([comment.created.date]) [comment.title] by [comment.created.author];
-[/section.comments.created]
+			<strong>[user.deleted.count] Deleted Users</strong>
+			[section.users.deleted]
+			([user.deleted.date]) [user.name] by [user.deleted.author];
+			[/section.users.deleted]
+			<h3>Comments</h3>
+			<strong>[comment.created.count] Created Comments</strong>
+			[section.comments.created]
+			([comment.created.date]) [comment.title] by [comment.created.author];
+			[/section.comments.created]
 
-<strong>[comment.trashed.count] Trashed Comments</strong>
-[section.comments.trashed]
-([comment.trashed.date]) [comment.title] by [comment.trashed.author];
-[/section.comments.trashed]
+			<strong>[comment.trashed.count] Trashed Comments</strong>
+			[section.comments.trashed]
+			([comment.trashed.date]) [comment.title] by [comment.trashed.author];
+			[/section.comments.trashed]
 
-<strong>[comment.deleted.count] Deleted Comments</strong>
-[section.comments.deleted]
-([comment.deleted.date]) [comment.title] by [comment.deleted.author];
-[/section.comments.deleted]
+			<strong>[comment.deleted.count] Deleted Comments</strong>
+			[section.comments.deleted]
+			([comment.deleted.date]) [comment.title] by [comment.deleted.author];
+			[/section.comments.deleted]
 
-<strong>[comment.edited.count] Edited Comments</strong>
-[section.comments.edited]
-([comment.edited.date]) [comment.title] by [comment.edited.author];
-[/section.comments.edited]
+			<strong>[comment.edited.count] Edited Comments</strong>
+			[section.comments.edited]
+			([comment.edited.date]) [comment.title] by [comment.edited.author];
+			[/section.comments.edited]
 
-<strong>[comment.restored.count] Restored Comments</strong>
-[section.comments.restored]
-([comment.restored.date]) [comment.title] by [comment.restored.author];
-[/section.comments.restored]
+			<strong>[comment.restored.count] Restored Comments</strong>
+			[section.comments.restored]
+			([comment.restored.date]) [comment.title] by [comment.restored.author];
+			[/section.comments.restored]
 
-<strong>[comment.approved.count] Approved Comments</strong>
-[section.comments.approved]
-([comment.approved.date]) [comment.title] by [comment.approved.author];
-[/section.comments.approved]
+			<strong>[comment.approved.count] Approved Comments</strong>
+			[section.comments.approved]
+			([comment.approved.date]) [comment.title] by [comment.approved.author];
+			[/section.comments.approved]
 
-<strong>[comment.spam.count] Spammed Comments</strong>
-[section.comments.spam]
-([comment.spam.date]) [comment.title] by [comment.spam.author];
-[/section.comments.spam]
+			<strong>[comment.spam.count] Spammed Comments</strong>
+			[section.comments.spam]
+			([comment.spam.date]) [comment.title] by [comment.spam.author];
+			[/section.comments.spam]
 
-<strong>[comment.replied.count] Replied Comments</strong>
-[section.comments.replied]
-([comment.replied.date]) [comment.title] by [comment.replied.author];
-[/section.comments.replied]
-<h3>Media</h3>
-<strong>[media.uploaded.count] Uploaded Media</strong>
-[section.media.uploaded]
-([media.uploaded.date]) [media.name] by [media.uploaded.author];
-[/section.media.uploaded]
+			<strong>[comment.replied.count] Replied Comments</strong>
+			[section.comments.replied]
+			([comment.replied.date]) [comment.title] by [comment.replied.author];
+			[/section.comments.replied]
+			<h3>Media</h3>
+			<strong>[media.uploaded.count] Uploaded Media</strong>
+			[section.media.uploaded]
+			([media.uploaded.date]) [media.name] by [media.uploaded.author];
+			[/section.media.uploaded]
 
-<strong>[media.updated.count] Updated Media</strong>
-[section.media.updated]
-([media.updated.date]) [media.name] by [media.updated.author];
-[/section.media.updated]
+			<strong>[media.updated.count] Updated Media</strong>
+			[section.media.updated]
+			([media.updated.date]) [media.name] by [media.updated.author];
+			[/section.media.updated]
 
-<strong>[media.deleted.count] Deleted Media</strong>
-[section.media.deleted]
-([media.deleted.date]) [media.name] by [media.deleted.author];
-[/section.media.deleted]
-<h3>Widgets</h3>
-<strong>[widget.added.count] Added Widgets</strong>
-[section.widgets.added]
-([widget.added.date]) [widget.title] added in [widget.added.area] by [widget.added.author];
-[/section.widgets.added]
+			<strong>[media.deleted.count] Deleted Media</strong>
+			[section.media.deleted]
+			([media.deleted.date]) [media.name] by [media.deleted.author];
+			[/section.media.deleted]
+			<h3>Widgets</h3>
+			<strong>[widget.added.count] Added Widgets</strong>
+			[section.widgets.added]
+			([widget.added.date]) [widget.title] added in [widget.added.area] by [widget.added.author];
+			[/section.widgets.added]
 
-<strong>[widget.updated.count] Updated Widgets</strong>
-[section.widgets.updated]
-([widget.updated.date]) [widget.title] in [widget.updated.area] by [widget.updated.author];
-[/section.widgets.updated]
+			<strong>[widget.updated.count] Updated Widgets</strong>
+			[section.widgets.updated]
+			([widget.updated.date]) [widget.title] in [widget.updated.area] by [widget.updated.author];
+			[/section.widgets.updated]
 
-<strong>[widget.deleted.count] Deleted Widgets</strong>
-[section.widgets.deleted]
-([widget.deleted.date]) [widget.title] in [widget.deleted.area] by [widget.deleted.author];
-[/section.widgets.deleted]
-<h3>Menus</h3>
-<strong>[menu.created.count] Created Menus</strong>
-[section.menus.created]
-([menu.added.date]) [menu.title] by [menu.added.author];
-[/section.menus.created]
+			<strong>[widget.deleted.count] Deleted Widgets</strong>
+			[section.widgets.deleted]
+			([widget.deleted.date]) [widget.title] in [widget.deleted.area] by [widget.deleted.author];
+			[/section.widgets.deleted]
+			<h3>Menus</h3>
+			<strong>[menu.created.count] Created Menus</strong>
+			[section.menus.created]
+			([menu.added.date]) [menu.title] by [menu.added.author];
+			[/section.menus.created]
 
-<strong>[menu.updated.count] Updated Menus</strong>
-[section.menus.updated]
-([menu.updated.date]) [menu.title] by [menu.updated.author];
-[/section.menus.updated]
+			<strong>[menu.updated.count] Updated Menus</strong>
+			[section.menus.updated]
+			([menu.updated.date]) [menu.title] by [menu.updated.author];
+			[/section.menus.updated]
 
-<strong>[menu.deleted.count] Deleted Menus</strong>
-[section.menus.deleted]
-([menu.deleted.date]) [menu.title] by [menu.deleted.author];
-[/section.menus.deleted]
-<h3>WordPress</h3>
-<strong>[wordpress.updated.count] Updates WordPress</strong>
-[section.wordpress.updated]
-([wordpress.updated.date]) Updated by [wordpress.updated.author] - [wordpress.old.version] to [wordpress.current.version]
-[/section.wordpress.updated]',
+			<strong>[menu.deleted.count] Deleted Menus</strong>
+			[section.menus.deleted]
+			([menu.deleted.date]) [menu.title] by [menu.deleted.author];
+			[/section.menus.deleted]
+			<h3>WordPress</h3>
+			<strong>[wordpress.updated.count] Updates WordPress</strong>
+			[section.wordpress.updated]
+			([wordpress.updated.date]) Updated by [wordpress.updated.author] - [wordpress.old.version] to [wordpress.current.version]
+			[/section.wordpress.updated]',
 		);
 		$this->default_formats   = array(
 			array(
@@ -356,88 +356,88 @@ class MainWP_Live_Reports_Responder_DB {
 		$sql             = array();
 
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'client_report_token' ) . '` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`token_name` varchar(512) NOT NULL DEFAULT "",
-`token_description` text NOT NULL,
-`type` tinyint(1) NOT NULL DEFAULT 0';
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`token_name` varchar(512) NOT NULL DEFAULT "",
+		`token_description` text NOT NULL,
+		`type` tinyint(1) NOT NULL DEFAULT 0';
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
-PRIMARY KEY  (`id`)  ';
+			PRIMARY KEY  (`id`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'client_report_site_token' ) . '` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`site_url` varchar(255) NOT NULL,
-`token_id` int(12) NOT NULL,
-`token_value` varchar(512) NOT NULL';
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`site_url` varchar(255) NOT NULL,
+		`token_id` int(12) NOT NULL,
+		`token_value` varchar(512) NOT NULL';
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
-PRIMARY KEY  (`id`)  ';
+			PRIMARY KEY  (`id`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'client_report' ) . '` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`title` text NOT NULL,
-`date_from` int(11) NOT NULL,
-`date_to` int(11) NOT NULL,
-`fname` VARCHAR(512),
-`fcompany` VARCHAR(512),
-`femail` VARCHAR(128),
-`bcc_email` VARCHAR(128),
-`client_id` int(11) NOT NULL,
-`header` longtext NOT NULL,
-`body` longtext NOT NULL,
-`footer` longtext NOT NULL,
-`attach_files` text NOT NULL,
-`lastsend` int(11) NOT NULL,
-`nextsend` int(11) NOT NULL,
-`subject` text NOT NULL,
-`recurring_schedule` VARCHAR(32) NOT NULL DEFAULT "",
-`recurring_day` VARCHAR(10) DEFAULT NULL,
-`schedule_send_email` VARCHAR(32) NOT NULL,
-`schedule_bcc_me` tinyint(1) NOT NULL DEFAULT 0,
-`scheduled` tinyint(1) NOT NULL DEFAULT 0,
-`schedule_nextsend` int(11) NOT NULL,
-`schedule_lastsend` int(11) NOT NULL,
-`completed` int(11) NOT NULL,
-`completed_sites` text NOT NULL,
-`sending_errors` text NOT NULL,
-`is_archived` tinyint(1) NOT NULL DEFAULT 0,
-`sites` text NOT NULL,
-`groups` text NOT NULL';
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`title` text NOT NULL,
+		`date_from` int(11) NOT NULL,
+		`date_to` int(11) NOT NULL,
+		`fname` VARCHAR(512),
+		`fcompany` VARCHAR(512),
+		`femail` VARCHAR(128),
+		`bcc_email` VARCHAR(128),
+		`client_id` int(11) NOT NULL,
+		`header` longtext NOT NULL,
+		`body` longtext NOT NULL,
+		`footer` longtext NOT NULL,
+		`attach_files` text NOT NULL,
+		`lastsend` int(11) NOT NULL,
+		`nextsend` int(11) NOT NULL,
+		`subject` text NOT NULL,
+		`recurring_schedule` VARCHAR(32) NOT NULL DEFAULT "",
+		`recurring_day` VARCHAR(10) DEFAULT NULL,
+		`schedule_send_email` VARCHAR(32) NOT NULL,
+		`schedule_bcc_me` tinyint(1) NOT NULL DEFAULT 0,
+		`scheduled` tinyint(1) NOT NULL DEFAULT 0,
+		`schedule_nextsend` int(11) NOT NULL,
+		`schedule_lastsend` int(11) NOT NULL,
+		`completed` int(11) NOT NULL,
+		`completed_sites` text NOT NULL,
+		`sending_errors` text NOT NULL,
+		`is_archived` tinyint(1) NOT NULL DEFAULT 0,
+		`sites` text NOT NULL,
+		`groups` text NOT NULL';
 
 		if ( '' === $currentVersion ) {
 			$tbl .= ',
-PRIMARY KEY  (`id`)  ';
+			PRIMARY KEY  (`id`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'client_report_client' ) . '` (
-`clientid` int(11) NOT NULL AUTO_INCREMENT,
-`client` text NOT NULL,
-`name` VARCHAR(512),
-`company` VARCHAR(512),
-`email` text NOT NULL';
+		`clientid` int(11) NOT NULL AUTO_INCREMENT,
+		`client` text NOT NULL,
+		`name` VARCHAR(512),
+		`company` VARCHAR(512),
+		`email` text NOT NULL';
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
-PRIMARY KEY  (`clientid`)  ';
+			PRIMARY KEY  (`clientid`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE `' . $this->table_name( 'client_report_format' ) . '` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`title` VARCHAR(512),
-`content` longtext NOT NULL,
-`type` CHAR(1)';
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`title` VARCHAR(512),
+		`content` longtext NOT NULL,
+		`type` CHAR(1)';
 		if ( '' === $currentVersion || '1.3' === $currentVersion ) {
 			$tbl .= ',
-PRIMARY KEY  (`id`)  ';
+			PRIMARY KEY  (`id`)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;

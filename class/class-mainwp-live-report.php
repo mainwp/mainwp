@@ -1,18 +1,16 @@
 <?php
 /**
- * MainWP Client Live Reports
+ * MainWP Client Reports
  *
  * Legacy Client Reports Extension.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Live_Reports
- *
- * @deprecated moved to external Extension.
+ * Class MainWP_Live_Reports.
  */
 class MainWP_Live_Reports {
 

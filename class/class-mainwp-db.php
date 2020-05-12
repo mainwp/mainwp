@@ -4,7 +4,7 @@
  *
  * This file handles all interactions with the DB.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;

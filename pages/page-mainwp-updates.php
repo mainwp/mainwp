@@ -133,8 +133,6 @@ class MainWP_Updates {
 	 * Method render_footer()
 	 *
 	 * Close the page container.
-	 *
-	 * @return html Container closing tag.
 	 */
 	public static function render_footer() {
 		echo '</div>';
@@ -144,7 +142,6 @@ class MainWP_Updates {
 	 * Method render_site_link_dashboard()
 	 *
 	 * @param object $website the site.
-	 * @return html link to dashboard.
 	 */
 	public static function render_site_link_dashboard( $website ) {
 		?>
@@ -878,7 +875,7 @@ class MainWP_Updates {
 	 *
 	 * Get sites for updates
 	 *
-	 * @return mixed results
+	 * @return mixed results.
 	 */
 	public static function get_sites() {
 		global $current_user;
@@ -913,8 +910,6 @@ class MainWP_Updates {
 	 * @param int    $total_plugins_outdate total plugins outdate.
 	 * @param int    $total_themes_outdate total theme outdate.
 	 * @param string $site_view current site view.
-	 *
-	 * @return html output
 	 */
 	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) {
 		?>
@@ -959,8 +954,6 @@ class MainWP_Updates {
 	 * Method render_twitter_notice()
 	 *
 	 * Render the twitter bragger message.
-	 *
-	 * @return html Twitter bragger html.
 	 */
 	public static function render_twitter_notice() {
 
@@ -993,9 +986,7 @@ class MainWP_Updates {
 	 *
 	 * Render the HTTP Check html content.
 	 *
-	 * @param mixed $websites Child Sites.
-	 *
-	 * @return html HTTP Check content.
+	 * @param object $websites Child Sites.
 	 */
 	public static function render_http_checks( $websites ) {
 
@@ -1086,8 +1077,8 @@ class MainWP_Updates {
 	 *
 	 * Chek which primary backup plugin is being used.
 	 *
-	 * @param mixed $what Which backup plugin is being use.
-	 * @param mixed $website Website array of information.
+	 * @param mixed  $what Which backup plugin is being use.
+	 * @param object $website Website array of information.
 	 *
 	 * @return boolean True|False.
 	 */
@@ -1130,8 +1121,6 @@ class MainWP_Updates {
 	 *
 	 * @param string  $current_update current update string.
 	 * @param boolean $slug Whether to update slug.
-	 *
-	 * @return string updatesoverview_continue_update_me or empty string.
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
 
@@ -1150,7 +1139,6 @@ class MainWP_Updates {
 	/**
 	 * Method get_continue_update_selector()
 	 *
-	 * @param
 	 * @return Get continue update html selector
 	 */
 	public static function get_continue_update_selector() {
@@ -1161,8 +1149,6 @@ class MainWP_Updates {
 	 * Method render_updates_modal()
 	 *
 	 * Display the updates modal window during updates.
-	 *
-	 * @return html Updates Modal Window.
 	 */
 	public static function render_updates_modal() {
 		?>
@@ -1182,8 +1168,6 @@ class MainWP_Updates {
 	 * Method mainwp_help_content()
 	 *
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
-	 *
-	 * @return html Help box content.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'UpdatesManage' === $_GET['page'] ) {

@@ -111,12 +111,12 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * method render_header()
+	 * Method render_header()
 	 *
 	 * Set the MainWP Update page page title and pass it off to
 	 * method MainWP_UI::render_top_header()
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 *
 	 * @return array $params Array containing the page title.
 	 */
@@ -143,8 +143,8 @@ class MainWP_Updates {
 	/**
 	 * Method render_site_link_dashboard()
 	 *
-	 * @param object $website the site
-	 * @return html link to dashboard
+	 * @param object $website the site.
+	 * @return html link to dashboard.
 	 */
 	public static function render_site_link_dashboard( $website ) {
 		?>
@@ -579,12 +579,12 @@ class MainWP_Updates {
 	 *
 	 * Render WP updates tab
 	 *
-	 * @param object $websites the websites
-	 * @param int    $total_wp_upgrades total update
-	 * @param array  $all_groups_sites all groups of sites
-	 * @param array  $all_groups all groups
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current view
+	 * @param object $websites the websites.
+	 * @param int    $total_wp_upgrades total update.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current view.
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view ) {
 		?>
@@ -608,15 +608,15 @@ class MainWP_Updates {
 	 *
 	 * Render WP updates tab
 	 *
-	 * @param object $websites the websites
-	 * @param int    $total_plugin_upgrades total plugins update
-	 * @param object $userExtension user extension
-	 * @param array  $all_groups_sites groups of sites
-	 * @param array  $all_groups all groups
-	 * @param array  $allPlugins all plugins
-	 * @param array  $pluginsInfo all plugins info
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current view
+	 * @param object $websites the websites.
+	 * @param int    $total_plugin_upgrades total plugins update.
+	 * @param object $userExtension user extension.
+	 * @param array  $all_groups_sites groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param array  $allPlugins all plugins.
+	 * @param array  $pluginsInfo all plugins info.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current view.
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view ) {
 
@@ -656,15 +656,15 @@ class MainWP_Updates {
 	 *
 	 * Render themes update tab
 	 *
-	 * @param object $websites the websites
-	 * @param int    $total_theme_upgrades total updates
-	 * @param object $userExtension user extension
-	 * @param array  $all_groups_sites all groups of sites
-	 * @param array  $all_groups all groups
-	 * @param array  $allThemes all themes
-	 * @param array  $themesInfo all themes info
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current site view
+	 * @param object $websites the websites.
+	 * @param int    $total_theme_upgrades total updates.
+	 * @param object $userExtension user extension.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param array  $allThemes all themes.
+	 * @param array  $themesInfo all themes info.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current site view.
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view ) {
 
@@ -704,16 +704,16 @@ class MainWP_Updates {
 	 *
 	 * Render translations update tab
 	 *
-	 * @param object $websites the websites
-	 * @param int    $total_translation_upgrades total updates
-	 * @param object $userExtension user extension
-	 * @param array  $all_groups_sites all groups of sites
-	 * @param array  $all_groups all groups
-	 * @param array  $allTranslations all translations
-	 * @param array  $translationsInfo translations info
-	 * @param bool   $mainwp_show_language_updates show translation update
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current site view
+	 * @param object $websites the websites.
+	 * @param int    $total_translation_upgrades total updates.
+	 * @param object $userExtension user extension.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param array  $allTranslations all translations.
+	 * @param array  $translationsInfo translations info.
+	 * @param bool   $mainwp_show_language_updates show translation update.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current site view.
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
 		?>
@@ -741,13 +741,13 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned plugins tab
 	 *
-	 * @param object $websites  the websites
-	 * @param array  $all_groups_sites all groups of sites
-	 * @param array  $all_groups all groups
-	 * @param array  $allPluginsOutdate all outdate plugins
-	 * @param array  $decodedDismissedPlugins dismissed outdate plugins
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current site view
+	 * @param object $websites the websites.
+	 * @param array  $all_groups_sites all groups of sites.
+	 * @param array  $all_groups all groups.
+	 * @param array  $allPluginsOutdate all outdate plugins.
+	 * @param array  $decodedDismissedPlugins dismissed outdate plugins.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current site view.
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view ) {
 		?>
@@ -781,13 +781,13 @@ class MainWP_Updates {
 	 *
 	 * Render abandoned themes tab
 	 *
-	 * @param object $websites  the websites
-	 * @param array  $all_groups_sites all groups sites
-	 * @param array  $all_groups all groups
-	 * @param array  $allThemesOutdate all outdate themes
-	 * @param array  $decodedDismissedThemes dismissed themes
-	 * @param int    $site_offset_for_groups offset value
-	 * @param string $site_view current site view
+	 * @param object $websites the websites.
+	 * @param array  $all_groups_sites all groups sites.
+	 * @param array  $all_groups all groups.
+	 * @param array  $allThemesOutdate all outdate themes.
+	 * @param array  $decodedDismissedThemes dismissed themes.
+	 * @param int    $site_offset_for_groups offset value.
+	 * @param string $site_view current site view.
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view ) {
 		?>
@@ -821,7 +821,7 @@ class MainWP_Updates {
 	 *
 	 * Render js for update page
 	 *
-	 * @param string $site_view current site view
+	 * @param string $site_view current site view.
 	 */
 	public static function render_js_updates( $site_view ) {
 		?>
@@ -951,7 +951,7 @@ class MainWP_Updates {
 					</div>
 			</div>
 			</div>
-	</div>
+		</div>
 		<?php
 	}
 
@@ -1128,7 +1128,7 @@ class MainWP_Updates {
 	/**
 	 * Method set_continue_update_html_selector()
 	 *
-	 * @param string  $current_update current update string
+	 * @param string  $current_update current update string.
 	 * @param boolean $slug Whether to update slug.
 	 *
 	 * @return string updatesoverview_continue_update_me or empty string.

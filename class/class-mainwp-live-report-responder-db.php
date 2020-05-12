@@ -15,12 +15,29 @@ namespace MainWP\Dashboard;
  * @deprecated moved to external Extension.
  */
 class MainWP_Live_Reports_Responder_DB {
-//  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+	//  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+	
+	/**
+	 * @var string $mainwp_wpcreport_db_version Wordpress Client Report database version.
+	 */
 	private $mainwp_wpcreport_db_version = '5.6';
-	private $table_prefix;
 
+	/**
+	 * @var string $table_prefix Table prefix.
+	 */
+	private $table_prefix;
+	
+	/**
+	 * @staic
+	 * @var null Public static instance.
+	 */
 	private static $instance = null;
 
+	/**
+	 * Method __contruct()
+	 *
+	 * Initialize default tokens upon creation of the object.
+	 */
 	public function __construct() {
 		global $wpdb;
 		$this->table_prefix      = $wpdb->prefix . 'mainwp_';
@@ -331,22 +348,48 @@ class MainWP_Live_Reports_Responder_DB {
 		);
 	}
 
+	/**
+	 * Method table_name()
+	 * 
+	 * Add suffix to table_prefix.
+	 * 
+	 * @param mixed $suffix Given table suffix.
+	 * 
+	 * @return string Table name.
+	 */
 	public function table_name( $suffix ) {
 		return $this->table_prefix . $suffix;
 	}
 
+	/**
+	 * Method use_mysqli()
+	 * 
+	 * Determine whether a $wpdb variable is an instantiated object of mysqli.
+	 * @return (bool) Return true on seuccess and false on failer.
+	 */
 	public static function use_mysqli() {
-		/** @var $wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {
 			return false;
 		}
 
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		return ( $wpdb->dbh instanceof \mysqli );
 	}
 
+	/**
+	 * Method install()
+	 * 
+	 * Create database structure.
+	 * 
+	 * @return (int|false) Return report ID on success and false on failer.
+	 */
 	public function install() {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$currentVersion = get_site_option( 'mainwp_wpcreport_db_version' );
 		if ( ! empty( $currentVersion ) ) {
 			return;
@@ -486,6 +529,14 @@ class MainWP_Live_Reports_Responder_DB {
 		update_option( 'mainwp_wpcreport_db_version', $this->mainwp_wpcreport_db_version );
 	}
 
+	/**
+	 * Method get_instance()
+	 * 
+	 * Create a new public static instance of
+	 * MainWP_Live_Reports_Responder_DB().
+	 * 
+	 * @return void $instance New public static Instance.
+	 */
 	public static function get_instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new MainWP_Live_Reports_Responder_DB();
@@ -493,9 +544,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return self::$instance;
 	}
 
+	/**
+	 * Method add_token()
+	 * 
+	 * Add Report token.
+	 * 
+	 * @param array $token Token Array.
+	 * 
+	 * @return (int|bool) Return int Token ID on success and false on failer.
+	 */
 	public function add_token( $token ) {
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( ! empty( $token['token_name'] ) && ! empty( $token['token_description'] ) ) {
 			$current = $this->get_tokens_by( 'token_name', $token['token_name'] );
 			if ( $current ) {
@@ -508,9 +570,21 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_token()
+	 * 
+	 * Update report token.
+	 * 
+	 * @param mixed $id Report ID.
+	 * @param mixed $token Token ID.
+	 * 
+	 * @return (int|bool) Return int token ID or false on failer.
+	 */
 	public function update_token( $id, $token ) {
-		/** @var $wpdb wpdb */
+		
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$id = intval( $id );
 		if ( $id && ! empty( $token['token_name'] ) && ! empty( $token['token_description'] ) ) {
 			if ( $wpdb->update( $this->table_name( 'client_report_token' ), $token, array( 'id' => intval( $id ) ) ) ) {
@@ -520,7 +594,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method get_tokens_by()
+	 * 
+	 * Get report tokens by ID, name or URL.
+	 * 
+	 * @param string $by By token name or token ID. Default: id.
+	 * @param null $value Token ID.
+	 * @param string $site_url Child Site URL.
+	 * 
+	 * @return (array|object|null|void) Database query result by token or null on failure
+	 */
 	public function get_tokens_by( $by = 'id', $value = null, $site_url = '' ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $by ) || empty( $value ) ) {
@@ -563,21 +650,58 @@ class MainWP_Live_Reports_Responder_DB {
 		return null;
 	}
 
+	/**
+	 * Method get_tokens()
+	 * 
+	 * Get all report tokens.
+	 * 
+	 * @return (array|object|null) Database query results.
+	 */
 	public function get_tokens() {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE 1 = 1 ORDER BY type DESC, token_name ASC' );
 	}
 
+	/**
+	 * Method get_site_token_values()
+	 * 
+	 * Get Child site token values. 
+	 * 
+	 * @param mixed $id Token ID.
+	 * 
+	 * @return (array|object|null) Database query results.
+	 * 
+	 * @return void
+	 */
 	public function get_site_token_values( $id ) {
+		
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( empty( $id ) ) {
 			return false;
 		}
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT st.* FROM ' . $this->table_name( 'client_report_site_token' ) . ' st WHERE st.token_id = %d', $id ) );
 	}
 
+	/**
+	 * Method get_site_tokens()
+	 * 
+	 * 
+	 * @param mixed $site_url Child Site URL.
+	 * 
+	 * @param string $index Default: id.
+	 * 
+	 * @return array $return Array of tokens.
+	 */
 	public function get_site_tokens( $site_url, $index = 'id' ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$site_url = trim( $site_url );
 		if ( empty( $site_url ) ) {
 			return false;
@@ -620,11 +744,24 @@ class MainWP_Live_Reports_Responder_DB {
 		return $return;
 	}
 
+	/**
+	 * Method get_default_token_site()
+	 * 
+	 * Get default Child Site token.
+	 * 
+	 * @param mixed $token_name Token name.
+	 * @param mixed $site_url Child ite URL.
+	 * 
+	 * @return (string|bool) Return string Child Site name|URL or false on failer.
+	 */
 	public function get_default_token_site( $token_name, $site_url ) {
+
 		$website = apply_filters( 'mainwp_getwebsitesbyurl', $site_url );
+
 		if ( empty( $this->default_tokens[ $token_name ] ) || ! $website ) {
 			return false;
 		}
+
 		$website = current( $website );
 		if ( is_object( $website ) ) {
 			$url_site  = $website->url;
@@ -644,11 +781,24 @@ class MainWP_Live_Reports_Responder_DB {
 				$token_value = '';
 				break;
 		}
+
 		return $token_value;
 	}
 
+	/**
+	 * Method add_token_site()
+	 * 
+	 * Add Child Site token.
+	 * 
+	 * @param mixed $token_id Token ID.
+	 * @param mixed $token_value Token value.
+	 * @param mixed $site_url Child Site URL.
+	 * 
+	 * @return string Child Site token value.
+	 */
 	public function add_token_site( $token_id, $token_value, $site_url ) {
-		/** @var $wpdb wpdb */
+		
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $token_id ) ) {
@@ -675,8 +825,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_token_site()
+	 * 
+	 * Update Child Site token value.
+	 * 
+	 * @param mixed $token_id Token ID.
+	 * @param mixed $token_value Token value.
+	 * @param mixed $site_url Child Site URL.
+	 * 
+	 * @return (string|bool) Return token value or false on failer.
+	 */
 	public function update_token_site( $token_id, $token_value, $site_url ) {
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $token_id ) ) {
@@ -704,8 +866,21 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method delete_site_tokens()
+	 * 
+	 * Delete Child Site token value.
+	 * 
+	 * @param null $token_id Token ID.
+	 * @param null $site_url Child SIte URL.
+	 * 
+	 * @return (int|bool) Number of rows affected/selected for all other queries and Boolean true. Boolean false on error.
+	 */
 	public function delete_site_tokens( $token_id = null, $site_url = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( ! empty( $token_id ) ) {
 			return $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_site_token' ) . ' WHERE token_id = %d ', $token_id ) );
 		} elseif ( ! empty( $site_url ) ) {
@@ -714,8 +889,21 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method delete_token_by()
+	 * 
+	 * Delete Child Site token by id.
+	 *
+	 * @param string $by Query type. Default: 'id'.
+	 * @param null $value Token id.
+	 * 
+	 * @return (bool) Boolean true on success. Boolean false on error.
+	 */
 	public function delete_token_by( $by = 'id', $value = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE id=%d ', $value ) ) ) {
 				$this->delete_site_tokens( $value );
@@ -725,12 +913,23 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
-
+	/**
+	 * Method update_report()
+	 * 
+	 * Update Client Report.
+	 * 
+	 * @param array $report Client Report array.
+	 * 
+	 * @return (string|bool) Client Report token value. Boolean false on failer.
+	 */
 	public function update_report( $report ) { // phpcs:ignore -- complex function.
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$id            = isset( $report['id'] ) ? $report['id'] : 0;
 		$updatedClient = false;
+
 		if ( ! empty( $report['client'] ) || ! empty( $report['email'] ) ) {
 			$client_id = 0;
 			if ( ! empty( $report['client'] ) ) {
@@ -838,7 +1037,22 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method get_report_by()
+	 * 
+	 * Get Client Report by given query type $by.
+	 * 
+	 * @param string $by Query type. Default: 'id'. Choices: id, client, site, title, all.
+	 * @param null $value Further variables to substitute into the query's placeholders if being called with individual arguments.
+	 * @param string $orderby Order By. Default: null. Choices: client, name.
+	 * @param string $order Order. Default: null. Choices: client, name.
+	 * @param object $output Report object.
+	 * 
+	 * @return (object|bool) Return Client Report object or false on failer.
+	 */
 	public function get_report_by( $by = 'id', $value = null, $orderby = null, $order = null, $output = OBJECT ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $by ) || ( 'all' !== $by && empty( $value ) ) ) {
@@ -896,8 +1110,18 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method get_avail_archive_reports()
+	 * 
+	 * Get available achived client reports.
+	 * 
+	 * @return (object|bool) Return Client Report object or false on failer.
+	 */
 	public function get_avail_archive_reports() {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$sql = 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 		. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 		. ' ON rp.client_id = c.clientid '
@@ -905,34 +1129,82 @@ class MainWP_Live_Reports_Responder_DB {
 		. ' AND rp.date_from <= ' . ( time() - 3600 * 24 * 30 ) . '  '
 		. ' AND rp.selected_site != 0 AND c.email IS NOT NULL '
 		. '';
+
 		return $wpdb->get_results( $sql );
 	}
 
+	/**
+	 * Method get_schedule_reports()
+	 * 
+	 * Get schedualed client reports.
+	 * 
+	 * @return (object|bool) Return Client Report object or false on failer.
+	 */
 	public function get_schedule_reports() {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$sql = 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
 		. ' LEFT JOIN ' . $this->table_name( 'client_report_client' ) . ' c '
 		. ' ON rp.client_id = c.clientid '
 		. " WHERE rp.recurring_schedule != '' AND rp.scheduled = 1";
+
 		return $wpdb->get_results( $sql );
 	}
 
+	/**
+	 * Method delete_report_by()
+	 * 
+	 * Delete Client Report by id.
+	 * 
+	 * @param string $by Query type. Default: 'id'.
+	 * @param null $value Client Report ID.
+	 * 
+	 * @return (bool) Return true on success and false on failer.
+	 */
 	public function delete_report_by( $by = 'id', $value = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report' ) . ' WHERE id=%d ', $value ) ) ) {
 				return true;
 			}
 		}
+		
 		return false;
 	}
 
+	/**
+	 * Method get_clients()
+	 * 
+	 * Get all clients. 
+	 * 
+	 * @return (object|bool) Return Clients object or false on failer.
+	 */
 	public function get_clients() {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE 1 = 1 ORDER BY client ASC' );
 	}
 
+	/**
+	 * Method get_client_by()
+	 * 
+	 * Get client by clientid.
+	 * 
+	 * @param string $by Query type. Defualt: 'clientid'.
+	 * @param null $value Query value placeholder.
+	 * 
+	 * @return (array|object|null|void) Database query result for client or null on failure.
+	 */
 	public function get_client_by( $by = 'clientid', $value = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $value ) ) {
@@ -964,9 +1236,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_client()
+	 * 
+	 * Update Client.
+	 * 
+	 * @param object $client Client object.
+	 * 
+	 * @return (int|bool) int Client ID or false on failer.
+	 */
 	public function update_client( $client ) {
-		/** @var $wpdb wpdb */
+		
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$id = isset( $client['clientid'] ) ? $client['clientid'] : 0;
 
 		if ( ! empty( $id ) ) {
@@ -981,16 +1264,42 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method get_formats()
+	 * 
+	 * Get Client Report format.
+	 * 
+	 * @param null $type Format type.
+	 * 
+	 * @return (object|bool) Return report format object or false on failer.
+	 */
 	public function get_formats( $type = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		return $wpdb->prepare(
 			'SELECT * FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE `type` =%s ORDER BY title',
 			$type
 		);
 	}
 
+	/**
+	 * Method get_format_by()
+	 * 
+	 * Get Client Report format by.
+	 * 
+	 * @param string $by Query type. id|title.
+	 * @param mixed $value Id or title to grab.
+	 * @param null $type format type. Default: null as query placeholder.
+	 * 
+	 * @return (array|object|null|void) Database query result or null on failure.
+	 */
 	public function get_format_by( $by, $value, $type = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( empty( $value ) ) {
 			return false;
 		}
@@ -1013,9 +1322,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method update_format()
+	 * 
+	 * Update Client Report format.
+	 * 
+	 * @param object $format Client Report format object.
+	 * 
+	 * @return (int|false) The number of rows inserted, or false on error.
+	 */
 	public function update_format( $format ) {
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$id = isset( $format['id'] ) ? $format['id'] : 0;
 
 		if ( ! empty( $id ) ) {
@@ -1030,8 +1350,21 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method delete_format_by()
+	 * 
+	 * Delete Client Report format by id.
+	 * 
+	 * @param string $by Query type. Default: 'id'.
+	 * @param null $value Query value placeholder.
+	 * 
+	 * @return (bool) Return true on success and false on failer.
+	 */
 	public function delete_format_by( $by = 'id', $value = null ) {
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		if ( 'id' === $by ) {
 			if ( $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'client_report_format' ) . ' WHERE id=%d ', $value ) ) ) {
 				return true;
@@ -1040,8 +1373,20 @@ class MainWP_Live_Reports_Responder_DB {
 		return false;
 	}
 
+	/**
+	 * Method escape()
+	 * 
+	 * Escape the given data.
+	 * 
+	 * @param mixed $data Given data.
+	 * 
+	 * @deprecated $wpdb->escape is deprecated - Replace with wpdb::prepare() https://developer.wordpress.org/reference/classes/wpdb/escape/.
+	 * 
+	 * @return (string|bool) Escaped data or false on failer.
+	 */
 	protected function escape( $data ) {
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 		if ( function_exists( 'esc_sql' ) ) {
 			return esc_sql( $data );
@@ -1050,12 +1395,24 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method query()
+	 * 
+	 * SQL Query.
+	 * 
+	 * @param mixed $sql Given SQL Query.
+	 * 
+	 * @return (bool|object) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries 
+	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return TRUE. 
+	 */
 	public function query( $sql ) {
 		if ( null == $sql ) {
 			return false;
 		}
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		$result = self::m_query( $sql, $wpdb->dbh );
 
 		if ( ! $result || ( 0 === self::num_rows( $result ) ) ) {
@@ -1064,6 +1421,17 @@ class MainWP_Live_Reports_Responder_DB {
 		return $result;
 	}
 
+	/**
+	 * Method m_query()
+	 * 
+	 * MySQLi or MySQL Query.
+	 * 
+	 * @param mixed $query SQL query.
+	 * @param mixed $link mysqli_connect link.
+	 * 
+	 * @return (bool) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries 
+	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return true. 
+	 */
 	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_query( $link, $query );
@@ -1071,7 +1439,15 @@ class MainWP_Live_Reports_Responder_DB {
 			return \mysql_query( $query, $link );
 		}
 	}
-
+	/**
+	 * Method fetch_object(
+	 * 
+	 * MySQLi Query.
+	 * 
+	 * @param object $result SQL Query.
+	 * 
+	 * @return (object|null) Returns an object with string properties that corresponds to the fetched row or null if there are no more rows in resultset.  
+	 */
 	public static function fetch_object( $result ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_fetch_object( $result );
@@ -1080,6 +1456,12 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method free_result()
+	 * @param object $result SQL Query.
+	 * 
+	 * @return (bool) Returns true on success or false on failure. 
+	 */
 	public static function free_result( $result ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_free_result( $result );
@@ -1088,6 +1470,16 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method data_seek()
+	 * 
+	 * Data Seek. 
+	 * 
+	 * @param mixed $result Required. Specifies a result set identifier returned by mysqli_query(), mysqli_store_result() or mysqli_use_result()
+	 * @param mixed $offset Required. Specifies the field offset. Must be between 0 and the total number of rows - 1.
+	 * 
+	 * @return (bool) Returns true on success or false on failure. 
+	 */
 	public static function data_seek( $result, $offset ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_data_seek( $result, $offset );
@@ -1096,6 +1488,16 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method fetch_array()
+	 * 
+	 * Fetch array.
+	 * 
+	 * @param mixed $result Required. Specifies which data pointer to use. The data pointer is the result from the mysql_query() function
+	 * @param null $result_type Optional. Specifies what kind of array to return. Placeholder: null.
+	 * 
+	 * @return array The array that was fetched.
+	 */
 	public static function fetch_array( $result, $result_type = null ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_fetch_array( $result, ( null == $result_type ? MYSQLI_BOTH : $result_type ) );
@@ -1104,6 +1506,15 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method num_rows()
+	 * 
+	 * Num Rows.
+	 * 
+	 * @param mixed $result
+	 * 
+	 * @return (int|bool) The number of rows in a result set on success or false on failure. 
+	 */
 	public static function num_rows( $result ) {
 		if ( self::use_mysqli() ) {
 			return \mysqli_num_rows( $result );
@@ -1112,6 +1523,15 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method is_result()
+	 * 
+	 * Is result.
+	 * 
+	 * @param mixed $result SQL Result.
+	 * 
+	 * @return bool Returns TRUE if var is a resource, FALSE otherwise. 
+	 */
 	public static function is_result( $result ) {
 		if ( self::use_mysqli() ) {
 			return ( $result instanceof \mysqli_result );
@@ -1120,12 +1540,23 @@ class MainWP_Live_Reports_Responder_DB {
 		}
 	}
 
+	/**
+	 * Method get_results_result()
+	 * 
+	 * Get results result.
+	 * 
+	 * @param mixed $sql SQL query. 
+	 * 
+	 * @return (array|object|null) Database query results.
+	 */
 	public function get_results_result( $sql ) {
 		if ( null == $sql ) {
 			return null;
 		}
-		/** @var $wpdb wpdb */
+
+		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+
 		return $wpdb->get_results( $sql, OBJECT_K );
 	}
 

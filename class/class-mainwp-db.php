@@ -734,10 +734,30 @@ class MainWP_DB extends MainWP_DB_Base {
 		return null;
 	}
 
+	/**
+	 * Method get_websites_by_group_name()
+	 * 
+	 * Get child sites by group name()
+	 * 
+	 * @param mixed $userid Current user ID.
+	 * @param mixed $groupname Group name.
+	 * 
+	 * @return (object|null) Database query result or null on failure.
+	 */
 	public function get_websites_by_group_name( $userid, $groupname ) {
 		return $this->get_results_result( $this->get_sql_websites_by_group_name( $groupname, $userid ) );
 	}
 
+	/**
+	 * Method get_sql_websites_by_group_name()
+	 * 
+	 * Get child sites by group name.
+	 * 
+	 * @param mixed $groupname Group name.
+	 * @param null $userid Current user ID.
+	 * 
+	 * @return (object|null) Database query result or null on failure.
+	 */
 	public function get_sql_websites_by_group_name( $groupname, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;
@@ -757,12 +777,63 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $sql;
 	}
 
+	/**
+	 * Method get_wp_ip()
+	 * 
+	 * Get WordPress IP.
+	 * 
+	 * @param mixed $wpid Child site ID.
+	 * 
+	 * @return (string|null) Child Site IP address or null on failure.
+	 */
 	public function get_wp_ip( $wpid ) {
 		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ip FROM ' . $this->table_name( 'request_log' ) . ' WHERE wpid = %d', $wpid ) );
 	}
 
-	public function add_website( $userid, $name, $url, $admin, $pubkey, $privkey, $nossl, $nosslkey, $groupids, $groupnames,
-									$verifyCertificate = 1, $uniqueId = '', $http_user, $http_pass, $sslVersion = 0, $wpe = 0, $isStaging = 0 ) {
+	/**
+	 * Method add_website()
+	 * 
+	 * Add Child Site.
+	 * 
+	 * @param mixed $userid Current User ID.
+	 * @param mixed $name Child Site name.
+	 * @param mixed $url Child Site URL.
+	 * @param mixed $admin Child Site admin
+	 * @param mixed $pubkey Public Key.
+	 * @param mixed $privkey Private Key.
+	 * @param mixed $nossl 
+	 * @param mixed $nosslkey
+	 * @param mixed $groupids Group IDs.
+	 * @param mixed $groupnames Group Names.
+	 * @param integer $verifyCertificate Whether or not to verify SSL Certificate.
+	 * @param string $uniqueId Uniqueue ID
+	 * @param mixed $http_user htacess username.
+	 * @param mixed $http_pass htaccess password.
+	 * @param integer $sslVersion SSL Version.
+	 * @param integer $wpe 
+	 * @param integer $isStaging Whether or not child site is staging site.
+	 * 
+	 * @return (int|false) Child Site id or false on failure.
+	 */
+	public function add_website( 
+		$userid, 
+		$name, 
+		$url,
+		$admin, 
+		$pubkey, 
+		$privkey, 
+		$nossl, 
+		$nosslkey, 
+		$groupids, 
+		$groupnames, 
+		$verifyCertificate = 1, 
+		$uniqueId = '', 
+		$http_user, 
+		$http_pass, 
+		$sslVersion = 0, 
+		$wpe = 0, 
+		$isStaging = 0 ) {
+
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 === $nossl || 1 === $nossl ) ) {
 			$values = array(
 				'userid'                 => $userid,

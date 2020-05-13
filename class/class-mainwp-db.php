@@ -295,13 +295,13 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param null $search_site Site search field value. Default: null.
 	 * @param string $orderBy Order list by. Default: URL.
 	 * @param boolean $offset Query offset. Default: false.
-	 * @param boolean $rowcount Row count. Default: falese.
-	 * @param null $extraWhere
-	 * @param boolean $for_manager
-	 * @param mixed $extra_view
-	 * @param string $is_staging
+	 * @param boolean $rowcount Row count. Default: false.
+	 * @param null $extraWhere Extra WHERE. Default: null.
+	 * @param boolean $for_manager For role manager. Default: false.
+	 * @param mixed $extra_view Extra view. Default favi_icon.
+	 * @param string $is_staging yes|no Is child site a staging site.
 	 * 
-	 * @return void
+	 * @return (object|null) Database query results or null on failer.
 	 */
 	public function get_sql_websites_for_current_user( 
 		$selectgroups = false, 
@@ -364,6 +364,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $qry;
 	}
 
+	/**
+	 * Method get_sql_search_websites_for_current_user()
+	 * 
+	 * Get the child sites the current user has searched for.
+	 * 
+	 * @param mixed $params Query parameters.
+	 * 
+	 * @return (boolean|null) $qry Database query results or null on failer.
+	 */
 	public function get_sql_search_websites_for_current_user( $params ) {
 
 		if ( ! is_array( $params ) ) {
@@ -451,7 +460,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $qry;
 	}
 
-
+	/**
+	 * Method get_sql_where_allow_access_sites()
+	 * 
+	 * Get child sites where allowed access via SQL.
+	 * 
+	 * @param string $site_table_alias Child site table alias.
+	 * @param string $is_staging yes|no Is child site a staging site.
+	 * 
+	 * @return (boolean|null) $_where Database query results or null on failer.
+	 */
 	public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
 
 		if ( empty( $site_table_alias ) ) {
@@ -495,6 +513,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $_where;
 	}
 
+	/**
+	 * Method get_sql_where_allow_groups()
+	 * 
+	 * Get groupd where allowed accessv via SQL.
+	 * 
+	 * @param string $site_table_alias Child site table alias.
+	 * @param string $is_staging yes|no Is child site a staging site.
+	 * 
+	 * @return (boolean|null) $_where Database query results or null on failer.
+	 */
 	public function get_sql_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
 		// To fix bug run from cron job.
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
@@ -531,10 +559,31 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method get_website_by_id()
+	 * 
+	 * Get child site by id.
+	 * 
+	 * @param mixed $id Child site ID.
+	 * @param boolean $selectGroups Select groups.
+	 * 
+	 * @return (object|null) Database query results or null on failure.
+	 */
 	public function get_website_by_id( $id, $selectGroups = false ) {
 		return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups ) );
 	}
 
+	/**
+	 * Method get_sql_website_by_id()
+	 * 
+	 * Get child site by id via SQL.
+	 * 
+	 * @param mixed $id Child site ID. 
+	 * @param boolean $selectGroups Selected groups.
+	 * @param mixed $extra_view Extra view value.
+	 * 
+	 * @return (object|null) Database query result or null on failure.
+	 */
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array( 'favi_icon' ) ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
@@ -559,6 +608,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return null;
 	}
 
+	/**
+	 * Method get_websites_by_ids()
+	 * 
+	 * Get child sites by child site IDs.
+	 * 
+	 * @param mixed $ids Child site IDs.
+	 * @param null $userId User ID.
+	 * 
+	 * @return (object|null) Database uery result or null on failure.
+	 */
 	public function get_websites_by_ids( $ids, $userId = null ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;
@@ -569,6 +628,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE id IN (' . implode( ',', $ids ) . ')' . ( null != $userId ? ' AND userid = ' . $userId : '' ) . $where, OBJECT );
 	}
 
+	/**
+	 * Method get_websites_by_group_ids()
+	 * 
+	 * Get child sites by group IDs.
+	 * 
+	 * @param mixed $ids Group Ids.
+	 * @param null $userId User ID.
+	 *
+	 * @return (object|null) Database uery result or null on failure.
+	 */
 	public function get_websites_by_group_ids( $ids, $userId = null ) {
 		if ( empty( $ids ) ) {
 			return array();
@@ -581,12 +650,42 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . implode( ',', $ids ) . ') ' . ( null != $userId ? ' AND wp.userid = ' . $userId : '' ), OBJECT );
 	}
 
+	/**
+	 * Method get_wensites_by_group_id()
+	 * 
+	 * Get child sites by group id.
+	 * 
+	 * @param mixed $id Group ID.
+	 *
+	 * @return (object|null) Database uery result or null on failure.
+	 */
 	public function get_websites_by_group_id( $id ) {
 		return $this->get_results_result( $this->get_sql_websites_by_group_id( $id ) );
 	}
 
-	public function get_sql_websites_by_group_id( $id, $selectgroups = false, $orderBy = 'wp.url', $offset = false,
-											$rowcount = false, $where = null, $search_site = null ) {
+	/**
+	 * Method get_sql_websites_by_group_id()
+	 * 
+	 * Get child sites by group id via SQL.
+	 * 
+	 * @param mixed $id Group ID
+	 * @param boolean $selectgroups Selected groups. Default: false.
+	 * @param string $orderBy Order list by. Default: URL.
+	 * @param boolean $offset Query offset. Default: false.
+	 * @param boolean $rowcount Row count. Default: falese.
+	 * @param null $where SQL WHERE value.
+	 * * @param null $search_site Site search field value. Default: null.
+	 * 
+	 * @return (object|null) Return database query or null on failer.
+	 */
+	public function get_sql_websites_by_group_id( 
+		$id, 
+		$selectgroups = false, 
+		$orderBy = 'wp.url', 
+		$offset = false, 
+		$rowcount = false, 
+		$where = null, 
+		$search_site = null ) {
 
 		$is_staging = 'no';
 		if ( $selectgroups ) {

@@ -1108,10 +1108,10 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method send_http_response_notification().
 	 *
-	 * @param bool $sitesHttpCheckIds sites ids
-	 * @param bool $text_format text format
+	 * @param bool $sitesHttpCheckIds sites ids.
+	 * @param bool $text_format text format.
 	 *
-	 * @return bool False if failed
+	 * @return bool False if failed.
 	 */
 	public function send_http_response_notification( $sitesHttpCheckIds, $text_format ) {
 

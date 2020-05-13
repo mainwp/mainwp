@@ -108,7 +108,66 @@ class MainWP_Premium_Update {
 
 		return false;
 	}
+	
+	/**
+	 * Method maybe_request_premium_updates()
+	 *
+	 * @param mixed $website Child Site info.
+	 * @param mixed $what stats|upgradeplugintheme What function to perform.
+	 * @param mixed $params plugin|theme Update Type.
+	 *
+	 * @return mixed $request_update
+	 */
+	public static function maybe_request_premium_updates( $website, $what, $params ) {
+		$request_update = false;
+		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
 
+			$update_type = '';
+
+			$check_premi_plugins = array();
+			$check_premi_themes  = array();
+
+			if ( 'stats' === $what ) {
+				if ( '' != $website->plugins ) {
+					$check_premi_plugins = json_decode( $website->plugins, 1 );
+				}
+				if ( '' != $website->themes ) {
+					$check_premi_themes = json_decode( $website->themes, 1 );
+				}
+			} elseif ( 'upgradeplugintheme' === $what ) {
+				$update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
+				if ( 'plugin' === $update_type ) {
+					if ( '' != $website->plugins ) {
+						$check_premi_plugins = json_decode( $website->plugins, 1 );
+					}
+				} elseif ( 'theme' === $update_type ) {
+					if ( '' != $website->themes ) {
+						$check_premi_themes = json_decode( $website->themes, 1 );
+					}
+				}
+			}
+
+			if ( self::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
+				self::try_to_detect_premiums_update( $website, 'plugin' );
+			}
+
+			if ( self::check_premium_updates( $check_premi_themes, 'theme' ) ) {
+				self::try_to_detect_premiums_update( $website, 'theme' );
+			}
+
+			if ( 'upgradeplugintheme' === $what ) {
+				if ( 'plugin' === $update_type || 'theme' === $update_type ) {
+					if ( self::check_request_update_premium( $params['list'], $update_type ) ) {
+						self::request_premiums_update( $website, $update_type, $params['list'] );
+						$request_update = true;
+					}
+				}
+			}
+		}
+
+		return $request_update;
+	}
+	
 	/**
 	 * Method check_request_update_premium()
 	 *

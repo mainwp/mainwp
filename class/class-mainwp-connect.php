@@ -533,8 +533,11 @@ class MainWP_Connect {
 			$handleToWebsite = array();
 			$requestUrls     = array();
 			$requestHandles  = array();
-
-			self::init_cookiesdir();
+			
+			$dirs      = MainWP_System_Utility::get_mainwp_dir();
+			$cookieDir = $dirs[0] . 'cookies';
+			
+			self::init_cookiesdir( $cookieDir );
 
 			foreach ( $websites as $website ) {
 				$url = $website->url;
@@ -814,7 +817,10 @@ class MainWP_Connect {
 		$requestUrls        = array();
 		$requestHandles     = array();
 
-		self::init_cookiesdir();
+		$dirs      = MainWP_System_Utility::get_mainwp_dir();
+		$cookieDir = $dirs[0] . 'cookies';
+
+		self::init_cookiesdir( $cookieDir );
 
 		foreach ( $websites as $website ) {
 			$url = $website->url;
@@ -1145,7 +1151,7 @@ class MainWP_Connect {
 			'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
 		);
 
-		$request_update = self::maybe_request_premium_updates( $website, $what, $params );
+		$request_update = MainWP_Premium_Update::maybe_request_premium_updates( $website, $what, $params );
 
 		if ( isset( $rawResponse ) && $rawResponse ) {
 			$others['raw_response'] = 'yes';
@@ -1178,7 +1184,7 @@ class MainWP_Connect {
 		$information = array();
 
 		if ( ! $request_update ) {
-			$information = self::fetch_url( $website, $website->url, $postdata, $checkConstraints, $pForceFetch, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
+			$information = self::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $website->http_user, $website->http_pass, $website->ssl_version, $others );
 		} else {
 			$slug                    = $params['list'];
 			$information['upgrades'] = array( $slug => 1 );
@@ -1219,69 +1225,6 @@ class MainWP_Connect {
 		}
 
 		return $information;
-	}
-
-	/**
-	 * Method maybe_request_premium_updates()
-	 *
-	 * @param mixed $website Child Site info.
-	 * @param mixed $what stats|upgradeplugintheme What function to perform.
-	 * @param mixed $params plugin|theme Update Type.
-	 *
-	 * @return mixed $request_update
-	 */
-	public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- not quite complex method.
-		$request_update = false;
-		if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
-
-			$update_type = '';
-
-			$check_premi_plugins = array();
-			$check_premi_themes  = array();
-
-			if ( 'stats' === $what ) {
-				if ( '' != $website->plugins ) {
-					$check_premi_plugins = json_decode( $website->plugins, 1 );
-				}
-				if ( '' != $website->themes ) {
-					$check_premi_themes = json_decode( $website->themes, 1 );
-				}
-			} elseif ( 'upgradeplugintheme' === $what ) {
-				$update_type = ( isset( $params['type'] ) ) ? $params['type'] : '';
-				if ( 'plugin' === $update_type ) {
-					if ( '' != $website->plugins ) {
-						$check_premi_plugins = json_decode( $website->plugins, 1 );
-					}
-				} elseif ( 'theme' === $update_type ) {
-					if ( '' != $website->themes ) {
-						$check_premi_themes = json_decode( $website->themes, 1 );
-					}
-				}
-			}
-
-			if ( is_array( $check_premi_plugins ) && 0 < count( $check_premi_plugins ) ) {
-				if ( MainWP_Premium_Update::check_premium_updates( $check_premi_plugins, 'plugin' ) ) {
-					MainWP_Premium_Update::try_to_detect_premiums_update( $website, 'plugin' );
-				}
-			}
-
-			if ( is_array( $check_premi_themes ) && 0 < count( $check_premi_themes ) ) {
-				if ( MainWP_Premium_Update::check_premium_updates( $check_premi_themes, 'theme' ) ) {
-					MainWP_Premium_Update::try_to_detect_premiums_update( $website, 'theme' );
-				}
-			}
-
-			if ( 'upgradeplugintheme' === $what ) {
-				if ( 'plugin' === $update_type || 'theme' === $update_type ) {
-					if ( MainWP_Premium_Update::check_request_update_premium( $params['list'], $update_type ) ) {
-						MainWP_Premium_Update::request_premiums_update( $website, $update_type, $params['list'] );
-						$request_update = true;
-					}
-				}
-			}
-		}
-
-		return $request_update;
 	}
 
 	/**
@@ -1326,7 +1269,7 @@ class MainWP_Connect {
 		$website  = null;
 
 		$others['function'] = $what;
-		return self::fetch_url( $website, $url, $postdata, false, $pForceFetch, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
+		return self::fetch_url( $website, $url, $postdata, false, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
 	}
 
 	/**
@@ -1337,8 +1280,7 @@ class MainWP_Connect {
 	 * @param mixed   $website Child Site info.
 	 * @param mixed   $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
-	 * @param boolean $pForceFetch true|false Whether or not to force fetch.
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.	 
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param boolean $pRetryFailed ture|false Whether or not the Retry has failed.
 	 * @param null    $http_user htaccess username.
@@ -1354,8 +1296,7 @@ class MainWP_Connect {
 		&$website,
 		$url,
 		$postdata,
-		$checkConstraints = false,
-		$pForceFetch = false,
+		$checkConstraints = false,		
 		$verifyCertificate = null,
 		$pRetryFailed = true,
 		$http_user = null,
@@ -1375,14 +1316,14 @@ class MainWP_Connect {
 				$tmpUrl .= 'wp-admin/admin-ajax.php';
 			}
 
-			return self::m_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+			return self::m_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 		} catch ( \Exception $e ) {
 			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
 				throw $e;
 			}
 
 			try {
-				return self::m_fetch_url( $website, $url, $postdata, $checkConstraints, $pForceFetch, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+				return self::m_fetch_url( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
 			} catch ( \Exception $ex ) {
 				throw $e;
 			}
@@ -1395,8 +1336,7 @@ class MainWP_Connect {
 	 * @param mixed   $website Child Site info.
 	 * @param mixed   $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
-	 * @param boolean $pForceFetch true|false Whether or not to force fetch.
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.	 
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
@@ -1411,8 +1351,7 @@ class MainWP_Connect {
 		&$website,
 		$url,
 		$postdata,
-		$checkConstraints = false,
-		$pForceFetch = false,
+		$checkConstraints = false,		
 		$verifyCertificate = null,
 		$http_user = null,
 		$http_pass = null,
@@ -1423,88 +1362,9 @@ class MainWP_Connect {
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 
-		$identifier = null;
+		$identifier = null;		
 		if ( $checkConstraints ) {
-			$semLock      = '103218';
-			$identifier   = self::get_lock_identifier( $semLock );
-			$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
-			if ( 0 < $minimumDelay ) {
-				$minimumDelay = $minimumDelay / 1000;
-			}
-			$minimumIPDelay = ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
-			if ( 0 < $minimumIPDelay ) {
-				$minimumIPDelay = $minimumIPDelay / 1000;
-			}
-
-			MainWP_Utility::end_session();
-			$delay = true;
-			while ( $delay ) {
-				self::lock( $identifier );
-
-				if ( 0 < $minimumDelay ) {
-					$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp();
-					if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
-						self::release( $identifier );
-						usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $minimumIPDelay && null != $website ) {
-					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-
-					if ( null != $ip && '' !== $ip ) {
-						$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
-
-						if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
-							self::release( $identifier );
-							usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
-
-			$maximumRequests   = ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
-			$maximumIPRequests = ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
-
-			$first = true;
-			$delay = true;
-			while ( $delay ) {
-				if ( ! $first ) {
-					self::lock( $identifier );
-				} else {
-					$first = false;
-				}
-
-				MainWP_DB_Common::instance()->close_open_requests();
-
-				if ( 0 < $maximumRequests ) {
-					$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests();
-					if ( $nrOfOpenRequests >= $maximumRequests ) {
-						self::release( $identifier );
-						usleep( 200000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $maximumIPRequests && null != $website ) {
-					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-
-					if ( null != $ip && '' != $ip ) {
-						$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
-						if ( $nrOfOpenRequests >= $maximumIPRequests ) {
-							self::release( $identifier );
-							usleep( 200000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
+			self::check_constraints( $identifier );			
 		}
 
 		if ( null != $website ) {
@@ -1515,7 +1375,10 @@ class MainWP_Connect {
 			self::release( $identifier );
 		}
 
-		self::init_cookiesdir();
+		$dirs      = MainWP_System_Utility::get_mainwp_dir();
+		$cookieDir = $dirs[0] . 'cookies';
+		
+		self::init_cookiesdir( $cookieDir );
 
 		$ch = curl_init();
 
@@ -1683,7 +1546,90 @@ class MainWP_Connect {
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}
+	
+	private static function check_constraints( &$identifier ) {		
+		$semLock      = '103218';
+		$identifier   = self::get_lock_identifier( $semLock );
+		$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
+		if ( 0 < $minimumDelay ) {
+			$minimumDelay = $minimumDelay / 1000;
+		}
+		$minimumIPDelay = ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) );
+		if ( 0 < $minimumIPDelay ) {
+			$minimumIPDelay = $minimumIPDelay / 1000;
+		}
 
+		MainWP_Utility::end_session();
+		$delay = true;
+		while ( $delay ) {
+			self::lock( $identifier );
+
+			if ( 0 < $minimumDelay ) {
+				$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp();
+				if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
+					self::release( $identifier );
+					usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
+					continue;
+				}
+			}
+
+			if ( 0 < $minimumIPDelay && null != $website ) {
+				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
+
+				if ( null != $ip && '' !== $ip ) {
+					$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
+
+					if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
+						self::release( $identifier );
+						usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
+						continue;
+					}
+				}
+			}
+
+			$delay = false;
+		}
+
+		$maximumRequests   = ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
+		$maximumIPRequests = ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
+
+		$first = true;
+		$delay = true;
+		while ( $delay ) {
+			if ( ! $first ) {
+				self::lock( $identifier );
+			} else {
+				$first = false;
+			}
+
+			MainWP_DB_Common::instance()->close_open_requests();
+
+			if ( 0 < $maximumRequests ) {
+				$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests();
+				if ( $nrOfOpenRequests >= $maximumRequests ) {
+					self::release( $identifier );
+					usleep( 200000 );
+					continue;
+				}
+			}
+
+			if ( 0 < $maximumIPRequests && null != $website ) {
+				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
+
+				if ( null != $ip && '' != $ip ) {
+					$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
+					if ( $nrOfOpenRequests >= $maximumIPRequests ) {
+						self::release( $identifier );
+						usleep( 200000 );
+						continue;
+					}
+				}
+			}
+
+			$delay = false;
+		}			
+	}
+	
 	/**
 	 * Method download_to_file()
 	 *
@@ -1756,14 +1702,11 @@ class MainWP_Connect {
 	 *
 	 * Initiate cookies directory.
 	 */
-	public static function init_cookiesdir() {
+	public static function init_cookiesdir( $cookieDir ) {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
 			global $wp_filesystem;
-
-			$dirs      = MainWP_System_Utility::get_mainwp_dir();
-			$cookieDir = $dirs[0] . 'cookies';
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 

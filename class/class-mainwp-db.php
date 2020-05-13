@@ -518,8 +518,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * 
 	 * Get groupd where allowed accessv via SQL.
 	 * 
-	 * @param string $site_table_alias Child site table alias.
-	 * @param string $is_staging yes|no Is child site a staging site.
+	 * @param string $group_table_alias Child site table alias.
+	 * @param string $with_staging yes|no Is child site a staging site.
 	 * 
 	 * @return (boolean|null) $_where Database query results or null on failer.
 	 */
@@ -674,7 +674,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param boolean $offset Query offset. Default: false.
 	 * @param boolean $rowcount Row count. Default: falese.
 	 * @param null $where SQL WHERE value.
-	 * * @param null $search_site Site search field value. Default: null.
+	 * @param null $search_site Site search field value. Default: null.
 	 * 
 	 * @return (object|null) Return database query or null on failer.
 	 */

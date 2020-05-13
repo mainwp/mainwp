@@ -24,9 +24,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method instance()
-	 * 
+	 *
 	 * Create public static instance.
-	 * 
+	 *
 	 * @static
 	 * @return MainWP_DB
 	 */
@@ -42,11 +42,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_option_view()
-	 * 
+	 *
 	 * Get wp_options view.
-	 * 
+	 *
 	 * @param array $extra Extra query vaules.
-	 * 
+	 *
 	 * @return array WP Options View.
 	 */
 	public function get_option_view( $extra = array() ) {
@@ -74,9 +74,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_disconnected_websites()
-	 * 
-	 * Get disconnected child sites. 
-	 * 
+	 *
+	 * Get disconnected child sites.
+	 *
 	 * @return array $disc_sites Array of disonnected sites.
 	 */
 	public function get_disconnected_websites() {
@@ -104,12 +104,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_count()
-	 * 
+	 *
 	 * Get child site count.
-	 * 
-	 * @param null $userId Current user ID.
-	 * @param boolean $all_access 
-	 * 
+	 *
+	 * @param null    $userId Current user ID.
+	 * @param boolean $all_access
+	 *
 	 * @return int Child site count.
 	 */
 	public function get_websites_count( $userId = null, $all_access = false ) {
@@ -155,13 +155,13 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method update_website_option()
-	 * 
-	 * Update child site options. 
-	 * 
+	 *
+	 * Update child site options.
+	 *
 	 * @param object $website Child Site object.
-	 * @param mixed $option Option to update.
-	 * @param mixed $value Value to update with.
-	 * 
+	 * @param mixed  $option Option to update.
+	 * @param mixed  $value Value to update with.
+	 *
 	 * @return (int|false) The number of rows updated, or false on error.
 	 */
 	public function update_website_option( $website, $option, $value ) {
@@ -200,14 +200,14 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_by_user_id()
-	 * 
+	 *
 	 * Get child sites by user ID.
-	 * 
-	 * @param mixed $userid User ID.
+	 *
+	 * @param mixed   $userid User ID.
 	 * @param boolean $selectgroups Selected groups.
-	 * @param null $search_site Site search field value.
-	 * @param string $orderBy Order list by. Default: URL.
-	 * 
+	 * @param null    $search_site Site search field value.
+	 * @param string  $orderBy Order list by. Default: URL.
+	 *
 	 * @return (array|object|null) Database query results or null on failer.
 	 */
 	public function get_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
@@ -216,9 +216,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_websites()
-	 * 
+	 *
 	 * Get child sites via SQL.
-	 * 
+	 *
 	 * @return object Child site object.
 	 */
 	public function get_sql_websites() {
@@ -233,17 +233,17 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_websites_by_user_id()
-	 * 
+	 *
 	 * Get child sites by user id via SQL.
-	 * 
-	 * @param mixed $userid Given User ID.
+	 *
+	 * @param mixed   $userid Given User ID.
 	 * @param boolean $selectgroups Selected groups. Default: false.
-	 * @param null $search_site Site search field value. Default: null.
-	 * @param string $orderBy Order list by. Default: URL.
+	 * @param null    $search_site Site search field value. Default: null.
+	 * @param string  $orderBy Order list by. Default: URL.
 	 * @param boolean $offset Query offset. Default: false.
 	 * @param boolean $rowcount Row count. Default: falese.
-	 * 
-	 * @return (object|null) Return database query or null on failer. 
+	 *
+	 * @return (object|null) Return database query or null on failer.
 	 */
 	public function get_sql_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
@@ -288,30 +288,30 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_websites_for_current_user()
-	 * 
+	 *
 	 * Get child sites for current user via SQL.
-	 * 
+	 *
 	 * @param boolean $selectgroups Selected groups. Default: false.
-	 * @param null $search_site Site search field value. Default: null.
-	 * @param string $orderBy Order list by. Default: URL.
+	 * @param null    $search_site Site search field value. Default: null.
+	 * @param string  $orderBy Order list by. Default: URL.
 	 * @param boolean $offset Query offset. Default: false.
 	 * @param boolean $rowcount Row count. Default: false.
-	 * @param null $extraWhere Extra WHERE. Default: null.
+	 * @param null    $extraWhere Extra WHERE. Default: null.
 	 * @param boolean $for_manager For role manager. Default: false.
-	 * @param mixed $extra_view Extra view. Default favi_icon.
-	 * @param string $is_staging yes|no Is child site a staging site.
-	 * 
+	 * @param mixed   $extra_view Extra view. Default favi_icon.
+	 * @param string  $is_staging yes|no Is child site a staging site.
+	 *
 	 * @return (object|null) Database query results or null on failer.
 	 */
-	public function get_sql_websites_for_current_user( 
-		$selectgroups = false, 
-		$search_site = null, 
-		$orderBy = 'wp.url', 
-		$offset = false, 
-		$rowcount = false, 
-		$extraWhere = null, 
-		$for_manager = false, 
-		$extra_view = array( 'favi_icon' ), 
+	public function get_sql_websites_for_current_user(
+		$selectgroups = false,
+		$search_site = null,
+		$orderBy = 'wp.url',
+		$offset = false,
+		$rowcount = false,
+		$extraWhere = null,
+		$for_manager = false,
+		$extra_view = array( 'favi_icon' ),
 		$is_staging = 'no' ) {
 
 		$where = '';
@@ -366,11 +366,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_search_websites_for_current_user()
-	 * 
+	 *
 	 * Get the child sites the current user has searched for.
-	 * 
+	 *
 	 * @param mixed $params Query parameters.
-	 * 
+	 *
 	 * @return (boolean|null) $qry Database query results or null on failer.
 	 */
 	public function get_sql_search_websites_for_current_user( $params ) {
@@ -462,12 +462,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_where_allow_access_sites()
-	 * 
+	 *
 	 * Get child sites where allowed access via SQL.
-	 * 
+	 *
 	 * @param string $site_table_alias Child site table alias.
 	 * @param string $is_staging yes|no Is child site a staging site.
-	 * 
+	 *
 	 * @return (boolean|null) $_where Database query results or null on failer.
 	 */
 	public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
@@ -515,12 +515,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_where_allow_groups()
-	 * 
+	 *
 	 * Get groupd where allowed accessv via SQL.
-	 * 
+	 *
 	 * @param string $group_table_alias Child site table alias.
 	 * @param string $with_staging yes|no Is child site a staging site.
-	 * 
+	 *
 	 * @return (boolean|null) $_where Database query results or null on failer.
 	 */
 	public function get_sql_where_allow_groups( $group_table_alias = '', $with_staging = 'no' ) {
@@ -561,12 +561,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_website_by_id()
-	 * 
+	 *
 	 * Get child site by id.
-	 * 
-	 * @param mixed $id Child site ID.
+	 *
+	 * @param mixed   $id Child site ID.
 	 * @param boolean $selectGroups Select groups.
-	 * 
+	 *
 	 * @return (object|null) Database query results or null on failure.
 	 */
 	public function get_website_by_id( $id, $selectGroups = false ) {
@@ -575,13 +575,13 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_website_by_id()
-	 * 
+	 *
 	 * Get child site by id via SQL.
-	 * 
-	 * @param mixed $id Child site ID. 
+	 *
+	 * @param mixed   $id Child site ID.
 	 * @param boolean $selectGroups Selected groups.
-	 * @param mixed $extra_view Extra view value.
-	 * 
+	 * @param mixed   $extra_view Extra view value.
+	 *
 	 * @return (object|null) Database query result or null on failure.
 	 */
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array( 'favi_icon' ) ) {
@@ -610,12 +610,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_by_ids()
-	 * 
+	 *
 	 * Get child sites by child site IDs.
-	 * 
+	 *
 	 * @param mixed $ids Child site IDs.
-	 * @param null $userId User ID.
-	 * 
+	 * @param null  $userId User ID.
+	 *
 	 * @return (object|null) Database uery result or null on failure.
 	 */
 	public function get_websites_by_ids( $ids, $userId = null ) {
@@ -630,11 +630,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_by_group_ids()
-	 * 
+	 *
 	 * Get child sites by group IDs.
-	 * 
+	 *
 	 * @param mixed $ids Group Ids.
-	 * @param null $userId User ID.
+	 * @param null  $userId User ID.
 	 *
 	 * @return (object|null) Database uery result or null on failure.
 	 */
@@ -652,9 +652,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_wensites_by_group_id()
-	 * 
+	 *
 	 * Get child sites by group id.
-	 * 
+	 *
 	 * @param mixed $id Group ID.
 	 *
 	 * @return (object|null) Database uery result or null on failure.
@@ -665,26 +665,26 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_websites_by_group_id()
-	 * 
+	 *
 	 * Get child sites by group id via SQL.
-	 * 
-	 * @param mixed $id Group ID
+	 *
+	 * @param mixed   $id Group ID
 	 * @param boolean $selectgroups Selected groups. Default: false.
-	 * @param string $orderBy Order list by. Default: URL.
+	 * @param string  $orderBy Order list by. Default: URL.
 	 * @param boolean $offset Query offset. Default: false.
 	 * @param boolean $rowcount Row count. Default: falese.
-	 * @param null $where SQL WHERE value.
-	 * @param null $search_site Site search field value. Default: null.
-	 * 
+	 * @param null    $where SQL WHERE value.
+	 * @param null    $search_site Site search field value. Default: null.
+	 *
 	 * @return (object|null) Return database query or null on failer.
 	 */
-	public function get_sql_websites_by_group_id( 
-		$id, 
-		$selectgroups = false, 
-		$orderBy = 'wp.url', 
-		$offset = false, 
-		$rowcount = false, 
-		$where = null, 
+	public function get_sql_websites_by_group_id(
+		$id,
+		$selectgroups = false,
+		$orderBy = 'wp.url',
+		$offset = false,
+		$rowcount = false,
+		$where = null,
 		$search_site = null ) {
 
 		$is_staging = 'no';
@@ -736,12 +736,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_by_group_name()
-	 * 
+	 *
 	 * Get child sites by group name()
-	 * 
+	 *
 	 * @param mixed $userid Current user ID.
 	 * @param mixed $groupname Group name.
-	 * 
+	 *
 	 * @return (object|null) Database query result or null on failure.
 	 */
 	public function get_websites_by_group_name( $userid, $groupname ) {
@@ -750,12 +750,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_sql_websites_by_group_name()
-	 * 
+	 *
 	 * Get child sites by group name.
-	 * 
+	 *
 	 * @param mixed $groupname Group name.
-	 * @param null $userid Current user ID.
-	 * 
+	 * @param null  $userid Current user ID.
+	 *
 	 * @return (object|null) Database query result or null on failure.
 	 */
 	public function get_sql_websites_by_group_name( $groupname, $userid = null ) {
@@ -779,11 +779,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_wp_ip()
-	 * 
+	 *
 	 * Get WordPress IP.
-	 * 
+	 *
 	 * @param mixed $wpid Child site ID.
-	 * 
+	 *
 	 * @return (string|null) Child Site IP address or null on failure.
 	 */
 	public function get_wp_ip( $wpid ) {
@@ -792,46 +792,46 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method add_website()
-	 * 
+	 *
 	 * Add Child Site.
-	 * 
-	 * @param mixed $userid Current User ID.
-	 * @param mixed $name Child Site name.
-	 * @param mixed $url Child Site URL.
-	 * @param mixed $admin Child Site admin
-	 * @param mixed $pubkey Public Key.
-	 * @param mixed $privkey Private Key.
-	 * @param mixed $nossl 
-	 * @param mixed $nosslkey
-	 * @param mixed $groupids Group IDs.
-	 * @param mixed $groupnames Group Names.
+	 *
+	 * @param mixed   $userid Current User ID.
+	 * @param mixed   $name Child Site name.
+	 * @param mixed   $url Child Site URL.
+	 * @param mixed   $admin Child Site admin
+	 * @param mixed   $pubkey Public Key.
+	 * @param mixed   $privkey Private Key.
+	 * @param mixed   $nossl
+	 * @param mixed   $nosslkey
+	 * @param mixed   $groupids Group IDs.
+	 * @param mixed   $groupnames Group Names.
 	 * @param integer $verifyCertificate Whether or not to verify SSL Certificate.
-	 * @param string $uniqueId Uniqueue ID
-	 * @param mixed $http_user htacess username.
-	 * @param mixed $http_pass htaccess password.
+	 * @param string  $uniqueId Uniqueue ID
+	 * @param mixed   $http_user htacess username.
+	 * @param mixed   $http_pass htaccess password.
 	 * @param integer $sslVersion SSL Version.
-	 * @param integer $wpe 
+	 * @param integer $wpe
 	 * @param integer $isStaging Whether or not child site is staging site.
-	 * 
+	 *
 	 * @return (int|false) Child Site id or false on failure.
 	 */
-	public function add_website( 
-		$userid, 
-		$name, 
+	public function add_website(
+		$userid,
+		$name,
 		$url,
-		$admin, 
-		$pubkey, 
-		$privkey, 
-		$nossl, 
-		$nosslkey, 
-		$groupids, 
-		$groupnames, 
-		$verifyCertificate = 1, 
-		$uniqueId = '', 
-		$http_user, 
-		$http_pass, 
-		$sslVersion = 0, 
-		$wpe = 0, 
+		$admin,
+		$pubkey,
+		$privkey,
+		$nossl,
+		$nosslkey,
+		$groupids,
+		$groupnames,
+		$verifyCertificate = 1,
+		$uniqueId = '',
+		$http_user,
+		$http_pass,
+		$sslVersion = 0,
+		$wpe = 0,
 		$isStaging = 0 ) {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 === $nossl || 1 === $nossl ) ) {
@@ -930,11 +930,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method remove_website()
-	 * 
+	 *
 	 * Remove child site.
-	 * 
+	 *
 	 * @param mixed $websiteid Child site ID.
-	 * 
+	 *
 	 * @return (int|boolean) Return child site Id that was removed or false on failure.
 	 */
 	public function remove_website( $websiteid ) {
@@ -952,12 +952,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method update_website_values()
-	 * 
+	 *
 	 * Update child site db values.
-	 * 
+	 *
 	 * @param mixed $websiteid Childsite ID.
 	 * @param mixed $fields Database fields to update.
-	 * 
+	 *
 	 * @return (int|false) The number of rows updated, or false on error.
 	 */
 	public function update_website_values( $websiteid, $fields ) {
@@ -970,12 +970,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method update_websites_sync_values()
-	 * 
-	 * Update child site sync values. 
-	 * 
-     * @param mixed $websiteid Childsite ID.
+	 *
+	 * Update child site sync values.
+	 *
+	 * @param mixed $websiteid Childsite ID.
 	 * @param mixed $fields Database fields to update.
-	 * 
+	 *
 	 * @return (int|false) The number of rows updated, or false on error.
 	 */
 	public function update_website_sync_values( $websiteid, $fields ) {
@@ -988,50 +988,50 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method update_website()
-	 * 
+	 *
 	 * Update child site.
-	 * 
-	 * @param mixed $websiteid
-	 * @param mixed $url Child Site URL.
-	 * @param mixed $userid
-	 * @param mixed $name Child Site name.
-	 * @param mixed $siteadmin
-	 * @param mixed $groupids Group IDs.
-	 * @param mixed $groupnames Group Names.
-	 * @param mixed $offlineChecks Offline Checks.
-	 * @param mixed $pluginDir Plugin directory.
-	 * @param mixed $maximumFileDescriptorsOverride
-	 * @param mixed $maximumFileDescriptorsAuto
-	 * @param mixed $maximumFileDescriptors
-     * @param integer $verifyCertificate Whether or not to verify SSL Certificate.
-	 * @param mixed $archiveFormat Archive formate.
-	 * @param string $uniqueId Uniqueue ID
-	 * @param mixed $http_user htacess username.
-	 * @param mixed $http_pass htaccess password.
+	 *
+	 * @param mixed   $websiteid
+	 * @param mixed   $url Child Site URL.
+	 * @param mixed   $userid
+	 * @param mixed   $name Child Site name.
+	 * @param mixed   $siteadmin
+	 * @param mixed   $groupids Group IDs.
+	 * @param mixed   $groupnames Group Names.
+	 * @param mixed   $offlineChecks Offline Checks.
+	 * @param mixed   $pluginDir Plugin directory.
+	 * @param mixed   $maximumFileDescriptorsOverride
+	 * @param mixed   $maximumFileDescriptorsAuto
+	 * @param mixed   $maximumFileDescriptors
+	 * @param integer $verifyCertificate Whether or not to verify SSL Certificate.
+	 * @param mixed   $archiveFormat Archive formate.
+	 * @param string  $uniqueId Uniqueue ID
+	 * @param mixed   $http_user htacess username.
+	 * @param mixed   $http_pass htaccess password.
 	 * @param integer $sslVersion SSL Version.
 	 * @param integer $wpe
-	 * 
+	 *
 	 * @return (boolean) ture on success or false on failure.
 	 */
-	public function update_website( 
-		$websiteid, 
-		$url, 
-		$userid, 
-		$name, 
-		$siteadmin, 
-		$groupids, 
-		$groupnames, 
-		$offlineChecks, 
-		$pluginDir, 
-		$maximumFileDescriptorsOverride, 
-		$maximumFileDescriptorsAuto, 
-		$maximumFileDescriptors, 
-		$verifyCertificate = 1, 
-		$archiveFormat, 
-		$uniqueId = '', 
-		$http_user = null, 
-		$http_pass = null, 
-		$sslVersion = 0, 
+	public function update_website(
+		$websiteid,
+		$url,
+		$userid,
+		$name,
+		$siteadmin,
+		$groupids,
+		$groupnames,
+		$offlineChecks,
+		$pluginDir,
+		$maximumFileDescriptorsOverride,
+		$maximumFileDescriptorsAuto,
+		$maximumFileDescriptors,
+		$verifyCertificate = 1,
+		$archiveFormat,
+		$uniqueId = '',
+		$http_user = null,
+		$http_pass = null,
+		$sslVersion = 0,
 		$wpe = 0 ) {
 
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
@@ -1081,9 +1081,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_check_updates_count())
-	 * 
+	 *
 	 * Get websites check updates count.
-	 * 
+	 *
 	 * @return (int) Child sites update count.
 	 */
 	public function get_websites_check_updates_count() {
@@ -1094,9 +1094,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_count_where_dts_automatic_sync_smaller_then_start()
-	 * 
+	 *
 	 * Get child site count where date & time Session sync is smaller then start.
-	 * 
+	 *
 	 * @return (int) Returned child site count.
 	 */
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
@@ -1107,9 +1107,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_last_automatic_sync()
-	 * 
+	 *
 	 * Get child site last sutomatic sync date & time.
-	 * 
+	 *
 	 * @return string Date and time of last automatic sync.
 	 */
 	public function get_websites_last_automatic_sync() {
@@ -1118,11 +1118,11 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_check_updates()
-	 * 
+	 *
 	 * Get child sites check updates.
-	 * 
+	 *
 	 * @param mixed $limit
-	 * 
+	 *
 	 * @return (object|null) Database query result or null on failure.
 	 */
 	public function get_websites_check_updates( $limit ) {
@@ -1133,9 +1133,9 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method get_websites_stats_update_sql()
-	 * 
+	 *
 	 * Get website update stats via SQL.
-	 * 
+	 *
 	 * @return (object|null) Database query result of null on failure.
 	 */
 	public function get_websites_stats_update_sql() {
@@ -1145,12 +1145,12 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * Method update_website_stats()
-	 * 
-	 * Update whether or not a child site has been updated. 
-	 * 
+	 *
+	 * Update whether or not a child site has been updated.
+	 *
 	 * @param mixed $websiteid Child site ID.
 	 * @param mixed $statsUpdated Child site Update status.
-	 * 
+	 *
 	 * @return (int|boolean) Number of rows effected in update or false on failure.
 	 */
 	public function update_website_stats( $websiteid, $statsUpdated ) {
@@ -1163,11 +1163,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	// (array|object|null) Database query results
 	/**
 	 * Method get_website_by_url()
-	 * 
+	 *
 	 * Get child site by url.
-	 * 
+	 *
 	 * @param mixed $url Child site URL.
-	 * 
+	 *
 	 * @return (object|null) Database query results or null on failure.
 	 */
 	public function get_websites_by_url( $url ) {

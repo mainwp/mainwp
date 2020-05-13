@@ -18,11 +18,15 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * @static
-	 * @var $instance instance of this
+	 * @var $instance Public static nstance of MainWP_DB
 	 */
 	private static $instance = null;
 
 	/**
+	 * Method instance()
+	 * 
+	 * Create public static instance.
+	 * 
 	 * @static
 	 * @return MainWP_DB
 	 */
@@ -36,13 +40,22 @@ class MainWP_DB extends MainWP_DB_Base {
 		return self::$instance;
 	}
 
+	/**
+	 * Method get_option_view()
+	 * 
+	 * Get wp_options view.
+	 * 
+	 * @param array $extra Extra query vaules.
+	 * 
+	 * @return array WP Options View.
+	 */
 	public function get_option_view( $extra = array() ) {
 		$view = '(SELECT intwp.id AS wpid,
-                         (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
-                         (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
-                         (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
-                         (SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
-                         (SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+            (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
+            (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
+            (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
+            (SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
+       		(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
 
 		if ( is_array( $extra ) ) {
 			foreach ( $extra as $field ) {
@@ -59,6 +72,13 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $view;
 	}
 
+	/**
+	 * Method get_disconnected_websites()
+	 * 
+	 * Get disconnected child sites. 
+	 * 
+	 * @return array $disc_sites Array of disonnected sites.
+	 */
 	public function get_disconnected_websites() {
 		$sql      = self::instance()->get_sql_websites_for_current_user();
 		$websites = self::instance()->query( $sql );
@@ -82,7 +102,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $disc_sites;
 	}
 
-	// Database actions.
+	/**
+	 * Method get_websites_count()
+	 * 
+	 * Get child site count.
+	 * 
+	 * @param null $userId Current user ID.
+	 * @param boolean $all_access 
+	 * 
+	 * @return int Child site count.
+	 */
 	public function get_websites_count( $userId = null, $all_access = false ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;
@@ -105,7 +134,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param array $website Child Site array.
 	 * @param mixed $option Child Site wp_options table name.
 	 *
-	 * @return (string|null) Database query result (as string), or null on failure
+	 * @return (string|null) Database query result (as string), or null on failure.
 	 */
 	public function get_website_option( $website, $option ) {
 
@@ -124,6 +153,17 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $site_id ) );
 	}
 
+	/**
+	 * Method update_website_option()
+	 * 
+	 * Update child site options. 
+	 * 
+	 * @param object $website Child Site object.
+	 * @param mixed $option Option to update.
+	 * @param mixed $value Value to update with.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_website_option( $website, $option, $value ) {
 		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
 		if ( 0 < count( $rslt ) ) {
@@ -158,10 +198,29 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 	}
 
+	/**
+	 * Method get_websites_by_user_id()
+	 * 
+	 * Get child sites by user ID.
+	 * 
+	 * @param mixed $userid User ID.
+	 * @param boolean $selectgroups Selected groups.
+	 * @param null $search_site Site search field value.
+	 * @param string $orderBy Order list by. Default: URL.
+	 * 
+	 * @return (array|object|null) Database query results or null on failer.
+	 */
 	public function get_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
 		return $this->get_results_result( $this->get_sql_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy ) );
 	}
 
+	/**
+	 * Method get_sql_websites()
+	 * 
+	 * Get child sites via SQL.
+	 * 
+	 * @return object Child site object.
+	 */
 	public function get_sql_websites() {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
@@ -172,6 +231,20 @@ class MainWP_DB extends MainWP_DB_Base {
                 ' . $where;
 	}
 
+	/**
+	 * Method get_sql_websites_by_user_id()
+	 * 
+	 * Get child sites by user id via SQL.
+	 * 
+	 * @param mixed $userid Given User ID.
+	 * @param boolean $selectgroups Selected groups. Default: false.
+	 * @param null $search_site Site search field value. Default: null.
+	 * @param string $orderBy Order list by. Default: URL.
+	 * @param boolean $offset Query offset. Default: false.
+	 * @param boolean $rowcount Row count. Default: falese.
+	 * 
+	 * @return (object|null) Return database query or null on failer. 
+	 */
 	public function get_sql_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
 			$where = '';
@@ -213,9 +286,34 @@ class MainWP_DB extends MainWP_DB_Base {
 		return null;
 	}
 
-	public function get_sql_websites_for_current_user( $selectgroups = false, $search_site = null, $orderBy = 'wp.url',
-									$offset = false, $rowcount = false, $extraWhere = null, $for_manager = false,
-									$extra_view = array( 'favi_icon' ), $is_staging = 'no' ) {
+	/**
+	 * Method get_sql_websites_for_current_user()
+	 * 
+	 * Get child sites for current user via SQL.
+	 * 
+	 * @param boolean $selectgroups Selected groups. Default: false.
+	 * @param null $search_site Site search field value. Default: null.
+	 * @param string $orderBy Order list by. Default: URL.
+	 * @param boolean $offset Query offset. Default: false.
+	 * @param boolean $rowcount Row count. Default: falese.
+	 * @param null $extraWhere
+	 * @param boolean $for_manager
+	 * @param mixed $extra_view
+	 * @param string $is_staging
+	 * 
+	 * @return void
+	 */
+	public function get_sql_websites_for_current_user( 
+		$selectgroups = false, 
+		$search_site = null, 
+		$orderBy = 'wp.url', 
+		$offset = false, 
+		$rowcount = false, 
+		$extraWhere = null, 
+		$for_manager = false, 
+		$extra_view = array( 'favi_icon' ), 
+		$is_staging = 'no' ) {
+
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
 			global $current_user;

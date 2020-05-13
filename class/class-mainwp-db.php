@@ -928,6 +928,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		return false;
 	}
 
+	/**
+	 * Method remove_website()
+	 * 
+	 * Remove child site.
+	 * 
+	 * @param mixed $websiteid Child site ID.
+	 * 
+	 * @return (int|boolean) Return child site Id that was removed or false on failure.
+	 */
 	public function remove_website( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 			$nr = $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp' ) . ' WHERE id=%d', $websiteid ) );
@@ -941,6 +950,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return false;
 	}
 
+	/**
+	 * Method update_website_values()
+	 * 
+	 * Update child site db values.
+	 * 
+	 * @param mixed $websiteid Childsite ID.
+	 * @param mixed $fields Database fields to update.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_website_values( $websiteid, $fields ) {
 		if ( 0 < count( $fields ) ) {
 			return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
@@ -949,6 +968,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		return false;
 	}
 
+	/**
+	 * Method update_websites_sync_values()
+	 * 
+	 * Update child site sync values. 
+	 * 
+     * @param mixed $websiteid Childsite ID.
+	 * @param mixed $fields Database fields to update.
+	 * 
+	 * @return (int|false) The number of rows updated, or false on error.
+	 */
 	public function update_website_sync_values( $websiteid, $fields ) {
 		if ( 0 < count( $fields ) ) {
 			return $this->wpdb->update( $this->table_name( 'wp_sync' ), $fields, array( 'wpid' => $websiteid ) );
@@ -957,10 +986,54 @@ class MainWP_DB extends MainWP_DB_Base {
 		return false;
 	}
 
-	public function update_website( $websiteid, $url, $userid, $name, $siteadmin, $groupids, $groupnames, $offlineChecks,
-								$pluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors,
-								$verifyCertificate = 1, $archiveFormat, $uniqueId = '', $http_user = null, $http_pass = null, $sslVersion = 0,
-								$wpe = 0 ) {
+	/**
+	 * Method update_website()
+	 * 
+	 * Update child site.
+	 * 
+	 * @param mixed $websiteid
+	 * @param mixed $url Child Site URL.
+	 * @param mixed $userid
+	 * @param mixed $name Child Site name.
+	 * @param mixed $siteadmin
+	 * @param mixed $groupids Group IDs.
+	 * @param mixed $groupnames Group Names.
+	 * @param mixed $offlineChecks Offline Checks.
+	 * @param mixed $pluginDir Plugin directory.
+	 * @param mixed $maximumFileDescriptorsOverride
+	 * @param mixed $maximumFileDescriptorsAuto
+	 * @param mixed $maximumFileDescriptors
+     * @param integer $verifyCertificate Whether or not to verify SSL Certificate.
+	 * @param mixed $archiveFormat Archive formate.
+	 * @param string $uniqueId Uniqueue ID
+	 * @param mixed $http_user htacess username.
+	 * @param mixed $http_pass htaccess password.
+	 * @param integer $sslVersion SSL Version.
+	 * @param integer $wpe
+	 * 
+	 * @return (boolean) ture on success or false on failure.
+	 */
+	public function update_website( 
+		$websiteid, 
+		$url, 
+		$userid, 
+		$name, 
+		$siteadmin, 
+		$groupids, 
+		$groupnames, 
+		$offlineChecks, 
+		$pluginDir, 
+		$maximumFileDescriptorsOverride, 
+		$maximumFileDescriptorsAuto, 
+		$maximumFileDescriptors, 
+		$verifyCertificate = 1, 
+		$archiveFormat, 
+		$uniqueId = '', 
+		$http_user = null, 
+		$http_pass = null, 
+		$sslVersion = 0, 
+		$wpe = 0 ) {
+
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1006,33 +1079,80 @@ class MainWP_DB extends MainWP_DB_Base {
 		return false;
 	}
 
+	/**
+	 * Method get_websites_check_updates_count())
+	 * 
+	 * Get websites check updates count.
+	 * 
+	 * @return (int) Child sites update count.
+	 */
 	public function get_websites_check_updates_count() {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where );
 	}
 
+	/**
+	 * Method get_websites_count_where_dts_automatic_sync_smaller_then_start()
+	 * 
+	 * Get child site count where date & time Session sync is smaller then start.
+	 * 
+	 * @return (int) Returned child site count.
+	 */
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where );
 	}
 
+	/**
+	 * Method get_websites_last_automatic_sync()
+	 * 
+	 * Get child site last sutomatic sync date & time.
+	 * 
+	 * @return string Date and time of last automatic sync.
+	 */
 	public function get_websites_last_automatic_sync() {
 		return $this->wpdb->get_var( 'SELECT MAX(wp_sync.dtsAutomaticSync) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid' );
 	}
 
+	/**
+	 * Method get_websites_check_updates()
+	 * 
+	 * Get child sites check updates.
+	 * 
+	 * @param mixed $limit
+	 * 
+	 * @return (object|null) Database query result or null on failure.
+	 */
 	public function get_websites_check_updates( $limit ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
 		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
 	}
 
+	/**
+	 * Method get_websites_stats_update_sql()
+	 * 
+	 * Get website update stats via SQL.
+	 * 
+	 * @return (object|null) Database query result of null on failure.
+	 */
 	public function get_websites_stats_update_sql() {
 		$where = $this->get_sql_where_allow_access_sites();
 		return 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
 	}
 
+	/**
+	 * Method update_website_stats()
+	 * 
+	 * Update whether or not a child site has been updated. 
+	 * 
+	 * @param mixed $websiteid Child site ID.
+	 * @param mixed $statsUpdated Child site Update status.
+	 * 
+	 * @return (int|boolean) Number of rows effected in update or false on failure.
+	 */
 	public function update_website_stats( $websiteid, $statsUpdated ) {
 		return $this->wpdb->update(
 			$this->table_name( 'wp' ),
@@ -1041,6 +1161,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		);
 	}
 	// (array|object|null) Database query results
+	/**
+	 * Method get_website_by_url()
+	 * 
+	 * Get child site by url.
+	 * 
+	 * @param mixed $url Child site URL.
+	 * 
+	 * @return (object|null) Database query results or null on failure.
+	 */
 	public function get_websites_by_url( $url ) {
 		if ( '/' != substr( $url, - 1 ) ) {
 			$url .= '/';

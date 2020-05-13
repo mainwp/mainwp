@@ -108,7 +108,7 @@ class MainWP_Premium_Update {
 
 		return false;
 	}
-	
+
 	/**
 	 * Method maybe_request_premium_updates()
 	 *
@@ -167,7 +167,7 @@ class MainWP_Premium_Update {
 
 		return $request_update;
 	}
-	
+
 	/**
 	 * Method check_request_update_premium()
 	 *

@@ -506,8 +506,6 @@ class MainWP_Server_Information_Handler {
 	 * Method  get_server_ip()
 	 *
 	 * Get server IP address.
-	 *
-	 * @return string $_SERVER['SERVER_ADDR'].
 	 */
 	public static function get_server_ip() {
 		echo $_SERVER['SERVER_ADDR'];

@@ -441,8 +441,8 @@ class MainWP_Updates_Per_Item {
 	 * Render abandoned plugins
 	 *
 	 * @param object $websites the websites.
-	 * @param array $allPluginsOutdate all abandoned plugins.
-	 * @param array $decodedDismissedPlugins all dismissed abandoned plugins.
+	 * @param array  $allPluginsOutdate all abandoned plugins.
+	 * @param array  $decodedDismissedPlugins all dismissed abandoned plugins.
 	 */
 	public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );

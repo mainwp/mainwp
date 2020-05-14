@@ -292,7 +292,7 @@ class MainWP_System {
 	 *
 	 * Check if there has been a wp mail failer.
 	 *
-	 * @param $error Array of error messages.
+	 * @param string $error Array of error messages.
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -395,10 +395,11 @@ class MainWP_System {
 			/**
 			 * Method mainwp_current_user_have_right()
 			 *
-			 * Check permission level by hook mainwp_currentusercan of Team Control extension
+			 * Check permission level by hook mainwp_currentusercan of Team Control extension.
 			 *
-			 * @param string $cap_type group or type of capabilities
-			 * @param string $cap capabilities for current user
+			 * @param string $cap_type group or type of capabilities.
+			 * @param string $cap capabilities for current user.
+			 *
 			 * @return bool true|false
 			 */
 			function mainwp_current_user_have_right( $cap_type = '', $cap ) {
@@ -657,9 +658,7 @@ class MainWP_System {
 	 *
 	 * Enqueue all Mainwp Admin Scripts.
 	 *
-	 * @param mixed $hook
-	 *
-	 * @return html Script Meta Tags to include on page.
+	 * @param mixed $hook Enqueue hook.
 	 */
 	public function admin_enqueue_scripts( $hook ) {
 
@@ -708,9 +707,7 @@ class MainWP_System {
 	 *
 	 * Enqueue all Mainwp Admin Styles.
 	 *
-	 * @param mixed $hook
-	 *
-	 * @return html Styles Meta Tags to include on page.
+	 * @param mixed $hook Enqueue hook.
 	 */
 	public function admin_enqueue_styles( $hook ) {
 		global $wp_version;
@@ -830,7 +827,7 @@ class MainWP_System {
 	}
 
 	/**
-	 * method activation()
+	 * Method activation()
 	 *
 	 * Activate MainWP.
 	 */
@@ -840,7 +837,7 @@ class MainWP_System {
 	}
 
 	/**
-	 * method deactivation()
+	 * Method deactivation()
 	 *
 	 * Deactivate MainWP.
 	 */
@@ -849,7 +846,7 @@ class MainWP_System {
 	}
 
 	/**
-	 * method update()
+	 * Method update()
 	 *
 	 * Update MainWP.
 	 */

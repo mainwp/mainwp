@@ -26,9 +26,9 @@ class MainWP_Plugins_Handler {
 	/**
 	 * Plugins Search Handler.
 	 *
-	 * @param mixed $data Search Data.
+	 * @param mixed  $data Search Data.
 	 * @param object $website Child Sites.
-	 * @param mixed $output Output.
+	 * @param mixed  $output Output.
 	 *
 	 * @uses MainWP_Error_Helper::get_error_message()
 	 * @uses MainWP_Exception()

@@ -739,7 +739,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * Get child sites by group name()
 	 *
-	 * @param int $userid Current user ID.
+	 * @param int    $userid Current user ID.
 	 * @param string $groupname Group name.
 	 *
 	 * @return object|null Database query result or null on failure.
@@ -754,7 +754,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get child sites by group name.
 	 *
 	 * @param string $groupname Group name.
-	 * @param int  $userid Current user ID.
+	 * @param int    $userid Current user ID.
 	 *
 	 * @return object|null Database query result or null on failure.
 	 */

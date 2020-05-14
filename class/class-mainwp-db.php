@@ -18,7 +18,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 	/**
 	 * @static
-	 * @var $instance Public static nstance of MainWP_DB
+	 * @var $instance Public static instance of MainWP_DB class
 	 */
 	private static $instance = null;
 
@@ -108,7 +108,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get child site count.
 	 *
 	 * @param null    $userId Current user ID.
-	 * @param boolean $all_access Does user have access to all sites?
+	 * @param boolean $all_access Check if user has access to all sites.
 	 *
 	 * @return int Child site count.
 	 */
@@ -161,8 +161,6 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param object $website Child Site object.
 	 * @param mixed  $option Option to update.
 	 * @param mixed  $value Value to update with.
-	 *
-	 * @return int|false The number of rows updated, or false on error.
 	 */
 	public function update_website_option( $website, $option, $value ) {
 		$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
@@ -668,7 +666,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * Get child sites by group id via SQL.
 	 *
-	 * @param int     $id Group ID
+	 * @param int     $id Group ID.
 	 * @param boolean $selectgroups Selected groups. Default: false.
 	 * @param string  $orderBy Order list by. Default: URL.
 	 * @param boolean $offset Query offset. Default: false.
@@ -739,7 +737,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * Get child sites by group name()
 	 *
-	 * @param int $userid Current user ID.
+	 * @param int    $userid Current user ID.
 	 * @param string $groupname Group name.
 	 *
 	 * @return object|null Database query result or null on failure.
@@ -754,7 +752,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get child sites by group name.
 	 *
 	 * @param string $groupname Group name.
-	 * @param int  $userid Current user ID.
+	 * @param int    $userid Current user ID.
 	 *
 	 * @return object|null Database query result or null on failure.
 	 */
@@ -810,7 +808,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param string $http_user HTTP Basic Authentication username.
 	 * @param string $http_pass HTTP Basic Authentication password.
 	 * @param int    $sslVersion SSL Version.
-	 * @param int    $wpe WP Engine hosted site?
+	 * @param int    $wpe Is it WP Engine hosted site.
 	 * @param int    $isStaging Whether or not child site is staging site.
 	 *
 	 * @return int|false Child site ID or false on failure.
@@ -1009,7 +1007,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param string  $http_user HTTP Basic Authentication username.
 	 * @param string  $http_pass HTTP Basic Authentication password.
 	 * @param int     $sslVersion SSL Version.
-	 * @param int     $wpe WP Engine hosted site?
+	 * @param int     $wpe Is it WP Engine hosted site.
 	 *
 	 * @return boolean ture on success or false on failure.
 	 */
@@ -1160,7 +1158,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			array( 'id' => $websiteid )
 		);
 	}
-	// (array|object|null) Database query results
+
 	/**
 	 * Method get_website_by_url()
 	 *

@@ -21,7 +21,7 @@ class MainWP_Connect {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return object
+	 * @return object Class name.
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
@@ -32,12 +32,12 @@ class MainWP_Connect {
 	 *
 	 * Try connecting to Child Site via cURL.
 	 *
-	 * @param mixed             $url Child Site URL.
-	 * @param boolean True|null $verifyCertificate Option to check SSL Certificate. Default = null.
+	 * @param string            $url Child Site URL.
+	 * @param boolean true|null $verifyCertificate Option to check SSL Certificate. Default = null.
 	 * @param string            $http_user HTTPAuth Username. Default = null.
 	 * @param string            $http_pass HTTPAuth Password. Default = null.
 	 * @param integer           $sslVersion Child Site SSL Version.
-	 * @param boolean True|null $forceUseIPv4 Option to fource IP4. Default = null.
+	 * @param boolean true|null $forceUseIPv4 Option to fource IP4. Default = null.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
@@ -482,14 +482,14 @@ class MainWP_Connect {
 	 *
 	 * Fethech authorized URLs.
 	 *
-	 * @param mixed $websites
-	 * @param mixed $what
-	 * @param mixed $params
-	 * @param mixed $handler
-	 * @param mixed $output
-	 * @param mixed $whatPage
-	 * @param array $others
-	 * @param bool  $is_external_hook
+	 * @param object $websites Websites information.
+	 * @param string $what Action to perorm.
+	 * @param array  $params Request parameters.
+	 * @param mixed  $handler Request handler.
+	 * @param mixed  $output Request output.
+	 * @param mixed  $whatPage Request URL. Default /admin-ajax.php.
+	 * @param array  $others Request additional information.
+	 * @param bool   $is_external_hook Check if external hook is used.
 	 *
 	 * @return bool true|false
 	 */
@@ -753,14 +753,14 @@ class MainWP_Connect {
 	 *
 	 * To debug fetch authorized URLs.
 	 *
-	 * @param mixed $websites
-	 * @param mixed $what
-	 * @param mixed $params
-	 * @param mixed $handler
-	 * @param mixed $output
-	 * @param mixed $whatPage
-	 * @param bool  $json_format
-	 * @param array $others
+	 * @param object $websites Websites information.
+	 * @param string $what Action to perorm.
+	 * @param array  $params Request parameters.
+	 * @param mixed  $handler Request handler.
+	 * @param mixed  $output Request output.
+	 * @param mixed  $whatPage Request URL. Default /admin-ajax.php.
+	 * @param bool   $json_format Use JSON format.
+	 * @param array  $others Request additional information.
 	 *
 	 * @return bool true|false
 	 */
@@ -1096,23 +1096,23 @@ class MainWP_Connect {
 	/**
 	 * Method lock()
 	 *
-	 * Use sem_acquire or @flock to lock the $pIdentifier.
+	 * Use sem_acquire or @flock to lock the $identifier.
 	 *
-	 * @param mixed $pIdentifier
+	 * @param mixed $identifier Identifier.
 	 *
 	 * @return mixed false|sem_acquire()|@flock
 	 */
-	public static function lock( $pIdentifier ) {
-		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
+	public static function lock( $identifier ) {
+		if ( ( null == $identifier ) || ( false == $identifier ) ) {
 			return false;
 		}
 
 		if ( function_exists( 'sem_acquire' ) ) {
-			return sem_acquire( $pIdentifier );
+			return sem_acquire( $identifier );
 		} else {
 			for ( $i = 0; $i < 3; $i ++ ) {
-				if ( @flock( $pIdentifier, LOCK_EX ) ) {
-					return $pIdentifier;
+				if ( @flock( $identifier, LOCK_EX ) ) {
+					return $identifier;
 				} else {
 					sleep( 1 );
 				}
@@ -1127,37 +1127,37 @@ class MainWP_Connect {
 	/**
 	 * Method release()
 	 *
-	 * Use sem_release or @flock, @fclose to unlock $pIdentifier.
+	 * Use sem_release or @flock, @fclose to unlock $identifier.
 	 *
-	 * @param mixed $pIdentifier
+	 * @param mixed $identifier Identifier.
 	 *
 	 * @return mixed false|sem_release()|@flock
 	 */
-	public static function release( $pIdentifier ) {
-		if ( ( null == $pIdentifier ) || ( false == $pIdentifier ) ) {
+	public static function release( $identifier ) {
+		if ( ( null == $identifier ) || ( false == $identifier ) ) {
 			return false;
 		}
 
 		if ( function_exists( 'sem_release' ) ) {
-			return sem_release( $pIdentifier );
+			return sem_release( $identifier );
 		} else {
-			@flock( $pIdentifier, LOCK_UN );
-			@fclose( $pIdentifier );
+			@flock( $identifier, LOCK_UN );
+			@fclose( $identifier );
 		}
 
 		return false;
 	}
 
 	/**
-	 * Method  fetch_url_authed()
+	 * Method fetch_url_authed()
 	 *
-	 * @param mixed   $website
-	 * @param mixed   $what
-	 * @param null    $params
-	 * @param boolean $checkConstraints
-	 * @param boolean $pForceFetch
-	 * @param boolean $pRetryFailed
-	 * @param null    $rawResponse
+	 * @param object  $website Website information.
+	 * @param string  $what Function to perform.
+	 * @param null    $params Function paramerters.
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
+	 * @param boolean $pForceFetch true|false Whether or not to force the fetch.
+	 * @param boolean $pRetryFailed true|false Whether or not to retry the fetch process.
+	 * @param null    $rawResponse Raw response.
 	 *
 	 * @return mixed $information
 	 */
@@ -1260,9 +1260,9 @@ class MainWP_Connect {
 	 *
 	 * Fetch not authorized URL.
 	 *
-	 * @param mixed   $url URL to fetch from.
-	 * @param mixed   $admin Admin name.
-	 * @param mixed   $what What function to perform.
+	 * @param string  $url URL to fetch from.
+	 * @param string  $admin Admin name.
+	 * @param string  $what Function to perform.
 	 * @param null    $params Function paramerters.
 	 * @param boolean $pForceFetch true|false Whether or not to force the fetch.
 	 * @param null    $verifyCertificate Verify the SSL Certificate.
@@ -1271,7 +1271,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version to check for.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @return mixed self::fetch_url()
+	 * @return mixed self::fetch_url() Fetch URL.
 	 */
 	public static function fetch_url_not_authed(
 		$url,
@@ -1305,8 +1305,8 @@ class MainWP_Connect {
 	 *
 	 * Fetch URL.
 	 *
-	 * @param mixed   $website Child Site info.
-	 * @param mixed   $url URL to fetch from.
+	 * @param object  $website Child Site info.
+	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
 	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
@@ -1316,7 +1316,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @throw \Exception
+	 * @throws string $e Excetpion message.
 	 *
 	 * @return mixed self::m_fetch_url()
 	 */
@@ -1361,8 +1361,10 @@ class MainWP_Connect {
 	/**
 	 * Method m_fetch_url()
 	 *
-	 * @param mixed   $website Child Site info.
-	 * @param mixed   $url URL to fetch from.
+	 * M Fetch URL.
+	 *
+	 * @param object  $website Child Site info.
+	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
 	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
@@ -1371,7 +1373,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @throw MainWP_Exception
+	 * @throws string MainWP_Exception Exception message.
 	 *
 	 * @return mixed $data, $information.
 	 */
@@ -1693,6 +1695,8 @@ class MainWP_Connect {
 	 * @param boolean $size Size of file.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
+	 *
+	 * @throws string MainWP_Exception() exception message.
 	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 

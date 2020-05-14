@@ -761,8 +761,6 @@ class MainWP_Connect {
 	 * @param mixed  $whatPage Request URL. Default /admin-ajax.php.
 	 * @param bool   $json_format Use JSON format.
 	 * @param array  $others Request additional information.
-	 *
-	 * @return bool true|false
 	 */
 	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1316,7 +1314,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @throws string $e Excetpion message.
+	 * @throws string \Exception Excetpion message.
 	 *
 	 * @return mixed self::m_fetch_url()
 	 */
@@ -1583,8 +1581,6 @@ class MainWP_Connect {
 	 * Check connection delay constraints.
 	 *
 	 * @param mixed $identifier Lock identifier.
-	 *
-	 * @return (boolean) Return true if there is a delay and false if there is not.
 	 */
 	private static function check_constraints( &$identifier ) {
 		$semLock      = '103218';
@@ -1696,7 +1692,7 @@ class MainWP_Connect {
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
 	 *
-	 * @throws string MainWP_Exception() exception message.
+	 * @throws string MainWP_Exception Exception message.
 	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 

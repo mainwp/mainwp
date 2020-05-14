@@ -116,45 +116,6 @@ class MainWP_Utility {
 	}
 
 	/**
-	 * Method json_convert_string()
-	 *
-	 * Convert content into utf8 encoding.
-	 *
-	 * @param mixed $mixed
-	 *
-	 * @return mixed $mixed
-	 */
-	public static function json_convert_string( $mixed ) {
-		if ( is_array( $mixed ) ) {
-			foreach ( $mixed as $key => $value ) {
-				$mixed[ $key ] = self::json_convert_string( $value );
-			}
-		} elseif ( is_string( $mixed ) ) {
-			if ( function_exists( 'mb_convert_encoding' ) ) {
-				return mb_convert_encoding( $mixed, 'UTF-8', 'UTF-8' );
-			}
-		}
-		return $mixed;
-	}
-
-	/**
-	 * Method safe_json_encode()
-	 *
-	 * @param mixed   $value String to encode.
-	 * @param integer $options Options for encoding.
-	 * @param integer $depth Depth to encode to.
-	 *
-	 * @return mixed $encoded Encoded String.
-	 */
-	public static function safe_json_encode( $value, $options = 0, $depth = 512 ) {
-		$encoded = wp_json_encode( $value, $options, $depth );
-		if ( false === $encoded && $value && json_last_error() == JSON_ERROR_UTF8 ) {
-			$encoded = wp_json_encode( self::json_convert_string( $value ), $options, $depth );
-		}
-		return $encoded;
-	}
-
-	/**
 	 * Method ctype_digit()
 	 *
 	 * Returns TRUE if every character in the string text is a decimal digit, FALSE otherwise.

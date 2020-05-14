@@ -242,7 +242,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['plugins'] ) ) {
-			$websiteValues['plugins'] = MainWP_Utility::safe_json_encode( $information['plugins'] );
+			$websiteValues['plugins'] = wp_json_encode( $information['plugins'] );
 			$done                     = true;
 		}
 
@@ -252,7 +252,7 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['categories'] ) ) {
-			$websiteValues['categories'] = MainWP_Utility::safe_json_encode( $information['categories'] );
+			$websiteValues['categories'] = wp_json_encode( $information['categories'] );
 			$done                        = true;
 		}
 

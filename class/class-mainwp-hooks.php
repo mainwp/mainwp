@@ -45,6 +45,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
 
 		/**
+		 * mainwp_getErrorMessage deprecated filter.
+		 *
 		 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
 		 */
 		add_filter( 'mainwp_getErrorMessage', array( &$this, 'get_error_message' ), 10, 2 );
@@ -84,38 +86,32 @@ class MainWP_Hooks {
 	 *
 	 * MainWP debug log.
 	 *
-	 * @param mixed $pText Debug text.
-	 *
-	 * @return string Debug text.
+	 * @param string $text Debug text.
 	 */
-	public function mainwp_log_debug( $pText ) {
-		MainWP_Logger::instance()->debug( $pText );
+	public function mainwp_log_debug( $text ) {
+		MainWP_Logger::instance()->debug( $text );
 	}
 
 	/**
 	 * Method mainwp_log_info()
 	 *
-	 * MainWP Log Info.
+	 * MainWP log info.
 	 *
-	 * @param mixed $pText Info Text.
-	 *
-	 * @return string Info Text.
+	 * @param string $text Info Text.
 	 */
-	public function mainwp_log_info( $pText ) {
-		MainWP_Logger::instance()->info( $pText );
+	public function mainwp_log_info( $text ) {
+		MainWP_Logger::instance()->info( $text );
 	}
 
 	/**
 	 * Method mainwp_log_warning()
 	 *
-	 * MainWP Log Warning.
+	 * MainWP log warning.
 	 *
-	 * @param mixed $pText Warning Text.
-	 *
-	 * @return string Warning Text.
+	 * @param string $text Warning text.
 	 */
-	public function mainwp_log_warning( $pText ) {
-		MainWP_Logger::instance()->warning( $pText );
+	public function mainwp_log_warning( $text ) {
+		MainWP_Logger::instance()->warning( $text );
 	}
 
 	/**
@@ -133,7 +129,7 @@ class MainWP_Hooks {
 	 * Hook to add Child Site.
 	 *
 	 * @since 3.2.2
-	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site
+	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site.
 	 *
 	 * @return array $ret data fields: response, siteid.
 	 */
@@ -164,9 +160,9 @@ class MainWP_Hooks {
 	 *
 	 * Hook to delete Child Site.
 	 *
-	 * @param boolean $site_id Child Site ID.
+	 * @param boolean $site_id Child site ID.
 	 *
-	 * @return (boolean|array) Return false if empty and return array error - Site not found | result - SUCCESS.
+	 * @return boolean|array Return false if empty and return array error - Site not found | result - SUCCESS.
 	 */
 	public function hook_delete_site( $site_id = false ) {
 
@@ -208,9 +204,9 @@ class MainWP_Hooks {
 	 * @since 3.4.4
 	 * @param mixed   $pluginFile Plugin file.
 	 * @param mixed   $key Key.
-	 * @param mixed   $websiteid Child Site ID.
-	 * @param mixed   $cloneid Cloan ID
-	 * @param mixed   $clone_url Cloan URL.
+	 * @param mixed   $websiteid Child site ID.
+	 * @param mixed   $cloneid Clone site ID.
+	 * @param mixed   $clone_url Clone site URL.
 	 * @param boolean $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
@@ -226,8 +222,8 @@ class MainWP_Hooks {
 	 *
 	 * @param mixed   $pluginFile Plugin file.
 	 * @param mixed   $key Key.
-	 * @param string  $clone_url Cloan URL.
-	 * @param boolean $clone_site_id Cloan Site ID.
+	 * @param string  $clone_url Clone site URL.
+	 * @param boolean $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
 	 */
@@ -241,7 +237,7 @@ class MainWP_Hooks {
 	 * Hook to edit Child Site.
 	 *
 	 * @since 3.2.2
-	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id
+	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id.
 	 *
 	 * @return int $ret Child site ID.
 	 */
@@ -261,13 +257,11 @@ class MainWP_Hooks {
 	 *
 	 * Hook to add MainWP Left Menu item.
 	 *
-	 * @param mixed   $title Menu title.
-	 * @param mixed   $slug Menu Slug.
-	 * @param mixed   $href Menu link.
-	 * @param integer $level Menu Level.
+	 * @param string  $title Menu title.
+	 * @param string  $slug Menu slug.
+	 * @param string  $href Menu link.
+	 * @param integer $level Menu level.
 	 * @param string  $parent_key Parent menu.
-	 *
-	 * @return array $mainwp_leftmenu[] | $mainwp_sub_leftmenu[].
 	 */
 	public function hook_add_sub_left_menu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
 		$item = array(
@@ -384,8 +378,6 @@ class MainWP_Hooks {
 	 * Echo Cached Search Body.
 	 *
 	 * @param string $page Current MainWP Page.
-	 *
-	 *  @return string Cached Seach body html.
 	 */
 	public function cache_echo_body( $page ) {
 		MainWP_Cache::echo_body( $page );
@@ -397,8 +389,6 @@ class MainWP_Hooks {
 	 * Initiate search session variables for the current page.
 	 *
 	 * @param string $page Current MainWP Page.
-	 *
-	 * @return void
 	 */
 	public function cache_init( $page ) {
 		MainWP_Cache::init_cache( $page );
@@ -411,8 +401,6 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $context Time of search.
-	 *
-	 * @return void
 	 */
 	public function cache_add_context( $page, $context ) {
 		MainWP_Cache::add_context( $page, $context );
@@ -425,8 +413,6 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $body Search body.
-	 *
-	 * @return void
 	 */
 	public function cache_add_body( $page, $body ) {
 		MainWP_Cache::add_body( $page, $body );
@@ -445,8 +431,6 @@ class MainWP_Hooks {
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
 	 * @param array   $selected_groups Selected Groups.
-	 *
-	 * @return string MainWP Select Sites Box html.
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
@@ -457,11 +441,9 @@ class MainWP_Hooks {
 	 *
 	 * Hook to send user a notification via wp_mail()
 	 *
-	 * @param mixed $userId User ID.
-	 * @param mixed $subject Email Subject.
-	 * @param mixed $content Email Content.
-	 *
-	 * @return (bool) Whether the email contents were sent successfully.
+	 * @param int    $userId User ID.
+	 * @param string $subject Email Subject.
+	 * @param string $content Email Content.
 	 */
 	public function notify_user( $userId, $subject, $content ) {
 		wp_mail(
@@ -505,11 +487,11 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get Child site wp_options.
 	 *
-	 * @param mixed  $boolean
-	 * @param array  $website Child Site array.
+	 * @param mixed  $boolean Boolean check.
+	 * @param object $website Child site information object.
 	 * @param string $name Option table name.
 	 *
-	 * @return (string|null) Database query result (as string), or null on failure
+	 * @return string|null Database query result (as string), or null on failure
 	 */
 	public function get_website_options( $boolean, $website, $name = '' ) {
 
@@ -531,9 +513,9 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get Child Site by URL.
 	 *
-	 * @param mixed $url Child Site URL.
+	 * @param string $url Child Site URL.
 	 *
-	 * @return (array|object|null) Database query results.
+	 * @return array|object|null Database query results.
 	 */
 	public function get_websites_by_url( $url ) {
 		return MainWP_DB::instance()->get_websites_by_url( $url );
@@ -598,7 +580,7 @@ class MainWP_Hooks {
 	 * @param string $can_type group or type of capabilities.
 	 * @param string $which Which function to perform.
 	 *
-	 * @return (bool) $input Return true if the user can and false if they can not.
+	 * @return bool $input Return true if the user can and false if they can not.
 	 */
 	public function hook_current_user_can( $input, $can_type, $which ) {
 
@@ -614,7 +596,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get MainWP Directory.
 	 *
-	 * @param boolean $false
+	 * @param boolean $false False.
 	 * @param null    $dir WP files system diectories.
 	 * @param boolean $direct_access Return true if Direct access file system. Default: false.
 	 *
@@ -684,7 +666,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook to check if multi user.
 	 *
-	 * @return (bool) true|false.
+	 * @return bool true|false.
 	 */
 	public function is_multi_user() {
 		return MainWP_System::instance()->is_multi_user();
@@ -698,7 +680,7 @@ class MainWP_Hooks {
 	 * @param mixed $allowedExtensions Allowed files extentions.
 	 * @param mixed $sizeLimit Maximum file size allowed to be uploaded.
 	 *
-	 * @return (bool) Return true on upload false on failer.
+	 * @return bool Return true on upload false on failer.
 	 */
 	public function filter_qq2_file_uploader( $allowedExtensions, $sizeLimit ) {
 		return new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
@@ -710,7 +692,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get meta boxes.
 	 *
-	 * @return (string|bool) Return error or true.
+	 * @return string|bool Return error or true.
 	 */
 	public function get_meta_boxes() {
 		return MainWP_System::instance()->metaboxes;
@@ -725,7 +707,7 @@ class MainWP_Hooks {
 	 * @param mixed  $email Email address.
 	 * @param string $title Email title.
 	 *
-	 * @return (string|bool) Return error or true.
+	 * @return string|bool Return error or true.
 	 */
 	public function get_format_email( $body, $email, $title = '' ) {
 		return MainWP_Format::format_email( $email, $body, $title );
@@ -735,8 +717,6 @@ class MainWP_Hooks {
 	 * Method active_plugin()
 	 *
 	 * Hook to activate plugins.
-	 *
-	 * @return (string|bool) Return error or true.
 	 */
 	public function active_plugin() {
 		MainWP_Plugins_Handler::activate_plugins();
@@ -747,8 +727,6 @@ class MainWP_Hooks {
 	 * Method deactive_plugin()
 	 *
 	 * Hook to deactivate plugins.
-	 *
-	 * @return (string|bool) Return error or true.
 	 */
 	public function deactive_plugin() {
 		MainWP_Plugins_Handler::deactivate_plugins();
@@ -759,8 +737,6 @@ class MainWP_Hooks {
 	 * Method delete_plugin()
 	 *
 	 * Hook to delete plugins.
-	 *
-	 * @return (string|bool) Return error or true.
 	 */
 	public function delete_plugin() {
 		MainWP_Plugins_Handler::delete_plugins();
@@ -771,8 +747,6 @@ class MainWP_Hooks {
 	 * Method delete_theme()
 	 *
 	 * Hook to delete theme()
-	 *
-	 * @return (string|bool) Return error or true.
 	 */
 	public function delete_theme() {
 		MainWP_Themes_Handler::delete_themes();
@@ -783,8 +757,6 @@ class MainWP_Hooks {
 	 * Method upgrade_plugin_theme()
 	 *
 	 * Hook to update theme.
-	 *
-	 * @return (string|bool) Return error or true.
 	 */
 	public function upgrade_plugin_theme() {
 		try {

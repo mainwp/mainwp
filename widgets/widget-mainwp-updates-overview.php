@@ -775,7 +775,7 @@ class MainWP_Updates_Overview {
 
 	/**
 	 * Method render_global_update()
-	 * 
+	 *
 	 * Render global updates.
 	 *
 	 * @param bool  $user_can_update_wordpress permission to update WordPress.
@@ -794,7 +794,7 @@ class MainWP_Updates_Overview {
 	 * @param bool  $user_can_update_translation permission to update languages.
 	 * @param int   $total_translation_upgrades total WordPress update.
 	 * @param mixed $all_translations_updates all transations update list.
-	 * 
+	 *
 	 * @return string Overview Widget updates content html.
 	 */
 	public static function render_global_update(

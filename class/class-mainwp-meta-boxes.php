@@ -13,11 +13,11 @@ namespace MainWP\Dashboard;
 class MainWP_Meta_Boxes {
 
 	/**
+	 * Method select_sites()
+	 *
 	 * Select Sites.
 	 *
-	 * @param mixed $post Post Array
-	 *
-	 * @return html Select Sites Form.
+	 * @param object $post Post object.
 	 */
 	public function select_sites( $post ) {
 
@@ -47,23 +47,25 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
+	 * Method select_sites_handle()
+	 *
 	 * Update Post meta for Select Sites Meta boxes.
 	 *
 	 * @param mixed $post_id Post ID.
-	 * @param mixed $post_type Post Type
+	 * @param mixed $post_type Post type.
 	 *
-	 * @return int $post_id
+	 * @return int $post_id Post ID.
 	 */
 	public function select_sites_handle( $post_id, $post_type ) {
 		/**
-		 * verify this came from the our screen and with proper authorization.
+		 * Verify this came from the our screen and with proper authorization.
 		 */
 		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
 
 		/**
-		 * verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything
+		 * Verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything.
 		 */
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
@@ -107,11 +109,11 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
-	 * Render Add Categories.
+	 * Method add_categories()
 	 *
-	 * @param mixed $post Post array.
+	 * Render add categories.
 	 *
-	 * @return html
+	 * @param object $post Post object.
 	 */
 	public function add_categories( $post ) {
 		$categories = apply_filters( 'mainwp_bulkpost_saved_categories', $post, array() );
@@ -185,35 +187,37 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
-	 * Handle adding Categories.
+	 * Method add_categories_handle()
 	 *
-	 * @param mixed $post_id Post ID.
-	 * @param mixed $post_type Post Type.
+	 * Handle adding categories.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $post_type Post type.
 	 */
 	public function add_categories_handle( $post_id, $post_type ) {
 		/**
-		 * verify this came from the our screen and with proper authorization.
+		 * Verify this came from the our screen and with proper authorization.
 		 */
 		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( $_POST['post_category_nonce'], 'post_category_' . $post_id ) ) {
 			return;
 		}
 
 		/**
-		 * verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything
+		 * Verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything.
 		 */
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 
 		/**
-		 * Check permissions
+		 * Check permissions.
 		 */
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
 
 		/**
-		 * OK, we're authenticated: we need to find and save the data
+		 * OK, we're authenticated: we need to find and save the data.
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type ) {
@@ -230,19 +234,23 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
+	 * Method add_tags()
+	 *
 	 * Add tags to Post array.
 	 *
-	 * @param mixed $post Post array.
+	 * @param object $post Post object.
 	 */
 	public function add_tags( $post ) {
 		$this->add_extra( 'Tags', '_tags', 'add_tags', $post );
 	}
 
 	/**
+	 * Method add_tags_handle()
+	 *
 	 * Add Tags to post array handler.
 	 *
-	 * @param mixed $post_id Post ID.
-	 * @param mixed $post_type post Type.
+	 * @param int    $post_id Post ID.
+	 * @param string $post_type Post type.
 	 */
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
@@ -252,23 +260,25 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
-	 * Add Slug to Post array.
+	 * Method add_slug()
 	 *
-	 * @param $post Post Array.
+	 * Add Slug to Post object.
+	 *
+	 * @param object $post Post object.
 	 */
 	public function add_slug( $post ) {
 		$this->add_extra( 'Slug', '_slug', 'add_slug', $post );
 	}
 
 	/**
-	 * Add nounce to post array.
+	 * Method add_extra()
 	 *
-	 * @param mixed $title Post Title
-	 * @param mixed $saveto
-	 * @param mixed $prefix
-	 * @param mixed $post
+	 * Add nounce to post object.
 	 *
-	 * @return void
+	 * @param string $title Post title.
+	 * @param string $saveto Save to.
+	 * @param string $prefix Custom prefix.
+	 * @param object $post Post object.
 	 */
 	private function add_extra( $title, $saveto, $prefix, $post ) {
 		$extra = base64_decode( get_post_meta( $post->ID, $saveto, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for http encoding compatible.
@@ -280,50 +290,54 @@ class MainWP_Meta_Boxes {
 
 
 	/**
-	 * Add Post Slug.
+	 * Method add_slug_handle()
 	 *
-	 * @param mixed $post_id Post ID.
-	 * @param mixed $post_type Post Type.
+	 * Add post slug.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $post_type Post type.
 	 */
 	public function add_slug_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Slug', '_slug', 'add_slug', $post_id, $post_type );
 	}
 
 	/**
+	 * Method add_extra_handle()
+	 *
 	 * Update Post meta & add Security Nonce Prefix.
 	 *
-	 * @param mixed $title Post title.
-	 * @param mixed $saveto Where to save.
-	 * @param mixed $prefix Nounce Prefix.
-	 * @param mixed $post_id Post ID.
-	 * @param mixed $post_type Post Type.
+	 * @param string $title Post title.
+	 * @param string $saveto Where to save.
+	 * @param string $prefix Custom prefix.
+	 * @param int    $post_id Post ID.
+	 * @param string $post_type Post type.
 	 *
 	 * @return int  $post_id Post ID.
 	 */
 	private function add_extra_handle( $title, $saveto, $prefix, $post_id, $post_type ) {
 		/**
-		 * verify this came from the our screen and with proper authorization.
+		 * Verify this came from the our screen and with proper authorization.
 		 */
 		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( $_POST[ $prefix . '_nonce' ], $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
 
 		/**
-		 * verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything
+		 * Verify if this is an auto save routine. If it is our form has not been submitted, so we dont want to do anything.
 		 */
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
 		}
 
 		/**
-		 * Check permissions
+		 * Check permissions.
 		 */
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return $post_id;
 		}
 
 		/**
-		 * OK, we're authenticated: we need to find and save the data
+		 * OK, we're authenticated: we need to find and save the data.
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {

@@ -24,7 +24,11 @@ class MainWP_DB_Base {
 	 */
 	private static $instance = null;
 
-	/** @var string $table_prefix Table prefix. */
+	/**
+	 * Table prefix.
+	 *
+	 * @var string $table_prefix
+	 */
 	protected $table_prefix;
 
 	/** @var mixed $wpdb WordPress Database. */
@@ -39,7 +43,11 @@ class MainWP_DB_Base {
 
 		self::$instance = $this;
 
-		/** @var mixed $wpdb Global WordPress Database. */
+		/**
+		 * WordPress Database.
+		 *
+		 * @var mixed $wpdb Global WordPress Database.
+		 */
 		global $wpdb;
 
 		$this->wpdb         = &$wpdb;
@@ -61,12 +69,12 @@ class MainWP_DB_Base {
 	/**
 	 * Method table_name()
 	 *
-	 * Create entire Table Name.
+	 * Create entire table name.
 	 *
-	 * @param mixed $suffix Table Suffix.
-	 * @param null  $tablePrefix Table Prefix.
+	 * @param mixed $suffix Table suffix.
+	 * @param null  $tablePrefix Table prefix.
 	 *
-	 * @return string Table Name.
+	 * @return string Table name.
 	 */
 	protected function table_name( $suffix, $tablePrefix = null ) {
 		return ( null == $tablePrefix ? $this->table_prefix : $tablePrefix ) . $suffix;
@@ -76,6 +84,8 @@ class MainWP_DB_Base {
 	 * Method get_my_sql_version()
 	 *
 	 * Get MySQL Version.
+	 *
+	 * @return mixed MySQL vresion.
 	 */
 	public function get_my_sql_version() {
 		return $this->wpdb->get_var( 'SHOW VARIABLES LIKE "version"', 1 );
@@ -143,7 +153,7 @@ class MainWP_DB_Base {
 	 *
 	 * Escape SQL Data.
 	 *
-	 * @param mixed $data
+	 * @param mixed $data Data to escape.
 	 *
 	 * @return mixed Escapped SQL Data.
 	 */
@@ -158,13 +168,11 @@ class MainWP_DB_Base {
 	/**
 	 * Method use_mysqli()
 	 *
-	 * Use MySQLi,
-	 * Support old & new versions of WordPress (3.9+).
+	 * Use MySQLi, Support old & new versions of WordPress (3.9+).
 	 *
 	 * @return boolean|self false|$instance Instance of \mysqli
 	 */
 	public static function use_mysqli() {
-		/** @var $this ->wpdb wpdb */
 		if ( ! function_exists( '\mysqli_connect' ) ) {
 			return false;
 		}
@@ -176,7 +184,7 @@ class MainWP_DB_Base {
 	 *
 	 * Ping MySQLi.
 	 *
-	 * @param mixed $link
+	 * @param mixed $link Query link.
 	 *
 	 * @return mixed \mysqli_ping
 	 */
@@ -191,10 +199,10 @@ class MainWP_DB_Base {
 	/**
 	 * Method m_query()
 	 *
-	 * MySQLi Query.
+	 * MySQLi m_query.
 	 *
-	 * @param mixed $query
-	 * @param mixed $link
+	 * @param mixed $query Query params.
+	 * @param mixed $link Query link.
 	 *
 	 * @return mixed \mysqli_query
 	 */
@@ -209,11 +217,11 @@ class MainWP_DB_Base {
 	/**
 	 * Method fetch_object()
 	 *
-	 * Fetch Object.
+	 * Fetch object.
 	 *
-	 * @param mixed $result
+	 * @param mixed $result Query result.
 	 *
-	 * @return boolean|mixed false| \mysqli_fetch_object
+	 * @return boolean|mixed false|\mysqli_fetch_object
 	 */
 	public static function fetch_object( $result ) {
 		if ( false === $result ) {
@@ -230,11 +238,11 @@ class MainWP_DB_Base {
 	/**
 	 * Method free_result()
 	 *
-	 * MySQLi Free Result.
+	 * MySQLi free result.
 	 *
-	 * @param mixed $result
+	 * @param mixed $result Query result.
 	 *
-	 * @return boolean|mixed false| \mysqli_free_result
+	 * @return boolean|mixed false|\mysqli_free_result
 	 */
 	public static function free_result( $result ) {
 		if ( false === $result ) {
@@ -251,12 +259,12 @@ class MainWP_DB_Base {
 	/**
 	 * Method data_seek()
 	 *
-	 * MySQLi Data Seek.
+	 * MySQLi data seek.
 	 *
-	 * @param mixed $result
-	 * @param mixed $offset
+	 * @param mixed $result Query result.
+	 * @param mixed $offset Query offset.
 	 *
-	 * @return boolean|mixed false| \mysqli_data_seek
+	 * @return boolean|mixed false|\mysqli_data_seek
 	 */
 	public static function data_seek( $result, $offset ) {
 		if ( false === $result ) {
@@ -273,12 +281,12 @@ class MainWP_DB_Base {
 	/**
 	 * Method fetch_array()
 	 *
-	 * MySQLi Fetch Array.
+	 * MySQLi fetch array.
 	 *
-	 * @param mixed $result
-	 * @param null  $result_type
+	 * @param mixed $result Query result.
+	 * @param null  $result_type Query result type.
 	 *
-	 * @return boolean|mixed false| \mysqli_fetch_array
+	 * @return boolean|mixed false|\mysqli_fetch_array.
 	 */
 	public static function fetch_array( $result, $result_type = null ) {
 		if ( false === $result ) {
@@ -296,11 +304,11 @@ class MainWP_DB_Base {
 	/**
 	 * Method num_rows()
 	 *
-	 * MySQLi Numb Rows.
+	 * MySQLi number of rows.
 	 *
-	 * @param mixed $result
+	 * @param mixed $result Query result.
 	 *
-	 * @return boolean|mixed false| \mysqli_num_rows
+	 * @return boolean|mixed false|\mysqli_num_rows.
 	 */
 	public static function num_rows( $result ) {
 		if ( false === $result ) {
@@ -319,9 +327,9 @@ class MainWP_DB_Base {
 	 *
 	 * Return instance of \mysqli_result
 	 *
-	 * @param mixed $result
+	 * @param mixed $result Query result.
 	 *
-	 * @return boolean|mixed false| \mysqli_result
+	 * @return boolean|mixed false|\mysqli_result
 	 */
 	public static function is_result( $result ) {
 		if ( false === $result ) {

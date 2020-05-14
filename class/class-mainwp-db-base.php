@@ -31,7 +31,11 @@ class MainWP_DB_Base {
 	 */
 	protected $table_prefix;
 
-	/** @var mixed $wpdb WordPress Database. */
+	/**
+	 * WordPress Database.
+	 *
+	 * @var mixed $wpdb WordPress Database.
+	 */
 	protected $wpdb;
 
 	/**

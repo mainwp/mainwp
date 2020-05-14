@@ -45,9 +45,9 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
 
 		/**
-		 * mainwp_getErrorMessage deprecated filter.
+		 * The mainwp_getErrorMessage filter has been deprecated.
 		 *
-		 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
+		 * @deprecated 4.0.7. Please use filter mainwp_get_error_message.
 		 */
 		add_filter( 'mainwp_getErrorMessage', array( &$this, 'get_error_message' ), 10, 2 );
 		add_filter( 'mainwp_get_error_message', array( &$this, 'get_error_message' ), 10, 2 );

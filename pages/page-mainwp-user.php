@@ -130,8 +130,6 @@ class MainWP_User {
 	 * Method init_subpages_menu()
 	 *
 	 * Initiate sub pages menue.
-	 *
-	 * @return html Sub Pages Menu.
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -236,7 +234,7 @@ class MainWP_User {
 	 *
 	 * Render Users page header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$params = array(
@@ -431,8 +429,6 @@ class MainWP_User {
 	 * Method render_search_options()
 	 *
 	 * Render User page search.
-	 *
-	 * @return html User page Search.
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
@@ -470,8 +466,6 @@ class MainWP_User {
 	 * Method render_update_users()
 	 *
 	 * Render Edit Users Modal window.
-	 *
-	 * @return html Edit user modal.
 	 */
 	public static function render_update_users() {
 
@@ -611,13 +605,11 @@ class MainWP_User {
 	 *
 	 * Render Users Table.
 	 *
-	 * @param boolean $cached true|false Cached or not
+	 * @param boolean $cached true|false Cached or not.
 	 * @param string  $role Current user role.
-	 * @param string  $groups Current user groups
+	 * @param string  $groups Current user groups.
 	 * @param string  $sites Current Child Sites the user is on.
 	 * @param null    $search Search field.
-	 *
-	 * @return html User table.
 	 */
 	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
 		?>
@@ -872,8 +864,6 @@ class MainWP_User {
 	 * Method render_cache_not_found()
 	 *
 	 * Render when cache is not found.
-	 *
-	 * @return html Html to display when Searrch field is empty.
 	 */
 	public static function render_cache_not_found() {
 		ob_start();
@@ -975,8 +965,8 @@ class MainWP_User {
 	 * Handle user search.
 	 *
 	 * @param mixed $data Search data.
-	 * @param mixed $website Child Site
-	 * @param mixed $output Output to pass to self::users_search_handler_renderer()
+	 * @param mixed $website Child Site.
+	 * @param mixed $output Output to pass to self::users_search_handler_renderer().
 	 */
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1035,7 +1025,7 @@ class MainWP_User {
 	 *
 	 * User action.
 	 *
-	 * @param mixed  $pAction Action to perform delete|update_user|update_password
+	 * @param mixed  $pAction Action to perform delete|update_user|update_password.
 	 * @param string $extra Additional Roles to add if any.
 	 *
 	 * @return mixed $information User update info that is returned.
@@ -1128,8 +1118,6 @@ class MainWP_User {
 	 * Method render_bulk_add()
 	 *
 	 * Render Bulk Add Users form.
-	 *
-	 * @return html bulk add users form.
 	 */
 	public static function render_bulk_add() {
 		self::render_header( 'Add' );
@@ -1504,8 +1492,6 @@ class MainWP_User {
 	 *
 	 * @param mixed $dbwebsites Child sites list.
 	 * @param mixed $output Modal window content.
-	 *
-	 * @return html New user Modal Window.
 	 */
 	public static function render_bulk_add_modal( $dbwebsites, $output ) {
 		?>
@@ -1532,8 +1518,6 @@ class MainWP_User {
 	 * Method render_bulk_upload()
 	 *
 	 * Render Import Users Modal window.
-	 *
-	 * @return html Import Users Modal Window.
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );

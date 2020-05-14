@@ -377,8 +377,6 @@ class MainWP_Post {
 	 *
 	 * @param string $shownPage Current page slug.
 	 * @param null   $post_id BulkEdit Post ID.
-	 *
-	 * @return string Render page navigation html.
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
@@ -439,8 +437,6 @@ class MainWP_Post {
 	 * Render page footer.
 	 *
 	 * @param string $shownPage Current page slug.
-	 *
-	 * @return string Close page container.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -531,7 +527,7 @@ class MainWP_Post {
 				<div class="mainwp-search-submit">
 					<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Posts', 'mainwp' ); ?>"/>
 				</div>
-			</div>			
+			</div>
 			<div class="ui hidden clearing divider"></div>
 		</div>
 
@@ -550,8 +546,6 @@ class MainWP_Post {
 	 * Method render_search_options()
 	 *
 	 * Search form for Post page.
-	 *
-	 * @return string Search box html.
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -667,8 +661,6 @@ class MainWP_Post {
 	 * @param integer $userId Current user ID.
 	 * @param string  $post_type Post type.
 	 * @param string  $search_on Site on all sites. Default = all.
-	 *
-	 * @return string Post table html.
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -1145,8 +1137,6 @@ class MainWP_Post {
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param WP_Post $pos Optional. The post being edited.
-	 *
-	 * @return string Custom Fields meta box form html.
 	 */
 	public static function meta_form( $pos = null ) {
 		global $wpdb;
@@ -1271,7 +1261,7 @@ class MainWP_Post {
 	 *
 	 * @since 2.9.0
 	 *
-	 * @param int   $thumbnail_id ID of the attachment used for thumbnail
+	 * @param int   $thumbnail_id ID of the attachment used for thumbnail.
 	 * @param mixed $pos The post ID or object associated with the thumbnail, defaults to global $post.
 	 * @return string html
 	 */
@@ -1361,8 +1351,6 @@ class MainWP_Post {
 	 * Renders the post thumbnail meta box.
 	 *
 	 * @param mixed $pos Post ID.
-	 *
-	 * @return string Post thumbnail HTML.
 	 */
 	public static function post_thumbnail_meta_box( $pos ) {
 		$thumbnail_id = get_post_meta( $pos->ID, '_thumbnail_id', true );
@@ -1376,9 +1364,9 @@ class MainWP_Post {
 	 *
 	 * @param object  $post Current Post object.
 	 * @param integer $edit Whether or not this is an edit or new post.
-	 * @param integer $for_post
+	 * @param integer $for_post For post.
 	 * @param integer $tab_index Tabindex position.
-	 * @param integer $multi
+	 * @param integer $multi Multi.
 	 *
 	 * @return string Hidden time stamps html.
 	 */
@@ -1460,8 +1448,8 @@ class MainWP_Post {
 	 * Render meta boxes.
 	 *
 	 * @param mixed $screen Current page tab.
-	 * @param mixed $context
-	 * @param mixed $object
+	 * @param mixed $context Context.
+	 * @param mixed $object Object.
 	 *
 	 * @return string Metabox html
 	 */
@@ -1796,8 +1784,6 @@ class MainWP_Post {
 	 * Render Select Categories form
 	 *
 	 * @param object $post Post object.
-	 *
-	 * @return string Search post categories html.
 	 */
 	public static function render_categories( $post ) {
 		?>
@@ -1865,7 +1851,7 @@ class MainWP_Post {
 				<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
 			</div>
 		</div>
-		<div class="ui divider"></div>		
+		<div class="ui divider"></div>
 		<?php
 	}
 
@@ -1876,8 +1862,6 @@ class MainWP_Post {
 	 *
 	 * @param object $post Post object.
 	 * @param mixed  $post_type Post type.
-	 *
-	 * @return string Render Featured Image & Post Options fields html.
 	 */
 	public static function render_post_fields( $post, $post_type ) {
 		?>
@@ -2023,10 +2007,8 @@ class MainWP_Post {
 	 *
 	 * Render both the Add & Edit tabs.
 	 *
-	 * @param mixed $post_id Post ID.
-	 * @param mixed $what What tab is active.
-	 *
-	 * @return string Bulk add or edit tab html.
+	 * @param mixed $post_id post ID.
+	 * @param mixed $what what tab is active.
 	 */
 	public static function render_addedit( $post_id, $what ) {
 		self::render_header( $what, $post_id );
@@ -2039,11 +2021,9 @@ class MainWP_Post {
 	 *
 	 * Hook Posts Search handler.
 	 *
-	 * @param mixed  $data Search data.
-	 * @param object $website Child Site object.
-	 * @param mixed  $output
-	 *
-	 * @return array
+	 * @param mixed  $data search data.
+	 * @param object $website child site object.
+	 * @param mixed  $output output.
 	 */
 	public static function hook_posts_search_handler( $data, $website, &$output ) {
 		$posts = array();
@@ -2059,8 +2039,6 @@ class MainWP_Post {
 	 * Method mainwp_help_content()
 	 *
 	 * Attatch MainWP help content.
-	 *
-	 * @return string Help content html.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PostBulkManage' === $_GET['page'] || 'PostBulkAdd' === $_GET['page'] ) ) {

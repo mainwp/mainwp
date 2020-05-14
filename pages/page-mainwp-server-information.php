@@ -34,8 +34,6 @@ class MainWP_Server_Information {
 	 * Method init_menu()
 	 *
 	 * Initiate Server Informaion subPage menu.
-	 *
-	 * @return html Server Information subPage menu html.
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -137,8 +135,6 @@ class MainWP_Server_Information {
 	 * Method init_subpages_menu()
 	 *
 	 * Render Sub Pages Menu.
-	 *
-	 * @return html Subpages Menu.
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -190,7 +186,7 @@ class MainWP_Server_Information {
 	 *
 	 * Initiate Server Information left menu.
 	 *
-	 * @param array $subPages Array of subpages.
+	 * @param array $subPages array of subpages.
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -266,8 +262,6 @@ class MainWP_Server_Information {
 	 * Render Server Information header.
 	 *
 	 * @param string $shownPage Current page.
-	 *
-	 * @return html Server Information header html.
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
@@ -326,8 +320,6 @@ class MainWP_Server_Information {
 	 * Method render_footer()
 	 *
 	 * @param string $shownPage Page that is shown.
-	 *
-	 * @return html Page closing tag.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -338,7 +330,7 @@ class MainWP_Server_Information {
 	 *
 	 * Render Server Information page.
 	 *
-	 * @return html Server Information html.
+	 * @return void
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -615,8 +607,6 @@ class MainWP_Server_Information {
 	 * Method render_quick_setup_system_check()
 	 *
 	 * Render MainWP system requirements check.
-	 *
-	 * @return html  MainWP system requirements check html.
 	 */
 	public static function render_quick_setup_system_check() {
 		?>
@@ -763,29 +753,25 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method
-	 * Print the directory check row.
-	 */
-	/**
 	 * Method render_directory_row()
 	 *
 	 * Render the directory check row.
 	 *
-	 * @param mixed $pName path name
-	 * @param mixed $pCheck Path Check.
-	 * @param mixed $pResult Path result.
-	 * @param mixed $pPassed Rath Passed
-	 * @param int   $errorType Global variable self::WARNING = 1.
+	 * @param string  $name check name.
+	 * @param string  $check desired result.
+	 * @param string  $result detected result.
+	 * @param boolean $passed true|false check result.
+	 * @param int     $errorType global variable self::WARNING = 1.
 	 *
-	 * @return mixed html|True.
+	 * @return boolean true.
 	 */
-	public static function render_directory_row( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
+	public static function render_directory_row( $name, $check, $result, $passed, $errorType = self::WARNING ) {
 		?>
 		<tr>
-			<td><?php echo esc_html( $pName ); ?></td>
-			<td><?php echo esc_html( $pCheck ); ?></td>
-			<td><?php echo esc_html( $pResult ); ?></td>
-			<td><?php echo ( $pPassed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<td><?php echo esc_html( $name ); ?></td>
+			<td><?php echo esc_html( $check ); ?></td>
+			<td><?php echo esc_html( $result ); ?></td>
+			<td><?php echo ( $passed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		</tr>
 		<?php
 		return true;
@@ -794,35 +780,33 @@ class MainWP_Server_Information {
 	/**
 	 * Method render_row()
 	 *
-	 * Render Row.
+	 * Render server information table row.
 	 *
-	 * @param mixed  $pConfig Config Path.
-	 * @param mixed  $pCompare Compair Path.
-	 * @param mixed  $pVersion
-	 * @param mixed  $pGetter
-	 * @param string $pExtraText
-	 * @param null   $pExtraCompare
-	 * @param null   $pExtraVersion
-	 * @param null   $whatType curlSSL Type.
-	 * @param int    $errorType Global variable self::WARNING = 1.
-	 *
-	 * @return html Row html.
+	 * @param string $config configuraion check.
+	 * @param string $compare comparison operator.
+	 * @param mixed  $version reqiored minium version number.
+	 * @param mixed  $getter detected version number.
+	 * @param string $extraText additionl text.
+	 * @param null   $extraCompare extra compare.
+	 * @param null   $extraVersion extra version.
+	 * @param null   $whatType comparison type.
+	 * @param int    $errorType global variable self::WARNING = 1.
 	 */
-	public static function render_row( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $pGetter ) );
+	public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
 		?>
 		<tr>
-			<td><?php echo esc_html( $pConfig ); ?></td>
-			<td><?php echo esc_html( $pCompare ); ?><?php echo ( true === $pVersion ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
+			<td><?php echo esc_html( $config ); ?></td>
+			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( ( 'get_max_input_time' === $pGetter || 'get_max_execution_time' === $pGetter ) && -1 == $currentVersion ) { ?>
+				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>
-				<td><?php echo ( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+				<td><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
@@ -831,36 +815,34 @@ class MainWP_Server_Information {
 	/**
 	 * Method render_row_with_description()
 	 *
-	 * Render row with description.
+	 * Render server information table row with description.
 	 *
-	 * @param mixed     $pConfig
-	 * @param mixed     $pCompare
-	 * @param mixed     $pVersion
-	 * @param mixed     $pGetter
-	 * @param string    $pExtraText
-	 * @param null      $pExtraCompare
-	 * @param null      $pExtraVersion
-	 * @param null      $whatType
-	 * @param undefined $errorType
-	 *
-	 * @return html Row with description html.
+	 * @param string $config configuraion check.
+	 * @param string $compare comparison operator.
+	 * @param mixed  $version reqiored minium version number.
+	 * @param mixed  $getter detected version number.
+	 * @param string $extraText additionl text.
+	 * @param null   $extraCompare extra compare.
+	 * @param null   $extraVersion extra version.
+	 * @param null   $whatType comparison type.
+	 * @param int    $errorType global variable self::WARNING = 1.
 	 */
-	public static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( self::get_class_name(), $pGetter ) );
+	public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+		$currentVersion = call_user_func( array( self::get_class_name(), $getter ) );
 		?>
 		<tr>
-			<td><?php echo esc_html( $pConfig ); ?></td>
-			<td><?php echo esc_html( $pCompare ); ?>  <?php echo ( true === $pVersion ? 'true' : ( is_array( $pVersion ) && isset( $pVersion['version'] ) ? $pVersion['version'] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
+			<td><?php echo esc_html( $config ); ?></td>
+			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
 			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( 'get_max_input_time' === $pGetter && -1 == $currentVersion ) { ?>
-				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
-		<?php } else { ?>
-				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( null != $pExtraCompare ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
-		<?php } ?>
+			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
+			<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
+			<?php } else { ?>
+			<td><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } ?>
 		</tr>
 		<?php
 	}
@@ -1044,8 +1026,6 @@ class MainWP_Server_Information {
 	 * Method render_action_logs()
 	 *
 	 * Render action logs page.
-	 *
-	 * @return html Action logs html.
 	 */
 	public static function render_action_logs() {
 		self::render_header( 'Action logs' );
@@ -1144,8 +1124,6 @@ class MainWP_Server_Information {
 	 * Method php_disabled_functions()
 	 *
 	 * Check for disable PHP Functions.
-	 *
-	 * @return html Disabled functions list.
 	 */
 	public static function php_disabled_functions() {
 		$disabled_functions = ini_get( 'disable_functions' );
@@ -1165,8 +1143,6 @@ class MainWP_Server_Information {
 	 * Method display_mainwp_options()
 	 *
 	 * Render MainWP Settings 'Options'.
-	 *
-	 * @return html MainWP Settings html.
 	 */
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();

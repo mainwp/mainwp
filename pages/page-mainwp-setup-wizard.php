@@ -160,8 +160,6 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_header()
 	 *
 	 * Render Setup Wizard's header.
-	 *
-	 * @return html Setup Wizard's Header.
 	 */
 	public function setup_wizard_header() {
 		?>
@@ -187,8 +185,6 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_footer()
 	 *
 	 * Render Setup Wizard's footer.
-	 *
-	 * @return html Setup Wizard's footer.
 	 */
 	public function setup_wizard_footer() {
 		?>
@@ -218,8 +214,6 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_steps()
 	 *
 	 * Render Setup Wizards Steps.
-	 *
-	 * @return html Setup Wizard's Steps.
 	 */
 	public function setup_wizard_steps() {
 		$ouput_steps = $this->steps;
@@ -252,8 +246,6 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_content()
 	 *
 	 * Render setup Wizard's current step view.
-	 *
-	 * @return html Setup Wizard's current step content.
 	 */
 	public function setup_wizard_content() {
 		echo '<div class="mainwp-quick-setup-wizard-steps-content" style="float:right; width:72%;">';
@@ -266,8 +258,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_introduction()
 	 *
 	 * First start message after activation.
-	 *
-	 * @return html First Start Introduction Message.
 	 */
 	public function mwp_setup_introduction() {
 		$this->mwp_setup_ready_actions();
@@ -289,8 +279,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_installation()
 	 *
 	 * Render Installation Step.
-	 *
-	 * @return html Installation step.
 	 */
 	public function mwp_setup_installation() {
 		$hostingType = get_option( 'mwp_setup_installationHostingType' );
@@ -389,8 +377,6 @@ class MainWP_Setup_Wizard {
 	 * Method  mwp_setup_system_requirements()
 	 *
 	 * Render System Requirments Step.
-	 *
-	 * @return html System Requirements html.
 	 */
 	public function mwp_setup_system_requirements() {
 		$hosting_type = get_option( 'mwp_setup_installationHostingType' );
@@ -417,8 +403,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_install_mainwp_child()
 	 *
 	 * Render Install MainWP Child Plugin on Child Site Step.
-	 *
-	 * @return html Add first Child Site html content.
 	 */
 	public function mwp_setup_install_mainwp_child() {
 		?>
@@ -449,8 +433,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_connect_first_site()
 	 *
 	 * Render Install first Child Site Step form.
-	 *
-	 * @return html Add first Child Site html form.
 	 */
 	public function mwp_setup_connect_first_site() {
 		?>
@@ -519,8 +501,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_hosting()
 	 *
 	 * Redner Hosting Setup step form.
-	 *
-	 * @return html Hosting setup form.
 	 */
 	public function mwp_setup_hosting() {
 		$installation_hosting_type = get_option( 'mwp_setup_installationHostingType' );
@@ -622,8 +602,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_optimization()
 	 *
 	 * Render Optimization step.
-	 *
-	 * @return html Optimization step html.
 	 */
 	public function mwp_setup_optimization() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -698,8 +676,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification()
 	 *
 	 * Render Notifications Step.
-	 *
-	 * @return html Notifications step html.
 	 */
 	public function mwp_setup_notification() {
 		$important_notification = get_option( 'mwp_setup_importantNotification', false );
@@ -797,8 +773,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_backup()
 	 *
 	 * Render Backups Step.
-	 *
-	 * @return html Backups Step html.
 	 */
 	public function mwp_setup_backup() {
 
@@ -1012,8 +986,6 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_get_backup_extension()
 	 *
 	 * Ajax get backup extension.
-	 *
-	 * @return mixed SUCCESS|ERROR.
 	 */
 	public static function ajax_get_backup_extension() {
 
@@ -1088,8 +1060,6 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_activate_plugin()
 	 *
 	 * Ajax Activate Plugin.
-	 *
-	 * @return string SUCCESS|FAILED.
 	 */
 	public static function ajax_activate_plugin() {
 
@@ -1113,8 +1083,6 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_grab_api_key()
 	 *
 	 * Ajax grab api key.
-	 *
-	 * @return json $result Returned API key.
 	 */
 	public static function ajax_grab_api_key() {
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
@@ -1130,8 +1098,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_install_extension()
 	 *
 	 * Setup & install extensions Step.
-	 *
-	 * @return html Extentions setup form.
 	 */
 	public function mwp_setup_install_extension() {
 		$backup_method  = get_option( 'mwp_setup_primaryBackup' );
@@ -1245,9 +1211,7 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method mwp_setup_ready()
 	 *
-	 * Render MainWp Dashboard Ready message.
-	 *
-	 * @return html MainWP Dashboard is ready message.
+	 * Render MainWP Dashboard ready message.
 	 */
 	public function mwp_setup_ready() {
 		?>

@@ -17,7 +17,7 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return object
+	 * @return object class name.
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
@@ -28,13 +28,12 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render Plugins updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_plugin_upgrades
-	 * @param mixed $userExtension
-	 * @param mixed $allPlugins
-	 * @param mixed $pluginsInfo
-	 * @param mixed $trustedPlugins
-	 * @return html
+	 * @param object $websites the websites.
+	 * @param int    $total_plugin_upgrades total plugin updates.
+	 * @param mixed  $userExtension user extension.
+	 * @param array  $allPlugins all plugins.
+	 * @param array  $pluginsInfo pugins information.
+	 * @param array  $trustedPlugins trusted plugins.
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -184,142 +183,141 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render themes updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_theme_upgrades
-	 * @param mixed $userExtension
-	 * @param mixed $allThemes
-	 * @param mixed $themesInfo
-	 * @param mixed $trustedThemes
-	 * @return html
+	 * @param object $websites the websites.
+	 * @param int    $total_theme_upgrades total themes updates.
+	 * @param mixed  $userExtension user extension.
+	 * @param array  $allThemes all themes.
+	 * @param array  $themesInfo themes information.
+	 * @param array  $trustedThemes trusted themes.
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		?>
-	<table class="ui stackable single line table" id="mainwp-themes-updates-table">
-		<thead>
-			<tr>
-				<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Theme', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
-				<th class="no-sort right aligned">
-					<?php MainWP_UI::render_show_all_updates_button(); ?>
-					<?php
-					if ( MainWP_Updates::user_can_update_themes() ) {
-						MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
-						if ( 0 < $total_theme_upgrades ) {
-							?>
-						<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
-							<?php
-						}
-					}
-					?>
-				</th>
-			</tr>
-		</thead>
-		<tbody id="themes-updates-global" class="ui accordion">
-			<?php foreach ( $allThemes as $slug => $val ) : ?>
-				<?php
-				$cnt        = intval( $val['cnt'] );
-				$theme_name = rawurlencode( $slug );
-				$trusted    = in_array( $slug, $trustedThemes ) ? 1 : 0;
-				?>
-				<tr class="ui title">
-					<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-					<td><?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?></td>
-					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
-					<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
-					<td class="right aligned">
-						<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
-							<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
-						<?php endif; ?>
-						<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
-							<?php
-							if ( 0 < $cnt ) :
-								if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
-									MainWP_Updates::set_continue_update_html_selector( 'themes_upgrade_all', $slug );
-								}
+		<table class="ui stackable single line table" id="mainwp-themes-updates-table">
+			<thead>
+				<tr>
+					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
+					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Theme', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="handle-accordion-sorting indicator-accordion-sorting"><?php esc_html_e( 'Trusted', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="no-sort right aligned">
+						<?php MainWP_UI::render_show_all_updates_button(); ?>
+						<?php
+						if ( MainWP_Updates::user_can_update_themes() ) {
+							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
+							if ( 0 < $total_theme_upgrades ) {
 								?>
-								<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
-							<?php endif; ?>
-						<?php endif; ?>
-					</td>
-				</tr>
-				<tr style="display:none" class="themes-bulk-updates" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
-					<td colspan="5" class="ui content">
-						<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-									<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-									<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-									<th class="no-sort"></th>
-								</tr>
-							</thead>
-							<tbody theme_slug="<?php echo $theme_name; ?>">
+							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
 								<?php
-								MainWP_DB::data_seek( $websites, 0 );
-								while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-									if ( $website->is_ignoreThemeUpdates ) {
-										continue;
+							}
+						}
+						?>
+					</th>
+				</tr>
+			</thead>
+			<tbody id="themes-updates-global" class="ui accordion">
+				<?php foreach ( $allThemes as $slug => $val ) : ?>
+					<?php
+					$cnt        = intval( $val['cnt'] );
+					$theme_name = rawurlencode( $slug );
+					$trusted    = in_array( $slug, $trustedThemes ) ? 1 : 0;
+					?>
+					<tr class="ui title">
+						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
+						<td><?php echo esc_html( $themesInfo[ $slug ]['name'] ); ?></td>
+						<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Update', 'Updates', $cnt, 'mainwp' ); ?></td>
+						<td sort-value="<?php echo $trusted; ?>"><?php echo ( $trusted ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
+						<td class="right aligned">
+							<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
+								<a href="javascript:void(0)" class="ui mini button btn-update-click-accordion" onClick="return updatesoverview_themes_ignore_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
+							<?php endif; ?>
+							<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
+								<?php
+								if ( 0 < $cnt ) :
+									if ( MAINWP_VIEW_PER_PLUGIN_THEME == $userExtension->site_view ) {
+										MainWP_Updates::set_continue_update_html_selector( 'themes_upgrade_all', $slug );
 									}
-									$theme_upgrades         = json_decode( $website->theme_upgrades, true );
-									$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
-									if ( is_array( $decodedPremiumUpgrades ) ) {
-										foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-											$premiumUpgrade['premium'] = true;
-											if ( 'theme' === $premiumUpgrade['type'] ) {
-												if ( ! is_array( $theme_upgrades ) ) {
-													$theme_upgrades = array();
+									?>
+									<a href="javascript:void(0)" class="ui mini button green <?php echo MainWP_Updates::get_continue_update_selector(); ?>" onClick="return updatesoverview_themes_upgrade_all( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>' )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<?php endif; ?>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<tr style="display:none" class="themes-bulk-updates" theme_slug="<?php echo $theme_name; ?>" theme_name="<?php echo rawurlencode( $themesInfo[ $slug ]['name'] ); ?>" premium="<?php echo $themesInfo[ $slug ]['premium'] ? 1 : 0; ?>">
+						<td colspan="5" class="ui content">
+							<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
+										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
+										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
+										<th class="no-sort"></th>
+									</tr>
+								</thead>
+								<tbody theme_slug="<?php echo $theme_name; ?>">
+									<?php
+									MainWP_DB::data_seek( $websites, 0 );
+									while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+										if ( $website->is_ignoreThemeUpdates ) {
+											continue;
+										}
+										$theme_upgrades         = json_decode( $website->theme_upgrades, true );
+										$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+										if ( is_array( $decodedPremiumUpgrades ) ) {
+											foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+												$premiumUpgrade['premium'] = true;
+												if ( 'theme' === $premiumUpgrade['type'] ) {
+													if ( ! is_array( $theme_upgrades ) ) {
+														$theme_upgrades = array();
+													}
+													$premiumUpgrade             = array_filter( $premiumUpgrade );
+													$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
 												}
-												$premiumUpgrade             = array_filter( $premiumUpgrade );
-												$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
 											}
 										}
-									}
-									$ignored_themes = json_decode( $website->ignored_themes, true );
-									if ( is_array( $ignored_themes ) ) {
-										$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
-									}
+										$ignored_themes = json_decode( $website->ignored_themes, true );
+										if ( is_array( $ignored_themes ) ) {
+											$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+										}
 
-									if ( ! isset( $theme_upgrades[ $slug ] ) ) {
-										continue;
+										if ( ! isset( $theme_upgrades[ $slug ] ) ) {
+											continue;
+										}
+										$theme_upgrade = $theme_upgrades[ $slug ];
+										?>
+										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
+											<td>
+											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
+											</td>
+											<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
+											<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
+											<td class="right aligned">
+											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
+												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
+											<?php endif; ?>
+											<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
+												<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
+											<?php endif; ?>
+											</td>
+										</tr>
+										<?php
 									}
-									$theme_upgrade = $theme_upgrades[ $slug ];
 									?>
-									<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-										<td>
-										<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
-										</td>
-										<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-										<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-										<td class="right aligned">
-										<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
-											<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
-										<?php endif; ?>
-										<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
-											<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
-										<?php endif; ?>
-										</td>
-									</tr>
-									<?php
-								}
-								?>
-							</tbody>
-						</table>
-					</td>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+			<tfoot>
+				<tr>
+					<th class="collapsing no-sort"></th>
+					<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
+					<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
+					<th class="no-sort right aligned"></th>
 				</tr>
-			<?php endforeach; ?>
-		</tbody>
-		<tfoot>
-			<tr>
-				<th class="collapsing no-sort"></th>
-				<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-				<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
-				<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-				<th class="no-sort right aligned"></th>
-			</tr>
-		</tfoot>
-	</table>
+			</tfoot>
+		</table>
 		<?php
 	}
 
@@ -328,17 +326,15 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render translations updates
 	 *
-	 * @param mixed $websites
-	 * @param mixed $total_translation_upgrades
-	 * @param mixed $userExtension
-	 * @param mixed $allTranslations
-	 * @param mixed $translationsInfo
-	 * @return html
+	 * @param object $websites the websites.
+	 * @param int    $total_translation_upgrades total translation updates.
+	 * @param mixed  $userExtension user extension.
+	 * @param array  $allTranslations all translations.
+	 * @param array  $translationsInfo translations information.
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
-
 		?>
-	<table class="ui stackable single line table" id="mainwp-translations-sites-table">
+		<table class="ui stackable single line table" id="mainwp-translations-sites-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
@@ -444,11 +440,9 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render abandoned plugins
 	 *
-	 * @param mixed $websites
-	 * @param mixed $allPluginsOutdate
-	 * @param mixed $decodedDismissedPlugins
-	 *
-	 * @return html
+	 * @param object $websites the websites.
+	 * @param array  $allPluginsOutdate all abandoned plugins.
+	 * @param array  $decodedDismissedPlugins all dismissed abandoned plugins.
 	 */
 	public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
@@ -560,10 +554,9 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render abandoned themes
 	 *
-	 * @param mixed $websites
-	 * @param mixed $allThemesOutdate
-	 * @param mixed $decodedDismissedThemes
-	 * @return html
+	 * @param object $websites the websites.
+	 * @param array  $allThemesOutdate all abandoned themes.
+	 * @param array  $decodedDismissedThemes all dismissed abandoned themes.
 	 */
 	public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );

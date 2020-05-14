@@ -75,7 +75,7 @@ class MainWP_Api_Manager {
 	/**
 	 * Method __construct()
 	 *
-	 * Replace http procol to https
+	 * Replace HTTP procol to HTTPS
 	 */
 	public function __construct() {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
@@ -85,15 +85,19 @@ class MainWP_Api_Manager {
 	 * Method get_domain()
 	 *
 	 * Get domain.
+	 *
+	 * @return $this->domain current MainWP Dashboard URL.
 	 */
 	public function get_domain() {
 		return $this->domain;
 	}
 
 	/**
-	 * Method Get Upgrade Url
+	 * Method get_upgrade_url()
 	 *
-	 * Grabs the correct upgrade url.
+	 * Get Upgrade URL
+	 *
+	 * @return $url activation upgrade URL.
 	 */
 	public function get_upgrade_url() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
@@ -101,11 +105,13 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method Get Activation Info
+	 * Method get_activation_info()
 	 *
-	 * @param mixed $ext_key
+	 * Get Activation Info
 	 *
-	 * @return mixed
+	 * @param mixed $ext_key extension key.
+	 *
+	 * @return mixed get_option() get activation information.
 	 */
 	public function get_activation_info( $ext_key ) {
 		if ( empty( $ext_key ) ) {
@@ -120,10 +126,10 @@ class MainWP_Api_Manager {
 	 *
 	 * Stores activation info.
 	 *
-	 * @param mixed $ext_key
-	 * @param mixed $info
+	 * @param mixed $ext_key extension key.
+	 * @param mixed $info activation information.
 	 *
-	 * @return mixed
+	 * @return mixed update_option() set activation info.
 	 */
 	public function set_activation_info( $ext_key, $info ) {
 
@@ -142,9 +148,11 @@ class MainWP_Api_Manager {
 	 *
 	 * Checks API Key &  API Email again MainWP Servers.
 	 *
-	 * @param mixed $api
-	 * @param mixed $api_key
-	 * @param mixed $api_email
+	 * @param array  $api extension activation info.
+	 * @param string $api_key API license key.
+	 * @param string $api_email API email address.
+	 *
+	 * @return array $return activation info.
 	 */
 	public function license_key_activation( $api, $api_key, $api_email ) {
 
@@ -227,9 +235,9 @@ class MainWP_Api_Manager {
 	 *
 	 * Deactivate the current license key before activating the new license key.
 	 *
-	 * @param mixed $args
+	 * @param array $args request arguments.
 	 *
-	 * @return booleen True|False.
+	 * @return boolean True|False.
 	 */
 	private function replace_license_key( $args ) {
 		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation.
@@ -240,11 +248,13 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method license_key_adectivation()
+	 * Method license_key_deactivation()
 	 *
 	 * Deactivates license Key.
 	 *
-	 * @param mixed $api
+	 * @param array $api extension activation info.
+	 *
+	 * @return array $return deactivation info.
 	 */
 	public function license_key_deactivation( $api ) {
 
@@ -299,11 +309,10 @@ class MainWP_Api_Manager {
 	 *
 	 * Test the users MainWP.com Login details against MainWP Server.
 	 *
-	 * @param mixed $username
+	 * @param string $username MainWP registered username.
+	 * @param string $password MainWP registered password.
 	 *
-	 * @param mixed $password
-	 *
-	 * @return booleen True|False.
+	 * @return mixed test_login_api() login test result.
 	 */
 	public function test_login_api( $username, $password ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -324,11 +333,11 @@ class MainWP_Api_Manager {
 	 *
 	 * Check if the user purchased the software.
 	 *
-	 * @param mixed $username
-	 * @param mixed $password
-	 * @param mixed $productId
+	 * @param string $username MainWP registered username.
+	 * @param string $password MainWP registered password.
+	 * @param string $productId extension (product) ID.
 	 *
-	 * @return mixed Array.
+	 * @return mixed purchase_software() purchase extensions.
 	 */
 	public function purchase_software( $username, $password, $productId ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -349,12 +358,12 @@ class MainWP_Api_Manager {
 	 *
 	 * Get users purchased software.
 	 *
-	 * @param mixed   $username
-	 * @param mixed   $password
-	 * @param mixed   $productId
-	 * @param booleen $no_register
+	 * @param string  $username MainWP registered username.
+	 * @param string  $password MainWP registered password.
+	 * @param string  $productId extension (product) ID.
+	 * @param boolean $no_register registration request.
 	 *
-	 * @return mixed Array.
+	 * @return mixed get_purchased_software() purchased extensions.
 	 */
 	public function get_purchased_software( $username, $password, $productId = '', $no_register = false ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -376,11 +385,11 @@ class MainWP_Api_Manager {
 	 *
 	 * Grab users associate MainWP License key for the selected Extension.
 	 *
-	 * @param mixed $api
-	 * @param mixed $username
-	 * @param mixed $password
+	 * @param array  $api extension activation info.
+	 * @param string $username MainWP registered username.
+	 * @param string $password MainWP registered password.
 	 *
-	 * @return mixed $return
+	 * @return mixed $return activation info.
 	 */
 	public function grab_license_key( $api, $username, $password ) {
 
@@ -412,15 +421,15 @@ class MainWP_Api_Manager {
 				$options['activated_key']    = 'Deactivated';
 
 				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( true == $activate_results['activated'] ) && ! empty( $activate_results['api_key'] ) ) {
-					$return['result']                      = 'SUCCESS';
-					$mess                                  = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
-					$return['message']                     = __( 'Extension activated. ', 'mainwp' ) . $mess;
-					$options['api_key']                    = $activate_results['api_key'];
-										$return['api_key'] = $activate_results['api_key'];
-					$options['activation_email']           = $activate_results['activation_email'];
-										$return['activation_email'] = $activate_results['activation_email'];
-					$options['activated_key']                       = 'Activated';
-					$options['deactivate_checkbox']                 = 'off';
+					$return['result']               = 'SUCCESS';
+					$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
+					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
+					$options['api_key']             = $activate_results['api_key'];
+					$return['api_key']              = $activate_results['api_key'];
+					$options['activation_email']    = $activate_results['activation_email'];
+					$return['activation_email']     = $activate_results['activation_email'];
+					$options['activated_key']       = 'Activated';
+					$options['deactivate_checkbox'] = 'off';
 				} else {
 
 					if ( false == $activate_results ) {
@@ -455,9 +464,9 @@ class MainWP_Api_Manager {
 	 *
 	 * Check if $response contains any api errors.
 	 *
-	 * @param mixed $response
+	 * @param array $response response array.
 	 *
-	 * @return string $error Error Message.
+	 * @return string $error Error message.
 	 */
 	public function check_response_for_api_errors( $response ) {
 		if ( ! is_array( $response ) || ! isset( $response['code'] ) ) {
@@ -470,7 +479,7 @@ class MainWP_Api_Manager {
 				$error = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
 				break;
 			case '102':
-				$error = __( 'Activation error!  Download permission for this product could not be found.', 'mainwp' );
+				$error = __( 'Activation error! Download permission for this product could not be found.', 'mainwp' );
 				break;
 			case '101':
 				$error = __( 'Activation error! Matching API key could not be found.', 'mainwp' );
@@ -503,8 +512,8 @@ class MainWP_Api_Manager {
 	 *
 	 * Check if $response contains any install errors.
 	 *
-	 * @param mixed  $response
-	 * @param string $software_title
+	 * @param array  $response response array.
+	 * @param string $software_title extension title.
 	 *
 	 * @return string $return Installation Error messages.
 	 */
@@ -536,9 +545,9 @@ class MainWP_Api_Manager {
 	 *
 	 * Check if Extensions have an update.
 	 *
-	 * @param mixed $args
+	 * @param array $args request arguments.
 	 *
-	 * @return mixed $request
+	 * @return mixed update_check() plugin info.
 	 */
 	public function update_check( $args ) {
 		$args['domain'] = $this->domain;
@@ -551,9 +560,9 @@ class MainWP_Api_Manager {
 	 *
 	 * Request Plugin Information
 	 *
-	 * @param mixed $args
+	 * @param array $args request arguments.
 	 *
-	 * @return mixed
+	 * @return mixed request() plugin info.
 	 */
 	public function request_plugin_information( $args ) {
 		$args['domain'] = $this->domain;

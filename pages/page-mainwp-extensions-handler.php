@@ -74,8 +74,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get all extension slugs.
 	 *
-	 * @return array slugs.
-	 * @return array am_slugs.
+	 * @return array am_slugs|slugs.
 	 */
 	public static function get_slugs() {
 		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
@@ -446,7 +445,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get sql websites for current user.
 	 *
-	 * @param mixed $pluginFile Extension plugin file to verify
+	 * @param mixed $pluginFile Extension plugin file to verify.
 	 * @param mixed $key PThe child-key.
 	 *
 	 * @return mixed null|sql query.
@@ -470,7 +469,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Fetch Authorized URLS.
 	 *
-	 * @param mixed $pluginFile Extension plugin file to verify
+	 * @param mixed $pluginFile Extension plugin file to verify.
 	 * @param mixed $key The child-key.
 	 * @param mixed $dbwebsites
 	 * @param mixed $what
@@ -493,8 +492,8 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Fetch Authorized URL.
 	 *
-	 * @throws MainWP_Exception On incorrect website
-	 * @param mixed $pluginFile Extension plugin file to verify
+	 * @throws MainWP_Exception On incorrect website.
+	 * @param mixed $pluginFile Extension plugin file to verify.
 	 * @param mixed $key The child-key.
 	 * @param mixed $websiteId Child Site ID.
 	 * @param mixed $what What.
@@ -523,7 +522,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get DB Sites.
 	 *
-	 * @param mixed   $pluginFile Extension plugin file to verify
+	 * @param mixed   $pluginFile Extension plugin file to verify.
 	 * @param mixed   $key The child-key.
 	 * @param mixed   $sites Child Sites.
 	 * @param string  $groups Groups.
@@ -771,7 +770,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get Manager extensions.
 	 *
-	 * @return void
+	 * @return mainwp_manager_extensions value.
 	 */
 	public static function hook_manager_get_extensions() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -781,7 +780,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Clone Site.
 	 *
-	 * @param mixed   $pluginFile Extension plugin file to verify
+	 * @param mixed   $pluginFile Extension plugin file to verify.
 	 * @param mixed   $key The child-key.
 	 * @param mixed   $websiteid Child Site ID.
 	 * @param mixed   $cloneID Clone ID.
@@ -939,7 +938,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Add Groups.
 	 *
-	 * @param mixed $pluginFile  Extension plugin file to verify
+	 * @param mixed $pluginFile  Extension plugin file to verify.
 	 * @param mixed $key The child-key.
 	 * @param mixed $newName Name that you want to give the group.
 	 *

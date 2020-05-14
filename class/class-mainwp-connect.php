@@ -493,8 +493,17 @@ class MainWP_Connect {
 	 *
 	 * @return bool true|false
 	 */
-	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
+	public static function fetch_urls_authed(
+		&$websites,
+		$what,
+		$params = null,
+		$handler,
+		&$output,
+		$whatPage = null,
+		$others = array(),
+		$is_external_hook = false ) {
 
+		// phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
 		// current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
@@ -1299,7 +1308,7 @@ class MainWP_Connect {
 	 * @param mixed   $website Child Site info.
 	 * @param mixed   $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param boolean $checkConstraints true|false Whether or not to check contraints.	 
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param boolean $pRetryFailed ture|false Whether or not the Retry has failed.
 	 * @param null    $http_user htaccess username.
@@ -1315,7 +1324,7 @@ class MainWP_Connect {
 		&$website,
 		$url,
 		$postdata,
-		$checkConstraints = false,		
+		$checkConstraints = false,
 		$verifyCertificate = null,
 		$pRetryFailed = true,
 		$http_user = null,
@@ -1355,7 +1364,7 @@ class MainWP_Connect {
 	 * @param mixed   $website Child Site info.
 	 * @param mixed   $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param boolean $checkConstraints true|false Whether or not to check contraints.	 
+	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
@@ -1370,7 +1379,7 @@ class MainWP_Connect {
 		&$website,
 		$url,
 		$postdata,
-		$checkConstraints = false,		
+		$checkConstraints = false,
 		$verifyCertificate = null,
 		$http_user = null,
 		$http_pass = null,
@@ -1381,9 +1390,9 @@ class MainWP_Connect {
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 
-		$identifier = null;		
+		$identifier = null;
 		if ( $checkConstraints ) {
-			self::check_constraints( $identifier );			
+			self::check_constraints( $identifier );
 		}
 
 		if ( null != $website ) {
@@ -1396,7 +1405,7 @@ class MainWP_Connect {
 
 		$dirs      = MainWP_System_Utility::get_mainwp_dir();
 		$cookieDir = $dirs[0] . 'cookies';
-		
+
 		self::init_cookiesdir( $cookieDir );
 
 		$ch = curl_init();
@@ -1565,16 +1574,17 @@ class MainWP_Connect {
 			throw new MainWP_Exception( 'NOMAINWP', $url );
 		}
 	}
-	
+
 	/**
-	 * Method check_constraints().
+	 * Method check_constraints()
 	 *
-	 * Check constraints.
-	 * 
-	 * @param mixed   $identifier connect identifier.
-	 * 
-	 */	
-	private static function check_constraints( &$identifier ) {		
+	 * Check connection delay constraints.
+	 *
+	 * @param mixed $identifier Lock identifier.
+	 *
+	 * @return (boolean) Return true if there is a delay and false if there is not.
+	 */
+	private static function check_constraints( &$identifier ) {
 		$semLock      = '103218';
 		$identifier   = self::get_lock_identifier( $semLock );
 		$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
@@ -1653,7 +1663,7 @@ class MainWP_Connect {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Method check_constraints_open_requests().
 	 *
@@ -1743,7 +1753,12 @@ class MainWP_Connect {
 	/**
 	 * Method init_coockiesdir()
 	 *
-	 * Initiate cookies directory.
+	 * Check for cookies directory and crate it if it doesn't already exist,
+	 * set the file permissions and update htaccess.
+	 *
+	 * @param mixed $cookieDir Cookies directory.
+	 *
+	 * @return void
 	 */
 	public static function init_cookiesdir( $cookieDir ) {
 

@@ -774,7 +774,9 @@ class MainWP_Updates_Overview {
 	}
 
 	/**
-	 * Render to support global update.
+	 * Method render_global_update()
+	 *
+	 * Render global updates.
 	 *
 	 * @param bool  $user_can_update_wordpress permission to update WordPress.
 	 * @param int   $total_wp_upgrades total WordPress update.
@@ -784,14 +786,16 @@ class MainWP_Updates_Overview {
 	 * @param int   $total_plugin_upgrades total WordPress update.
 	 * @param mixed $all_plugins_updates all WordPress update list.
 	 *
-	 * @param bool  $user_can_update_wordpress permission to update themes.
+	 * @param bool  $user_can_update_themes permission to update themes.
 	 * @param int   $total_theme_upgrades total themes update.
 	 * @param mixed $all_themes_updates all themes update list.
 	 *
 	 * @param mixed $mainwp_show_language_updates MainWP Language Updates.
-	 * @param bool  $user_can_update_wordpress permission to update languages.
+	 * @param bool  $user_can_update_translation permission to update languages.
 	 * @param int   $total_translation_upgrades total WordPress update.
 	 * @param mixed $all_translations_updates all transations update list.
+	 *
+	 * @return string Overview Widget updates content html.
 	 */
 	public static function render_global_update(
 		$user_can_update_wordpress,

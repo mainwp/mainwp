@@ -493,8 +493,17 @@ class MainWP_Connect {
 	 *
 	 * @return bool true|false
 	 */
-	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
+	public static function fetch_urls_authed(
+		&$websites,
+		$what,
+		$params = null,
+		$handler,
+		&$output,
+		$whatPage = null,
+		$others = array(),
+		$is_external_hook = false ) {
 
+		// phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
 		// current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
@@ -1547,6 +1556,15 @@ class MainWP_Connect {
 		}
 	}
 
+	/**
+	 * Method check_constraints()
+	 *
+	 * Check connection delay constraints.
+	 *
+	 * @param mixed $identifier Lock identifier.
+	 *
+	 * @return (boolean) Return true if there is a delay and false if there is not.
+	 */
 	private static function check_constraints( &$identifier ) {
 		$semLock      = '103218';
 		$identifier   = self::get_lock_identifier( $semLock );
@@ -1700,7 +1718,12 @@ class MainWP_Connect {
 	/**
 	 * Method init_coockiesdir()
 	 *
-	 * Initiate cookies directory.
+	 * Check for cookies directory and crate it if it doesn't already exist,
+	 * set the file permissions and update htaccess.
+	 *
+	 * @param mixed $cookieDir Cookies directory.
+	 *
+	 * @return void
 	 */
 	public static function init_cookiesdir( $cookieDir ) {
 

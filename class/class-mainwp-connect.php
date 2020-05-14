@@ -1314,7 +1314,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @throws string \Exception Excetpion message.
+	 * @throws \Exception Excetpion message.
 	 *
 	 * @return mixed self::m_fetch_url()
 	 */
@@ -1371,7 +1371,7 @@ class MainWP_Connect {
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
 	 *
-	 * @throws string MainWP_Exception Exception message.
+	 * @throws MainWP_Exception Exception message.
 	 *
 	 * @return mixed $data, $information.
 	 */
@@ -1692,7 +1692,7 @@ class MainWP_Connect {
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
 	 *
-	 * @throws string MainWP_Exception Exception message.
+	 * @throws MainWP_Exception Exception message.
 	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 

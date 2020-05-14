@@ -11,6 +11,18 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Live_Reports.
+ * 
+ * @static @var $buffer              
+ * @static @var $enabled_piwik Enabled check for piwiki.
+ * @static @var $enabled_sucuri Enabled check for sucuri.  
+ * @static @var $enabled_ga Enabled check for Google Authenticator.     
+ * @static @var $enabled_aum Enabled check for Advanced Uptime Monitor.        
+ * @static @var $enabled_woocomstatus Enabled check for Woocommerce status extension.     
+ * @static @var $enabled_pagespeed Enabled check for Google Pagespeed.  
+ * @static @var $enabled_brokenlinks Enabled check for Broken Links Checker.        
+ * @static @var $count_sec_header     
+ * @static @var $count_sec_body       
+ * @static @var $count_sec_footer     
  */
 class MainWP_Live_Reports {
 
@@ -28,12 +40,34 @@ class MainWP_Live_Reports {
 	private static $count_sec_body       = 0;
 	private static $count_sec_footer     = 0;
 
+	/**
+	 * Method __construct()
+	 * 
+	 * A magic method defined, __construct() will be called automatically anytime 
+	 * someone instantiates (creates) an object of this class. 
+	 * 
+	 * @return void
+	 */
 	public function __construct() {
 	}
 
+	/**
+	 * Method init()
+	 * 
+	 * Set up constants with default values, unless user overrides.
+	 * 
+	 * @return void
+	 */
 	public static function init() {
 	}
 
+	/**
+	 * Method admin_init()
+	 * 
+	 * Initiates the admin page when loaded & sets initial Class Variables.
+	 * 
+	 * @return (bool) true|false Stores in class variables.
+	 */
 	public function admin_init() {
 
 		if ( ! in_array( 'mainwp-client-reports-extension/mainwp-client-reports-extension.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {

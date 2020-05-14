@@ -537,8 +537,8 @@ class MainWP_Connect {
 		if ( $debug ) {
 			self::debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others );
 			return;
-		}			
-	
+		}
+
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$mh    = curl_multi_init();
 
@@ -758,13 +758,13 @@ class MainWP_Connect {
 	 * @param mixed $params
 	 * @param mixed $handler
 	 * @param mixed $output
-	 * @param mixed $whatPage	 
+	 * @param mixed $whatPage
 	 * @param bool  $json_format
 	 * @param array $others
 	 *
 	 * @return bool true|false
-	 */	
-	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) {					
+	 */
+	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$timeout = 20 * 60 * 60;
@@ -1043,7 +1043,7 @@ class MainWP_Connect {
 			}
 		}
 	}
-	
+
 	/**
 	 * Method get_resource_id()
 	 *
@@ -1599,11 +1599,11 @@ class MainWP_Connect {
 		MainWP_Utility::end_session();
 		$delay = true;
 		while ( $delay ) {
-			self::lock( $identifier );						
+			self::lock( $identifier );
 			if ( 0 < $minimumDelay && self::check_constraints_last_request( $identifier, $minimumDelay ) ) {
 				continue;
 			}
-			
+
 			if ( 0 < $minimumIPDelay && null != $website ) {
 				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 				if ( null != $ip && '' !== $ip ) {
@@ -1630,31 +1630,31 @@ class MainWP_Connect {
 			MainWP_DB_Common::instance()->close_open_requests();
 
 			if ( 0 < $maximumRequests && self::check_constraints_open_requests( $identifier, $maximumRequests ) ) {
-				continue;				
+				continue;
 			}
 
 			if ( 0 < $maximumIPRequests && null != $website ) {
 				$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
 				if ( null != $ip && '' != $ip ) {
-					if ( self::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {						
+					if ( self::check_constraints_open_requests( $identifier, $maximumIPRequests, $ip ) ) {
 						continue;
-					}					
+					}
 				}
 			}
 			$delay = false;
-		}			
+		}
 	}
-	
+
 	/**
 	 * Method check_constraints_last_request().
 	 *
 	 * Check constraints for last requests.
 	 *
-	 * @param mixed   $identifier connect identifier.
-	 * @param int	$minimumDelay minimum delay.	 
-	 * @param string|null   $ip ip address.
+	 * @param mixed       $identifier connect identifier.
+	 * @param int         $minimumDelay minimum delay.
+	 * @param string|null $ip ip address.
 	 */
-	private static function check_constraints_last_request( $identifier, $minimumDelay, $ip = null ){		
+	private static function check_constraints_last_request( $identifier, $minimumDelay, $ip = null ) {
 		$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
 		if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
 			self::release( $identifier );
@@ -1669,11 +1669,11 @@ class MainWP_Connect {
 	 *
 	 * Check constraints for open requests.
 	 *
-	 * @param mixed   $identifier connect identifier.
-	 * @param int	$maximumRequests maximum requests.	 
-	 * @param string|null   $ip ip address.
+	 * @param mixed       $identifier connect identifier.
+	 * @param int         $maximumRequests maximum requests.
+	 * @param string|null $ip ip address.
 	 */
-	private static function check_constraints_open_requests( $identifier, $maximumRequests, $ip = null ){				
+	private static function check_constraints_open_requests( $identifier, $maximumRequests, $ip = null ) {
 		$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
 		if ( $nrOfOpenRequests >= $maximumRequests ) {
 			self::release( $identifier );
@@ -1682,7 +1682,7 @@ class MainWP_Connect {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Method download_to_file()
 	 *

@@ -15,12 +15,12 @@ class MainWP_System_Handler {
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
 	/**
-	 * @var mixed Singleton.
+	 * @var $instance The single instance of the class
 	 */
 	private static $instance = null;
 
 	/**
-	 * @var null Upgrade Version Info.
+	 * @var null $upgradeVersionInfo Upgrade Version Info.
 	 */
 	private $upgradeVersionInfo = null;
 
@@ -81,9 +81,7 @@ class MainWP_System_Handler {
 			7
 		);
 
-		/**
-		 * @deprecated Use 'mainwp_manager_getextensions' instead.
-		 */
+		// @deprecated Use 'mainwp_manager_getextensions' instead.
 		add_filter(
 			'mainwp-manager-getextensions',
 			array(
@@ -134,7 +132,7 @@ class MainWP_System_Handler {
 	 * @param int    $websiteId Website ID.
 	 * @param string $what Function to perform.
 	 * @param array  $params Function paramerters.
-	 * @param null   $rawResponse Raw response.
+	 * @param null   $raw_response Raw response.
 	 *
 	 * @return mixed MainWP_Extensions_Handler::hook_fetch_url_authed() Hook fetch authorized URL.
 	 */

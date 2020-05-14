@@ -41,6 +41,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method init_cron_jobs()
+	 *
 	 * Instantiate Cron Jobs.
 	 */
 	public function init_cron_jobs() {
@@ -60,6 +62,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method init_cron()
+	 *
 	 * Build Cron Jobs Array & initiate via init_wp_cron()
 	 */
 	public function init_cron() {
@@ -101,6 +105,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method init_wp_cron()
+	 *
 	 * Schedual Cron Jobs.
 	 *
 	 * @param mixed $useWPCron Wether or not to use WP_Cron.
@@ -120,7 +126,13 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
-	/** Check if WP_Cron is active. */
+	/**
+	 * Method cron_active()
+	 *
+	 * Check if WP_Cron is active.
+	 *
+	 * @return void
+	 */
 	public function cron_active() {
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			return;
@@ -140,6 +152,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method get_cron_schedules()
+	 *
 	 * Get current Cron Schedual.
 	 *
 	 * @param array $schedules Array of currently set scheduals.
@@ -160,6 +174,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method get_timestamp_from_hh_mm()
+	 *
 	 * Get Time Stamp from $hh_mm.
 	 *
 	 * @param mixed $hh_mm Global time stamp variable.
@@ -180,6 +196,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method get_period_of_time_from_hh_mm()
+	 *
 	 * Get Period of time from $hh_mm.
 	 *
 	 * @param mixed $hh_mm Global time stamp variable.
@@ -202,6 +220,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method cron_updates_check()
+	 *
 	 * MainWP Cron Check Update
 	 *
 	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
@@ -795,10 +815,12 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method send_notification().
 	 *
-	 * @param bool $plugin_automaticDailyUpdate auto update plugins daily
-	 * @param bool $theme_automaticDailyUpdate auto update themes daily
-	 * @param bool $mainwpAutomaticDailyUpdate auto update core daily
-	 * @param bool $text_format text format value
+	 * Send email notification.
+	 *
+	 * @param bool $plugin_automaticDailyUpdate Auto update plugins daily.
+	 * @param bool $theme_automaticDailyUpdate Auto update themes daily.
+	 * @param bool $mainwpAutomaticDailyUpdate Auto update core daily.
+	 * @param bool $text_format Text format value.
 	 *
 	 * @return bool True|False
 	 */
@@ -889,7 +911,7 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method clear_fields().
 	 *
-	 * Clear settings field values
+	 * Clear settings field values.
 	 */
 	public static function clear_fields() {
 		$empty_fields = array(
@@ -918,12 +940,12 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method get_mail_content_plugins().
 	 *
-	 * Get mail content for plugins update
+	 * Get mail content for plugins update.
 	 *
-	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param bool  $text_format text format
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
 	 *
-	 * @return string $mail_content mail content
+	 * @return string $mail_content Email content.
 	 */
 	public function get_mail_content_plugins( $sitesCheckCompleted, $text_format ) {
 
@@ -972,12 +994,12 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method get_mail_content_themes().
 	 *
-	 * Get themes update mail content
+	 * Get themes update mail content.
 	 *
-	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param bool  $text_format text format
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
 	 *
-	 * @return string $mail_content mail content
+	 * @return string $mail_content Email content
 	 */
 	public function get_mail_content_themes( $sitesCheckCompleted, $text_format ) {
 
@@ -1027,12 +1049,12 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method get_mail_content_themes().
 	 *
-	 * Get mail content of WP update
+	 * Get mail content of WP update.
 	 *
-	 * @param mixed $sitesCheckCompleted completed sites
-	 * @param bool  $text_format text format
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
 	 *
-	 * @return string $mail_content mail content
+	 * @return string $mail_content Email content.
 	 */
 	public function get_mail_content_wp( $sitesCheckCompleted, $text_format ) {
 
@@ -1080,12 +1102,12 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method get_mail_content_connections().
 	 *
-	 * Get mail content of connections
+	 * Get mail content of connections.
 	 *
-	 * @param mixed $sitesDisconnect disconnected sites
-	 * @param bool  $text_format text format
+	 * @param mixed $sitesDisconnect Disconnected sites.
+	 * @param bool  $text_format Text format.
 	 *
-	 * @return string $mail_content mail content
+	 * @return string $mail_content Email content.
 	 */
 	public function get_mail_content_connections( $sitesDisconnect, $text_format ) {
 		$mail_lines   = $this->print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
@@ -1108,8 +1130,10 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method send_http_response_notification().
 	 *
-	 * @param bool $sitesHttpCheckIds sites ids.
-	 * @param bool $text_format text format.
+	 * Send HTTP response email notification.
+	 *
+	 * @param bool $sitesHttpCheckIds Sites IDs.
+	 * @param bool $text_format Text format.
 	 *
 	 * @return bool False if failed.
 	 */
@@ -1166,9 +1190,11 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method send_updates_notification().
 	 *
-	 * @param mixed $email admin email
-	 * @param mixed $content mail content
-	 * @param bool  $text_format text format
+	 * Sent available updates notification email.
+	 *
+	 * @param mixed $email Admin email.
+	 * @param mixed $content Mail content.
+	 * @param bool  $text_format Text format.
 	 */
 	public function send_updates_notification( $email, $content, $text_format ) {
 
@@ -1206,11 +1232,13 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method print_digest_lines()
+	 *
 	 * List of updates to be emailed.
 	 *
-	 * @param array  $array Array of URLs
+	 * @param array  $array Array of URLs.
 	 * @param array  $backupChecks null|Child Site ID.
-	 * @param string $what disc_sites|null
+	 * @param string $what disc_sites|null.
 	 *
 	 * @return html $output Email Body.
 	 */
@@ -1255,9 +1283,9 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Cron Ping Childs
+	 * Method cron_ping_childs()
 	 *
-	 * This cron job pings the Child Sites.
+	 * Cron job to ping child sites.
 	 */
 	public function cron_ping_childs() {
 		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
@@ -1285,6 +1313,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method cron_backups_continue()
+	 *
 	 * Execute remaining backup tasks.
 	 */
 	public function cron_backups_continue() {
@@ -1328,6 +1358,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method cron_backups()
+	 *
 	 * Execute Backup Tasks.
 	 */
 	public function cron_backups() {
@@ -1392,6 +1424,8 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method cron_stats()
+	 *
 	 * Grab MainWP Cron Job Statistics.
 	 */
 	public function cron_stats() {

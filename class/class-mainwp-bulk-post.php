@@ -13,6 +13,8 @@ namespace MainWP\Dashboard;
 class MainWP_Bulk_Post {
 
 	/**
+	 * Method __construct()
+	 *
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -24,7 +26,9 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  handle_edit_bulkpost().
+	 * Method handle_edit_bulkpost()
+	 *
+	 * Handle bulkpost edit process.
 	 */
 	public function handle_edit_bulkpost() {
 
@@ -81,9 +85,13 @@ class MainWP_Bulk_Post {
 
 
 	/**
-	 * Method  save_bulkpost().
+	 * Method save_bulkpost().
 	 *
-	 * @param int $post_id
+	 * Save page (Bulkpost custom post type).
+	 *
+	 * @param int $post_id Post ID.
+	 *
+	 * @return void
 	 */
 	public function save_bulkpost( $post_id ) {
 		$_post = get_post( $post_id );
@@ -125,9 +133,13 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  save_bulkpage().
+	 * Method save_bulkpage().
 	 *
-	 * @param int $post_id
+	 * Save page (Bulkpage custom post type).
+	 *
+	 * @param int $post_id Page ID.
+	 *
+	 * @return void
 	 */
 	public function save_bulkpage( $post_id ) {
 
@@ -169,7 +181,9 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  create_post_type().
+	 * Method create_post_type()
+	 *
+	 * Register "Bulkpost" and "Bulkpage" custom post types.
 	 */
 	public function create_post_type() {
 		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
@@ -275,9 +289,11 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
+	 * Method post_updated_messages()
+	 *
 	 * Render post updated message.
 	 *
-	 * @param mixed $messages Message to display.
+	 * @param string $messages Message to display.
 	 *
 	 * @return string $messages.
 	 */

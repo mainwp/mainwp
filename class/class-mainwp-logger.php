@@ -68,7 +68,7 @@ class MainWP_Logger {
 	/**
 	 * Method __construct()
 	 *
-	 * @return void
+	 * Constructor.
 	 */
 	private function __construct() {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
@@ -85,12 +85,12 @@ class MainWP_Logger {
 	/**
 	 * Method set_log_priority()
 	 *
-	 * Sets the Log Priority.
+	 * Sets the log priority.
 	 *
-	 * @param mixed $pLogPriority
+	 * @param mixed $logPriority Log priority value.
 	 */
-	public function set_log_priority( $pLogPriority ) {
-		$this->logPriority = $pLogPriority;
+	public function set_log_priority( $logPriority ) {
+		$this->logPriority = $logPriority;
 	}
 
 	/**
@@ -98,12 +98,12 @@ class MainWP_Logger {
 	 *
 	 * Grab debug.
 	 *
-	 * @param mixed $pText
+	 * @param string $text Debug message text.
 	 *
-	 * @return mixed Debug info.
+	 * @return string Log debug message.
 	 */
-	public function debug( $pText ) {
-		return $this->log( $pText, self::DEBUG );
+	public function debug( $text ) {
+		return $this->log( $text, self::DEBUG );
 	}
 
 	/**
@@ -111,12 +111,12 @@ class MainWP_Logger {
 	 *
 	 * Grab info.
 	 *
-	 * @param mixed $pText
+	 * @param string $text Info message text.
 	 *
-	 * @return mixed Log Info.
+	 * @return string Log info message.
 	 */
-	public function info( $pText ) {
-		return $this->log( $pText, self::INFO );
+	public function info( $text ) {
+		return $this->log( $text, self::INFO );
 	}
 
 	/**
@@ -124,64 +124,64 @@ class MainWP_Logger {
 	 *
 	 * Grab warning information.
 	 *
-	 * @param mixed $pText
+	 * @param string $text Warning message text.
 	 *
-	 * @return mixed Warning info.
+	 * @return string Log warning message.
 	 */
-	public function warning( $pText ) {
-		return $this->log( $pText, self::WARNING );
+	public function warning( $text ) {
+		return $this->log( $text, self::WARNING );
 	}
 
 	/**
 	 * Method info_update()
 	 *
-	 * Grab Info Update
+	 * Grab info update
 	 *
-	 * @param mixed $pText
+	 * @param string $text Info Update message text.
 	 *
-	 * @return mixed Log Info Update.
+	 * @return string Log info update message.
 	 */
-	public function info_update( $pText ) {
-		return $this->log( $pText, self::INFO_UPDATE );
+	public function info_update( $text ) {
+		return $this->log( $text, self::INFO_UPDATE );
 	}
 
 
 	/**
 	 * Method debug_for_website()
 	 *
-	 * Grab Website debug and info.
+	 * Grab website debug and info.
 	 *
-	 * @param mixed $pWebsite
-	 * @param mixed $pAction
-	 * @param mixed $pMessage
+	 * @param object $website Child site object.
+	 * @param string $action Performed action.
+	 * @param string $message Debug message.
 	 *
 	 * @return mixed Website debug info.
 	 */
-	public function debug_for_website( $pWebsite, $pAction, $pMessage ) {
-		if ( empty( $pWebsite ) ) {
-			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
+	public function debug_for_website( $website, $action, $message ) {
+		if ( empty( $website ) ) {
+			return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, self::DEBUG );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::DEBUG );
+		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::DEBUG );
 	}
 
 	/**
-	 * Method infor_for_website()
+	 * Method info_for_website()
 	 *
 	 * Grab Website Info.
 	 *
-	 * @param mixed $pWebsite
-	 * @param mixed $pAction
-	 * @param mixed $pMessage
+	 * @param object $website Child site object.
+	 * @param string $action Performed action.
+	 * @param string $message Info message.
 	 *
 	 * @return mixed Website Info.
 	 */
-	public function info_for_website( $pWebsite, $pAction, $pMessage ) {
-		if ( empty( $pWebsite ) ) {
-			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage, self::INFO );
+	public function info_for_website( $website, $action, $message ) {
+		if ( empty( $website ) ) {
+			return $this->log( '[-] [-]  ::' . $action . ':: ' . $message, self::INFO );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage, self::INFO );
+		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message, self::INFO );
 	}
 
 	/**
@@ -189,14 +189,14 @@ class MainWP_Logger {
 	 *
 	 * Grab Website Warnings.
 	 *
-	 * @param mixed   $pWebsite
-	 * @param mixed   $pAction
-	 * @param mixed   $pMessage
-	 * @param boolean $addStackTrace
+	 * @param object  $website Child site object.
+	 * @param string  $action Performed action.
+	 * @param string  $message Warning message.
+	 * @param boolean $addStackTrace Add or Don't add stack trace.
 	 *
-	 * @return mixed Website Warnings.
+	 * @return string Website warnings.
 	 */
-	public function warning_for_website( $pWebsite, $pAction, $pMessage, $addStackTrace = true ) {
+	public function warning_for_website( $website, $action, $message, $addStackTrace = true ) {
 		$stackTrace = '';
 		if ( $addStackTrace ) {
 			ob_start();
@@ -204,11 +204,11 @@ class MainWP_Logger {
 			debug_print_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
 			$stackTrace = "\n" . ob_get_clean();
 		}
-		if ( empty( $pWebsite ) ) {
-			return $this->log( '[-] [-]  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
+		if ( empty( $website ) ) {
+			return $this->log( '[-] [-]  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
 		}
 
-		return $this->log( '[' . $pWebsite->name . '] [' . MainWP_Utility::get_nice_url( $pWebsite->url ) . ']  ::' . $pAction . ':: ' . $pMessage . $stackTrace, self::WARNING );
+		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
 	}
 
 
@@ -217,16 +217,16 @@ class MainWP_Logger {
 	 *
 	 * Create Log File.
 	 *
-	 * @param mixed $pText
-	 * @param mixed $pPriority
+	 * @param string $text Log record text.
+	 * @param int    $priority Set priority.
 	 *
 	 * @return booleen True|False Default is False.
 	 */
-	public function log( $pText, $pPriority ) {
+	public function log( $text, $priority ) {
 
 		$do_log = false;
-		if ( ( self::INFO_UPDATE == $pPriority && self::INFO_UPDATE == $this->logPriority ) ||
-				( self::INFO_UPDATE != $pPriority && $this->logPriority >= $pPriority ) ) {
+		if ( ( self::INFO_UPDATE == $priority && self::INFO_UPDATE == $this->logPriority ) ||
+				( self::INFO_UPDATE != $priority && $this->logPriority >= $priority ) ) {
 			$do_log = true;
 		}
 
@@ -236,7 +236,7 @@ class MainWP_Logger {
 
 			if ( $logCurrentHandle ) {
 				$time   = gmdate( $this->logDateFormat );
-				$prefix = '[' . $this->get_log_text( $pPriority ) . ']';
+				$prefix = '[' . $this->get_log_text( $priority ) . ']';
 
 				global $current_user;
 
@@ -244,7 +244,7 @@ class MainWP_Logger {
 					$prefix .= ' [' . $current_user->user_login . ']';
 				}
 
-				fwrite( $logCurrentHandle, $time . ' ' . $prefix . ' ' . $pText . "\n" );
+				fwrite( $logCurrentHandle, $time . ' ' . $prefix . ' ' . $text . "\n" );
 				fclose( $logCurrentHandle );
 			}
 
@@ -296,8 +296,8 @@ class MainWP_Logger {
 	 *
 	 * Prepend content to log file.
 	 *
-	 * @param mixed $string
-	 * @param mixed $filename
+	 * @param mixed $string Custom string.
+	 * @param mixed $filename Filename.
 	 */
 	public function prepend( $string, $filename ) {
 		$context = stream_context_create();
@@ -326,12 +326,12 @@ class MainWP_Logger {
 	 *
 	 * Grab what type of log entry.
 	 *
-	 * @param mixed $pPriority
+	 * @param mixed $priority Set priority.
 	 *
 	 * @return string LOG -OR- DISABLED|DEBUG|INFO|WARNING|INFO UPDATE
 	 */
-	public function get_log_text( $pPriority ) {
-		switch ( $pPriority ) {
+	public function get_log_text( $priority ) {
+		switch ( $priority ) {
 			case self::DISABLED:
 				return 'DISABLED';
 			case self::DEBUG:

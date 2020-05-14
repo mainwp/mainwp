@@ -15,7 +15,7 @@ class MainWP_System_Handler {
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
 	/**
-	 * Singleton.
+	 * @var mixed Singleton.
 	 */
 	private static $instance = null;
 
@@ -110,15 +110,15 @@ class MainWP_System_Handler {
 	 *
 	 * Filter fetch authorized urls.
 	 *
-	 * @param mixed $pluginFile MainWP Extention.
-	 * @param mixed $key MainWP Licence Key.
-	 * @param mixed $dbwebsites Child Sites.
-	 * @param mixed $what
-	 * @param mixed $params
-	 * @param mixed $handle
-	 * @param mixed $output
+	 * @param mixed  $pluginFile MainWP extention.
+	 * @param string $key MainWP Licence Key.
+	 * @param object $dbwebsites Child Sites.
+	 * @param string $what Function to perform.
+	 * @param array  $params Function paramerters.
+	 * @param mixed  $handle Function handle.
+	 * @param mixed  $output Function output.
 	 *
-	 * @return void
+	 * @return mixed MainWP_Extensions_Handler::hook_fetch_urls_authed() Hook fetch authorized URLs.
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
@@ -129,14 +129,14 @@ class MainWP_System_Handler {
 	 *
 	 * Filter fetch Authorized URL.
 	 *
-	 * @param mixed $pluginFile
-	 * @param mixed $key
-	 * @param mixed $websiteId
-	 * @param mixed $what
-	 * @param mixed $params
-	 * @param null  $raw_response
+	 * @param mixed  $pluginFile MainWP extention.
+	 * @param string $key MainWP licence key.
+	 * @param int    $websiteId Website ID.
+	 * @param string $what Function to perform.
+	 * @param array  $params Function paramerters.
+	 * @param null   $rawResponse Raw response.
 	 *
-	 * @return void
+	 * @return mixed MainWP_Extensions_Handler::hook_fetch_url_authed() Hook fetch authorized URL.
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
@@ -148,9 +148,9 @@ class MainWP_System_Handler {
 	 * Apply filter
 	 *
 	 * @param string $filter The filter.
-	 * @param mixed  $value Input value.
+	 * @param array  $value Input value.
 	 *
-	 * @return mixed Output value.
+	 * @return array $output Output array.
 	 */
 	public function apply_filters( $filter, $value = array() ) {
 
@@ -284,7 +284,7 @@ class MainWP_System_Handler {
 	 *
 	 * Get MainWP Extension api information.
 	 *
-	 * @param mixed $false
+	 * @param mixed $false Return value.
 	 * @param mixed $action Action being performed.
 	 * @param mixed $arg Action arguments. Should be the plugin slug.
 	 *
@@ -333,9 +333,9 @@ class MainWP_System_Handler {
 	 *
 	 * Check MainWP Exensions for updates.
 	 *
-	 * @param mixed $transient
+	 * @param object $transient Transient information.
 	 *
-	 * @return mixed $transient
+	 * @return object $transient Transient information.
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
@@ -411,16 +411,16 @@ class MainWP_System_Handler {
 	 *
 	 * Map resulting object.
 	 *
-	 * @param mixed $pRslt
+	 * @param object $result Resulting information.
 	 *
-	 * @return object $obj.
+	 * @return object $obj Mapped resulting object.
 	 */
-	public static function map_rslt_obj( $pRslt ) {
+	public static function map_rslt_obj( $result ) {
 		$obj              = new \stdClass();
-		$obj->slug        = $pRslt->slug;
-		$obj->new_version = $pRslt->latest_version;
+		$obj->slug        = $result->slug;
+		$obj->new_version = $result->latest_version;
 		$obj->url         = 'https://mainwp.com/';
-		$obj->package     = $pRslt->download_url;
+		$obj->package     = $result->download_url;
 
 		return $obj;
 	}
@@ -447,9 +447,9 @@ class MainWP_System_Handler {
 	 *
 	 * Pre-check for extension updates.
 	 *
-	 * @param mixed $transient
+	 * @param object $transient Transient information.
 	 *
-	 * @return mixed $transient
+	 * @return object $transient Transient information.
 	 */
 	public function pre_check_update_custom( $transient ) {
 		if ( ! isset( $transient->checked ) ) {

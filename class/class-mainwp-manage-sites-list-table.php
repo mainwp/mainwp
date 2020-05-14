@@ -259,8 +259,6 @@ class MainWP_Manage_Sites_List_Table {
 	 * Method generate_tabletop()
 	 *
 	 * Run the render_manage_sites_table_top menthod.
-	 *
-	 * @return html Table top.
 	 */
 	public function generate_tabletop() {
 		$this->render_manage_sites_table_top();
@@ -294,8 +292,6 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Render Manage Sites Table Top.
-	 *
-	 * @return html Manage Sites Table Top.
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
@@ -689,8 +685,6 @@ class MainWP_Manage_Sites_List_Table {
 	 * Display the table.
 	 *
 	 * @param boolean $optimize true|false Whether or not to optimize.
-	 *
-	 * @return html Sites Table.
 	 */
 	public function display( $optimize = true ) {
 
@@ -879,8 +873,6 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Return empty table place holders.
-	 *
-	 * @return html Place holders.
 	 */
 	public function display_rows_or_placeholder() {
 		if ( $this->has_items() ) {
@@ -906,9 +898,7 @@ class MainWP_Manage_Sites_List_Table {
 	 * Echo the column headers.
 	 *
 	 * @param boolean $optimize true|false Whether or not to optimise.
-	 * @param boolean $top true|false
-	 *
-	 * @return html column headers.
+	 * @param boolean $top true|false.
 	 */
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
@@ -1276,8 +1266,6 @@ class MainWP_Manage_Sites_List_Table {
 	 * Single Row.
 	 *
 	 * @param mixed $website Child Site.
-	 *
-	 * @return html Html for a single Row.
 	 */
 	public function single_row( $website ) {
 		$classes = '';
@@ -1312,8 +1300,6 @@ class MainWP_Manage_Sites_List_Table {
 	 * Columns for a single row.
 	 *
 	 * @param mixed $website Child Site.
-	 *
-	 * @return html html for single row columns.
 	 */
 	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.
 

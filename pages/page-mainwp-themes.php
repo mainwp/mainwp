@@ -26,6 +26,8 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Subpages array.
+	 *
 	 * @var array $subPages Array of SubPages.
 	 */
 	public static $subPages;
@@ -62,7 +64,9 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Initiate the MainWP Themes SubMenu Page.
+	 * Method init_menu()
+	 *
+	 * Initiate the MainWP Themes SubMenu page.
 	 */
 	public static function init_menu() {
 
@@ -142,6 +146,8 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method init_subpages_menu()
+	 *
 	 * Themes Subpage Menu HTML Content.
 	 */
 	public static function init_subpages_menu() {
@@ -186,6 +192,8 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method init_left_menu()
+	 *
 	 * Build arrays for each SubPage Menu Block.
 	 *
 	 * @param array $subPages Array of SubPages.
@@ -251,9 +259,11 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method render_header()
+	 *
 	 * Render Themes SubPage Header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$params = array( 'title' => __( 'Themes', 'mainwp' ) );
@@ -316,15 +326,19 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method render_footer()
+	 *
 	 * Close the page container.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
 	/**
+	 * Method render()
+	 *
 	 * Render the Theme SubPage content.
 	 */
 	public static function render() {
@@ -457,14 +471,16 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method render_table()
+	 *
 	 * Render the Child Sites Bulk action & Sidebar Meta boxes.
 	 *
-	 * @param mixed $keyword
-	 * @param mixed $status
-	 * @param mixed $groups
-	 * @param mixed $sites
+	 * @param string $keyword Search keyword parameter.
+	 * @param string $status Search status parameter.
+	 * @param array  $groups Selected groups of child sites.
+	 * @param array  $sites Selected child sites.
 	 *
-	 * @return mixed $result Errors|HTML
+	 * @return mixed $result Errors|HTML.
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
@@ -675,16 +691,16 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * This method renders the Manage Themes Table
+	 * Method render_manage_themes_table()
 	 *
-	 * @param mixed $sites List of sites.
-	 * @param mixed $themes List of themes.
-	 * @param mixed $siteThemes
-	 * @param mixed $themesSlug
-	 * @param mixed $themesVersion Installed Theme version.
-	 * @param mixed $themesRealVersion Current Theme version.
+	 * Render the Manage Themes table
 	 *
-	 * @return html Output the table.
+	 * @param array  $sites List of sites.
+	 * @param array  $themes List of themes.
+	 * @param array  $siteThemes List of themes for the site.
+	 * @param string $themesSlug Theme slug.
+	 * @param string $themesVersion Installed theme version.
+	 * @param string $themesRealVersion Current theme version.
 	 */
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
 		?>
@@ -1102,9 +1118,13 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method render_all_themes_table()
+	 *
 	 * Render the All Themes Table.
 	 *
-	 * @param null $output
+	 * @param null $output Function output.
+	 *
+	 * @return void
 	 */
 	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1574,10 +1594,12 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Render ignored sites list.
+	 * Method render_sites_ignored_abandoned()
 	 *
-	 * @param mixed $cnt
-	 * @param mixed $websites Websites list.
+	 * Render ignored items per site list.
+	 *
+	 * @param int $cnt Count of items.
+	 * @param object $websites The websits object.
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>

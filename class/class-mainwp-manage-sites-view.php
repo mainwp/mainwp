@@ -33,9 +33,7 @@ class MainWP_Manage_Sites_View {
 	/**
 	 * Method init_subpages_menu()
 	 *
-	 * @param array $subPages Sub pages array
-	 *
-	 * @return html Sites sub page menu.
+	 * @param array $subPages Sub pages array.
 	 */
 	public static function init_subpages_menu( &$subPages ) {
 		?>
@@ -80,9 +78,7 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * Initiate left Sites menu.
 	 *
-	 * @param array $subPages Sub pages array
-	 *
-	 * @return MainWP_Menu::add_left_menu()
+	 * @param array $subPages Sub pages array.
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 
@@ -307,8 +303,6 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
-	 *
-	 * @return html Close container.
 	 */
 	public static function render_footer( $shownPage, &$subPages ) {
 		echo '</div>';
@@ -318,8 +312,6 @@ class MainWP_Manage_Sites_View {
 	 * Method render_import_sites()
 	 *
 	 * Render import sites dialog.
-	 *
-	 * @return html Import site dialog.
 	 */
 	public static function render_import_sites() {
 		?>
@@ -436,8 +428,6 @@ class MainWP_Manage_Sites_View {
 	 * Method render_sync_exts_settings()
 	 *
 	 * Render sync extension settings.
-	 *
-	 * @return html $html
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.1', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -509,9 +499,7 @@ class MainWP_Manage_Sites_View {
 	/**
 	 * Method render_settings()
 	 *
-	 * Render Site Settings.
-	 *
-	 * @return html Site Settings.
+	 * Render site settings.
 	 */
 	public static function render_settings() {
 
@@ -711,8 +699,6 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $active_tab Currently active tab.
 	 * @param mixed $active_text Currently active drop down text.
 	 * @param mixed $show_language_updates Whether or not to show translations.
-	 *
-	 * @return html Header sub page header tabs.
 	 */
 	public static function render_header_tabs( $active_tab, $active_text, $show_language_updates ) {
 		?>
@@ -1012,10 +998,10 @@ class MainWP_Manage_Sites_View {
 	/**
 	 * Method m_reconnect_site()
 	 *
-	 * Reconnect Chid Site.
+	 * Reconnect chid site.
 	 *
-	 * @param mixed $website Child Site.
-	 * @throws \Exception on errors.
+	 * @param object $website The website object.
+	 * @throws \Exception Exception on errors.
 	 *
 	 * @return boolean true|false.
 	 */

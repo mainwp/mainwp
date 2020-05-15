@@ -22,18 +22,24 @@ class MainWP_Manage_Sites {
 	}
 
 	/**
+	 * Sub pages
+	 *
 	 * @static
-	 * @var undefined Sub pages.
+	 * @var array $subPages Sub pages.
 	 */
 	public static $subPages;
 
 	/**
+	 * Current page.
+	 *
 	 * @static
-	 * @var undefined Current Page.
+	 * @var string $page Current page.
 	 */
-	public static $page;
+	public array $page;
 
 	/**
+	 * Widgets to enable.
+	 *
 	 * @static
 	 * @var array $enable_widgets Widgets to enable.
 	 */
@@ -50,7 +56,11 @@ class MainWP_Manage_Sites {
 		'site_note'         => true,
 	);
 
-	/** @var $sitesTable MainWP_Manage_Sites_List_Table. */
+	/**
+	 * Magage Sites table
+	 *
+	 * @var $sitesTable Magage Sites table.
+	 */
 	public static $sitesTable;
 
 	/**
@@ -232,7 +242,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render page footer.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Manage_Sites_View::render_footer( $shownPage, self::$subPages );
@@ -243,9 +253,9 @@ class MainWP_Manage_Sites {
 	 *
 	 * Create Screen Options button.
 	 *
-	 * @param $input Screen Options Button HTML.
+	 * @param mixed $input Screen options button HTML.
 	 *
-	 * @return html Screen Options Button.
+	 * @return mixed Screen sptions button.
 	 */
 	public static function screen_options( $input ) {
 		return $input .
@@ -258,8 +268,6 @@ class MainWP_Manage_Sites {
 	 * Method render_screen_options()
 	 *
 	 * Render Screen Options Modal.
-	 *
-	 * @return html Screen Options modal window.
 	 */
 	public static function render_screen_options() {
 
@@ -857,8 +865,6 @@ class MainWP_Manage_Sites {
 	 *
 	 * @param boolean $showDelete true|false Show delete option.
 	 * @param boolean $showAddNew true|false Show add new option.
-	 *
-	 * @return html Manage Sites Content.
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
@@ -1083,9 +1089,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render on edit.
 	 *
-	 * @param mixed $website Child Site.
-	 *
-	 * @return js Script to update site.
+	 * @param object $website The website object.
 	 */
 	public static function on_edit_site( $website ) {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {

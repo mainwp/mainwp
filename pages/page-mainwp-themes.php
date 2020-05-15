@@ -1435,10 +1435,12 @@ class MainWP_Themes {
 	}
 
 	/**
+	 * Method render_sites_ignored()
+	 *
 	 * Render ignored sites.
 	 *
-	 * @param mixed $cnt
-	 * @param mixed $websites Websites list.
+	 * @param int    $cnt Count of items.
+	 * @param object $websites The websits object.
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
@@ -1598,7 +1600,7 @@ class MainWP_Themes {
 	 *
 	 * Render ignored items per site list.
 	 *
-	 * @param int $cnt Count of items.
+	 * @param int    $cnt Count of items.
 	 * @param object $websites The websits object.
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {

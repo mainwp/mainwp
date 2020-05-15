@@ -23,18 +23,24 @@ class MainWP_Extensions_Handler {
 		return __CLASS__;
 	}
 
-	/**
-	 * @var boolean true|false Extension is loaded.
-	 */
+	 /**
+ 	 *  Loaded extensions.
+ 	 *
+ 	 * @var array $extensionsLoaded
+ 	 */
 	public static $extensionsLoaded = false;
 
 	/**
-	 * @var undefined Loaded extensions list.
+	 * All extensions.
+	 *
+	 * @var array $extensions
 	 */
 	public static $extensions;
 
 	/**
-	 * @var array Possible options.
+	 * Possible options.
+	 *
+	 * @var array $possible_options
 	 */
 	private static $possible_options = array(
 		'plugin_upgrades'  => 'plugin_upgrades',
@@ -469,13 +475,13 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Fetch Authorized URLS.
 	 *
-	 * @param mixed $pluginFile Extension plugin file to verify.
-	 * @param mixed $key The child-key.
-	 * @param mixed $dbwebsites
-	 * @param mixed $what
-	 * @param mixed $params
-	 * @param mixed $handle
-	 * @param mixed $output
+	 * @param mixed  $pluginFile Extension plugin file to verify.
+	 * @param string $key The child key.
+	 * @param object $dbwebsites The websites.
+	 * @param string $what Action to perorm.
+	 * @param mixed  $params Request parameters.
+	 * @param mixed  $handle Request handle.
+	 * @param mixed  $output Request output.
 	 *
 	 * @uses MainWP_Connect::fetch_urls_authed()
 	 *

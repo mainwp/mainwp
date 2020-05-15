@@ -25,8 +25,6 @@ class MainWP_Manage_Groups {
 	 * Method init_menu()
 	 *
 	 * Add Groups Sub Menu.
-	 *
-	 * @return string Groups.
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -46,8 +44,6 @@ class MainWP_Manage_Groups {
 	 * Method get_group_list_content()
 	 *
 	 * Get group list contents.
-	 *
-	 * @return array $group Array of group data.
 	 */
 	public static function get_group_list_content() {
 
@@ -64,8 +60,6 @@ class MainWP_Manage_Groups {
 	 * Group Data Table Row.
 	 *
 	 * @param array $group Array of group data.
-	 *
-	 * @return html Group data table Row.
 	 */
 	private static function create_group_item( $group ) {
 		?>
@@ -100,8 +94,6 @@ class MainWP_Manage_Groups {
 	 * Method get_website_list_content()
 	 *
 	 * Get the Child Site list content.
-	 *
-	 * @return html Single Child Site Name & Checkbox.
 	 */
 	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -380,8 +372,6 @@ class MainWP_Manage_Groups {
 	 * Method rename_group()
 	 *
 	 * Rename the selected group.
-	 *
-	 * @return result $group->name.
 	 */
 	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
@@ -407,8 +397,6 @@ class MainWP_Manage_Groups {
 	 * Method delete_group()
 	 *
 	 * Delete the selected group.
-	 *
-	 * @return result OK|ERROR
 	 */
 	public static function delete_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
@@ -466,8 +454,6 @@ class MainWP_Manage_Groups {
 	 * Method add_group()
 	 *
 	 * Add Group.
-	 *
-	 * @return do_action|die mainwp_added_new_group|Error =1.
 	 */
 	public static function add_group() {
 		global $current_user;
@@ -510,8 +496,6 @@ class MainWP_Manage_Groups {
 	 * Method update_group()
 	 *
 	 * Update groups Sites.
-	 *
-	 * @return boolean true|false.
 	 */
 	public static function update_group() {
 		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {

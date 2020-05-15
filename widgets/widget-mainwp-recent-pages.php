@@ -38,8 +38,6 @@ class MainWP_Recent_Pages {
 	 * Method render_sites()
 	 *
 	 * Build the resent pages list.
-	 *
-	 * @param
 	 */
 	public static function render_sites() {
 
@@ -83,7 +81,7 @@ class MainWP_Recent_Pages {
 		<?php self::render_top_grid(); ?>
 
 		<!-- Published List -->
-		<?php self::render_published_posts( $allPages, $recent_number ); ?>		
+		<?php self::render_published_posts( $allPages, $recent_number ); ?>
 
 		<!-- END Published List -->
 
@@ -99,9 +97,9 @@ class MainWP_Recent_Pages {
 		<?php self::render_future_posts( $allPages, $recent_number ); ?>
 		<!-- END Future  List -->
 
-		<!-- Trash List -->			
+		<!-- Trash List -->
 		<?php self::render_trash_posts( $allPages, $recent_number ); ?>
-		<!-- END Trash  List -->			
+		<!-- END Trash  List -->
 
 		<div class="ui hidden divider"></div>
 
@@ -118,8 +116,6 @@ class MainWP_Recent_Pages {
 
 	/**
 	 * Render MainWP Recent Paged Widget Header
-	 *
-	 * @return html
 	 */
 	public static function render_top_grid() {
 		?>
@@ -154,8 +150,6 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 *
-	 * @return html
 	 */
 	public static function render_published_posts( $allPages, $recent_number ) {
 
@@ -218,7 +212,7 @@ class MainWP_Recent_Pages {
 				</div>
 			<?php } ?>
 		</div>
-		</div>		
+		</div>
 		<?php
 	}
 
@@ -227,8 +221,6 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 *
-	 * @return html
 	 */
 	public static function render_draft_posts( $allPages, $recent_number ) {
 
@@ -292,7 +284,7 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>		
+			</div>
 		<?php
 	}
 
@@ -301,8 +293,6 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 *
-	 * @return html
 	 */
 	public static function render_pending_posts( $allPages, $recent_number ) {
 
@@ -366,7 +356,7 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>		
+			</div>
 		<?php
 	}
 
@@ -375,8 +365,6 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 *
-	 * @return html
 	 */
 	public static function render_future_posts( $allPages, $recent_number ) {
 		$recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
@@ -440,7 +428,7 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-			</div>		
+			</div>
 		<?php
 	}
 
@@ -449,8 +437,6 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param mixed $allPages All pages data.
 	 * @param mixed $recent_number Number of pages.
-	 *
-	 * @return html
 	 */
 	public static function render_trash_posts( $allPages, $recent_number ) {
 		$recent_pages_trash = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
@@ -512,7 +498,7 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
-		</div>		
+		</div>
 		<?php
 	}
 }

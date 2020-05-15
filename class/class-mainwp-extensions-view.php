@@ -41,8 +41,8 @@ class MainWP_Extensions_View {
 	 *
 	 * Render page header.
 	 *
-	 * @param string $shownPage
-	 * @param string $extensions
+	 * @param string $shownPage The page slug shown at this moment.
+	 * @param array  $extensions Extensions information.
 	 */
 	public static function render_header( $shownPage = '', &$extensions = '' ) {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
@@ -87,7 +87,7 @@ class MainWP_Extensions_View {
 	 *
 	 * Render page footer.
 	 *
-	 * @param mixed $shownPage
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -96,7 +96,7 @@ class MainWP_Extensions_View {
 	/**
 	 * Method render()
 	 *
-	 * Build Extensions Page.
+	 * Render the extensions page.
 	 */
 	public static function render() {
 
@@ -171,9 +171,9 @@ class MainWP_Extensions_View {
 	}
 
 	/**
-	 * Render Incompatability Notice.
+	 * Method render_incompatible_notice()
 	 *
-	 * @return html Html block for Incompatability Notice.
+	 * Render Incompatability Notice.
 	 */
 	public static function render_incompatible_notice() {
 		$deactivated_exts = get_transient( 'mainwp_transient_deactivated_incomtible_exts' );
@@ -196,9 +196,9 @@ class MainWP_Extensions_View {
 	}
 
 	/**
-	 * Render Intro Notice.
+	 * Method render_intro_notice()
 	 *
-	 * @return html Html block for Intro Notice.
+	 * Render Intro Notice.
 	 */
 	public static function render_intro_notice() {
 		?>
@@ -213,11 +213,11 @@ class MainWP_Extensions_View {
 	}
 
 	/**
+	 * Method render_search_box()
+	 *
 	 * Render Search Box.
 	 *
-	 * @param mixed $extensions Extentions Array.
-	 *
-	 * @return html Html block for Search Box.
+	 * @param mixed $extensions Extentions array.
 	 */
 	public static function render_search_box( $extensions ) {
 		?>
@@ -252,12 +252,12 @@ class MainWP_Extensions_View {
 	}
 
 	/**
+	 * Method render_extension_card()
+	 *
 	 * Render the MainWP Extension Cards.
 	 *
 	 * @param mixed $extension Extention to render.
 	 * @param mixed $extension_update Extension update.
-	 *
-	 * @return html Html Block for MainWP Extensions.
 	 */
 	public static function render_extension_card( $extension, $extension_update ) {
 
@@ -343,9 +343,9 @@ class MainWP_Extensions_View {
 	}
 
 	/**
-	 * Render Purchase Notice.
+	 * Method render_purchase_notice()
 	 *
-	 * @return html Html Block for purchange notice.
+	 * Render Purchase Notice.
 	 */
 	public static function render_purchase_notice() {
 		?>
@@ -367,8 +367,6 @@ class MainWP_Extensions_View {
 	 *
 	 * @param mixed $username MainWP.com Username.
 	 * @param mixed $password MainWP.com Password.
-	 *
-	 * @return html HTML block for Extentions Page.
 	 */
 	public static function render_side_box( $username, $password ) {
 		?>

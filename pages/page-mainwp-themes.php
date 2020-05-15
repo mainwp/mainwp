@@ -1598,7 +1598,7 @@ class MainWP_Themes {
 	 *
 	 * Render ignored items per site list.
 	 *
-	 * @param int $cnt Count of items.
+	 * @param int    $cnt Count of items.
 	 * @param object $websites The websits object.
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {

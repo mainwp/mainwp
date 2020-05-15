@@ -38,8 +38,6 @@ class MainWP_Recent_Posts {
 	 * Method render_sites()
 	 *
 	 * Build the recent posts list.
-	 *
-	 * @param
 	 */
 	public static function render_sites() {
 
@@ -115,8 +113,6 @@ class MainWP_Recent_Posts {
 
 	/**
 	 * Render MainWP Recent Posts Widget Header
-	 *
-	 * @return html
 	 */
 	public static function render_top_grid() {
 		?>
@@ -150,8 +146,6 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $allPosts All posts data.
 	 * @param mixed $recent_number Number of posts.
-	 *
-	 * @return html
 	 */
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
@@ -224,8 +218,6 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $allPosts All posts data.
 	 * @param mixed $recent_number Number of Posts.
-	 *
-	 * @return html
 	 */
 	public static function render_draft_posts( $allPosts, $recent_number ) {
 
@@ -296,8 +288,6 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $allPosts All posts data.
 	 * @param mixed $recent_number Number of posts.
-	 *
-	 * @return html
 	 */
 	public static function render_pending_posts( $allPosts, $recent_number ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
@@ -368,8 +358,6 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $allPosts All posts data.
 	 * @param mixed $recent_number Number of post.
-	 *
-	 * @return html
 	 */
 	public static function render_future_posts( $allPosts, $recent_number ) {
 
@@ -442,8 +430,6 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $allPosts All posts data.
 	 * @param mixed $recent_number Number of posts.
-	 *
-	 * @return html
 	 */
 	public static function render_trash_posts( $allPosts, $recent_number ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );

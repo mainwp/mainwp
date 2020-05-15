@@ -24,12 +24,16 @@ class MainWP_Plugins {
 	}
 
 	/**
-	 * @var undefined $subPages MainWP Plugins Sub Pages.
+	 * MainWP Plugins sub-pages.
+	 *
+	 * @var array $subPages MainWP Plugins Sub Pages.
 	 */
 	public static $subPages;
 
 	/**
-	 * @var undefined $pluginsTable Plugins Table.
+	 * Plugins table.
+	 *
+	 * @var mixed $pluginsTable Plugins table.
 	 */
 	public static $pluginsTable;
 
@@ -343,9 +347,11 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_footer()
+	 *
 	 * Render MainWP Plugins Page Footer.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -756,6 +762,8 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_manage_table()
+	 *
 	 * Render Manage Plugins Table.
 	 *
 	 * @param array $sites Child Sites array.
@@ -766,8 +774,6 @@ class MainWP_Plugins {
 	 * @param array $pluginsName Plugin names array.
 	 * @param array $pluginsVersion Installed plugins versions.
 	 * @param array $pluginsRealVersion Latest plugin release version.
-	 *
-	 * @return html Manage plugin table.
 	 */
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
 		?>
@@ -1066,9 +1072,11 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_all_active_table()
+	 *
 	 * Render all active Plugins table.
 	 *
-	 * @param null $output
+	 * @param null $output function output.
 	 *
 	 * @return void
 	 */
@@ -1213,15 +1221,15 @@ class MainWP_Plugins {
 
 
 	/**
+	 * Method render_all_active_html()
+	 *
 	 * Render all active plugins html.
 	 *
 	 * @param array $plugins Plugins array.
 	 * @param array $trustedPlugins Trusted plugins array.
 	 * @param mixed $search_status trust|untrust|ignored.
-	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
-	 * @param array $trustedPluginsNotes Trusted Plugins Notes.
-	 *
-	 * @return html All active plugins table.
+	 * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
+	 * @param array $trustedPluginsNotes Trusted plugins notes.
 	 */
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
 		?>
@@ -1353,12 +1361,12 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_global_ignored()
+	 *
 	 * Render Global Ignored plugins list.
 	 *
 	 * @param array $ignoredPlugins Ignored plugins array.
-	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
-	 *
-	 * @return html Ignored Plugins.
+	 * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
 	 */
 	public static function render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
@@ -1520,12 +1528,12 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_global_ignored_abandoned()
+	 *
 	 * Render Global Ignored Abandoned table.
 	 *
 	 * @param array $ignoredPlugins Ignored plugins array.
-	 * @param array $decodedIgnoredPlugins Decoded Ignored Plugins array.
-	 *
-	 * @return html Globally Ignored Plugins.
+	 * @param array $decodedIgnoredPlugins Decoded dgnored plugins array.
 	 */
 	public static function render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ) {
 		?>
@@ -1574,12 +1582,12 @@ class MainWP_Plugins {
 	}
 
 	/**
+	 * Method render_sites_ignored_abandoned()
+	 *
 	 * Render Per Site Ignored Abandoned Table.
 	 *
-	 * @param mixed $cnt Plugin Count.
-	 * @param mixed $websites Child Sites.
-	 *
-	 * @return html Per Site Ignored Abandoned Table.
+	 * @param int    $cnt Plugins count.
+	 * @param object $websites The websites object.
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>
@@ -1648,7 +1656,11 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	/** Hook the section help content to the Help Sidebar element */
+	/**
+	 * Method mainwp_help_content()
+	 *
+	 * Hook the section help content to the Help Sidebar element.
+	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>

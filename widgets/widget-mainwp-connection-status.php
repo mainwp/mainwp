@@ -144,9 +144,7 @@ class MainWP_Connection_Status {
 	/**
 	 * The renders the MainWP Overview page Connection Status Widget Header and Drop down Box.
 	 *
-	 * @param mixed $current_wpid Current Website ID
-	 *
-	 * @return html
+	 * @param mixed $current_wpid Current Website ID.
 	 */
 	public static function render_status( $current_wpid ) {
 		?>
@@ -200,8 +198,6 @@ class MainWP_Connection_Status {
 	 *
 	 * @param mixed $site Site list.
 	 * @param mixed $count_connected Connection Count.
-	 *
-	 * @return html
 	 */
 	public static function render_current_status( $site, $count_connected ) {
 		if ( $count_connected > 0 ) :
@@ -241,8 +237,6 @@ class MainWP_Connection_Status {
 	 *
 	 * @param mixed $count_connected Connected Count.
 	 * @param mixed $count_disconnected Disconnected Count.
-	 *
-	 * @return html
 	 */
 	public static function render_multi_status( $count_connected, $count_disconnected ) {
 		?>
@@ -281,8 +275,6 @@ class MainWP_Connection_Status {
 	 * @param mixed $html_all_sites All sites html.
 	 * @param mixed $html_online_sites Online sites html.
 	 * @param mixed $html_other_sites Other sites html.
-	 *
-	 * @return html
 	 */
 	public static function render_details( $html_all_sites, $html_online_sites, $html_other_sites ) {
 		?>
@@ -319,8 +311,6 @@ class MainWP_Connection_Status {
 	 * @param mixed $md5Connection md5 Connection.
 	 * @param mixed $output_md5 md5 decoded output.
 	 * @param mixed $hasSyncErrors Collected errors.
-	 *
-	 * @return html
 	 */
 	public static function render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors ) {
 		?>
@@ -365,8 +355,6 @@ class MainWP_Connection_Status {
 	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
 	 * @param mixed $md5Connection md5 Connection.
 	 * @param mixed $output_md5 md5 decoded output.
-	 *
-	 * @return html
 	 */
 	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>
@@ -407,8 +395,6 @@ class MainWP_Connection_Status {
 	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
 	 * @param mixed $md5Connection md5 Connection.
 	 * @param mixed $output_md5 md5 decoded output.
-	 *
-	 * @return html
 	 */
 	public static function render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>

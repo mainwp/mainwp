@@ -15,8 +15,10 @@ namespace MainWP\Dashboard;
 class MainWP_Utility {
 
 	/**
+	 * Yoast SEO is enabled return true else return null.
+	 *
 	 * @static
-	 * @var (null|true) $enabled_wp_seo If Yoast SEO is enabled return true else return null.
+	 * @var boolean $enabled_wp_seo If Yoast SEO is enabled return true else return null.
 	 */
 	public static $enabled_wp_seo = null;
 
@@ -50,10 +52,10 @@ class MainWP_Utility {
 	 *
 	 * End of Stack Trace.
 	 *
-	 * @param mixed $haystack
-	 * @param mixed $needle
+	 * @param mixed $haystack Haystack parameter.
+	 * @param mixed $needle Needle parameter.
 	 *
-	 * @return mixed True|substr( $haystack, - $length ) === $needle.
+	 * @return boolean
 	 */
 	public static function ends_with( $haystack, $needle ) {
 		$length = strlen( $needle );
@@ -69,8 +71,8 @@ class MainWP_Utility {
 	 *
 	 * Grab url.
 	 *
-	 * @param mixed   $pUrl
-	 * @param boolean $showHttp
+	 * @param string  $pUrl Website URL.
+	 * @param boolean $showHttp Show HTTP.
 	 *
 	 * @return string $url.
 	 */
@@ -437,9 +439,9 @@ class MainWP_Utility {
 	 * Remove http prefixes from given url.
 	 *
 	 * @param mixed     $pUrl Given URL.
-	 * @param (boolean) $pTrimSlashes Whether or not to trim slashes. Default is false.
+	 * @param boolean   $pTrimSlashes Whether or not to trim slashes. Default is false.
 	 *
-	 * @return void
+	 * @return string Trimmed URL.
 	 */
 	public static function remove_http_prefix( $pUrl, $pTrimSlashes = false ) {
 		return str_replace( array( 'http:' . ( $pTrimSlashes ? '//' : '' ), 'https:' . ( $pTrimSlashes ? '//' : '' ) ), array( '', '' ), $pUrl );
@@ -567,8 +569,6 @@ class MainWP_Utility {
 	 * @param mixed  $array Array to sort.
 	 * @param mixed  $key Array key.
 	 * @param string $sort_flag Flags to sort by. Default = SORT_STRING.
-	 *
-	 * @return array Sorted array.
 	 */
 	public static function array_sort( &$array, $key, $sort_flag = SORT_STRING ) {
 		$sorter = array();
@@ -621,8 +621,6 @@ class MainWP_Utility {
 	 * Method render_mainwp_nonce()
 	 *
 	 * Render MainWP nonce.
-	 *
-	 * @return string Nonce field HTML markup.
 	 */
 	public static function render_mainwp_nonce() {
 		wp_nonce_field( 'mainwp-admin-nonce' );

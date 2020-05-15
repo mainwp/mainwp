@@ -49,8 +49,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## Synopsis [--list]
 	 *
-	 * @param mixed $args
-	 * @param mixed $assoc_args
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
 	 */
 	public function sites( $args, $assoc_args ) {
 		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
@@ -104,8 +104,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## Synopsis [<websiteid>] [--all]
 	 *
-	 * @param mixed $args
-	 * @param mixed $assoc_args
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -170,8 +170,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## Synopsis [<websiteid>]
 	 *
-	 * @param mixed $args
-	 * @param mixed $assoc_args
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
@@ -252,8 +252,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<pluginslug>] [--upgrade-all]
 	 *
-	 * @param mixed $args
-	 * @param mixed $assoc_args
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
 	 */
 	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- complex method.
 		$sites = array();
@@ -515,8 +515,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## Synopsis [<websiteid>] [--list] [--list-all] [--upgrade=<theme>] [--upgrade-all]
 	 *
-	 * @param mixed $args
-	 * @param mixed $assoc_args
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
 	 */
 	public function theme( $args, $assoc_args ) { // phpcs:ignore -- complex function.
 		$sites = array();

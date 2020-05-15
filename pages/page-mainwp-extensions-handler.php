@@ -24,10 +24,10 @@ class MainWP_Extensions_Handler {
 	}
 
 	 /**
- 	 *  Loaded extensions.
- 	 *
- 	 * @var array $extensionsLoaded
- 	 */
+	  *  Loaded extensions.
+	  *
+	  * @var array $extensionsLoaded
+	  */
 	public static $extensionsLoaded = false;
 
 	/**

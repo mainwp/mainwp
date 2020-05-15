@@ -37,8 +37,6 @@ class MainWP_Manage_Sites_Update_View {
 	 * Render Plugin updates Tab.
 	 *
 	 * @param mixed $id Child Site ID.
-	 *
-	 * @return html Invidivual updates html.
 	 */
 	public static function render_individual_updates( $id ) {
 		global $current_user;
@@ -111,8 +109,6 @@ class MainWP_Manage_Sites_Update_View {
 	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
-	 *
-	 * @return html WordPress Updates Tab.
 	 */
 	public static function render_wpcore_updates( $website, $active_tab ) {
 		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
@@ -173,8 +169,6 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-	 *
-	 * @return html Plugin Updates Tab.
 	 */
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
 
@@ -280,8 +274,6 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-	 *
-	 * @return html Themes Updates Tab.
 	 */
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
 
@@ -381,8 +373,6 @@ class MainWP_Manage_Sites_Update_View {
 	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
-	 *
-	 * @return html Language Updates Tab.
 	 */
 	public static function render_language_updates( $website, $active_tab ) {
 		$user_can_update_translation = mainwp_current_user_have_right( 'dashboard', 'update_translations' );
@@ -439,8 +429,6 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-	 *
-	 * @return html Abandoned Plugins Tab.
 	 */
 	public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
 
@@ -522,8 +510,6 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-	 *
-	 * @return html Abandoned Themes Tab.
 	 */
 	public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {
 

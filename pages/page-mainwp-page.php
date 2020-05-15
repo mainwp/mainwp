@@ -25,10 +25,18 @@ class MainWP_Page {
 		return __CLASS__;
 	}
 
-	/** @var object Subpages of Page. */
+	/**
+	 * Subpages of Page.
+	 *
+	 * @var object $subPages
+	 */
 	public static $subPages;
 
-	/** @var object Pages to load. */
+	/**
+	 * Pages to load.
+	 *
+	 * @var object $load_page
+	 */
 	public static $load_page;
 
 	/**
@@ -138,8 +146,6 @@ class MainWP_Page {
 	 * Method init_subpages_menu()
 	 *
 	 * Initiate subpages menu.
-	 *
-	 * @return void Sub menus.
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -179,8 +185,6 @@ class MainWP_Page {
 	 * Initiate left menu.
 	 *
 	 * @param array $subPages Left menu sub pages.
-	 *
-	 * @return void Initiate left menu.
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 
@@ -235,7 +239,7 @@ class MainWP_Page {
 	 *
 	 * Get columns to display.
 	 *
-	 * @return array Columns to display.
+	 * @return array $colums Columns to display.
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
@@ -264,8 +268,6 @@ class MainWP_Page {
 	 * Method admin_head()
 	 *
 	 * Add current screen ID to html header.
-	 *
-	 * @return void Inject js pagenow variable containing the current page id.
 	 */
 	public static function admin_head() {
 		global $current_screen;
@@ -282,7 +284,7 @@ class MainWP_Page {
 	 * @param mixed $hidden Columns that are hidden.
 	 * @param mixed $screen Current page.
 	 *
-	 * @return string Hidden columns.
+	 * @return string $hidden Hidden columns.
 	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
 		if ( $screen && 'mainwp_page_PageBulkManage' == $screen->id ) {
@@ -296,9 +298,9 @@ class MainWP_Page {
 	 *
 	 * Add edit post status handle.
 	 *
-	 * @param mixed $post_id Post ID.
+	 * @param int $post_id Post ID.
 	 *
-	 * @return string Post id with status handle added to it.
+	 * @return int $post_id Post id with status handle added to it.
 	 */
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
@@ -313,10 +315,8 @@ class MainWP_Page {
 	 *
 	 * Render page header.
 	 *
-	 * @param string $shownPage Current page. BulkManage|BulkAdd|BulkEdit
-	 * @param null   $post_id Post ID.
-	 *
-	 * @return void MainWP_UI::render_page_navigation()
+	 * @param string $shownPage Current page.
+	 * @param int    $post_id Post ID.
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 
@@ -377,9 +377,7 @@ class MainWP_Page {
 	 *
 	 * Render page footer.
 	 *
-	 * @param string $shownPage Current page. BulkManage|BulkAdd|BulkEdit
-	 *
-	 * @return void Close page container element.
+	 * @param string $shownPage Current page.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -897,8 +895,6 @@ class MainWP_Page {
 	 * Method publish()
 	 *
 	 * Publish page.
-	 *
-	 * @return (string|false) Page has been published string, or false if it cannot be encoded.
 	 */
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish' );
@@ -909,8 +905,6 @@ class MainWP_Page {
 	 * Method unpublish()
 	 *
 	 * Unpublish page.
-	 *
-	 * @return (string|false) Page has been unpublished string, or false if it cannot be encoded.
 	 */
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish' );
@@ -921,8 +915,6 @@ class MainWP_Page {
 	 * Method trash()
 	 *
 	 * Trash page.
-	 *
-	 * @return (string|false) Page has been moved to trash string, or false if it cannot be encoded.
 	 */
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash' );
@@ -933,8 +925,6 @@ class MainWP_Page {
 	 * Method delete()
 	 *
 	 * Delete page.
-	 *
-	 * @return (string|false) Page has been permanently deleted string, or false if it cannot be encoded.
 	 */
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete' );
@@ -945,8 +935,6 @@ class MainWP_Page {
 	 * Method restore()
 	 *
 	 * Restore page.
-	 *
-	 * @return (string|false) Page has been restored string, or false if it cannot be encoded.
 	 */
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore' );
@@ -959,7 +947,7 @@ class MainWP_Page {
 	 * Check if user has the rights to manage pages,
 	 * grab the post id and pass onto render_addedit() method.
 	 *
-	 * @return null|self::render_addedit()
+	 * @return void
 	 */
 	public static function render_bulk_add() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -977,7 +965,7 @@ class MainWP_Page {
 	 * Check if user has the rights to manage pages,
 	 * grab the post id and pass onto render_addedit() method.
 	 *
-	 * @return null|self::render_addedit()
+	 * @return void
 	 */
 	public static function render_bulk_edit() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {

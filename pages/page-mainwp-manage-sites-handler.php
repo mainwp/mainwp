@@ -61,7 +61,7 @@ class MainWP_Manage_Sites_Handler {
 	 *
 	 * Try to recconnect to Child Site.
 	 *
-	 * @return string TROW|ERROR|SUCCESS
+	 * @throws \Exception Error message.
 	 */
 	public static function reconnect_site() {
 		$siteId = $_POST['siteid'];
@@ -85,8 +85,6 @@ class MainWP_Manage_Sites_Handler {
 	 * Method add_site()
 	 *
 	 * Add new Child Site.
-	 *
-	 * @return json  $ret
 	 */
 	public static function add_site() {
 		$ret     = array();
@@ -119,8 +117,6 @@ class MainWP_Manage_Sites_Handler {
 	 * Method apply_plugin_settings()
 	 *
 	 * Apply plugin settings.
-	 *
-	 * @return json error
 	 */
 	public static function apply_plugin_settings() {
 		$site_id      = $_POST['siteId'];
@@ -137,8 +133,6 @@ class MainWP_Manage_Sites_Handler {
 	 * Method save_note()
 	 *
 	 * Save Child Site Note.
-	 *
-	 * @return json result|errors|undefined_error
 	 */
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
@@ -160,8 +154,6 @@ class MainWP_Manage_Sites_Handler {
 	 * Method remove_site()
 	 *
 	 * Try to remove Child Site.
-	 *
-	 * @return json error|SUCCESS|REMOVED|undefined_error|NOSITE
 	 */
 	public static function remove_site() {
 		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
@@ -283,8 +275,6 @@ class MainWP_Manage_Sites_Handler {
 	 * Method update_child_site_value()
 	 *
 	 * Update Child Site ID.
-	 *
-	 * @return json error|SUCCESS|undefined_error|NO_SIDE_ID
 	 */
 	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {

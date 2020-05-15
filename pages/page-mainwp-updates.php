@@ -12,34 +12,74 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Updates {
 
-	/** @var bool User can ignore updates. */
+	/**
+	 *  User can ignore updates.
+	 *
+	 * @var bool $user_can_ignore_updates User can ignore updates.
+	 */
 	public static $user_can_ignore_updates = null;
 
-	/** @var bool User can updates translations. */
+	/**
+	 *  User can update translations.
+	 *
+	 * @var bool $user_can_update_trans User can update translations.
+	 */
 	public static $user_can_update_trans = null;
 
-	/** @var bool User can updates WP. */
+	/**
+	 *  User can update WordPress core files.
+	 *
+	 * @var bool $user_can_update_wp User can update WordPress core files.
+	 */
 	public static $user_can_update_wp = null;
 
-	/** @var bool User can updates themes. */
+	/**
+	 *  User can update themes.
+	 *
+	 * @var bool $user_can_update_themes User can update themes.
+	 */
 	public static $user_can_update_themes = null;
 
-	/** @var bool User can updates plugins. */
+	/**
+	 *  User can update plugins.
+	 *
+	 * @var bool $user_can_update_plugins User can update plugins.
+	 */
 	public static $user_can_update_plugins = null;
 
-	/** @var string Placeholder for trusted label. */
+	/**
+	 * Placeholder for trusted label.
+	 *
+	 * @var string $trusted_label Placeholder for trusted label.
+	 */
 	public static $trusted_label = '';
 
-	/** @var string Placeholder for not trusted label. */
+	/**
+	 * Placeholder for not trusted label.
+	 *
+	 * @var string $not_trusted_label Placeholder for not trusted label.
+	 */
 	public static $not_trusted_label = '';
 
-	/** @var string Placeholder for continue selector. */
+	/**
+	 * Placeholder for continue selector.
+	 *
+	 * @var string $continue_selector Placeholder for continue selector.
+	 */
 	public static $continue_selector = '';
 
-	/** @var string Placeholder for continue update. */
+	/**
+	 * Placeholder for continue update.
+	 *
+	 * @var string $continue_update Placeholder for continue update.
+	 */
 	public static $continue_update = '';
 
-	/** @var string Placeholder for continue update slug. */
+	/**
+	 * Placeholder for continue update slug.
+	 *
+	 * @var string $continue_update_slug Placeholder for continue update slug.
+	 */
 	public static $continue_update_slug = '';
 
 	/**
@@ -117,8 +157,6 @@ class MainWP_Updates {
 	 * method MainWP_UI::render_top_header()
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-	 *
-	 * @return array $params Array containing the page title.
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -141,7 +179,9 @@ class MainWP_Updates {
 	/**
 	 * Method render_site_link_dashboard()
 	 *
-	 * @param object $website the site.
+	 * Generate individual site overview page link
+	 *
+	 * @param object $website The site object.
 	 */
 	public static function render_site_link_dashboard( $website ) {
 		?>
@@ -152,7 +192,8 @@ class MainWP_Updates {
 	/**
 	 * Method user_can_ignore_updates()
 	 *
-	 * @param empty
+	 * Check if the current user has permission to uignore updates.
+	 *
 	 * @return true|false user can ignore updates or not.
 	 */
 	public static function user_can_ignore_updates() {
@@ -165,7 +206,8 @@ class MainWP_Updates {
 	/**
 	 * Method user_can_update_trans()
 	 *
-	 * @param empty
+	 * Check if the current user has permission to update translations.
+	 *
 	 * @return true|false user can update translations.
 	 */
 	public static function user_can_update_trans() {
@@ -178,8 +220,9 @@ class MainWP_Updates {
 	/**
 	 * Method user_can_update_wp()
 	 *
-	 * @param empty
-	 * @return true|false user can update WP.
+	 * Check if the current user has permission to update WordPress core files.
+	 *
+	 * @return true|false user can update WordPress.
 	 */
 	public static function user_can_update_wp() {
 		if ( null === self::$user_can_update_wp ) {
@@ -191,7 +234,8 @@ class MainWP_Updates {
 	/**
 	 * Method user_can_update_themes()
 	 *
-	 * @param empty
+	 * Check if the current user has permission to update themes.
+	 *
 	 * @return true|false user can update themes.
 	 */
 	public static function user_can_update_themes() {
@@ -204,7 +248,8 @@ class MainWP_Updates {
 	/**
 	 * Method user_can_update_plugins()
 	 *
-	 * @param empty
+	 * Check if the current user has permission to update plugins.
+	 *
 	 * @return true|false user can update plugins.
 	 */
 	public static function user_can_update_plugins() {

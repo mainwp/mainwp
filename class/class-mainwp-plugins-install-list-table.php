@@ -22,16 +22,32 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
  */
 class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
-	/** @var string Direction ASC|DESC */
+	/**
+	 * Default direction.
+	 *
+	 * @var string $order
+	 */
 	public $order = 'ASC';
 
-	/** @var int 0|1. */
+	/**
+	 * Default order.
+	 *
+	 * @var int $orderby
+	 */
 	public $orderby = null;
 
-	/** @var array Groups Array. */
+	/**
+	 * Groups array.
+	 *
+	 * @var array $groups
+	 */
 	public $groups = array();
 
-	/** @var mixed Error messages. */
+	/**
+	 * Error messages.
+	 *
+	 * @var mixed $error
+	 */
 	private $error;
 
 	/**
@@ -220,7 +236,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 *
 	 * Displays the table Navigation.
 	 *
-	 * @param mixed $which
+	 * @param mixed $which Position information.
 	 *
 	 * @return mixed wp_referer_field();
 	 */
@@ -243,7 +259,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 *
 	 * Build the pagination menu.
 	 *
-	 * @param mixed $which
+	 * @param mixed $which Position information.
 	 *
 	 * @return mixed Pagination HTML
 	 */
@@ -351,8 +367,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	/**
 	 * Method order_callback()
 	 *
-	 * @param mixed $plugin_a
-	 * @param mixed $plugin_b
+	 * @param object $plugin_a Plugin A.
+	 * @param object $plugin_b Plugin B.
 	 *
 	 * @return int 0|1 Default 0.
 	 */

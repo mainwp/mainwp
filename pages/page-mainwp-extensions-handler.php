@@ -23,11 +23,11 @@ class MainWP_Extensions_Handler {
 		return __CLASS__;
 	}
 
-	 /**
- 	 *  Loaded extensions.
- 	 *
- 	 * @var array $extensionsLoaded
- 	 */
+	/**
+	 *  Loaded extensions.
+	 *
+	 * @var array $extensionsLoaded
+	 */
 	public static $extensionsLoaded = false;
 
 	/**

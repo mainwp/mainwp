@@ -27,6 +27,8 @@ class MainWP_Install_Bulk {
 	}
 
 	/**
+	 * Method init()
+	 *
 	 * Instantiate the main page
 	 *
 	 * Has to be called in System constructor,
@@ -37,6 +39,8 @@ class MainWP_Install_Bulk {
 	}
 
 	/**
+	 * Method admin_init()
+	 *
 	 * Handles the uploading of a file.
 	 */
 	public static function admin_init() {
@@ -58,11 +62,11 @@ class MainWP_Install_Bulk {
 
 
 	/**
+	 * Method render_upload()
+	 *
 	 * Renders the upload sub part.
 	 *
 	 * @param string $type Plugin|Theme Type of upload.
-	 *
-	 * @return html
 	 */
 	public static function render_upload( $type ) {
 		$title             = ( 'plugin' == $type ) ? 'Plugins' : 'Themes';
@@ -110,11 +114,11 @@ class MainWP_Install_Bulk {
 	}
 
 	/**
-	 * Prepair for the installation
+	 * Method prepare_install()
+	 *
+	 * Prepair for the installation.
 	 *
 	 * Grab all the nesesary data to make the upload and prepair json response.
-	 *
-	 * @return $output wp_send_json( $output ).
 	 */
 	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -198,6 +202,8 @@ class MainWP_Install_Bulk {
 
 
 	/**
+	 * Method addition_post_data()
+	 *
 	 * Grab Post addition data.
 	 *
 	 * @param array $post_data Data for post.
@@ -265,9 +271,9 @@ class MainWP_Install_Bulk {
 	}
 
 	/**
-	 * Prepair the upload.
+	 * Method prepare_upload()
 	 *
-	 * @return $output wp_send_json( $output ).
+	 * Prepair the upload.
 	 */
 	public static function prepare_upload() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -326,9 +332,9 @@ class MainWP_Install_Bulk {
 	}
 
 	/**
-	 * Perform the upload.
+	 * Method perform_upload()
 	 *
-	 * @return $output wp_send_json( $output ).
+	 * Perform the upload.
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
@@ -376,8 +382,6 @@ class MainWP_Install_Bulk {
 	 * Clean the upload
 	 *
 	 * Do file structure mainenance and tmp file removals.
-	 *
-	 * @return json array( 'ok' => true ) & die.
 	 */
 	public static function clean_upload() {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -402,9 +406,9 @@ class MainWP_Install_Bulk {
 	/**
 	 * Plugin & Theme upload handler.
 	 *
-	 * @param mixed $data
-	 * @param mixed $website
-	 * @param mixed $output
+	 * @param mixed  $data Processing data.
+	 * @param object $website The website object.
+	 * @param mixed  $output Function output.
 	 *
 	 * @return mixed $output->ok[ $website->id ] = array( $website->name )|Error,
 	 *  Already installed,

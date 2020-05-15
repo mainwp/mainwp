@@ -438,8 +438,8 @@ class MainWP_Utility {
 	 *
 	 * Remove http prefixes from given url.
 	 *
-	 * @param mixed     $pUrl Given URL.
-	 * @param boolean   $pTrimSlashes Whether or not to trim slashes. Default is false.
+	 * @param mixed   $pUrl Given URL.
+	 * @param boolean $pTrimSlashes Whether or not to trim slashes. Default is false.
 	 *
 	 * @return string Trimmed URL.
 	 */

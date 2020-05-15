@@ -278,7 +278,7 @@ class MainWP_Plugins {
 	/**
 	 * Render MainWP Plugins Page Header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
 

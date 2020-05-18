@@ -49,11 +49,14 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  redirect_edit_bulkpost().
+	 * Method redirect_edit_bulkpost().
 	 *
-	 * @param string $location
-	 * @param int    $post_id
-	 * @return string $location
+	 * Redirect to edit post.
+	 *
+	 * @param string  $location Target URL.
+	 * @param int     $post_id Post ID number.
+	 *
+	 * @return string $location Target URL.
 	 */
 	public function redirect_edit_bulkpost( $location, $post_id ) {
 		if ( $post_id ) {
@@ -66,11 +69,14 @@ class MainWP_Bulk_Post {
 	}
 
 	/**
-	 * Method  redirect_edit_bulkpage().
+	 * Method redirect_edit_bulkpage().
 	 *
-	 * @param string $location
-	 * @param int    $post_id
-	 * @return string $location
+	 * Redirect to edit page.
+	 *
+	 * @param string  $location Target URL.
+	 * @param int     $post_id Page ID number.
+	 *
+	 * @return string $location Target URL.
 	 */
 	public function redirect_edit_bulkpage( $location, $post_id ) {
 

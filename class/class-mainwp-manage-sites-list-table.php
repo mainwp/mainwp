@@ -31,7 +31,7 @@ class MainWP_Manage_Sites_List_Table {
 	/**
 	 * Public variable to hold total items number.
 	 *
-	 *@var integer
+	 * @var integer
 	 */
 	public $total_items;
 
@@ -226,7 +226,7 @@ class MainWP_Manage_Sites_List_Table {
 		$disable_backup = false;
 		$primaryBackup  = get_option( 'mainwp_primaryBackup' );
 
-		$primary_methods      = array();
+		$primary_methods = array();
 
 		/**
 		 * Filter is being replaced with mainwp_getprimarybackup_methods

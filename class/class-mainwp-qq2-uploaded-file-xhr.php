@@ -18,9 +18,11 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 	/**
 	 * Save the file to the specified path
 	 *
-	 * @param $path Path to File.
-	 * @throws \Exception errors
-	 * @return boolean TRUE on success|False
+	 * @param string $path Path to File.
+	 *
+	 * @throws \Exception Error messages.
+	 *
+	 * @return boolean true|false.
 	 */
 	public function save( $path ) {
 		$input    = fopen( 'php://input', 'r' );
@@ -33,7 +35,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 		}
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
-		/** @global WP_Filesystem_Base $wp_filesystem */
+
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -87,8 +89,8 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 	 *
 	 * Get content length.
 	 *
-	 * @throws \Exception error.
-	 * @return int length
+	 * @throws \Exception Error message.
+	 * @return int Content lenght.
 	 */
 	public function get_size() {
 		if ( isset( $_SERVER['CONTENT_LENGTH'] ) ) {

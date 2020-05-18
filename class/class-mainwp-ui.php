@@ -37,8 +37,6 @@ class MainWP_UI {
 	 * @param array   $selected_groups Selected Groups.
 	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
-	 *
-	 * @return string MainWP Select Sites Box html.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
@@ -511,7 +509,7 @@ class MainWP_UI {
 	 * Render header action buttons,
 	 * (Sync|Add|Options|Community|User|Updates).
 	 *
-	 * @return void Render header action buttons html.
+	 * @return mixed $output Render header action buttons html.
 	 */
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();
@@ -586,8 +584,6 @@ class MainWP_UI {
 	 *
 	 * @param array $subitems [access, active, style].
 	 * @param null  $name_caller Menu Name.
-	 *
-	 * @return string Render page navigation html.
 	 */
 	public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
 
@@ -659,8 +655,8 @@ class MainWP_UI {
 	 *
 	 * Customize WordPress add_meta_box() function.
 	 *
-	 * @param mixed       $id
-	 * @param mixed       $callback
+	 * @param mixed       $id Widget ID parameter.
+	 * @param mixed       $callback Callback function.
 	 * @param null        $screen Current page.
 	 * @param string|null $context right|null. If 3 columns then = 'middle'.
 	 * @param null        $title Widget title.
@@ -668,7 +664,7 @@ class MainWP_UI {
 	 *
 	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
 	 */
-	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- not quite complex function.
+	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		global $mainwp_widget_boxes;
 
 		$page = MainWP_System_Utility::get_page_id( $screen );

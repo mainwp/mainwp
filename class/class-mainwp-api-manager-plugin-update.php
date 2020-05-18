@@ -17,15 +17,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * MainWP API Manager Update Handler
  *
- * @package MainWP API Manager/Update Handler
- * @author Todd Lahman LLC
- * @copyright   Copyright (c) Todd Lahman LLC
- * @since 1.0.0
+ * @package   MainWP API Manager/Update Handler
+ * @author    Todd Lahman LLC
+ * @copyright Copyright (c) Todd Lahman LLC
+ * @since     1.0.0
  */
 class MainWP_Api_Manager_Plugin_Update {
 
 	/**
-	 * @var $instance The single instance of the class
+	 * Protected static varibale to hold the instance.
+	 *
+	 * @var null Default value.
 	 */
 	protected static $instance = null;
 
@@ -55,10 +57,12 @@ class MainWP_Api_Manager_Plugin_Update {
 	/**
 	 * Method create_upgrade_api_url()
 	 *
-	 * @param mixed   $args
-	 * @param boolean $bulk_check
+	 * Create upgrade request API URL.
 	 *
-	 * @return URL Build URL
+	 * @param array   $args Request arguments.
+	 * @param boolean $bulk_check Bulk check request.
+	 *
+	 * @return string Build URL.
 	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
 		if ( $bulk_check ) {
@@ -81,9 +85,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Returns plugin information in an array.
 	 *
-	 * @param mixed $plugin
+	 * @param array  $plugin Plugin information.
 	 *
-	 * @return mixed Plugin Information
+	 * @return mixed Plugin information.
 	 */
 	public function update_check( $plugin ) {
 
@@ -110,7 +114,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
 	 *
-	 * @param mixed $plugins
+	 * @param array  $plugins List of plugins (extensions).
 	 *
 	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
 	 */
@@ -129,9 +133,9 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Check $args, if there is a response, an object eists & response is not false.
 	 *
-	 * @param mixed $args
+	 * @param array   $args Request arguments.
 	 *
-	 * @return object $response
+	 * @return object $response Plugin information.
 	 */
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';
@@ -150,10 +154,13 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * Sends and receives data to and from the server API
 	 *
 	 * @access public
-	 * @since  1.0.0
-	 * @param mixed  $args
-	 * @param boolen $bulk_check Check if updating in bulk true|false
-	 * @return object $response
+	 *
+	 * @since         1.0.0
+	 *
+	 * @param array   $args Request arguments.
+	 * @param boolean $bulk_check Check if updating in bulk true|false.
+	 *
+	 * @return object $response Plugin information.
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );

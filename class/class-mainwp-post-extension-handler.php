@@ -42,7 +42,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_extension_add_menu', array( &$this, 'add_extension_menu' ) );
 		$this->add_action( 'mainwp_extension_remove_menu', array( &$this, 'remove_extension_menu_from_mainwp_menu' ) );
 
-		$this->add_action( 'mainwp_extension_activate', array( &$this, 'activate_extension' ) );
+		$this->add_action( 'mainwp_extension_api_activate', array( &$this, 'activate_api_extension' ) );
 		$this->add_action( 'mainwp_extension_deactivate', array( &$this, 'deactivate_extension' ) );
 		$this->add_action( 'mainwp_extension_testextensionapilogin', array( &$this, 'test_extensions_api_login' ) );
 
@@ -80,8 +80,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/** Activate MainWP Extension. */
-	public function activate_extension() {
-		$this->check_security( 'mainwp_extension_activate' );
+	public function activate_api_extension() {
+		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api       = dirname( $_POST['slug'] );
 		$api_key   = trim( $_POST['key'] );

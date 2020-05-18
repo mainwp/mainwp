@@ -528,6 +528,20 @@ class MainWP_System_Handler {
 	}
 
 	/**
+	 * Method activate_redirection()
+	 *
+	 * Redirect after activating MainWP Extension.
+	 *
+	 * @param mixed $location Location to redirect to.
+	 *
+	 * @return $location Admin URL + the page to redirect to.
+	 */
+	public function activate_redirect( $location ) {
+		$location = admin_url( 'admin.php?page=Extensions' );
+		return $location;
+	}
+	
+	/**
 	 * Method activate_extension()
 	 *
 	 * Activate MainWP Extension.

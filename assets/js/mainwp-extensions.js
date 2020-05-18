@@ -74,7 +74,7 @@ function mainwp_extensions_activate( pObj, retring ) {
             return;
 
         var data = mainwp_secure_data( {
-            action: 'mainwp_extension_activate',
+            action: 'mainwp_extension_api_activate',
             slug: extensionSlug,
             key: key,
             email: email
@@ -561,10 +561,6 @@ mainwp_extension_bulk_install_done = function () {
 
   statusEl.addClass( 'green' );
   statusEl.html( __( "Installation completed successfully. Page will reload automatically in 3 seconds." ) ).show();
-
-//  setTimeout( function () {
-//        location.href = 'admin.php?page=Extensions';
-//  }, 3000 );
 }
 
 

@@ -473,20 +473,6 @@ class MainWP_System {
 	}
 
 	/**
-	 * Method activate_redirection()
-	 *
-	 * Redirect after activating MainWP Extension.
-	 *
-	 * @param mixed $location Location to redirect to.
-	 *
-	 * @return $location Admin URL + the page to redirect to.
-	 */
-	public function activate_redirect( $location ) {
-		$location = admin_url( 'admin.php?page=Extensions' );
-		return $location;
-	}
-
-	/**
 	 * Method admin_init()
 	 *
 	 * Do nothing if current user is not an Admin else display the page.

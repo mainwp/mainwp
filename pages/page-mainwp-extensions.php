@@ -67,10 +67,8 @@ class MainWP_Extensions {
 	 * Method init_menu()
 	 *
 	 * Instantiate Extensions Menu.
-	 *
-	 * phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	 */
-	public static function init_menu() { //
+	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
 		}
@@ -338,10 +336,8 @@ class MainWP_Extensions {
 	 * Method get_purchased_exts()
 	 *
 	 * Get purchased MainWP Extensions.
-	 *
-	 * phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	 */
-	public static function get_purchased_exts() {
+	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );

@@ -70,7 +70,7 @@ class MainWP_Extensions {
 	 *
 	 * phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	 */
-	public static function init_menu() { //
+	public static function init_menu() {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
 		}

@@ -28,9 +28,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	/**
 	 * Method init_menu()
 	 *
-	 * Add Users Sub Menu "Admin Passwords".
-	 *
-	 * @return string $_page Admin Passwords HTML.
+	 * Add Users sub menu "Admin Passwords".
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -49,9 +47,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	/**
 	 * Method render_footer()
 	 *
-	 * Close <div>.
+	 * Close the HTML container.
 	 *
-	 * @param $shownPage Page that is shown.
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
@@ -62,7 +60,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 *
 	 * Render Admin Passwords Page.
 	 */
-	public static function render() { // phpcs:ignore -- complex method.
+	public static function render() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$show_form = true;
 		$errors    = array();
 
@@ -174,7 +172,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
 		?>
 		<?php if ( ! $show_form ) : ?>
-			<?php self::render_modal( $dbwebsites, $output ); ?>			
+			<?php self::render_modal( $dbwebsites, $output ); ?>
 		<?php endif; ?>
 		<?php self::render_bulk_form( $websites ); ?>
 		<?php
@@ -186,10 +184,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 *
 	 * Render update password results.
 	 *
-	 * @param mixed $dbwebsites
-	 * @param mixed $output result of update password
-	 *
-	 * @return echo html.
+	 * @param object $dbwebsites The websites object.
+	 * @param object $output Result of update password.
 	 */
 	public static function render_modal( $dbwebsites, $output ) {
 		?>
@@ -213,7 +209,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		</div>
 		<script type="text/javascript">
 			jQuery( '#mainwp-reset-admin-passwords-modal' ).modal( 'show' );
-		</script>		
+		</script>
 		<?php
 	}
 
@@ -222,9 +218,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 *
 	 * Render bulk update administrator password form.
 	 *
-	 * @param mixed $websites
-	 *
-	 * @return echo html.
+	 * @param mixed $websites The websites object.
 	 */
 	public static function render_bulk_form( $websites ) {
 		?>

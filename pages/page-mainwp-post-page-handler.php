@@ -24,12 +24,14 @@ class MainWP_Post_Page_Handler {
 	}
 
 	/**
+	 * Method add_meta()
+	 *
 	 * Add post meta data defined in $_POST superglobal for post with given ID.
 	 *
 	 * @since 1.2.0
 	 *
-	 * @param int $post_ID
-	 * @return int|bool
+	 * @param int $post_ID Post or Page ID.
+	 * @return mixed False or add_post_meta()
 	 */
 	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
@@ -65,9 +67,7 @@ class MainWP_Post_Page_Handler {
 	/**
 	 * Method ajax_add_meta()
 	 *
-	 * Ajax process to add post meta data
-	 *
-	 * @return exit json result
+	 * Ajax process to add post meta data.
 	 */
 	public static function ajax_add_meta() {
 
@@ -153,9 +153,7 @@ class MainWP_Post_Page_Handler {
 	/**
 	 * Method get_categories()
 	 *
-	 * Get categories
-	 *
-	 * @return exit html result
+	 * Get categories.
 	 */
 	public static function get_categories() {
 		$websites = array();
@@ -220,11 +218,9 @@ class MainWP_Post_Page_Handler {
 	/**
 	 * Method posting()
 	 *
-	 * Create bulk posts on sites
-	 *
-	 * @return html result
+	 * Create bulk posts on sites.
 	 */
-	public static function posting() { // phpcs:ignore -- complex method.
+	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
 			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );
@@ -508,9 +504,7 @@ class MainWP_Post_Page_Handler {
 	/**
 	 * Method get_post()
 	 *
-	 * Get post from child site to edit
-	 *
-	 * @return exit json result
+	 * Get post from child site to edit.
 	 */
 	public static function get_post() {
 		$postId    = $_POST['postId'];
@@ -595,7 +589,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * @return array result
 	 */
-	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method.
+	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		global $current_user;
 
 		if ( ! isset( $new_post['edit_id'] ) ) {
@@ -755,7 +749,8 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * Handle upload image.
 	 *
-	 * @throws \Exception error upload file.
+	 * @throws \Exception Error upload file.
+	 *
 	 * @param string $img_url URL for the image.
 	 * @param array  $img_data Array of image data.
 	 *

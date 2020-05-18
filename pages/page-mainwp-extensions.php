@@ -17,19 +17,23 @@ class MainWP_Extensions {
 	 *
 	 * Get Class Name.
 	 *
-	 * @return object
+	 * @return object Class name.
 	 */
 	public static function get_class_name() {
 		return __CLASS__;
 	}
 
 	/**
-	 * @var boolean true|false Extension is loaded.
+	 * Public static variable to hold Extensions loaded status.
+	 *
+	 * @var boolean Default false.
 	 */
 	public static $extensionsLoaded = false;
 
 	/**
-	 * @var undefined Loaded extensions list.
+	 * Public static variable to hold Extensions list.
+	 *
+	 * @var array Extensions list.
 	 */
 	public static $extensions;
 
@@ -60,11 +64,13 @@ class MainWP_Extensions {
 	}
 
 	/**
-	 * Instantiate Extensions Menu
+	 * Method init_menu()
 	 *
-	 * @return void
+	 * Instantiate Extensions Menu.
+	 *
+	 * phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	 */
-	public static function init_menu() { // phpcs:ignore -- not quite complex function.
+	public static function init_menu() { //
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Extensions_View::init_menu();
 		}
@@ -72,10 +78,11 @@ class MainWP_Extensions {
 		self::$extensions = array();
 		$all_extensions   = array();
 
-		/*
-		* @deprecated Use 'mainwp_getextensions' instead.
-		*
-		*/
+		/**
+		 * Filter is being replaced with mainwp_getextensions
+		 *
+		 * @deprecated
+		 */
 		$newExtensions = array();
 		$newExtensions = apply_filters_deprecated( 'mainwp-getextensions', array( $newExtensions ), '4.0.1', 'mainwp_getextensions' );
 		$newExtensions = apply_filters( 'mainwp_getextensions', $newExtensions );
@@ -247,9 +254,11 @@ class MainWP_Extensions {
 	}
 
 	/**
+	 * Method init_left_menu()
+	 *
 	 * Initiate top level Extensions Menues.
 	 *
-	 * @param mixed $extPages List of extension pages.
+	 * @param array $extPages List of extension pages.
 	 */
 	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -281,7 +290,11 @@ class MainWP_Extensions {
 		}
 	}
 
-	/** Initiate Extensions Subpage Menu.  */
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Initiate Extensions Subpage Menu.
+	 */
 	public static function init_subpages_menu() {
 		if ( empty( self::$extensions ) ) {
 			return;
@@ -322,11 +335,13 @@ class MainWP_Extensions {
 
 
 	/**
+	 * Method get_purchased_exts()
+	 *
 	 * Get purchased MainWP Extensions.
 	 *
-	 * @return html Extensions list.
+	 * phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	 */
-	public static function get_purchased_exts() { // phpcs:ignore -- complex method.
+	public static function get_purchased_exts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
 		$username = trim( $_POST['username'] );
 		$password = trim( $_POST['password'] );
@@ -501,24 +516,32 @@ class MainWP_Extensions {
 	}
 
 	/**
+	 * Method render_header()
+	 *
 	 * Render page header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
 		MainWP_Extensions_View::render_header( $shownPage, self::$extensions );
 	}
 
 	/**
+	 * Method render_footer()
+	 *
 	 * Render page footer.
 	 *
-	 * @param string $shownPage The page slug shown at this moment
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Extensions_View::render_footer( $shownPage );
 	}
 
-	/** Render Page */
+	/**
+	 * Method render()
+	 *
+	 * Render page content.
+	 */
 	public static function render() {
 
 		$params = array(
@@ -531,11 +554,9 @@ class MainWP_Extensions {
 	}
 
 	/**
-	 * MainWP Help Content.
+	 * Method mainwp_help_content()
 	 *
 	 * Create the MainWP Help Document List for the help component in the sidebar.
-	 *
-	 * @return html MainWP Help Document List.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {

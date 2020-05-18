@@ -21,10 +21,18 @@ class MainWP_Overview {
 		return __CLASS__;
 	}
 
-	/** Session Variable. */
-	protected static $singleton = null;
+	/**
+	 * The single instance of the class
+	 *
+	 * @var mixed Default null
+	 */
+	protected static $instance = null;
 
-	/** Array of enabled Widgets. */
+	/**
+	 * Enabled widgets
+	 *
+	 * @var array $enable_widgets
+	 */
 	private static $enable_widgets = array(
 		'overview'          => true,
 		'connection_status' => true,
@@ -41,11 +49,11 @@ class MainWP_Overview {
 	 *  @return self::singlton Overview Page Session.
 	 */
 	public static function get() {
-		if ( null == self::$singleton ) {
-			self::$singleton = new MainWP_Overview();
+		if ( null == self::$instance ) {
+			self::$instance = new MainWP_Overview();
 		}
 
-		return self::$singleton;
+		return self::$instance;
 	}
 
 	/** Method __construct(). */
@@ -127,7 +135,11 @@ class MainWP_Overview {
 		);
 	}
 
-	/** Run on page load. */
+	/**
+	 * Method on_load_page()
+	 *
+	 * Run on page load.
+	 */
 	public function on_load_page() {
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
@@ -138,11 +150,14 @@ class MainWP_Overview {
 		self::add_meta_boxes( $this->dashBoard );
 	}
 
-	/** Add MainWP Overview Page Widgets.
+	/**
+	 * Method add_meta_boxes()
 	 *
-	 * @param $page Current page.
+	 * Add MainWP Overview Page Widgets.
+	 *
+	 * @param array $page Current page.
 	 */
-	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method.
+	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
@@ -160,55 +175,37 @@ class MainWP_Overview {
 
 		$values = self::$enable_widgets;
 
-		/*
-		 * hook to support enable/disable overview widgets
-		 */
-
+		// hook to support enable/disable overview widgets.
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
-		/*
-		 * Load the Updates Overview widget
-		 */
-
+		// Load the Updates Overview widget.
 		if ( self::$enable_widgets['overview'] ) {
 			MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, 'left', __( 'Updates Overview', 'mainwp' ) );
 		}
 
-		/*
-		 * Load the Recent Posts widget
-		 */
-
+		// Load the Recent Posts widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
 			if ( self::$enable_widgets['recent_posts'] ) {
 				MainWP_UI::add_widget_box( 'recent_posts', array( MainWP_Recent_Posts::get_class_name(), 'render' ), $page, 'right', __( 'Recent Posts', 'mainwp' ) );
 			}
 		}
 
-		/*
-		 * Load the Recent Pages widget
-		 */
-
+		// Load the Recent Pages widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			if ( self::$enable_widgets['recent_pages'] ) {
 				MainWP_UI::add_widget_box( 'recent_pages', array( MainWP_Recent_Pages::get_class_name(), 'render' ), $page, 'right', __( 'Recent Pages', 'mainwp' ) );
 			}
 		}
 
-		/*
-		 * Load the Connection Status widget
-		 */
-
+		// Load the Connection Status widget.
 		if ( ! MainWP_System_Utility::get_current_wpid() ) {
 			if ( self::$enable_widgets['connection_status'] ) {
 				MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, 'left', __( 'Connection Status', 'mainwp' ) );
 			}
 		}
 
-		/*
-		 * Load the Security Issues widget
-		 */
-
+		// Load the Security Issues widget.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
@@ -235,7 +232,7 @@ class MainWP_Overview {
 	}
 
 	/**
-	 * Method on_show_page
+	 * Method on_show_page()
 	 *
 	 * When the page loads render the body content.
 	 */
@@ -263,13 +260,13 @@ class MainWP_Overview {
 
 
 	/**
+	 * Method render_dashboard_body()
+	 *
 	 * Render the Dasboard Body content.
 	 *
 	 * @param mixed $websites Array of Child Sites.
 	 * @param mixed $pDashboard Dashboard.
 	 * @param mixed $pScreenLayout Screen Layout.
-	 *
-	 * @return html
 	 */
 	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {
 

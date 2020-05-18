@@ -102,10 +102,10 @@ class MainWP_Twitter {
 	 *
 	 * Build Twitter message based on what action was performed.
 	 *
-	 * @param mixed $what
-	 * @param mixed $value
+	 * @param mixed $what Performed action.
+	 * @param mixed $value Performed action details.
 	 *
-	 * @return mixed $message.
+	 * @return mixed $message Twit content.
 	 */
 	public static function get_notice( $what, $value ) {
 
@@ -174,8 +174,8 @@ class MainWP_Twitter {
 	 *
 	 * Build Twitter Brag button.
 	 *
-	 * @param mixed   $content
-	 * @param boolean $echo
+	 * @param mixed   $content Twit content.
+	 * @param boolean $echo Echo or return content.
 	 *
 	 * @return mixed $return Button HTML
 	 */
@@ -206,7 +206,7 @@ class MainWP_Twitter {
 	 * @param integer $countSites Number of Sites updated.
 	 * @param integer $countSec Second it took to update.
 	 * @param integer $coutRealItems Number of items updated.
-	 * @param integer $twId Twitter ID
+	 * @param integer $twId Twitter ID.
 	 * @param integer $countItems Total number of Items together.
 	 *
 	 * @return boolean True|False.

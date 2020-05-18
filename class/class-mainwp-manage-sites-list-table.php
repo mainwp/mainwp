@@ -9,23 +9,37 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Manage Sites List Table.
+ *
+ * @todo The only variables that seam to be used are $column_headers.
  */
 class MainWP_Manage_Sites_List_Table {
 
-	/** @todo the only variables that seam to be used are $column_headers. */
-
-	/** @var null $userExtension User Extension. */
+	/**
+	 * Protected variable to hold User extension.
+	 *
+	 * @var mixed Default null.
+	 */
 	protected $userExtension = null;
 
 	/**
+	 * Public variable to hol Items information.
 	 *
-	 * @var $items Items.*/
+	 * @var array
+	 */
 	public $items;
 
-	/** @var $total_items Total Items. */
+	/**
+	 * Public variable to hold total items number.
+	 *
+	 *@var integer
+	 */
 	public $total_items;
 
-	/** @var $column_headers Column Headers.*/
+	/**
+	 * Protected variable to hold columns headers
+	 *
+	 * @var array
+	 */
 	protected $column_headers;
 
 	/**
@@ -47,6 +61,8 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
+	 * Method column_backup()
+	 *
 	 * Backup Column.
 	 *
 	 * @param mixed $item List of backups.
@@ -57,7 +73,12 @@ class MainWP_Manage_Sites_List_Table {
 
 		$lastBackup = MainWP_DB::instance()->get_website_option( $item, 'primary_lasttime_backup' );
 
-		$backupnow_lnk = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.1', 'mainwp_managesites_getbackuplink' );  // @deprecated Use 'mainwp_managesites_getbackuplink' instead.
+		/**
+		 * Filter is being replaced with mainwp_managesites_getbackuplink
+		 *
+		 * @deprecated
+		 */
+		$backupnow_lnk = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.1', 'mainwp_managesites_getbackuplink' );
 		$backupnow_lnk = apply_filters( 'mainwp_managesites_getbackuplink', $backupnow_lnk, $item['id'], $lastBackup );
 
 		if ( ! empty( $backupnow_lnk ) ) {
@@ -107,9 +128,14 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return string Column Name.
 	 */
-	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- not quite complex function.
+	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );  // @deprecated Use 'mainwp_sitestable_item' instead.
+		/**
+		 * Filter is being replaced with mainwp_sitestable_item
+		 *
+		 * @deprecated
+		 */
+		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );
 		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
 
 		switch ( $column_name ) {
@@ -177,6 +203,8 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
+	 * Method get_columns()
+	 *
 	 * Combine all columns.
 	 *
 	 * @return array $columns Array of column names.
@@ -184,7 +212,13 @@ class MainWP_Manage_Sites_List_Table {
 	public function get_columns() {
 
 		$columns = $this->get_default_columns();
-		$columns = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.1', 'mainwp_sitestable_getcolumns' );  // @deprecated Use 'mainwp_sitestable_getcolumns' instead.
+
+		/**
+		 * Filter is being replaced with mainwp_sitestable_getcolumns
+		 *
+		 * @deprecated
+		 */
+		$columns = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.1', 'mainwp_sitestable_getcolumns' );
 		$columns = apply_filters( 'mainwp_sitestable_getcolumns', $columns, $columns );
 
 		$columns['site_actions'] = '';
@@ -193,7 +227,13 @@ class MainWP_Manage_Sites_List_Table {
 		$primaryBackup  = get_option( 'mainwp_primaryBackup' );
 
 		$primary_methods      = array();
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+
+		/**
+		 * Filter is being replaced with mainwp_getprimarybackup_methods
+		 *
+		 * @deprecated
+		 */
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );
 		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
 		if ( empty( $primaryBackup ) ) {
@@ -407,7 +447,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @param boolean $optimize true|false Whether or not to optimize.
 	 */
-	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function.
+	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( null === $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -573,7 +613,12 @@ class MainWP_Manage_Sites_List_Table {
 			$site_ids[] = $site->id;
 		}
 
-		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.1', 'mainwp_sitestable_prepared_items' ); // @deprecated Use 'mainwp_sitestable_prepared_items' instead.
+		/**
+		 * Action is being replaced with mainwp_sitestable_prepared_items
+		 *
+		 * @deprecated
+		 */
+		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.1', 'mainwp_sitestable_prepared_items' );
 
 		do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
@@ -588,7 +633,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return array $site_ids Array of Child Site ID's that have updates.
 	 */
-	public function get_available_update_siteids() { // phpcs:ignore -- not quite complex function.
+	public function get_available_update_siteids() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$site_ids = array();
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
@@ -999,7 +1044,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return html Rows html.
 	 */
-	public function get_datatable_rows() { // phpcs:ignore -- complex function.
+	public function get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();
 		$info_rows = array();
 		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
@@ -1301,7 +1346,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @param mixed $website Child Site.
 	 */
-	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function.
+	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;

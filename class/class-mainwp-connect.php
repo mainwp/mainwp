@@ -41,7 +41,7 @@ class MainWP_Connect {
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
-	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) { // phpcs:ignore -- complex method.
+	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -503,7 +503,7 @@ class MainWP_Connect {
 		$others = array(),
 		$is_external_hook = false ) {
 
-		// phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
+		// phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		// current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
@@ -582,7 +582,9 @@ class MainWP_Connect {
 				$_new_post = $params['new_post'];
 
 				/**
-				 * @deprecated Use 'mainwp_pre_posting_posts' instead.
+				 * Filter is being replaced with mainwp_pre_posting_posts.
+				 *
+				 * @deprecated
 				 */
 				$params = apply_filters_deprecated(
 					'mainwp-pre-posting-posts',
@@ -804,7 +806,9 @@ class MainWP_Connect {
 				$_new_post = $params['new_post'];
 
 				/**
-				 * @deprecated Use 'mainwp_pre_posting_posts' instead.
+				 * Filter is being replaced with mainwp_pre_posting_posts.
+				 *
+				 * @deprecated
 				 */
 				$params = apply_filters_deprecated(
 					'mainwp-pre-posting-posts',
@@ -1384,7 +1388,7 @@ class MainWP_Connect {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$others = array() ) { // phpcs:ignore -- complex method.
+		$others = array() ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 

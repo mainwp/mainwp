@@ -540,7 +540,7 @@ class MainWP_System_Handler {
 		$location = admin_url( 'admin.php?page=Extensions' );
 		return $location;
 	}
-	
+
 	/**
 	 * Method activate_extension()
 	 *

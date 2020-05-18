@@ -22,10 +22,13 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
+	 * Method upgrade_site()
+	 *
 	 * Check Child Site ID & Update.
 	 *
-	 * @throws MainWP_Exception on errors.
-	 * @param mixed $id Child Site ID.
+	 * @param int $id Child site ID.
+	 *
+	 * @throws MainWP_Exception Error messages.
 	 */
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -138,13 +141,15 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
-	 * Ignore Plugin or Themes.
+	 * Method ignore_plugins_themes()
 	 *
-	 * @param mixed $type plugin|theme
-	 * @param mixed $slug Plugin or Theme slug.
-	 * @param mixed $name Plugin or Theme name.
+	 * Ignore Plugins or Themes.
 	 *
-	 * @return string success.
+	 * @param string $type Plugin or theme.
+	 * @param string $slug Plugin or tempheme slug.
+	 * @param string $name Plugin or theme name.
+	 *
+	 * @return string 'success'.
 	 */
 	public static function ignore_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
@@ -405,14 +410,15 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
+	 * Method upgrade_plugin_theme_translation()
+	 *
 	 * Upgrade plugin or theme translations.
 	 *
-	 * @throws MainWP_Exception on errors.
-	 * @param mixed $id Child Site ID.
-	 * @param mixed $type plugin|theme.
-	 * @param mixed $list List of theme or plugin names ( seperated by , )
+	 * @param int    $id Child site ID.
+	 * @param string $type Plugin or theme.
+	 * @param array  $list List of theme or plugin names seperated by comma.
 	 *
-	 * @throw MainWP_Exception(error).
+	 * @throws MainWP_Exception Error messages.
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -448,12 +454,12 @@ class MainWP_Updates_Handler {
 	/**
 	 * Get plugin or theme slugs.
 	 *
-	 * @param mixed $id Child Site ID.
-	 * @param mixed $type plugin|theme.
+	 * @param int    $id Child Site ID.
+	 * @param string $type plugin|theme.
 	 *
 	 * @return array List of plugins or themes.
 	 */
-	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- not quite complex function.
+	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id );

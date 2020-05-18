@@ -85,7 +85,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Returns plugin information in an array.
 	 *
-	 * @param array  $plugin Plugin information.
+	 * @param array $plugin Plugin information.
 	 *
 	 * @return mixed Plugin information.
 	 */
@@ -114,7 +114,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
 	 *
-	 * @param array  $plugins List of plugins (extensions).
+	 * @param array $plugins List of plugins (extensions).
 	 *
 	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
 	 */
@@ -133,7 +133,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * Check $args, if there is a response, an object eists & response is not false.
 	 *
-	 * @param array   $args Request arguments.
+	 * @param array $args Request arguments.
 	 *
 	 * @return object $response Plugin information.
 	 */

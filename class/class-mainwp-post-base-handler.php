@@ -12,7 +12,11 @@ namespace MainWP\Dashboard;
  */
 abstract class MainWP_Post_Base_Handler {
 
-	/** Protected static variable to hold security nounces. */
+	/**
+	 * Protected static variable to hold security nounces.
+	 *
+	 * @var string Security nonce.
+	 */
 	protected static $security_nonces;
 
 	/**
@@ -30,8 +34,8 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * Add security check to request parameter
 	 *
-	 * @param string $action
-	 * @param string $query_arg
+	 * @param string $action Action to perform.
+	 * @param string $query_arg Query argument.
 	 */
 	public function secure_request( $action = '', $query_arg = 'security' ) {
 		if ( ! MainWP_System_Utility::is_admin() ) {
@@ -66,8 +70,8 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * Check security request.
 	 *
-	 * @param string $action
-	 * @param string $query_arg
+	 * @param string $action Action to perform.
+	 * @param string $query_arg Query argument.
 	 *
 	 * @return bool true or false
 	 */
@@ -91,8 +95,8 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * Add ajax action.
 	 *
-	 * @param string $action
-	 * @param string $callback
+	 * @param string $action Action to perform.
+	 * @param string $callback Callback to perform.
 	 */
 	public function add_action( $action, $callback ) {
 		add_action( 'wp_ajax_' . $action, $callback );
@@ -104,7 +108,7 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * Add security nonce.
 	 *
-	 * @param string $action
+	 * @param string $action Action to perform.
 	 */
 	public function add_security_nonce( $action ) {
 		if ( ! is_array( self::$security_nonces ) ) {

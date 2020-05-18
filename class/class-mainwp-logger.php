@@ -28,26 +28,53 @@ class MainWP_Logger {
 	const INFO_COLOR    = 'gray';
 	const WARNING_COLOR = 'red';
 
-
-	/** @var string Log file prefix. */
+	/**
+	 * Private varibale to hold the log file prefix.
+	 *
+	 * @var string Default 'mainwp'
+	 */
 	private $logFileNamePrefix = 'mainwp';
 
-	/** @var string Log file suffix. */
+	/**
+	 * Private varibale to hold the log file suffix.
+	 *
+	 * @var string Default '.log'
+	 */
 	private $logFileNameSuffix = '.log';
 
-	/** @var integer Log file max size. */
+	/**
+	 * Private varibale to hold the log file max size.
+	 *
+	 * @var int Default 0.5
+	 */
 	private $logMaxMB = 0.5;
 
-	/** @var string Log file date format. */
+	/**
+	 * Private varibale to hold the log file date format.
+	 *
+	 * @var string Default 'Y-m-d H:i:s'
+	 */
 	private $logDateFormat = 'Y-m-d H:i:s';
 
-	/** @var string Log file output directory. */
+	/**
+	 * Private varibale to hold the log file output directory.
+	 *
+	 * @var mixed Default null
+	 */
 	private $logDirectory = null;
 
-	/** @var string Log file priority. */
+	/**
+	 * Private varibale to hold the log file priotrity.
+	 *
+	 * @var string Disabled
+	 */
 	private $logPriority = self::DISABLED;
 
-	/** @var mixed Log file Instance. */
+	/**
+	 * Private static varibale to hold the instance.
+	 *
+	 * @var mixed Default null
+	 */
 	private static $instance = null;
 
 	/**

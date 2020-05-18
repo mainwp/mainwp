@@ -53,8 +53,8 @@ class MainWP_Bulk_Post {
 	 *
 	 * Redirect to edit post.
 	 *
-	 * @param string  $location Target URL.
-	 * @param int     $post_id Post ID number.
+	 * @param string $location Target URL.
+	 * @param int    $post_id Post ID number.
 	 *
 	 * @return string $location Target URL.
 	 */
@@ -73,8 +73,8 @@ class MainWP_Bulk_Post {
 	 *
 	 * Redirect to edit page.
 	 *
-	 * @param string  $location Target URL.
-	 * @param int     $post_id Page ID number.
+	 * @param string $location Target URL.
+	 * @param int    $post_id Page ID number.
 	 *
 	 * @return string $location Target URL.
 	 */

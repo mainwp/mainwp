@@ -29,7 +29,7 @@ class MainWP_Themes_Handler {
 	 *
 	 * Theme Search Handler.
 	 *
-	 * @param mixed $data Search data.
+	 * @param mixed  $data Search data.
 	 * @param object $website The website object.
 	 * @param object $output Search results object.
 	 *

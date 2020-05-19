@@ -25,8 +25,6 @@ class MainWP_Child_Scan {
 	 * Method init_menu()
 	 *
 	 * Add Users Sub Menu "MainWP Child Scan".
-	 *
-	 * @return string MainWP Child Scan.
 	 */
 	public static function init_menu() {
 		add_submenu_page( 'mainwp_tab', __( 'MainWP Child Scan', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'MainWP Child Scan', 'mainwp' ) . '</div>', 'read', 'MainWP_Child_Scan', array( self::get_class_name(), 'render' ) );
@@ -35,9 +33,9 @@ class MainWP_Child_Scan {
 	/**
 	 * Method render_header()
 	 *
-	 * Render Page Header.
+	 * Render the page header.
 	 *
-	 * @param string $shownPage
+	 * @param string $shownPage Current page slug.
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -54,9 +52,9 @@ class MainWP_Child_Scan {
 	/**
 	 * Method render_footer()
 	 *
-	 * Rnder Page Footer.
+	 * Render the page footer.
 	 *
-	 * @param mixed $shownPage
+	 * @param mixed $shownPage Current page slug.
 	 */
 	public static function render_footer( $shownPage ) {
 		?>

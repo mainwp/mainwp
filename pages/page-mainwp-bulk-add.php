@@ -34,9 +34,9 @@ class MainWP_Bulk_Add {
 	/**
 	 * Method posting_bulk_handler()
 	 *
-	 * @param mixed $data
-	 * @param mixed $website
-	 * @param mixed $output
+	 * @param mixed  $data Data to process.
+	 * @param object $website The website object.
+	 * @param object $output Function output object.
 	 *
 	 * @return mixed $output
 	 */

@@ -110,8 +110,8 @@ class MainWP_Sync {
 	 *
 	 * Grab all Child Site Information.
 	 *
-	 * @param mixed   $pWebsite
-	 * @param mixed   $information Filter mainwp_before_save_sync_result
+	 * @param mixed   $pWebsite The website object.
+	 * @param mixed   $information Filter mainwp_before_save_sync_result.
 	 * @param string  $sync_errors Check for Sync Errors.
 	 * @param integer $offline_check_result Check if offline.
 	 * @param boolean $error True|False.
@@ -402,7 +402,7 @@ class MainWP_Sync {
 						$filename = strtok( $filename, '?' );
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore -- 
+							$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
 							if ( $size ) {
 								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );

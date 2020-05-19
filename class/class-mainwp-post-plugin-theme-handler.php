@@ -12,7 +12,11 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
-	/** @var $instance Singlton MainWP_Post_Plugin_Theme_Handler. */
+	/**
+	 * Protected static variable to hold the single instance of the class.
+	 *
+	 * @var mixed Default null
+	 */
 	private static $instance = null;
 
 	/**
@@ -103,10 +107,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_themes_search()
 	 *
-	 * Search handler for,
-	 * Page: Themes.
-	 *
-	 * @return json $result Search results.
+	 * Search handler for Themes.
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
@@ -179,10 +180,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_plugins_search()
 	 *
-	 * Search handler for,
-	 * Page: Plugins.
-	 *
-	 * @return json $result Search results.
+	 * Search handler for Plugins.
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );

@@ -16,8 +16,10 @@ class MainWP_Server_Information {
 	const ERROR   = 2;
 
 	/**
+	 * The Server information page sub-pages.
+	 *
 	 * @static
-	 * @var $subPages Server Information sub pages.
+	 * @var array Sub pages.
 	 */
 	public static $subPages;
 
@@ -116,7 +118,11 @@ class MainWP_Server_Information {
 			);
 		}
 
-		/** @deprecated Use 'mainwp_getsubpages_server' instead. */
+		/**
+		 * Filter is being replaced with mainwp_getsubpages_server.
+		 *
+		 * @deprecated
+		 */
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.1', 'mainwp_getsubpages_server' );
 		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
@@ -737,7 +743,6 @@ class MainWP_Server_Information {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

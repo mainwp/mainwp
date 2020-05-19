@@ -159,7 +159,7 @@ class MainWP_System_Utility {
 	 * @param mixed $what What url.
 	 * @param mixed $filename File Name.
 	 *
-	 * @return void
+	 * @return string Download URL.
 	 */
 	public static function get_download_url( $what, $filename ) {
 		$specificDir = self::get_mainwp_specific_dir( $what );
@@ -226,7 +226,7 @@ class MainWP_System_Utility {
 	/**
 	 * Method get_mainwp_specific_url()
 	 *
-	 * get MainWP specific URL.
+	 * Get MainWP specific URL.
 	 *
 	 * @param mixed $dir MainWP Directory.
 	 *
@@ -354,9 +354,9 @@ class MainWP_System_Utility {
 	 *
 	 * Get response from Child Site.
 	 *
-	 * @param mixed $data
+	 * @param mixed $data Data to process.
 	 *
-	 * @return json $data|true
+	 * @return json $data|true.
 	 */
 	public static function get_child_response( $data ) {
 		if ( is_serialized( $data ) ) {

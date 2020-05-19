@@ -12,13 +12,25 @@ namespace MainWP\Dashboard;
 /** Class MainWP_QQ2_File_Uploader. */
 class MainWP_QQ2_File_Uploader {
 
-	/** Array of allowed Extensions. */
+	/**
+	 * Private variable to hold allowed file extensions.
+	 *
+	 * @var array Allowed extension.
+	 */
 	private $allowedExtensions = array();
 
-	/** Maximum allowed file size.  */
+	/**
+	 * Private variable to hold allowed file size.
+	 *
+	 * @var int Size limit.
+	 */
 	private $sizeLimit = 8388608;
 
-	/** File to be uploaded.  */
+	/**
+	 * Private variable to hold the file to upload.
+	 *
+	 * @var mixed The file.
+	 */
 	private $file;
 
 	/**

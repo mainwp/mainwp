@@ -2,11 +2,14 @@
 /**
  * MainWP API Manager
  *
- * This class handles MainWP API.
+ * This class handles MainWP Extensions API licensing.
  *
  * @package MainWP/MainWP API Manager
+ *
  * @author Todd Lahman LLC
- * @copyright   Copyright (c) Todd Lahman LLC
+ *
+ * @copyright Copyright (c) Todd Lahman LLC
+ *
  * @since 1.0.0
  */
 
@@ -18,30 +21,41 @@ namespace MainWP\Dashboard;
 class MainWP_Api_Manager {
 
 	/**
-	 * @var string Upgrade Url
+	 * Extensions upgrade URL
+	 *
+	 * @var string Default URL 'https://mainwp.com/'
 	 */
 	private $upgrade_url = 'https://mainwp.com/';
 
 	/**
-	 * @var string Renew License Url
+	 * Extensions license renewal URL
+	 *
+	 * @var string Default 'https://mainwp.com/my-account'
 	 */
 	private $renew_license_url = 'https://mainwp.com/my-account';
 
 	/**
-	 * @var string MainWP Installation Domain Name.
+	 * MainWP installation domain name
+	 *
+	 * @var string $domain Emtpy by default.
 	 */
 	public $domain = '';
 
 	/**
-	 * @var The single instance of the class
+	 * Protected static variable to hold the single instance of the class.
+	 *
+	 * @var mixed Default null
 	 */
 	protected static $instance = null;
 
 	/**
 	 * Method instance()
 	 *
+	 * Return the single instance of the class.
+	 *
 	 * @static
-	 * @return class instance
+	 *
+	 * @return mixed $instance The single instance of the class.
 	 */
 	public static function instance() {
 

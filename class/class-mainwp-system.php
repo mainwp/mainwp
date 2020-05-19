@@ -21,29 +21,37 @@ const MAINWP_VIEW_PER_GROUP        = 2;
 class MainWP_System {
 
 	/**
-	 * @var string $version Plugin Version Number.
+	 * Public static variable to hold the current plugin version.
+	 *
+	 * @var string Current plugin version.
 	 */
 	public static $version = '4.0.7.2';
 
 	/**
-	 * @var mixed Singleton.
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 
 	/**
-	 * @var mixed Metaboxes.
+	 * Public variable to hold the Metaboxes array.
+	 *
+	 * @var array Metaboxes.
 	 */
 	public $metaboxes;
 
 	/**
+	 * Private variable to hold the current version.
+	 *
 	 * @var string The plugin current version.
 	 */
 	private $current_version = null;
 
 	/**
-	 * Plugin Slug (plugin_directory/plugin_file.php)
+	 * Private variable to hold the plugin slug (mainwp/mainwp.php)
 	 *
-	 * @var string $plugin_slug Plugin Slug.
+	 * @var string Plugin slug.
 	 */
 	private $plugin_slug;
 

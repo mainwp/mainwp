@@ -25,11 +25,13 @@ class MainWP_Themes_Handler {
 	}
 
 	/**
+	 * Method themes_search_handler()
+	 *
 	 * Theme Search Handler.
 	 *
-	 * @param mixed $data
-	 * @param mixed $website
-	 * @param mixed $output
+	 * @param mixed $data Search data.
+	 * @param object $website The website object.
+	 * @param object $output Search results object.
 	 *
 	 * @return mixed Exception|Theme
 	 */
@@ -80,8 +82,6 @@ class MainWP_Themes_Handler {
 	 *
 	 * @param mixed $pAction Action to perform.
 	 * @param mixed $theme Theme to perform action on.
-	 *
-	 * @return boolean True|Fail This will either return 'True' or 'FAIL'.
 	 */
 	public static function action( $pAction, $theme ) {
 		$websiteIdEnc = $_POST['websiteId'];

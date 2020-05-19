@@ -26,8 +26,11 @@ class MainWP_Post {
 	}
 
 	/**
+	 * Public static variable to hold Sub-pages data.
+	 *
 	 * @static
-	 * @var undefined Public static variable for subPages.
+	 *
+	 * @var array Sub-pages.
 	 */
 	public static $subPages;
 
@@ -1087,7 +1090,13 @@ class MainWP_Post {
 	 */
 	public static function list_meta_row( $entry, &$count ) {
 
-		/** @static @var string $update_nonce Nonce to be sent along with each post update. */
+		/**
+		 * Static variable to hold update nonce.
+		 *
+		 * @static
+		 *
+		 * @var string Update nonce.
+		 */
 		static $update_nonce = '';
 
 		if ( is_protected_meta( $entry['meta_key'], 'post' ) ) {

@@ -24,10 +24,18 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Setup_Wizard {
 
-	/** @var string $step Step user is on. */
+	/**
+	 * Private variable to hold current quick setup wizard step.
+	 *
+	 * @var string Current QSW step.
+	 */
 	private $step = '';
 
-	/** @var array $steps Array of available steps. */
+	/**
+	 * Private variable to hold quick setup wizard steps.
+	 *
+	 * @var array QSW steps.
+	 */
 	private $steps = array();
 
 	/**

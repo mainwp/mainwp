@@ -45,10 +45,11 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 
 	/**
 	 * Check permission level.
-	 * To compatible with extensions
 	 *
-	 * @param string $cap_type group or type of capabilities
-	 * @param string $cap capabilities for current user
+	 * To compatible with extensions.
+	 *
+	 * @param string $cap_type Group or type of capabilities.
+	 * @param string $cap Capabilities for current user.
 	 *
 	 * @return bool true|false
 	 */

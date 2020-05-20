@@ -35,7 +35,7 @@ class MainWP_User {
 	/**
 	 * Method init()
 	 *
-	 * nitiate hooks for the users page.
+	 * Initiate hooks for the users page.
 	 */
 	public static function init() {
 		/**

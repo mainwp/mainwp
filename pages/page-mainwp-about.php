@@ -33,7 +33,6 @@ class MainWP_About {
 	 * Initiate hooks for the about page.
 	 */
 	public static function init() {
-
 	}
 
 	/**

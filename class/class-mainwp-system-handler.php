@@ -15,12 +15,18 @@ class MainWP_System_Handler {
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
 
 	/**
-	 * @var null $instance The single instance of the class.
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 
 	/**
-	 * @var null $upgradeVersionInfo Upgrade Version Info.
+	 * Private variable to hold the upgrade version info.
+	 *
+	 * @var null Version info.
 	 */
 	private $upgradeVersionInfo = null;
 

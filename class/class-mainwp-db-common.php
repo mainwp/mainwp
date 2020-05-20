@@ -17,8 +17,11 @@ class MainWP_DB_Common extends MainWP_DB {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
 	 * @static
-	 * @var (self|null) $instance Instance of MainWP_DB_Common or null.
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 
@@ -351,8 +354,6 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Clear sites in group.
 	 *
 	 * @param mixed $groupId ID of group.
-	 *
-	 * @return boolean true
 	 */
 	public function clear_group( $groupId ) {
 		$this->wpdb->query( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE groupid=' . $groupId );

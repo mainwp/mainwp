@@ -495,8 +495,8 @@ class MainWP_System_View {
 			jQuery( document ).ready(
 				function ()
 				{
-					jQuery( '#adminmenu #collapse-menu' ).hide();					
-				}	
+					jQuery( '#adminmenu #collapse-menu' ).hide();
+				}
 			);
 		</script>
 		<?php
@@ -606,11 +606,11 @@ class MainWP_System_View {
 	}
 
 	/**
+	 * Method render_footer_content()
+	 *
 	 * Render footer content.
 	 *
-	 * @param mixed $websites List of Child Sites.
-	 *
-	 * @return html MainWP footer.
+	 * @param mixed $websites The websites object.
 	 */
 	public static function render_footer_content( $websites ) {
 

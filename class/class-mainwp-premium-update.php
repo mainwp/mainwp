@@ -35,7 +35,7 @@ class MainWP_Premium_Update {
 	 * Check for Premium Plugin updates.
 	 *
 	 * @param array $updates Array of updates.
-	 * @param mixed $type Type of update. theme|plugin
+	 * @param mixed $type Type of update.
 	 *
 	 * @return boolean true|false.
 	 */

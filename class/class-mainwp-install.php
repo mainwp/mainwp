@@ -17,13 +17,18 @@ class MainWP_Install extends MainWP_DB_Base {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
-	 * @var $mainwp_db_version DB version number
+	 * Private variable to hold the database version info.
+	 *
+	 * @var string DB version info.
 	 */
 	protected $mainwp_db_version = '8.17';
 
 	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
 	 * @static
-	 * @var $instance instance of this
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 
@@ -94,7 +99,7 @@ class MainWP_Install extends MainWP_DB_Base {
   http_response_code int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   note_lastupdate int(11) NOT NULL DEFAULT 0,
-  statsUpdate int(11) NOT NULL,  
+  statsUpdate int(11) NOT NULL,
   directories longtext NOT NULL,
   plugin_upgrades longtext NOT NULL,
   theme_upgrades longtext NOT NULL,
@@ -110,7 +115,7 @@ class MainWP_Install extends MainWP_DB_Base {
   categories longtext NOT NULL,
   pluginDir text NOT NULL,
   automatic_update tinyint(1) NOT NULL,
-  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,  
+  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
   backups text NOT NULL,
   mainwpdir int(11) NOT NULL,
   loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,

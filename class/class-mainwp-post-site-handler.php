@@ -12,7 +12,13 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
-	/** @var $instance Singleton MainWP_Post_Site_Handler */
+	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
 	private static $instance = null;
 
 	/**
@@ -161,8 +167,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_testwp()
 	 *
 	 * Test if Child Site can be reached.
-	 *
-	 * @return $rslt
 	 */
 	public function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );

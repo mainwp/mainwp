@@ -64,8 +64,6 @@ class MainWP_Widget_Plugins {
 	 * Method render_widget()
 	 *
 	 * Build Plugins Widget
-	 *
-	 * @param none
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -101,10 +99,8 @@ class MainWP_Widget_Plugins {
 	 *
 	 * Render html plugins widget for current site
 	 *
-	 * @param mixed $website current site.
-	 * @param mixed $allPlugins all plugins.
-	 *
-	 * @return echo html
+	 * @param mixed $website Current site.
+	 * @param mixed $allPlugins All plugins.
 	 */
 	public static function render_html_widget( $website, $allPlugins ) {
 

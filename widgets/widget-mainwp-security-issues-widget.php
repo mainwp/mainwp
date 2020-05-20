@@ -60,9 +60,7 @@ class MainWP_Security_Issues_Widget {
 	 * Render html themes widget for current site
 	 *
 	 * @param mixed $websites Array of websites.
-	 * @param mixed $total_securityIssues Total Security Issues.
-	 *
-	 * @return echo html
+	 * @param mixed $total_securityIssues Total security Issues.
 	 */
 	public static function render_issues( $websites, $total_securityIssues ) {
 		?>

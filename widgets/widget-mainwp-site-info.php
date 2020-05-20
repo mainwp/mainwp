@@ -78,8 +78,6 @@ class MainWP_Site_Info {
 	 * @param object $website Website object.
 	 * @param array  $website_info Website data.
 	 * @param array  $child_site_info Website info to display.
-	 *
-	 * @return echo html
 	 */
 	public static function render_info( $website, $website_info, $child_site_info ) {
 		?>

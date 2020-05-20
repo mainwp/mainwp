@@ -37,9 +37,7 @@ class MainWP_Widget_Themes {
 	/**
 	 * Method render_widget()
 	 *
-	 * Build Themes Widget
-	 *
-	 * @param none
+	 * Build themes widget.
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -70,12 +68,10 @@ class MainWP_Widget_Themes {
 	 *
 	 * Method render_html_widget().
 	 *
-	 * Render html themes widget for current site
+	 * Render html themes widget for current site.
 	 *
-	 * @param mixed $website current site.
-	 * @param mixed $allThemes all themes.
-	 *
-	 * @return echo html
+	 * @param mixed $website Current site.
+	 * @param mixed $allThemes All themes.
 	 */
 	public static function render_html_widget( $website, $allThemes ) {
 

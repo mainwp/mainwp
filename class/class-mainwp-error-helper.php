@@ -43,9 +43,9 @@ class MainWP_Error_Helper {
 	 *
 	 * Check for http error and or "nomainwp" and or "WPERROR".
 	 *
-	 * @param mixed $pException
+	 * @param mixed $pException The exception.
 	 *
-	 * @return @error Error message.
+	 * @return string @error Error message.
 	 */
 	public static function get_console_error_message( $pException ) {
 		$error = $pException->getMessage();

@@ -432,7 +432,7 @@ class MainWP_Menu {
 	 *
 	 * Grab all submenu items and attatch to Main Menu.
 	 *
-	 * @param mixed $parent_key
+	 * @param mixed $parent_key The parent key.
 	 */
 	public static function render_sub_item( $parent_key ) {
 		if ( empty( $parent_key ) ) {

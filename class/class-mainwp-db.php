@@ -17,8 +17,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
 	 * @static
-	 * @var $instance Public static instance of MainWP_DB class
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 

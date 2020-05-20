@@ -16,7 +16,9 @@ class MainWP_Exception extends \Exception {
 
 
 	/**
-	 * @var undefined $messageExtra WPERROR messages.
+	 * Protected variable to hold the extra messages.
+	 *
+	 * @var string Error messages.
 	 */
 	protected $messageExtra;
 

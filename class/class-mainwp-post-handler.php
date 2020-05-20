@@ -13,7 +13,11 @@ namespace MainWP\Dashboard;
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 	/**
-	 * @var mixed Singleton.
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
 	 */
 	private static $instance = null;
 

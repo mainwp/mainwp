@@ -15,7 +15,11 @@ namespace MainWP\Dashboard;
 class MainWP_Deprecated_Hooks {
 
 	/**
-	 * @var $instance The single instance of the class
+	 * Protected static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
 	 */
 	protected static $instance = null;
 

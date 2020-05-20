@@ -493,18 +493,7 @@ class MainWP_Connect {
 	 *
 	 * @return bool true|false
 	 */
-	public static function fetch_urls_authed(
-		&$websites,
-		$what,
-		$params = null,
-		$handler,
-		&$output,
-		$whatPage = null,
-		$others = array(),
-		$is_external_hook = false ) {
-
-		// phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		// current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
@@ -764,7 +753,7 @@ class MainWP_Connect {
 	 * @param bool   $json_format Use JSON format.
 	 * @param array  $others Request additional information.
 	 */
-	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) {
+	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
 		$timeout = 20 * 60 * 60;
@@ -1379,6 +1368,7 @@ class MainWP_Connect {
 	 *
 	 * @return mixed $data, $information.
 	 */
+	// phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 	public static function m_fetch_url(
 		&$website,
 		$url,
@@ -1388,7 +1378,7 @@ class MainWP_Connect {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$others = array() ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$others = array() ) {
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 

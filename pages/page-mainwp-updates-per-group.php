@@ -152,7 +152,7 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_plugin_upgrades total plugin updates.
-	 * @param mixed  $userExtension
+	 * @param mixed  $userExtension The user extension.
 	 * @param array  $all_groups_sites all groups of sites.
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
@@ -348,7 +348,7 @@ class MainWP_Updates_Per_Group {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_theme_upgrades total themes updates.
-	 * @param mixed  $userExtension
+	 * @param mixed  $userExtension The user extension.
 	 * @param array  $all_groups_sites all groups of sites.
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.

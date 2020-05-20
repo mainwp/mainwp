@@ -26,15 +26,16 @@ class MainWP_User {
 	}
 
 	/**
-	 * @static
-	 * @var undefined Sub pages to display.
+	 * Public static varable to hold Subpages information.
+	 *
+	 * @var array $subPages
 	 */
 	public static $subPages;
 
 	/**
 	 * Method init()
 	 *
-	 * Initiate users page.
+	 * nitiate hooks for the users page.
 	 */
 	public static function init() {
 		/**

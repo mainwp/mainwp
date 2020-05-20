@@ -28,9 +28,12 @@ class MainWP_About {
 	}
 
 	/**
-	 * init
+	 * Methos init()
+	 *
+	 * Initiate hooks for the about page.
 	 */
 	public static function init() {
+
 	}
 
 	/**

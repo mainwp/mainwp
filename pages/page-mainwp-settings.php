@@ -26,7 +26,9 @@ class MainWP_Settings {
 	}
 
 	/**
-	 * @var array $subPages Array used to store extra Sub pages.
+	 * Public static varable to hold Subpages information.
+	 *
+	 * @var array $subPages
 	 */
 	public static $subPages;
 

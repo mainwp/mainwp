@@ -160,7 +160,7 @@ class MainWP_Widget_Plugins {
 		<div id="mainwp-widget-inactive-plugins" class="ui tab" data-tab="inactive_plugins">
 			<div class="ui middle aligned divided selection list">
 				<?php
-				$_count = count( $actived_plugins );
+				$_count = count( $inactive_plugins );
 				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = $inactive_plugins[ $i ]['slug'];
 					?>

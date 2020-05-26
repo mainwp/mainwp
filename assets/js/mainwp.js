@@ -2814,12 +2814,12 @@ jQuery( document ).on( 'click', '.close.icon', function () {
 /*
  * to compatible
  */
-function mainwp_setCookie( c_name, value, expiredays )
+function mainwp_setCookie()
 {
 	return false;
 }
 
-function mainwp_getCookie( c_name )
+function mainwp_getCookie()
 {
    return false;
 }

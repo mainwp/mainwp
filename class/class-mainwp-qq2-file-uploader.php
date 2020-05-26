@@ -135,4 +135,16 @@ class MainWP_QQ2_File_Uploader {
 			return array( 'error' => $e->getMessage() );
 		}
 	}
+	
+	/**
+	 * Wrap of the method handle_upload() for compatible.
+	 *
+	 * @param mixed   $uploadDirectory File Upload directory.
+	 * @param boolean $replaceOldFile True|False Weather or not to replace the orignal file or not.
+	 *
+	 * @return array success'=>true|error'=>'error message'
+	 */
+	public function handleUpload( $uploadDirectory, $replaceOldFile = false ) { // phpcs:ignore -- for compatible
+		return $this->handle_upload( $uploadDirectory, $replaceOldFile );
+	}
 }

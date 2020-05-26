@@ -59,7 +59,7 @@ class MainWP_Extensions {
 			MainWP_Extensions_View::init_menu();
 		}
 
-		$save_extensions   = array();
+		$save_extensions = array();
 
 		/**
 		 * Filter is being replaced with mainwp_getextensions
@@ -221,7 +221,7 @@ class MainWP_Extensions {
 
 		MainWP_Utility::update_option( 'mainwp_extensions', $save_extensions );
 		MainWP_Extensions_Handler::get_extensions( true ); // forced reload.
-		
+
 		if ( ! $is_cached ) {
 			update_option( 'mainwp_extensions_all_activation_cached', $activations_cached );
 		}
@@ -341,7 +341,7 @@ class MainWP_Extensions {
 					}
 				}
 
-				$exts = MainWP_Extensions_Handler::get_extensions();
+				$exts                = MainWP_Extensions_Handler::get_extensions();
 				$installed_softwares = array();
 				foreach ( $exts as $extension ) {
 					if ( isset( $extension['product_id'] ) && ! empty( $extension['product_id'] ) ) {

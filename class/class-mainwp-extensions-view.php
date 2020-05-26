@@ -41,7 +41,7 @@ class MainWP_Extensions_View {
 	 *
 	 * Render page header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment.	 
+	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
@@ -66,7 +66,7 @@ class MainWP_Extensions_View {
 		);
 
 		// get extensions to generate manage site page header.
-		$extensions = MainWP_Extensions_Handler::get_extensions();		
+		$extensions = MainWP_Extensions_Handler::get_extensions();
 		foreach ( $extensions as $extension ) {
 			if ( $extension['plugin'] == $shownPage ) {
 				$renderItems[] = array(
@@ -76,7 +76,7 @@ class MainWP_Extensions_View {
 				);
 				break;
 			}
-		}		
+		}
 		MainWP_UI::render_page_navigation( $renderItems );
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
@@ -112,7 +112,7 @@ class MainWP_Extensions_View {
 			update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 		}
 
-		$extensions = MainWP_Extensions_Handler::get_extensions();
+		$extensions       = MainWP_Extensions_Handler::get_extensions();
 		$extension_update = get_site_transient( 'update_plugins' );
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">

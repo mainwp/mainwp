@@ -54,7 +54,7 @@ class MainWP_Extensions_Handler {
 	 *
 	 * @return string Extensions Slug.
 	 */
-	public static function get_extension_slug( $pSlug ) {		
+	public static function get_extension_slug( $pSlug ) {
 		$currentExtensions = self::get_extensions();
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
 			return $pSlug;
@@ -134,18 +134,18 @@ class MainWP_Extensions_Handler {
 		return $menu_name;
 	}
 
-	/** 
-	 * Load MainWP Extensions. 
-	 * 
+	/**
+	 * Load MainWP Extensions.
+	 *
 	 * @param bool $forced Forced reload value.
-	 * 
+	 *
 	 * @return array Array of loaded Extensions.
 	 */
 	public static function get_extensions( $forced = false ) {
 		if ( ! isset( self::$extensions ) || $forced ) {
-			self::$extensions = array();			
-			$extensions = get_option( 'mainwp_extensions', array() );			
-			foreach( $extensions as $extension ) {
+			self::$extensions = array();
+			$extensions       = get_option( 'mainwp_extensions', array() );
+			foreach ( $extensions as $extension ) {
 				$slug = $extension['slug'];
 				if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
 					self::$extensions[] = $extension;
@@ -167,7 +167,7 @@ class MainWP_Extensions_Handler {
 			$args = array();
 		}
 		$extensions = self::get_extensions();
-		$return = array();
+		$return     = array();
 		foreach ( $extensions as $extension ) {
 			if ( isset( $args['activated'] ) && ! empty( $args['activated'] ) ) {
 				if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
@@ -179,7 +179,7 @@ class MainWP_Extensions_Handler {
 			$ext            = array();
 			$ext['version'] = $extension['version'];
 			$ext['name']    = $extension['name'];
-			$ext['page']    = $extension['page'];			
+			$ext['page']    = $extension['page'];
 			if ( isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ) {
 				$ext['activated_key'] = 'Activated';
 			}

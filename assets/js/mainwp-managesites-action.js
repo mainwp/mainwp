@@ -276,11 +276,8 @@ bulkManageSitesFinished = 0;
 bulkManageSitesTaskRunning = false;
 
 
-managesites_bulk_init = function () {
-    jQuery( '.mainwp_append_error' ).remove();
-    jQuery( '.mainwp_append_message' ).remove();
+managesites_bulk_init = function () {    
     jQuery( '#mainwp-message-zone' ).hide();
-
     if ( bulkManageSitesTaskRunning == false ) {
         bulkManageSitesMaxThreads = mainwpParams['maximumInstallUpdateRequests'] == undefined ? 3 : mainwpParams['maximumInstallUpdateRequests'];
         bulkManageSitesCurrentThreads = 0;

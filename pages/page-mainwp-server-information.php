@@ -379,7 +379,7 @@ class MainWP_Server_Information {
 						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Extensions', 'mainwp' ); ?></div></td>
 					</tr>
 				<?php
-				$extensions       = MainWP_Extensions_Handler::load_extensions();
+				$extensions       = MainWP_Extensions_Handler::get_extensions();
 				$extensions_slugs = array();
 				if ( 0 == count( $extensions ) ) {
 					echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';

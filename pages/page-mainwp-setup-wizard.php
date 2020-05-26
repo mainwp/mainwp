@@ -1121,7 +1121,7 @@ class MainWP_Setup_Wizard {
 		$ext_installed = false;
 		$ext_activated = false;
 
-		$installed_exts = MainWP_Extensions_Handler::load_extensions();
+		$installed_exts = MainWP_Extensions_Handler::get_extensions();
 
 		foreach ( $installed_exts as $ext ) {
 			if ( isset( $ext['product_id'] ) && $ext_product_id == $ext['product_id'] ) {

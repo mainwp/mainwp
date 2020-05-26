@@ -24,13 +24,6 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
-	 *  Loaded extensions.
-	 *
-	 * @var array $extensionsLoaded
-	 */
-	public static $extensionsLoaded = false;
-
-	/**
 	 * All extensions.
 	 *
 	 * @var array $extensions
@@ -55,15 +48,14 @@ class MainWP_Extensions_Handler {
 
 
 	/**
-	 * Get Plugin Slug.
+	 * Get Extension Slug.
 	 *
 	 * @param mixed $pSlug Extension Slug.
 	 *
 	 * @return string Extensions Slug.
 	 */
-	public static function get_plugin_slug( $pSlug ) {
-		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
-
+	public static function get_extension_slug( $pSlug ) {		
+		$currentExtensions = self::get_extensions();
 		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
 			return $pSlug;
 		}
@@ -83,9 +75,9 @@ class MainWP_Extensions_Handler {
 	 * @return array am_slugs|slugs.
 	 */
 	public static function get_slugs() {
-		$currentExtensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
+		$currentExtensions = self::get_extensions();
 
-		if ( ! is_array( $currentExtensions ) || empty( $currentExtensions ) ) {
+		if ( empty( $currentExtensions ) ) {
 			return array(
 				'slugs'    => '',
 				'am_slugs' => '',
@@ -142,33 +134,39 @@ class MainWP_Extensions_Handler {
 		return $menu_name;
 	}
 
-	/** Load MainWP Extensions. */
-	public static function load_extensions() {
-		if ( ! isset( self::$extensions ) ) {
-			self::$extensions = get_option( 'mainwp_extensions' );
-			if ( ! is_array( self::$extensions ) ) {
-				self::$extensions = array();
+	/** 
+	 * Load MainWP Extensions. 
+	 * 
+	 * @param bool $forced Forced reload value.
+	 * 
+	 * @return array Array of loaded Extensions.
+	 */
+	public static function get_extensions( $forced = false ) {
+		if ( ! isset( self::$extensions ) || $forced ) {
+			self::$extensions = array();			
+			$extensions = get_option( 'mainwp_extensions', array() );			
+			foreach( $extensions as $extension ) {
+				$slug = $extension['slug'];
+				if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
+					self::$extensions[] = $extension;
+				}
 			}
-			self::$extensionsLoaded = true;
 		}
-
 		return self::$extensions;
 	}
 
 	/**
-	 * Get MainWP Extensions array.
+	 * Get MainWP Extensions infor array.
 	 *
 	 * @param array $args Empty Array.
 	 *
 	 * @return array Array of Extensions.
 	 */
-	public static function get_extensions( $args = array() ) {
+	public static function get_indexed_extensions_infor( $args = array() ) {
 		if ( ! is_array( $args ) ) {
 			$args = array();
 		}
-
-		$extensions = self::load_extensions();
-
+		$extensions = self::get_extensions();
 		$return = array();
 		foreach ( $extensions as $extension ) {
 			if ( isset( $args['activated'] ) && ! empty( $args['activated'] ) ) {
@@ -181,8 +179,7 @@ class MainWP_Extensions_Handler {
 			$ext            = array();
 			$ext['version'] = $extension['version'];
 			$ext['name']    = $extension['name'];
-			$ext['page']    = $extension['page'];
-			$ext['page']    = $extension['page'];
+			$ext['page']    = $extension['page'];			
 			if ( isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ) {
 				$ext['activated_key'] = 'Activated';
 			}
@@ -386,7 +383,7 @@ class MainWP_Extensions_Handler {
 
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 
-		$extensions = ( self::$extensionsLoaded ? self::$extensions : get_option( 'mainwp_extensions' ) );
+		$extensions = self::get_extensions();
 		if ( isset( $extensions ) && is_array( $extensions ) ) {
 			foreach ( $extensions as $extension ) {
 				$slug = dirname( $extension['slug'] );
@@ -432,7 +429,7 @@ class MainWP_Extensions_Handler {
 	 * @return boolean true|false.
 	 */
 	public static function is_extension_activated( $plugin_slug ) {
-		$extensions = self::get_extensions( array( 'activated' => true ) );
+		$extensions = self::get_indexed_extensions_infor( array( 'activated' => true ) );
 		return isset( $extensions[ $plugin_slug ] ) ? true : false;
 	}
 
@@ -774,13 +771,13 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
-	 * Get Manager extensions.
+	 * Get all loaded extensions.
 	 *
-	 * @return mainwp_manager_extensions value.
+	 * @return mainwp_extensions value.
 	 */
-	public static function hook_manager_get_extensions() {
+	public static function hook_get_all_extensions() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		return get_option( 'mainwp_manager_extensions' );
+		return get_option( 'mainwp_extensions' );
 	}
 
 	/**

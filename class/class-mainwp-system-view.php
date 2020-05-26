@@ -230,7 +230,7 @@ class MainWP_System_View {
 	 * @return html Activation warning message.
 	 */
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
-		$extensions = MainWP_Extensions_Handler::get_extensions();
+		$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();
 		if ( ! isset( $extensions[ $plugin_slug ] ) ) {
 			return;
 		}
@@ -384,7 +384,7 @@ class MainWP_System_View {
 				$display_request2 = ( ( time() - $start_time ) > $days * 24 * 3600 ) ? true : false;
 			}
 		} else {
-			$currentExtensions = ( MainWP_Extensions::$extensionsLoaded ? MainWP_Extensions::$extensions : get_option( 'mainwp_extensions' ) );
+			$currentExtensions = MainWP_Extensions_Handler::get_extensions();
 			if ( is_array( $currentExtensions ) && count( $currentExtensions ) > 10 ) {
 				$display_request2 = true;
 			}

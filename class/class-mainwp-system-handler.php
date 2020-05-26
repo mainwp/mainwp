@@ -92,7 +92,7 @@ class MainWP_System_Handler {
 			'mainwp-manager-getextensions',
 			array(
 				MainWP_Extensions_Handler::get_class_name(),
-				'hook_manager_get_extensions',
+				'hook_get_all_extensions',
 			)
 		);
 
@@ -100,7 +100,7 @@ class MainWP_System_Handler {
 			'mainwp_manager_getextensions',
 			array(
 				MainWP_Extensions_Handler::get_class_name(),
-				'hook_manager_get_extensions',
+				'hook_get_all_extensions',
 			)
 		);
 
@@ -343,7 +343,7 @@ class MainWP_System_Handler {
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- complex method.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
-			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
+			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
 				$plugin_slug = $_POST['plugin'];
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
@@ -399,7 +399,7 @@ class MainWP_System_Handler {
 					continue;
 				}
 
-				$plugin_slug = MainWP_Extensions_Handler::get_plugin_slug( $rslt->slug );
+				$plugin_slug = MainWP_Extensions_Handler::get_extension_slug( $rslt->slug );
 				if ( isset( $transient->checked[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $transient->checked[ $plugin_slug ], '>' ) ) {
 					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
 				}
@@ -465,9 +465,9 @@ class MainWP_System_Handler {
 		}
 
 		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {
-			$extensions = MainWP_Extensions_Handler::get_extensions( array( 'activated' => true ) );
+			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
 			foreach ( $this->upgradeVersionInfo->result as $rslt ) {
-				$plugin_slug = MainWP_Extensions_Handler::get_plugin_slug( $rslt->slug );
+				$plugin_slug = MainWP_Extensions_Handler::get_extension_slug( $rslt->slug );
 				if ( isset( $extensions[ $plugin_slug ] ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 					$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
 				}

@@ -23,20 +23,6 @@ class MainWP_Extensions {
 		return __CLASS__;
 	}
 
-	/**
-	 * Public static variable to hold Extensions loaded status.
-	 *
-	 * @var boolean Default false.
-	 */
-	public static $extensionsLoaded = false;
-
-	/**
-	 * Public static variable to hold Extensions list.
-	 *
-	 * @var array Extensions list.
-	 */
-	public static $extensions;
-
 	/** Instantiate action hooks. */
 	public static function init() {
 		/**
@@ -73,17 +59,16 @@ class MainWP_Extensions {
 			MainWP_Extensions_View::init_menu();
 		}
 
-		self::$extensions = array();
-		$all_extensions   = array();
+		$save_extensions   = array();
 
 		/**
 		 * Filter is being replaced with mainwp_getextensions
 		 *
 		 * @deprecated
 		 */
-		$newExtensions = array();
-		$newExtensions = apply_filters_deprecated( 'mainwp-getextensions', array( $newExtensions ), '4.0.1', 'mainwp_getextensions' );
-		$newExtensions = apply_filters( 'mainwp_getextensions', $newExtensions );
+		$init_extensions = array();
+		$init_extensions = apply_filters_deprecated( 'mainwp-getextensions', array( $init_extensions ), '4.0.1', 'mainwp_getextensions' );
+		$init_extensions = apply_filters( 'mainwp_getextensions', $init_extensions );
 
 		$activations_cached = get_option( 'mainwp_extensions_all_activation_cached', array() );
 
@@ -146,7 +131,7 @@ class MainWP_Extensions {
 		include_once ABSPATH . '/wp-admin/includes/plugin.php';
 
 		$deactivated_imcompatible = array();
-		foreach ( $newExtensions as $extension ) {
+		foreach ( $init_extensions as $extension ) {
 			$slug        = plugin_basename( $extension['plugin'] );
 			$plugin_data = get_plugin_data( $extension['plugin'] );
 			$file_data   = get_file_data( $extension['plugin'], $extraHeaders );
@@ -206,32 +191,26 @@ class MainWP_Extensions {
 				$extension['instance_id']         = isset( $options['instance_id'] ) ? $options['instance_id'] : '';
 				$extension['software_version']    = isset( $options['software_version'] ) ? $options['software_version'] : '';
 			}
+			$save_extensions[] = $extension;
+			if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
+				if ( isset( $extension['callback'] ) ) {
 
-			$all_extensions[] = $extension;
-			if ( ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && MWP_TEAMCONTROL_PLUGIN_SLUG == $slug ) ||
-				mainwp_current_user_have_right( 'extension', dirname( $slug ) )
-			) {
-				self::$extensions[] = $extension;
-				if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
-					if ( isset( $extension['callback'] ) ) {
+					$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
 
-						$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
-
-						if ( MainWP_Extensions_Handler::added_on_menu( $slug ) ) {
-							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
-						} else {
-							$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
-						}
-
-						if ( isset( $extension['on_load_callback'] ) && ! empty( $extension['on_load_callback'] ) ) {
-							add_action( 'load-' . $_page, $extension['on_load_callback'] );
-						}
-
-						$extsPages[] = array(
-							'title' => $menu_name,
-							'slug'  => $extension['page'],
-						);
+					if ( MainWP_Extensions_Handler::added_on_menu( $slug ) ) {
+						$_page = add_submenu_page( 'mainwp_tab', $extension['name'], $menu_name, 'read', $extension['page'], $extension['callback'] );
+					} else {
+						$_page = add_submenu_page( 'mainwp_tab', $extension['name'], '<div class="mainwp-hidden">' . $extension['name'] . '</div>', 'read', $extension['page'], $extension['callback'] );
 					}
+
+					if ( isset( $extension['on_load_callback'] ) && ! empty( $extension['on_load_callback'] ) ) {
+						add_action( 'load-' . $_page, $extension['on_load_callback'] );
+					}
+
+					$extsPages[] = array(
+						'title' => $menu_name,
+						'slug'  => $extension['page'],
+					);
 				}
 			}
 		}
@@ -240,14 +219,13 @@ class MainWP_Extensions {
 			set_transient( 'mainwp_transient_deactivated_incomtible_exts', $deactivated_imcompatible );
 		}
 
-		MainWP_Utility::update_option( 'mainwp_extensions', self::$extensions );
-		MainWP_Utility::update_option( 'mainwp_manager_extensions', $all_extensions );
-
+		MainWP_Utility::update_option( 'mainwp_extensions', $save_extensions );
+		MainWP_Extensions_Handler::get_extensions( true ); // forced reload.
+		
 		if ( ! $is_cached ) {
 			update_option( 'mainwp_extensions_all_activation_cached', $activations_cached );
 		}
 
-		self::$extensionsLoaded = true;
 		self::init_left_menu( $extsPages );
 	}
 
@@ -294,26 +272,25 @@ class MainWP_Extensions {
 	 * Initiate Extensions Subpage Menu.
 	 */
 	public static function init_subpages_menu() {
-		if ( empty( self::$extensions ) ) {
+		$exts = MainWP_Extensions_Handler::get_extensions();
+		if ( empty( $exts ) ) {
 			return;
 		}
 		$html = '';
-		if ( isset( self::$extensions ) && is_array( self::$extensions ) ) {
-			foreach ( self::$extensions as $extension ) {
-				if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
-					continue;
-				}
-				if ( MainWP_Extensions_Handler::added_on_menu( $extension['slug'] ) ) {
-					continue;
-				}
+		foreach ( $exts as $extension ) {
+			if ( defined( 'MWP_TEAMCONTROL_PLUGIN_SLUG' ) && ( MWP_TEAMCONTROL_PLUGIN_SLUG == $extension['slug'] ) && ! mainwp_current_user_have_right( 'extension', dirname( MWP_TEAMCONTROL_PLUGIN_SLUG ) ) ) {
+				continue;
+			}
+			if ( MainWP_Extensions_Handler::added_on_menu( $extension['slug'] ) ) {
+				continue;
+			}
 
-				$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
+			$menu_name = MainWP_Extensions_Handler::polish_ext_name( $extension );
 
-				if ( isset( $extension['direct_page'] ) ) {
-					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
-				} else {
-					$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
-				}
+			if ( isset( $extension['direct_page'] ) ) {
+				$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['direct_page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
+			} else {
+				$html .= '<a href="' . admin_url( 'admin.php?page=' . $extension['page'] ) . '" class="mainwp-submenu">' . $menu_name . '</a>';
 			}
 		}
 		if ( empty( $html ) ) {
@@ -364,14 +341,11 @@ class MainWP_Extensions {
 					}
 				}
 
-				MainWP_Extensions_Handler::load_extensions();
-
+				$exts = MainWP_Extensions_Handler::get_extensions();
 				$installed_softwares = array();
-				if ( is_array( self::$extensions ) ) {
-					foreach ( self::$extensions as $extension ) {
-						if ( isset( $extension['product_id'] ) && ! empty( $extension['product_id'] ) ) {
-							$installed_softwares[ $extension['product_id'] ] = $extension['product_id'];
-						}
+				foreach ( $exts as $extension ) {
+					if ( isset( $extension['product_id'] ) && ! empty( $extension['product_id'] ) ) {
+						$installed_softwares[ $extension['product_id'] ] = $extension['product_id'];
 					}
 				}
 
@@ -519,7 +493,7 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
-		MainWP_Extensions_View::render_header( $shownPage, self::$extensions );
+		MainWP_Extensions_View::render_header( $shownPage );
 	}
 
 	/**
@@ -545,7 +519,7 @@ class MainWP_Extensions {
 		);
 		MainWP_UI::render_top_header( $params );
 
-		MainWP_Extensions_View::render( self::$extensions );
+		MainWP_Extensions_View::render();
 		echo '</div>';
 	}
 

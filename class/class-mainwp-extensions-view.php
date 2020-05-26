@@ -41,10 +41,9 @@ class MainWP_Extensions_View {
 	 *
 	 * Render page header.
 	 *
-	 * @param string $shownPage The page slug shown at this moment.
-	 * @param array  $extensions Extensions information.
+	 * @param string $shownPage The page slug shown at this moment.	 
 	 */
-	public static function render_header( $shownPage = '', &$extensions = '' ) {
+	public static function render_header( $shownPage = '' ) {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
 			$params = array(
 				'title' => __( 'Extensions', 'mainwp' ),
@@ -66,18 +65,18 @@ class MainWP_Extensions_View {
 			'active' => ( '' === $shownPage ) ? true : false,
 		);
 
-		if ( isset( $extensions ) && is_array( $extensions ) ) {
-			foreach ( $extensions as $extension ) {
-				if ( $extension['plugin'] == $shownPage ) {
-					$renderItems[] = array(
-						'title'  => $extension['name'],
-						'href'   => 'admin.php?page=' . $extension['page'],
-						'active' => true,
-					);
-					break;
-				}
+		// get extensions to generate manage site page header.
+		$extensions = MainWP_Extensions_Handler::get_extensions();		
+		foreach ( $extensions as $extension ) {
+			if ( $extension['plugin'] == $shownPage ) {
+				$renderItems[] = array(
+					'title'  => $extension['name'],
+					'href'   => 'admin.php?page=' . $extension['page'],
+					'active' => true,
+				);
+				break;
 			}
-		}
+		}		
 		MainWP_UI::render_page_navigation( $renderItems );
 		do_action( 'mainwp_extensions_top_header_after_tab', $shownPage );
 	}
@@ -113,10 +112,7 @@ class MainWP_Extensions_View {
 			update_option( 'mainwp_api_sslVerifyCertificate', 0 );
 		}
 
-		$extensions = MainWP_Extensions::$extensions;
-		if ( ! is_array( $extensions ) ) {
-			$extensions = array();
-		}
+		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$extension_update = get_site_transient( 'update_plugins' );
 		?>
 		<div id="mainwp-manage-extensions" class="ui alt segment">

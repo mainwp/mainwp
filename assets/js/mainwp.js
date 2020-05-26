@@ -912,10 +912,7 @@ jQuery( document ).ready( function () {
 managesites_init = function () {
     jQuery( '#mainwp-message-zone' ).hide();
     jQuery( '.sync-ext-row span.status' ).html( '' );
-    jQuery( '.sync-ext-row span.status' ).css( 'color', '#0073aa' );
-
-    managesites_bulk_init();
-
+    jQuery( '.sync-ext-row span.status' ).css( 'color', '#0073aa' );    
 };
 
 mainwp_overview_reconnect = function ( pElement ) {
@@ -2813,3 +2810,16 @@ jQuery( document ).ready( function () {
 jQuery( document ).on( 'click', '.close.icon', function () {
     jQuery( this ).parent().hide();
 } );
+
+/*
+ * to compatible
+ */
+function mainwp_setCookie( c_name, value, expiredays )
+{
+	return false;
+}
+
+function mainwp_getCookie( c_name )
+{
+   return false;
+}

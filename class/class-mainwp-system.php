@@ -220,7 +220,6 @@ class MainWP_System {
 				'mainwp_plugin_version',
 				'mainwp_upgradeVersionInfo',
 				'mainwp_extensions',
-				'mainwp_manager_extensions',
 				'mainwp_getting_started',
 				'mainwp_activated',
 				'mainwp_api_sslVerifyCertificate',

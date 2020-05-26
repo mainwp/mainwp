@@ -35,7 +35,7 @@ class MainWP_Manage_Sites {
 	 * @static
 	 * @var string $page Current page.
 	 */
-	public array $page;
+	public static $page;
 
 	/**
 	 * Widgets to enable.

@@ -135,7 +135,7 @@ class MainWP_QQ2_File_Uploader {
 			return array( 'error' => $e->getMessage() );
 		}
 	}
-	
+
 	/**
 	 * Wrap of the method handle_upload() for compatible.
 	 *

@@ -2805,7 +2805,7 @@ jQuery( document ).ready( function () {
     if ( typeof postboxes !== "undefined" && typeof mainwp_postbox_page !== "undefined" ) {
         postboxes.add_postbox_toggles( mainwp_postbox_page );
     }
-	mainwp_getCookie();
+	mainwp_setCookie();
 	mainwp_getCookie();
 } );
 

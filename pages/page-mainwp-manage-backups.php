@@ -79,7 +79,7 @@ class MainWP_Manage_Backups {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
 
-		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.1', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
 		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
 		if ( is_array( $customPage ) && isset( $customPage['slug'] ) && ! empty( $mainwp_primaryBackup ) ) {
@@ -116,7 +116,7 @@ class MainWP_Manage_Backups {
 		 */
 
 		$sub_pages      = array();
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-backups', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_backups' );  // @deprecated Use 'mainwp_getsubpages_backups' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 			foreach ( self::$subPages as $subPage ) {
@@ -309,7 +309,7 @@ class MainWP_Manage_Backups {
 		}
 
 		$primary_methods      = array();
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
 		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
 		if ( ! is_array( $primaryBackupMethods ) ) {

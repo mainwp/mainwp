@@ -35,6 +35,7 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-activated-check'             => 'mainwp_activated_check',
 		'mainwp-extension-available-check'   => '',
 		'mainwp-manager-getextensions'       => 'mainwp_manager_getextensions',
+		'mainwp-extension-enabled-check'     => 'mainwp_extension_enabled_check'
 	);
 
 	/**
@@ -53,15 +54,16 @@ class MainWP_Deprecated_Hooks {
 	 * @var array
 	 */
 	public $deprecated_version = array(
-		'mainwp-getsites'                    => '4.0.1',
-		'mainwp-getdbsites'                  => '4.0.1',
-		'mainwp-activated'                   => '4.0.1',
-		'mainwp-activated-check'             => '4.0.1',
-		'mainwp-extension-available-check'   => '4.0.1',
-		'mainwp-getgroups'                   => '4.0.1',
-		'mainwp-manager-getextensions'       => '4.0.1',
-		'mainwp_activate_extention'          => '4.0.1',
-		'mainwp_deactivate_extention'        => '4.0.1',
+		'mainwp-getsites'                    => '4.0.7.2',
+		'mainwp-getdbsites'                  => '4.0.7.2',
+		'mainwp-activated'                   => '4.0.7.2',
+		'mainwp-activated-check'             => '4.0.7.2',
+		'mainwp-extension-available-check'   => '4.0.7.2',
+		'mainwp-getgroups'                   => '4.0.7.2',
+		'mainwp-manager-getextensions'       => '4.0.7.2',
+		'mainwp_activate_extention'          => '4.0.7.2',
+		'mainwp_deactivate_extention'        => '4.0.7.2',
+		'mainwp-extension-enabled-check'     => '4.0.7.2'
 	);
 
 	/**

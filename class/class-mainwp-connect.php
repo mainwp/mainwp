@@ -585,7 +585,7 @@ class MainWP_Connect {
 							'name'   => $website->name,
 						),
 					),
-					'4.0.1',
+					'4.0.7.2',
 					'mainwp_pre_posting_posts'
 				);
 
@@ -809,7 +809,7 @@ class MainWP_Connect {
 							'name'   => $website->name,
 						),
 					),
-					'4.0.1',
+					'4.0.7.2',
 					'mainwp_pre_posting_posts'
 				);
 

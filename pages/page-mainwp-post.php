@@ -111,7 +111,7 @@ class MainWP_Post {
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
 		 */
 		$sub_pages      = array();
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_post', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {

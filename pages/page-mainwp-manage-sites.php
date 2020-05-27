@@ -164,7 +164,7 @@ class MainWP_Manage_Sites {
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
 		 */
 		$sub_pages      = array();
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_sites', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -555,7 +555,7 @@ class MainWP_Manage_Sites {
 				</div>
 
 				<?php
-				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
 				do_action( 'mainwp_manage_sites_edit', false );
 				?>
 
@@ -684,7 +684,7 @@ class MainWP_Manage_Sites {
 
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
-
+				
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
@@ -759,7 +759,7 @@ class MainWP_Manage_Sites {
 			$id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
 			$id = 'advanced-' . $id;
 
-			if ( $enabled ) {
+			if ( $enabled ) {				
 				MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, 'right', $metaBox['metabox_title'] );
 			}
 		}

@@ -132,7 +132,7 @@ class MainWP_Settings {
 		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
 		 */
 
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.1', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {

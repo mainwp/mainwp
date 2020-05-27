@@ -66,7 +66,7 @@ class MainWP_Sync {
 
 			$primaryBackup = MainWP_System_Utility::get_primary_backup();
 
-			$othersData = apply_filters_deprecated( 'mainwp-sync-others-data', array( array(), $pWebsite ), '4.0.1', 'mainwp_sync_others_data' );  // @deprecated Use 'mainwp_sync_others_data' instead.
+			$othersData = apply_filters_deprecated( 'mainwp-sync-others-data', array( array(), $pWebsite ), '4.0.7.2', 'mainwp_sync_others_data' );  // @deprecated Use 'mainwp_sync_others_data' instead.
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
 			$information = MainWP_Connect::fetch_url_authed(
@@ -354,7 +354,7 @@ class MainWP_Sync {
 
 		// Sync action.
 		if ( ! $error ) {
-			do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.1', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead.
+			do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.7.2', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead.
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
 

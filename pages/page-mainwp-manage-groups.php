@@ -123,7 +123,7 @@ class MainWP_Manage_Groups {
 			return;
 		}
 
-		do_action_deprecated( 'mainwp-pageheader-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pageheader_sites' ); // @deprecated Use 'mainwp_pageheader_sites' instead.
+		do_action_deprecated( 'mainwp-pageheader-sites', array( 'ManageGroups' ), '4.0.7.2', 'mainwp_pageheader_sites' ); // @deprecated Use 'mainwp_pageheader_sites' instead.
 
 		do_action( 'mainwp_pageheader_sites', 'ManageGroups' );
 
@@ -168,7 +168,7 @@ class MainWP_Manage_Groups {
 		</div>
 
 		<?php
-		do_action_deprecated( 'mainwp-pagefooter-sites', array( 'ManageGroups' ), '4.0.1', 'mainwp_pagefooter_sites' ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
+		do_action_deprecated( 'mainwp-pagefooter-sites', array( 'ManageGroups' ), '4.0.7.2', 'mainwp_pagefooter_sites' ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
 		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
 		?>
 

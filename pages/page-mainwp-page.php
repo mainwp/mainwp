@@ -100,7 +100,7 @@ class MainWP_Page {
 		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
 		 */
 		$sub_pages      = array();
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.1', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_page', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
@@ -1144,8 +1144,8 @@ class MainWP_Page {
 							if ( ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
 
-								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.1', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.
-								do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.1', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
+								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.
+								do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
 								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], $links );
 								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
@@ -1154,7 +1154,7 @@ class MainWP_Page {
 							}
 						}
 
-						$after_posting = apply_filters_deprecated( 'mainwp-after-posting-bulkpage-result', array( false, $_post, $dbwebsites, $output ), '4.0.1', 'mainwp_after_posting_bulkpage_result' );  // @deprecated Use 'mainwp_after_posting_bulkpage_result' instead.
+						$after_posting = apply_filters_deprecated( 'mainwp-after-posting-bulkpage-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpage_result' );  // @deprecated Use 'mainwp_after_posting_bulkpage_result' instead.
 						$after_posting = apply_filters( 'mainwp_after_posting_bulkpage_result', $after_posting, $_post, $dbwebsites, $output );
 
 						if ( false == $after_posting ) {

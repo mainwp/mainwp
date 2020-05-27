@@ -403,6 +403,7 @@ class MainWP_Extensions_Handler {
 	 * @return array 'key' => md5( $pluginFile . '-SNNonceAdder').
 	 */
 	public static function is_extension_enabled( $pluginFile ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		return array( 'key' => md5( $pluginFile . '-SNNonceAdder' ) );
 	}
 

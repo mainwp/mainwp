@@ -67,7 +67,7 @@ class MainWP_Extensions {
 		 * @deprecated
 		 */
 		$init_extensions = array();
-		$init_extensions = apply_filters_deprecated( 'mainwp-getextensions', array( $init_extensions ), '4.0.1', 'mainwp_getextensions' );
+		$init_extensions = apply_filters_deprecated( 'mainwp-getextensions', array( $init_extensions ), '4.0.7.2', 'mainwp_getextensions' );
 		$init_extensions = apply_filters( 'mainwp_getextensions', $init_extensions );
 
 		$activations_cached = get_option( 'mainwp_extensions_all_activation_cached', array() );

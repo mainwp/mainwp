@@ -123,7 +123,7 @@ class MainWP_Server_Information {
 		 *
 		 * @deprecated
 		 */
-		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.1', 'mainwp_getsubpages_server' );
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
 		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
 
 		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {

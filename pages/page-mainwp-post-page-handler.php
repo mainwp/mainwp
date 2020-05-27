@@ -401,8 +401,8 @@ class MainWP_Post_Page_Handler {
 							foreach ( $dbwebsites as $website ) {
 								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 									$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
-									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.1', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
-									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.1', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
+									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
+									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
 									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], $links );
 									do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
@@ -415,7 +415,7 @@ class MainWP_Post_Page_Handler {
 							* @deprecated Use 'mainwp_after_posting_bulkpost_result' instead.
 							*
 							*/
-							$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.1', 'mainwp_after_posting_bulkpost_result' );
+							$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
 							$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
 
 							if ( false === $after_posting ) {

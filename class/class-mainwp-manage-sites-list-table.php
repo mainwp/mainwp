@@ -78,7 +78,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @deprecated
 		 */
-		$backupnow_lnk = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.1', 'mainwp_managesites_getbackuplink' );
+		$backupnow_lnk = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.7.2', 'mainwp_managesites_getbackuplink' );
 		$backupnow_lnk = apply_filters( 'mainwp_managesites_getbackuplink', $backupnow_lnk, $item['id'], $lastBackup );
 
 		if ( ! empty( $backupnow_lnk ) ) {
@@ -135,7 +135,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @deprecated
 		 */
-		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.1', 'mainwp_sitestable_item' );
+		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.7.2', 'mainwp_sitestable_item' );
 		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
 
 		switch ( $column_name ) {
@@ -218,7 +218,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @deprecated
 		 */
-		$columns = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.1', 'mainwp_sitestable_getcolumns' );
+		$columns = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.7.2', 'mainwp_sitestable_getcolumns' );
 		$columns = apply_filters( 'mainwp_sitestable_getcolumns', $columns, $columns );
 
 		$columns['site_actions'] = '';
@@ -233,7 +233,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @deprecated
 		 */
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );
 		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
 		if ( empty( $primaryBackup ) ) {
@@ -618,7 +618,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @deprecated
 		 */
-		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.1', 'mainwp_sitestable_prepared_items' );
+		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.7.2', 'mainwp_sitestable_prepared_items' );
 
 		do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 

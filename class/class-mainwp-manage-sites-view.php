@@ -430,7 +430,7 @@ class MainWP_Manage_Sites_View {
 	 * Render sync extension settings.
 	 */
 	public static function render_sync_exts_settings() {
-		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.1', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
+		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
 		$sync_extensions_options = apply_filters( 'mainwp_sync_extensions_options', $sync_extensions_options );
 
 		$working_extensions  = MainWP_Extensions_Handler::get_indexed_extensions_infor();
@@ -520,7 +520,7 @@ class MainWP_Manage_Sites_View {
 
 		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
 		$primary_methods      = array();
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.1', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
+		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
 		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
 		if ( ! is_array( $primaryBackupMethods ) ) {
@@ -760,7 +760,7 @@ class MainWP_Manage_Sites_View {
 				return;
 			}
 			if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
-				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.1', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
+				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
 				do_action( 'mainwp_securityissues_sites', $website );
 			}
 			?>
@@ -769,7 +769,7 @@ class MainWP_Manage_Sites_View {
 			// Hook in MainWP Sucuri Extension.
 			if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
-					do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.1', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
+					do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
 					do_action( 'mainwp_sucuriscan_sites', $website );
 				}
 			}
@@ -779,7 +779,7 @@ class MainWP_Manage_Sites_View {
 			// Hook in MainWP Wordfence Extension.
 			if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
-					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.1', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
+					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
 					do_action( 'mainwp_wordfence_sites', $website );
 
 				}
@@ -981,8 +981,8 @@ class MainWP_Manage_Sites_View {
 					</div>
 				</div>
 				<?php
-				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.1', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
-				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.1', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
+				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
 				do_action( 'mainwp_manage_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit_tablerow', $website );

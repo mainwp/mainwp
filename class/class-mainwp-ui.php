@@ -675,7 +675,7 @@ class MainWP_UI {
 
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 		$contexts        = array( 'left', 'right' );
-		if ( 3 === $overviewColumns ) {
+		if ( 3 == $overviewColumns ) {
 			$contexts[] = 'middle';
 		}
 
@@ -700,7 +700,7 @@ class MainWP_UI {
 				}
 
 				// If box previously deleted, don't add.
-				if ( false === $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
+				if ( false == $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ] ) {
 					return;
 				}
 
@@ -712,7 +712,7 @@ class MainWP_UI {
 					* Else, if we're adding to the sorted priority, we don't know the title
 					* or callback. Grab them from the previously added context/priority.
 					*/
-				} elseif ( 'sorted' === $priority ) {
+				} elseif ( 'sorted' == $priority ) {
 					$title    = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['title'];
 					$callback = $mainwp_widget_boxes[ $page ][ $a_context ][ $a_priority ][ $id ]['callback'];
 				}
@@ -765,7 +765,7 @@ class MainWP_UI {
 
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 		$contexts        = array( 'left', 'right' );
-		if ( 3 === $overviewColumns ) {
+		if ( 3 == $overviewColumns ) {
 			$contexts[] = 'middle';
 		}
 
@@ -793,7 +793,7 @@ class MainWP_UI {
 			foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
 				if ( isset( $mainwp_widget_boxes[ $page ][ $context ][ $priority ] ) ) {
 					foreach ( (array) $mainwp_widget_boxes[ $page ][ $context ][ $priority ] as $box ) {
-						if ( false === $box || ! isset( $box['callback'] ) ) {
+						if ( false == $box || ! isset( $box['callback'] ) ) {
 							continue;
 						}
 
@@ -994,7 +994,7 @@ class MainWP_UI {
 			'child_site_info'           => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
 		);
 
-		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.1', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
+		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
 		$custom_opts = apply_filters( 'mainwp_widgets_screen_options', $custom_opts );
 
 		if ( is_array( $custom_opts ) && 0 < count( $custom_opts ) ) {
@@ -1015,7 +1015,7 @@ class MainWP_UI {
 		</div>
 		<?php
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-		if ( 2 !== $overviewColumns && 3 !== $overviewColumns ) {
+		if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
 			$overviewColumns = 2;
 		}
 
@@ -1024,12 +1024,12 @@ class MainWP_UI {
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Widgets columns', 'mainwp' ); ?></label>
 			<div class="ten wide column">
 				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 2 === $overviewColumns ? 'checked="true"' : '' ); ?> value="2">
+					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 2 == $overviewColumns ? 'checked="true"' : '' ); ?> value="2">
 					<label><?php esc_html_e( 'Show widgets in 2 columns', 'mainwp' ); ?></label>
 				</div>
 					<div class="ui fitted hidden divider"></div>
 				<div class="ui radio checkbox">
-					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 3 === $overviewColumns ? 'checked="true"' : '' ); ?> value="3">
+					<input type="radio" name="number_overview_columns" required="required" <?php echo ( 3 == $overviewColumns ? 'checked="true"' : '' ); ?> value="3">
 					<label><?php esc_html_e( 'Show widgets in 3 columns', 'mainwp' ); ?></label>
 				</div>
 			</div>

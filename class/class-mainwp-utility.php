@@ -320,10 +320,11 @@ class MainWP_Utility {
 			$outputSite[ $key ] = $website->$key;
 		}
 
-		if ( $object_output )
+		if ( $object_output ) {
 			return (object) $outputSite;
-		else
+		} else {
 			return $outputSite;
+		}
 	}
 
 	/**

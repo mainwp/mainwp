@@ -313,55 +313,16 @@ class MainWP_Utility {
 	 *
 	 * @return object $outputSite Mapped site.
 	 */
-	public static function map_site( &$website, $keys ) {
+	public static function map_site( &$website, $keys, $object_output = true ) {
 		$outputSite = array();
 		foreach ( $keys as $key ) {
 			$outputSite[ $key ] = $website->$key;
 		}
 
-		return (object) $outputSite;
-	}
-
-	/**
-	 * Method map_site_array()
-	 *
-	 * Map Site array.
-	 *
-	 * @param mixed $website Website to map.
-	 * @param mixed $keys Keys to map.
-	 *
-	 * @return object $outputSite Mapped site.
-	 */
-	public static function map_site_array( &$website, $keys ) {
-		$outputSite = array();
-		foreach ( $keys as $key ) {
-			$outputSite[ $key ] = $website->$key;
-		}
-
-		return $outputSite;
-	}
-
-	/**
-	 * Method sec2hms()
-	 *
-	 * Convert seconds to Hours:Minutes.
-	 *
-	 * @param mixed   $sec Time in seconds.
-	 * @param boolean $padHours Hpurs to pad.
-	 *
-	 * @return string $hms Time in Hours:Minutes.
-	 */
-	public static function sec2hms( $sec, $padHours = false ) {
-
-		$hms     = '';
-		$hours   = intval( intval( $sec ) / 3600 );
-		$hms    .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
-		$minutes = intval( ( $sec / 60 ) % 60 );
-		$hms    .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
-		$seconds = intval( $sec % 60 );
-		$hms    .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
-
-		return $hms;
+		if ( $object_output )
+			return (object) $outputSite;
+		else
+			return $outputSite;
 	}
 
 	/**

@@ -972,7 +972,7 @@ class MainWP_Settings {
 				if ( empty( $website ) ) {
 					continue;
 				}
-				$row  = MainWP_Utility::map_site_array( $website, $keys );
+				$row  = MainWP_Utility::map_site( $website, $keys, false );
 				$csv .= '"' . implode( '","', $row ) . '"' . "\r\n";
 			}
 

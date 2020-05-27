@@ -849,7 +849,7 @@ class MainWP_Live_Reports {
 
 		if ( is_array( $dbwebsites ) ) {
 			foreach ( $dbwebsites as $site ) {
-				$websites[] = MainWP_Utility::map_site_array( $site, array( 'id', 'name', 'url' ) );
+				$websites[] = MainWP_Utility::map_site( $site, array( 'id', 'name', 'url' ), false );
 			}
 		}
 		$filtered_reports = array();
@@ -1731,7 +1731,7 @@ class MainWP_Live_Reports {
 	 */
 	private static function format_stats_values( $value, $round = false, $perc = false, $showAsTime = false ) {
 		if ( $showAsTime ) {
-			$value = MainWP_Utility::sec2hms( $value );
+			$value = self::sec2hms( $value );
 		} else {
 			if ( $round ) {
 				$value = round( $value, 2 );
@@ -1741,6 +1741,29 @@ class MainWP_Live_Reports {
 			}
 		}
 		return $value;
+	}
+
+	/**
+	 * Method sec2hms()
+	 *
+	 * Convert seconds to Hours:Minutes.
+	 *
+	 * @param mixed   $sec Time in seconds.
+	 * @param boolean $padHours Hpurs to pad.
+	 *
+	 * @return string $hms Time in Hours:Minutes.
+	 */
+	public static function sec2hms( $sec, $padHours = false ) {
+
+		$hms     = '';
+		$hours   = intval( intval( $sec ) / 3600 );
+		$hms    .= ( $padHours ) ? str_pad( $hours, 2, '0', STR_PAD_LEFT ) . ':' : $hours . ':';
+		$minutes = intval( ( $sec / 60 ) % 60 );
+		$hms    .= str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ':';
+		$seconds = intval( $sec % 60 );
+		$hms    .= str_pad( $seconds, 2, '0', STR_PAD_LEFT );
+
+		return $hms;
 	}
 
 	/**

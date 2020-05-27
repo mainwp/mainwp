@@ -310,7 +310,7 @@ class MainWP_Utility {
 	 *
 	 * @param mixed $website Website to map.
 	 * @param mixed $keys Keys to map.
-	 * @param bool $object_output Output format array|object.
+	 * @param bool  $object_output Output format array|object.
 	 *
 	 * @return object $outputSite Mapped site.
 	 */

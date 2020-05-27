@@ -684,7 +684,7 @@ class MainWP_Manage_Sites {
 
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
-				
+
 		foreach ( $extMetaBoxs as $box ) {
 			if ( isset( $box['plugin'] ) ) {
 				$name                          = basename( $box['plugin'], '.php' );
@@ -759,7 +759,7 @@ class MainWP_Manage_Sites {
 			$id = isset( $metaBox['id'] ) ? $metaBox['id'] : $i++;
 			$id = 'advanced-' . $id;
 
-			if ( $enabled ) {				
+			if ( $enabled ) {
 				MainWP_UI::add_widget_box( $id, $metaBox['callback'], self::$page, 'right', $metaBox['metabox_title'] );
 			}
 		}

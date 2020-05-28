@@ -60,6 +60,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_context', array( &$this, 'cache_add_context' ), 10, 2 );
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
+		add_filter( 'mainwp_get_metaboxes_post', array( &$this, 'get_metaboxes_post' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_System_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
@@ -683,6 +684,17 @@ class MainWP_Hooks {
 	 */
 	public function filter_qq2_file_uploader( $allowedExtensions, $sizeLimit ) {
 		return new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
+	}
+
+	/**
+	 * Method get_metaboxes_post()
+	 *
+	 * Hook to get meta boxes.
+	 *
+	 * @return string|bool Return error or true.
+	 */
+	public function get_metaboxes_post() {
+		return MainWP_System::instance()->metaboxes;
 	}
 
 	/**

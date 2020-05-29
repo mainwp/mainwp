@@ -835,7 +835,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$wpe = 0,
 		$isStaging = 0 ) {
 
-		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 === $nossl || 1 === $nossl ) ) {
+		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 == $nossl || 1 == $nossl ) ) {
 			$values = array(
 				'userid'                 => $userid,
 				'adminname'              => $this->escape( $admin ),

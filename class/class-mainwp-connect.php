@@ -406,7 +406,7 @@ class MainWP_Connect {
 		$params = array();
 		if ( $website && '' != $paramValue ) {
 			$nonce = wp_rand( 0, 9999 );
-			if ( ( 0 === $website->nossl ) && function_exists( 'openssl_verify' ) ) {
+			if ( ( 0 == $website->nossl ) && function_exists( 'openssl_verify' ) ) {
 				$nossl = 0;
 				openssl_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			} else {

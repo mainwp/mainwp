@@ -90,12 +90,6 @@ class MainWP_System {
 				add_action( 'mainwp_before_header', array( MainWP_System_View::get_class_name(), 'mainwp_4_update_notice' ) );
 			}
 
-			if ( empty( $currentVersion ) ) {
-				MainWP_Utility::update_option( 'mainwp_getting_started', 'started' );
-			} else {
-				delete_option( 'mainwp_getting_started' );
-			}
-
 			MainWP_Utility::update_option( 'mainwp_plugin_version', $this->current_version );
 		}
 
@@ -219,8 +213,7 @@ class MainWP_System {
 				'mainwp_db_version',
 				'mainwp_plugin_version',
 				'mainwp_upgradeVersionInfo',
-				'mainwp_extensions',
-				'mainwp_getting_started',
+				'mainwp_extensions',				
 				'mainwp_activated',
 				'mainwp_api_sslVerifyCertificate',
 				'mainwp_automaticDailyUpdate',
@@ -599,19 +592,6 @@ class MainWP_System {
 			wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 
 			return;
-		}
-
-		$started = get_option( 'mainwp_getting_started' );
-		if ( ! empty( $started ) ) {
-			delete_option( 'mainwp_getting_started' );
-			wp_cache_delete( 'mainwp_getting_started', 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
-			if ( ! is_multisite() ) {
-				if ( 'started' === $started ) {
-					wp_safe_redirect( admin_url( 'admin.php?page=mainwp_about&do=started' ) );
-					exit;
-				}
-			}
 		}
 
 		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );

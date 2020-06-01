@@ -1,6 +1,8 @@
 <?php
 /**
  * MainWP Compatible Functions.
+ * 
+ * @package     MainWP/Dashboard
  */
 
 // phpcs:disable -- compatible functions

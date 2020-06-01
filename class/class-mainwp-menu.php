@@ -109,8 +109,6 @@ class MainWP_Menu {
 				MainWP_Server_Information::init_menu();
 			}
 
-			MainWP_About::init_menu();
-			MainWP_Child_Scan::init_menu();
 		}
 	}
 

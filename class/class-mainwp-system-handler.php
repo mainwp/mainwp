@@ -313,7 +313,7 @@ class MainWP_System_Handler {
 		if ( '' !== $am_slugs ) {
 			$am_slugs = explode( ',', $am_slugs );
 			if ( in_array( $arg->slug, $am_slugs ) ) {
-				$info = MainWP_API_Settings::get_plugin_information( $arg->slug );
+				$info = MainWP_API_Handler::get_plugin_information( $arg->slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
 						$exts_data = MainWP_Extensions_View::get_available_extensions();
@@ -352,7 +352,7 @@ class MainWP_System_Handler {
 					}
 
 					$api_slug = dirname( $plugin_slug );
-					$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
+					$rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
 
 					if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 						$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
@@ -368,7 +368,7 @@ class MainWP_System_Handler {
 							continue;
 						}
 						$api_slug = dirname( $plugin_slug );
-						$rslt     = MainWP_API_Settings::get_upgrade_information( $api_slug );
+						$rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
 						if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 
 							$this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
@@ -435,7 +435,7 @@ class MainWP_System_Handler {
 	 * Check if Extension has an update.
 	 */
 	private function check_upgrade() {
-		$result = MainWP_API_Settings::check_exts_upgrade();
+		$result = MainWP_API_Handler::check_exts_upgrade();
 		if ( null === $this->upgradeVersionInfo ) {
 			$this->upgradeVersionInfo = new \stdClass();
 		}

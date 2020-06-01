@@ -11,7 +11,7 @@ namespace MainWP\Dashboard;
 /**
  * MainWP API Settings Page
  */
-class MainWP_API_Settings {
+class MainWP_API_Handler {
 
 	/**
 	 * Get Class Name

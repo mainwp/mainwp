@@ -43,7 +43,7 @@ class MainWP_QQ2_File_Uploader {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );
 
 		$this->allowedExtensions = $allowedExtensions;
-		$this->sizeLimit         = $sizeLimit;
+		$this->sizeLimit         = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
 
 		if ( isset( $_GET['qqfile'] ) ) {
 			$this->file = new MainWP_QQ2_Uploaded_File_Xhr();

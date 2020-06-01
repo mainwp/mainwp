@@ -114,22 +114,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 
-		$this->add_action( 'mainwp_childscan', array( &$this, 'mainwp_childscan' ) );
-	}
-
-	/**
-	 * Method mainwp_childscan()
-	 *
-	 * Scan Child Site.
-	 *
-	 * @return mixed MainWP_Child_Scan::scan()|error.
-	 */
-	public function mainwp_childscan() {
-		if ( $this->check_security( 'mainwp_childscan', 'security' ) ) {
-			MainWP_Child_Scan::scan();
-		} else {
-			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
 	}
 
 	/**

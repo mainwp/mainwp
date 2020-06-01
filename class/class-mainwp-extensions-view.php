@@ -428,7 +428,7 @@ class MainWP_Extensions_View {
 	}
 
 	/**
-	 * Method getAvailableExtentions()
+	 * Method get_available_extensions()
 	 *
 	 * Static Arrays of all Available Extensions.
 	 *

@@ -1,7 +1,10 @@
 <?php
 /**
  * MainWP Compatible Functions.
+ * 
  */
+
+// phpcs:disable -- compatible functions
 
 if ( ! class_exists( 'MainWP_DB' ) ) {
 
@@ -105,6 +108,14 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 	 * MainWP Extensions View Compatible class
 	 */
 	class MainWP_Extensions_View {
+
+		/**
+		* Method getAvailableExtensions()
+		*
+		* Static Arrays of all Available Extensions.
+		*
+		* @todo Move to MainWP Server via an XML file.
+		*/
 		public static function getAvailableExtensions() {
 			return MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions();
 		}

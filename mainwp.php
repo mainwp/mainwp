@@ -81,5 +81,5 @@ if ( ! $mainwp_is_secupress_scanning ) {
 	$mainWP = new MainWP\Dashboard\MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
 	register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 	register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
-	add_action( 'plugins_loaded', array( $mainWP, 'update' ) );		
+	add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
 }

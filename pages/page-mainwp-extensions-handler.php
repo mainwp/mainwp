@@ -151,9 +151,7 @@ class MainWP_Extensions_Handler {
 					if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
 						self::$extensions[] = $extension;
 					}
-				}
-				else
-				{
+				} else {
 					self::$extensions[] = $extension;
 				}
 			}

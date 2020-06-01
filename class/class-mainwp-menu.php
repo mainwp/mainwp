@@ -108,7 +108,6 @@ class MainWP_Menu {
 			if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
 				MainWP_Server_Information::init_menu();
 			}
-
 		}
 	}
 

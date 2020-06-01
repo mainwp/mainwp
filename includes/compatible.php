@@ -1,7 +1,7 @@
 <?php
 /**
  * MainWP Compatible Functions.
- * 
+ *
  * @package     MainWP/Dashboard
  */
 

@@ -68,6 +68,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
 spl_autoload_register( 'mainwp_autoload' );
 
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'functions.php';
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'compatible.php';
 
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;
@@ -80,5 +81,5 @@ if ( ! $mainwp_is_secupress_scanning ) {
 	$mainWP = new MainWP\Dashboard\MainWP_System( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . plugin_basename( __FILE__ ) );
 	register_activation_hook( __FILE__, array( $mainWP, 'activation' ) );
 	register_deactivation_hook( __FILE__, array( $mainWP, 'deactivation' ) );
-	add_action( 'plugins_loaded', array( $mainWP, 'update' ) );
+	add_action( 'plugins_loaded', array( $mainWP, 'update' ) );		
 }

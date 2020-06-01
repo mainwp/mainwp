@@ -23,13 +23,13 @@ class MainWP_API_Settings {
 	}
 
 	/**
-	 * Method check_upgrade()
+	 * Method check_exts_upgrade()
 	 *
 	 * Check if Extension has an update.
 	 *
 	 * @return array $output List of results.
 	 */
-	public static function check_upgrade() {
+	public static function check_exts_upgrade() {
 
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$output     = array();

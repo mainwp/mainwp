@@ -147,7 +147,13 @@ class MainWP_Extensions_Handler {
 			$extensions       = get_option( 'mainwp_extensions', array() );
 			foreach ( $extensions as $extension ) {
 				$slug = $extension['slug'];
-				if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
+				if ( function_exists( 'mainwp_current_user_have_right' ) ) { // to fix later init, it's ok to check user have right.
+					if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
+						self::$extensions[] = $extension;
+					}
+				}
+				else
+				{
 					self::$extensions[] = $extension;
 				}
 			}

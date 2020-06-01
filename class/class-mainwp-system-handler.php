@@ -435,7 +435,7 @@ class MainWP_System_Handler {
 	 * Check if Extension has an update.
 	 */
 	private function check_upgrade() {
-		$result = MainWP_API_Settings::check_upgrade();
+		$result = MainWP_API_Settings::check_exts_upgrade();
 		if ( null === $this->upgradeVersionInfo ) {
 			$this->upgradeVersionInfo = new \stdClass();
 		}

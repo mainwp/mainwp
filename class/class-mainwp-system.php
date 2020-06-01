@@ -213,7 +213,7 @@ class MainWP_System {
 				'mainwp_db_version',
 				'mainwp_plugin_version',
 				'mainwp_upgradeVersionInfo',
-				'mainwp_extensions',				
+				'mainwp_extensions',
 				'mainwp_activated',
 				'mainwp_api_sslVerifyCertificate',
 				'mainwp_automaticDailyUpdate',

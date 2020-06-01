@@ -1,7 +1,6 @@
 <?php
 /**
  * MainWP Compatible Functions.
- * 
  */
 
 // phpcs:disable -- compatible functions

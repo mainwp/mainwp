@@ -193,11 +193,13 @@ class MainWP_DB extends MainWP_DB_Base {
 			$arr_options[ $o->name ] = $o->value;
 			if ( in_array( $o->name, $fill_options ) ) {
 				if ( is_array( $website ) ) {
-					if ( ! isset( $website[ $o->name ] ) )
+					if ( ! isset( $website[ $o->name ] ) ) {
 						$website[ $o->name ] = $o->value;
+					}
 				} elseif ( is_object( $website ) ) {
-					if ( ! property_exists( $website, $o->name ))
+					if ( ! property_exists( $website, $o->name ) ) {
 						$website->{$o->name} = $o->value;
+					}
 				}
 			}
 		}

@@ -171,7 +171,7 @@ class MainWP_Manage_Sites_List_Table {
 			'groups'                => array( 'groups', false ),
 			'last_sync'             => array( 'last_sync', false ),
 			'last_post'             => array( 'last_post', false ),
-			'site_health'             => array( 'site_health', false ),
+			'site_health'           => array( 'site_health', false ),
 			'phpversion'            => array( 'phpversion', false ),
 			'update'                => array( 'update', false ),
 		);
@@ -195,11 +195,11 @@ class MainWP_Manage_Sites_List_Table {
 			'wpcore_update'          => '<i class="wordpress icon"></i>',
 			'plugin_update'          => '<i class="plug icon"></i>',
 			'theme_update'           => '<i class="paint brush icon"></i>',
-			'last_sync'              => __( 'Last Sync', 'mainwp' ),			
+			'last_sync'              => __( 'Last Sync', 'mainwp' ),
 			'backup'                 => __( 'Last Backup', 'mainwp' ),
 			'phpversion'             => __( 'PHP', 'mainwp' ),
 			'last_post'              => __( 'Last Post', 'mainwp' ),
-			'site_health'              => __( 'Site Health', 'mainwp' ),
+			'site_health'            => __( 'Site Health', 'mainwp' ),
 			'notes'                  => __( 'Notes', 'mainwp' ),
 		);
 	}
@@ -650,8 +650,8 @@ class MainWP_Manage_Sites_List_Table {
 				$total_theme_upgrades  = 0;
 
 				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades' ) );
-				$wp_upgrades = isset( $site_options[ 'wp_upgrades' ] ) ? json_decode( $site_options[ 'wp_upgrades' ], true ) : array();
-				
+				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+
 				if ( $website->is_ignoreCoreUpdates ) {
 					$wp_upgrades = array();
 				}
@@ -669,8 +669,8 @@ class MainWP_Manage_Sites_List_Table {
 				if ( $website->is_ignoreThemeUpdates ) {
 					$theme_upgrades = array();
 				}
-				
-				$decodedPremiumUpgrades = isset( $site_options[ 'premium_upgrades' ] ) ? json_decode( $site_options[ 'premium_upgrades' ], true ) : array();
+
+				$decodedPremiumUpgrades = isset( $site_options['premium_upgrades'] ) ? json_decode( $site_options['premium_upgrades'], true ) : array();
 
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -1048,9 +1048,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Get table rows.
-	 * 
+	 *
 	 * Optimize for shared hosting or big networks.
-	 * 
+	 *
 	 * @return html Rows html.
 	 */
 	public function get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -1093,8 +1093,7 @@ class MainWP_Manage_Sites_List_Table {
 				$total_theme_upgrades  = 0;
 
 				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
-				$wp_upgrades = isset( $site_options[ 'wp_upgrades' ] ) ? json_decode( $site_options[ 'wp_upgrades' ], true ) : array();
-				
+				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
 
 				if ( $website['is_ignoreCoreUpdates'] ) {
 					$wp_upgrades = array();
@@ -1116,7 +1115,7 @@ class MainWP_Manage_Sites_List_Table {
 					$theme_upgrades = array();
 				}
 
-				$decodedPremiumUpgrades = isset( $site_options[ 'premium_upgrades' ] ) ? json_decode( $site_options[ 'premium_upgrades' ], true ) : array();
+				$decodedPremiumUpgrades = isset( $site_options['premium_upgrades'] ) ? json_decode( $site_options['premium_upgrades'], true ) : array();
 
 				if ( is_array( $decodedPremiumUpgrades ) ) {
 					foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
@@ -1198,9 +1197,9 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
-				$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0; 		
+				$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0;
 				if ( 0 < $health ) {
-					$h_color  = 'yellow';
+					$h_color = 'yellow';
 				} else {
 					$h_color = 'green';
 				}
@@ -1260,7 +1259,7 @@ class MainWP_Manage_Sites_List_Table {
 								<?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?>
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
 								<span><a class="ui mini compact button <?php echo $h_color; ?>" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><?php echo intval( $health ); ?></a></span>
-							<?php
+								<?php
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
 								?>
@@ -1372,7 +1371,7 @@ class MainWP_Manage_Sites_List_Table {
 		$total_theme_upgrades  = 0;
 
 		$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
-		$wp_upgrades = isset( $site_options[ 'wp_upgrades' ] ) ? json_decode( $site_options[ 'wp_upgrades' ], true ) : array();
+		$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
 
 		if ( $website['is_ignoreCoreUpdates'] ) {
 			$wp_upgrades = array();
@@ -1394,7 +1393,7 @@ class MainWP_Manage_Sites_List_Table {
 			$theme_upgrades = array();
 		}
 
-		$decodedPremiumUpgrades = isset( $site_options[ 'premium_upgrades' ] ) ? json_decode( $site_options[ 'premium_upgrades' ], true ) : array();
+		$decodedPremiumUpgrades = isset( $site_options['premium_upgrades'] ) ? json_decode( $site_options['premium_upgrades'], true ) : array();
 		if ( is_array( $decodedPremiumUpgrades ) ) {
 			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
 				$premiumUpgrade['premium'] = true;
@@ -1480,14 +1479,13 @@ class MainWP_Manage_Sites_List_Table {
 		} else {
 			$t_color = 'green';
 		}
-		
-		$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0; 		
+
+		$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0;
 		if ( 0 < $health ) {
-			$h_color  = 'yellow';
+			$h_color = 'yellow';
 		} else {
 			$h_color = 'green';
 		}
-		
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
 		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
@@ -1576,40 +1574,40 @@ class MainWP_Manage_Sites_List_Table {
 		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>
 				<?php
-			} elseif ( 'site_actions' === $column_name ) {
-				?>
+		} elseif ( 'site_actions' === $column_name ) {
+			?>
 					<td class="collapsing">
 						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999;">
 							<i class="ellipsis horizontal icon"></i>
 							<div class="menu">
-						<?php if ( '' !== $website['sync_errors'] ) : ?>
+					<?php if ( '' !== $website['sync_errors'] ) : ?>
 							<a class="mainwp_site_reconnect item" href="#"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
 							<?php else : ?>
 							<a class="managesites_syncdata item" href="#"><?php esc_html_e( 'Sync Data', 'mainwp' ); ?></a>
 							<?php endif; ?>
-						<?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&dashboard=<?php echo $website['id']; ?>"><?php esc_html_e( 'Overview', 'mainwp' ); ?></a>
 							<?php endif; ?>
-						<?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&id=<?php echo $website['id']; ?>"><?php esc_html_e( 'Edit Site', 'mainwp' ); ?></a>
 							<?php endif; ?>
-						<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) : ?>
 							<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
 							</div>
 						</div>
 					</td>
-					<?php
-			} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
-				echo "<td $attributes>";
-				echo call_user_func( array( $this, 'column_' . $column_name ), $website );
-				echo '</td>';
-			} else {
-				echo "<td $attributes>";
-				echo $this->column_default( $website, $column_name );
-				echo '</td>';
-			}
+				<?php
+		} elseif ( method_exists( $this, 'column_' . $column_name ) ) {
+			echo "<td $attributes>";
+			echo call_user_func( array( $this, 'column_' . $column_name ), $website );
+			echo '</td>';
+		} else {
+			echo "<td $attributes>";
+			echo $this->column_default( $website, $column_name );
+			echo '</td>';
+		}
 		}
 	}
 

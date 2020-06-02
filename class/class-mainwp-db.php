@@ -168,40 +168,41 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_website_options_array( &$website, $options ) {
 
-		if ( ! is_array( $options ) || empty( $options ) )
+		if ( ! is_array( $options ) || empty( $options ) ) {
 			return array();
-		
+		}
+
 		if ( is_array( $website ) ) {
 			$site_id = $website['id'];
 		} elseif ( is_object( $website ) ) {
 			$site_id = $website->id;
 		}
-		
+
 		$options_name = implode("','", $options );
 		$options_name = "'" . $options_name . "'";
-		
+
 		$options_db = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name, value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name IN (' . $options_name . ')', $site_id ) );
-		
+
 		$fill_options = array(
-			'primary_lasttime_backup',			
+			'primary_lasttime_backup',
 		);
-		
+
 		$arr_options = array();
 
 		foreach ( (array) $options_db as $o ) {
 			$arr_options[ $o->name ] = $o->value;
 			if ( in_array( $o->name, $fill_options ) ) {
-				if ( is_array( $website ) ) {					
+				if ( is_array( $website ) ) {
 					$website[ $o->name ] = $o->value;
 				} elseif ( is_object( $website ) ) {
-					$website->{$o->name} = $o->value;					
+					$website->{$o->name} = $o->value;
 				}
 			}
 		}
 
 		return $arr_options;
 	}
-	
+
 	/**
 	 * Method update_website_option()
 	 *

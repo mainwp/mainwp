@@ -51,7 +51,7 @@ class MainWP_QQ2_File_Uploader {
 		*
 		* @since 4.1
 		*/
-		$this->sizeLimit         = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
+		$this->sizeLimit = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
 
 		if ( isset( $_GET['qqfile'] ) ) {
 			$this->file = new MainWP_QQ2_Uploaded_File_Xhr();

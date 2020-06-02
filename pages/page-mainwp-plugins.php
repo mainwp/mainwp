@@ -918,22 +918,22 @@ class MainWP_Plugins {
 			?>
 		</div>
 	</div>
-<?php
-	$selected_sites  = array();
-	$selected_groups = array();
+		<?php
+		$selected_sites  = array();
+		$selected_groups = array();
 
-	if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] )) {
-		$selected_sites = explode( '-', $_GET['selected_sites'] );
-		$selected_sites = array_map( 'intval', $selected_sites );
-		$selected_sites = array_filter( $selected_sites );
-	}
-?>
+		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
+			$selected_sites = explode( '-', $_GET['selected_sites'] );
+			$selected_sites = array_map( 'intval', $selected_sites );
+			$selected_sites = array_filter( $selected_sites );
+		}
+		?>
 	<div class="mainwp-side-content mainwp-no-padding">
 		<div class="mainwp-select-sites">
 			<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>			
 			<?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 		</div>
-		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( "-", $selected_sites ) ); ?>" />
+		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( '-', $selected_sites ) ); ?>" />
 		<div class="ui divider"></div>
 		<div class="mainwp-search-options">
 			<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>

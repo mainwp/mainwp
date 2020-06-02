@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB extends MainWP_DB_Base {
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- unprepared SQL ok, accessing the database directly to custom database functions.
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -193,9 +193,11 @@ class MainWP_DB extends MainWP_DB_Base {
 			$arr_options[ $o->name ] = $o->value;
 			if ( in_array( $o->name, $fill_options ) ) {
 				if ( is_array( $website ) ) {
-					$website[ $o->name ] = $o->value;
+					if ( ! isset( $website[ $o->name ] ) )
+						$website[ $o->name ] = $o->value;
 				} elseif ( is_object( $website ) ) {
-					$website->{$o->name} = $o->value;
+					if ( ! property_exists( $website, $o->name ))
+						$website->{$o->name} = $o->value;
 				}
 			}
 		}

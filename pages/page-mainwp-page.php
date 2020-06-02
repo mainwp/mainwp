@@ -1046,10 +1046,6 @@ class MainWP_Page {
 						$mainwp_upload_dir   = wp_upload_dir();
 
 						$post_status = get_post_meta( $id, '_edit_post_status', true );
-
-						if ( 'pending' != $post_status ) {
-							$post_status = $_post->post_status;
-						}
 						$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 
 						$new_post = array(

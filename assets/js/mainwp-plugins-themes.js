@@ -92,9 +92,19 @@ jQuery( document ).ready( function () {
         mainwp_fetch_plugins();
     } );
     jQuery( document ).on( 'change', '.mainwp_plugin_check_all', function() {
-            jQuery( ".mainwp-selected-plugin[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
+		var ch_val = jQuery( this ).is(":checked");
+		jQuery( ".mainwp-selected-plugin[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', ch_val );
+		jQuery( ".mainwp-selected-plugin[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).each( function () {
+			if ( ch_val ) {
+				jQuery( this ).closest('tr').find('.mainwp_plugins_site_check_all').prop( 'checked', ch_val );
+			}
+		});
+		if (jQuery('.mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
+            jQuery('#mainwp-install-to-selected-sites').show();
+        } else {
+            jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
+        }
     });
-
 
     jQuery( document ).on( 'click', '#mainwp-install-to-selected-sites', function() {
         var checkedVals = jQuery('.mainwp_plugins_site_check_all:checkbox:checked').map(function() {
@@ -115,25 +125,22 @@ jQuery( document ).ready( function () {
     });
 
     jQuery( document ).on( 'change', '.mainwp_plugins_site_check_all', function() {
-        var rowElement = jQuery( this ).parents( 'tr' );
-        rowElement.find( '.mainwp-selected-plugin' ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
-
+        var rowElement = jQuery( this ).closest( 'tr' );		
+		var ch_val = jQuery( this ).is(":checked");				
+        rowElement.find( '.mainwp-selected-plugin' ).each( function () {			
+			jQuery( this ).prop( 'checked', ch_val );
+		});		
         if (jQuery('.mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
             jQuery('#mainwp-install-to-selected-sites').show();
         } else {
             jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
-        }
-
-        if ( jQuery( '#mainwp-do-plugins-bulk-actions' ) ) {
-            if ( jQuery( '#mainwp-bulk-actions' ).val() == 'activate' )
-                return;
-            rowElement.find( '.mainwp-selected-plugin' ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
-        }
+        }		
     } );
-  jQuery( '#mainwp_show_all_active_plugins' ).on( 'click', function () {
-    mainwp_fetch_all_active_plugins();
-    return false;
-  } );
+
+	jQuery( '#mainwp_show_all_active_plugins' ).on( 'click', function () {
+	  mainwp_fetch_all_active_plugins();
+	  return false;
+	} );
 
     var pluginCountSent;
     var pluginCountReceived;

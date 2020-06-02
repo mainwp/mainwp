@@ -481,13 +481,13 @@ class MainWP_Plugins {
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
 			foreach ( $statuses as $st ) {
-				$status .= "'" . esc_attr( $st ) . "',";
+				$status .= "'" . esc_html( $st ) . "',";
 			}
 			$status = rtrim( $status, ',' );
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
+					jQuery( '#mainwp_plugins_search_by_status' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output, to fix incorrect characters. ?>] );
 				} );
 			</script>
 			<?php
@@ -879,9 +879,12 @@ class MainWP_Plugins {
 								jQuery( document ).ready(function () {
 									jQuery( '#mainwp-search-plugins-form-field' ).on( 'keypress', function(e) {
 										var search = jQuery( '#mainwp-search-plugins-form-field' ).val();
+										var sel_ids = jQuery( '#plugin_install_selected_sites' ).val();										
+										if ( '' != sel_ids )
+											sel_ids = '&selected_sites=' + sel_ids;
 										var origin   = '<?php echo get_admin_url(); ?>';
 										if ( 13 === e.which ) {
-											location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search);
+											location.href = origin + 'admin.php?page=PluginsInstall&tab=search&s=' + encodeURIComponent(search) + sel_ids;
 										}
 									} );
 								} );
@@ -915,23 +918,22 @@ class MainWP_Plugins {
 			?>
 		</div>
 	</div>
+<?php
+	$selected_sites  = array();
+	$selected_groups = array();
 
+	if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] )) {
+		$selected_sites = explode( '-', $_GET['selected_sites'] );
+		$selected_sites = array_map( 'intval', $selected_sites );
+		$selected_sites = array_filter( $selected_sites );
+	}
+?>
 	<div class="mainwp-side-content mainwp-no-padding">
 		<div class="mainwp-select-sites">
-			<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-			<?php
-				$selected_sites  = array();
-				$selected_groups = array();
-
-			if ( isset( $_GET['selected_sites'] ) ) {
-				$selected_sites = explode( '-', $_GET['selected_sites'] );
-				$selected_sites = array_map( 'intval', $selected_sites );
-				$selected_sites = array_filter( $selected_sites );
-			}
-
-				MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups );
-			?>
+			<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>			
+			<?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
 		</div>
+		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( "-", $selected_sites ) ); ?>" />
 		<div class="ui divider"></div>
 		<div class="mainwp-search-options">
 			<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>

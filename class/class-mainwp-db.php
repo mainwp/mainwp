@@ -178,7 +178,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$site_id = $website->id;
 		}
 
-		$options_name = implode("','", $options );
+		$options_name = implode( "','", $options );
 		$options_name = "'" . $options_name . "'";
 
 		$options_db = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name, value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name IN (' . $options_name . ')', $site_id ) );
@@ -199,7 +199,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				}
 			}
 		}
-
 		return $arr_options;
 	}
 

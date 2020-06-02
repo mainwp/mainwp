@@ -1899,7 +1899,8 @@ class MainWP_Post {
 				<div class="field">
 					<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
 					<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
-						<option value="draft" <?php echo ( 'draft' === $post->post_status || 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
+						<option value="publish" <?php echo ( 'publish' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Publish', 'mainwp' ); ?></option>
+						<option value="draft" <?php echo ( 'draft' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Draft', 'mainwp' ); ?></option>
 						<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
 					</select>
 				</div>

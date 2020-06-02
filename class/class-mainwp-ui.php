@@ -1010,7 +1010,7 @@ class MainWP_UI {
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 === get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
+				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
 		<?php

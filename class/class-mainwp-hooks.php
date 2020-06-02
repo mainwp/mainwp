@@ -75,7 +75,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_delete_clonesite', array( &$this, 'filter_delete_clone_site' ), 10, 4 );
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
-		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'get_website_options' ), 10, 3 );
+		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'hook_get_site_options' ), 10, 3 );
 		add_filter( 'mainwp_addgroup', array( MainWP_Extensions_Handler::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
@@ -483,9 +483,9 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method get_website_option()
+	 * Method hook_get_site_options()
 	 *
-	 * Hook to get Child site wp_options.
+	 * Hook to get Child site options.
 	 *
 	 * @param mixed  $boolean Boolean check.
 	 * @param object $website Child site information object.
@@ -493,7 +493,7 @@ class MainWP_Hooks {
 	 *
 	 * @return string|null Database query result (as string), or null on failure
 	 */
-	public function get_website_options( $boolean, $website, $name = '' ) {
+	public function hook_get_site_options( $boolean, $website, $name = '' ) {
 
 		if ( empty( $name ) ) {
 			return $boolean;

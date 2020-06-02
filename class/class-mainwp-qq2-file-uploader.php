@@ -43,6 +43,14 @@ class MainWP_QQ2_File_Uploader {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );
 
 		$this->allowedExtensions = $allowedExtensions;
+
+		/**
+		* Filter 'mainwp_file_uploader_size_limit'
+		*
+		* Set maximum upload file size.
+		*
+		* @since 4.1
+		*/
 		$this->sizeLimit         = apply_filters( 'mainwp_file_uploader_size_limit', $sizeLimit );
 
 		if ( isset( $_GET['qqfile'] ) ) {

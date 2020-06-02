@@ -354,7 +354,7 @@ class MainWP_Manage_Sites {
 	/**
 	 * Method display_rows()
 	 *
-	 * Display table rows.
+	 * Display table rows, optimize for shared hosting or big networks.
 	 */
 	public static function display_rows() {
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
@@ -868,7 +868,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
-		$optimize_for_sites_table = ( 1 === get_option( 'mainwp_optimize' ) );
+		$optimize_for_sites_table = ( 1 == get_option( 'mainwp_optimize' ) );
 
 		if ( ! $optimize_for_sites_table ) {
 			self::$sitesTable->prepare_items( false );

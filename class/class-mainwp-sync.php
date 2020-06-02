@@ -286,6 +286,16 @@ class MainWP_Sync {
 			$done                               = true;
 		}
 
+		if ( isset( $information['health_site_status'] ) ) {
+			$issue_counts = $information['health_site_status'];			
+			$issues_total = $issue_counts['recommended'] + $issue_counts['critical'];			
+			$websiteSyncValues['health_issues_total'] = $issues_total;
+			$done                               = true;			
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $issue_counts ) ); // used in reports.			
+		} else {
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', $emptyArray );
+		}
+
 		if ( isset( $information['mainwpdir'] ) ) {
 			$websiteValues['mainwpdir'] = $information['mainwpdir'];
 			$done                       = true;

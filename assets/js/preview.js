@@ -3,7 +3,7 @@
  * Credits
  *
  * Plugin-Name: Akismet Anti-Spam
- * Plugin-URI: https://akismet.com/ 
+ * Plugin-URI: https://akismet.com/
  * Author: Automattic
  * Author URI: https://automattic.com/wordpress-plugins/
  * License: GPLv2 or later

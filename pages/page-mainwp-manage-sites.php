@@ -54,6 +54,7 @@ class MainWP_Manage_Sites {
 		'themes'            => true,
 		'notes'             => true,
 		'site_note'         => true,
+		'topics'            => true,
 	);
 
 	/**
@@ -741,6 +742,11 @@ class MainWP_Manage_Sites {
 		// Load the Notes widget.
 		if ( self::$enable_widgets['notes'] ) {
 			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
+		}
+
+		// Load the Community topics widget.
+		if ( self::$enable_widgets['topics'] ) {
+			MainWP_UI::add_widget_box( 'topics', array( MainWP_Community::get_class_name(), 'render' ), self::$page, 'left', __( 'MainWP Community', 'mainwp' ) );
 		}
 
 		// Load the Site Info widget.

@@ -797,7 +797,7 @@ class MainWP_System_Cron_Jobs {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
 					}
-
+					MainWP_Logger::Instance()->info_update( 'CRON :: auto update core :: websites id :: ' . $websiteId );
 					try {
 						MainWP_Connect::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( \Exception $e ) {

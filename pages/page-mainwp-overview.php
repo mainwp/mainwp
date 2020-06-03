@@ -40,6 +40,7 @@ class MainWP_Overview {
 		'recent_pages'      => true,
 		'security_issues'   => true,
 		'backup_tasks'      => true,
+		'topics'      => true,
 	);
 
 	/**
@@ -210,6 +211,11 @@ class MainWP_Overview {
 			if ( self::$enable_widgets['security_issues'] ) {
 				MainWP_UI::add_widget_box( 'security_issues', array( MainWP_Security_Issues_Widget::get_class_name(), 'render_widget' ), $page, 'left', __( 'Security Issues', 'mainwp' ) );
 			}
+		}
+
+		// Load the Community topics widget.
+		if ( self::$enable_widgets['topics'] ) {
+			MainWP_UI::add_widget_box( 'topics', array( MainWP_Community::get_class_name(), 'render' ), $page, 'left', __( 'MainWP Community', 'mainwp' ) );
 		}
 
 		$i = 1;

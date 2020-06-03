@@ -2739,68 +2739,6 @@ jQuery( document ).ready( function () {
 } );
 
 
-/**
- * MainWP Child Scan
- **/
-
-jQuery( document ).on( 'click', '.mwp-child-scan', function () {
-    mwp_start_childscan();
-} );
-var childsToScan = [ ];
-mwp_start_childscan = function ()
-{
-    jQuery( '#mwp_child_scan_childsites tr' ).each( function () {
-        var id = jQuery( this ).attr( 'siteid' );
-        if ( id == undefined || id == '' )
-            return;
-        childsToScan.push( id );
-    } );
-
-    mwp_childscan_next();
-};
-
-mwp_childscan_next = function ()
-{
-    if ( childsToScan.length == 0 )
-        return;
-
-    var childId = childsToScan.shift();
-
-    jQuery( 'tr[siteid="' + childId + '"]' ).children().last().html( 'Scanning' );
-
-    var data = mainwp_secure_data( {
-        action: 'mainwp_childscan',
-        childId: childId
-    } );
-
-    jQuery.ajax( {
-        type: 'POST',
-        url: ajaxurl,
-        data: data,
-        success: function ( pId ) {
-            return function ( response ) {
-                var tr = jQuery( 'tr[siteid="' + pId + '"]' );
-                if ( response.success ) {
-                    tr.children().last().html( response.success );
-                    tr.attr( 'siteid', '' );
-                } else if ( response.error ) {
-                    tr.children().last().html( 'Error: ' + response.error );
-                } else {
-                    tr.children().last().html( 'Error while contacting site!' );
-                }
-                mwp_childscan_next();
-            }
-        }( childId ),
-        error: function ( pId ) {
-            return function () {
-                jQuery( 'tr[siteid="' + pId + '"]' ).children().last().html( 'Error while contacting site!' );
-                mwp_childscan_next();
-            }
-        }( childId ),
-        dataType: 'json'
-    } );
-};
-
 jQuery( document ).ready( function () {
     if ( typeof postboxes !== "undefined" && typeof mainwp_postbox_page !== "undefined" ) {
         postboxes.add_postbox_toggles( mainwp_postbox_page );

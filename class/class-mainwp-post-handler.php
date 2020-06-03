@@ -669,7 +669,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_get_community_topics() {
 		$this->secure_request( 'mainwp_get_community_topics' );
-		MainWP_Community::get_mainwp_communitytopics();
+		MainWP_Community::get_mainwp_community_topics();
 	}
 
 

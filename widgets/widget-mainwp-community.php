@@ -1,5 +1,4 @@
 <?php
-
 /**
  * MainWP Community Widget
  *
@@ -28,7 +27,15 @@ class MainWP_Community {
 		return __CLASS__;
 	}
 
-	public static function get_mainwp_communitytopics( $forced = false ) {
+	/**
+	 * Method get_mainwp_community_topics()
+	 *
+	 * Get MainWP community topics.
+	 *
+	 * @param bool  $forced To forced load topics.
+	 * 	 
+	 */
+	public static function get_mainwp_community_topics( $forced = false ) {
 
 		$api_url = 'https://meta.mainwp.com/latest.json';
 
@@ -36,10 +43,11 @@ class MainWP_Community {
 		$data      = get_transient( $cache_key );
 
 		$maxitems = 5;
+
 		if ( $forced || ! is_array( $data ) || ! isset( $data['topics'] ) ) {
 
 			global $wp_version;
-			// Get the WordPress current version to be polite in the API call
+			// Get the WordPress current version to be polite in the API call.
 			include ABSPATH . WPINC . '/version.php';
 
 			$request_args               = array();
@@ -54,7 +62,7 @@ class MainWP_Community {
 			if ( is_wp_error( $response ) ) {
 				$response_error = $response->get_error_message();
 			} elseif ( 200 !== $response_code ) {
-				$response_error = __( 'Error loading topics.', 'mainwp');
+				$response_error = __( 'Error loading topics.', 'mainwp' );
 			} elseif ( is_array( $response_body ) && isset( $response_body['topic_list'] ) ) {
 				if ( isset( $response_body['topic_list']['topics'] ) ) {
 					$count = count( $response_body['topic_list']['topics'] );
@@ -90,8 +98,8 @@ class MainWP_Community {
 					<div class="item">						
 						<div class="middle aligned content">
 							<a href="<?php echo esc_url( $topic_base_url . $item['slug'] ); ?>"
-							   target="_blank" title="<?php printf( __( 'Posted %s, by %s', 'mainwp' ), $item['last_posted_at'], $item['last_poster_username'] ); ?>">
-								   <?php echo esc_html( $item['title'] ); ?>
+								target="_blank" title="<?php printf( __( 'Posted %s, by %s', 'mainwp' ), $item['last_posted_at'], $item['last_poster_username'] ); ?>">
+								<?php echo esc_html( $item['title'] ); ?>
 							</a>
 						</div>
 					</div>
@@ -103,6 +111,11 @@ class MainWP_Community {
 		wp_die( $output );
 	}
 
+	/**
+	 * Method render()
+	 *
+	 * Render the widget.
+	 */
 	public static function render() {
 		?>
 		<h3 class="ui header handle-drag">

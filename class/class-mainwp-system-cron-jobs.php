@@ -243,7 +243,7 @@ class MainWP_System_Cron_Jobs {
 		$run_timestamp   = 0;
 		if ( ! empty( $timeDailyUpdate ) ) {
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
-			if ( time() < $run_timestamp ) {
+			if ( time() < $run_timestamp ) { // not run this time.
 				return;
 			}
 		}
@@ -267,9 +267,10 @@ class MainWP_System_Cron_Jobs {
 		if ( $period_of_time > 0 ) {
 			$mins_between = ( 24 * 60 - $period_of_time ) / $frequencyDailyUpdate;
 			if ( time() < $lasttimeAutomaticUpdate + $mins_between * 60 ) {
-				if ( ! $updatecheck_running ) {
+				if ( ! $updatecheck_running ) { // if update checking finished then return, wait next time.
 					return;
 				}
+				// if update checking still not finished then continue.
 			} else {
 				$enableFrequencyAutomaticUpdate = true;
 			}
@@ -291,7 +292,7 @@ class MainWP_System_Cron_Jobs {
 				}
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
-			$websites = array();
+			$websites = array(); // ok, do check.
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
 

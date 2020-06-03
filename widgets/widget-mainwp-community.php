@@ -70,7 +70,7 @@ class MainWP_Community {
 					}
 					$data = array();
 					for ( $i = 0; $i < $maxitems; $i ++ ) {
-						$data['topic'][] = $response_body['topic_list']['topics'][ $i ];
+						$data['topics'][] = $response_body['topic_list']['topics'][ $i ];
 					}
 					set_transient( $cache_key, $data, 12 * HOUR_IN_SECONDS );
 				}
@@ -78,7 +78,7 @@ class MainWP_Community {
 		}
 		$topic_base_url = 'https://meta.mainwp.com/t/';
 
-		$topic_items = is_array( $data ) && isset( $data['topic'] ) ? $data['topic'] : array();
+		$topic_items = is_array( $data ) && isset( $data['topics'] ) ? $data['topics'] : array();
 
 		if ( empty( $response_error ) && 0 == count( $topic_items ) ) {
 			$response_error = __( 'No items', 'mainwp' );

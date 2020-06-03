@@ -119,6 +119,18 @@ class MainWP_Manage_Sites_List_Table {
 		return $output;
 	}
 
+	/**
+	 * Method column_site_preview()
+	 *
+	 * Site preview column.
+	 *
+	 * @param mixed $item List of backups.
+	 *
+	 * @return mixed preview content.
+	 */
+	public function column_site_preview( $item ) {
+		return '<span class="mainwp-preview-item" preview-site-url="' . $item['url'] . '" ><i class="eye icon"></i></span>';
+	}
 
 	/**
 	 * Set the column names.
@@ -171,7 +183,7 @@ class MainWP_Manage_Sites_List_Table {
 			'groups'                => array( 'groups', false ),
 			'last_sync'             => array( 'last_sync', false ),
 			'last_post'             => array( 'last_post', false ),
-			'site_health'           => array( 'site_health', false ),
+			'site_health'           => array( 'site_health', false ),			
 			'phpversion'            => array( 'phpversion', false ),
 			'update'                => array( 'update', false ),
 		);
@@ -200,6 +212,7 @@ class MainWP_Manage_Sites_List_Table {
 			'phpversion'             => __( 'PHP', 'mainwp' ),
 			'last_post'              => __( 'Last Post', 'mainwp' ),
 			'site_health'            => __( 'Site Health', 'mainwp' ),
+			'site_preview'            => '<i class="eye icon"></i>',
 			'notes'                  => __( 'Notes', 'mainwp' ),
 		);
 	}
@@ -821,7 +834,6 @@ class MainWP_Manage_Sites_List_Table {
 					"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 					"pageLength": <?php echo intval( $sites_per_page ); ?>
 				} );
-
 			<?php } else { ?>
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
@@ -878,6 +890,7 @@ class MainWP_Manage_Sites_List_Table {
 						"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
+							mainwp_preview_init_event();
 						},
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

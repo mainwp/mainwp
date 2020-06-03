@@ -183,7 +183,7 @@ class MainWP_Manage_Sites_List_Table {
 			'groups'                => array( 'groups', false ),
 			'last_sync'             => array( 'last_sync', false ),
 			'last_post'             => array( 'last_post', false ),
-			'site_health'           => array( 'site_health', false ),			
+			'site_health'           => array( 'site_health', false ),
 			'phpversion'            => array( 'phpversion', false ),
 			'update'                => array( 'update', false ),
 		);
@@ -212,7 +212,7 @@ class MainWP_Manage_Sites_List_Table {
 			'phpversion'             => __( 'PHP', 'mainwp' ),
 			'last_post'              => __( 'Last Post', 'mainwp' ),
 			'site_health'            => __( 'Site Health', 'mainwp' ),
-			'site_preview'            => '<i class="eye icon"></i>',
+			'site_preview'           => '<i class="eye icon"></i>',
 			'notes'                  => __( 'Notes', 'mainwp' ),
 		);
 	}

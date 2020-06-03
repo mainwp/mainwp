@@ -557,7 +557,7 @@ class MainWP_System {
 			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
 		}
-		
+
 		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
 			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );

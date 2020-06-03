@@ -32,8 +32,7 @@ class MainWP_Community {
 	 *
 	 * Get MainWP community topics.
 	 *
-	 * @param bool  $forced To forced load topics.
-	 * 	 
+	 * @param bool $forced To forced load topics.
 	 */
 	public static function get_mainwp_community_topics( $forced = false ) {
 

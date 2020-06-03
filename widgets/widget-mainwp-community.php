@@ -31,24 +31,23 @@ class MainWP_Community {
 	public static function get_mainwp_communitytopics( $forced = false ) {
 
 		$api_url = 'https://meta.mainwp.com/latest.json';
-		
 
-		$cache_key	 = 'mainwp_community_lasttopics';				
-		$data		 = get_transient( $cache_key );		
-		
+		$cache_key = 'mainwp_community_lasttopics';
+		$data      = get_transient( $cache_key );
+
 		$maxitems = 5;
-		if ( $forced || !is_array( $data ) || !isset( $data['topics'] ) ) {
-			
+		if ( $forced || ! is_array( $data ) || ! isset( $data['topics'] ) ) {
+
 			global $wp_version;
-			//Get the WordPress current version to be polite in the API call
-			include( ABSPATH . WPINC . '/version.php' );
+			// Get the WordPress current version to be polite in the API call
+			include ABSPATH . WPINC . '/version.php';
 
 			$request_args               = array();
 			$request_args['user-agent'] = 'WordPress/' . $wp_version . '; ' . home_url( '/' );
 
-			$response       = wp_remote_get( $api_url, $request_args );
-			$response_code  = wp_remote_retrieve_response_code( $response );
-			$response_body  = json_decode( wp_remote_retrieve_body( $response ), true );
+			$response      = wp_remote_get( $api_url, $request_args );
+			$response_code = wp_remote_retrieve_response_code( $response );
+			$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 			$response_error = null;
 
@@ -65,25 +64,24 @@ class MainWP_Community {
 					$data = array();
 					for ( $i = 0; $i < $maxitems; $i ++ ) {
 						$data['topic'][] = $response_body['topic_list']['topics'][ $i ];
-					} 				
+					}
 					set_transient( $cache_key, $data, 12 * HOUR_IN_SECONDS );
 				}
-				
 			}
-		}				
+		}
 		$topic_base_url = 'https://meta.mainwp.com/t/';
-		
+
 		$topic_items = is_array( $data ) && isset( $data['topic'] ) ? $data['topic'] : array();
-		
+
 		if ( empty( $response_error ) && 0 == count( $topic_items ) ) {
 			$response_error = __( 'No items', 'mainwp' );
-		}		
+		}
 		ob_start();
 		?>
-		<?php if ( !empty( $response_error ) ) : ?>
+		<?php if ( ! empty( $response_error ) ) : ?>
 				<div class="item">						
 					<div class="middle aligned content">
-						<?php echo esc_html( $response_error ) ;?>
+						<?php echo esc_html( $response_error ); ?>
 					</div>
 				</div>
 		<?php else : ?>
@@ -98,14 +96,15 @@ class MainWP_Community {
 						</div>
 					</div>
 				<?php endforeach; ?>
-		<?php endif;
-		
+			<?php
+		endif;
+
 		$output = ob_get_clean();
-		wp_die( $output );		
+		wp_die( $output );
 	}
 
-	public static function render() {		
-	?>
+	public static function render() {
+		?>
 		<h3 class="ui header handle-drag">
 			<?php esc_html_e( 'MainWP Community', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Latest topics from the MainWP Community', 'mainwp' ); ?></div>

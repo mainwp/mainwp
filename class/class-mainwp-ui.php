@@ -992,7 +992,7 @@ class MainWP_UI {
 			'security_issues'           => __( 'Security Issues', 'mainwp' ),
 			'notes'                     => __( 'Notes (Individual Site Overview page)', 'mainwp' ),
 			'child_site_info'           => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
-			'topics'                     => __( 'MainWP Community', 'mainwp' ),
+			'topics'                    => __( 'MainWP Community', 'mainwp' ),
 		);
 
 		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.

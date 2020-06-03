@@ -111,9 +111,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_ignore_http_response', array( &$this, 'mainwp_ignore_http_response' ) );
 		$this->add_action( 'mainwp_disconnect_site', array( &$this, 'ajax_disconnect_site' ) );
 		$this->add_action( 'mainwp_manage_display_rows', array( &$this, 'ajax_display_rows' ) );
-		
+
 		$this->add_action( 'mainwp_get_community_topics', array( &$this, 'ajax_get_community_topics' ) );
-				
+
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 	}
 

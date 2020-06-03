@@ -40,7 +40,7 @@ class MainWP_Overview {
 		'recent_pages'      => true,
 		'security_issues'   => true,
 		'backup_tasks'      => true,
-		'topics'      => true,
+		'topics'            => true,
 	);
 
 	/**

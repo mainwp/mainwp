@@ -418,7 +418,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui info message">
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
 				<?php esc_html_e( 'If you have it installed, click the "MainWP Child Plugin Installed" button to connect the site, if not, follow these instructions to install it.', 'mainwp' ); ?><br /><br />
-				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
+				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %shelp document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
 			</div>
 			<ol>
 				<li><?php esc_html_e( 'Login to the WordPress site you want to connect <em>(open it in a new browser tab)</em>', 'mainwp' ); ?></li>

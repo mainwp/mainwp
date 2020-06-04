@@ -652,7 +652,7 @@ class MainWP_System_Cron_Jobs {
 				return;
 			}
 
-			if ( 1 !== $mainwpAutomaticDailyUpdate && 1 !== $plugin_automaticDailyUpdate && 1 !== $theme_automaticDailyUpdate ) {
+			if ( 1 != $mainwpAutomaticDailyUpdate && 1 != $plugin_automaticDailyUpdate && 1 != $theme_automaticDailyUpdate ) {
 				return;
 			}
 
@@ -664,19 +664,19 @@ class MainWP_System_Cron_Jobs {
 
 				$websitesToCheck = array();
 
-				if ( 1 === $plugin_automaticDailyUpdate ) {
+				if ( 1 == $plugin_automaticDailyUpdate ) {
 					foreach ( $pluginsToUpdateNow as $websiteId => $slugs ) {
 						$websitesToCheck[ $websiteId ] = true;
 					}
 				}
 
-				if ( 1 === $theme_automaticDailyUpdate ) {
+				if ( 1 == $theme_automaticDailyUpdate ) {
 					foreach ( $themesToUpdateNow as $websiteId => $slugs ) {
 						$websitesToCheck[ $websiteId ] = true;
 					}
 				}
 
-				if ( 1 === $mainwpAutomaticDailyUpdate ) {
+				if ( 1 == $mainwpAutomaticDailyUpdate ) {
 					foreach ( $coreToUpdateNow as $websiteId ) {
 						$websitesToCheck[ $websiteId ] = true;
 					}
@@ -738,7 +738,7 @@ class MainWP_System_Cron_Jobs {
 				$sitesCheckCompleted = null;
 			}
 
-			if ( 1 === $plugin_automaticDailyUpdate ) {
+			if ( 1 == $plugin_automaticDailyUpdate ) {
 				foreach ( $pluginsToUpdateNow as $websiteId => $slugs ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
@@ -766,7 +766,7 @@ class MainWP_System_Cron_Jobs {
 				$pluginsToUpdateNow = array();
 			}
 
-			if ( 1 === $theme_automaticDailyUpdate ) {
+			if ( 1 == $theme_automaticDailyUpdate ) {
 				foreach ( $themesToUpdateNow as $websiteId => $slugs ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
@@ -793,7 +793,7 @@ class MainWP_System_Cron_Jobs {
 				$themesToUpdateNow = array();
 			}
 
-			if ( 1 === $mainwpAutomaticDailyUpdate ) {
+			if ( 1 == $mainwpAutomaticDailyUpdate ) {
 				foreach ( $coreToUpdateNow as $websiteId ) {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;

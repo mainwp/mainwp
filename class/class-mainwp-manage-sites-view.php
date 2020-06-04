@@ -541,7 +541,7 @@ class MainWP_Manage_Sites_View {
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 === $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
+				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 == $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
 			</div>
 		</div>
 

@@ -192,7 +192,12 @@ class MainWP_Bulk_Post {
 	 * Register "Bulkpost" and "Bulkpage" custom post types.
 	 */
 	public function create_post_type() {
-		$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
+
+		$queryable = true;
+		if ( function_exists( 'is_plugin_active' ) ) {
+			$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
+		}
+
 		$labels    = array(
 			'name'               => _x( 'Bulkpost', 'bulkpost' ),
 			'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),

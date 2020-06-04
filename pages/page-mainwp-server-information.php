@@ -672,7 +672,7 @@ class MainWP_Server_Information {
 		self::render_header( 'ServerInformationCron' );
 
 		$cron_jobs = array(
-			'Check for available updates'            => array( 'mainwp_cron_last_updatescheck', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
+			'Check for available updates'            => array( 'mainwp_updatescheck_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
 			'Check for new statistics'               => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
 			'Ping childs sites'                      => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
 		);
@@ -705,7 +705,7 @@ class MainWP_Server_Information {
 						<td><?php echo $cron_job; ?></td>
 						<td><?php echo $hook[1]; ?></td>
 						<td><?php echo $hook[2]; ?></td>
-						<td><?php echo ( false === get_option( $hook[0] ) || 0 == get_option( $hook[0] ) ) ? esc_html__( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
+						<td><?php echo ( false == get_option( $hook[0] ) ) ? esc_html__( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
 						<td><?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) ); ?></td>
 					</tr>
 					<?php

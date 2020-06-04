@@ -12,9 +12,9 @@
  */
 
 jQuery( function ( $ ) {
-	
+
 	/**
-	 * Init site preview function.	
+	 * Init site preview function.
 	 */
 	mainwp_preview_init_event = function() {
 		var mshotRemovalTimer = null;
@@ -24,7 +24,7 @@ jQuery( function ( $ ) {
 		var mshotEnabledLinkSelector = 'td span.mainwp-preview-item';
 
 		// Show a preview image of the hovered URL.
-		$( '#mainwp-manage-sites-body-table' ).on( 'mouseover', mshotEnabledLinkSelector, function () {
+		$( '#mainwp-manage-sites-body-table' ).on( 'click', mshotEnabledLinkSelector, function () {
 			clearTimeout( mshotRemovalTimer );
 
 			if ( $( '.mainwp-preview-mshot' ).length > 0 ) {
@@ -65,13 +65,6 @@ jQuery( function ( $ ) {
 			}, 12000 );
 
 			$( 'body' ).append( mShot );
-		} ).on( 'mouseout', mshotEnabledLinkSelector, function () {
-			mshotRemovalTimer = setTimeout( function () {
-				clearTimeout( mshotSecondTryTimer );
-				clearTimeout( mshotThirdTryTimer );
-
-				$( '.mainwp-preview-mshot' ).remove();
-			}, 200 );
 		} ).on( 'mouseover', 'tr', function () {
 			// When the mouse hovers over a row, begin preloading mshots for links.
 			var linksToPreloadMshotsFor = $( this ).find( mshotEnabledLinkSelector );
@@ -85,11 +78,21 @@ jQuery( function ( $ ) {
 				}
 			} );
 		} );
+
+    $( document ).on( 'mouseup', function () {
+      if ( $( '.mainwp-preview-mshot' ).length > 0 ) {
+        mshotRemovalTimer = setTimeout( function () {
+           clearTimeout( mshotSecondTryTimer );
+           clearTimeout( mshotThirdTryTimer );
+           $( '.mainwp-preview-mshot' ).remove();
+        }, 100 );
+     }
+    } );
 	};
-	
+
 	// init preview.
 	mainwp_preview_init_event();
-	
+
 	/**
 	 * Generate an mShot URL if given a link URL.
 	 *
@@ -99,14 +102,14 @@ jQuery( function ( $ ) {
 	 */
 	function mainwp_preview_mshot_url( linkUrl, retry ) {
 		var mshotUrl = '//s0.wordpress.com/mshots/v1/' + encodeURIComponent( linkUrl ) + '?w=900';
-		
+
 		if ( retry ) {
 			mshotUrl += '&r=' + encodeURIComponent( retry );
 		}
-		
+
 		return mshotUrl;
 	}
-	
+
 	/**
 	 * Begin loading an mShot preview of a link.
 	 *

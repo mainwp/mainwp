@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.18';
+	protected $mainwp_db_version = '8.19';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -155,7 +155,7 @@ class MainWP_Install extends MainWP_DB_Base {
   dbsize int(11) NOT NULL DEFAULT 0,
   extauth text NOT NULL DEFAULT "",
   last_post_gmt int(11) NOT NULL DEFAULT 0,
-  health_issues_total int(11) NOT NULL DEFAULT 0,
+  health_issues int(11) NOT NULL DEFAULT 0,
   KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 

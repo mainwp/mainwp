@@ -436,7 +436,7 @@ class MainWP_System_Handler {
 	 */
 	private function check_upgrade() {
 		$result = MainWP_API_Handler::check_exts_upgrade();
-		if ( null === $this->upgradeVersionInfo ) {
+		if ( null == $this->upgradeVersionInfo ) {
 			$this->upgradeVersionInfo = new \stdClass();
 		}
 		$this->upgradeVersionInfo->updated = time();

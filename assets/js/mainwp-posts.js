@@ -199,10 +199,12 @@ mainwp_fetch_pages = function () {
             "columnDefs": [ {
                 "targets": 'no-sort',
                 "orderable": false
-            } ]
+            } ],
+            "preDrawCallback": function( settings ) {
+              mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+              mainwp_datatable_fix_menu_overflow();
+            }
         });
-        mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-        mainwp_datatable_fix_menu_overflow();
     } );
 };
 
@@ -422,9 +424,13 @@ mainwp_fetch_posts = function ( postId, userId ) {
             "columnDefs": [ {
               "targets": 'no-sort',
               "orderable": false
-            } ]
+            } ],
+            "preDrawCallback": function( settings ) {
+  						jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
+  						jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+  						mainwp_datatable_fix_menu_overflow();
+              mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+  					}
         });
-        mainwp_table_check_columns_init(); // ajax: to fix checkbox all
-        mainwp_datatable_fix_menu_overflow();
     } );
 };

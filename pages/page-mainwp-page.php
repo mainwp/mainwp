@@ -486,13 +486,12 @@ class MainWP_Page {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text" value="
-					<?php
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text"
+					value="<?php
 					if ( null != $cachedSearch ) {
 						echo esc_attr( $cachedSearch['keyword'] );
 					}
-					?>
-					"/>
+					?>"/>
 				</div>
 			</div>
 			<div class="field">
@@ -619,23 +618,28 @@ class MainWP_Page {
 		</table>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
-			jQuery( '#mainwp-pages-table' ).DataTable( {
-				"colReorder" : true,
-				"stateSave":  true,
-				"pagingType": "full_numbers",
-				"scrollX" : true,
-				"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-				"order": [],
-				"columnDefs": [ {
-					"targets": 'no-sort',
-					"orderable": false
-				} ],
-				"preDrawCallback": function( settings ) {
-					jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
-					jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
-					mainwp_datatable_fix_menu_overflow();
-				}
-			} );
+			try {
+				jQuery( '#mainwp-pages-table' ).DataTable( {
+					"colReorder" : true,
+					"stateSave":  true,
+					"pagingType": "full_numbers",
+					"scrollX" : true,
+					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+					"order": [],
+					"columnDefs": [ {
+						"targets": 'no-sort',
+						"orderable": false
+					} ],
+					"preDrawCallback": function( settings ) {
+						jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
+						jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
+						mainwp_datatable_fix_menu_overflow();
+						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+					}
+				} );
+			} catch( err ) {
+				// to fix js error.
+			}
 		} );
 		</script>
 		<?php

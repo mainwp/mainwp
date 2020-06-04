@@ -288,8 +288,7 @@ class MainWP_Sync {
 
 		if ( isset( $information['health_site_status'] ) ) {
 			$issue_counts                             = $information['health_site_status'];
-			$issues_total                             = $issue_counts['recommended'] + $issue_counts['critical'];
-			$websiteSyncValues['health_issues_total'] = $issues_total;
+			$websiteSyncValues['health_issues'] = $issue_counts['critical'];
 			$done                                     = true;
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $issue_counts ) ); // used in reports.
 		} else {

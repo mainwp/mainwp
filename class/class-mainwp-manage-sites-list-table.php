@@ -464,7 +464,7 @@ class MainWP_Manage_Sites_List_Table {
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		if ( null === $this->userExtension ) {
+		if ( null == $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		}
 
@@ -517,7 +517,7 @@ class MainWP_Manage_Sites_List_Table {
 				} elseif ( 'last_post' === $req_orderby ) {
 					$orderby = 'wp_sync.last_post_gmt ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'site_health' === $req_orderby ) {
-					$orderby = 'wp_sync.health_issues_total ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+					$orderby = 'wp_sync.health_issues ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				}
 			}
 		}
@@ -1107,8 +1107,9 @@ class MainWP_Manage_Sites_List_Table {
 				$total_plugin_upgrades = 0;
 				$total_theme_upgrades  = 0;
 
-				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'health_site_status' ) );
 				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+				$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
 
 				if ( $website['is_ignoreCoreUpdates'] ) {
 					$wp_upgrades = array();
@@ -1212,11 +1213,15 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
-				$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0;
-				if ( 0 < $health ) {
-					$h_color = 'yellow';
-				} else {
+				$hval = $this->get_health_site_val( $health_status );
+				$critical = isset( $website['health_issues'] ) ? $website['health_issues'] : 0;
+
+				if ( 80 <= $hval && 0 == $critical ) {
 					$h_color = 'green';
+					$h_text = __( 'Good', 'mainwp' );
+				} else {
+					$h_color = 'orange';
+					$h_text = __( 'Should be improved', 'mainwp' );
 				}
 
 				$note       = html_entity_decode( $website['note'] );
@@ -1273,7 +1278,7 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'last_post' === $column_name ) { ?>
 								<?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?>
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
-								<span><a class="ui mini compact button <?php echo $h_color; ?>" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><?php echo intval( $health ); ?></a></span>
+								<span><a class="ui circular label <?php echo $h_color; ?> open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html( $h_text ) . ' - ' . esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"></a></span>
 								<?php
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
@@ -1325,6 +1330,43 @@ class MainWP_Manage_Sites_List_Table {
 			'recordsFiltered' => $this->total_items,
 			'rowsInfo'        => $info_rows,
 		);
+	}
+
+	/**
+	 * Get Health Site value.
+	 *
+	 * @param mixed $issue_counts Health site issues.
+	 *
+	 * @return integer $val Health value.
+	 */
+	function get_health_site_val( $issue_counts ){
+
+		if ( empty( $issue_counts ) ) {
+			$issue_counts = array(
+				'good'        => 0,
+				'recommended' => 0,
+				'critical'    => 0,
+			);
+		}
+
+		$totalTests  = $issue_counts['good'] + $issue_counts['recommended'] + $issue_counts['critical'] * 1.5;
+		$failedTests = $issue_counts['recommended'] + $issue_counts['critical'] * 1.5;
+
+		if ( 0 == $totalTests ) {
+				$val = 100;
+		} else {
+				$val = 100 - ceil( ( $failedTests / $totalTests ) * 100 );
+		}
+
+		if ( 0 > $val ) {
+			$val = 0;
+		}
+
+		if ( 100 < $val ) {
+			$val = 100;
+		}
+
+		return $val;
 	}
 
 	/**
@@ -1385,8 +1427,10 @@ class MainWP_Manage_Sites_List_Table {
 		$total_plugin_upgrades = 0;
 		$total_theme_upgrades  = 0;
 
-		$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+		$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'health_site_status' ) );
 		$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
+		$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
+
 
 		if ( $website['is_ignoreCoreUpdates'] ) {
 			$wp_upgrades = array();
@@ -1495,11 +1539,15 @@ class MainWP_Manage_Sites_List_Table {
 			$t_color = 'green';
 		}
 
-		$health = isset( $website['health_issues_total'] ) ? $website['health_issues_total'] : 0;
-		if ( 0 < $health ) {
-			$h_color = 'yellow';
-		} else {
+		$hval = $this->get_health_site_val( $health_status );
+		$critical = isset( $website['health_issues'] ) ? $website['health_issues'] : 0;
+
+		if ( 80 <= $hval && 0 == $critical ) {
 			$h_color = 'green';
+			$h_text = __( 'Good', 'mainwp' );
+		} else {
+			$h_color = 'orange';
+			$h_text = __( 'Should be improved', 'mainwp' );
 		}
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
@@ -1576,7 +1624,7 @@ class MainWP_Manage_Sites_List_Table {
 			<?php } elseif ( 'last_post' === $column_name ) { ?>
 				<td class="collapsing"><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?></td>
 			<?php } elseif ( 'site_health' === $column_name ) { ?>
-				<td class="collapsing"><span><a class="ui mini compact button open_newwindow_wpadmin <?php echo $h_color; ?>" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php esc_attr_e( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><?php echo intval( $health ); ?></a></span></td>
+				<td class="collapsing"><span><a class="ui circular label open_newwindow_wpadmin <?php echo $h_color; ?>" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html( $h_text ) . ' - ' . esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"></a></span></td>
 			<?php } elseif ( 'notes' === $column_name ) { ?>
 				<td class="collapsing center aligned">
 					<?php if ( '' === $website['note'] ) : ?>

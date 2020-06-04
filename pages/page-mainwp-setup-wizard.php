@@ -235,7 +235,7 @@ class MainWP_Setup_Wizard {
 				?>
 				<div class="step
 				<?php
-				if ( $step_key === $this->step ) {
+				if ( $step_key == $this->step ) {
 					echo 'active';
 				} elseif ( array_search( $this->step, array_keys( $this->steps ) ) > array_search( $step_key, array_keys( $this->steps ) ) ) {
 					echo 'completed'; }

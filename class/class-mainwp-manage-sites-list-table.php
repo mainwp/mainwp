@@ -1339,7 +1339,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return integer $val Health value.
 	 */
-	function get_health_site_val( $issue_counts ){
+	 public function get_health_site_val( $issue_counts ){
 
 		if ( empty( $issue_counts ) ) {
 			$issue_counts = array(

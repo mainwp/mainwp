@@ -219,7 +219,7 @@ mainwp_setup_extension_activate_plugin = function () {
         if ( response == 'SUCCESS' ) {
             jQuery( '#mwp_setup_active_extension' ).fadeIn( 500 );
             mainwp_setup_extension_activate( false );
-        } 
+        }
     } );
 }
 
@@ -267,8 +267,8 @@ mainwp_setup_extension_activate = function ( retring )
 };
 
 // Connect a new website
-mainwp_setup_managesites_add = function () {    
-    
+mainwp_setup_managesites_add = function () {
+
     jQuery( '#mainwp-message-zone' ).hide();
     var errors = [ ];
     if ( jQuery( '#mainwp_managesites_add_wpname' ).val() == '' ) {
@@ -290,10 +290,10 @@ mainwp_setup_managesites_add = function () {
     }
     if ( jQuery( '#mainwp_managesites_add_wpadmin' ).val() == '' ) {
       errors.push( 'Please enter a username of the website administrator.' );
-    } 
-    if ( errors.length > 0 ) {      
+    }
+    if ( errors.length > 0 ) {
       jQuery( '#mainwp-message-zone' ).html( errors.join( '<br />' )  ).addClass('yellow' ).show();
-    } else {      
+    } else {
       jQuery( '#mainwp-message-zone' ).html( 'Adding the site to your MainWP Dashboard. Please wait...'  ).addClass( 'green' ).show();
 
       jQuery( '#mainwp_managesites_add' ).attr( 'disabled', 'true' ); //disable button to add..
@@ -317,7 +317,7 @@ mainwp_setup_managesites_add = function () {
 //        force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
 //        ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
 //        http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
-//        http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()        
+//        http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()
       });
 
       jQuery.post( ajaxurl, data, function ( res_things ) {
@@ -356,11 +356,11 @@ mainwp_setup_managesites_add = function () {
             managesites_add_uniqueId: jQuery( '#mainwp_managesites_add_uniqueId' ).val(),
             groupids: group_ids,
             verify_certificate: jQuery( '#mainwp_managesites_verify_certificate' ).val(),
-            qsw_page: true,            
+            qsw_page: true,
 //            force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
 //            ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
 //            managesites_add_http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
-//            managesites_add_http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()            
+//            managesites_add_http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()
           } );
 
           // to support add client reports tokens values
@@ -377,11 +377,11 @@ mainwp_setup_managesites_add = function () {
               data[tname] = tvalue;
           } );
 
-          jQuery.post( ajaxurl, data, function ( res_things ) {            
+          jQuery.post( ajaxurl, data, function ( res_things ) {
             if ( res_things.error ) {
               response = res_things.error;
             } else {
-              response = res_things.response;              
+              response = res_things.response;
             }
             response = jQuery.trim( response );
 
@@ -395,7 +395,7 @@ mainwp_setup_managesites_add = function () {
               //Message the WP was added
               jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
               jQuery( '#mainwp-message-zone' ).html( response ).addClass('green' ).show();
-              jQuery( '#mainwp-info-zone' ).html( 'You can also add more sites now or <a href="admin.php?page=mainwp-setup&step=hosting_setup" class="ui blue mini button">Continue with Quick Setup Wizard</a>' ).show();
+              jQuery( '#mainwp-info-zone' ).html( 'You can also add more sites now or <a href="admin.php?page=mainwp-setup&step=optimization" class="ui blue mini button">Continue with Quick Setup Wizard</a>' ).show();
 
               //Reset fields
               jQuery( '#mainwp_managesites_add_wpname' ).val( '' );
@@ -424,7 +424,7 @@ mainwp_setup_managesites_add = function () {
             if ( errors.length > 0 ) {
               jQuery( '#mainwp-message-zone' ).removeClass( 'green' );
               jQuery( '#mainwp-message-zone' ).hide();
-              jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button              
+              jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button
               jQuery( '#mainwp-message-zone' ).html( errors.join( '<br />' ) ).addClass('red' ).show();
             }
         }, 'json' );
@@ -440,7 +440,7 @@ mainwp_setup_secure_data = function ( data )
 {
     if ( data['action'] == undefined )
         return data;
-    data['security'] = jQuery( '#nonce_secure_data' ).attr(data['action']);     
+    data['security'] = jQuery( '#nonce_secure_data' ).attr(data['action']);
     return data;
 };
 
@@ -455,11 +455,11 @@ jQuery( document ).ready( function () {
       jQuery( this ).closest( '#mainwp-multi-emails' ).remove();
       return false;
   } );
-  
+
     jQuery( document ).on( 'click', '#mainwp_managesites_add', function (event) {
         mainwp_setup_managesites_add( event );
     } );
-    
+
     jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function() {
         var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
         var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();

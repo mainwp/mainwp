@@ -418,20 +418,20 @@ class MainWP_Setup_Wizard {
 			<div class="ui info message">
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
 				<?php esc_html_e( 'If you have it installed, click the "MainWP Child Plugin Installed" button to connect the site, if not, follow these instructions to install it.', 'mainwp' ); ?><br /><br />
-				<?php esc_html_e( 'If you need additional help with installing the MainWP Child, please see this <a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">help document</a>.', 'mainwp' ); ?>
+				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %shelp document%s.', 'mainwp'), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
 			</div>
 			<ol>
 				<li><?php esc_html_e( 'Login to the WordPress site you want to connect <em>(open it in a new browser tab)</em>', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Go to the <strong>WP > Plugins</strong> page', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'Click <strong>Add New</strong> to install a new plugin', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( 'In the <strong>Search Field</strong>, enter “MainWP Child�? and once the plugin shows, click the Install button', 'mainwp' ); ?></li>
-				<li><?php esc_html_e( '<strong>Activate</strong> the plugin', 'mainwp' ); ?></li>
+				<li><?php printf( __( 'Go to the %sWP > Plugins%s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( 'Click %sAdd New%s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( 'In the %sSearch Field%s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( '%sActivate%s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 			</ol>
 			<div class="ui clearing hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
 			<a href="admin.php?page=mainwp-setup&step=connect_first_site" class="ui big green right floated button"><?php esc_attr_e( 'MainWP Child Plugin Installed', 'mainwp' ); ?></a>
-			<a href="admin.php?page=mainwp-setup&step=hosting_setup" class="ui big button"><?php esc_html_e( 'Skip For Now', 'mainwp' ); ?></a>
+			<a href="admin.php?page=mainwp-setup&step=connect_first_site" class="ui big button"><?php esc_html_e( 'Skip For Now', 'mainwp' ); ?></a>
 			<a href="<?php echo esc_url( $this->get_back_step_link() ); ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
 		<?php

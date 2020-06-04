@@ -833,7 +833,7 @@ class MainWP_Server_Information {
 	 * @param int    $errorType global variable self::WARNING = 1.
 	 */
 	public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( self::get_class_name(), $getter ) );
+		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
 		?>
 		<tr>
 			<td><?php echo esc_html( $config ); ?></td>

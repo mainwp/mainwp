@@ -79,7 +79,7 @@ class MainWP_System_Utility {
 			return null;
 		}
 
-		if ( ! ( $user instanceof WP_User ) ) {
+		if ( ! ( $user instanceof \WP_User ) ) {
 			return null;
 		}
 

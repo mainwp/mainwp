@@ -192,10 +192,9 @@ jQuery( document ).ready( function () {
             jQuery( this ).parent().addClass( 'selected_sites_item_checked' );
         else
             jQuery( this ).parent().removeClass( 'selected_sites_item_checked' );
-
-        mainwp_site_select( this );
-        //mainwp_selected_refresh_count( this );
+        mainwp_site_select();        
     } );
+	// seems not used.
     jQuery( '.mainwp_selected_sites_item input:radio' ).on( 'change', function () {
         if ( jQuery( this ).is( ':checked' ) )
         {
@@ -203,42 +202,28 @@ jQuery( document ).ready( function () {
             jQuery( this ).parent().parent().find( '.mainwp_selected_sites_item input:radio:not(:checked)' ).parent().removeClass( 'selected_sites_item_checked' );
         } else
             jQuery( this ).parent().removeClass( 'selected_sites_item_checked' );
-
-        mainwp_site_select( this );
-        //mainwp_selected_refresh_count( this );
+        mainwp_site_select();
     } );
+
     jQuery( '.mainwp_selected_groups_item input:checkbox' ).on( 'change', function () {
         if ( jQuery( this ).is( ':checked' ) )
             jQuery( this ).parent().addClass( 'selected_groups_item_checked' );
         else
             jQuery( this ).parent().removeClass( 'selected_groups_item_checked' );
-
-        //mainwp_selected_refresh_count( this );
+		mainwp_group_select();        
     } );
+
+	// seems not used.
     jQuery( '.mainwp_selected_groups_item input:radio' ).on( 'change', function () {
         if ( jQuery( this ).is( ':checked' ) )
         {
             jQuery( this ).parent().addClass( 'selected_groups_item_checked' );
             jQuery( this ).parent().parent().find( '.mainwp_selected_groups_item input:radio:not(:checked)' ).parent().removeClass( 'selected_groups_item_checked' );
         } else
-            jQuery( this ).parent().removeClass( 'selected_groups_item_checked' );
-        //mainwp_selected_refresh_count( this );
+            jQuery( this ).parent().removeClass( 'selected_groups_item_checked' );        
     } );
 
 } );
-mainwp_selected_refresh_count = function ( me )
-{
-    var parent = jQuery( me ).closest( '.mainwp_select_sites_wrapper' );
-    var value = 0;
-    if ( parent.find( '#select_by' ).val() == 'site' )
-    {
-        value = parent.find( '.selected_sites_item_checked' ).length;
-    } else
-    {
-        value = parent.find( '.selected_groups_item_checked' ).length;
-    }
-    parent.find( '.mainwp_sites_selectcount' ).html( value );
-};
 
 mainwp_site_select = function () {
     mainwp_newpost_updateCategories();
@@ -315,7 +300,7 @@ mainwp_newpost_updateCategories = function ()
                 return jQuery( el ).val();
             } );
         } else { //group
-            groups = jQuery.map( jQuery( '#mainwp-select-staging-sites-list INPUT:checkbox:checked' ), function ( el ) {
+            groups = jQuery.map( jQuery( '#mainwp-select-groups-list INPUT:checkbox:checked' ), function ( el ) {
                 return jQuery( el ).val();
             } );
         }

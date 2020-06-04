@@ -198,7 +198,7 @@ class MainWP_Bulk_Post {
 			$queryable = is_plugin_active( 'mainwp-post-plus-extension/mainwp-post-plus-extension.php' ) ? true : false;
 		}
 
-		$labels    = array(
+		$labels = array(
 			'name'               => _x( 'Bulkpost', 'bulkpost' ),
 			'singular_name'      => _x( 'Bulkpost', 'bulkpost' ),
 			'add_new'            => _x( 'Add New', 'bulkpost' ),

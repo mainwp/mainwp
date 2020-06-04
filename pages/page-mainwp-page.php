@@ -487,11 +487,13 @@ class MainWP_Page {
 			<div class="field">
 				<div class="ui input fluid">
 					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text"
-					value="<?php
+					value="
+					<?php
 					if ( null != $cachedSearch ) {
 						echo esc_attr( $cachedSearch['keyword'] );
 					}
-					?>"/>
+					?>
+					"/>
 				</div>
 			</div>
 			<div class="field">

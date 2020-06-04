@@ -549,12 +549,15 @@ class MainWP_Page {
 		</div>
 		<?php
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
-			$status = implode( "','", $statuses );
-			$status = "'" . $status . "'";
+			$status = '';
+			foreach ( $statuses as $st ) {
+				$status .= "'" . esc_html( $st ) . "',";
+			}
+			$status = rtrim( $status, ',' );
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_page_search_type' ).dropdown( 'set selected',[<?php echo esc_html( $status ); ?>] );
+					jQuery( '#mainwp_page_search_type' ).dropdown( 'set selected',[<?php echo $status; //phpcs:ignore -- safe output. ?>] );
 				} );
 			</script>
 			<?php
@@ -628,14 +631,9 @@ class MainWP_Page {
 					"orderable": false
 				} ],
 				"preDrawCallback": function( settings ) {
-				<?php
-				if ( ! $cached ) {
-					?>
 					jQuery( '#mainwp_pages_wrap_table table .ui.dropdown' ).dropdown();
 					jQuery( '#mainwp_pages_wrap_table table .ui.checkbox' ).checkbox();
-					<?php
-				}
-				?>
+					mainwp_datatable_fix_menu_overflow();
 				}
 			} );
 		} );

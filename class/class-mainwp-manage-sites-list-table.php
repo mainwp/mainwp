@@ -834,6 +834,7 @@ class MainWP_Manage_Sites_List_Table {
 					"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 					"pageLength": <?php echo intval( $sites_per_page ); ?>
 				} );
+				mainwp_datatable_fix_menu_overflow();
 			<?php } else { ?>
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
@@ -891,6 +892,7 @@ class MainWP_Manage_Sites_List_Table {
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
 							mainwp_preview_init_event();
+							mainwp_datatable_fix_menu_overflow();
 						},
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

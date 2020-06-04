@@ -3,7 +3,7 @@
  * MainWP_Page.page
  */
 jQuery( document ).ready( function () {
-    
+
 // to fix issue not loaded calendar js library
 if (jQuery( '.ui.calendar' ).length > 0 ) {
             if (mainwpParams.use_wp_datepicker == 1) {
@@ -201,7 +201,8 @@ mainwp_fetch_pages = function () {
                 "orderable": false
             } ]
         });
-        mainwp_table_check_columns_init(); // ajax: to fix checkbox all
+        mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+        mainwp_datatable_fix_menu_overflow();
     } );
 };
 
@@ -424,5 +425,6 @@ mainwp_fetch_posts = function ( postId, userId ) {
             } ]
         });
         mainwp_table_check_columns_init(); // ajax: to fix checkbox all
+        mainwp_datatable_fix_menu_overflow();
     } );
 };

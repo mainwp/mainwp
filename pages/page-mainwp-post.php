@@ -634,14 +634,14 @@ class MainWP_Post {
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
 			foreach ( $statuses as $st ) {
-				$status .= "'" . esc_attr( $st ) . "',";
+				$status .= "'" . esc_html( $st ) . "',";
 			}
 			$status = rtrim( $status, ',' );
 
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
+					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output. ?>] );
 				} )
 			</script>
 			<?php
@@ -728,10 +728,9 @@ class MainWP_Post {
 				} ],
 				"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted posts.', 'mainwp' ); ?>" },
 				"preDrawCallback": function( settings ) {
-				<?php if ( ! $cached ) { ?>
-				jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
-				jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
-				<?php } ?>
+					jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
+					jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+					mainwp_datatable_fix_menu_overflow();
 				}
 			} );
 		} );

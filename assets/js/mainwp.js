@@ -68,7 +68,7 @@ jQuery( document ).ready( function () {
         postAction( jQuery( this ), 'delete' );
         return false;
     } );
-    
+
 } );
 
 // Publish, Unpublish, Trash, ... posts and pages
@@ -912,7 +912,7 @@ jQuery( document ).ready( function () {
 managesites_init = function () {
     jQuery( '#mainwp-message-zone' ).hide();
     jQuery( '.sync-ext-row span.status' ).html( '' );
-    jQuery( '.sync-ext-row span.status' ).css( 'color', '#0073aa' );    
+    jQuery( '.sync-ext-row span.status' ).css( 'color', '#0073aa' );
 };
 
 mainwp_overview_reconnect = function ( pElement ) {
@@ -1442,7 +1442,7 @@ managesites_remove = function ( id ) {
 };
 
 jQuery( document ).ready( function () {
-	
+
     jQuery( document ).on( 'click', '#mainwp_managesites_add', function (event) {
         mainwp_managesites_add( event );
     } );
@@ -1692,7 +1692,7 @@ mainwp_install_bulk = function ( type, slug ) {
             else
                 dashboardActionName = 'installing_new_theme';
             countRealItemsUpdated = 0;
-            
+
             bulkInstallDone = 0;
 
             for ( var siteId in response.sites ) {
@@ -1899,7 +1899,7 @@ mainwp_upload_bulk = function ( type ) {
             var installQueue = '<div class="ui middle aligned divided list">';
             for ( var siteId in response.sites ) {
                 var site = response.sites[siteId];
-                
+
                 installQueue += '<div class="siteBulkInstall item" siteid="' + siteId + '" status="queue">' +
                       '<div class="ui grid">' +
                       '<div class="two column row">' +
@@ -1913,7 +1913,7 @@ mainwp_upload_bulk = function ( type ) {
                       '</div>' +
                       '</div>';
 
-            }            
+            }
             installQueue += '</div>';
             jQuery( '#plugintheme-installation-queue' ).html( installQueue );
             mainwp_upload_bulk_start_next( pType, response.urls, pActivatePlugin, pOverwrite );
@@ -2534,13 +2534,38 @@ updatesoverview_send_twitt_info = function() {
                 countItems: couttItemsToUpdate,
                 countRealItems: countRealItemsUpdated
             } );
-            jQuery.post(ajaxurl, data, function () {                
+            jQuery.post(ajaxurl, data, function () {
             });
         }
     }
     return send;
 };
 
+mainwp_datatable_fix_menu_overflow = function () {
+  // Fix the overflow prbolem for the actions menu element (right pointing menu).
+  jQuery( 'table tr td .ui.right.pointing.dropdown.button' ).on( 'click', function() {
+    jQuery( this ).closest( '.dataTables_scrollBody' ).css( 'position', '' );
+    jQuery( this ).closest( '.dataTables_scroll' ).css( 'position', 'relative' );
+    jQuery( this ).css( 'position', 'static' );
+    var position = jQuery( this ).position();
+    jQuery( this ).find( '.menu' ).css( 'top', position.top );
+    jQuery( this ).find( '.menu' ).css( 'right', '40px' );
+    jQuery( this ).find( '.menu' ).css( 'min-width', '170px' );
+  } );
+
+  // Fix the overflow prbolem for the actions menu element (left pointing menu).
+  jQuery( 'table tr td .ui.left.pointing.dropdown.button' ).on( 'click', function() {
+    jQuery( this ).closest( '.dataTables_scrollBody' ).css( 'position', '' );
+    jQuery( this ).closest( '.dataTables_scroll' ).css( 'position', 'relative' );
+    jQuery( this ).css( 'position', 'static' );
+    var position = jQuery( this ).position();
+    jQuery( this ).find( '.menu' ).css( 'top', position.top );
+    jQuery( this ).find( '.menu' ).css( 'left', position.left - 159 );
+    jQuery( this ).find( '.menu' ).css( 'min-width', '150px' );
+    jQuery( this ).removeClass( 'left' );
+    jQuery( this ).addClass( 'right' );
+  } );
+}
 
 /* eslint-disable complexity */
 function mainwp_according_table_sorting( pObj ) {
@@ -2646,7 +2671,7 @@ jQuery( document ).ready( function () {
             return false;
     } );
 } );
-                                
+
 mainwp_force_destroy_sessions = function () {
   var confirmMsg = __( 'Forces your dashboard to reconnect with your child sites?' );
   mainwp_confirm( confirmMsg, function() {

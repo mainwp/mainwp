@@ -451,12 +451,15 @@ class MainWP_User {
 		</div>
 		<?php
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
-			$status = implode( "','", $statuses );
-			$status = "'" . $status . "'";
+			$status = '';
+			foreach ( $statuses as $st ) {
+				$status .= "'" . esc_html( $st ) . "',";
+			}
+			$status = rtrim( $status, ',' );
 			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo esc_html( $status ); ?>] );
+				jQuery( '#mainwp_user_roles' ).dropdown( 'set selected', [<?php echo $status; //phpcs:ignore -- safe output. ?>] );
 			} );
 			</script>
 			<?php

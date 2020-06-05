@@ -1367,7 +1367,7 @@ class MainWP_Connect {
 	 * @throws MainWP_Exception Exception message.
 	 *
 	 * @return mixed $data, $information.
-	 */	
+	 */
 	public static function m_fetch_url( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
 		$url,

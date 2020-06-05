@@ -421,7 +421,7 @@ class MainWP_Setup_Wizard {
 				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %shelp document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
 			</div>
 			<ol>
-				<li><?php esc_html_e( 'Login to the WordPress site you want to connect <em>(open it in a new browser tab)</em>', 'mainwp' ); ?></li>
+				<li><?php printf( __( 'Login to the WordPress site you want to connect %s(open it in a new browser tab)%s', 'mainwp' ), '<em>', '</em>' ); ?></li>
 				<li><?php printf( __( 'Go to the %sWP > Plugins%s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 				<li><?php printf( __( 'Click %sAdd New%s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 				<li><?php printf( __( 'In the %sSearch Field%s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>

@@ -621,7 +621,7 @@ class MainWP_Connect {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
-					chmod( $cookieFile, 0644 );
+					@chmod( $cookieFile, 0644 );
 					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -845,7 +845,7 @@ class MainWP_Connect {
 				}
 
 				if ( file_exists( $cookieFile ) ) {
-					chmod( $cookieFile, 0644 );
+					@chmod( $cookieFile, 0644 );
 					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 				}
@@ -1367,9 +1367,8 @@ class MainWP_Connect {
 	 * @throws MainWP_Exception Exception message.
 	 *
 	 * @return mixed $data, $information.
-	 */
-	// phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-	public static function m_fetch_url(
+	 */	
+	public static function m_fetch_url( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
 		$url,
 		$postdata,
@@ -1386,7 +1385,7 @@ class MainWP_Connect {
 
 		$identifier = null;
 		if ( $checkConstraints ) {
-			self::check_constraints( $identifier );
+			self::check_constraints( $identifier, $website );
 		}
 
 		if ( null != $website ) {
@@ -1423,7 +1422,7 @@ class MainWP_Connect {
 			}
 
 			if ( file_exists( $cookieFile ) ) {
-				chmod( $cookieFile, 0644 );
+				@chmod( $cookieFile, 0644 );
 				curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
 				curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
 			}
@@ -1576,7 +1575,7 @@ class MainWP_Connect {
 	 *
 	 * @param mixed $identifier Lock identifier.
 	 */
-	private static function check_constraints( &$identifier ) {
+	private static function check_constraints( &$identifier, $website ) {
 		$semLock      = '103218';
 		$identifier   = self::get_lock_identifier( $semLock );
 		$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );

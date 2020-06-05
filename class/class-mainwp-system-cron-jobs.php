@@ -839,12 +839,14 @@ class MainWP_System_Cron_Jobs {
 
 		$mail_content = '';
 		$sendMail     = false;
+		$updateAvaiable = false;
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
 			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );
 			if ( '' != $plugin_content ) {
 				$sendMail      = true;
 				$mail_content .= $plugin_content;
+				$updateAvaiable = true;
 			}
 		}
 
@@ -853,6 +855,7 @@ class MainWP_System_Cron_Jobs {
 			if ( '' != $themes_content ) {
 				$sendMail      = true;
 				$mail_content .= $themes_content;
+				$updateAvaiable = true;
 			}
 		}
 
@@ -861,6 +864,7 @@ class MainWP_System_Cron_Jobs {
 			if ( '' != $core_content ) {
 				$sendMail      = true;
 				$mail_content .= $core_content;
+				$updateAvaiable = true;
 			}
 		}
 
@@ -902,7 +906,7 @@ class MainWP_System_Cron_Jobs {
 
 		if ( false !== $email && '' !== $email ) {
 			$mail_content = apply_filters( 'mainwp_daily_digest_content', $mail_content, $text_format );
-			$this->send_updates_notification( $email, $mail_content, $text_format );
+			$this->send_updates_notification( $email, $mail_content, $text_format, $updateAvaiable );
 		}
 
 		return true;
@@ -1114,12 +1118,12 @@ class MainWP_System_Cron_Jobs {
 		$mail_lines   = $this->print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
 		$mail_content = '';
 		if ( $text_format ) {
-			$mail_content .= 'Connection Status' . "\r\n";
+			$mail_content .= 'Disconnected sites' . "\r\n";
 			$mail_content .= "\r\n";
 			$mail_content .= $mail_lines;
 			$mail_content .= "\r\n";
 		} else {
-			$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> Connection Status </b><br>';
+			$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;">Disconnected sites</b><br>';
 			$mail_content .= '<ul>';
 			$mail_content .= $mail_lines;
 			$mail_content .= '</ul>';
@@ -1196,8 +1200,9 @@ class MainWP_System_Cron_Jobs {
 	 * @param mixed $email Admin email.
 	 * @param mixed $content Mail content.
 	 * @param bool  $text_format Text format.
+	 * @param bool  $updateAvaiable Update avaiable.
 	 */
-	public function send_updates_notification( $email, $content, $text_format ) {
+	public function send_updates_notification( $email, $content, $text_format, $updateAvaiable ) {
 
 		if ( $text_format ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
@@ -1206,24 +1211,30 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( $text_format ) {
-			$mail_content = 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n"
-			. $content . "\r\n" .
-			'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n";
+			$mail_content = $updateAvaiable ? 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n" : '' ;
+			$mail_content .= $content . "\r\n";
+			$mail_content .= $updateAvaiable ? 'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n" : '';
 		} else {
-			$mail_content = '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>
-			<div></div>
-			' . $content . '
-			<div> </div>
-			<div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>';
+			$mail_content = $updateAvaiable ? '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>' : '';
+			$mail_content .= '<div></div>';
+			$mail_content .= $content;
+			$mail_content .= '<div> </div>';
+			$mail_content .= $updateAvaiable ? '<div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>' : '';
 		}
+
+		$mail_title = 'Available Updates';
+		if ( ! $updateAvaiable )
+			$mail_title = '';
+
 		wp_mail(
 			$email,
-			$mail_title = 'Available Updates',
+			'Available Updates',
 			MainWP_Format::format_email(
 				$email,
 				$mail_content,
 				$mail_title,
-				$text_format
+				$text_format,
+				$updateAvaiable
 			),
 			array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',

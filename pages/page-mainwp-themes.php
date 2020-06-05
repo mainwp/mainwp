@@ -443,6 +443,10 @@ class MainWP_Themes {
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
+			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
+		}
+
 		?>
 
 		<div class="ui mini form">

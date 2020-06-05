@@ -257,8 +257,11 @@ class MainWP_Post {
 	 * @return (mixed) $hidden User option value on success, false on failure.
 	 */
 	public static function get_hidden_columns( $hidden, $screen ) {
-		if ( $screen && 'mainwp_page_PostBulkManage' === $screen->id ) {
+		if ( $screen && 'mainwp_page_PostBulkManage' == $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
+		}
+		if ( ! is_array( $hidden ) ) {
+			$hidden = array();
 		}
 		return $hidden;
 	}
@@ -553,6 +556,9 @@ class MainWP_Post {
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
+			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
+		}
 
 		?>
 		<div class="ui mini form">

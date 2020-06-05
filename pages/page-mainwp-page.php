@@ -290,6 +290,9 @@ class MainWP_Page {
 		if ( $screen && 'mainwp_page_PageBulkManage' == $screen->id ) {
 			$hidden = get_user_option( 'manage' . strtolower( $screen->id ) . 'columnshidden' );
 		}
+		if ( ! is_array( $hidden ) ) {
+			$hidden = array();
+		}
 		return $hidden;
 	}
 
@@ -482,18 +485,14 @@ class MainWP_Page {
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
+			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
+		}
 		?>
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text"
-					value="
-					<?php
-					if ( null != $cachedSearch ) {
-						echo esc_attr( $cachedSearch['keyword'] );
-					}
-					?>
-					"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_page_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
 			<div class="field">

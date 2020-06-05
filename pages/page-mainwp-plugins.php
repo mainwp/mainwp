@@ -461,18 +461,14 @@ class MainWP_Plugins {
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
+			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
+		}
 		?>
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value=
-					"
-					<?php
-					if ( null != $cachedSearch ) {
-						echo esc_attr( $cachedSearch['keyword'] ); }
-					?>
-					"
-					/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
 		</div>

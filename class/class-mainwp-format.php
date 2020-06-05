@@ -36,6 +36,7 @@ class MainWP_Format {
 	 * @return string Formatted content
 	 */
 	public static function format_email( $to_email = null, $body, $title = '', $text_format = false ) {
+
 		$current_year = gmdate( 'Y' );
 		if ( $text_format ) {
 				$mail_send['header'] = '';

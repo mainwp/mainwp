@@ -270,9 +270,11 @@ class MainWP_Updates {
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$site_view     = $userExtension->site_view;
 
-		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-			$site_offset_for_groups = array();
-			$all_groups             = array();
+		$site_offset_for_groups = array();
+		$all_groups             = array();
+		$site_offset_for_groups = array();
+
+		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {			
 			$groups                 = MainWP_DB_Common::instance()->get_groups_for_current_user();
 			foreach ( $groups as $group ) {
 				$all_groups[ $group->id ] = $group->name;

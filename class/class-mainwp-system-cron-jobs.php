@@ -837,15 +837,15 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		$mail_content = '';
-		$sendMail     = false;
+		$mail_content   = '';
+		$sendMail       = false;
 		$updateAvaiable = false;
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
 			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );
 			if ( '' != $plugin_content ) {
-				$sendMail      = true;
-				$mail_content .= $plugin_content;
+				$sendMail       = true;
+				$mail_content  .= $plugin_content;
 				$updateAvaiable = true;
 			}
 		}
@@ -853,8 +853,8 @@ class MainWP_System_Cron_Jobs {
 		if ( ! empty( $theme_automaticDailyUpdate ) ) {
 			$themes_content = $this->get_mail_content_themes( $sitesCheckCompleted, $text_format );
 			if ( '' != $themes_content ) {
-				$sendMail      = true;
-				$mail_content .= $themes_content;
+				$sendMail       = true;
+				$mail_content  .= $themes_content;
 				$updateAvaiable = true;
 			}
 		}
@@ -862,8 +862,8 @@ class MainWP_System_Cron_Jobs {
 		if ( ! empty( $mainwpAutomaticDailyUpdate ) ) {
 			$core_content .= $this->get_mail_content_wp( $sitesCheckCompleted, $text_format );
 			if ( '' != $core_content ) {
-				$sendMail      = true;
-				$mail_content .= $core_content;
+				$sendMail       = true;
+				$mail_content  .= $core_content;
 				$updateAvaiable = true;
 			}
 		}
@@ -1211,11 +1211,11 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( $text_format ) {
-			$mail_content = $updateAvaiable ? 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n" : '' ;
+			$mail_content  = $updateAvaiable ? 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n" : '';
 			$mail_content .= $content . "\r\n";
 			$mail_content .= $updateAvaiable ? 'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n" : '';
 		} else {
-			$mail_content = $updateAvaiable ? '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>' : '';
+			$mail_content  = $updateAvaiable ? '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>' : '';
 			$mail_content .= '<div></div>';
 			$mail_content .= $content;
 			$mail_content .= '<div> </div>';
@@ -1223,8 +1223,9 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$mail_title = 'Available Updates';
-		if ( ! $updateAvaiable )
+		if ( ! $updateAvaiable ) {
 			$mail_title = '';
+		}
 
 		wp_mail(
 			$email,

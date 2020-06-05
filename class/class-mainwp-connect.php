@@ -1574,6 +1574,7 @@ class MainWP_Connect {
 	 * Check connection delay constraints.
 	 *
 	 * @param mixed $identifier Lock identifier.
+	 * @param mixed $website Object child site.
 	 */
 	private static function check_constraints( &$identifier, $website ) {
 		$semLock      = '103218';

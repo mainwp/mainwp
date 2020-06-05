@@ -14,6 +14,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post {
 
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Complexity file.
+
 	/**
 	 * Method get_class_name()
 	 *
@@ -276,7 +278,7 @@ class MainWP_Post {
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Posts" class="mainwp-submenu-wrapper">
-			<div class="wp-submenu sub-open" style="">
+			<div class="wp-submenu sub-open">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) { ?>

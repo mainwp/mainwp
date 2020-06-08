@@ -434,18 +434,15 @@ class MainWP_User {
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
+			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
+		}
 		?>
 
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="
-					<?php
-					if ( null != $cachedSearch ) {
-						echo esc_attr( $cachedSearch['keyword'] );
-					}
-					?>
-					"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
 		</div>
@@ -642,24 +639,28 @@ class MainWP_User {
 		</table>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
-			jQuery( '#mainwp-users-table' ).DataTable( {
-			"colReorder" : true,
-			"stateSave":  true,
-			"pagingType": "full_numbers",
-			"order": [],
-			"scrollX" : true,
-			"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-			"columnDefs": [ {
-				"targets": 'no-sort',
-				"orderable": false
-			} ],
-			"preDrawCallback": function( settings ) {
-			<?php if ( ! $cached ) { ?>
-			jQuery('#mainwp-users-table .ui.dropdown').dropdown();
-			jQuery('#mainwp-users-table .ui.checkbox').checkbox();
-			<?php } ?>
+			try {
+				jQuery( '#mainwp-users-table' ).DataTable( {
+					"colReorder" : true,
+					"stateSave":  true,
+					"pagingType": "full_numbers",
+					"order": [],
+					"scrollX" : true,
+					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+					"columnDefs": [ {
+						"targets": 'no-sort',
+						"orderable": false
+					} ],
+					"preDrawCallback": function( settings ) {					
+						jQuery('#mainwp-users-table .ui.dropdown').dropdown();
+						jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+						mainwp_datatable_fix_menu_overflow();
+						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+					}
+				} );
+			} catch ( err ) {
+				// to fix js error.
 			}
-			} );
 		} );
 		</script>
 		<?php

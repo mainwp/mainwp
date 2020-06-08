@@ -2571,6 +2571,10 @@ mainwp_datatable_fix_menu_overflow = function () {
 function mainwp_according_table_sorting( pObj ) {
     var table, th, rows, switching, i, x, y, xVal, yVal, campare = false, shouldSwitch = false, dir, switchcount = 0, n, skip = 1;
     table = jQuery(pObj).closest('table')[0];
+    var skip_sort = 2;
+    if ( 'mainwp-wordpress-updates-table' == jQuery(table).attr('id') ) {
+      skip_sort = 1;
+    }
 
     // get TH element
     if (jQuery(pObj)[0].tagName == 'TH') {
@@ -2593,12 +2597,12 @@ function mainwp_according_table_sorting( pObj ) {
       rows = table.rows;
 
       /* Loop through all table rows */
-      for (i = 1; i < (rows.length - skip); i+=2) {  // skip content according rows, sort by title rows only
+      for (i = 1; i < (rows.length - skip); i+=skip_sort) {  // skip content according rows, sort by title rows only
             shouldSwitch = false;
             /* Get the two elements you want to compare,
             one from current row and one from the next-next: */
             x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + 2].getElementsByTagName("TD")[n];
+            y = rows[i + skip_sort].getElementsByTagName("TD")[n];
 
             // if sort value attribute existed then sorting on that else sorting on cell value
             if (x.hasAttribute('sort-value')) {
@@ -2630,8 +2634,13 @@ function mainwp_according_table_sorting( pObj ) {
             }
       }
       if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
-            rows[i+1].parentNode.insertBefore(rows[i + 3], rows[i+1]);
+            if ( 2 == skip_sort ) {
+                rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
+                rows[i+1].parentNode.insertBefore(rows[i + 3], rows[i+1]);
+            } else {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                rows[i+1].parentNode.insertBefore(rows[i + 2], rows[i+1]);
+            }
             switching = true;
             // increase this count by 1, that is ok
             switchcount ++;

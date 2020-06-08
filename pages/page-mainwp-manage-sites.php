@@ -288,6 +288,10 @@ class MainWP_Manage_Sites {
 			$columns['site_actions'] = __( 'Actions', 'mainwp' );
 		}
 
+		$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
+		if ( ! is_array( $hide_cols ) ) {
+			$hide_cols = array();
+		}
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
@@ -308,12 +312,6 @@ class MainWP_Manage_Sites {
 							<input type="text" name="mainwp_default_sites_per_page" id="mainwp_default_sites_per_page" saved-value="<?php echo intval( $sites_per_page ); ?>" value="<?php echo intval( $sites_per_page ); ?>"/>
 						</div>
 					</div>
-					<?php
-					$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
-					if ( ! is_array( $hide_cols ) ) {
-						$hide_cols = array();
-					}
-					?>
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Hide unwanted columns', 'mainwp' ); ?></label>
 						<div class="ten wide column">
@@ -330,6 +328,11 @@ class MainWP_Manage_Sites {
 											<?php
 											if ( in_array( $name, $hide_cols, true ) ) {
 												echo 'checked="checked"';
+											}
+											if ( 'site_preview' == $name ) {
+												?>
+												onclick="mainwp_manage_sites_site_preview_screen_options( this ); return false;"
+												<?php
 											}
 											?>
 											id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
@@ -348,6 +351,16 @@ class MainWP_Manage_Sites {
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 			</form>
+		</div>
+		<div class="ui modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<span><?php esc_html_e('Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+			</div>
+			<div class="actions">
+				<input type="button" class="ui green button" name="button" id="button" value="<?php esc_attr_e( 'Yes', 'mainwp' ); ?>" />
+				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
+			</div>
 		</div>
 		<?php
 	}

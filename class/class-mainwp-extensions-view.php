@@ -149,7 +149,7 @@ class MainWP_Extensions_View {
 							} else {
 								$extensino_to_menu_buton = '<button class="button-primary mainwp-extensions-add-menu" >' . __( 'Add to menu', 'mainwp' ) . '</button>';
 							}
-							self::render_extension_card( $extension, $extension_update );
+							self::render_extension_card( $extension, $extension_update, $img_url );
 							?>
 
 						<?php endforeach; ?>
@@ -254,8 +254,9 @@ class MainWP_Extensions_View {
 	 *
 	 * @param mixed $extension Extention to render.
 	 * @param mixed $extension_update Extension update.
+	 * @param mixed $img_url Extension image.
 	 */
-	public static function render_extension_card( $extension, $extension_update ) {
+	public static function render_extension_card( $extension, $extension_update, $img_url ) {
 
 		if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
 			$extension_page_url = admin_url( 'admin.php?page=' . $extension['direct_page'] );

@@ -278,9 +278,15 @@ mainwp_fetch_users = function () {
         "scrollX" : true,
         "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
         "columnDefs": [ {
-          "targets": 'no-sort',
-          "orderable": false
-      } ]
+            "targets": 'no-sort',
+            "orderable": false
+        } ],
+        "preDrawCallback": function( settings ) {					
+            jQuery('#mainwp-users-table .ui.dropdown').dropdown();
+            jQuery('#mainwp-users-table .ui.checkbox').checkbox();
+            mainwp_datatable_fix_menu_overflow();
+            mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+        }
     });
   } );
 };

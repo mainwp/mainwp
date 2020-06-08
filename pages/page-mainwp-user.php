@@ -651,7 +651,7 @@ class MainWP_User {
 						"targets": 'no-sort',
 						"orderable": false
 					} ],
-					"preDrawCallback": function( settings ) {					
+					"preDrawCallback": function() {					
 						jQuery('#mainwp-users-table .ui.dropdown').dropdown();
 						jQuery('#mainwp-users-table .ui.checkbox').checkbox();
 						mainwp_datatable_fix_menu_overflow();

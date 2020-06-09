@@ -573,6 +573,7 @@ class MainWP_Themes {
 								'nosslkey',
 								'http_user',
 								'http_pass',
+								'ssl_version'
 							)
 						);
 					}
@@ -599,6 +600,7 @@ class MainWP_Themes {
 									'nosslkey',
 									'http_user',
 									'http_pass',
+									'ssl_version'
 								)
 							);
 						}
@@ -1182,6 +1184,7 @@ class MainWP_Themes {
 							'nosslkey',
 							'http_user',
 							'http_pass',
+							'ssl_version'
 						)
 					);
 				}

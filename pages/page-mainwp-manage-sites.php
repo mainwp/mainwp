@@ -292,6 +292,17 @@ class MainWP_Manage_Sites {
 		if ( ! is_array( $hide_cols ) ) {
 			$hide_cols = array();
 		}
+
+		// update for ver 4.1, remove later.
+		if ( ! get_option( 'mainwp_update_confirm_site_preview', false ) ) {
+			$hide_cols[] = 'site_preview';
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
+			}
+			update_option( 'mainwp_update_confirm_site_preview', true );
+		}
+
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
@@ -323,17 +334,12 @@ class MainWP_Manage_Sites {
 									}
 									?>
 									<li>
-										<div class="ui checkbox">
+										<div class="ui checkbox <?php echo ( 'site_preview' == $name ) ? 'site_preview not-auto-init' : ''; ?>">
 											<input type="checkbox"
 											<?php
 											if ( in_array( $name, $hide_cols, true ) ) {
 												echo 'checked="checked"';
-											}
-											if ( 'site_preview' == $name ) {
-												?>
-												onclick="mainwp_manage_sites_site_preview_screen_options( this ); return false;"
-												<?php
-											}
+											}											
 											?>
 											id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
 											<label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
@@ -352,16 +358,32 @@ class MainWP_Manage_Sites {
 				</div>
 			</form>
 		</div>
-		<div class="ui modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
+		<div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
 				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
 			</div>
 			<div class="actions">
-				<input type="button" class="ui green button" name="button" id="button" value="<?php esc_attr_e( 'Yes', 'mainwp' ); ?>" />
+				<div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>
 				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
 			</div>
 		</div>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
+					onUnchecked   : function() {
+						var $chk = jQuery( this );						
+						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
+							allowMultiple: true,
+							width: 100,
+							onDeny: function () {
+								$chk.prop('checked', true);
+							}
+						} ).modal( 'show' );
+					}
+				} );
+			} );
+		</script>
 		<?php
 	}
 

@@ -115,6 +115,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 									'nosslkey',
 									'http_user',
 									'http_pass',
+									'ssl_version'
 								)
 							);
 						}
@@ -139,6 +140,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 										'nosslkey',
 										'http_user',
 										'http_pass',
+										'ssl_version'
 									)
 								);
 							}

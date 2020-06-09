@@ -106,6 +106,8 @@ class MainWP_System_Handler {
 
 		if ( '' != get_option( 'mainwp_upgradeVersionInfo' ) ) {
 			$this->upgradeVersionInfo = get_option( 'mainwp_upgradeVersionInfo' );
+			if ( ! is_object( $this->upgradeVersionInfo ) )
+				$this->upgradeVersionInfo = new \stdClass();
 		}
 	}
 
@@ -460,7 +462,7 @@ class MainWP_System_Handler {
 			return $transient;
 		}
 
-		if ( ( null == $this->upgradeVersionInfo ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
+		if ( ( null == $this->upgradeVersionInfo ) || ! property_exists( $this->upgradeVersionInfo, 'updated' ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
 			$this->check_upgrade();
 		}
 

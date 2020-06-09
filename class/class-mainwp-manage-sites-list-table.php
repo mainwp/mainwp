@@ -802,6 +802,7 @@ class MainWP_Manage_Sites_List_Table {
 	<script type="text/javascript">
 		mainwp_manage_sites_screen_options = function () {
 				jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
+					allowMultiple: true,
 					onHide: function () {
 						var val = jQuery( '#mainwp_default_sites_per_page' ).val();
 						var saved = jQuery( '#mainwp_default_sites_per_page' ).attr( 'saved-value' );
@@ -815,19 +816,6 @@ class MainWP_Manage_Sites_List_Table {
 				jQuery( '#manage-sites-screen-options-form' ).submit( function() {
 					jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
 				} );
-				return false;
-			};
-
-			mainwp_manage_sites_site_preview_screen_options = function ( obj ) {
-				console.log(jQuery( '#mainwp_hide_column_site_preview' ).is(":checked"))
-				if ( ! jQuery( '#mainwp_hide_column_site_preview' ).is(":checked") ) {
-					return true;
-				}
-				jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
-					onHide: function () {
-						var val = jQuery( '#mainwp_default_sites_per_page' ).val();						
-					}
-				} ).modal( 'show' );
 				return false;
 			};
 

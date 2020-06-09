@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.19';
+	protected $mainwp_db_version = '8.21';
 
 	/**
 	 * Private static variable to hold the single instance of the class.

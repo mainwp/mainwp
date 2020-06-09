@@ -534,7 +534,7 @@ class MainWP_Hooks {
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
 		$dbwebsites = array();
-		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
+		$data       = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'http_user', 'http_pass', 'ssl_version' );
 
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {

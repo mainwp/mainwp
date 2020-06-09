@@ -670,7 +670,7 @@ class MainWP_Page {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
-					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
 				}
 			}
 		}
@@ -682,7 +682,7 @@ class MainWP_Page {
 						if ( '' != $website->sync_errors ) {
 							continue;
 						}
-						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
 					}
 					MainWP_DB::free_result( $websites );
 				}
@@ -1102,7 +1102,7 @@ class MainWP_Page {
 							foreach ( $selected_sites as $k ) {
 								if ( MainWP_Utility::ctype_digit( $k ) ) {
 									$website                    = MainWP_DB::instance()->get_website_by_id( $k );
-									$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+									$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
 								}
 							}
 						} else {
@@ -1113,7 +1113,7 @@ class MainWP_Page {
 										if ( '' != $website->sync_errors ) {
 											continue;
 										}
-										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass' ) );
+										$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'http_user', 'http_pass', 'ssl_version' ) );
 									}
 									MainWP_DB::free_result( $websites );
 								}
@@ -1140,7 +1140,7 @@ class MainWP_Page {
 
 						$failed_posts = array();
 						foreach ( $dbwebsites as $website ) {
-							if ( ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+							if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
 
 								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.

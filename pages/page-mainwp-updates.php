@@ -272,8 +272,8 @@ class MainWP_Updates {
 
 		$site_offset_for_groups = array();
 		$all_groups             = array();
-		$sites_in_groups  = array();
-		$all_groups_sites = array();
+		$sites_in_groups        = array();
+		$all_groups_sites       = array();
 
 		if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
 			$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();

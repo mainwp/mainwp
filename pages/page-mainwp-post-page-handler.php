@@ -334,7 +334,7 @@ class MainWP_Post_Page_Handler {
 												'nosslkey',
 												'http_user',
 												'http_pass',
-												'ssl_version'
+												'ssl_version',
 											)
 										);
 									}
@@ -359,7 +359,7 @@ class MainWP_Post_Page_Handler {
 													'nosslkey',
 													'http_user',
 													'http_pass',
-													'ssl_version'
+													'ssl_version',
 												)
 											);
 										}

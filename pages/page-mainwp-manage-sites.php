@@ -296,7 +296,7 @@ class MainWP_Manage_Sites {
 		// update for ver 4.1, remove later.
 		if ( ! get_option( 'mainwp_update_confirm_site_preview', false ) ) {
 			$hide_cols[] = 'site_preview';
-			$user = wp_get_current_user();
+			$user        = wp_get_current_user();
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
 			}
@@ -339,7 +339,7 @@ class MainWP_Manage_Sites {
 											<?php
 											if ( in_array( $name, $hide_cols, true ) ) {
 												echo 'checked="checked"';
-											}											
+											}
 											?>
 											id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
 											<label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>

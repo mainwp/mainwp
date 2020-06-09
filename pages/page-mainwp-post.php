@@ -790,7 +790,7 @@ class MainWP_Post {
 							'nosslkey',
 							'http_user',
 							'http_pass',
-							'ssl_version'
+							'ssl_version',
 						)
 					);
 				}
@@ -816,7 +816,7 @@ class MainWP_Post {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-								'ssl_version'
+								'ssl_version',
 							)
 						);
 					}

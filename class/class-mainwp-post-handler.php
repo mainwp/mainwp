@@ -112,8 +112,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_disconnect_site', array( &$this, 'ajax_disconnect_site' ) );
 		$this->add_action( 'mainwp_manage_display_rows', array( &$this, 'ajax_display_rows' ) );
 
-		$this->add_action( 'mainwp_get_community_topics', array( &$this, 'ajax_get_community_topics' ) );
-
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 	}
 
@@ -659,17 +657,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_display_rows() {
 		$this->secure_request( 'mainwp_manage_display_rows' );
 		MainWP_Manage_Sites::display_rows();
-	}
-
-	/**
-	 * Method ajax_get_community_topics()
-	 *
-	 * Display rows via ajax,
-	 * Page: Manage Sites.
-	 */
-	public function ajax_get_community_topics() {
-		$this->secure_request( 'mainwp_get_community_topics' );
-		MainWP_Community::get_mainwp_community_topics();
 	}
 
 

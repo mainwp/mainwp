@@ -929,7 +929,6 @@ mainwp_overview_reconnect = function ( pElement ) {
         return function ( response ) {
             parent.hide();
             response = jQuery.trim( response );
-            console.log(response);
             if ( response.substr( 0, 5 ) == 'ERROR' ) {
                 var error;
                 if ( response.length == 5 ) {
@@ -2491,8 +2490,6 @@ jQuery( document ).on( 'change', '#cb-select-all-top, #cb-select-all-bottom', fu
         $table = $this.closest('table'),
         controlChecked = $this.prop('checked');
 
-        //console.log($table);
-
         if ( $table.length == 0)
             return false;
 
@@ -2571,9 +2568,10 @@ mainwp_datatable_fix_menu_overflow = function () {
 function mainwp_according_table_sorting( pObj ) {
     var table, th, rows, switching, i, x, y, xVal, yVal, campare = false, shouldSwitch = false, dir, switchcount = 0, n, skip = 1;
     table = jQuery(pObj).closest('table')[0];
-    var skip_sort = 2;
+    var subline_skip = 2;
     if ( 'mainwp-wordpress-updates-table' == jQuery(table).attr('id') ) {
-      skip_sort = 1;
+      subline_skip = 1; // for rows without subline.
+      skip = 0; 
     }
 
     // get TH element
@@ -2595,14 +2593,13 @@ function mainwp_according_table_sorting( pObj ) {
     while (switching) {
       switching = false;
       rows = table.rows;
-
       /* Loop through all table rows */
-      for (i = 1; i < (rows.length - skip); i+=skip_sort) {  // skip content according rows, sort by title rows only
+      for (i = 1; i < (rows.length - skip); i+=subline_skip) {  // skip content according rows, sort by title rows only
             shouldSwitch = false;
             /* Get the two elements you want to compare,
             one from current row and one from the next-next: */
             x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + skip_sort].getElementsByTagName("TD")[n];
+            y = rows[i + subline_skip].getElementsByTagName("TD")[n];
 
             // if sort value attribute existed then sorting on that else sorting on cell value
             if (x.hasAttribute('sort-value')) {
@@ -2634,12 +2631,11 @@ function mainwp_according_table_sorting( pObj ) {
             }
       }
       if (shouldSwitch) {
-            if ( 2 == skip_sort ) {
+            if ( 2 == subline_skip ) {
                 rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
                 rows[i+1].parentNode.insertBefore(rows[i + 3], rows[i+1]);
             } else {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                rows[i+1].parentNode.insertBefore(rows[i + 2], rows[i+1]);
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]); // switch 2 rows.
             }
             switching = true;
             // increase this count by 1, that is ok

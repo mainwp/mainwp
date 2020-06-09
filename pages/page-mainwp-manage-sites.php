@@ -779,11 +779,6 @@ class MainWP_Manage_Sites {
 			MainWP_UI::add_widget_box( 'notes', array( MainWP_Notes::get_class_name(), 'render' ), self::$page, 'left', __( 'Notes', 'mainwp' ) );
 		}
 
-		// Load the Community topics widget.
-		if ( self::$enable_widgets['topics'] ) {
-			MainWP_UI::add_widget_box( 'topics', array( MainWP_Community::get_class_name(), 'render' ), self::$page, 'left', __( 'MainWP Community', 'mainwp' ) );
-		}
-
 		// Load the Site Info widget.
 		MainWP_UI::add_widget_box( 'child_site_info', array( MainWP_Site_Info::get_class_name(), 'render' ), self::$page, 'right', __( 'Child site info', 'mainwp' ) );
 

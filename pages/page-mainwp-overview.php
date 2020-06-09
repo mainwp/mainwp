@@ -213,11 +213,6 @@ class MainWP_Overview {
 			}
 		}
 
-		// Load the Community topics widget.
-		if ( self::$enable_widgets['topics'] ) {
-			MainWP_UI::add_widget_box( 'topics', array( MainWP_Community::get_class_name(), 'render' ), $page, 'left', __( 'MainWP Community', 'mainwp' ) );
-		}
-
 		$i = 1;
 		foreach ( $extMetaBoxs as $metaBox ) {
 			$enabled = true;

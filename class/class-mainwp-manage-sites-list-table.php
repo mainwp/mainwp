@@ -1279,7 +1279,7 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'last_post' === $column_name ) { ?>
 								<?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?>
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
-								<span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui circle empty label <?php echo $h_color; ?>"></span><span><?php echo esc_html( $h_text ); ?></span></a></span>
+								<span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo $h_color; ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
 								<?php
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
@@ -1624,7 +1624,7 @@ class MainWP_Manage_Sites_List_Table {
 			<?php } elseif ( 'last_post' === $column_name ) { ?>
 				<td class="collapsing"><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?></td>
 			<?php } elseif ( 'site_health' === $column_name ) { ?>
-				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui circle empty label <?php echo $h_color; ?>"></span><span><?php echo esc_html( $h_text ); ?></span></a></span></td>
+				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo $h_color; ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
 			<?php } elseif ( 'notes' === $column_name ) { ?>
 				<td class="collapsing center aligned">
 					<?php if ( '' === $website['note'] ) : ?>

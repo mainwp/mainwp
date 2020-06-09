@@ -106,8 +106,9 @@ class MainWP_System_Handler {
 
 		if ( '' != get_option( 'mainwp_upgradeVersionInfo' ) ) {
 			$this->upgradeVersionInfo = get_option( 'mainwp_upgradeVersionInfo' );
-			if ( ! is_object( $this->upgradeVersionInfo ) )
+			if ( ! is_object( $this->upgradeVersionInfo ) ) {
 				$this->upgradeVersionInfo = new \stdClass();
+			}
 		}
 	}
 

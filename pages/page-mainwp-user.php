@@ -795,7 +795,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-								'ssl_version'
+								'ssl_version',
 							)
 						);
 					}
@@ -821,7 +821,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-									'ssl_version'
+									'ssl_version',
 								)
 							);
 						}
@@ -1398,7 +1398,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-								'ssl_version'
+								'ssl_version',
 							)
 						);
 					}
@@ -1420,7 +1420,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-									'ssl_version'
+									'ssl_version',
 								)
 							);
 						}
@@ -1694,7 +1694,7 @@ class MainWP_User {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-								'ssl_version'
+								'ssl_version',
 							)
 						);
 					} else {
@@ -1721,7 +1721,7 @@ class MainWP_User {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-									'ssl_version'
+									'ssl_version',
 								)
 							);
 						}

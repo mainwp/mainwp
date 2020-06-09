@@ -597,7 +597,7 @@ class MainWP_Plugins {
 								'nosslkey',
 								'http_user',
 								'http_pass',
-								'ssl_version'
+								'ssl_version',
 							)
 						);
 					}
@@ -624,7 +624,7 @@ class MainWP_Plugins {
 									'nosslkey',
 									'http_user',
 									'http_pass',
-									'ssl_version'
+									'ssl_version',
 								)
 							);
 						}
@@ -1132,7 +1132,7 @@ class MainWP_Plugins {
 							'nosslkey',
 							'http_user',
 							'http_pass',
-							'ssl_version'
+							'ssl_version',
 						)
 					);
 				}

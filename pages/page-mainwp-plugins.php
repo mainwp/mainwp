@@ -825,18 +825,22 @@ class MainWP_Plugins {
 			</style>
 			<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
-				jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
-					"paging" : false,
-					"colReorder" : true,
-					"stateSave" :  true,
-					"ordering" : true,
-					"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-					"scrollCollapse" : true,
-					"scrollY" : 500,
-					"scrollX" : true,
-					"scroller" : true,
-					"fixedColumns" : true,
-				} );
+				try {
+					jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
+						"paging" : false,
+						"colReorder" : true,
+						"stateSave" :  true,
+						"ordering" : true,
+						"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
+						"scrollCollapse" : true,
+						"scrollY" : 500,
+						"scrollX" : true,
+						"scroller" : true,
+						"fixedColumns" : true,						
+					} );
+				} catch( err ) {
+					// to fix js issues.
+				}
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 			} );
 			</script>

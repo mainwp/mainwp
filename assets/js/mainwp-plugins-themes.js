@@ -95,11 +95,12 @@ jQuery( document ).ready( function () {
 		var ch_val = jQuery( this ).is(":checked");
 		jQuery( ".mainwp-selected-plugin[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', ch_val );
 		jQuery( ".mainwp-selected-plugin[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).each( function () {
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();            
 			if ( ch_val ) {
-				jQuery( this ).closest('tr').find('.mainwp_plugins_site_check_all').prop( 'checked', ch_val );
+                jQuery('.dataTables_scrollBody table').find('tr').eq( rowIdx + 1 ).find('.mainwp_plugins_site_check_all').prop( 'checked', true );
 			}
 		});
-		if (jQuery('.mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
+		if (jQuery('.dataTables_scrollBody .mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
             jQuery('#mainwp-install-to-selected-sites').show();
         } else {
             jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
@@ -107,7 +108,7 @@ jQuery( document ).ready( function () {
     });
 
     jQuery( document ).on( 'click', '#mainwp-install-to-selected-sites', function() {
-        var checkedVals = jQuery('.mainwp_plugins_site_check_all:checkbox:checked').map(function() {
+        var checkedVals = jQuery('.dataTables_scrollBody table .mainwp_plugins_site_check_all:checkbox:checked').map(function() {
             var rowElement = jQuery( this ).parents( 'tr' );
             var val = rowElement.find( "input[type=hidden].websiteId" ).val();
             return val;
@@ -124,18 +125,45 @@ jQuery( document ).ready( function () {
         return false;
     });
 
-    jQuery( document ).on( 'change', '.mainwp_plugins_site_check_all', function() {
-        var rowElement = jQuery( this ).closest( 'tr' );		
-		var ch_val = jQuery( this ).is(":checked");				
-        rowElement.find( '.mainwp-selected-plugin' ).each( function () {			
-			jQuery( this ).prop( 'checked', ch_val );
-		});		
-        if (jQuery('.mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
-            jQuery('#mainwp-install-to-selected-sites').show();
-        } else {
-            jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
-        }		
-    } );
+    // to fix compatible with table fixed columns. 
+    mainwp_plugins_table_site_check_all_init = function() {
+        jQuery( document ).on( 'change', '.dataTables_scrollBody .mainwp_plugins_site_check_all', function() {
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();
+            var ch_val = jQuery( this ).is(":checked");
+            jQuery('#mainwp-manage-plugins-table').find('tr').eq( rowIdx + 1 ).find('.mainwp-selected-plugin').each( function () {			
+                jQuery( this ).prop( 'checked', ch_val );
+            });
+            // to fix checkbox display.
+            jQuery('.DTFC_LeftBodyWrapper table').find('tr').eq( rowIdx + 1 ).find('.mainwp_plugins_site_check_all').prop( 'checked', ch_val); 
+
+            if (jQuery('.dataTables_scrollBody .mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
+                jQuery('#mainwp-install-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
+            }		
+        } );
+
+        // to fix display before table sort by columns.
+        jQuery( document ).on( 'change', '.DTFC_LeftBodyWrapper .mainwp_plugins_site_check_all', function() {
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();
+            var ch_val = jQuery( this ).is(":checked");		
+            jQuery('#mainwp-manage-plugins-table').find('tr').eq( rowIdx + 1 ).find('.mainwp-selected-plugin').each( function () {			
+                jQuery( this ).prop( 'checked', ch_val );
+            });   
+		  
+            // to set install on selected sites.         
+            jQuery('.dataTables_scrollBody table').find('tr').eq( rowIdx + 1 ).find('.mainwp_plugins_site_check_all').prop( 'checked', ch_val); 
+
+            if (jQuery('.dataTables_scrollBody .mainwp_plugins_site_check_all:checkbox:checked').length > 0) {
+                jQuery('#mainwp-install-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-to-selected-sites').fadeOut(1000);
+            }	
+            		
+        } );
+    };
+
+    mainwp_plugins_table_site_check_all_init();
 
 	jQuery( '#mainwp_show_all_active_plugins' ).on( 'click', function () {
 	  mainwp_fetch_all_active_plugins();
@@ -411,28 +439,72 @@ jQuery( document ).ready( function () {
     } );
 
     jQuery( document ).on( 'change', '.mainwp_theme_check_all', function() {
-        jQuery( ".mainwp-selected-theme[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
-    } );
+        var ch_val = jQuery( this ).is(":checked");
+        jQuery( ".mainwp-selected-theme[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', ch_val );
+        jQuery( ".mainwp-selected-theme[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).each( function () {
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();            
+			if ( ch_val ) {
+                jQuery('.dataTables_scrollBody table').find('tr').eq( rowIdx + 1 ).find('.mainwp_themes_site_check_all').prop( 'checked', true );
+			}
+		});
 
-    jQuery( document ).on( 'change', '.mainwp_themes_site_check_all', function() {
-        var rowElement = jQuery( this ).parents( 'tr' );
-        rowElement.find( '.mainwp-selected-theme' ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
-
-        if (jQuery('.mainwp_themes_site_check_all:checkbox:checked').length > 0) {
+		if (jQuery('.dataTables_scrollBody .mainwp_themes_site_check_all:checkbox:checked').length > 0) {
             jQuery('#mainwp-install-themes-to-selected-sites').show();
         } else {
             jQuery('#mainwp-install-themes-to-selected-sites').fadeOut(1000);
         }
-
-        if ( jQuery( '#mainwp-do-themes-bulk-actions' ) ) {
-            if ( jQuery( '#mainwp-bulk-actions' ).val() == 'activate' )
-                return;
-            rowElement.find( '.mainwp-selected-theme' ).prop( 'checked', jQuery( this ).prop( 'checked' ) );
-        }
     } );
 
+    mainwp_themes_table_site_check_all_init = function() {
+        jQuery( document ).on( 'change', '.dataTables_scrollBody .mainwp_themes_site_check_all', function() {            
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();
+            var ch_val = jQuery( this ).is(":checked");		
+
+            var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
+            console.log(action);      
+            if ( ! (action == 'activate' && ch_val ) ) {
+                jQuery('#mainwp-manage-themes-table').find('tr').eq( rowIdx + 1 ).find('.mainwp-selected-theme').each( function () {			
+                    jQuery( this ).prop( 'checked', ch_val );
+                });       
+            }
+
+            // to fix checkbox display.
+            jQuery('.DTFC_LeftBodyWrapper table').find('tr').eq( rowIdx + 1 ).find('.mainwp_themes_site_check_all').prop( 'checked', ch_val); 
+
+            if (jQuery('.dataTables_scrollBody .mainwp_themes_site_check_all:checkbox:checked').length > 0) {
+                jQuery('#mainwp-install-themes-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-themes-to-selected-sites').fadeOut(1000);
+            }     
+        } );
+        
+        // to fix display before table sort by columns.
+        jQuery( document ).on( 'change', '.DTFC_LeftBodyWrapper .mainwp_themes_site_check_all', function() {
+            var rowIdx = jQuery( this ).closest( 'tr' ).index();
+            var ch_val = jQuery( this ).is(":checked");		
+
+            var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
+            console.log( action );      
+            if ( ! (action == 'activate' && ch_val ) ) {
+                jQuery('#mainwp-manage-themes-table').find('tr').eq( rowIdx + 1 ).find('.mainwp-selected-theme').each( function () {			
+                    jQuery( this ).prop( 'checked', ch_val );
+                });
+            }
+		  
+            // to set install on selected sites.         
+            jQuery('.dataTables_scrollBody table').find('tr').eq( rowIdx + 1 ).find('.mainwp_themes_site_check_all').prop( 'checked', ch_val); 
+
+            if (jQuery('.dataTables_scrollBody .mainwp_themes_site_check_all:checkbox:checked').length > 0) {
+                jQuery('#mainwp-install-themes-to-selected-sites').show();
+            } else {
+                jQuery('#mainwp-install-themes-to-selected-sites').fadeOut(1000);
+            }		
+        } );
+    }
+    mainwp_themes_table_site_check_all_init();
+
      jQuery( document ).on( 'click', '#mainwp-install-themes-to-selected-sites', function() {
-        var checkedVals = jQuery('.mainwp_themes_site_check_all:checkbox:checked').map(function() {
+        var checkedVals = jQuery('.dataTables_scrollBody .mainwp_themes_site_check_all:checkbox:checked').map(function() {
             var rowElement = jQuery( this ).parents( 'tr' );
             var val = rowElement.find( "input[type=hidden].websiteId" ).val();
             return val;

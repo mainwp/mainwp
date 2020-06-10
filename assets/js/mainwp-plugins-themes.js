@@ -1,4 +1,4 @@
-
+/* eslint complexity: ["error", 100] */
 //Ignore plugin
 jQuery( document ).ready( function () {
     jQuery( document ).on( 'click', 'input[name="plugins"]', function ()

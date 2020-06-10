@@ -234,7 +234,7 @@ class MainWP_Plugins_Handler {
 	 * Save the trusted plugin note.
 	 */
 	public static function save_trusted_plugin_note() {
-		$slug                = rawurlencode( $_POST['slug'] );
+		$slug                = urldecode( $_POST['slug'] );
 		$note                = stripslashes( $_POST['note'] );
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();

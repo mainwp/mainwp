@@ -535,7 +535,7 @@ class MainWP_Plugins {
 								}
 							}
 
-							if ( '' !== $keyword && ! stristr( $plugin['name'], $keyword ) ) {
+							if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
 								continue;
 							}
 
@@ -565,7 +565,7 @@ class MainWP_Plugins {
 										continue;
 									}
 								}
-								if ( '' !== $keyword && ! stristr( $plugin['name'], $keyword ) ) {
+								if ( '' != $keyword && ! stristr( $plugin['name'], $keyword ) ) {
 									continue;
 								}
 
@@ -1111,7 +1111,7 @@ class MainWP_Plugins {
 								continue;
 							}
 						}
-						if ( '' !== $keyword && false === stristr( $plugin['name'], $keyword ) ) {
+						if ( '' != $keyword && false === stristr( $plugin['name'], $keyword ) ) {
 							continue;
 						}
 						$plugin['websiteid']  = $website->id;

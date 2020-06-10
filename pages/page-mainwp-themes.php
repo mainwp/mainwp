@@ -510,7 +510,7 @@ class MainWP_Themes {
 								}
 							}
 
-							if ( '' !== $keyword && ! stristr( $theme['title'], $keyword ) ) {
+							if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
 								continue;
 							}
 
@@ -541,7 +541,7 @@ class MainWP_Themes {
 										continue;
 									}
 								}
-								if ( '' !== $keyword && ! stristr( $theme['title'], $keyword ) ) {
+								if ( '' != $keyword && ! stristr( $theme['title'], $keyword ) ) {
 									continue;
 								}
 
@@ -1159,7 +1159,7 @@ class MainWP_Themes {
 								continue;
 							}
 						}
-						if ( '' !== $keyword && false === stristr( $theme['name'], $keyword ) ) {
+						if ( '' != $keyword && false === stristr( $theme['name'], $keyword ) ) {
 							continue;
 						}
 						$theme['websiteid']  = $website->id;

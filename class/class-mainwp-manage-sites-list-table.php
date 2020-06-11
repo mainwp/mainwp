@@ -1284,7 +1284,7 @@ class MainWP_Manage_Sites_List_Table {
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
 								?>
-									<?php if ( '' === $website['note'] ) : ?>
+									<?php if ( '' == $website['note'] ) : ?>
 										<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>"><i class="sticky note outline icon"></i></a>
 									<?php else : ?>
 										<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>

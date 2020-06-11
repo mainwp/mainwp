@@ -99,8 +99,8 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		foreach ( $jobs as $recur => $hook ) {
-			$this->init_wp_cron( $useWPCron, $recur, $hook );
+		foreach ( $jobs as $hook => $recur ) {
+			$this->init_wp_cron( $useWPCron, $hook, $recur );
 		}
 	}
 
@@ -113,7 +113,7 @@ class MainWP_System_Cron_Jobs {
 	 * @param mixed $recurrence When cron is going to reoccur.
 	 * @param mixed $cron_hook Cron job hook.
 	 */
-	public function init_wp_cron( $useWPCron, $recurrence, $cron_hook ) {
+	public function init_wp_cron( $useWPCron, $cron_hook, $recurrence ) {
 		$sched = wp_next_scheduled( $cron_hook );
 		if ( false == $sched ) {
 			if ( $useWPCron ) {
@@ -444,7 +444,7 @@ class MainWP_System_Cron_Jobs {
 
 					$newUpdate = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
 					if ( ! $website->is_ignoreCoreUpdates ) {
-						if ( 1 === $website->automatic_update ) {
+						if ( 1 == $website->automatic_update ) {
 							if ( $newUpdate ) {
 								$coreNewUpdate[] = array( $website->id, $infoNewTxt, $infoTrustedText );
 							} else {

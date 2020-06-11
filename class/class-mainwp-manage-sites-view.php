@@ -681,7 +681,7 @@ class MainWP_Manage_Sites_View {
 		?>
 		<div>
 			<?php
-			if ( -1 === $website->mainwpdir ) {
+			if ( -1 == $website->mainwpdir ) {
 				echo '<div class="ui yellow message"><span class="mainwp_conflict" siteid="' . intval( $website->id ) . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work.</span></div>';
 			}
 			global $screen_layout_columns;

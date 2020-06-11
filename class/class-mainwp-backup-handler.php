@@ -779,8 +779,8 @@ class MainWP_Backup_Handler {
 		);
 
 		if ( false === $pMaximumFileDescriptorsOverride ) {
-			if ( 1 === $website->maximumFileDescriptorsOverride ) {
-				$maximumFileDescriptorsAuto = ( 1 === $website->maximumFileDescriptorsAuto );
+			if ( 1 == $website->maximumFileDescriptorsOverride ) {
+				$maximumFileDescriptorsAuto = ( 1 == $website->maximumFileDescriptorsAuto );
 				$maximumFileDescriptors     = $website->maximumFileDescriptors;
 			} else {
 				$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );

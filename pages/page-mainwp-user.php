@@ -676,7 +676,7 @@ class MainWP_User {
 	 * @param string $sites Users Sites.
 	 * @param null   $search Search field.
 	 */
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = null ) { // phpcs:ignore -- not quite complex function.
+	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- not quite complex function.
 		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new \stdClass();
@@ -694,7 +694,7 @@ class MainWP_User {
 				}
 			}
 
-			if ( '' !== $sites ) {
+			if ( '' != $sites ) {
 				foreach ( $sites as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$search_user_role = array();
@@ -718,7 +718,7 @@ class MainWP_User {
 
 						for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 							$user = $allUsers[ $i ];
-							if ( '' !== $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
+							if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
 								continue;
 							}
 
@@ -734,12 +734,12 @@ class MainWP_User {
 					}
 				}
 			}
-			if ( '' !== $groups ) {
+			if ( '' != $groups ) {
 				foreach ( $groups as $k => $v ) {
 					if ( MainWP_Utility::ctype_digit( $v ) ) {
 						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );
 						while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-							if ( '' !== $website->sync_errors ) {
+							if ( '' != $website->sync_errors ) {
 								continue;
 							}
 							$allUsers      = json_decode( $website->users, true );
@@ -759,7 +759,7 @@ class MainWP_User {
 							}
 							for ( $i = 0; $i < $allUsersCount; $i ++ ) {
 								$user = $allUsers[ $i ];
-								if ( '' !== $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
+								if ( '' != $search && ! stristr( $user['login'], trim( $search ) ) && ! stristr( $user['display_name'], trim( $search ) ) && ! stristr( $user['email'], trim( $search ) ) ) {
 									continue;
 								}
 

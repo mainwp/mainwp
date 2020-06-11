@@ -110,8 +110,8 @@ class MainWP_System_Cron_Jobs {
 	 * Schedual Cron Jobs.
 	 *
 	 * @param mixed $useWPCron Wether or not to use WP_Cron.
-	 * @param mixed $recurrence When cron is going to reoccur.
-	 * @param mixed $cron_hook Cron job hook.
+	 * @param mixed $cron_hook When cron is going to reoccur.
+	 * @param mixed $recurrence Cron job hook.
 	 */
 	public function init_wp_cron( $useWPCron, $cron_hook, $recurrence ) {
 		$sched = wp_next_scheduled( $cron_hook );

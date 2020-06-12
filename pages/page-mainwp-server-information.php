@@ -1,96 +1,181 @@
 <?php
+/**
+ * MainWP Server Information Page.
+ *
+ * @package MainWP/Dashboard
+ */
 
+namespace MainWP\Dashboard;
+
+/**
+ * MainWP Server Information Page.
+ */
 class MainWP_Server_Information {
 
-	const WARNING	 = 1;
-	const ERROR	 = 2;
+	const WARNING = 1;
+	const ERROR   = 2;
 
+	/**
+	 * The Server information page sub-pages.
+	 *
+	 * @static
+	 * @var array Sub pages.
+	 */
 	public static $subPages;
 
-	public static function getClassName() {
+	/**
+	 * Get Class Name
+	 *
+	 * @return string __CLASS__
+	 */
+	public static function get_class_name() {
 		return __CLASS__;
 	}
 
-	public static function initMenu() {
-		add_submenu_page( 'mainwp_tab', __( 'Server Information', 'mainwp' ), ' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>', 'read', 'ServerInformation', array(
-			MainWP_Server_Information::getClassName(),
-			'render',
-		) );
-		if ( !MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Cron Schedules', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>', 'read', 'ServerInformationCron', array(
-				MainWP_Server_Information::getClassName(),
-				'renderCron',
-			) );
+	/**
+	 * Method init_menu()
+	 *
+	 * Initiate Server Informaion subPage menu.
+	 */
+	public static function init_menu() {
+		add_submenu_page(
+			'mainwp_tab',
+			__( 'Server Information', 'mainwp' ),
+			' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>',
+			'read',
+			'ServerInformation',
+			array(
+				self::get_class_name(),
+				'render',
+			)
+		);
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Cron Schedules', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Cron Schedules', 'mainwp' ) . '</div>',
+				'read',
+				'ServerInformationCron',
+				array(
+					self::get_class_name(),
+					'render_cron',
+				)
+			);
 		}
 
-		if ( !MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Error Log', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>', 'read', 'ErrorLog', array(
-				MainWP_Server_Information::getClassName(),
-				'renderErrorLogPage',
-			) );
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Error Log', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Error Log', 'mainwp' ) . '</div>',
+				'read',
+				'ErrorLog',
+				array(
+					self::get_class_name(),
+					'render_error_log_page',
+				)
+			);
 		}
-		if ( !MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'WP-Config File', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>', 'read', 'WPConfig', array(
-				MainWP_Server_Information::getClassName(),
-				'renderWPConfig',
-			) );
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'WP-Config File', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'WP-Config File', 'mainwp' ) . '</div>',
+				'read',
+				'WPConfig',
+				array(
+					self::get_class_name(),
+					'render_wp_config',
+				)
+			);
 		}
-		if ( !MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-            if (self::isApacheServerSoftware()) {
-                add_submenu_page( 'mainwp_tab', __( '.htaccess File', 'mainwp' ), '<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>', 'read', '.htaccess', array(
-                    MainWP_Server_Information::getClassName(),
-                    'renderhtaccess',
-                ) );
-            }
-		}
-		if ( !MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
-			add_submenu_page( 'mainwp_tab', __( 'Action logs', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>', 'read', 'ActionLogs', array(
-				MainWP_Server_Information::getClassName(),
-				'renderActionLogs',
-			) );
-		}
-		self::$subPages = apply_filters( 'mainwp-getsubpages-server', array() );
-		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
-			foreach ( self::$subPages as $subPage ) {
-				if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage[ 'slug' ] ) )
-					continue;
-				add_submenu_page( 'mainwp_tab', $subPage[ 'title' ], '<div class="mainwp-hidden">' . $subPage[ 'title' ] . '</div>', 'read', 'Server' . $subPage[ 'slug' ], $subPage[ 'callback' ] );
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
+			if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
+				add_submenu_page(
+					'mainwp_tab',
+					__( '.htaccess File', 'mainwp' ),
+					'<div class="mainwp-hidden">' . __( '.htaccess File', 'mainwp' ) . '</div>',
+					'read',
+					'.htaccess',
+					array(
+						self::get_class_name(),
+						'render_htaccess',
+					)
+				);
 			}
 		}
-		MainWP_Server_Information::init_left_menu( self::$subPages );
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Action logs', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Action logs', 'mainwp' ) . '</div>',
+				'read',
+				'ActionLogs',
+				array(
+					self::get_class_name(),
+					'render_action_logs',
+				)
+			);
+		}
+
+		/**
+		 * Filter is being replaced with mainwp_getsubpages_server.
+		 *
+		 * @deprecated
+		 */
+		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
+		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
+
+		if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
+			foreach ( self::$subPages as $subPage ) {
+				if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
+					continue;
+				}
+				add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Server' . $subPage['slug'], $subPage['callback'] );
+			}
+		}
+		self::init_left_menu( self::$subPages );
 	}
 
-	public static function initMenuSubPages() {
+	/**
+	 * Method init_subpages_menu()
+	 *
+	 * Render Sub Pages Menu.
+	 */
+	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-ServerInformation" class="mainwp-submenu-wrapper">
-			<div class="wp-submenu sub-open" style="">
+			<div class="wp-submenu sub-open">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php _e( 'Server', 'mainwp' ); ?></a>
-					<?php if ( !MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php _e( 'Cron Schedules', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=ServerInformation' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Server', 'mainwp' ); ?></a>
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=ServerInformationCron' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cron Schedules', 'mainwp' ); ?></a>
 					<?php } ?>
-					<?php if ( !MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php _e( 'Error Log', 'mainwp' ); ?></a>
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=ErrorLog' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Error Log', 'mainwp' ); ?></a>
 					<?php } ?>
-					<?php if ( !MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php _e( 'WP-Config File', 'mainwp' ); ?></a>
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=WPConfig' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'WP-Config File', 'mainwp' ); ?></a>
 					<?php } ?>
-					<?php if ( !MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-                        if (self::isApacheServerSoftware()) {
-                            ?>
-                            <a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php _e( '.htaccess File', 'mainwp' ); ?></a>
-                    <?php }
-                    }
-                    ?>
+					<?php
+					if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
+						if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
+							?>
+							<a href="<?php echo admin_url( 'admin.php?page=.htaccess' ); ?>" class="mainwp-submenu"><?php esc_html_e( '.htaccess File', 'mainwp' ); ?></a>
+							<?php
+						}
+					}
+					?>
 					<?php
 					if ( isset( self::$subPages ) && is_array( self::$subPages ) ) {
 						foreach ( self::$subPages as $subPage ) {
-							if ( !isset( $subPage[ 'menu_hidden' ] ) || (isset( $subPage[ 'menu_hidden' ] ) && $subPage[ 'menu_hidden' ] != true) ) {
-								if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage[ 'slug' ] ) )
+							if ( ! isset( $subPage['menu_hidden'] ) || ( isset( $subPage['menu_hidden'] ) && true !== $subPage['menu_hidden'] ) ) {
+								if ( MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
 									continue;
+								}
 								?>
-								<a href="<?php echo admin_url( 'admin.php?page=Server' . $subPage[ 'slug' ] ); ?>" class="mainwp-submenu"><?php echo esc_html($subPage[ 'title' ]); ?></a>
+								<a href="<?php echo admin_url( 'admin.php?page=Server' . $subPage['slug'] ); ?>" class="mainwp-submenu"><?php echo esc_html( $subPage['title'] ); ?></a>
 								<?php
 							}
 						}
@@ -102,344 +187,403 @@ class MainWP_Server_Information {
 		<?php
 	}
 
-	static function init_left_menu( $subPages = array() ) {
-		MainWP_Menu::add_left_menu( array(
-			'title'		 => __( 'Status', 'mainwp' ),
-			'parent_key' => 'mainwp_tab',
-			'slug'		 => 'ServerInformation',
-			'href'		 => 'admin.php?page=ServerInformation',
-			'icon'		 => '<i class="server icon"></i>'
-		), 1 ); // level 1
+	/**
+	 * Method init_left_menu()
+	 *
+	 * Initiate Server Information left menu.
+	 *
+	 * @param array $subPages array of subpages.
+	 */
+	public static function init_left_menu( $subPages = array() ) {
+		MainWP_Menu::add_left_menu(
+			array(
+				'title'      => __( 'Status', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'ServerInformation',
+				'href'       => 'admin.php?page=ServerInformation',
+				'icon'       => '<i class="server icon"></i>',
+			),
+			1
+		);
 
 		global $_mainwp_menu_active_slugs;
-		$_mainwp_menu_active_slugs[ 'ActionLogs' ] = 'ServerInformation'; // hidden page
+		$_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation';
 
 		$init_sub_subleftmenu = array(
-			array( 'title'		 => __( 'Server', 'mainwp' ),
+			array(
+				'title'      => __( 'Server', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
-				'href'		 => 'admin.php?page=ServerInformation',
-				'slug'		 => 'ServerInformation',
-				'right'		 => ''
+				'href'       => 'admin.php?page=ServerInformation',
+				'slug'       => 'ServerInformation',
+				'right'      => '',
 			),
-			array( 'title'		 => __( 'Cron Schedules', 'mainwp' ),
+			array(
+				'title'      => __( 'Cron Schedules', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
-				'href'		 => 'admin.php?page=ServerInformationCron',
-				'slug'		 => 'ServerInformationCron',
-				'right'		 => ''
+				'href'       => 'admin.php?page=ServerInformationCron',
+				'slug'       => 'ServerInformationCron',
+				'right'      => '',
 			),
-			array( 'title'		 => __( 'Error Log', 'mainwp' ),
+			array(
+				'title'      => __( 'Error Log', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
-				'href'		 => 'admin.php?page=ErrorLog',
-				'slug'		 => 'ErrorLog',
-				'right'		 => ''
+				'href'       => 'admin.php?page=ErrorLog',
+				'slug'       => 'ErrorLog',
+				'right'      => '',
 			),
-			array( 'title'		 => __( 'WP-Config File', 'mainwp' ),
+			array(
+				'title'      => __( 'WP-Config File', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
-				'href'		 => 'admin.php?page=WPConfig',
-				'slug'		 => 'WPConfig',
-				'right'		 => ''
+				'href'       => 'admin.php?page=WPConfig',
+				'slug'       => 'WPConfig',
+				'right'      => '',
 			),
-			array( 'title'		 => __( '.htaccess File', 'mainwp' ),
+			array(
+				'title'      => __( '.htaccess File', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
-				'href'		 => 'admin.php?page=.htaccess',
-				'slug'		 => '.htaccess',
-				'right'		 => ''
+				'href'       => 'admin.php?page=.htaccess',
+				'slug'       => '.htaccess',
+				'right'      => '',
 			),
 		);
 
-        if ( !self::isApacheServerSoftware() ) {
-            if ( $init_sub_subleftmenu[4]['slug'] == '.htaccess')
-                unset($init_sub_subleftmenu[4]);
-        }
+		if ( ! MainWP_Server_Information_Handler::is_apache_server_software() ) {
+			if ( '.htaccess' === $init_sub_subleftmenu[4]['slug'] ) {
+				unset( $init_sub_subleftmenu[4] );
+			}
+		}
 
-		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Settings' );
+		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Server' );
 		foreach ( $init_sub_subleftmenu as $item ) {
-			if ( MainWP_Menu::is_disable_menu_item( 3, $item[ 'slug' ] ) )
+			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
 				continue;
-			MainWP_Menu::add_left_menu( $item, 2);
+			}
+			MainWP_Menu::add_left_menu( $item, 2 );
 		}
 	}
 
-	public static function renderHeader( $shownPage = '') {
+	/**
+	 * Method render_header()
+	 *
+	 * Render Server Information header.
+	 *
+	 * @param string $shownPage Current page.
+	 */
+	public static function render_header( $shownPage = '' ) {
 			$params = array(
-				'title' => __( 'Server Information', 'mainwp' )
+				'title' => __( 'Server Information', 'mainwp' ),
 			);
 
-		MainWP_UI::render_top_header( $params );
+			MainWP_UI::render_top_header( $params );
 
 			$renderItems = array();
 
 			$renderItems[] = array(
-			'title'  => __( 'Server', 'mainwp' ),
-			'href'   => "admin.php?page=ServerInformation",
-			'active' => ( $shownPage == '' ) ? true : false
+				'title'  => __( 'Server', 'mainwp' ),
+				'href'   => 'admin.php?page=ServerInformation',
+				'active' => ( '' === $shownPage ) ? true : false,
 			);
 
-			if ( !MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ServerInformationCron' ) ) {
 				$renderItems[] = array(
-				'title'  => __( 'Cron Schedules', 'mainwp' ),
-				'href'   => "admin.php?page=ServerInformationCron",
-				'active' => ( $shownPage == 'ServerInformationCron' ) ? true : false
+					'title'  => __( 'Cron Schedules', 'mainwp' ),
+					'href'   => 'admin.php?page=ServerInformationCron',
+					'active' => ( 'ServerInformationCron' === $shownPage ) ? true : false,
 				);
 			}
 
-			if ( !MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ErrorLog' ) ) {
 				$renderItems[] = array(
-				'title'  => __( 'Error Log', 'mainwp' ),
-				'href'   => "admin.php?page=ErrorLog",
-					'active' => ($shownPage == 'ErrorLog') ? true : false
+					'title'      => __( 'Error Log', 'mainwp' ),
+					'href'       => 'admin.php?page=ErrorLog',
+					'active'     => ( 'ErrorLog' === $shownPage ) ? true : false,
 				);
 			}
 
-			if ( !MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
 				$renderItems[] = array(
-					'title' => __( 'WP-Config File', 'mainwp' ),
-					'href' => "admin.php?page=WPConfig",
-				'active' => ( $shownPage == 'WPConfig' ) ? true : false
+					'title'  => __( 'WP-Config File', 'mainwp' ),
+					'href'   => 'admin.php?page=WPConfig',
+					'active' => ( 'WPConfig' === $shownPage ) ? true : false,
 				);
 			}
 
-			if ( !MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-      if ( self::isApacheServerSoftware() ) {
-                    $renderItems[] = array(
-          'title'  => __( '.htaccess File', 'mainwp' ),
-          'href'   => "admin.php?page=.htaccess",
-          'active' => ( $shownPage == '.htaccess' ) ? true : false
-                    );
-                }
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
+				if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
+					$renderItems[] = array(
+						'title'  => __( '.htaccess File', 'mainwp' ),
+						'href'   => 'admin.php?page=.htaccess',
+						'active' => ( '.htaccess' === $shownPage ) ? true : false,
+					);
+				}
 			}
 
 			MainWP_UI::render_page_navigation( $renderItems );
-		echo '<div class="ui segment">';
-		}
+			echo '<div class="ui segment">';
+	}
 
-		public static function renderFooter( $shownPage ) {
+	/**
+	 * Method render_footer()
+	 *
+	 * @param string $shownPage Page that is shown.
+	 */
+	public static function render_footer( $shownPage ) {
 		echo '</div>';
+	}
+
+	/**
+	 * Method render()
+	 *
+	 * Render Server Information page.
+	 *
+	 * @return void
+	 */
+	public static function render() {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( 'server information', 'mainwp' );
+
+			return;
 		}
 
-		public static function render() {
-			if ( !mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-				mainwp_do_not_have_permissions( __( 'server information', 'mainwp' ) );
+		self::render_header( '' );
 
-				return;
-			}
+		do_action( 'mainwp_before_server_info_table' );
 
-			self::renderHeader( '' );
-
-			do_action( 'mainwp-before-server-info-table' );
-
-			?>
+		?>
+			<div class="ui two column grid">
+			<div class="column"></div>
+			<div class="right aligned column">
+			<a href="#" style="margin-left:5px" class="ui small basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
+			<a href="#" class="ui small green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
+			</div>
+			</div>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
 				<thead>
 					<tr>
-						<th><?php _e( 'Server Info', 'mainwp' ); ?></th>
-						<th><?php _e( 'Required', 'mainwp' ); ?></th>
-						<th><?php _e( 'Detected', 'mainwp' ); ?></th>
-						<th><?php _e( 'Status', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Server Info', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Required', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Dashboard', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Dashboard', 'mainwp' ); ?></div></td></tr>
 					<tr>
-						<td><?php _e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
-						<td><?php echo self::getMainWPVersion(); ?></td>
-						<td><?php echo self::getCurrentVersion(); ?></td>
-						<td><?php echo self::getMainWPVersionCheck(); ?></td>
+						<td><?php esc_html_e( 'MainWP Dashboard Version', 'mainwp' ); ?></td>
+						<td><?php echo MainWP_Server_Information_Handler::get_mainwp_version(); ?></td>
+						<td><?php echo MainWP_Server_Information_Handler::get_current_version(); ?></td>
+						<td><?php echo self::get_mainwp_version_check(); ?></td>
 					</tr>
-					<?php self::checkDirectoryMainWPDirectory(); ?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Extensions', 'mainwp' ); ?></div></td></tr>
-					<?php
-					$extensions			 		= MainWP_Extensions::loadExtensions();
-					$extensions_slugs	  = array();
-					if ( count( $extensions ) == 0 ) {
-						echo '<tr><td colspan="4">' . __( 'No installed extensions', 'mainwp' ) . '</td></tr>';
-					}
-					foreach ( $extensions as $extension ) {
-						$extensions_slugs[] = $extension[ 'slug' ];
-						?>
+				<?php self::check_directory_mainwp_directory(); ?>
+					<tr>
+						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Extensions', 'mainwp' ); ?></div></td>
+					</tr>
+				<?php
+				$extensions       = MainWP_Extensions_Handler::get_extensions();
+				$extensions_slugs = array();
+				if ( 0 == count( $extensions ) ) {
+					echo '<tr><td colspan="4">' . esc_html__( 'No installed extensions', 'mainwp' ) . '</td></tr>';
+				}
+				foreach ( $extensions as $extension ) {
+					$extensions_slugs[] = $extension['slug'];
+					?>
 						<tr>
-							<td><?php echo $extension[ 'name' ]; ?></td>
-							<td><?php echo $extension[ 'version' ]; ?></td>
-							<td><?php echo isset( $extension[ 'activated_key' ] ) && $extension[ 'activated_key' ] == 'Activated' ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
-							<td><?php echo isset( $extension[ 'activated_key' ] ) && $extension[ 'activated_key' ] == 'Activated' ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( self::WARNING ); ?></td>
+							<td><?php echo esc_html( $extension['name'] ); ?></td>
+							<td><?php echo esc_html( $extension['version'] ); ?></td>
+							<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+							<td><?php echo isset( $extension['activated_key'] ) && 'Activated' === $extension['activated_key'] ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( self::WARNING ); ?></td>
 						</tr>
 						<?php
-					}
-					?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'WordPress', 'mainwp' ); ?></div></td></tr>
+				}
+				?>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'WordPress', 'mainwp' ); ?></div></td></tr>
 					<?php
-					self::renderRow( 'WordPress Version', '>=', '3.6', 'getWordpressVersion', '', '', null, null, self::ERROR );
-					self::renderRow( 'WordPress Memory Limit', '>=', '64M', 'getWordpressMemoryLimit', '', '', null );
-					self::renderRow( 'MultiSite Disabled', '=', true, 'checkIfMultisite', '', '', null );
+					self::render_row( 'WordPress Version', '>=', '3.6', 'get_wordpress_version', '', '', null, null, self::ERROR );
+					self::render_row( 'WordPress Memory Limit', '>=', '64M', 'get_wordpress_memory_limit', '', '', null );
+					self::render_row( 'MultiSite Disabled', '=', true, 'check_if_multisite', '', '', null );
 					?>
 					<tr>
-						<td><?php _e( 'FileSystem Method', 'mainwp' ); ?></td>
-						<td><?php echo '= ' . 'direct'; ?></td>
-						<td><?php echo self::getFileSystemMethod(); ?></td>
-						<td><?php echo self::getFileSystemMethodCheck(); ?></td>
+						<td><?php esc_html_e( 'FileSystem Method', 'mainwp' ); ?></td>
+						<td><?php echo esc_html( '= direct' ); ?></td>
+						<td><?php echo MainWP_Server_Information_Handler::get_file_system_method(); ?></td>
+						<td><?php echo self::get_file_system_method_check(); ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'PHP', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'PHP', 'mainwp' ); ?></div></td></tr>
 					<?php
-					self::renderRow( 'PHP Version', '>=', '5.6', 'getPHPVersion', '', '', null, null, self::ERROR );
-					self::renderRow( 'PHP Safe Mode Disabled', '=', true, 'getPHPSafeMode', '', '', null );
-					self::renderRow( 'PHP Max Execution Time', '>=', '30', 'getMaxExecutionTime', 'seconds', '=', '0' );
-					self::renderRow( 'PHP Max Input Time', '>=', '30', 'getMaxInputTime', 'seconds', '=', '0' );
-					self::renderRow( 'PHP Memory Limit', '>=', '128M', 'getPHPMemoryLimit', '', '', null, 'filesize' );
-					self::renderRow( 'PCRE Backtracking Limit', '>=', '10000', 'getOutputBufferSize', '', '', null );
-					self::renderRow( 'PHP Upload Max Filesize', '>=', '2M', 'getUploadMaxFilesize', '', '', null, 'filesize' );
-					self::renderRow( 'PHP Post Max Size', '>=', '2M', 'getPostMaxSize', '', '', null, 'filesize' );
-					self::renderRow( 'SSL Extension Enabled', '=', true, 'getSSLSupport', '', '', null );
-					self::renderRow( 'SSL Warnings', '=', '', 'getSSLWarning', 'empty', '', null );
-					self::renderRow( 'cURL Extension Enabled', '=', true, 'getCurlSupport', '', '', null, null, self::ERROR );
-					self::renderRow( 'cURL Timeout', '>=', '300', 'getCurlTimeout', 'seconds', '=', '0' );
+					self::render_row( 'PHP Version', '>=', '5.6', 'get_php_version', '', '', null, null, self::ERROR );
+					self::render_row( 'PHP Safe Mode Disabled', '=', true, 'get_php_safe_mode', '', '', null );
+					self::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
+					self::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
+					self::render_row( 'PHP Memory Limit', '>=', '128M', 'get_php_memory_limit', '', '', null, 'filesize' );
+					self::render_row( 'PCRE Backtracking Limit', '>=', '10000', 'get_output_buffer_size', '', '', null );
+					self::render_row( 'PHP Upload Max Filesize', '>=', '2M', 'get_upload_max_filesize', '', '', null, 'filesize' );
+					self::render_row( 'PHP Post Max Size', '>=', '2M', 'get_post_max_size', '', '', null, 'filesize' );
+					self::render_row( 'SSL Extension Enabled', '=', true, 'get_ssl_support', '', '', null );
+					self::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
+					self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
+					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
-						self::renderRow( 'cURL Version', '>=', '7.18.1', 'getCurlVersion', '', '', null );
-						self::renderRow( 'cURL SSL Version', '>=', array(
-							'version_number' => 0x009080cf,
-							'version'		 => 'OpenSSL/0.9.8l',
-						), 'getCurlSSLVersion', '', '', null, 'curlssl' );
+						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
+						self::render_row(
+							'cURL SSL Version',
+							'>=',
+							array(
+								'version_number' => 0x009080cf,
+								'version'        => 'OpenSSL/0.9.8l',
+							),
+							'get_curl_ssl_version',
+							'',
+							'',
+							null,
+							'curlssl'
+						);
 					}
 					?>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPAllowUrlFopen(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Allow URL fopen', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_php_allow_url_fopen(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Exif Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPExif(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Exif Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_php_exif(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP IPTC Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPIPTC(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP IPTC Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_php_iptc(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP XML Support', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getPHPXML(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP XML Support', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_php_xml(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::phpDisabledFunctions(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Disabled Functions', 'mainwp' ); ?></td>
+						<td colspan="2"><?php self::php_disabled_functions(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getLoadedPHPExtensions(); ?></td>
-					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MySQL', 'mainwp' ); ?></div></td></tr>
-					<?php self::renderRow( 'MySQL Version', '>=', '5.0', 'getMySQLVersion', '', '', null, null, self::ERROR ); ?>
-					<tr>
-						<td colspan="2"><?php _e( 'MySQL Mode', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getSQLMode(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'PHP Loaded Extensions', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_loaded_php_extensions(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
+						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MySQL', 'mainwp' ); ?></div></td>
+					</tr>
+					<?php self::render_row( 'MySQL Version', '>=', '5.0', 'get_mysql_version', '', '', null, null, self::ERROR ); ?>
+					<tr>
+						<td colspan="2"><?php esc_html_e( 'MySQL Mode', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_sql_mode(); ?></td>
+					</tr>
+					<tr>
+						<td colspan="2"><?php esc_html_e( 'MySQL Client Encoding', 'mainwp' ); ?></td>
 						<td colspan="2"><?php echo defined( 'DB_CHARSET' ) ? DB_CHARSET : ''; ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'Server Info', 'mainwp' ); ?></div></td></tr>
 					<tr>
-						<td colspan="2"><?php _e( 'WordPress Root Directory', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getWPRoot(); ?></td>
+						<td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Server Info', 'mainwp' ); ?></div></td>
+					</tr>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'WordPress Root Directory', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_wp_root(); ?></td>
+					</tr>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'Server Name', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_name(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Name', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerName(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Software', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_software(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Software', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerSoftware(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Operating System', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_os(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Operating System', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getOS(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Architecture', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_architecture(); ?></td>
+					</tr>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'Server IP', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_ip(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Architecture', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getArchitecture(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server Protocol', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_protocol(); ?></td>
+					</tr>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'HTTP Host', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_http_host(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server IP', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerIP(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'HTTPS', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_https(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Protocol', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerProtocol(); ?></td>
-					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'HTTP Host', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getHTTPHost(); ?></td>
-					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'HTTPS', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getHTTPS(); ?></td>
-					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'Server self connect', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::serverSelfConnect(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Server self connect', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::server_self_connect(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'User Agent', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getUserAgent(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_user_agent(); ?></td>
+					</tr>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'Server Port', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_port(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Server Port', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerPort(); ?></td>
-					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'Gateway Interface', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerGatewayInterface(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Gateway Interface', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_gateway_interface(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Memory Usage', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::memoryUsage(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::memory_usage(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Complete URL', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getCompleteURL(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_complete_url(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Request Time', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerRequestTime(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_request_time(); ?></td>
 					</tr>
 					<tr>
-						<td colspan="2"><?php _e( 'Accept Content', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerHTTPAccept(); ?></td>
+						<td colspan="2"><?php esc_html_e( 'Accept Content', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_http_accept(); ?></td>
 					</tr>
 					<tr>
 						<td colspan="2"><?php esc_html_e( 'Accept-Charset Content', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getServerAcceptCharset(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_server_accept_charset(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Currently Executing Script Pathname', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getScriptFileName(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_script_file_name(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Current Page URI', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getCurrentPageURI(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_current_page_uri(); ?></td>
 					</tr>
-					<tr>
+					<tr class="mwp-not-generate-row">
 						<td colspan="2"><?php esc_html_e( 'Remote Address', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemoteAddress(); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_remote_address(); ?></td>
 					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'Remote Host', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemoteHost(); ?></td>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'Remote Host', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_remote_host(); ?></td>
 					</tr>
-					<tr>
-						<td colspan="2"><?php _e( 'Remote Port', 'mainwp' ); ?></td>
-						<td colspan="2"><?php self::getRemotePort(); ?></td>
+					<tr class="mwp-not-generate-row">
+						<td colspan="2"><?php esc_html_e( 'Remote Port', 'mainwp' ); ?></td>
+						<td colspan="2"><?php MainWP_Server_Information_Handler::get_remote_port(); ?></td>
 					</tr>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'MainWP Settings', 'mainwp' ); ?></div></td></tr>
-					<?php self::displayMainWPOptions(); ?>
-					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php _e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'MainWP Settings', 'mainwp' ); ?></div></td></tr>
+					<?php self::display_mainwp_options(); ?>
+					<tr><td colspan="4"><div class="ui ribbon inverted grey label"><?php esc_html_e( 'Active Plugins', 'mainwp' ); ?></div></td></tr>
 					<?php
-					$all_extensions	 = MainWP_Extensions_View::getAvailableExtensions();
-					$all_plugins	 = get_plugins();
+					$all_extensions = MainWP_Extensions_View::get_available_extensions();
+					$all_plugins    = get_plugins();
 					foreach ( $all_plugins as $slug => $plugin ) {
-						if ( isset( $all_extensions[ dirname( $slug ) ] ) )
+						if ( isset( $all_extensions[ dirname( $slug ) ] ) ) {
 							continue;
+						}
 						?>
 						<tr>
-							<td><?php echo esc_html($plugin[ 'Name' ]); ?></td>
-							<td><?php echo esc_html($plugin[ 'Version' ]); ?></td>
+							<td><?php echo esc_html( $plugin['Name'] ); ?></td>
+							<td><?php echo esc_html( $plugin['Version'] ); ?></td>
 							<td colspan="2"><?php echo is_plugin_active( $slug ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
 						</tr>
 						<?php
@@ -447,646 +591,288 @@ class MainWP_Server_Information {
 					?>
 				</tbody>
 				<tfoot class="full-width">
-			    <tr>
-			      <th colspan="4">
-			        <a href="#" class="ui right floated small green button" id="mainwp-download-system-report"><?php _e( 'Download System Report', 'mainwp' ); ?></a>
-							<div><?php _e( 'Please include this information when requesting support.', 'mainwp' ); ?></div>
-			      </th>
-			    </tr>
-			  </tfoot>
+					<tr>
+						<th colspan="4">
+							<a href="#" class="ui right floated small green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
+							<div><?php esc_html_e( 'Please include this information when requesting support.', 'mainwp' ); ?></div>
+						</th>
+					</tr>
+				</tfoot>
 			</table>
-            <div id="download-server-information" style="display: none">
-                <textarea readonly="readonly" wrap="off"></textarea>
-            </div>
+			<div id="download-server-information" style="display: none">
+				<textarea readonly="readonly" wrap="off"></textarea>
+			</div>
 		<?php
 
-		do_action( 'mainwp-after-server-info-table' );
+		do_action( 'mainwp_after_server_info_table' );
 
-		self::renderFooter( '' );
+		self::render_footer( '' );
 	}
 
-	public static function renderQuickSetupSystemCheck() {
+	/**
+	 * Method render_quick_setup_system_check()
+	 *
+	 * Render MainWP system requirements check.
+	 */
+	public static function render_quick_setup_system_check() {
 		?>
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
-				<thead>
-					<tr>
-					<th><?php _e( 'Check', 'mainwp' ); ?></th>
-					<th><?php _e( 'Required Value', 'mainwp' ); ?></th>
-					<th><?php _e( 'Detected Value', 'mainwp' ); ?></th>
-					<th class="collapsing center aligned"><?php _e( 'Status', 'mainwp' ); ?></th>
-					</tr>
-				</thead>
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Check', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Required Value', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
+					<th class="collapsing center aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+				</tr>
+			</thead>
 			<tbody>
-					<?php
-					self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '5.6', 'getPHPVersion', '', '', null );
-					self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'getSSLSupport', '', '', null );
-					self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'getCurlSupport', '', '', null );
-					self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'getMySQLVersion', '', '', null );
-					?>
-				</tbody>
-			</table>
+				<?php
+				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '5.6', 'get_php_version', '', '', null );
+				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
+				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
+				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
+				?>
+			</tbody>
+		</table>
 		<?php
 	}
 
-	public static function is_localhost() {
-		$whitelist = array( '127.0.0.1', "::1" );
-		if ( in_array( $_SERVER[ 'REMOTE_ADDR' ], $whitelist ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	public static function getCurrentVersion() {
-		$currentVersion = get_option( 'mainwp_plugin_version' );
-		return $currentVersion;
-	}
-
-	public static function getMainWPVersion() {
-		if ( ( isset( $_SESSION[ 'cachedVersion' ] ) ) && ( NULL !== $_SESSION[ 'cachedVersion' ] ) && ( ( $_SESSION[ 'cachedTime' ] + ( 60 * 30 ) ) > time() ) ) {
-			return $_SESSION[ 'cachedVersion' ];
-		}
-		include_once( ABSPATH . '/wp-admin/includes/plugin-install.php' );
-		$api = plugins_api( 'plugin_information', array(
-			'slug'		 => 'mainwp',
-			'fields'	 => array( 'sections' => false ),
-			'timeout'	 => 60,
-		) );
-		if ( is_object( $api ) && isset( $api->version ) ) {
-			$_SESSION[ 'cachedTime' ]		 = time();
-			$_SESSION[ 'cachedVersion' ]	 = $api->version;
-			return $_SESSION[ 'cachedVersion' ];
-		}
-		return false;
-	}
-
-	// Compare the detected MainWP Dashboard version agains the verion in WP.org
-	public static function getMainWPVersionCheck() {
+	/**
+	 * Method get_mainwp_version_check()
+	 *
+	 * Compare the detected MainWP Dashboard version agains the verion in WP.org.
+	 *
+	 * @return mixed Pass|self::get_warning_html().
+	 */
+	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
-		$latest	 = self::getMainwpVersion();
+		$latest  = MainWP_Server_Information_Handler::get_mainwp_version();
 		if ( $current == $latest ) {
 			return '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>';
 		} else {
-			return self::getWarningHTML();
+			return self::get_warning_html();
 		}
 	}
 
-	// Render the Cron Schedule page
-	public static function renderCron() {
+	/**
+	 * Method render_cron()
+	 *
+	 * Render the Cron Schedule page
+	 *
+	 * @return html Cron Schedual Page html.
+	 */
+	public static function render_cron() {
 
-        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-			mainwp_do_not_have_permissions( __( 'cron schedules', 'mainwp' ) );
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
 
 			return;
 		}
 
-		self::renderHeader( 'ServerInformationCron' );
+		self::render_header( 'ServerInformationCron' );
 
 		$cron_jobs = array(
-			'Check for available updates'		 	 => array( 'mainwp_cron_last_updatescheck', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
-			'Check for new statistics'				 => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
-			'Ping childs sites'				 				 => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) )
+			'Check for available updates'            => array( 'mainwp_updatescheck_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
+			'Check for new statistics'               => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
+			'Ping childs sites'                      => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
 		);
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			$cron_jobs['Start backups (Legacy)'] 	 				 = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', __( 'Once hourly', 'mainwp' ) );
-			$cron_jobs['Continue backups (Legacy)'] 	 		 = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', __( 'Once every five minutes', 'mainwp' ) );
+			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', __( 'Once hourly', 'mainwp' ) );
+			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', __( 'Once every five minutes', 'mainwp' ) );
 		}
 
 		?>
 
-		<?php do_action( 'mainwp-before-cron-jobs-table' ); ?>
+		<?php do_action( 'mainwp_before_cron_jobs_table' ); ?>
 
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
 			<thead>
 				<tr>
-					<th><?php _e( 'Cron Job', 'mainwp' ); ?></th>
-					<th><?php _e( 'Hook', 	  'mainwp' ); ?></th>
-					<th><?php _e( 'Schedule', 'mainwp' ); ?></th>
-					<th><?php _e( 'Last Run', 'mainwp' ); ?></th>
-					<th><?php _e( 'Next Run', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Cron Job', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Hook', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Schedule', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Last Run', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Next Run', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach ( $cron_jobs as $cron_job => $hook ) {
-				$next_run = wp_next_scheduled( $hook[1] );
-				?>
-				<tr>
-					<td><?php echo $cron_job; ?></td>
-					<td><?php echo $hook[1]; ?></td>
-					<td><?php echo $hook[2]; ?></td>
-					<td><?php echo ( get_option( $hook[0] ) === false || get_option( $hook[0] ) == 0 ) ? __( 'Never', 'mainwp' ) : MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( get_option( $hook[0] ) ) ); ?></td>
-					<td><?php echo MainWP_Utility::formatTimestamp( MainWP_Utility::getTimestamp( $next_run ) ); ?></td>
-				</tr>
 				<?php
+				foreach ( $cron_jobs as $cron_job => $hook ) {
+					$next_run = wp_next_scheduled( $hook[1] );
+					?>
+					<tr>
+						<td><?php echo $cron_job; ?></td>
+						<td><?php echo $hook[1]; ?></td>
+						<td><?php echo $hook[2]; ?></td>
+						<td><?php echo ( false == get_option( $hook[0] ) ) ? esc_html__( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
+						<td><?php echo MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) ); ?></td>
+					</tr>
+					<?php
 				}
-				do_action( 'mainwp-cron-jobs-list' );
+				do_action( 'mainwp_cron_jobs_list' );
 				?>
 			</tbody>
 		</table>
 		<script type="text/javascript">
-		jQuery('#mainwp-cron-jobs-table').DataTable( {
+		jQuery( '#mainwp-cron-jobs-table' ).DataTable( {
 				"paging": false,
 		} );
 		</script>
 		<?php
 
-		do_action( 'mainwp-after-cron-jobs-table' );
+		do_action( 'mainwp_after_cron_jobs_table' );
 
-		self::renderFooter( 'ServerInformationCron' );
+		self::render_footer( 'ServerInformationCron' );
 	}
 
-	// Check if the ../wp-content/uploads/mainwp/ directory is writable
-	public static function checkDirectoryMainWPDirectory() {
-		$dirs	 = MainWP_Utility::getMainWPDir();
-		$path	 = $dirs[ 0 ];
+	/**
+	 * Method check_directory_mainwp_directory()
+	 *
+	 * Check if the ../wp-content/uploads/mainwp/ directory is writable
+	 *
+	 * @return boolean true|false.
+	 */
+	public static function check_directory_mainwp_directory() {
+		$dirs = MainWP_System_Utility::get_mainwp_dir();
+		$path = $dirs[0];
 
-		if ( !is_dir( dirname( $path ) ) ) {
-			return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Found', false, self::ERROR );
+		if ( ! is_dir( dirname( $path ) ) ) {
+			return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Found', false, self::ERROR );
 		}
 
-		$hasWPFileSystem = MainWP_Utility::getWPFilesystem();
+		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-		/** @global WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 
-		if ( $hasWPFileSystem && !empty( $wp_filesystem ) ) {
-			if ( !$wp_filesystem->is_writable( $path ) ) {
-				return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
+		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+			if ( ! $wp_filesystem->is_writable( $path ) ) {
+				return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
 			}
 		} else {
-			if ( !is_writable( $path ) ) {
-				return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
+			if ( ! is_writable( $path ) ) {
+				return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Not Writable', false, self::ERROR );
 			}
 		}
-		return self::renderDirectoryRow( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
+		return self::render_directory_row( 'MainWP Upload Directory', 'Writable', 'Writable', true, self::ERROR );
 	}
 
-	// Print the directory check row
-	public static function renderDirectoryRow( $pName, $pCheck, $pResult, $pPassed, $errorType = self::WARNING ) {
+	/**
+	 * Method render_directory_row()
+	 *
+	 * Render the directory check row.
+	 *
+	 * @param string  $name check name.
+	 * @param string  $check desired result.
+	 * @param string  $result detected result.
+	 * @param boolean $passed true|false check result.
+	 * @param int     $errorType global variable self::WARNING = 1.
+	 *
+	 * @return boolean true.
+	 */
+	public static function render_directory_row( $name, $check, $result, $passed, $errorType = self::WARNING ) {
 		?>
 		<tr>
-			<td><?php echo $pName; ?></td>
-			<td><?php echo $pCheck; ?></td>
-			<td><?php echo $pResult; ?></td>
-			<td><?php echo( $pPassed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
+			<td><?php echo esc_html( $name ); ?></td>
+			<td><?php echo esc_html( $check ); ?></td>
+			<td><?php echo esc_html( $result ); ?></td>
+			<td><?php echo ( $passed ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		</tr>
 		<?php
 		return true;
 	}
 
-	public static function renderRow( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( MainWP_Server_Information::getClassName(), $pGetter ) );
+	/**
+	 * Method render_row()
+	 *
+	 * Render server information table row.
+	 *
+	 * @param string $config configuraion check.
+	 * @param string $compare comparison operator.
+	 * @param mixed  $version reqiored minium version number.
+	 * @param mixed  $getter detected version number.
+	 * @param string $extraText additionl text.
+	 * @param null   $extraCompare extra compare.
+	 * @param null   $extraVersion extra version.
+	 * @param null   $whatType comparison type.
+	 * @param int    $errorType global variable self::WARNING = 1.
+	 */
+	public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
 		?>
 		<tr>
-			<td><?php echo $pConfig; ?></td>
-			<td><?php echo $pCompare; ?><?php echo ( $pVersion === true ? 'true' : ( is_array( $pVersion ) && isset( $pVersion[ 'version' ] ) ? $pVersion[ 'version' ] : $pVersion ) ) . ' ' . $pExtraText; ?></td>
-			<td><?php echo( $currentVersion === true ? 'true' : $currentVersion ); ?></td>
-			<?php if ( $whatType == 'filesize' ) { ?>
-				<td><?php echo( self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ( $whatType == 'curlssl' ) { ?>
-				<td><?php echo( self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ( ($pGetter == 'getMaxInputTime' || $pGetter == 'getMaxExecutionTime') && $currentVersion == -1 ) { ?>
+			<td><?php echo esc_html( $config ); ?></td>
+			<td><?php echo esc_html( $compare ); ?><?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
+			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
+			<?php if ( 'filesize' === $whatType ) { ?>
+				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'curlssl' === $whatType ) { ?>
+				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>
-				<td><?php echo (version_compare( $currentVersion, $pVersion, $pCompare ) || (($pExtraCompare != null) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare )) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType )); ?></td>
+				<td><?php echo ( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 		<?php } ?>
 		</tr>
 		<?php
 	}
 
-	public static function render_row_with_description( $pConfig, $pCompare, $pVersion, $pGetter, $pExtraText = '', $pExtraCompare = null, $pExtraVersion = null, $whatType = null, $errorType = self::WARNING ) {
-		$currentVersion = call_user_func( array( MainWP_Server_Information::getClassName(), $pGetter ) );
+	/**
+	 * Method render_row_with_description()
+	 *
+	 * Render server information table row with description.
+	 *
+	 * @param string $config configuraion check.
+	 * @param string $compare comparison operator.
+	 * @param mixed  $version reqiored minium version number.
+	 * @param mixed  $getter detected version number.
+	 * @param string $extraText additionl text.
+	 * @param null   $extraCompare extra compare.
+	 * @param null   $extraVersion extra version.
+	 * @param null   $whatType comparison type.
+	 * @param int    $errorType global variable self::WARNING = 1.
+	 */
+	public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
+		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
 		?>
 		<tr>
-			<td><?php echo $pConfig; ?></td>
-			<td><?php echo $pCompare; ?>  <?php echo ($pVersion === true ? 'true' : ( is_array( $pVersion ) && isset( $pVersion[ 'version' ] ) ? $pVersion[ 'version' ] : $pVersion)) . ' ' . $pExtraText; ?></td>
-			<td><?php echo ($currentVersion === true ? 'true' : $currentVersion); ?></td>
-			<?php if ( $whatType == 'filesize' ) { ?>
-				<td><?php echo (self::filesize_compare( $currentVersion, $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ( $whatType == 'curlssl' ) { ?>
-				<td><?php echo (self::curlssl_compare( $pVersion, $pCompare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-			<?php } else if ( $pGetter == 'getMaxInputTime' && $currentVersion == -1 ) { ?>
-				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
-		<?php } else { ?>
-				<td><?php echo( version_compare( $currentVersion, $pVersion, $pCompare ) || ( ( $pExtraCompare != null ) && version_compare( $currentVersion, $pExtraVersion, $pExtraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::getWarningHTML( $errorType ) ); ?></td>
-		<?php } ?>
+			<td><?php echo esc_html( $config ); ?></td>
+			<td><?php echo esc_html( $compare ); ?>  <?php echo ( true === $version ? 'true' : ( is_array( $version ) && isset( $version['version'] ) ? $version['version'] : $version ) ) . ' ' . $extraText; ?></td>
+			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
+			<?php if ( 'filesize' === $whatType ) { ?>
+			<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'curlssl' === $whatType ) { ?>
+			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
+			<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
+			<?php } else { ?>
+			<td><?php echo( version_compare( $currentVersion, $version, $compare ) || ( ( null != $extraCompare ) && version_compare( $currentVersion, $extraVersion, $extraCompare ) ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } ?>
 		</tr>
 		<?php
 	}
 
-	// Check if the Dashboard site is Multisite setup
-	public static function checkIfMultisite() {
-		$isMultisite = !is_multisite() ? true : false;
-
-		return $isMultisite;
-	}
-
-	public static function checkCURLSSLInfo() {
-		$isSupport	 = ( self::getCurlSupport() && self::getSSLSupport() ) ? true : false;
-		$checkCURL	 = version_compare( self::getCurlVersion(), '7.18.1', '>=' );
-		$checkSSL	 = self::curlssl_compare( array(
-			'version_number' => 0x009080cf,
-			'version'		 => 'OpenSSL/0.9.8l',
-		), '>=' );
-
-		return $isSupport && $checkSSL && $checkCURL;
-	}
-
-	public static function filesize_compare( $value1, $value2, $operator = null ) {
-		if ( strpos( $value1, 'G' ) !== false ) {
-			$value1	 = preg_replace( '/[A-Za-z]/', '', $value1 );
-			$value1	 = intval( $value1 ) * 1024; // Megabyte number
+	/**
+	 * Method get_file_system_method_check()
+	 *
+	 * Check if file system method is direct.
+	 *
+	 * @return mixed html|self::get_warning_html().
+	 */
+	public static function get_file_system_method_check() {
+		$fsmethod = MainWP_Server_Information_Handler::get_file_system_method();
+		if ( 'direct' === $fsmethod ) {
+			return '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>';
 		} else {
-			$value1 = preg_replace( '/[A-Za-z]/', '', $value1 ); // Megabyte number
-		}
-
-		if ( strpos( $value2, 'G' ) !== false ) {
-			$value2	 = preg_replace( '/[A-Za-z]/', '', $value2 );
-			$value2	 = intval( $value2 ) * 1024; // Megabyte number
-		} else {
-			$value2 = preg_replace( '/[A-Za-z]/', '', $value2 ); // Megabyte number
-		}
-
-		return version_compare( $value1, $value2, $operator );
-	}
-
-	public static function curlssl_compare( $value, $operator = null ) {
-		if ( isset( $value[ 'version_number' ] ) && defined( 'OPENSSL_VERSION_NUMBER' ) ) {
-			return version_compare( OPENSSL_VERSION_NUMBER, $value[ 'version_number' ], $operator );
-		}
-
-		return false;
-	}
-
-	public static function getFileSystemMethod() {
-		$fs = get_filesystem_method();
-
-		return $fs;
-	}
-
-	public static function getFileSystemMethodCheck() {
-		$fsmethod = self::getFileSystemMethod();
-		if ( $fsmethod == 'direct' ) {
-			return '<div class="ui green basic label"><i class="check circle icon"></i> Pass</div>';
-		} else {
-			return self::getWarningHTML();
+			return self::get_warning_html();
 		}
 	}
 
-	public static function getLoadedPHPExtensions() {
-		$extensions = get_loaded_extensions();
-		sort( $extensions );
-		echo implode( ', ', $extensions );
-	}
-
-	public static function getWordpressMemoryLimit() {
-		return WP_MEMORY_LIMIT;
-	}
-
-	public static function getCurlVersion() {
-		$curlversion = curl_version();
-
-		return $curlversion[ 'version' ];
-	}
-
-	public static function getCurlSSLVersion() {
-		$curlversion = curl_version();
-
-		return $curlversion[ 'ssl_version' ];
-	}
-
-	public static function getWordpressVersion() {
-		global $wp_version;
-
-		return $wp_version;
-	}
-
-	public static function getSSLSupport() {
-		return extension_loaded( 'openssl' );
-	}
-
-	public static function getSSLWarning() {
-		$conf		 = array( 'private_key_bits' => 2048 );
-		$conf_loc	 = MainWP_System::get_openssl_conf();
-		if ( !empty( $conf_loc ) ) {
-			$conf[ 'config' ] = $conf_loc;
-		}
-		$res = @openssl_pkey_new( $conf );
-		@openssl_pkey_export( $res, $privkey, null, $conf );
-
-		$str = openssl_error_string();
-
-		return ( stristr( $str, 'NCONF_get_string:no value' ) ? '' : $str );
-	}
-
-	public static function isOpensslConfigWarning() {
-		$ssl_warning = MainWP_Server_Information::getSSLWarning();
-		if ( $ssl_warning != '' ) {
-			if ( stristr( $ssl_warning, __( 'No such file or directory found', 'mainwp' ) ) !== false ) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static function getCurlSupport() {
-		return function_exists( 'curl_version' );
-	}
-
-	public static function getCurlTimeout() {
-		return ini_get( 'default_socket_timeout' );
-	}
-
-	public static function getPHPVersion() {
-		return phpversion();
-	}
-
-	public static function getMaxExecutionTime() {
-		return ini_get( 'max_execution_time' );
-	}
-
-	public static function getMaxInputTime() {
-		return ini_get( 'max_input_time' );
-	}
-
-	public static function getUploadMaxFilesize() {
-		return ini_get( 'upload_max_filesize' );
-	}
-
-	public static function getPostMaxSize() {
-		return ini_get( 'post_max_size' );
-	}
-
-	public static function getMySQLVersion() {
-		return MainWP_DB::Instance()->getMySQLVersion();
-	}
-
-	public static function getPHPMemoryLimit() {
-		return ini_get( 'memory_limit' );
-	}
-
-	public static function getOS( $return = false ) {
-		if ( $return )
-			return PHP_OS;
-		else
-			echo PHP_OS;
-	}
-
-	public static function getArchitecture() {
-		echo( PHP_INT_SIZE * 8 )
-		?>&nbsp;bit <?php
-	}
-
-	public static function memoryUsage() {
-		if ( function_exists( 'memory_get_usage' ) ) {
-			$memory_usage = round( memory_get_usage() / 1024 / 1024, 2 ) . __( ' MB' );
-		} else {
-			$memory_usage = __( 'N/A' );
-		}
-		echo $memory_usage;
-	}
-
-	public static function getOutputBufferSize() {
-		return ini_get( 'pcre.backtrack_limit' );
-	}
-
-	public static function getPHPSafeMode() {
-		if ( version_compare( self::getPHPVersion(), '5.3.0' ) >= 0 )
-			return true;
-
-		if ( ini_get( 'safe_mode' ) ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	public static function getSQLMode() {
-		global $wpdb;
-		$mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" );
-		if ( is_array( $mysqlinfo ) ) {
-			$sql_mode = $mysqlinfo[ 0 ]->Value;
-		}
-		if ( empty( $sql_mode ) ) {
-			$sql_mode = __( 'NOT SET' );
-		}
-		echo $sql_mode;
-	}
-
-	public static function getPHPAllowUrlFopen() {
-		if ( ini_get( 'allow_url_fopen' ) ) {
-			$allow_url_fopen = __( 'YES', 'mainwp' );
-		} else {
-			$allow_url_fopen = __( 'NO', 'mainwp' );
-		}
-		echo $allow_url_fopen;
-	}
-
-	public static function getPHPExif() {
-		if ( is_callable( 'exif_read_data' ) ) {
-			$exif = __( 'YES', 'mainwp' ) . ' ( V' . substr( phpversion( 'exif' ), 0, 4 ) . ')';
-		} else {
-			$exif = __( 'NO', 'mainwp' );
-		}
-		echo $exif;
-	}
-
-	public static function getPHPIPTC() {
-		if ( is_callable( 'iptcparse' ) ) {
-			$iptc = __( 'YES', 'mainwp' );
-		} else {
-			$iptc = __( 'NO', 'mainwp' );
-		}
-		echo $iptc;
-	}
-
-	public static function getPHPXML() {
-		if ( is_callable( 'xml_parser_create' ) ) {
-			$xml = __( 'YES', 'mainwp' );
-		} else {
-			$xml = __( 'NO', 'mainwp' );
-		}
-		echo $xml;
-	}
-
-	public static function getCurrentlyExecutingScript() {
-		echo $_SERVER[ 'PHP_SELF' ];
-	}
-
-	public static function getServerGatewayInterface() {
-		echo isset($_SERVER[ 'GATEWAY_INTERFACE' ]) ? $_SERVER[ 'GATEWAY_INTERFACE' ] : '';
-	}
-
-	public static function getServerIP() {
-		echo $_SERVER[ 'SERVER_ADDR' ];
-	}
-
-	public static function getServerName( $return = false ) {
-		if ( $return )
-			return $_SERVER[ 'SERVER_NAME' ];
-		else
-			echo $_SERVER[ 'SERVER_NAME' ];
-	}
-
-	public static function getServerSoftware( $return = false ) {
-		if ( $return )
-			return $_SERVER[ 'SERVER_SOFTWARE' ];
-		else
-			echo $_SERVER[ 'SERVER_SOFTWARE' ];
-	}
-
-    public static function isApacheServerSoftware($return = false) {
-        $server = self::getServerSoftware(true);
-        return (stripos( $server, 'apache' ) !== false) ? true : false;
-	}
-
-	public static function getServerProtocol() {
-		echo $_SERVER[ 'SERVER_PROTOCOL' ];
-	}
-
-	public static function getServerRequestMethod() {
-		echo $_SERVER[ 'REQUEST_METHOD' ];
-	}
-
-	public static function getServerRequestTime() {
-		echo $_SERVER[ 'REQUEST_TIME' ];
-	}
-
-	public static function getServerQueryString() {
-		echo $_SERVER[ 'QUERY_STRING' ];
-	}
-
-	public static function getServerHTTPAccept() {
-		echo $_SERVER[ 'HTTP_ACCEPT' ];
-	}
-
-	public static function getServerAcceptCharset() {
-		if ( !isset( $_SERVER[ 'HTTP_ACCEPT_CHARSET' ] ) || ( $_SERVER[ 'HTTP_ACCEPT_CHARSET' ] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
-		} else {
-			echo $_SERVER[ 'HTTP_ACCEPT_CHARSET' ];
-		}
-	}
-
-	public static function getHTTPHost() {
-		echo $_SERVER[ 'HTTP_HOST' ];
-	}
-
-	public static function getCompleteURL() {
-		echo isset( $_SERVER[ 'HTTP_REFERER' ] ) ? $_SERVER[ 'HTTP_REFERER' ] : '';
-	}
-
-	public static function getUserAgent() {
-		echo $_SERVER[ 'HTTP_USER_AGENT' ];
-	}
-
-	public static function getHTTPS() {
-		if ( isset( $_SERVER[ 'HTTPS' ] ) && $_SERVER[ 'HTTPS' ] != '' ) {
-			echo __( 'ON', 'mainwp' ) . ' - ' . $_SERVER[ 'HTTPS' ];
-		} else {
-			echo __( 'OFF', 'mainwp' );
-		}
-	}
-
-	public static function serverSelfConnect() {
-		$url		 = site_url( 'wp-cron.php' );
-		$query_args	 = array( 'mainwp_run' => 'test' );
-		$url		 = esc_url_raw( add_query_arg( $query_args, $url ) );
-		$args		 = array( 'blocking'	 => TRUE,
-			'sslverify'	 => apply_filters( 'https_local_ssl_verify', true ),
-			'timeout'	 => 15
-		);
-		$response	 = wp_remote_post( $url, $args );
-		$test_result = '';
-		if ( is_wp_error( $response ) ) {
-			$test_result .= sprintf( __( 'The HTTP response test get an error "%s"', 'mainwp' ), $response->get_error_message() );
-		}
-		$response_code = wp_remote_retrieve_response_code( $response );
-		if ( $response_code < 200 && $response_code > 204 ) {
-			$test_result .= sprintf( __( 'The HTTP response test get a false http status (%s)', 'mainwp' ), wp_remote_retrieve_response_code( $response ) );
-		} else {
-			$response_body = wp_remote_retrieve_body( $response );
-			if ( FALSE === strstr( $response_body, 'MainWP Test' ) ) {
-				$test_result .= sprintf( __( 'Not expected HTTP response body: %s', 'mainwp' ), esc_attr( strip_tags( $response_body ) ) );
-			}
-		}
-		if ( empty( $test_result ) ) {
-			_e( 'Response Test O.K.', 'mainwp' );
-		} else
-			echo $test_result;
-	}
-
-	public static function getRemoteAddress() {
-		echo $_SERVER[ 'REMOTE_ADDR' ];
-	}
-
-	public static function getRemoteHost() {
-		if ( !isset( $_SERVER[ 'REMOTE_HOST' ] ) || ( $_SERVER[ 'REMOTE_HOST' ] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
-		} else {
-			echo $_SERVER[ 'REMOTE_HOST' ];
-		}
-	}
-
-	public static function getRemotePort() {
-		echo $_SERVER[ 'REMOTE_PORT' ];
-	}
-
-	public static function getScriptFileName() {
-		echo $_SERVER[ 'SCRIPT_FILENAME' ];
-	}
-
-	public static function getServerAdmin() {
-		echo $_SERVER[ 'SERVER_ADMIN' ];
-	}
-
-	public static function getServerPort() {
-		echo $_SERVER[ 'SERVER_PORT' ];
-	}
-
-	public static function getServerSignature() {
-		echo $_SERVER[ 'SERVER_SIGNATURE' ];
-	}
-
-	public static function getServerPathTranslated() {
-		if ( !isset( $_SERVER[ 'PATH_TRANSLATED' ] ) || ( $_SERVER[ 'PATH_TRANSLATED' ] == '' ) ) {
-			echo __( 'N/A', 'mainwp' );
-		} else {
-			echo $_SERVER[ 'PATH_TRANSLATED' ];
-		}
-	}
-
-	public static function getScriptName() {
-		echo $_SERVER[ 'SCRIPT_NAME' ];
-	}
-
-	public static function getCurrentPageURI() {
-		echo $_SERVER[ 'REQUEST_URI' ];
-	}
-
-	public static function getWPRoot() {
-		echo ABSPATH;
-	}
-
-	function formatSizeUnits( $bytes ) {
-		if ( $bytes >= 1073741824 ) {
-			$bytes = number_format( $bytes / 1073741824, 2 ) . ' GB';
-		} elseif ( $bytes >= 1048576 ) {
-			$bytes = number_format( $bytes / 1048576, 2 ) . ' MB';
-		} elseif ( $bytes >= 1024 ) {
-			$bytes = number_format( $bytes / 1024, 2 ) . ' KB';
-		} elseif ( $bytes > 1 ) {
-			$bytes = $bytes . ' bytes';
-		} elseif ( $bytes == 1 ) {
-			$bytes = $bytes . ' byte';
-		} else {
-			$bytes = '0 bytes';
-		}
-
-		return $bytes;
-	}
-
-	/*
+	/**
+	 * Method render_error_log_page()
+	 *
+	 * Render Error Log page.
+	 *
 	 * Plugin Name: Error Log Dashboard Widget
 	 * Plugin URI: http://wordpress.org/extend/plugins/error-log-dashboard-widget/
 	 * Description: Robust zero-configuration and low-memory way to keep an eye on error log.
@@ -1097,221 +883,178 @@ class MainWP_Server_Information {
 
 	 * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
 	 */
+	public static function render_error_log_page() {
 
-	public static function renderErrorLogPage() {
-
-        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-			mainwp_do_not_have_permissions( __( 'error log', 'mainwp' ) );
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( 'error log', 'mainwp' );
 
 			return;
 		}
 
-		self::renderHeader( 'ErrorLog' );
+		self::render_header( 'ErrorLog' );
 		?>
 		<table class="ui stackable celled table" id="mainwp-error-log-table">
 			<thead>
 				<tr>
-					<th><?php _e( 'Time', 'mainwp' ); ?></th>
-					<th><?php _e( 'Error', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Time', 'mainwp' ); ?></th>
+					<th><?php esc_html_e( 'Error', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
-				<?php self::renderErrorLog(); ?>
+				<?php self::render_error_log(); ?>
 			</tbody>
 		</table>
 		<?php
-		self::renderFooter( 'ErrorLog' );
+		self::render_footer( 'ErrorLog' );
 	}
 
-	public static function renderErrorLog() {
+	/**
+	 * Method render_error_log()
+	 *
+	 * Render error log page.
+	 *
+	 * @return html Error log page html.
+	 */
+	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
 		if ( ! $log_errors ) {
-			echo '<tr><td colspan="2">' . __( 'Error logging disabled.', 'mainwp' );
-			echo '<br/>' . sprintf( __( 'To enable error logging, please check this %shelp document%s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' );
+			echo '<tr><td colspan="2">' . esc_html__( 'Error logging disabled.', 'mainwp' );
+			echo '<br/>' . sprintf( esc_html__( 'To enable error logging, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://codex.wordpress.org/Debugging_in_WordPress" target="_blank">', '</a>' );
 			echo '</td></tr>';
 		}
 
-		$error_log	 = ini_get( 'error_log' );
-		$logs		 		 = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
-		$count		 	 = apply_filters( 'error_log_mainwp_lines', 50 );
-		$lines		 	 = array();
+		$error_log = ini_get( 'error_log' );
+		$logs      = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
+		$count     = apply_filters( 'error_log_mainwp_lines', 50 );
+		$lines     = array();
 
 		foreach ( $logs as $log ) {
 
 			if ( is_readable( $log ) ) {
-				$lines = array_merge( $lines, self::last_lines( $log, $count ) );
+				$lines = array_merge( $lines, MainWP_Server_Information_Handler::last_lines( $log, $count ) );
 			}
 		}
 
-		$lines	 = array_map( 'trim', $lines );
-		$lines	 = array_filter( $lines );
+		$lines = array_map( 'trim', $lines );
+		$lines = array_filter( $lines );
 
 		if ( empty( $lines ) ) {
 
-			echo '<tr><td colspan="2">' . __( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
+			echo '<tr><td colspan="2">' . esc_html__( 'MainWP is unable to find your error logs, please contact your host for server error logs.', 'mainwp' ) . '</td></tr>';
 
 			return;
 		}
 
 		foreach ( $lines as $key => $line ) {
 
-			if ( false != strpos( $line, ']' ) ) {
+			if ( false !== strpos( $line, ']' ) ) {
 				list( $time, $error ) = explode( ']', $line, 2 );
 			} else {
 				list( $time, $error ) = array( '', $line );
 			}
 
-			$time		 			 = trim( $time, '[]' );
-			$error		 		 = trim( $error );
+			$time          = trim( $time, '[]' );
+			$error         = trim( $error );
 			$lines[ $key ] = compact( 'time', 'error' );
 		}
 
-		if ( count( $lines ) > 1 ) {
+		if ( 1 < count( $lines ) ) {
 
-			uasort( $lines, array( __CLASS__, 'time_compare' ) );
+			uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
 			$lines = array_slice( $lines, 0, $count );
 		}
 
 		foreach ( $lines as $line ) {
 
-			$error	 = esc_html( $line[ 'error' ] );
-			$time	   = esc_html( $line[ 'time' ] );
-			if ( !empty( $error ) ) {
+			$error = esc_html( $line['error'] );
+			$time  = esc_html( $line['time'] );
+			if ( ! empty( $error ) ) {
 				echo "<tr><td>{$time}</td><td>{$error}</td></tr>";
 			}
 		}
 	}
 
-	static function time_compare( $a, $b ) {
+	/**
+	 * Method render_wp_config()
+	 *
+	 * Render the wp comfig page.
+	 *
+	 * @return html WP Config page html.
+	 */
+	public static function render_wp_config() {
 
-		if ( $a == $b ) {
-			return 0;
-		}
-
-		return ( strtotime( $a[ 'time' ] ) > strtotime( $b[ 'time' ] ) ) ? - 1 : 1;
-	}
-
-	static function last_lines( $path, $line_count, $block_size = 512 ) {
-		$lines = array();
-
-		// we will always have a fragment of a non-complete line
-		// keep this in here till we have our next entire line.
-		$leftover = '';
-
-		$fh = fopen( $path, 'r' );
-		// go to the end of the file
-		fseek( $fh, 0, SEEK_END );
-
-		do {
-			// need to know whether we can actually go back
-			// $block_size bytes
-			$can_read = $block_size;
-
-			if ( ftell( $fh ) <= $block_size ) {
-				$can_read = ftell( $fh );
-			}
-
-			if ( empty( $can_read ) ) {
-				break;
-			}
-
-			// go back as many bytes as we can
-			// read them to $data and then move the file pointer
-			// back to where we were.
-			fseek( $fh, - $can_read, SEEK_CUR );
-			$data	 = fread( $fh, $can_read );
-			$data	 .= $leftover;
-			fseek( $fh, - $can_read, SEEK_CUR );
-
-			// split lines by \n. Then reverse them,
-			// now the last line is most likely not a complete
-			// line which is why we do not directly add it, but
-			// append it to the data read the next time.
-			$split_data	 = array_reverse( explode( "\n", $data ) );
-			$new_lines	 = array_slice( $split_data, 0, - 1 );
-			$lines		 = array_merge( $lines, $new_lines );
-			$leftover	 = $split_data[ count( $split_data ) - 1 ];
-		} while ( count( $lines ) < $line_count && ftell( $fh ) != 0 );
-
-		if ( ftell( $fh ) == 0 ) {
-			$lines[] = $leftover;
-		}
-
-		fclose( $fh );
-
-		// Usually, we will read too many lines, correct that here.
-		return array_slice( $lines, 0, $line_count );
-	}
-
-	public static function renderWPConfig() {
-
-        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-			mainwp_do_not_have_permissions( __( 'WP-Config.php', 'mainwp' ) );
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
 
 			return;
 		}
 
-		self::renderHeader( 'WPConfig' );
+		self::render_header( 'WPConfig' );
 		?>
 		<div id="mainwp-show-wp-config">
 			<?php
-			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
-				echo __( 'File content could not be displayed.', 'mainwp' );
-				echo "<br />";
-				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
-				echo "<br />";
-				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
+			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source' ) ) {
+				esc_html_e( 'File content could not be displayed.', 'mainwp' );
+				echo '<br />';
+				esc_html_e( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
+				echo '<br />';
+				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
-					@show_source( ABSPATH . 'wp-config.php' );
+					show_source( ABSPATH . 'wp-config.php' );
 				} else {
 
-					$files		 	 = @get_included_files();
+					$files       = get_included_files();
 					$configFound = false;
 					if ( is_array( $files ) ) {
 						foreach ( $files as $file ) {
 							if ( stristr( $file, 'wp-config.php' ) ) {
 								$configFound = true;
-								@show_source( $file );
+								show_source( $file );
 								break;
 							}
 						}
 					}
 
-					if ( !$configFound ) {
-						_e( 'wp-config.php not found', 'mainwp' );
+					if ( ! $configFound ) {
+						esc_html_e( 'wp-config.php not found', 'mainwp' );
 					}
 				}
 			}
 			?>
 		</div>
 		<?php
-		self::renderFooter( 'WPConfig' );
+		self::render_footer( 'WPConfig' );
 	}
 
-	public static function renderActionLogs() {
-		self::renderHeader( 'Action logs' );
+	/**
+	 * Method render_action_logs()
+	 *
+	 * Render action logs page.
+	 */
+	public static function render_action_logs() {
+		self::render_header( 'Action logs' );
 
-		if ( isset( $_REQUEST[ 'actionlogs_status' ] ) ) {
-			if ( $_REQUEST[ 'actionlogs_status' ] != MainWP_Logger::DISABLED ) {
-				MainWP_Logger::Instance()->setLogPriority( $_REQUEST[ 'actionlogs_status' ] );
+		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
+			if ( MainWP_Logger::DISABLED != $_REQUEST['actionlogs_status'] ) {
+				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
-			MainWP_Logger::Instance()->log( 'Action logs set to: ' . MainWP_Logger::Instance()->getLogText( $_REQUEST[ 'actionlogs_status' ] ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
 
-			if ( $_REQUEST[ 'actionlogs_status' ] == MainWP_Logger::DISABLED ) {
-				MainWP_Logger::Instance()->setLogPriority( $_REQUEST[ 'actionlogs_status' ] );
+			if ( MainWP_Logger::DISABLED == $_REQUEST['actionlogs_status'] ) {
+				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
 			}
 
-			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST[ 'actionlogs_status' ] );
+			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST['actionlogs_status'] );
 		}
 
-		if ( isset( $_REQUEST[ 'actionlogs_clear' ] ) ) {
-			MainWP_Logger::clearLog();
+		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
+			MainWP_Logger::clear_log();
 		}
 
 		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( $enabled === false ) {
+		if ( false === $enabled ) {
 			$enabled = MainWP_Logger::DISABLED;
 		}
 		?>
@@ -1320,177 +1063,109 @@ class MainWP_Server_Information {
 
 			<div style="padding: 1em;">
 				<form method="POST" action="">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					Status:
 					<select name="actionlogs_status">
-						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php
-		if ( MainWP_Logger::DISABLED == $enabled ) : echo 'selected';
-		endif;
-		?>>Disabled
+						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Disabled', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php
-						if ( MainWP_Logger::WARNING == $enabled ) : echo 'selected';
-						endif;
-						?>>Warning
+						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Warning', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::INFO; ?>" <?php
-								if ( MainWP_Logger::INFO == $enabled ) : echo 'selected';
-								endif;
-								?>>Info
+						<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Info', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php
-								if ( MainWP_Logger::DEBUG == $enabled ) : echo 'selected';
-								endif;
-								?>>Debug
+						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
-                         <option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php if ( MainWP_Logger::INFO_UPDATE == $enabled ) : echo 'selected';
-                            endif; ?>>Info Update
+						<option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php echo ( MainWP_Logger::INFO_UPDATE == $enabled ? 'selected' : '' ); ?>>
+							<?php esc_html_e( 'Info Update', 'mainwp' ); ?>
 						</option>
-					</select> <input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
+					</select>
+					<input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
 				</form>
 			</div>
-			<div style="padding: 1em;"><?php MainWP_Logger::showLog(); ?></div>
+			<div style="padding: 1em;"><?php MainWP_Logger::show_log(); ?></div>
 		</div>
 		<?php
-		self::renderFooter( 'Action logs' );
+		self::render_footer( 'Action logs' );
 	}
 
-	public static function renderhtaccess() {
+	/**
+	 * Method render_htaccess()
+	 *
+	 * Render htaccess page.
+	 *
+	 * @return html Htaccess page html.
+	 */
+	public static function render_htaccess() {
 
-        if ( ! mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
-			mainwp_do_not_have_permissions( __( '.htaccess', 'mainwp' ) );
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
 
 			return;
 		}
 
-		self::renderHeader( '.htaccess' );
+		self::render_header( '.htaccess' );
 		?>
 		<div id="mainwp-show-htaccess">
 			<?php
-			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source') ) {
- 				echo __( 'File content could not be displayed.', 'mainwp' );
-				echo "<br />";
-				echo __( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
-				echo "<br />";
-				echo __( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
+			if ( false !== strpos( ini_get( 'disable_functions' ), 'show_source' ) ) {
+				esc_html_e( 'File content could not be displayed.', 'mainwp' );
+				echo '<br />';
+				esc_html_e( 'It appears that the show_source() PHP function has been disabled on the servre.', 'mainwp' );
+				echo '<br />';
+				esc_html_e( 'Please, contact your host support and have them enable the show_source() function for the proper functioning of this feature.', 'mainwp' );
 			} else {
 				show_source( ABSPATH . '.htaccess' );
 			}
 			?>
 		</div>
 		<?php
-		self::renderFooter( '.htaccess' );
+		self::render_footer( '.htaccess' );
 	}
 
-	// Check for the disabled php functions.
-	public static function phpDisabledFunctions() {
+	/**
+	 * Method php_disabled_functions()
+	 *
+	 * Check for disable PHP Functions.
+	 */
+	public static function php_disabled_functions() {
 		$disabled_functions = ini_get( 'disable_functions' );
-		if ( $disabled_functions != '' ) {
+		if ( '' !== $disabled_functions ) {
 			$arr = explode( ',', $disabled_functions );
 			sort( $arr );
-			for ( $i = 0; $i < count( $arr ); $i ++ ) {
+			$_count = count( $arr );
+			for ( $i = 0; $i < $_count; $i ++ ) {
 				echo $arr[ $i ] . ', ';
 			}
 		} else {
-			echo __( 'No functions disabled.', 'mainwp' );
+			esc_html_e( 'No functions disabled.', 'mainwp' );
 		}
 	}
 
-	public static function mainwpOptions() {
-		$mainwp_options = array(
-			'mainwp_number_of_child_sites'					 					=> __( 'Number Of Child Sites', 'mainwp' ),
-			'mainwp_wp_cron'								 									=> __( 'Use WP-Cron', 'mainwp' ),
-			'mainwp_optimize'								 									=> __( 'Optimize for Shared Hosting or Big Networks', 'mainwp' ),
-			'mainwp_automaticDailyUpdate'					 						=> __( 'Automatic Daily Update', 'mainwp' ),
-			'mainwp_numberdays_Outdate_Plugin_Theme'		 			=> __( 'Abandoned Plugins/Themes Tolerance', 'mainwp' ),
-			'mainwp_maximumPosts'							 								=> __( 'Maximum number of posts to return', 'mainwp' ),
-			'mainwp_maximumPages'							 								=> __( 'Maximum number of pages to return', 'mainwp' ),
-			'mainwp_maximumComments'						 							=> __( 'Maximum Number of Comments', 'mainwp' ),
-			'mainwp_primaryBackup'							 							=> __( 'Primary Backup System', 'mainwp' ),
-			'mainwp_maximumRequests'						 							=> __( 'Maximum simultaneous requests', 'mainwp' ),
-			'mainwp_minimumDelay'							 								=> __( 'Minimum delay between requests', 'mainwp' ),
-			'mainwp_maximumIPRequests'						 						=> __( 'Maximum simultaneous requests per ip', 'mainwp' ),
-			'mainwp_minimumIPDelay'							 							=> __( 'Minimum delay between requests to the same ip', 'mainwp' ),
-			'mainwp_maximumSyncRequests'					 						=> __( 'Maximum simultaneous sync requests', 'mainwp' ),
-			'mainwp_maximumInstallUpdateRequests'			 				=> __( 'Minimum simultaneous install/update requests', 'mainwp' )
-		);
-
-		if ( !MainWP_Extensions::isExtensionAvailable( 'mainwp-comments-extension' ) ) {
-			unset( $mainwp_options[ 'mainwp_maximumComments' ] );
-		}
-
-		$options_value	 = array();
-		$userExtension	 = MainWP_DB::Instance()->getUserExtension();
-		foreach ( $mainwp_options as $opt => $label ) {
-			$value = get_option( $opt, false );
-			switch ( $opt ) {
-				case 'mainwp_number_of_child_sites':
-					$value				 = MainWP_DB::Instance()->getWebsitesCount();
-					break;
-				case 'mainwp_primaryBackup':
-					$value				 = __( 'Default MainWP Backups', 'mainwp' );
-					break;
-				case 'mainwp_numberdays_Outdate_Plugin_Theme';
-				case 'mainwp_maximumPosts';
-				case 'mainwp_maximumPages';
-				case 'mainwp_maximumComments';
-				case 'mainwp_maximumSyncRequests';
-				case 'mainwp_maximumInstallUpdateRequests';
-					break;
-				case 'mainwp_automaticDailyUpdate':
-					if ( $value == 1 ) {
-						$value 						 = 'Install trusted updates';
-					} else {
-						$value 						 = 'Disabled';
-					}
-					break;
-				case 'mainwp_maximumRequests':
-					$value	 = ($value === false) ? 4 : $value;
-					break;
-				case 'mainwp_maximumIPRequests':
-					$value	 = ($value === false) ? 1 : $value;
-					break;
-				case 'mainwp_minimumIPDelay':
-					$value	 = ($value === false) ? 1000 : $value;
-					break;
-				case 'mainwp_minimumDelay':
-					$value	 = ($value === false) ? 200 : $value;
-					break;
-				default:
-					$value	 = empty( $value ) ? 'No' : 'Yes';
-					break;
-			}
-			$options_value[ $opt ] = array( 'label' => $label, 'value' => $value );
-		}
-
-		$primaryBackup			 = get_option( 'mainwp_primaryBackup' );
-		$primaryBackupMethods	 = apply_filters( "mainwp-getprimarybackup-methods", array() );
-		if ( !is_array( $primaryBackupMethods ) ) {
-			$primaryBackupMethods = array();
-		}
-
-		if ( count( $primaryBackupMethods ) > 0 ) {
-			$chk = false;
-			foreach ( $primaryBackupMethods as $method ) {
-				if ( $primaryBackup == $method[ 'value' ] ) {
-					$value	 = $method[ 'title' ];
-					$chk	 = true;
-					break;
-				}
-			}
-			if ( $chk )
-				$options_value[ 'mainwp_primaryBackup' ] = array( 'label' => __( 'Primary Backup System', 'mainwp' ), 'value' => $value );
-		}
-		return $options_value;
-	}
-
-	public static function displayMainWPOptions() {
-		$options = self::mainwpOptions();
+	/**
+	 * Method display_mainwp_options()
+	 *
+	 * Render MainWP Settings 'Options'.
+	 */
+	public static function display_mainwp_options() {
+		$options = MainWP_Server_Information_Handler::mainwp_options();
 		foreach ( $options as $option ) {
-			echo '<tr><td colspan="2">' . $option[ 'label' ] . '</td><td colspan="2">' . $option[ 'value' ] . '</td></tr>';
+			echo '<tr><td colspan="2">' . $option['label'] . '</td><td colspan="2">' . $option['value'] . '</td></tr>';
 		}
 	}
 
-	private static function getWarningHTML( $errorType = self::WARNING ) {
+	/**
+	 * Method get_warning_html()
+	 *
+	 * Render PHP Warning HTML.
+	 *
+	 * @param int $errorType Global variable self::WARNING = 1.
+	 *
+	 * @return html PHP Warning html.
+	 */
+	private static function get_warning_html( $errorType = self::WARNING ) {
 		if ( self::WARNING == $errorType ) {
 			return '<div class="ui yellow basic label"><i class="exclamation circle icon"></i> ' . __( 'Warning', 'mainwp' ) . '</div>';
 		}

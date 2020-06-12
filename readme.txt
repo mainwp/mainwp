@@ -5,11 +5,11 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.3
+Tested up to: 5.3.2
 Requires PHP: 5.6
-Stable tag: 4.0.5
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: 4.0.7.2
+License: GPLv3 or later
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Manage WP sites from one central location! Much more than just updates, get nearly complete control of all your sites from your self-hosted Dashboard.
 
@@ -87,7 +87,7 @@ Both the MainWP Dashboard and Child plugin are fully open source and GPL complia
 = More Information =
 [MainWP Documentation](https://mainwp.com/help/)
 
-[MainWP User Group](https://www.facebook.com/groups/MainWPUsers/)
+[MainWP Community](https://meta.mainwp.com/)
 
 [MainWP Support](https://mainwp.com/support/)
 
@@ -153,6 +153,37 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.7.2 - 2-3-20 =
+* Fixed: an issue with loading Manage Sites table with AJAX
+* Fixed: an issue with dismissing the broken email functionality warning messages
+* Added: link to MainWP Community to the header element
+* Updated: renamed the "assests" directory to "assets"
+* Updated: multiple cosmetic improvements
+* Updated: removed some steps from the quick setup wizard
+
+= 4.0.7.1 - 1-22-20 =
+* Updated: multiple notification texts
+
+= 4.0.7 - 1-17-20 =
+* Fixed: encoding problem in error messages
+* Fixed: encoding problem posts categories selection
+* Fixed: multiple cosmetic problems
+* Added: a new feature to easily copy system report
+* Added: site ID parameter in the sync request
+* Updated: multiple notification texts
+* Updated: multiple layout tweaks
+* Preventative: security improvements
+
+= 4.0.6 - 12-9-19 =
+* Fixed: an issue with sending daily email notifications
+* Fixed: an issue with backup type selection
+* Fixed: MySQL 8 compatibility problems
+* Fixed: multiple typos
+* Added: 'mainwp_check_current_user_can' filter
+* Added: feature to check if the site can send emails
+* Added: support for the Pro Reports extension
+* Preventative: security improvements
 
 = 4.0.5 - 11-15-19 =
 * Fixed: an issue with daily sync frequency

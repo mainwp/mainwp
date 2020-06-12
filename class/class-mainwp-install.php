@@ -1,0 +1,403 @@
+<?php
+/**
+ * MainWP Install
+ *
+ * This file handles install MainWP DB.
+ *
+ * @package MainWP/Dashboard
+ */
+
+namespace MainWP\Dashboard;
+
+/**
+ * Class MainWP_DB
+ */
+class MainWP_Install extends MainWP_DB_Base {
+
+	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions.
+
+	/**
+	 * Private variable to hold the database version info.
+	 *
+	 * @var string DB version info.
+	 */
+	protected $mainwp_db_version = '8.21';
+
+	/**
+	 * Private static variable to hold the single instance of the class.
+	 *
+	 * @static
+	 *
+	 * @var mixed Default null
+	 */
+	private static $instance = null;
+
+	/**
+	 * Method instance()
+	 *
+	 * Return public static instance.
+	 *
+	 * @static
+	 * @return MainWP_DB
+	 */
+	public static function instance() {
+		if ( null == self::$instance ) {
+			self::$instance = new self();
+		}
+
+		self::$instance->test_connection();
+
+		return self::$instance;
+	}
+
+	/**
+	 * Method install()
+	 *
+	 * Installs the new DB.
+	 *
+	 * @return void
+	 */
+	public function install() {
+		// get_site_option is multisite aware!
+		$currentVersion = get_site_option( 'mainwp_db_version' );
+
+		if ( empty( $currentVersion ) ) {
+			update_option( 'mainwp_run_quick_setup', 'yes' );
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		} elseif ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+			MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		}
+
+		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
+		if ( 0 === self::num_rows( $rslt ) ) {
+			$currentVersion = false;
+		}
+
+		if ( $currentVersion == $this->mainwp_db_version ) {
+			return;
+		}
+
+		$charset_collate = $this->wpdb->get_charset_collate();
+
+		$sql = array();
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp' ) . ' (
+   id int(11) NOT NULL auto_increment,
+   userid int(11) NOT NULL,
+   adminname text NOT NULL,
+  name text NOT NULL,
+  url text NOT NULL,
+  pubkey text NOT NULL,
+  privkey text NOT NULL,
+  nossl tinyint(1) NOT NULL,
+  nosslkey text NOT NULL,
+  siteurl text NOT NULL,
+  ga_id text NOT NULL,
+  gas_id int(11) NOT NULL,
+  offline_checks text NOT NULL,
+  offline_checks_last int(11) NOT NULL,
+  offline_check_result int(11) NOT NULL,
+  http_response_code int(11) NOT NULL DEFAULT 0,
+  note text NOT NULL,
+  note_lastupdate int(11) NOT NULL DEFAULT 0,
+  statsUpdate int(11) NOT NULL,
+  directories longtext NOT NULL,
+  plugin_upgrades longtext NOT NULL,
+  theme_upgrades longtext NOT NULL,
+  translation_upgrades longtext NOT NULL,
+  premium_upgrades longtext NOT NULL,
+  securityIssues longtext NOT NULL,
+  themes longtext NOT NULL,
+  ignored_themes longtext NOT NULL,
+  plugins longtext NOT NULL,
+  ignored_plugins longtext NOT NULL,
+  pages longtext NOT NULL,
+  users longtext NOT NULL,
+  categories longtext NOT NULL,
+  pluginDir text NOT NULL,
+  automatic_update tinyint(1) NOT NULL,
+  backup_before_upgrade tinyint(1) NOT NULL DEFAULT 2,
+  backups text NOT NULL,
+  mainwpdir int(11) NOT NULL,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
+  is_ignoreCoreUpdates tinyint(1) NOT NULL DEFAULT 0,
+  is_ignorePluginUpdates tinyint(1) NOT NULL DEFAULT 0,
+  is_ignoreThemeUpdates tinyint(1) NOT NULL DEFAULT 0,
+  verify_certificate tinyint(1) NOT NULL DEFAULT 1,
+  force_use_ipv4 tinyint(1) NOT NULL DEFAULT 0,
+  ssl_version tinyint(1) NOT NULL DEFAULT 0,
+  ip text NOT NULL DEFAULT "",
+  uniqueId text NOT NULL,
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150,
+  http_user text NOT NULL DEFAULT "",
+  http_pass text NOT NULL DEFAULT "",
+  wpe tinyint(1) NOT NULL,
+  is_staging tinyint(1) NOT NULL DEFAULT 0,
+  KEY idx_userid (userid)';
+		if ( '' === $currentVersion ) {
+			$tbl .= ',
+  PRIMARY KEY  (id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_sync' ) . ' (
+   wpid int(11) NOT NULL,
+  version text NOT NULL DEFAULT "",
+  sync_errors longtext NOT NULL DEFAULT "",
+  uptodate longtext NOT NULL DEFAULT "",
+  dtsAutomaticSync int(11) NOT NULL DEFAULT 0,
+  dtsAutomaticSyncStart int(11) NOT NULL DEFAULT 0,
+  dtsSync int(11) NOT NULL DEFAULT 0,
+  dtsSyncStart int(11) NOT NULL DEFAULT 0,
+  totalsize int(11) NOT NULL DEFAULT 0,
+  dbsize int(11) NOT NULL DEFAULT 0,
+  extauth text NOT NULL DEFAULT "",
+  last_post_gmt int(11) NOT NULL DEFAULT 0,
+  health_issues int(11) NOT NULL DEFAULT 0,
+  KEY idx_wpid (wpid)) ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_options' ) . ' (
+  wpid int(11) NOT NULL,
+  name text NOT NULL DEFAULT "",
+  value longtext NOT NULL DEFAULT "",
+  KEY idx_wpid (wpid)) ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' (
+  wpid int(11) NOT NULL,
+  archiveFormat text NOT NULL,
+  KEY idx_wpid (wpid)) ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'users' ) . " (
+  userid int(11) NOT NULL,
+  user_email text NOT NULL DEFAULT '',
+  offlineChecksOnlineNotification tinyint(1) NOT NULL DEFAULT '0',
+  heatMap tinyint(1) NOT NULL DEFAULT '0',
+  ignored_plugins longtext NOT NULL DEFAULT '',
+  trusted_plugins longtext NOT NULL DEFAULT '',
+  trusted_plugins_notes longtext NOT NULL DEFAULT '',
+  ignored_themes longtext NOT NULL DEFAULT '',
+  trusted_themes longtext NOT NULL DEFAULT '',
+  trusted_themes_notes longtext NOT NULL DEFAULT '',
+  site_view tinyint(1) NOT NULL DEFAULT '0',
+  pluginDir text NOT NULL DEFAULT '',
+  dismissed_plugins longtext NOT NULL DEFAULT '',
+  dismissed_themes longtext NOT NULL DEFAULT ''";
+		if ( '' === $currentVersion ) {
+			$tbl .= ',
+  PRIMARY KEY  (userid)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'group' ) . ' (
+  id int(11) NOT NULL auto_increment,
+  userid int(11) NOT NULL,
+  name text NOT NULL';
+		if ( '' === $currentVersion ) {
+			$tbl .= ',
+  PRIMARY KEY  (id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$sql[] = 'CREATE TABLE ' . $this->table_name( 'wp_group' ) . ' (
+  wpid int(11) NOT NULL,
+  groupid int(11) NOT NULL,
+  KEY idx_wpid (wpid),
+  KEY idx_groupid (groupid)
+        ) ' . $charset_collate;
+
+		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
+  task_id int(11) NOT NULL,
+  wp_id int(11) NOT NULL,
+  dtsFetched int(11) NOT NULL DEFAULT 0,
+  fetchResult text NOT NULL DEFAULT "",
+  downloadedDB text NOT NULL DEFAULT "",
+  downloadedFULL text NOT NULL DEFAULT "",
+  downloadedDBComplete tinyint(1) NOT NULL DEFAULT 0,
+  downloadedFULLComplete tinyint(1) NOT NULL DEFAULT 0,
+  removedFiles tinyint(1) NOT NULL DEFAULT 0,
+  attempts int(11) NOT NULL DEFAULT 0,
+  last_error text NOT NULL DEFAULT "",
+  pid int(11) NOT NULL DEFAULT 0,
+  KEY idx_task_id (task_id)
+         ) ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup' ) . ' (
+  id int(11) NOT NULL auto_increment,
+  userid int(11) NOT NULL,
+  name text NOT NULL,
+  schedule text NOT NULL,
+  type text NOT NULL,
+  exclude text NOT NULL,
+  sites text NOT NULL,
+  `groups` text NOT NULL,
+  last int(11) NOT NULL,
+  last_run int(11) NOT NULL,
+  lastStartNotificationSent int(11) NOT NULL DEFAULT 0,
+  last_run_manually int(11) NOT NULL,
+  completed_sites text NOT NULL,
+  completed int(11) NOT NULL,
+  backup_errors text NOT NULL,
+  subfolder text NOT NULL,
+  filename text NOT NULL,
+  paused tinyint(1) NOT NULL,
+  template tinyint(1) DEFAULT 0,
+  excludebackup tinyint(1) DEFAULT 0,
+  excludecache tinyint(1) DEFAULT 0,
+  excludenonwp tinyint(1) DEFAULT 0,
+  excludezip tinyint(1) DEFAULT 0,
+  archiveFormat text NOT NULL,
+  loadFilesBeforeZip tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
+  maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
+  maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
+		if ( '' === $currentVersion ) {
+			$tbl .= ',
+  PRIMARY KEY  (id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'request_log' ) . ' (
+  id int(11) NOT NULL auto_increment,
+  wpid int(11) NOT NULL,
+  ip text NOT NULL DEFAULT "",
+  subnet text NOT NULL DEFAULT "",
+  micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
+  micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0';
+		if ( '' === $currentVersion || version_compare( $currentVersion, '5.7', '<=' ) ) {
+			$tbl .= ',
+  PRIMARY KEY  (id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate . ';';
+		$sql[] = $tbl;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		foreach ( $sql as $query ) {
+			dbDelta( $query );
+		}
+
+		$this->post_update();
+
+		if ( ! is_multisite() ) {
+			MainWP_Utility::update_option( 'mainwp_db_version', $this->mainwp_db_version );
+		} else {
+			update_site_option( 'mainwp_db_version', $this->mainwp_db_version );
+		}
+	}
+
+	/**
+	 * Method post_update()
+	 *
+	 * Update MainWP DB.
+	 *
+	 * @return void
+	 */
+	public function post_update() {
+
+		// get_site_option is multisite aware!
+		$currentVersion = get_site_option( 'mainwp_db_version' );
+
+		if ( false === $currentVersion ) {
+			return;
+		}
+
+		if ( version_compare( $currentVersion, '8.1', '<' ) ) {
+			// We can't split up here!
+			$wpSyncColumns = array(
+				'version',
+				'totalsize',
+				'dbsize',
+				'extauth',
+				'last_post_gmt',
+				'sync_errors',
+				'dtsSync',
+				'dtsSyncStart',
+				'dtsAutomaticSync',
+				'dtsAutomaticSyncStart',
+			);
+			foreach ( $wpSyncColumns as $wpSyncColumn ) {
+				$rslts = $this->wpdb->get_results( 'SELECT id,' . $wpSyncColumn . ' FROM ' . $this->table_name( 'wp' ), ARRAY_A );
+				if ( empty( $rslts ) ) {
+					continue;
+				}
+
+				foreach ( $rslts as $rslt ) {
+					$exists = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT wpid FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid = %d', $rslt['id'] ), ARRAY_A );
+					if ( empty( $exists ) ) {
+						$this->wpdb->insert(
+							$this->table_name( 'wp_sync' ),
+							array(
+								'wpid'           => $rslt['id'],
+								$wpSyncColumn    => $rslt[ $wpSyncColumn ],
+							)
+						);
+					} else {
+						$this->wpdb->update( $this->table_name( 'wp_sync' ), array( $wpSyncColumn => $rslt[ $wpSyncColumn ] ), array( 'wpid' => $rslt['id'] ) );
+					}
+				}
+
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $wpSyncColumn );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+
+			$optionColumns = array(
+				'last_wp_upgrades',
+				'last_plugin_upgrades',
+				'last_theme_upgrades',
+				'wp_upgrades',
+				'recent_comments',
+				'recent_posts',
+				'recent_pages',
+			);
+			foreach ( $optionColumns as $optionColumn ) {
+				$rslts = $this->wpdb->get_results( 'SELECT id,' . $optionColumn . ' FROM ' . $this->table_name( 'wp' ), ARRAY_A );
+				if ( empty( $rslts ) ) {
+					continue;
+				}
+
+				foreach ( $rslts as $rslt ) {
+					self::update_website_option( (object) $rslt, $optionColumn, $rslt[ $optionColumn ] );
+				}
+
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+		// delete old columns.
+		if ( version_compare( $currentVersion, '8.17', '<' ) ) {
+			$rankColumns = array(
+				'pagerank',
+				'indexed',
+				'alexia',
+				'pagerank_old',
+				'indexed_old',
+				'alexia_old',
+				'last_db_backup_size',
+			);
+
+			foreach ( $rankColumns as $rankColumn ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+
+			$syncColumns = array( 'uptodate' );
+			foreach ( $syncColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+	}
+
+}

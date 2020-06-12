@@ -1,0 +1,43 @@
+/**
+ *
+ * Credits
+ *
+ * Plugin-Name: Akismet Anti-Spam
+ * Plugin-URI: https://akismet.com/
+ * Author: Automattic
+ * Author URI: https://automattic.com/wordpress-plugins/
+ * License: GPLv2 or later
+ * Text Domain: akismet
+ *
+ */
+.mshot-arrow {
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #e5e5e5;
+    position: absolute;
+    left: -6px;
+    top: 91px;
+}
+.mshot-container {
+    background: #e5e5e5;
+    position: absolute;
+    top: -94px;
+    padding: 7px;
+    width: 464px;
+    height: 352px;
+    z-index: 20000;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+}
+.mainwp-preview-mshot {
+    position: absolute;
+    z-index: 2000;
+}
+.mainwp-preview-mshot .mshot-image {
+    margin: 0;
+    height: 338px;
+    width: 450px;
+}

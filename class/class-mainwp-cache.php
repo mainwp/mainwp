@@ -1,21 +1,53 @@
 <?php
+/**
+ * Search Cache Handler
+ *
+ * Handles all search content.
+ *
+ * @package     MainWP/Dashboard
+ */
 
+namespace MainWP\Dashboard;
+
+/**
+ * Class MainWP_Cache
+ */
 class MainWP_Cache {
 
-    public static function initSession() {
-		if ( session_id() == '' ) {
-            session_start();
-        }
-    }
+	/**
+	 * Method init_session()
+	 *
+	 * Start session.
+	 */
+	public static function init_session() {
+		if ( '' === session_id() ) {
+			session_start();
+		}
+	}
 
-	public static function initCache( $page ) {
+	/**
+	 * Method init_cache()
+	 *
+	 * Set session variables.
+	 *
+	 * @param mixed $page Page information.
+	 */
+	public static function init_cache( $page ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ]        = '';
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = '';
-        $_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = ''; // extra cache
-    }
+		$_SESSION[ 'MainWP' . $page . 'SearchResult' ]  = '';
+	}
 
-	public static function addContext( $page, $context ) {
-		if ( !is_array( $context ) ) {
+	/**
+	 * Method add_context()
+	 *
+	 * Set time & search context.
+	 *
+	 * @param mixed $page Page information.
+	 * @param array $context Search context.
+	 */
+	public static function add_context( $page, $context ) {
+		if ( ! is_array( $context ) ) {
 			$context = array();
 		}
 
@@ -23,40 +55,78 @@ class MainWP_Cache {
 		$_SESSION[ 'MainWP' . $page . 'SearchContext' ] = $context;
 	}
 
-	public static function addBody( $page, $body ) {
+	/**
+	 * Method add_body()
+	 *
+	 * Set search body session variable.
+	 *
+	 * @param string $page Page information..
+	 * @param mixed  $body Search body.
+	 */
+	public static function add_body( $page, $body ) {
 		$_SESSION[ 'MainWP' . $page . 'Search' ] .= $body;
 	}
 
-	public static function getCachedContext( $page ) {
+	/**
+	 * Method get_cached_context()
+	 *
+	 * Grab any cached searches.
+	 *
+	 * @param mixed $page Page information.
+	 *
+	 * @return array $cachedSearch Cached search array.
+	 */
+	public static function get_cached_context( $page ) {
 		$cachedSearch = ( isset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) && is_array( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] ) ? $_SESSION[ 'MainWP' . $page . 'SearchContext' ] : null );
 
-		if ( $cachedSearch != null ) {
-			if ( $cachedSearch['time'] < ( time() - ( 2 * 60 * 60 ) ) ) {
-				//More then two hours ago, clean this cache
+		if ( null != $cachedSearch ) {
+			if ( ( time() - ( 2 * 60 * 60 ) ) > $cachedSearch['time'] ) {
 				unset( $_SESSION[ 'MainWP' . $page . 'SearchContext' ] );
 				unset( $_SESSION[ 'MainWP' . $page . 'Search' ] );
-                unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
+				unset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] );
 				$cachedSearch = null;
 			}
 		}
-		if ( $cachedSearch != null && isset( $cachedSearch['status'] ) ) {
+		if ( null != $cachedSearch && isset( $cachedSearch['status'] ) ) {
 			$cachedSearch['status'] = explode( ',', $cachedSearch['status'] );
 		}
 
 		return $cachedSearch;
 	}
 
-	public static function echoBody( $page ) {
+	/**
+	 * Method echo_body()
+	 *
+	 * Grab & echo cached search body.
+	 *
+	 * @param mixed $page Page information.
+	 */
+	public static function echo_body( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'Search' ] ) ) {
 			echo $_SESSION[ 'MainWP' . $page . 'Search' ];
 		}
 	}
 
-    public static function addResult( $page, $result ) {
-        $_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
+	/**
+	 * Method add_result()
+	 *
+	 * Grab search results & store them in session.
+	 *
+	 * @param mixed $page Page information.
+	 * @param mixed $result Search results.
+	 */
+	public static function add_result( $page, $result ) {
+		$_SESSION[ 'MainWP' . $page . 'SearchResult' ] = $result;
 	}
 
-    public static function getCachedResult( $page ) {
+	/**
+	 * Method get_cached_result()
+	 *
+	 * Grab cached search results.
+	 *
+	 * @param mixed $page Page information.
+	 */
+	public static function get_cached_result( $page ) {
 		if ( isset( $_SESSION[ 'MainWP' . $page . 'SearchResult' ] ) ) {
 			return $_SESSION[ 'MainWP' . $page . 'SearchResult' ];
 		}

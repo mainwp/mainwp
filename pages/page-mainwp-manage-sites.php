@@ -531,9 +531,7 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-
 				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
-
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>

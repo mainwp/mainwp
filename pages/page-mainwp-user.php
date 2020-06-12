@@ -1295,7 +1295,7 @@ class MainWP_User {
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Uplod the CSV file', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
 							<div class="ten wide column">
 								<input type="file" name="import_user_file_bulkupload" id="import_user_file_bulkupload" accept="text/comma-separated-values" />
 							</div>

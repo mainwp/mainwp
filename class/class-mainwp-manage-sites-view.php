@@ -170,17 +170,17 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$managesites_pages = array(
-			'ManageSites' => array(
+			'ManageSites'  => array(
 				'href'   => 'admin.php?page=managesites',
 				'title'  => __( 'Manage Sites', 'mainwp' ),
 				'access' => true,
 			),
-			'AddNew' => array(
+			'AddNew'       => array(
 				'href'   => 'admin.php?page=managesites&do=new',
 				'title'  => __( 'Add New', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
-			'BulkAddNew' => array(
+			'BulkAddNew'   => array(
 				'href'   => 'admin.php?page=managesites&do=bulknew',
 				'title'  => __( 'Import Sites', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
@@ -198,22 +198,22 @@ class MainWP_Manage_Sites_View {
 				'title'  => __( 'Overview', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
-			'ManageSitesEdit' => array(
+			'ManageSitesEdit'      => array(
 				'href'   => 'admin.php?page=managesites&id=' . $site_id,
 				'title'  => __( 'Edit', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
-			'ManageSitesUpdates' => array(
+			'ManageSitesUpdates'   => array(
 				'href'   => 'admin.php?page=managesites&updateid=' . $site_id,
 				'title'  => __( 'Updates', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
-			'ManageSitesBackups' => array(
+			'ManageSitesBackups'   => array(
 				'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
 				'title'  => __( 'Backups', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
 			),
-			'SecurityScan' => array(
+			'SecurityScan'         => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
 				'title'  => __( 'Security Scan', 'mainwp' ),
 				'access' => true,
@@ -328,7 +328,10 @@ class MainWP_Manage_Sites_View {
 
 				$content = $wp_filesystem->get_contents( $tmp_path );
 
-				$lines          = explode( "\r\n", $content );
+				// to compatible with EOL on OS.
+				$content        = str_replace( "\r\n", "\n", $content );
+				$content        = str_replace( "\r", "\n", $content );
+				$lines          = explode( "\n", $content );
 				$default_values = array(
 					'name'               => '',
 					'url'                => '',
@@ -1158,9 +1161,9 @@ class MainWP_Manage_Sites_View {
 					$params['wpadmin'],
 					'register',
 					array(
-						'pubkey'     => $pubkey,
-						'server'     => get_admin_url(),
-						'uniqueId'   => $addUniqueId,
+						'pubkey'   => $pubkey,
+						'server'   => get_admin_url(),
+						'uniqueId' => $addUniqueId,
 					),
 					false,
 					$verifyCertificate,

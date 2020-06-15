@@ -218,50 +218,50 @@ class MainWP_Plugins {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'       => __( 'Plugins', 'mainwp' ),
-				'parent_key'  => 'mainwp_tab',
-				'slug'        => 'PluginsManage',
-				'href'        => 'admin.php?page=PluginsManage',
-				'icon'        => '<i class="plug icon"></i>',
+				'title'      => __( 'Plugins', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsManage',
+				'icon'       => '<i class="plug icon"></i>',
 			),
 			1
 		);
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'              => __( 'Manage Plugins', 'mainwp' ),
-				'parent_key'         => 'PluginsManage',
-				'href'               => 'admin.php?page=PluginsManage',
-				'slug'               => 'PluginsManage',
-				'right'              => '',
+				'title'      => __( 'Manage Plugins', 'mainwp' ),
+				'parent_key' => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsManage',
+				'slug'       => 'PluginsManage',
+				'right'      => '',
 			),
 			array(
-				'title'              => __( 'Install Plugins', 'mainwp' ),
-				'parent_key'         => 'PluginsManage',
-				'href'               => 'admin.php?page=PluginsInstall',
-				'slug'               => 'PluginsInstall',
-				'right'              => 'install_plugins',
+				'title'      => __( 'Install Plugins', 'mainwp' ),
+				'parent_key' => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsInstall',
+				'slug'       => 'PluginsInstall',
+				'right'      => 'install_plugins',
 			),
 			array(
-				'title'              => __( 'Auto Updates', 'mainwp' ),
-				'parent_key'         => 'PluginsManage',
-				'href'               => 'admin.php?page=PluginsAutoUpdate',
-				'slug'               => 'PluginsAutoUpdate',
-				'right'              => '',
+				'title'      => __( 'Auto Updates', 'mainwp' ),
+				'parent_key' => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsAutoUpdate',
+				'slug'       => 'PluginsAutoUpdate',
+				'right'      => '',
 			),
 			array(
-				'title'              => __( 'Ignored Updates', 'mainwp' ),
-				'parent_key'         => 'PluginsManage',
-				'href'               => 'admin.php?page=PluginsIgnore',
-				'slug'               => 'PluginsIgnore',
-				'right'              => '',
+				'title'      => __( 'Ignored Updates', 'mainwp' ),
+				'parent_key' => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsIgnore',
+				'slug'       => 'PluginsIgnore',
+				'right'      => '',
 			),
 			array(
-				'title'              => __( 'Ignored Abandoned', 'mainwp' ),
-				'parent_key'         => 'PluginsManage',
-				'href'               => 'admin.php?page=PluginsIgnoredAbandoned',
-				'slug'               => 'PluginsIgnoredAbandoned',
-				'right'              => '',
+				'title'      => __( 'Ignored Abandoned', 'mainwp' ),
+				'parent_key' => 'PluginsManage',
+				'href'       => 'admin.php?page=PluginsIgnoredAbandoned',
+				'slug'       => 'PluginsIgnoredAbandoned',
+				'right'      => '',
 			),
 		);
 
@@ -956,7 +956,14 @@ class MainWP_Plugins {
 		</div>
 		<div class="ui divider"></div>
 		<div class="mainwp-search-submit">
+		<?php
+		$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_plugin' );
+		if ( $allow_install ) {
+			?>
 			<input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" id="mainwp_plugin_bulk_install_btn" bulk-action="install" name="bulk-install">
+			<?php
+		}
+		?>
 		</div>
 	</div>
 	<div class="ui clearing hidden divider"></div>

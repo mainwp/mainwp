@@ -212,39 +212,39 @@ class MainWP_Themes {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'                => __( 'Manage Themes', 'mainwp' ),
-				'parent_key'           => 'ThemesManage',
-				'href'                 => 'admin.php?page=ThemesManage',
-				'slug'                 => 'ThemesManage',
-				'right'                => '',
+				'title'      => __( 'Manage Themes', 'mainwp' ),
+				'parent_key' => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesManage',
+				'slug'       => 'ThemesManage',
+				'right'      => '',
 			),
 			array(
-				'title'                => __( 'Install', 'mainwp' ),
-				'parent_key'           => 'ThemesManage',
-				'href'                 => 'admin.php?page=ThemesInstall',
-				'slug'                 => 'ThemesInstall',
-				'right'                => 'install_themes',
+				'title'      => __( 'Install', 'mainwp' ),
+				'parent_key' => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesInstall',
+				'slug'       => 'ThemesInstall',
+				'right'      => 'install_themes',
 			),
 			array(
-				'title'                => __( 'Auto Updates', 'mainwp' ),
-				'parent_key'           => 'ThemesManage',
-				'href'                 => 'admin.php?page=ThemesAutoUpdate',
-				'slug'                 => 'ThemesAutoUpdate',
-				'right'                => '',
+				'title'      => __( 'Auto Updates', 'mainwp' ),
+				'parent_key' => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesAutoUpdate',
+				'slug'       => 'ThemesAutoUpdate',
+				'right'      => '',
 			),
 			array(
-				'title'                => __( 'Ignored Updates', 'mainwp' ),
-				'parent_key'           => 'ThemesManage',
-				'href'                 => 'admin.php?page=ThemesIgnore',
-				'slug'                 => 'ThemesIgnore',
-				'right'                => '',
+				'title'      => __( 'Ignored Updates', 'mainwp' ),
+				'parent_key' => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesIgnore',
+				'slug'       => 'ThemesIgnore',
+				'right'      => '',
 			),
 			array(
-				'title'                => __( 'Ignored Abandoned', 'mainwp' ),
-				'parent_key'           => 'ThemesManage',
-				'href'                 => 'admin.php?page=ThemesIgnoredAbandoned',
-				'slug'                 => 'ThemesIgnoredAbandoned',
-				'right'                => '',
+				'title'      => __( 'Ignored Abandoned', 'mainwp' ),
+				'parent_key' => 'ThemesManage',
+				'href'       => 'admin.php?page=ThemesIgnoredAbandoned',
+				'slug'       => 'ThemesIgnoredAbandoned',
+				'right'      => '',
 			),
 		);
 
@@ -821,10 +821,10 @@ class MainWP_Themes {
 			array(
 				'themes'          => false,
 				'settings'        => array(
-					'isInstall'     => true,
-					'canInstall'    => false,
-					'installURI'    => null,
-					'adminUrl'      => wp_parse_url( self_admin_url(), PHP_URL_PATH ),
+					'isInstall'  => true,
+					'canInstall' => false,
+					'installURI' => null,
+					'adminUrl'   => wp_parse_url( self_admin_url(), PHP_URL_PATH ),
 				),
 				'l10n'            => array(
 					'addNew'            => __( 'Add new theme' ),
@@ -921,7 +921,14 @@ class MainWP_Themes {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+				<?php
+				$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_theme' );
+				if ( $allow_install ) {
+					?>
 					<input type="button" value="<?php esc_attr_e( 'Complete Installation', 'mainwp' ); ?>" class="ui green big fluid button" bulk-action="install" id="mainwp_theme_bulk_install_btn" name="bulk-install">
+					<?php
+				}
+				?>
 				</div>
 			</div>
 			<div class="ui clearing hidden divider"></div>

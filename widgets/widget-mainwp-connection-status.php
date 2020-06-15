@@ -255,7 +255,7 @@ class MainWP_Connection_Status {
 			</div>
 			<div class="column center aligned">
 				<div class="ui horizontal statistics large">
-					<div class="red statistic">
+					<div class="<?php echo ( 0 < $count_disconnected ) ? 'red' : 'green'; ?> statistic">
 						<div class="value">
 							<?php echo $count_disconnected; ?>
 						</div>

@@ -106,7 +106,7 @@ class MainWP_Plugins_Handler {
 				$slug = $plugins[ $i ];
 				$name = $names[ $i ];
 				if ( ! isset( $decodedIgnoredPlugins[ $slug ] ) ) {
-					$decodedIgnoredPlugins[ $slug ] = rawurlencode( $name );
+					$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
 				}
 			}
 			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
@@ -138,7 +138,7 @@ class MainWP_Plugins_Handler {
 
 		try {
 			$plugin      = implode( '||', $_POST['plugins'] );
-			$plugin      = rawurlencode( $plugin );
+			$plugin      = urldecode( $plugin );
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'plugin_action',
@@ -175,15 +175,15 @@ class MainWP_Plugins_Handler {
 		}
 		if ( 'trust' === $action ) {
 			foreach ( $slugs as $slug ) {
-				$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
+				$idx = array_search( urldecode( $slug ), $trustedPlugins );
 				if ( false === $idx ) {
-					$trustedPlugins[] = rawurlencode( $slug );
+					$trustedPlugins[] = urldecode( $slug );
 				}
 			}
 		} elseif ( 'untrust' === $action ) {
 			foreach ( $slugs as $slug ) {
-				if ( in_array( rawurlencode( $slug ), $trustedPlugins ) ) {
-					$trustedPlugins = array_diff( $trustedPlugins, array( rawurlencode( $slug ) ) );
+				if ( in_array( urldecode( $slug ), $trustedPlugins ) ) {
+					$trustedPlugins = array_diff( $trustedPlugins, array( urldecode( $slug ) ) );
 				}
 			}
 		}
@@ -202,9 +202,9 @@ class MainWP_Plugins_Handler {
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-		$idx = array_search( rawurlencode( $slug ), $trustedPlugins );
+		$idx = array_search( urldecode( $slug ), $trustedPlugins );
 		if ( false === $idx ) {
-			$trustedPlugins[] = rawurlencode( $slug );
+			$trustedPlugins[] = urldecode( $slug );
 		}
 		$userExtension->trusted_plugins = wp_json_encode( $trustedPlugins );
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );

@@ -964,22 +964,7 @@ class MainWP_Post {
 
 				<tr>
 					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
-					<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|
-					<?php
-					if ( 'publish' === $post['status'] ) {
-						echo 'unpublish|';
-					}
-					if ( 'pending' === $post['status'] ) {
-						echo 'approve|';
-					}
-					if ( 'trash' === $post['status'] ) {
-						echo 'restore|';
-					}
-					if ( 'future' === $post['status'] || 'draft' === $post['status'] ) {
-						echo 'publish|';
-					}
-					?>
-					"/>
+					<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo  ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
 					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
 
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>

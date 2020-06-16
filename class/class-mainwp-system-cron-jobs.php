@@ -340,7 +340,7 @@ class MainWP_System_Cron_Jobs {
 
 			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
 			MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
-			if ( 0 === $busyCounter ) {
+			if ( 0 == $busyCounter ) {
 				if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
 					return false;
@@ -918,7 +918,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Clear settings field values.
 	 */
-	public static function clear_fields() {
+	public function clear_fields() {
 		$empty_fields = array(
 			'mainwp_automaticUpdate_backupChecks',
 			'mainwp_updatescheck_mail_update_core_new',

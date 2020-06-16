@@ -797,16 +797,7 @@ class MainWP_Page {
 					<td  class="check-column"><span class="ui checkbox"><input type="checkbox" name="page[]" value="1"></span></td>
 					<td class="page-title  column-title">
 						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
-						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|
-						<?php
-						if ( 'trash' == $page['status'] ) {
-							echo 'restore|';
-						}
-						if ( 'future' == $page['status'] || 'draft' == $page['status'] ) {
-							echo 'publish|';
-						}
-						?>
-						"/>
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 
 						<strong>

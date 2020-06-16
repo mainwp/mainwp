@@ -1084,7 +1084,7 @@ class MainWP_UI {
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Show Usersnap button', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Usersnap button will show in the MainWP header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-				<input type="checkbox" name="mainwp_show_usersnap" <?php echo ( ( false !== get_option( 'mainwp_show_usersnap' ) ) ? 'checked="true"' : '' ); ?> />
+				<input type="checkbox" name="mainwp_show_usersnap" <?php echo ( ( false != get_option( 'mainwp_show_usersnap' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
 		<?php

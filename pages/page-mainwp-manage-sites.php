@@ -54,7 +54,6 @@ class MainWP_Manage_Sites {
 		'themes'            => true,
 		'notes'             => true,
 		'site_note'         => true,
-		'topics'            => true,
 	);
 
 	/**
@@ -1078,10 +1077,10 @@ class MainWP_Manage_Sites {
 						}
 
 						$newValues = array(
-							'automatic_update'       => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
-							'backup_before_upgrade'  => $backup_before_upgrade,
-							'force_use_ipv4'         => $forceuseipv4,
-							'loadFilesBeforeZip'     => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+							'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
+							'backup_before_upgrade' => $backup_before_upgrade,
+							'force_use_ipv4'        => $forceuseipv4,
+							'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
 						);
 
 						if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {

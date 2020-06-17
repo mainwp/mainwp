@@ -178,14 +178,14 @@ class MainWP_Manage_Sites_List_Table {
 	 */
 	public function get_sortable_columns() {
 		$sortable_columns = array(
-			'site'                  => array( 'site', false ),
-			'url'                   => array( 'url', false ),
-			'groups'                => array( 'groups', false ),
-			'last_sync'             => array( 'last_sync', false ),
-			'last_post'             => array( 'last_post', false ),
-			'site_health'           => array( 'site_health', false ),
-			'phpversion'            => array( 'phpversion', false ),
-			'update'                => array( 'update', false ),
+			'site'        => array( 'site', false ),
+			'url'         => array( 'url', false ),
+			'groups'      => array( 'groups', false ),
+			'last_sync'   => array( 'last_sync', false ),
+			'last_post'   => array( 'last_post', false ),
+			'site_health' => array( 'site_health', false ),
+			'phpversion'  => array( 'phpversion', false ),
+			'update'      => array( 'update', false ),
 		);
 
 		return $sortable_columns;
@@ -198,22 +198,22 @@ class MainWP_Manage_Sites_List_Table {
 	 */
 	public function get_default_columns() {
 		return array(
-			'cb'                     => '<input type="checkbox" />',
-			'status'                 => '',
-			'site'                   => __( 'Site', 'mainwp' ),
-			'login'                  => '<i class="sign in alternate icon"></i>',
-			'url'                    => __( 'URL', 'mainwp' ),
-			'update'                 => __( 'Updates', 'mainwp' ),
-			'wpcore_update'          => '<i class="wordpress icon"></i>',
-			'plugin_update'          => '<i class="plug icon"></i>',
-			'theme_update'           => '<i class="paint brush icon"></i>',
-			'last_sync'              => __( 'Last Sync', 'mainwp' ),
-			'backup'                 => __( 'Last Backup', 'mainwp' ),
-			'phpversion'             => __( 'PHP', 'mainwp' ),
-			'last_post'              => __( 'Last Post', 'mainwp' ),
-			'site_health'            => __( 'Site Health', 'mainwp' ),
-			'site_preview'           => '<i class="eye icon"></i>',
-			'notes'                  => __( 'Notes', 'mainwp' ),
+			'cb'            => '<input type="checkbox" />',
+			'status'        => '',
+			'site'          => __( 'Site', 'mainwp' ),
+			'login'         => '<i class="sign in alternate icon"></i>',
+			'url'           => __( 'URL', 'mainwp' ),
+			'update'        => __( 'Updates', 'mainwp' ),
+			'wpcore_update' => '<i class="wordpress icon"></i>',
+			'plugin_update' => '<i class="plug icon"></i>',
+			'theme_update'  => '<i class="paint brush icon"></i>',
+			'last_sync'     => __( 'Last Sync', 'mainwp' ),
+			'backup'        => __( 'Last Backup', 'mainwp' ),
+			'phpversion'    => __( 'PHP', 'mainwp' ),
+			'last_post'     => __( 'Last Post', 'mainwp' ),
+			'site_health'   => __( 'Site Health', 'mainwp' ),
+			'site_preview'  => '<i class="eye icon"></i>',
+			'notes'         => __( 'Notes', 'mainwp' ),
 		);
 	}
 
@@ -327,18 +327,18 @@ class MainWP_Manage_Sites_List_Table {
 	public function get_bulk_actions() {
 
 		$actions = array(
-			'sync'                    => __( 'Sync Data', 'mainwp' ),
-			'reconnect'               => __( 'Reconnect', 'mainwp' ),
-			'refresh_favico'          => __( 'Refresh Favicon', 'mainwp' ),
-			'delete'                  => __( 'Remove', 'mainwp' ),
-			'seperator_1'             => '',
-			'open_wpadmin'            => __( 'Jump to WP Admin', 'mainwp' ),
-			'open_frontpage'          => __( 'Jump to Front Page', 'mainwp' ),
-			'seperator_2'             => '',
-			'update_plugins'          => __( 'Update Plugins', 'mainwp' ),
-			'update_themes'           => __( 'Update Themes', 'mainwp' ),
-			'update_wpcore'           => __( 'Update WordPress', 'mainwp' ),
-			'update_translations'     => __( 'Update Translations', 'mainwp' ),
+			'sync'                => __( 'Sync Data', 'mainwp' ),
+			'reconnect'           => __( 'Reconnect', 'mainwp' ),
+			'refresh_favico'      => __( 'Refresh Favicon', 'mainwp' ),
+			'delete'              => __( 'Remove', 'mainwp' ),
+			'seperator_1'         => '',
+			'open_wpadmin'        => __( 'Jump to WP Admin', 'mainwp' ),
+			'open_frontpage'      => __( 'Jump to Front Page', 'mainwp' ),
+			'seperator_2'         => '',
+			'update_plugins'      => __( 'Update Plugins', 'mainwp' ),
+			'update_themes'       => __( 'Update Themes', 'mainwp' ),
+			'update_wpcore'       => __( 'Update WordPress', 'mainwp' ),
+			'update_translations' => __( 'Update Translations', 'mainwp' ),
 
 		);
 
@@ -1215,7 +1215,7 @@ class MainWP_Manage_Sites_List_Table {
 				}
 
 				$hval     = $this->get_health_site_val( $health_status );
-				$critical = isset( $website['health_issues'] ) ? $website['health_issues'] : 0;
+				$critical = isset( $website['health_issues'] ) ? intval( $website['health_issues'] ) : 0;
 
 				if ( 80 <= $hval && 0 == $critical ) {
 					$h_color = 'green';
@@ -1350,8 +1350,8 @@ class MainWP_Manage_Sites_List_Table {
 			);
 		}
 
-		$totalTests  = $issue_counts['good'] + $issue_counts['recommended'] + $issue_counts['critical'] * 1.5;
-		$failedTests = $issue_counts['recommended'] + $issue_counts['critical'] * 1.5;
+		$totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
+		$failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;
 
 		if ( 0 == $totalTests ) {
 				$val = 100;

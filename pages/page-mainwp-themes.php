@@ -753,7 +753,8 @@ class MainWP_Themes {
 		</table>
 		<style type="text/css">
 			.DTFC_LeftBodyLiner { overflow-x: hidden; }
-			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
+			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 9999px; display: none; }
+			.DTFC_LeftHeadWrapper { margin-top: 47px; }
 		</style>
 		<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {

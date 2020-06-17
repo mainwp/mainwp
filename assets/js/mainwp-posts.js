@@ -254,8 +254,6 @@ jQuery( document ).ready( function () {
 
     jQuery( document ).on( 'click', '#mainwp-do-posts-bulk-actions', function() {
         var action = jQuery( '#mainwp-bulk-actions' ).val();
-        console.log(action);
-
         if ( action == 'none' )
             return false;
 

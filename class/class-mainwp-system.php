@@ -138,6 +138,7 @@ class MainWP_System {
 		new MainWP_Bulk_Post();
 
 		add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
+		add_action( 'after_setup_theme', array( &$this, 'after_setup_theme' ) );
 
 		add_action( 'init', array( &$this, 'parse_init' ) );
 		add_action( 'init', array( &$this, 'init' ), 9999 );
@@ -473,6 +474,15 @@ class MainWP_System {
 	}
 
 	/**
+	 * Method after_setup_theme()
+	 *
+	 * After setup theme hook, to support post thumbnails.
+	 */
+	public function after_setup_theme() {
+		add_theme_support( 'post-thumbnails' );
+	}
+
+	/**
 	 * Method admin_init()
 	 *
 	 * Do nothing if current user is not an Admin else display the page.
@@ -527,18 +537,18 @@ class MainWP_System {
 		$disable_backup_checking   = ( empty( $enableLegacyBackupFeature ) && empty( $primaryBackup ) ) ? true : false;
 
 		$mainwpParams = array(
-			'image_url'                          => MAINWP_PLUGIN_URL . 'assets/images/',
-			'backup_before_upgrade'              => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
-			'disable_checkBackupBeforeUpgrade'   => $disable_backup_checking,
-			'admin_url'                          => admin_url(),
-			'use_wp_datepicker'                  => $use_wp_datepicker ? 1 : 0,
-			'date_format'                        => get_option( 'date_format' ),
-			'time_format'                        => get_option( 'time_format' ),
-			'enabledTwit'                        => MainWP_Twitter::enabled_twitter_messages(),
-			'maxSecondsTwit'                     => MAINWP_TWITTER_MAX_SECONDS,
-			'installedBulkSettingsManager'       => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
-			'maximumSyncRequests'                => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
-			'maximumInstallUpdateRequests'       => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
+			'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',
+			'backup_before_upgrade'            => ( get_option( 'mainwp_backup_before_upgrade' ) == 1 ),
+			'disable_checkBackupBeforeUpgrade' => $disable_backup_checking,
+			'admin_url'                        => admin_url(),
+			'use_wp_datepicker'                => $use_wp_datepicker ? 1 : 0,
+			'date_format'                      => get_option( 'date_format' ),
+			'time_format'                      => get_option( 'time_format' ),
+			'enabledTwit'                      => MainWP_Twitter::enabled_twitter_messages(),
+			'maxSecondsTwit'                   => MAINWP_TWITTER_MAX_SECONDS,
+			'installedBulkSettingsManager'     => is_plugin_active( 'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php' ) ? 1 : 0,
+			'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
+			'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
 		);
 		wp_localize_script( 'mainwp', 'mainwpParams', $mainwpParams );
 

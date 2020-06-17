@@ -7,6 +7,8 @@
 
 namespace MainWP\Dashboard;
 
+use SebastianBergmann\Environment\Console;
+
 /**
  * MainWP Manage Sites View.
  */
@@ -1047,10 +1049,8 @@ class MainWP_Manage_Sites_View {
 				);
 
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-					$err = rawurlencode( urldecode( $information['error'] ) );
-					$err = str_replace( '%2F', '/', $err );
-					$err = str_replace( '%20', ' ', $err );
-					$err = str_replace( '%26', '&', $err );
+					$err = urldecode( $information['error'] );
+					$err = MainWP_Utility::esc_content( $err );
 					throw new \Exception( $err );
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {

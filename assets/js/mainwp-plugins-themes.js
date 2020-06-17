@@ -461,7 +461,6 @@ jQuery( document ).ready( function () {
             var ch_val = jQuery( this ).is(":checked");		
 
             var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
-            console.log(action);      
             if ( ! (action == 'activate' && ch_val ) ) {
                 jQuery('#mainwp-manage-themes-table').find('tr').eq( rowIdx + 1 ).find('.mainwp-selected-theme').each( function () {			
                     jQuery( this ).prop( 'checked', ch_val );
@@ -532,7 +531,6 @@ jQuery( document ).ready( function () {
 
     jQuery( document ).on( 'click', '#mainwp-do-themes-bulk-actions', function () {
         var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
-        console.log(action);
         if ( action == '' || action == 'none' )
             return;
 

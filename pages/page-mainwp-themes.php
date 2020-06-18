@@ -720,7 +720,7 @@ class MainWP_Themes {
 						$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_attr( $th_id ); ?>">
-							<div class="ui checkbox">
+							<div class="ui checkbox not-auto-init">
 								<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" id="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" class="mainwp_theme_check_all" />
 								<label for="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>"><?php echo esc_html( $theme_title ); ?></label>
 							</div>
@@ -770,7 +770,7 @@ class MainWP_Themes {
 					"scroller" : true,
 					"fixedColumns" : true,
 				} );
-			jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
+				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
 			} );
 		</script>
 		<?php

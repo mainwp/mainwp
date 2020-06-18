@@ -785,7 +785,7 @@ class MainWP_Plugins {
 						$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_html( $th_id ); ?>">
-							<div class="ui checkbox">
+							<div class="ui checkbox not-auto-init">
 								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
 								<label for="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
 							</div>
@@ -843,7 +843,7 @@ class MainWP_Plugins {
 				} catch( err ) {
 					// to fix js issues.
 				}
-				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
+				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
 			} );
 			</script>
 		<?php

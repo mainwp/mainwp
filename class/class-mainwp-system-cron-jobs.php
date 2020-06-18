@@ -341,7 +341,7 @@ class MainWP_System_Cron_Jobs {
 			// to do: will notice about busy sites?
 			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
 			MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
-			
+
 			if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
 				return false;
@@ -355,7 +355,6 @@ class MainWP_System_Cron_Jobs {
 			if ( ! $this->send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
 				return;
 			}
-			
 		} else {
 
 			if ( ! $updatecheck_running ) {

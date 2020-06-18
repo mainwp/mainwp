@@ -824,6 +824,7 @@ class MainWP_Plugins {
 			.DTFC_LeftBodyLiner { overflow-x: hidden; }
 			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
 			.DTFC_LeftHeadWrapper table { border: none !important; }
+			.dataTables_scrollHeadInner thead th .ui.checkbox label{ height: 25px; }
 			</style>
 			<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
@@ -1324,7 +1325,7 @@ class MainWP_Plugins {
 
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
+				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox();
 			} );
 		</script>
 		<?php

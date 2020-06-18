@@ -621,7 +621,10 @@ class MainWP_Page {
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-pages-table' ).DataTable( {
-					"colReorder" : true,
+					"colReorder": {
+						fixedColumnsLeft: 1,
+						fixedColumnsRight: 1
+					},
 					"stateSave":  true,
 					"pagingType": "full_numbers",
 					"scrollX" : true,

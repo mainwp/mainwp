@@ -183,14 +183,14 @@ mainwp_fetch_pages = function () {
         response = jQuery.trim( response );
         jQuery( '#mainwp-loading-pages-row' ).hide();
         jQuery( '#mainwp_pages_main' ).show();
-//        var matches = ( response == null ? null : response.match( /page\[\]/g ) );
-//        jQuery( '#mainwp_pages_total' ).html( matches == null ? 0 : matches.length );
         jQuery( '#mainwp_pages_wrap_table' ).html( response );
-
         // re-initialize datatable
         jQuery("#mainwp-pages-table").DataTable().destroy();
         jQuery('#mainwp-pages-table').DataTable({
-            "colReorder" : true,
+            "colReorder": {
+                fixedColumnsLeft: 1,
+                fixedColumnsRight: 1
+            },
             "stateSave":  true,
             "pagingType": "full_numbers",
             "scrollX" : true,
@@ -408,12 +408,15 @@ mainwp_fetch_posts = function ( postId, userId ) {
         response = jQuery.trim( response );
         jQuery( '#mainwp-loading-posts-row' ).hide();
         jQuery( '#mainwp_posts_main' ).show();
-        jQuery( '#mainwp-posts-table-wrapper' ).empty();
+        // jQuery( '#mainwp-posts-table-wrapper' ).empty();
         jQuery( '#mainwp-posts-table-wrapper' ).html( response );
         // re-initialize datatable
         jQuery("#mainwp-posts-table").DataTable().destroy();
         jQuery('#mainwp-posts-table').DataTable({
-            "colReorder" : true,
+            "colReorder": {
+                fixedColumnsLeft: 1,
+                fixedColumnsRight: 1
+            },
             "stateSave":  true,
             "pagingType": "full_numbers",
             "order": [],
@@ -423,12 +426,12 @@ mainwp_fetch_posts = function ( postId, userId ) {
               "targets": 'no-sort',
               "orderable": false
             } ],
-            "preDrawCallback": function() {
-  						jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
-  						jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
-  						mainwp_datatable_fix_menu_overflow();
-              mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-  					}
+            "preDrawCallback": function () {
+                jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
+                jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
+                mainwp_datatable_fix_menu_overflow();
+                mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+            }
         });
     } );
 };

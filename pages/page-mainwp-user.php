@@ -641,7 +641,10 @@ class MainWP_User {
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-users-table' ).DataTable( {
-					"colReorder" : true,
+					"colReorder" : {
+						fixedColumnsLeft: 1,
+						fixedColumnsRight: 1
+					},
 					"stateSave":  true,
 					"pagingType": "full_numbers",
 					"order": [],

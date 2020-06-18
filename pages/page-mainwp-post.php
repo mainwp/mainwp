@@ -208,19 +208,19 @@ class MainWP_Post {
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
-			'title'                     => __( 'Title', 'mainwp' ),
-			'author'                    => __( 'Author', 'mainwp' ),
-			'date'                      => __( 'Date', 'mainwp' ),
-			'categories'                => __( 'Categories', 'mainwp' ),
-			'tags'                      => __( 'Tags', 'mainwp' ),
-			'post-type'                 => __( 'Post type', 'mainwp' ),
-			'comments'                  => __( 'Comments', 'mainwp' ),
-			'status'                    => __( 'Status', 'mainwp' ),
-			'seo-links'                 => __( 'Links', 'mainwp' ),
-			'seo-linked'                => __( 'Linked', 'mainwp' ),
-			'seo-score'                 => __( 'SEO Score', 'mainwp' ),
-			'seo-readability'           => __( 'Readability score', 'mainwp' ),
-			'website'                   => __( 'Website', 'mainwp' ),
+			'title'           => __( 'Title', 'mainwp' ),
+			'author'          => __( 'Author', 'mainwp' ),
+			'date'            => __( 'Date', 'mainwp' ),
+			'categories'      => __( 'Categories', 'mainwp' ),
+			'tags'            => __( 'Tags', 'mainwp' ),
+			'post-type'       => __( 'Post type', 'mainwp' ),
+			'comments'        => __( 'Comments', 'mainwp' ),
+			'status'          => __( 'Status', 'mainwp' ),
+			'seo-links'       => __( 'Links', 'mainwp' ),
+			'seo-linked'      => __( 'Linked', 'mainwp' ),
+			'seo-score'       => __( 'SEO Score', 'mainwp' ),
+			'seo-readability' => __( 'Readability score', 'mainwp' ),
+			'website'         => __( 'Website', 'mainwp' ),
 		);
 
 		if ( ! MainWP_Utility::enabled_wp_seo() ) {
@@ -409,9 +409,9 @@ class MainWP_Post {
 			}
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
 				$renderItems[] = array(
-					'title'      => __( 'Add New', 'mainwp' ),
-					'href'       => 'admin.php?page=PostBulkAdd',
-					'active'     => ( 'BulkAdd' === $shownPage ) ? true : false,
+					'title'  => __( 'Add New', 'mainwp' ),
+					'href'   => 'admin.php?page=PostBulkAdd',
+					'active' => ( 'BulkAdd' === $shownPage ) ? true : false,
 				);
 			}
 		}
@@ -684,8 +684,8 @@ class MainWP_Post {
 			</div>
 		</div>
 
-		<table id="mainwp-posts-table" class="ui stackable selectable single line table" style="width:100%">
-			<thead>
+		<table id="mainwp-posts-table" class="ui selectable single line table" style="width:100%">
+			<thead class="full-width">
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
@@ -725,7 +725,10 @@ class MainWP_Post {
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-posts-table' ).DataTable( {
-					"colReorder" : true,
+					"colReorder": {
+						fixedColumnsLeft: 1,
+						fixedColumnsRight: 1
+					},
 					"stateSave":  true,
 					"pagingType": "full_numbers",
 					"order": [],
@@ -872,14 +875,14 @@ class MainWP_Post {
 		MainWP_Cache::add_context(
 			'Post',
 			array(
-				'count'      => $output->posts,
-				'keyword'    => $keyword,
-				'dtsstart'   => $dtsstart,
-				'dtsstop'    => $dtsstop,
-				'status'     => $status,
-				'sites'      => ( '' !== $sites ) ? $sites : '',
-				'groups'     => ( '' !== $groups ) ? $groups : '',
-				'search_on'  => $search_on,
+				'count'     => $output->posts,
+				'keyword'   => $keyword,
+				'dtsstart'  => $dtsstart,
+				'dtsstop'   => $dtsstop,
+				'status'    => $status,
+				'sites'     => ( '' !== $sites ) ? $sites : '',
+				'groups'    => ( '' !== $groups ) ? $groups : '',
+				'search_on' => $search_on,
 			)
 		);
 
@@ -963,13 +966,12 @@ class MainWP_Post {
 				?>
 
 				<tr>
-					<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
-					<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
-
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
 
 					<td class="title column-title">
+						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
+						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
+						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $website->id ); ?>"/>
 						<strong>
 							<abbr title="<?php echo esc_attr( $post['title'] ); ?>">
 							<?php if ( 'trash' !== $post['status'] ) { ?>

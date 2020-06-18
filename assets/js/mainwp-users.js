@@ -271,7 +271,10 @@ mainwp_fetch_users = function () {
     // re-initialize datatable
     jQuery("#mainwp-users-table").DataTable().destroy();
     jQuery('#mainwp-users-table').DataTable({
-        "colReorder" : true,
+        "colReorder": {
+            fixedColumnsLeft: 1,
+            fixedColumnsRight: 1
+        },
         "stateSave":  true,
         "pagingType": "full_numbers",
         "order": [],

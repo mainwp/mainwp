@@ -338,23 +338,24 @@ class MainWP_System_Cron_Jobs {
 
 		if ( 0 == count( $checkupdate_websites ) ) {
 
+			// to do: will notice about busy sites?
 			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
 			MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
-			if ( 0 == $busyCounter ) {
-				if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
-					MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
-					return false;
-				}
-				if ( $updatecheck_running ) {
-					MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
-				}
-
-				update_option( 'mainwp_last_synced_all_sites', time() );
-
-				if ( ! $this->send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
-					return;
-				}
+			
+			if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
+				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
+				return false;
 			}
+			if ( $updatecheck_running ) {
+				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', '' );
+			}
+
+			update_option( 'mainwp_last_synced_all_sites', time() );
+
+			if ( ! $this->send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
+				return;
+			}
+			
 		} else {
 
 			if ( ! $updatecheck_running ) {

@@ -405,7 +405,7 @@ class MainWP_Server_Information {
 								<?php
 							}
 							?>
-							<td><?php echo isset( $extension['author'] ) ? esc_html( strip_tags( $extension['author'] ) ) : ''; ?></td>
+							<td><?php echo isset( $extension['author'] ) ? esc_html( wp_strip_all_tags( $extension['author'] ) ) : ''; ?></td>
 						</tr>
 						<?php
 				}

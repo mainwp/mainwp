@@ -17,9 +17,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-   - name: Execute SSH commmands on remote server
-      uses: JimCronqvist/action-ssh@master
-      with:
-        hosts: 'root@code-reference.mainwp.com'
-        privateKey: ${{ secrets.PRIVATE_KEY }}
-        command: sh ~/.scripts/docproc.sh
+     - name: SSH Execute Commands
+       uses: JimCronqvist/action-ssh@0.1.1
+       with:
+          hosts: 'root@code-reference.mainwp.com'
+          privateKey: ${{ secrets.PRIVATE_KEY }}
+          command: sh ~/.scripts/docproc.sh

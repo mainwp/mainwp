@@ -22,4 +22,4 @@ jobs:
        with:
           hosts: 'root@code-reference.mainwp.com'
           privateKey: ${{ secrets.PRIVATE_KEY }}
-          command: sh ~/.scripts/docproc.sh
+          command: sh ~/scripts/docproc.sh

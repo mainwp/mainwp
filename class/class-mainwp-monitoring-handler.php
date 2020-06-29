@@ -112,11 +112,11 @@ class MainWP_Monitoring_Handler {
 				$duration = $duration_site_last;
 			} else {
 				$freq_minutes = get_option( 'mainwp_frequencySitesChecking', 60 );
-				$duration     = $freq_minutes * 60; // in seconds.;
+				$duration     = $freq_minutes * 60; // in seconds.
 			}
 		}
 
-		// to limit duration 24 hours
+		// to limit duration 24 hours.
 		if ( 60 * 60 * 24 < $duration ) {
 			$duration = 60 * 60 * 24;
 		}

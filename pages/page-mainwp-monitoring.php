@@ -72,7 +72,6 @@ class MainWP_Monitoring {
 	 * Run on page load.
 	 */
 	public static function on_load_page() {
-		// MainWP_System::enqueue_postbox_scripts();
 		self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
 	}
 

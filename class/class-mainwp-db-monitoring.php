@@ -48,7 +48,7 @@ class MainWP_DB_Monitoring extends MainWP_DB {
 	 * @param array $fields fields to insert.
 	 * @param int   $duration duration.
 	 *
-	 * @return void
+	 * @return int $insert_id False or inserted id.
 	 */
 	public function insert_website_status( $fields, $duration ) {
 
@@ -78,7 +78,7 @@ class MainWP_DB_Monitoring extends MainWP_DB {
 	 * @param int $statusid Status id.
 	 * @param int $duration duration.
 	 *
-	 * @return void
+	 * @return mixed $result query result.
 	 */
 	public function update_duration( $statusid, $duration ) {
 		return $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_status' ) . ' SET duration = %d WHERE statusid = %d', $duration, $statusid ) );

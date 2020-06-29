@@ -12,7 +12,7 @@ jQuery( document ).on( 'click', '#mainwp-do-sites-bulk-actions', function () {
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function ( action ) {
 
-  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' ) {
+  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' ) {
 
     if ( bulkManageSitesTaskRunning )
       return false;
@@ -117,6 +117,8 @@ mainwp_managesites_doaction_process = function( action ) {
 	  mainwp_update_pluginsthemes( 'translation', selectedIds );
 	} else if (action == 'refresh_favico') {            
 	  mainwp_managesites_bulk_refresh_favico(selectedIds);
+	} else if (action == 'checknow') {            
+	  mainwp_sync_sites_data( selectedIds, 'checknow' );
 	}
 }
    
@@ -127,6 +129,14 @@ jQuery( document ).on( 'click', '.managesites_syncdata', function () {
     syncIds.push( row.attr( 'siteid' ) );
     mainwp_sync_sites_data( syncIds );
     return false;
+} );
+
+jQuery( document ).on( 'click', '.managesites_checknow', function () {
+  var row = jQuery( this ).closest( 'tr' );
+  var syncIds = [ ];
+  syncIds.push( row.attr( 'siteid' ) );
+  mainwp_sync_sites_data( syncIds, 'checknow' );
+  return false;
 } );
 
 jQuery( document ).on( 'click', '.mainwpactionlogsline', function () {

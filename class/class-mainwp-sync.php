@@ -54,10 +54,10 @@ class MainWP_Sync {
 						}
 
 						$cloneSites[ $website->id ] = array(
-							'name'       => $website->name,
-							'url'        => $website->url,
-							'extauth'    => $website->extauth,
-							'size'       => $website->totalsize,
+							'name'    => $website->name,
+							'url'     => $website->url,
+							'extauth' => $website->extauth,
+							'size'    => $website->totalsize,
 						);
 					}
 					MainWP_DB::free_result( $websites );
@@ -73,14 +73,14 @@ class MainWP_Sync {
 				$pWebsite,
 				'stats',
 				array(
-					'optimize'                       => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
-					'heatMap'                        => 0,
-					'cloneSites'                     => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
-					'othersData'                     => wp_json_encode( $othersData ),
-					'server'                         => get_admin_url(),
-					'numberdaysOutdatePluginTheme'   => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
-					'primaryBackup'                  => $primaryBackup,
-					'siteId'                         => $pWebsite->id,
+					'optimize'                     => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
+					'heatMap'                      => 0,
+					'cloneSites'                   => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
+					'othersData'                   => wp_json_encode( $othersData ),
+					'server'                       => get_admin_url(),
+					'numberdaysOutdatePluginTheme' => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+					'primaryBackup'                => $primaryBackup,
+					'siteId'                       => $pWebsite->id,
 				),
 				true,
 				$pForceFetch
@@ -90,18 +90,18 @@ class MainWP_Sync {
 
 			return $return;
 		} catch ( MainWP_Exception $e ) {
-			$sync_errors          = '';
-			$offline_check_result = 1;
+			$sync_errors  = '';
+			$check_result = 1;
 
 			if ( $e->getMessage() == 'HTTPERROR' ) {
-				$sync_errors          = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
-				$offline_check_result = - 1;
+				$sync_errors  = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
+				$check_result = - 1;
 			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors          = __( 'MainWP Child plugin not detected', 'mainwp' );
-				$offline_check_result = 1;
+				$sync_errors  = __( 'MainWP Child plugin not detected', 'mainwp' );
+				$check_result = 1;
 			}
 
-			return self::sync_information_array( $pWebsite, $information, $sync_errors, $offline_check_result, true, $pAllowDisconnect );
+			return self::sync_information_array( $pWebsite, $information, $sync_errors, $check_result, true, $pAllowDisconnect );
 		}
 	}
 
@@ -113,29 +113,29 @@ class MainWP_Sync {
 	 * @param mixed   $pWebsite The website object.
 	 * @param mixed   $information Filter mainwp_before_save_sync_result.
 	 * @param string  $sync_errors Check for Sync Errors.
-	 * @param integer $offline_check_result Check if offline.
+	 * @param integer $check_result Check if offline.
 	 * @param boolean $error True|False.
 	 * @param boolean $pAllowDisconnect True|False.
 	 *
 	 * @return mixed do_action( 'mainwp-site-synced', $pWebsite, $information ).
 	 */
-	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $offline_check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- complex method.
+	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- complex method.
 		$emptyArray        = wp_json_encode( array() );
 		$websiteValues     = array(
-			'directories'            => $emptyArray,
-			'plugin_upgrades'        => $emptyArray,
-			'theme_upgrades'         => $emptyArray,
-			'translation_upgrades'   => $emptyArray,
-			'securityIssues'         => $emptyArray,
-			'themes'                 => $emptyArray,
-			'plugins'                => $emptyArray,
-			'users'                  => $emptyArray,
-			'categories'             => $emptyArray,
-			'offline_check_result'   => $offline_check_result,
+			'directories'          => $emptyArray,
+			'plugin_upgrades'      => $emptyArray,
+			'theme_upgrades'       => $emptyArray,
+			'translation_upgrades' => $emptyArray,
+			'securityIssues'       => $emptyArray,
+			'themes'               => $emptyArray,
+			'plugins'              => $emptyArray,
+			'users'                => $emptyArray,
+			'categories'           => $emptyArray,
+			'offline_check_result' => $check_result,
 		);
 		$websiteSyncValues = array(
-			'sync_errors'    => $sync_errors,
-			'version'        => 0,
+			'sync_errors' => $sync_errors,
+			'version'     => 0,
 		);
 
 		$done = false;
@@ -178,8 +178,8 @@ class MainWP_Sync {
 				'wp_upgrades',
 				wp_json_encode(
 					array(
-						'current'    => $information['wpversion'],
-						'new'        => $information['wp_updates'],
+						'current' => $information['wpversion'],
+						'new'     => $information['wp_updates'],
 					)
 				)
 			);
@@ -287,10 +287,11 @@ class MainWP_Sync {
 		}
 
 		if ( isset( $information['health_site_status'] ) ) {
-			$issue_counts                       = $information['health_site_status'];
-			$websiteSyncValues['health_issues'] = $issue_counts['critical'];
-			$done                               = true;
-			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $issue_counts ) ); // used in reports.
+			$health_status                     = $information['health_site_status'];
+			$hstatus                           = MainWP_Utility::get_site_health_value( $health_status );
+			$websiteSyncValues['health_value'] = $hstatus['critical'] * 100 + $hstatus['val']; // re-calculate health value so sorting by health correct.
+			$done                              = true;
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $health_status ) );
 		} else {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', $emptyArray );
 		}

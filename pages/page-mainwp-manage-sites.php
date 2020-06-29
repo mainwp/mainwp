@@ -79,7 +79,8 @@ class MainWP_Manage_Sites {
 		 *
 		 * @see \MainWP_Manage_Sites::render_header
 		 */
-		add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp-pageheader-sites', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_sites' instead.
+		add_action( 'mainwp_pageheader_sites', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Sites page footer via the 'mainwp-pagefooter-sites' action.
@@ -91,10 +92,10 @@ class MainWP_Manage_Sites {
 		 *
 		 * @see \MainWP_Manage_Sites::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
+		add_action( 'mainwp_pagefooter_sites', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
-		add_action( 'mainwp-extension-sites-edit', array( self::get_class_name(), 'on_edit_site' ) ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
 		add_action( 'mainwp_extension_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
 
 		// Hook the Help Sidebar content.
@@ -234,6 +235,7 @@ class MainWP_Manage_Sites {
 	 * @param string $shownPage Current page slug.
 	 */
 	public static function render_header( $shownPage = '' ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Manage_Sites_View::render_header( $shownPage, self::$subPages );
 	}
 
@@ -245,6 +247,7 @@ class MainWP_Manage_Sites {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Manage_Sites_View::render_footer( $shownPage, self::$subPages );
 	}
 
@@ -387,14 +390,14 @@ class MainWP_Manage_Sites {
 	}
 
 	/**
-	 * Method display_rows()
+	 * Method ajax_optimize_display_rows()
 	 *
 	 * Display table rows, optimize for shared hosting or big networks.
 	 */
-	public static function display_rows() {
+	public static function ajax_optimize_display_rows() {
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 		self::$sitesTable->prepare_items( true );
-		$output = self::$sitesTable->get_datatable_rows();
+		$output = self::$sitesTable->ajax_get_datatable_rows();
 		self::$sitesTable->clear_items();
 		wp_send_json( $output );
 	}
@@ -965,7 +968,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render Manage Sites Page.
 	 */
-	public static function render_manage_sites() { // phpcs:ignore -- complex method.
+	public static function render_manage_sites() {
 		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
@@ -1027,77 +1030,95 @@ class MainWP_Manage_Sites {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-
-				global $current_user;
-				$updated = false;
 				// Edit website!
-				if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
-					if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
-						// update site.
-						$groupids   = array();
-						$groupnames = array();
-						$tmpArr     = array();
-						if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
-							$groupids = explode( ',', $_POST['mainwp_managesites_edit_addgroups'] );
-						}
-
-						// to fix update staging site.
-						if ( $website->is_staging ) {
-							$stag_gid = get_option( 'mainwp_stagingsites_group_id' );
-							if ( $stag_gid ) {
-								if ( ! in_array( $stag_gid, $groupids, true ) ) {
-									$groupids[] = $stag_gid;
-								}
-							}
-						}
-
-						$newPluginDir = '';
-
-						$maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
-						$maximumFileDescriptorsAuto     = isset( $_POST['mainwp_maximumFileDescriptorsAuto'] );
-						$maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
-
-						$archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : 'global';
-
-						$http_user = $_POST['mainwp_managesites_edit_http_user'];
-						$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
-						$url       = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
-
-						MainWP_DB::instance()->update_website( $websiteid, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, '', $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'] );
-						do_action( 'mainwp_update_site', $websiteid );
-
-						$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
-						if ( 2 < $backup_before_upgrade ) {
-							$backup_before_upgrade = 2;
-						}
-
-						$forceuseipv4 = isset( $_POST['mainwp_managesites_edit_forceuseipv4'] ) ? intval( $_POST['mainwp_managesites_edit_forceuseipv4'] ) : 0;
-						if ( 2 < $forceuseipv4 ) {
-							$forceuseipv4 = 0;
-						}
-
-						$newValues = array(
-							'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
-							'backup_before_upgrade' => $backup_before_upgrade,
-							'force_use_ipv4'        => $forceuseipv4,
-							'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
-						);
-
-						if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
-							$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
-							$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
-							$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
-						}
-
-						MainWP_DB::instance()->update_website_values( $websiteid, $newValues );
-						$updated = true;
-					}
-				}
+				$updated = self::update_site_handle( $website );
 				self::render_edit_site( $websiteid, $updated );
 				return;
 			}
 		}
 		self::render_all_sites();
+	}
+
+
+	/**
+	 * Method update_site_handle()
+	 *
+	 * Handle site update.
+	 *
+	 * @param mixed $website Child Site object.
+	 *
+	 * @return bool $updated Updated.
+	 */
+	private static function update_site_handle( $website ) {
+		global $current_user;
+		$updated = false;
+		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
+			if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
+				// update site.
+				$groupids   = array();
+				$groupnames = array();
+				$tmpArr     = array();
+				if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
+					$groupids = explode( ',', $_POST['mainwp_managesites_edit_addgroups'] );
+				}
+
+				// to fix update staging site.
+				if ( $website->is_staging ) {
+					$stag_gid = get_option( 'mainwp_stagingsites_group_id' );
+					if ( $stag_gid ) {
+						if ( ! in_array( $stag_gid, $groupids, true ) ) {
+							$groupids[] = $stag_gid;
+						}
+					}
+				}
+
+				$newPluginDir = '';
+
+				$maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
+				$maximumFileDescriptorsAuto     = isset( $_POST['mainwp_maximumFileDescriptorsAuto'] );
+				$maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
+
+				$archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : 'global';
+
+				$http_user = $_POST['mainwp_managesites_edit_http_user'];
+				$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
+				$url       = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
+
+				$disableChecking = isset( $_POST['mainwp_managesites_edit_disableChecking'] ) ? 1 : 0;
+				$checkInterval   = intval( $_POST['mainwp_managesites_edit_checkInterval'] );
+				$healthThreshold = intval( $_POST['mainwp_managesites_edit_healthThreshold'] );
+
+				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'], $disableChecking, $checkInterval, $healthThreshold );
+				do_action( 'mainwp_update_site', $website->id );
+
+				$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
+				if ( 2 < $backup_before_upgrade ) {
+					$backup_before_upgrade = 2;
+				}
+
+				$forceuseipv4 = isset( $_POST['mainwp_managesites_edit_forceuseipv4'] ) ? intval( $_POST['mainwp_managesites_edit_forceuseipv4'] ) : 0;
+				if ( 2 < $forceuseipv4 ) {
+					$forceuseipv4 = 0;
+				}
+
+				$newValues = array(
+					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
+					'backup_before_upgrade' => $backup_before_upgrade,
+					'force_use_ipv4'        => $forceuseipv4,
+					'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+				);
+
+				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
+					$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
+					$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
+					$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
+				}
+
+				MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+				$updated = true;
+			}
+		}
+		return $updated;
 	}
 
 	/**

@@ -48,20 +48,25 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * Get wp_options view.
 	 *
-	 * @param array $extra Extra query vaules.
+	 * @param array $fields Extra option fields.
+	 * @param bool  $default Whether or not to get default option fields.
 	 *
 	 * @return array WP Options View.
 	 */
-	public function get_option_view( $extra = array() ) {
-		$view = '(SELECT intwp.id AS wpid,
-            (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
-            (SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
-            (SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
-            (SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
-       		(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+	public function get_option_view( $fields = array(), $default = true ) {
 
-		if ( is_array( $extra ) ) {
-			foreach ( $extra as $field ) {
+		$view = '(SELECT intwp.id AS wpid,';
+
+		if ( empty( $fields ) || $default ) {
+			$view .= ' (SELECT recent_comments.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_comments WHERE  recent_comments.wpid = intwp.id AND recent_comments.name = "recent_comments" LIMIT 1) AS recent_comments,
+					(SELECT recent_posts.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_posts WHERE  recent_posts.wpid = intwp.id AND recent_posts.name = "recent_posts" LIMIT 1) AS recent_posts,
+					(SELECT recent_pages.value FROM ' . $this->table_name( 'wp_options' ) . ' recent_pages WHERE  recent_pages.wpid = intwp.id AND recent_pages.name = "recent_pages" LIMIT 1) AS recent_pages,
+					(SELECT phpversion.value FROM ' . $this->table_name( 'wp_options' ) . ' phpversion WHERE  phpversion.wpid = intwp.id AND phpversion.name = "phpversion" LIMIT 1) AS phpversion,
+					(SELECT wp_upgrades.value FROM ' . $this->table_name( 'wp_options' ) . ' wp_upgrades WHERE  wp_upgrades.wpid = intwp.id AND wp_upgrades.name = "wp_upgrades" LIMIT 1) AS wp_upgrades ';
+		}
+
+		if ( is_array( $fields ) ) {
+			foreach ( $fields as $field ) {
 				if ( empty( $field ) ) {
 					continue;
 				}
@@ -221,8 +226,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			$this->wpdb->delete(
 				$this->table_name( 'wp_options' ),
 				array(
-					'wpid'   => $website->id,
-					'name'   => $this->escape( $option ),
+					'wpid' => $website->id,
+					'name' => $this->escape( $option ),
 				)
 			);
 			$rslt = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT name FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = "' . $this->escape( $option ) . '"', $website->id ) );
@@ -232,9 +237,9 @@ class MainWP_DB extends MainWP_DB_Base {
 			$this->wpdb->insert(
 				$this->table_name( 'wp_options' ),
 				array(
-					'wpid'   => $website->id,
-					'name'   => $option,
-					'value'  => $value,
+					'wpid'  => $website->id,
+					'name'  => $option,
+					'value' => $value,
 				)
 			);
 		} else {
@@ -242,8 +247,8 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->table_name( 'wp_options' ),
 				array( 'value' => $value ),
 				array(
-					'wpid'   => $website->id,
-					'name'   => $option,
+					'wpid' => $website->id,
+					'name' => $option,
 				)
 			);
 		}
@@ -268,9 +273,9 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Method get_sql_websites()
 	 *
-	 * Get child sites via SQL.
+	 * Get SQL query.
 	 *
-	 * @return object Child site object.
+	 * @return string SQL string.
 	 */
 	public function get_sql_websites() {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
@@ -279,7 +284,28 @@ class MainWP_DB extends MainWP_DB_Base {
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
-                ' . $where;
+                WHERE 1 ' . $where;
+	}
+
+	/**
+	 * Method get_sql_websites_to_check_status()
+	 *
+	 * Get SQL query.
+	 *
+	 * @param int $last_check last time checking.
+	 * @param int $count number of websites.
+	 *
+	 * @return string SQL string.
+	 */
+	public function get_sql_websites_to_check_status( $last_check, $count = 20 ) {
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		$sql   = 'SELECT wp.*
+				FROM ' . $this->table_name( 'wp' ) . ' wp
+				WHERE wp.disable_status_check <> 1 AND ( ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' ) 
+				OR ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) ) )' .
+				$where . '
+				LIMIT 0, ' . intval( $count );
+		return $sql;
 	}
 
 	/**
@@ -617,11 +643,12 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param int   $id Child site ID.
 	 * @param array $selectGroups Select groups.
+	 * @param array $fields Get extra option fields.
 	 *
 	 * @return object|null Database query results or null on failure.
 	 */
-	public function get_website_by_id( $id, $selectGroups = false ) {
-		return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups ) );
+	public function get_website_by_id( $id, $selectGroups = false, $fields = array() ) {
+		return $this->get_row_result( $this->get_sql_website_by_id( $id, $selectGroups, $fields ) );
 	}
 
 	/**
@@ -636,6 +663,11 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @return object|null Database query result or null on failure.
 	 */
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array( 'favi_icon' ) ) {
+
+		if ( empty( $extra_view ) ) {
+			$extra_view = array( 'favi_icon' );
+		}
+
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
 			if ( $selectGroups ) {
@@ -887,55 +919,54 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) && ( 0 == $nossl || 1 == $nossl ) ) {
 			$values = array(
-				'userid'                 => $userid,
-				'adminname'              => $this->escape( $admin ),
-				'name'                   => $this->escape( wp_strip_all_tags( $name ) ),
-				'url'                    => $this->escape( $url ),
-				'pubkey'                 => $this->escape( $pubkey ),
-				'privkey'                => $this->escape( $privkey ),
-				'nossl'                  => $nossl,
-				'nosslkey'               => ( null == $nosslkey ? '' : $this->escape( $nosslkey ) ),
-				'siteurl'                => '',
-				'ga_id'                  => '',
-				'gas_id'                 => 0,
-				'offline_checks'         => '',
-				'offline_checks_last'    => 0,
-				'offline_check_result'   => 0,
-				'note'                   => '',
-				'statsUpdate'            => 0,
-				'directories'            => '',
-				'plugin_upgrades'        => '',
-				'theme_upgrades'         => '',
-				'translation_upgrades'   => '',
-				'securityIssues'         => '',
-				'themes'                 => '',
-				'ignored_themes'         => '',
-				'plugins'                => '',
-				'ignored_plugins'        => '',
-				'pages'                  => '',
-				'users'                  => '',
-				'categories'             => '',
-				'pluginDir'              => '',
-				'automatic_update'       => 0,
-				'backup_before_upgrade'  => 2,
-				'verify_certificate'     => intval( $verifyCertificate ),
-				'ssl_version'            => $sslVersion,
-				'uniqueId'               => $uniqueId,
-				'mainwpdir'              => 0,
-				'http_user'              => $http_user,
-				'http_pass'              => $http_pass,
-				'wpe'                    => $wpe,
-				'is_staging'             => $isStaging,
+				'userid'                => $userid,
+				'adminname'             => $this->escape( $admin ),
+				'name'                  => $this->escape( wp_strip_all_tags( $name ) ),
+				'url'                   => $this->escape( $url ),
+				'pubkey'                => $this->escape( $pubkey ),
+				'privkey'               => $this->escape( $privkey ),
+				'nossl'                 => $nossl,
+				'nosslkey'              => ( null == $nosslkey ? '' : $this->escape( $nosslkey ) ),
+				'siteurl'               => '',
+				'ga_id'                 => '',
+				'gas_id'                => 0,
+				'offline_checks_last'   => 0,
+				'offline_check_result'  => 0,
+				'note'                  => '',
+				'statsUpdate'           => 0,
+				'directories'           => '',
+				'plugin_upgrades'       => '',
+				'theme_upgrades'        => '',
+				'translation_upgrades'  => '',
+				'securityIssues'        => '',
+				'themes'                => '',
+				'ignored_themes'        => '',
+				'plugins'               => '',
+				'ignored_plugins'       => '',
+				'pages'                 => '',
+				'users'                 => '',
+				'categories'            => '',
+				'pluginDir'             => '',
+				'automatic_update'      => 0,
+				'backup_before_upgrade' => 2,
+				'verify_certificate'    => intval( $verifyCertificate ),
+				'ssl_version'           => $sslVersion,
+				'uniqueId'              => $uniqueId,
+				'mainwpdir'             => 0,
+				'http_user'             => $http_user,
+				'http_pass'             => $http_pass,
+				'wpe'                   => $wpe,
+				'is_staging'            => $isStaging,
 			);
 
 			$syncValues = array(
-				'dtsSync'                => 0,
-				'dtsSyncStart'           => 0,
-				'dtsAutomaticSync'       => 0,
-				'dtsAutomaticSyncStart'  => 0,
-				'totalsize'              => 0,
-				'extauth'                => '',
-				'sync_errors'            => '',
+				'dtsSync'               => 0,
+				'dtsSyncStart'          => 0,
+				'dtsAutomaticSync'      => 0,
+				'dtsAutomaticSyncStart' => 0,
+				'totalsize'             => 0,
+				'extauth'               => '',
+				'sync_errors'           => '',
 			);
 			if ( $this->wpdb->insert( $this->table_name( 'wp' ), $values ) ) {
 				$websiteid          = $this->wpdb->insert_id;
@@ -944,8 +975,8 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->wpdb->insert(
 					$this->table_name( 'wp_settings_backup' ),
 					array(
-						'wpid'           => $websiteid,
-						'archiveFormat'  => 'global',
+						'wpid'          => $websiteid,
+						'archiveFormat' => 'global',
 					)
 				);
 
@@ -966,8 +997,8 @@ class MainWP_DB extends MainWP_DB_Base {
 					$this->wpdb->insert(
 						$this->table_name( 'wp_group' ),
 						array(
-							'wpid'       => $websiteid,
-							'groupid'    => $groupid,
+							'wpid'    => $websiteid,
+							'groupid' => $groupid,
 						)
 					);
 				}
@@ -994,6 +1025,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid=%d', $websiteid ) );
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid=%d', $websiteid ) );
+			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'sites_status' ) . ' WHERE wpid=%d', $websiteid ) );
 
 			return $nr;
 		}
@@ -1042,25 +1074,27 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * Update child site.
 	 *
-	 * @param int     $websiteid Website ID.
-	 * @param string  $url Child site URL.
-	 * @param int     $userid Current user ID.
-	 * @param string  $name Child site name.
-	 * @param string  $siteadmin Child site administrator username.
-	 * @param array   $groupids Group IDs.
-	 * @param array   $groupnames Group Names.
-	 * @param boolean $offlineChecks Offline Checks.
-	 * @param string  $pluginDir Plugin directory.
-	 * @param mixed   $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
-	 * @param mixed   $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
-	 * @param mixed   $maximumFileDescriptors Set the Maximum File Descriptors option.
-	 * @param int     $verifyCertificate Whether or not to verify SSL Certificate.
-	 * @param mixed   $archiveFormat Backup archive formate.
-	 * @param string  $uniqueId Unique security ID.
-	 * @param string  $http_user HTTP Basic Authentication username.
-	 * @param string  $http_pass HTTP Basic Authentication password.
-	 * @param int     $sslVersion SSL Version.
-	 * @param int     $wpe Is it WP Engine hosted site.
+	 * @param int    $websiteid Website ID.
+	 * @param string $url Child site URL.
+	 * @param int    $userid Current user ID.
+	 * @param string $name Child site name.
+	 * @param string $siteadmin Child site administrator username.
+	 * @param array  $groupids Group IDs.
+	 * @param array  $groupnames Group Names.
+	 * @param string $pluginDir Plugin directory.
+	 * @param mixed  $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
+	 * @param mixed  $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
+	 * @param mixed  $maximumFileDescriptors Set the Maximum File Descriptors option.
+	 * @param int    $verifyCertificate Whether or not to verify SSL Certificate.
+	 * @param mixed  $archiveFormat Backup archive formate.
+	 * @param string $uniqueId Unique security ID.
+	 * @param string $http_user HTTP Basic Authentication username.
+	 * @param string $http_pass HTTP Basic Authentication password.
+	 * @param int    $sslVersion SSL Version.
+	 * @param int    $disableChecking Wether or not disable sites status checking.
+	 * @param int    $checkInterval Status checking interval.
+	 * @param int    $healthThreshold Site health threshold.
+	 * @param int    $wpe Is it WP Engine hosted site.
 	 *
 	 * @return boolean ture on success or false on failure.
 	 */
@@ -1072,7 +1106,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		$siteadmin,
 		$groupids,
 		$groupnames,
-		$offlineChecks,
 		$pluginDir,
 		$maximumFileDescriptorsOverride,
 		$maximumFileDescriptorsAuto,
@@ -1083,13 +1116,16 @@ class MainWP_DB extends MainWP_DB_Base {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
+		$disableChecking,
+		$checkInterval,
+		$healthThreshold,
 		$wpe = 0 ) {
 
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// update admin.
-				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",offline_checks="' . $this->escape( $offlineChecks ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '"  WHERE id=%d', $websiteid ) );
+				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
 				// remove groups.
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
@@ -1117,8 +1153,8 @@ class MainWP_DB extends MainWP_DB_Base {
 					$this->wpdb->insert(
 						$this->table_name( 'wp_group' ),
 						array(
-							'wpid'       => $websiteid,
-							'groupid'    => $groupid,
+							'wpid'    => $websiteid,
+							'groupid' => $groupid,
 						)
 					);
 				}
@@ -1241,5 +1277,35 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
+	}
+
+	/**
+	 * Method get_websites_offline_status()
+	 *
+	 * Get websites offline status.
+	 */
+	public function get_websites_offline_status() {
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		return $this->wpdb->get_results( 'SELECT wp.* FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0' . $where, OBJECT );
+	}
+
+	/**
+	 * Method get_websites_not_good_health()
+	 *
+	 * Get websites with not good site health.
+	 *
+	 * @param int $globalThreshold Global Site Health threshold.
+	 */
+	public function get_websites_not_good_health( $globalThreshold ) {
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		return $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				'SELECT wp.*, wp_sync.health_value FROM ' . $this->table_name( 'wp' ) . ' wp 
+				JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+				WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ( wp.health_threshold = 0 AND wp_sync.health_value < %d ) OR ( wp.health_threshold <> 0 AND wp_sync.health_value < wp.health_threshold ) ) ' . $where, // site with critical issues will be weak.
+				intval( $globalThreshold )
+			),
+			OBJECT
+		);
 	}
 }

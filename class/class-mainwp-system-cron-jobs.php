@@ -54,6 +54,7 @@ class MainWP_System_Cron_Jobs {
 		add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
 		add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );
 		add_action( 'mainwp_cronpingchilds_action', array( $this, 'cron_ping_childs' ) );
+		add_action( 'mainwp_croncheckstatus_action', array( $this, 'cron_check_websites_status' ) );
 
 		// phpcs:ignore -- required for dashboard's minutely scheduled jobs.
 		add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ) );
@@ -64,7 +65,7 @@ class MainWP_System_Cron_Jobs {
 	/**
 	 * Method init_cron()
 	 *
-	 * Build Cron Jobs Array & initiate via init_wp_cron()
+	 * Build Cron Jobs Array & initiate via init_mainwp_cron()
 	 */
 	public function init_cron() {
 
@@ -77,6 +78,17 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_cronpingchilds_action'   => 'daily',
 			'mainwp_cronupdatescheck_action' => 'minutely',
 		);
+
+		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+		if ( ! $disableChecking ) {
+			$jobs['mainwp_croncheckstatus_action'] = 'minutely';
+		} else {
+			// disable check sites status cron.
+			$sched = wp_next_scheduled( 'mainwp_croncheckstatus_action' );
+			if ( false != $sched ) {
+				wp_unschedule_event( $sched, 'mainwp_croncheckstatus_action' );
+			}
+		}
 
 		// Legacy Backup Cron jobs.
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -100,12 +112,12 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		foreach ( $jobs as $hook => $recur ) {
-			$this->init_wp_cron( $useWPCron, $hook, $recur );
+			$this->init_mainwp_cron( $useWPCron, $hook, $recur );
 		}
 	}
 
 	/**
-	 * Method init_wp_cron()
+	 * Method init_mainwp_cron()
 	 *
 	 * Schedual Cron Jobs.
 	 *
@@ -113,7 +125,7 @@ class MainWP_System_Cron_Jobs {
 	 * @param mixed $cron_hook When cron is going to reoccur.
 	 * @param mixed $recurrence Cron job hook.
 	 */
-	public function init_wp_cron( $useWPCron, $cron_hook, $recurrence ) {
+	public function init_mainwp_cron( $useWPCron, $cron_hook, $recurrence ) {
 		$sched = wp_next_scheduled( $cron_hook );
 		if ( false == $sched ) {
 			if ( $useWPCron ) {
@@ -162,12 +174,12 @@ class MainWP_System_Cron_Jobs {
 	 */
 	public function get_cron_schedules( $schedules ) {
 		$schedules['5minutely'] = array(
-			'interval'   => 5 * 60,
-			'display'    => __( 'Once every 5 minutes', 'mainwp' ),
+			'interval' => 5 * 60,
+			'display'  => __( 'Once every 5 minutes', 'mainwp' ),
 		);
 		$schedules['minutely']  = array(
-			'interval'   => 1 * 60,
-			'display'    => __( 'Once every minute', 'mainwp' ),
+			'interval' => 1 * 60,
+			'display'  => __( 'Once every minute', 'mainwp' ),
 		);
 
 		return $schedules;
@@ -750,8 +762,8 @@ class MainWP_System_Cron_Jobs {
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
-								'type'   => 'plugin',
-								'list'   => urldecode( implode( ',', $slugs ) ),
+								'type' => 'plugin',
+								'list' => urldecode( implode( ',', $slugs ) ),
 							)
 						);
 
@@ -777,8 +789,8 @@ class MainWP_System_Cron_Jobs {
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
 							array(
-								'type'   => 'theme',
-								'list'   => urldecode( implode( ',', $slugs ) ),
+								'type' => 'theme',
+								'list' => urldecode( implode( ',', $slugs ) ),
 							)
 						);
 
@@ -842,7 +854,7 @@ class MainWP_System_Cron_Jobs {
 		$updateAvaiable = false;
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
-			$plugin_content = $this->get_mail_content_plugins( $sitesCheckCompleted, $text_format );
+			$plugin_content = MainWP_Format::get_format_email_update_plugins( $sitesCheckCompleted, $text_format );
 			if ( '' != $plugin_content ) {
 				$sendMail       = true;
 				$mail_content  .= $plugin_content;
@@ -851,7 +863,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( ! empty( $theme_automaticDailyUpdate ) ) {
-			$themes_content = $this->get_mail_content_themes( $sitesCheckCompleted, $text_format );
+			$themes_content = MainWP_Format::get_format_email_update_themes( $sitesCheckCompleted, $text_format );
 			if ( '' != $themes_content ) {
 				$sendMail       = true;
 				$mail_content  .= $themes_content;
@@ -860,7 +872,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( ! empty( $mainwpAutomaticDailyUpdate ) ) {
-			$core_content .= $this->get_mail_content_wp( $sitesCheckCompleted, $text_format );
+			$core_content .= MainWP_Format::get_format_email_update_wp( $sitesCheckCompleted, $text_format );
 			if ( '' != $core_content ) {
 				$sendMail       = true;
 				$mail_content  .= $core_content;
@@ -871,7 +883,7 @@ class MainWP_System_Cron_Jobs {
 		$sitesDisconnect = MainWP_DB::instance()->get_disconnected_websites();
 		if ( count( $sitesDisconnect ) != 0 ) {
 			$sendMail      = true;
-			$mail_content .= $this->get_mail_content_connections( $sitesDisconnect, $text_format );
+			$mail_content .= MainWP_Format::get_format_email_status_connections( $sitesDisconnect, $text_format );
 		}
 
 		MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
@@ -897,7 +909,7 @@ class MainWP_System_Cron_Jobs {
 
 		if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
 			$sitesHttpCheckIds = get_option( 'mainwp_automaticUpdate_httpChecks' );
-			$this->send_http_response_notification( $sitesHttpCheckIds, $text_format );
+			MainWP_Notification::send_http_response_notification( $sitesHttpCheckIds, $text_format );
 			MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', '' );
 		}
 
@@ -906,7 +918,7 @@ class MainWP_System_Cron_Jobs {
 
 		if ( false !== $email && '' !== $email ) {
 			$mail_content = apply_filters( 'mainwp_daily_digest_content', $mail_content, $text_format );
-			$this->send_updates_notification( $email, $mail_content, $text_format, $updateAvaiable );
+			MainWP_Notification::send_updates_notification( $email, $mail_content, $text_format, $updateAvaiable );
 		}
 
 		return true;
@@ -942,358 +954,6 @@ class MainWP_System_Cron_Jobs {
 		}
 	}
 
-	/**
-	 * Method get_mail_content_plugins().
-	 *
-	 * Get mail content for plugins update.
-	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content.
-	 */
-	public function get_mail_content_plugins( $sitesCheckCompleted, $text_format ) {
-
-		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
-		if ( ! is_array( $pluginsNewUpdate ) ) {
-			$pluginsNewUpdate = array();
-		}
-		$pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
-		if ( ! is_array( $pluginsToUpdate ) ) {
-			$pluginsToUpdate = array();
-		}
-		$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
-		if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
-			$notTrustedPluginsNewUpdate = array();
-		}
-		$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
-		if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
-			$notTrustedPluginsToUpdate = array();
-		}
-
-		$mail_content = '';
-
-		if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
-			) {
-			$mail_lines  = '';
-			$mail_lines .= $this->print_digest_lines( $pluginsNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
-			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $notTrustedPluginsToUpdate );
-
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Plugin Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
-		return $mail_content;
-	}
-
-	/**
-	 * Method get_mail_content_themes().
-	 *
-	 * Get themes update mail content.
-	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content
-	 */
-	public function get_mail_content_themes( $sitesCheckCompleted, $text_format ) {
-
-		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
-		if ( ! is_array( $themesNewUpdate ) ) {
-			$themesNewUpdate = array();
-		}
-		$themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
-		if ( ! is_array( $themesToUpdate ) ) {
-			$themesToUpdate = array();
-		}
-		$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
-		if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
-			$notTrustedThemesNewUpdate = array();
-		}
-		$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
-		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
-			$notTrustedThemesToUpdate = array();
-		}
-
-		$mail_content = '';
-
-		if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
-			) {
-			$mail_lines  = '';
-			$mail_lines .= $this->print_digest_lines( $themesNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
-			$mail_lines .= $this->print_digest_lines( $notTrustedThemesNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $notTrustedThemesToUpdate );
-
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Themes Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
-
-		return $mail_content;
-	}
-
-	/**
-	 * Method get_mail_content_themes().
-	 *
-	 * Get mail content of WP update.
-	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content.
-	 */
-	public function get_mail_content_wp( $sitesCheckCompleted, $text_format ) {
-
-		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
-		if ( ! is_array( $coreNewUpdate ) ) {
-			$coreNewUpdate = array();
-		}
-		$coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
-		if ( ! is_array( $coreToUpdate ) ) {
-			$coreToUpdate = array();
-		}
-		$ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
-		if ( ! is_array( $ignoredCoreNewUpdate ) ) {
-			$ignoredCoreNewUpdate = array();
-		}
-		$ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
-		if ( ! is_array( $ignoredCoreToUpdate ) ) {
-			$ignoredCoreToUpdate = array();
-		}
-		$mail_content = '';
-
-		if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
-			$mail_lines  = '';
-			$mail_lines .= $this->print_digest_lines( $coreNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
-			$mail_lines .= $this->print_digest_lines( $ignoredCoreNewUpdate );
-			$mail_lines .= $this->print_digest_lines( $ignoredCoreToUpdate );
-
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Core Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
-
-		return $mail_content;
-	}
-
-	/**
-	 * Method get_mail_content_connections().
-	 *
-	 * Get mail content of connections.
-	 *
-	 * @param mixed $sitesDisconnect Disconnected sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content.
-	 */
-	public function get_mail_content_connections( $sitesDisconnect, $text_format ) {
-		$mail_lines   = $this->print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
-		$mail_content = '';
-		if ( $text_format ) {
-			$mail_content .= 'Disconnected sites' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= $mail_lines;
-			$mail_content .= "\r\n";
-		} else {
-			$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;">Disconnected sites</b><br>';
-			$mail_content .= '<ul>';
-			$mail_content .= $mail_lines;
-			$mail_content .= '</ul>';
-		}
-		return $mail_content;
-	}
-
-
-	/**
-	 * Method send_http_response_notification().
-	 *
-	 * Send HTTP response email notification.
-	 *
-	 * @param bool $sitesHttpCheckIds Sites IDs.
-	 * @param bool $text_format Text format.
-	 *
-	 * @return bool False if failed.
-	 */
-	public function send_http_response_notification( $sitesHttpCheckIds, $text_format ) {
-
-		if ( ! is_array( $sitesHttpCheckIds ) || empty( $sitesHttpCheckIds ) ) {
-			return false;
-		}
-
-		if ( $text_format ) {
-			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
-		} else {
-			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
-		}
-
-		$mail_offline = '';
-		$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
-
-		if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
-			foreach ( $sitesOffline as $site ) {
-				if ( -1 == $site->offline_check_result ) {
-					$mail_offline .= '<li>' . $site->name . ' - [' . $site->url . '] - [' . $site->http_response_code . ']</li>';
-				}
-			}
-		}
-
-		$email = get_option( 'mainwp_updatescheck_mail_email' );
-
-		if ( ! empty( $email ) && '' != $mail_offline ) {
-			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-			$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
-							<div></div>
-							<ul>
-							' . $mail_offline . '
-							</ul>
-							<div></div>
-							<div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-			wp_mail(
-				$email,
-				$mail_title = 'MainWP - HTTP response check',
-				MainWP_Format::format_email(
-					$email,
-					$mail_offline,
-					$mail_title
-				),
-				array(
-					'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-					$content_type,
-				)
-			);
-		}
-	}
-
-	/**
-	 * Method send_updates_notification().
-	 *
-	 * Sent available updates notification email.
-	 *
-	 * @param mixed $email Admin email.
-	 * @param mixed $content Mail content.
-	 * @param bool  $text_format Text format.
-	 * @param bool  $updateAvaiable Update avaiable.
-	 */
-	public function send_updates_notification( $email, $content, $text_format, $updateAvaiable ) {
-
-		if ( $text_format ) {
-			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
-		} else {
-			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
-		}
-
-		if ( $text_format ) {
-			$mail_content  = $updateAvaiable ? 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n" : '';
-			$mail_content .= $content . "\r\n";
-			$mail_content .= $updateAvaiable ? 'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n" : '';
-		} else {
-			$mail_content  = $updateAvaiable ? '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>' : '';
-			$mail_content .= '<div></div>';
-			$mail_content .= $content;
-			$mail_content .= '<div> </div>';
-			$mail_content .= $updateAvaiable ? '<div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>' : '';
-		}
-
-		$mail_title = 'Available Updates';
-		if ( ! $updateAvaiable ) {
-			$mail_title = '';
-		}
-
-		wp_mail(
-			$email,
-			'Available Updates',
-			MainWP_Format::format_email(
-				$email,
-				$mail_content,
-				$mail_title,
-				$text_format,
-				$updateAvaiable
-			),
-			array(
-				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-				$content_type,
-			)
-		);
-	}
-
-	/**
-	 * Method print_digest_lines()
-	 *
-	 * List of updates to be emailed.
-	 *
-	 * @param array  $array Array of URLs.
-	 * @param array  $backupChecks null|Child Site ID.
-	 * @param string $what disc_sites|null.
-	 *
-	 * @return html $output Email Body.
-	 */
-	public function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
-
-		$plain_text = apply_filters( 'mainwp_text_format_email', false );
-
-		$output = '';
-
-		if ( 'disc_sites' === $what ) {
-			if ( $plain_text ) {
-				foreach ( $array as $url ) {
-					$output .= $url . "\r\n";
-				}
-			} else {
-				foreach ( $array as $url ) {
-					$output .= '<li>' . $url . '</li>' . "\n";
-				}
-			}
-		} else {
-
-			if ( $plain_text ) {
-				foreach ( $array as $line ) {
-					$siteId      = $line[0];
-					$text        = $line[1];
-					$trustedText = $line[2];
-
-					$output .= $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . "\r\n";
-				}
-			} else {
-				foreach ( $array as $line ) {
-					$siteId      = $line[0];
-					$text        = $line[1];
-					$trustedText = $line[2];
-
-					$output .= '<li>' . $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . '</li>' . "\n";
-				}
-			}
-		}
-
-		return $output;
-	}
 
 	/**
 	 * Method cron_ping_childs()
@@ -1469,6 +1129,89 @@ class MainWP_System_Cron_Jobs {
 			sleep( 3 );
 		}
 		MainWP_DB::free_result( $websites );
+	}
+
+	/**
+	 * Method cron_check_websites_status()
+	 *
+	 * Cron job to check child sites status.
+	 */
+	public function cron_check_websites_status() {
+
+		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+
+		if ( $disableChecking ) {
+			return;
+		}
+
+		$running           = get_option( 'mainwp_cron_checksites_running' );
+		$freq_minutes      = get_option( 'mainwp_frequencySitesChecking', 60 );
+		$lasttime_to_check = get_option( 'mainwp_cron_checksites_last_timestamp', time() );
+
+		if ( ( 'yes' != $running ) && time() < $lasttime_to_check + $freq_minutes * MINUTE_IN_SECONDS ) {
+			return;
+		}
+
+		if ( 'yes' != $running ) {
+			MainWP_Logger::instance()->info( 'CRON :: check  sites status starting...' );
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', 'yes' );
+		}
+
+		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 20 );
+
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );
+
+		if ( empty( $websites ) ) {
+
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_last_timestamp', time() );
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', false );
+
+			$email       = MainWP_DB_Common::instance()->get_user_notification_email();
+			$text_format = apply_filters( 'mainwp_text_format_email', false );
+
+			$this->notice_sites_offline_status( $email, $text_format );
+			$this->notice_sites_not_good_site_health( $email, $text_format );
+			return;
+		}
+
+		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_Monitoring_Handler::handle_check_website( $website );
+		}
+		MainWP_DB::free_result( $websites );
+	}
+
+
+	/**
+	 * Method notice_sites_offline_status()
+	 *
+	 * To notice sites offline status.
+	 *
+	 * @param string $email notification email.
+	 * @param bool   $text_format Text format.
+	 */
+	public static function notice_sites_offline_status( $email, $text_format ) {
+		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status();
+		if ( ! empty( $offlineSites ) ) {
+			$mail_content = MainWP_Format::get_format_email_offline_sites( $offlineSites, $text_format );
+			MainWP_Notification::send_websites_status_notification( $email, $mail_content, $text_format );
+		}
+	}
+
+	/**
+	 * Method notice_sites_with_not_good_site_health()
+	 *
+	 * To notice sites online with not good site health.
+	 *
+	 * @param string $email notification email.
+	 * @param bool   $text_format Text format.
+	 */
+	public static function notice_sites_not_good_site_health( $email, $text_format ) {
+		$threshold       = get_option( 'mainwp_sitehealthThreshold', 80 );
+		$weakHealthSites = MainWP_DB_Common::instance()->get_websites_not_good_health( $threshold );
+		if ( ! empty( $weakHealthSites ) ) {
+			$mail_content = MainWP_Format::get_format_email_health_status_sites( $weakHealthSites, $text_format );
+			MainWP_Notification::send_websites_health_status_notification( $email, $mail_content, $text_format );
+		}
 	}
 
 }

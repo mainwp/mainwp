@@ -275,7 +275,8 @@ class MainWP_System_Handler {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
 			if ( wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 				$updated  = MainWP_Settings::handle_settings_post();
-				$updated |= MainWP_Manage_Sites_Handler::handle_settings_post();
+				$updated |= MainWP_Backup_Handler::handle_settings_post();
+				$updated |= MainWP_Monitoring_Handler::handle_settings_post();
 				$msg      = '';
 				if ( $updated ) {
 					$msg = '&message=saved';
@@ -564,10 +565,10 @@ class MainWP_System_Handler {
 
 		if ( is_array( $info ) && isset( $info['product_id'] ) && isset( $info['software_version'] ) ) {
 			$act_info = array(
-				'product_id'         => $info['product_id'],
-				'software_version'   => $info['software_version'],
-				'activated_key'      => 'Deactivated',
-				'instance_id'        => MainWP_Api_Manager_Password_Management::generate_password( 12, false ),
+				'product_id'       => $info['product_id'],
+				'software_version' => $info['software_version'],
+				'activated_key'    => 'Deactivated',
+				'instance_id'      => MainWP_Api_Manager_Password_Management::generate_password( 12, false ),
 			);
 			MainWP_Api_Manager::instance()->set_activation_info( $ext_key, $act_info );
 		}

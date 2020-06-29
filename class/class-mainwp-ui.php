@@ -427,7 +427,7 @@ class MainWP_UI {
 	 */
 	public static function render_second_top_header( $which = '' ) {
 		do_action( 'mainwp_before_subheader' );
-		if ( has_action( 'mainwp_subheader_actions' ) || 'overview' === $which || 'managesites' === $which ) {
+		if ( has_action( 'mainwp_subheader_actions' ) || 'overview' === $which || 'managesites' === $which || 'monitoringsites' === $which ) {
 			?>
 			<div class="mainwp-sub-header">
 				<?php if ( 'overview' === $which ) : ?>
@@ -437,7 +437,7 @@ class MainWP_UI {
 					</div>
 				</div>
 				<?php endif; ?>
-					<?php if ( 'managesites' === $which ) : ?>
+					<?php if ( 'managesites' === $which || 'monitoringsites' === $which ) : ?>
 						<?php do_action( 'mainwp_managesites_tabletop' ); ?>
 					<?php else : ?>
 						<?php do_action( 'mainwp_subheader_actions' ); ?>
@@ -983,15 +983,15 @@ class MainWP_UI {
 	public static function render_screen_options( $setting_page = true ) {
 
 		$default_widgets = array(
-			'overview'                  => __( 'Updates Overview', 'mainwp' ),
-			'recent_posts'              => __( 'Recent Posts', 'mainwp' ),
-			'recent_pages'              => __( 'Recent Pages', 'mainwp' ),
-			'plugins'                   => __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
-			'themes'                    => __( 'Themes (Individual Site Overview page)', 'mainwp' ),
-			'connection_status'         => __( 'Connection Status', 'mainwp' ),
-			'security_issues'           => __( 'Security Issues', 'mainwp' ),
-			'notes'                     => __( 'Notes (Individual Site Overview page)', 'mainwp' ),
-			'child_site_info'           => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
+			'overview'          => __( 'Updates Overview', 'mainwp' ),
+			'recent_posts'      => __( 'Recent Posts', 'mainwp' ),
+			'recent_pages'      => __( 'Recent Pages', 'mainwp' ),
+			'plugins'           => __( 'Plugins (Individual Site Overview page)', 'mainwp' ),
+			'themes'            => __( 'Themes (Individual Site Overview page)', 'mainwp' ),
+			'connection_status' => __( 'Connection Status', 'mainwp' ),
+			'security_issues'   => __( 'Security Issues', 'mainwp' ),
+			'notes'             => __( 'Notes (Individual Site Overview page)', 'mainwp' ),
+			'child_site_info'   => __( 'Child site info (Individual Site Overview page)', 'mainwp' ),
 		);
 
 		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.

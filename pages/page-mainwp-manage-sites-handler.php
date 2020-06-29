@@ -211,65 +211,6 @@ class MainWP_Manage_Sites_Handler {
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
-	/**
-	 * Method handle_settings_post()
-	 *
-	 * Update Child Site Settings.
-	 *
-	 * @return boolean true|false
-	 */
-	public static function handle_settings_post() {
-		if ( MainWP_System_Utility::is_admin() ) {
-			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
-					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
-				}
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
-					MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors'] );
-				}
-				MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
-				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
-					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources'] );
-				}
-				MainWP_Utility::update_option( 'mainwp_archiveFormat', $_POST['mainwp_archiveFormat'] );
-
-				$old_primaryBackup          = get_option( 'mainwp_primaryBackup' );
-				$old_enableLegacyBackup     = get_option( 'mainwp_enableLegacyBackupFeature' );
-				$updated_enableLegacyBackup = false;
-
-				if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
-					if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method.
-						MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', 0 );
-						MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
-						MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
-						if ( empty( $old_primaryBackup ) ) {
-							MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-							$updated_enableLegacyBackup = true;
-						}
-					}
-					MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );
-				}
-
-				if ( ! isset( $_POST['mainwp_primaryBackup'] ) || empty( $_POST['mainwp_primaryBackup'] ) ) {
-					MainWP_Utility::update_option( 'mainwp_options_loadFilesBeforeZip', ( ! isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 0 : 1 ) );
-					MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', ( ! isset( $_POST['mainwp_options_notificationOnBackupFail'] ) ? 0 : 1 ) );
-					MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', ( ! isset( $_POST['mainwp_options_notificationOnBackupStart'] ) ? 0 : 1 ) );
-					MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
-				}
-
-				$enableLegacyBackup = ( isset( $_POST['mainwp_options_enableLegacyBackupFeature'] ) && ! empty( $_POST['mainwp_options_enableLegacyBackupFeature'] ) ) ? 1 : 0;
-				if ( $enableLegacyBackup && empty( $old_enableLegacyBackup ) ) {
-					MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
-				}
-
-				if ( ! $updated_enableLegacyBackup ) {
-					MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', $enableLegacyBackup );
-				}
-				return true;
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * Method update_child_site_value()

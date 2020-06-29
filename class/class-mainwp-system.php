@@ -25,7 +25,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.0.7.2';
+	public static $version = '4.1-beta1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -239,6 +239,9 @@ class MainWP_System {
 				'mainwp_disable_update_confirmations',
 				'mainwp_settings_hide_widgets',
 				'mainwp_settings_hide_manage_sites_columns',
+				'mainwp_disableSitesChecking',
+				'mainwp_frequencySitesChecking',
+				'mainwp_sitehealthThreshold',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -360,6 +363,15 @@ class MainWP_System {
 	 */
 	public function mainwp_cronupdatescheck_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_updates_check();
+	}
+
+	/**
+	 * Method mainwp_croncheckstatus_action()
+	 *
+	 * Run cron check childs action.
+	 */
+	public function mainwp_croncheckstatus_action() {
+		MainWP_System_Cron_Jobs::instance()->cron_check_websites_status();
 	}
 
 	/**
@@ -568,7 +580,7 @@ class MainWP_System {
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
 		}
 
-		if ( isset( $_GET['page'] ) && 'managesites' === $_GET['page'] ) {
+		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] ) ) {
 			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
 		}

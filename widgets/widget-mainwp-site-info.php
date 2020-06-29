@@ -45,31 +45,32 @@ class MainWP_Site_Info {
 			return;
 		}
 
-		$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, true );
-
-		$websites = MainWP_DB::instance()->query( $sql );
-		if ( empty( $websites ) ) {
-			return;
-		}
-
-		$website = MainWP_DB::fetch_object( $websites );
+		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
 
 		$website_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
 
+		if ( is_array( $website_info ) ) {
+			$code        = $website->http_response_code;
+			$code_string = MainWP_Utility::get_http_codes( $code );
+			if ( ! empty( $code_string ) ) {
+				$code .= ' - ' . $code_string;
+			}
+			$website_info['last_status'] = $code;
+		}
+
 		$child_site_info = array(
-			'wpversion'             => __( 'WordPress Version', 'mainwp' ),
-			'debug_mode'            => __( 'Debug Mode', 'mainwp' ),
-			'phpversion'            => __( 'PHP Version', 'mainwp' ),
-			'child_version'         => __( 'MainWP Child Version', 'mainwp' ),
-			'memory_limit'          => __( 'PHP Memory Limit', 'mainwp' ),
-			'mysql_version'         => __( 'MySQL Version', 'mainwp' ),
-			'ip'                    => __( 'Server IP', 'mainwp' ),
-			'group'                 => __( 'Groups', 'mainwp' ),
+			'wpversion'     => __( 'WordPress Version', 'mainwp' ),
+			'debug_mode'    => __( 'Debug Mode', 'mainwp' ),
+			'phpversion'    => __( 'PHP Version', 'mainwp' ),
+			'child_version' => __( 'MainWP Child Version', 'mainwp' ),
+			'memory_limit'  => __( 'PHP Memory Limit', 'mainwp' ),
+			'mysql_version' => __( 'MySQL Version', 'mainwp' ),
+			'ip'            => __( 'Server IP', 'mainwp' ),
+			'group'         => __( 'Groups', 'mainwp' ),
+			'last_status'   => __( 'Last Check Status', 'mainwp' ),
 		);
 
 		self::render_info( $website, $website_info, $child_site_info );
-
-		MainWP_DB::free_result( $websites );
 	}
 
 	/**

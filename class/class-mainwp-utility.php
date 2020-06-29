@@ -589,4 +589,103 @@ class MainWP_Utility {
 		wp_nonce_field( 'mainwp-admin-nonce' );
 	}
 
+
+	/**
+	 * Get Health Site value.
+	 *
+	 * @param mixed $issue_counts Health site issues.
+	 *
+	 * @return array $array Health status value.
+	 */
+	public static function get_site_health_value( $issue_counts ) {
+
+		if ( empty( $issue_counts ) ) {
+			$issue_counts = array(
+				'good'        => 0,
+				'recommended' => 0,
+				'critical'    => 0,
+			);
+		}
+
+		$totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
+		$failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;
+
+		if ( 0 == $totalTests ) {
+				$val = 100;
+		} else {
+				$val = 100 - ceil( ( $failedTests / $totalTests ) * 100 );
+		}
+
+		if ( 0 > $val ) {
+			$val = 0;
+		}
+
+		if ( 100 < $val ) {
+			$val = 100;
+		}
+
+		return array(
+			'val'      => $val,
+			'critical' => $issue_counts['critical'],
+		);
+	}
+
+
+	/**
+	 * Get HTTP code.
+	 *
+	 * @param int $code HTTP code.
+	 *
+	 * @return array $http_codes HTTP code.
+	 */
+	public static function get_http_codes( $code = false ) {
+
+		$http_codes = array(
+			'200' => 'OK',
+			'201' => 'Created',
+			'202' => 'Accepted',
+			'203' => 'Non-Authoritative Information',
+			'204' => 'No Content',
+			'205' => 'Reset Content',
+			'206' => 'Partial Content',
+			'300' => 'Multiple Choices',
+			'301' => 'Moved Permanently',
+			'302' => 'Found',
+			'303' => 'See Other',
+			'304' => 'Not Modified',
+			'305' => 'Use Proxy',
+			'306' => '(Unused)',
+			'307' => 'Temporary Redirect',
+			'400' => 'Bad Request',
+			'401' => 'Unauthorized',
+			'402' => 'Payment Required',
+			'403' => 'Forbidden',
+			'404' => 'Not Found',
+			'405' => 'Method Not Allowed',
+			'406' => 'Not Acceptable',
+			'407' => 'Proxy Authentication Required',
+			'408' => 'Request Timeout',
+			'409' => 'Conflict',
+			'410' => 'Gone',
+			'411' => 'Length Required',
+			'412' => 'Precondition Failed',
+			'413' => 'Request Entity Too Large',
+			'414' => 'Request-URI Too Long',
+			'415' => 'Unsupported Media Type',
+			'416' => 'Requested Range Not Satisfiable',
+			'417' => 'Expectation Failed',
+			'500' => 'Internal Server Error',
+			'501' => 'Not Implemented',
+			'502' => 'Bad Gateway',
+			'503' => 'Service Unavailable',
+			'504' => 'Gateway Timeout',
+			'505' => 'HTTP Version Not Supported',
+		);
+
+		if ( empty( $code ) ) {
+			return $http_codes;
+		}
+
+		return isset( $http_codes[ $code ] ) ? $http_codes[ $code ] : '';
+	}
 }

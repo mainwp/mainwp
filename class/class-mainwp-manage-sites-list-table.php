@@ -162,6 +162,7 @@ class MainWP_Manage_Sites_List_Table {
 			case 'backup':
 			case 'last_sync':
 			case 'last_post':
+			case 'site_health':
 			case 'notes':
 			case 'phpversion':
 			case 'site_actions':
@@ -517,7 +518,7 @@ class MainWP_Manage_Sites_List_Table {
 				} elseif ( 'last_post' === $req_orderby ) {
 					$orderby = 'wp_sync.last_post_gmt ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'site_health' === $req_orderby ) {
-					$orderby = 'wp_sync.health_issues ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+					$orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				}
 			}
 		}
@@ -861,7 +862,7 @@ class MainWP_Manage_Sites_List_Table {
 							"type": "POST",
 							"data":  function ( d ) {
 								return $.extend( {}, d, mainwp_secure_data( {
-									action: 'mainwp_manage_display_rows',
+									action: 'mainwp_manage_sites_display_rows',
 									status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
 									g: jQuery("#mainwp-filter-sites-group").dropdown("get value")
 								} )
@@ -1069,7 +1070,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @return html Rows html.
 	 */
-	public function get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();
 		$info_rows = array();
 		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
@@ -1214,8 +1215,9 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
-				$hval     = $this->get_health_site_val( $health_status );
-				$critical = isset( $website['health_issues'] ) ? intval( $website['health_issues'] ) : 0;
+				$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+				$hval     = $hstatus['val'];
+				$critical = $hstatus['critical'];
 
 				if ( 80 <= $hval && 0 == $critical ) {
 					$h_color = 'green';
@@ -1331,43 +1333,6 @@ class MainWP_Manage_Sites_List_Table {
 			'recordsFiltered' => $this->total_items,
 			'rowsInfo'        => $info_rows,
 		);
-	}
-
-	/**
-	 * Get Health Site value.
-	 *
-	 * @param mixed $issue_counts Health site issues.
-	 *
-	 * @return integer $val Health value.
-	 */
-	public function get_health_site_val( $issue_counts ) {
-
-		if ( empty( $issue_counts ) ) {
-			$issue_counts = array(
-				'good'        => 0,
-				'recommended' => 0,
-				'critical'    => 0,
-			);
-		}
-
-		$totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
-		$failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;
-
-		if ( 0 == $totalTests ) {
-				$val = 100;
-		} else {
-				$val = 100 - ceil( ( $failedTests / $totalTests ) * 100 );
-		}
-
-		if ( 0 > $val ) {
-			$val = 0;
-		}
-
-		if ( 100 < $val ) {
-			$val = 100;
-		}
-
-		return $val;
 	}
 
 	/**
@@ -1539,8 +1504,9 @@ class MainWP_Manage_Sites_List_Table {
 			$t_color = 'green';
 		}
 
-		$hval     = $this->get_health_site_val( $health_status );
-		$critical = isset( $website['health_issues'] ) ? $website['health_issues'] : 0;
+		$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+		$hval     = $hstatus['val'];
+		$critical = $hstatus['critical'];
 
 		if ( 80 <= $hval && 0 == $critical ) {
 			$h_color = 'green';

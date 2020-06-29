@@ -62,6 +62,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
 		// Widget: RightNow.
 		$this->add_action( 'mainwp_syncsites', array( &$this, 'mainwp_syncsites' ) );
+
+		$this->add_action( 'mainwp_checksites', array( &$this, 'mainwp_checksites' ) );
 	}
 
 	/**
@@ -272,6 +274,16 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_syncsites' );
 		MainWP_Updates_Overview::dismiss_sync_errors( false );
 		MainWP_Updates_Overview::sync_site();
+	}
+
+	/**
+	 * Method mainwp_checksites()
+	 *
+	 * Check Child Sites.
+	 */
+	public function mainwp_checksites() {
+		$this->secure_request( 'mainwp_checksites' );
+		MainWP_Monitoring_Handler::ajax_check_status_site();
 	}
 
 }

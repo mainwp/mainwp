@@ -23,6 +23,346 @@ class MainWP_Format {
 		return __CLASS__;
 	}
 
+
+	/**
+	 * Method get_format_email_update_plugins().
+	 *
+	 * Get mail content for plugins update.
+	 *
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content.
+	 */
+	public static function get_format_email_update_plugins( $sitesCheckCompleted, $text_format ) {
+
+		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
+		if ( ! is_array( $pluginsNewUpdate ) ) {
+			$pluginsNewUpdate = array();
+		}
+		$pluginsToUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins' );
+		if ( ! is_array( $pluginsToUpdate ) ) {
+			$pluginsToUpdate = array();
+		}
+		$notTrustedPluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins_new' );
+		if ( ! is_array( $notTrustedPluginsNewUpdate ) ) {
+			$notTrustedPluginsNewUpdate = array();
+		}
+		$notTrustedPluginsToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_plugins' );
+		if ( ! is_array( $notTrustedPluginsToUpdate ) ) {
+			$notTrustedPluginsToUpdate = array();
+		}
+
+		$mail_content = '';
+
+		if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
+			) {
+			$mail_lines  = '';
+			$mail_lines .= self::print_digest_lines( $pluginsNewUpdate );
+			$mail_lines .= self::print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
+			$mail_lines .= self::print_digest_lines( $notTrustedPluginsNewUpdate );
+			$mail_lines .= self::print_digest_lines( $notTrustedPluginsToUpdate );
+
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Plugin Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+		return $mail_content;
+	}
+
+	/**
+	 * Method get_format_email_update_themes().
+	 *
+	 * Get themes update mail content.
+	 *
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content
+	 */
+	public static function get_format_email_update_themes( $sitesCheckCompleted, $text_format ) {
+
+		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
+		if ( ! is_array( $themesNewUpdate ) ) {
+			$themesNewUpdate = array();
+		}
+		$themesToUpdate = get_option( 'mainwp_updatescheck_mail_update_themes' );
+		if ( ! is_array( $themesToUpdate ) ) {
+			$themesToUpdate = array();
+		}
+		$notTrustedThemesNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes_new' );
+		if ( ! is_array( $notTrustedThemesNewUpdate ) ) {
+			$notTrustedThemesNewUpdate = array();
+		}
+		$notTrustedThemesToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_themes' );
+		if ( ! is_array( $notTrustedThemesToUpdate ) ) {
+			$notTrustedThemesToUpdate = array();
+		}
+
+		$mail_content = '';
+
+		if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
+			) {
+			$mail_lines  = '';
+			$mail_lines .= self::print_digest_lines( $themesNewUpdate );
+			$mail_lines .= self::print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
+			$mail_lines .= self::print_digest_lines( $notTrustedThemesNewUpdate );
+			$mail_lines .= self::print_digest_lines( $notTrustedThemesToUpdate );
+
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Themes Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+
+		return $mail_content;
+	}
+
+	/**
+	 * Method get_format_email_update_wp().
+	 *
+	 * Get mail content of WP update.
+	 *
+	 * @param mixed $sitesCheckCompleted Completed sites.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content.
+	 */
+	public static function get_format_email_update_wp( $sitesCheckCompleted, $text_format ) {
+
+		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
+		if ( ! is_array( $coreNewUpdate ) ) {
+			$coreNewUpdate = array();
+		}
+		$coreToUpdate = get_option( 'mainwp_updatescheck_mail_update_core' );
+		if ( ! is_array( $coreToUpdate ) ) {
+			$coreToUpdate = array();
+		}
+		$ignoredCoreNewUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core_new' );
+		if ( ! is_array( $ignoredCoreNewUpdate ) ) {
+			$ignoredCoreNewUpdate = array();
+		}
+		$ignoredCoreToUpdate = get_option( 'mainwp_updatescheck_mail_ignore_core' );
+		if ( ! is_array( $ignoredCoreToUpdate ) ) {
+			$ignoredCoreToUpdate = array();
+		}
+		$mail_content = '';
+
+		if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
+			$mail_lines  = '';
+			$mail_lines .= self::print_digest_lines( $coreNewUpdate );
+			$mail_lines .= self::print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
+			$mail_lines .= self::print_digest_lines( $ignoredCoreNewUpdate );
+			$mail_lines .= self::print_digest_lines( $ignoredCoreToUpdate );
+
+			if ( $text_format ) {
+				$mail_content .= 'WordPress Core Updates' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+
+		return $mail_content;
+	}
+
+	/**
+	 * Method get_format_email_status_connections().
+	 *
+	 * Get mail content of connections.
+	 *
+	 * @param mixed $sitesDisconnect Disconnected sites.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content.
+	 */
+	public static function get_format_email_status_connections( $sitesDisconnect, $text_format ) {
+		$mail_lines   = self::print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
+		$mail_content = '';
+		if ( $text_format ) {
+			$mail_content .= 'Disconnected sites' . "\r\n";
+			$mail_content .= "\r\n";
+			$mail_content .= $mail_lines;
+			$mail_content .= "\r\n";
+		} else {
+			$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;">Disconnected sites</b><br>';
+			$mail_content .= '<ul>';
+			$mail_content .= $mail_lines;
+			$mail_content .= '</ul>';
+		}
+		return $mail_content;
+	}
+
+
+	/**
+	 * Method print_digest_lines()
+	 *
+	 * List of updates to be emailed.
+	 *
+	 * @param array  $array Array of URLs.
+	 * @param array  $backupChecks null|Child Site ID.
+	 * @param string $what disc_sites|null.
+	 *
+	 * @return html $output Email Body.
+	 */
+	public static function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
+
+		$plain_text = apply_filters( 'mainwp_text_format_email', false );
+
+		$output = '';
+
+		if ( 'disc_sites' === $what ) {
+			if ( $plain_text ) {
+				foreach ( $array as $url ) {
+					$output .= $url . "\r\n";
+				}
+			} else {
+				foreach ( $array as $url ) {
+					$output .= '<li>' . $url . '</li>' . "\n";
+				}
+			}
+		} else {
+
+			if ( $plain_text ) {
+				foreach ( $array as $line ) {
+					$siteId      = $line[0];
+					$text        = $line[1];
+					$trustedText = $line[2];
+
+					$output .= $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . "\r\n";
+				}
+			} else {
+				foreach ( $array as $line ) {
+					$siteId      = $line[0];
+					$text        = $line[1];
+					$trustedText = $line[2];
+
+					$output .= '<li>' . $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . '</li>' . "\n";
+				}
+			}
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Method get_format_email_offline_sites().
+	 *
+	 * Get Websites offline status mail content.
+	 *
+	 * @param array $offlineStatusSites Offline status of sites.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content
+	 */
+	public static function get_format_email_offline_sites( $offlineStatusSites, $text_format ) {
+
+		if ( ! is_array( $offlineStatusSites ) ) {
+			$offlineStatusSites = array();
+		}
+
+		$mail_content = '';
+
+		if ( count( $offlineStatusSites ) != 0 ) {
+			$mail_lines = '';
+
+			foreach ( $offlineStatusSites as $site ) {
+				$site_name = $site->name;
+				$site_url  = $site->url;
+				$http_code = $site->http_response_code;
+				if ( $text_format ) {
+					$mail_lines .= $site_name . ' - [' . $site_url . '] - [' . $http_code . "]\r\n";
+				} else {
+					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - [' . $http_code . ']</li>';
+
+				}
+			}
+
+			if ( $text_format ) {
+				$mail_content .= 'Websites Offline' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>Websites Offline</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+
+		return $mail_content;
+	}
+
+	/**
+	 * Method get_format_email_health_status_sites().
+	 *
+	 * Get formated email content for websites with not good site health.
+	 *
+	 * @param array $weakHealthSites Weak sites health.
+	 * @param bool  $text_format Text format.
+	 *
+	 * @return string $mail_content Email content
+	 */
+	public static function get_format_email_health_status_sites( $weakHealthSites, $text_format ) {
+
+		if ( ! is_array( $weakHealthSites ) ) {
+			$weakHealthSites = array();
+		}
+
+		$mail_content = '';
+
+		if ( count( $weakHealthSites ) != 0 ) {
+			$mail_lines = '';
+
+			foreach ( $weakHealthSites as $site ) {
+				$site_name    = $site->name;
+				$site_url     = $site->url;
+				$health_value = $site->health_value;
+				if ( $text_format ) {
+					$mail_lines .= $site_name . ' - [' . $site_url . '] - Site Health [' . $health_value . "]\r\n";
+				} else {
+					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - Site Health [' . $health_value . ']</li>';
+
+				}
+			}
+
+			if ( $text_format ) {
+				$mail_content .= 'Websites Site Health' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= $mail_lines;
+				$mail_content .= "\r\n";
+			} else {
+				$mail_content .= '<div><strong>Websites Site Health</strong></div>';
+				$mail_content .= '<ul>';
+				$mail_content .= $mail_lines;
+				$mail_content .= '</ul>';
+			}
+		}
+
+		return $mail_content;
+	}
+
 	/**
 	 * Method format_email()
 	 *

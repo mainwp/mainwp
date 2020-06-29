@@ -350,9 +350,7 @@ class MainWP_Settings {
 
 			$save_emails               = implode( ',', $save_emails );
 			$userExtension->user_email = $save_emails;
-
-			$userExtension->heatMap   = ( ! isset( $_POST['mainwp_options_footprint_heatmap'] ) ? 1 : 0 );
-			$userExtension->pluginDir = '';
+			$userExtension->pluginDir  = '';
 
 			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 			if ( MainWP_System_Utility::is_admin() ) {
@@ -548,47 +546,7 @@ class MainWP_Settings {
 						$primaryBackup              = get_option( 'mainwp_primaryBackup' );
 						$disableUpdateConfirmations = get_option( 'mainwp_disable_update_confirmations', 0 );
 
-						$http_error_codes = array(
-							'200'    => 'OK',
-							'201'    => 'Created',
-							'202'    => 'Accepted',
-							'203'    => 'Non-Authoritative Information',
-							'204'    => 'No Content',
-							'205'    => 'Reset Content',
-							'206'    => 'Partial Content',
-							'300'    => 'Multiple Choices',
-							'301'    => 'Moved Permanently',
-							'302'    => 'Found',
-							'303'    => 'See Other',
-							'304'    => 'Not Modified',
-							'305'    => 'Use Proxy',
-							'306'    => '(Unused)',
-							'307'    => 'Temporary Redirect',
-							'400'    => 'Bad Request',
-							'401'    => 'Unauthorized',
-							'402'    => 'Payment Required',
-							'403'    => 'Forbidden',
-							'404'    => 'Not Found',
-							'405'    => 'Method Not Allowed',
-							'406'    => 'Not Acceptable',
-							'407'    => 'Proxy Authentication Required',
-							'408'    => 'Request Timeout',
-							'409'    => 'Conflict',
-							'410'    => 'Gone',
-							'411'    => 'Length Required',
-							'412'    => 'Precondition Failed',
-							'413'    => 'Request Entity Too Large',
-							'414'    => 'Request-URI Too Long',
-							'415'    => 'Unsupported Media Type',
-							'416'    => 'Requested Range Not Satisfiable',
-							'417'    => 'Expectation Failed',
-							'500'    => 'Internal Server Error',
-							'501'    => 'Not Implemented',
-							'502'    => 'Bad Gateway',
-							'503'    => 'Service Unavailable',
-							'504'    => 'Gateway Timeout',
-							'505'    => 'HTTP Version Not Supported',
-						);
+						$http_error_codes = MainWP_Utility::get_http_codes();
 						?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Plugin automatic updates', 'mainwp' ); ?></label>
@@ -682,7 +640,8 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
-						<?php MainWP_Manage_Sites_View::render_settings(); ?>
+						<?php MainWP_Monitoring_View::render_settings(); ?>
+						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
@@ -718,8 +677,8 @@ class MainWP_Settings {
 		}
 
 		return array(
-			'last'   => $lastAutomaticUpdate,
-			'next'   => $nextAutomaticUpdate,
+			'last' => $lastAutomaticUpdate,
+			'next' => $nextAutomaticUpdate,
 		);
 	}
 

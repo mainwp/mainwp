@@ -54,8 +54,8 @@ class MainWP_DB_Common extends MainWP_DB {
 		$websites = $this->query( $sql );
 
 		$return = array(
-			'sync_status'    => false,
-			'last_sync'      => 0,
+			'sync_status' => false,
+			'last_sync'   => 0,
 		);
 
 		if ( ! $websites ) {
@@ -451,7 +451,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @return string $user_email User email address.
 	 */
-	public function get_user_notification_email( $userid ) {
+	public function get_user_notification_email( $userid = 0 ) {
 		$theUserId = $userid;
 		if ( MainWP_System::instance()->is_single_user() ) {
 			$theUserId = 0;
@@ -522,15 +522,15 @@ class MainWP_DB_Common extends MainWP_DB {
 	 */
 	protected function create_user_extension( $userId ) {
 		$fields = array(
-			'userid'                 => $userId,
-			'user_email'             => '',
-			'ignored_plugins'        => '',
-			'trusted_plugins'        => '',
-			'trusted_plugins_notes'  => '',
-			'ignored_themes'         => '',
-			'trusted_themes'         => '',
-			'trusted_themes_notes'   => '',
-			'pluginDir'              => '',
+			'userid'                => $userId,
+			'user_email'            => '',
+			'ignored_plugins'       => '',
+			'trusted_plugins'       => '',
+			'trusted_plugins_notes' => '',
+			'ignored_themes'        => '',
+			'trusted_themes'        => '',
+			'trusted_themes_notes'  => '',
+			'pluginDir'             => '',
 		);
 
 		$this->wpdb->insert( $this->table_name( 'users' ), $fields );

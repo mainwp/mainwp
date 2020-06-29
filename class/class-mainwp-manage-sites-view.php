@@ -7,8 +7,6 @@
 
 namespace MainWP\Dashboard;
 
-use SebastianBergmann\Environment\Console;
-
 /**
  * MainWP Manage Sites View.
  */
@@ -54,6 +52,9 @@ class MainWP_Manage_Sites_View {
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageGroups' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=ManageGroups' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
+					<?php } ?>
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
@@ -126,6 +127,13 @@ class MainWP_Manage_Sites_View {
 				'slug'       => 'ManageGroups',
 				'right'      => '',
 			),
+			array(
+				'title'      => __( 'Monitoring', 'mainwp' ),
+				'parent_key' => 'managesites',
+				'href'       => 'admin.php?page=MonitoringSites',
+				'slug'       => 'MonitoringSites',
+				'right'      => '',
+			),
 		);
 
 		MainWP_Menu::init_subpages_left_menu( $subPages, $items_menu, 'managesites', 'ManageSites' );
@@ -152,7 +160,7 @@ class MainWP_Manage_Sites_View {
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
 	 */
-	public static function render_header( $shownPage = '', &$subPages = '' ) { // phpcs:ignore -- not quite complex method.
+	public static function render_header( $shownPage = '', $subPages = '' ) {
 
 		if ( '' === $shownPage ) {
 			$shownPage = 'ManageSites';
@@ -172,24 +180,29 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$managesites_pages = array(
-			'ManageSites'  => array(
+			'ManageSites'     => array(
 				'href'   => 'admin.php?page=managesites',
 				'title'  => __( 'Manage Sites', 'mainwp' ),
 				'access' => true,
 			),
-			'AddNew'       => array(
+			'AddNew'          => array(
 				'href'   => 'admin.php?page=managesites&do=new',
 				'title'  => __( 'Add New', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
-			'BulkAddNew'   => array(
+			'BulkAddNew'      => array(
 				'href'   => 'admin.php?page=managesites&do=bulknew',
 				'title'  => __( 'Import Sites', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'add_sites' ),
 			),
-			'ManageGroups' => array(
+			'ManageGroups'    => array(
 				'href'   => 'admin.php?page=ManageGroups',
 				'title'  => __( 'Groups', 'mainwp' ),
+				'access' => true,
+			),
+			'MonitoringSites' => array(
+				'href'   => 'admin.php?page=MonitoringSites',
+				'title'  => __( 'Monitoring', 'mainwp' ),
 				'access' => true,
 			),
 		);
@@ -249,6 +262,39 @@ class MainWP_Manage_Sites_View {
 
 		MainWP_UI::render_top_header( $params );
 
+		self::render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage );
+
+		if ( 'ManageSites' === $shownPage || 'MonitoringSites' === $shownPage ) {
+			$which = strtolower( $shownPage );
+			MainWP_UI::render_second_top_header( $which );
+		}
+	}
+
+	/**
+	 * Method render_footer()
+	 *
+	 * Close the page container.
+	 *
+	 * @param string $shownPage Current Page.
+	 * @param string $subPages Sites subpages.
+	 */
+	public static function render_footer( $shownPage, $subPages = false ) {
+		echo '</div>';
+	}
+
+	/**
+	 * Method render_managesites_header()
+	 *
+	 * Render manage sites header.
+	 *
+	 * @param array  $site_pages site pages.
+	 * @param array  $managesites_pages manage site pages.
+	 * @param array  $subPages sub pages.
+	 * @param int    $site_id Site id.
+	 * @param string $shownPage Current Page.
+	 */
+	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
+
 		$renderItems = array();
 
 		if ( isset( $managesites_pages[ $shownPage ] ) ) {
@@ -288,26 +334,7 @@ class MainWP_Manage_Sites_View {
 				$renderItems[]  = $item;
 			}
 		}
-
 		MainWP_UI::render_page_navigation( $renderItems );
-
-		$which = '';
-		if ( 'ManageSites' === $shownPage ) {
-			$which = 'managesites';
-			MainWP_UI::render_second_top_header( $which );
-		}
-	}
-
-	/**
-	 * Method render_footer()
-	 *
-	 * Close the page container.
-	 *
-	 * @param string $shownPage Current Page.
-	 * @param string $subPages Sites subpages.
-	 */
-	public static function render_footer( $shownPage, &$subPages ) {
-		echo '</div>';
 	}
 
 	/**
@@ -499,173 +526,6 @@ class MainWP_Manage_Sites_View {
 				echo $html;
 			}
 		}
-	}
-
-	/**
-	 * Method render_settings()
-	 *
-	 * Render site settings.
-	 */
-	public static function render_settings() {
-
-		$backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
-		$backupOnExternalSources    = get_option( 'mainwp_backupOnExternalSources' );
-		$archiveFormat              = get_option( 'mainwp_archiveFormat' );
-		$maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-		$maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
-		$maximumFileDescriptorsAuto = ( 1 === $maximumFileDescriptorsAuto || false === $maximumFileDescriptorsAuto );
-
-		$notificationOnBackupFail  = get_option( 'mainwp_notificationOnBackupFail' );
-		$notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
-		$chunkedBackupTasks        = get_option( 'mainwp_chunkedBackupTasks' );
-		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
-
-		$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-		$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
-
-		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
-		$primary_methods      = array();
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.
-		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
-
-		if ( ! is_array( $primaryBackupMethods ) ) {
-			$primaryBackupMethods = array();
-		}
-
-		global $mainwpUseExternalPrimaryBackupsMethod;
-
-		$hiddenCls = '';
-		if ( ! $enableLegacyBackupFeature || ( ! empty( $primaryBackup ) && $primaryBackup == $mainwpUseExternalPrimaryBackupsMethod ) ) {
-			$hiddenCls = 'style="display:none"';
-		}
-		?>
-		<h3 class="ui dividing header">
-			<?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-			<div class="sub header"><?php echo sprintf( __( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); ?></div>
-		</h3>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable legacy backup feature', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo ( 0 == $enableLegacyBackupFeature ? '' : 'checked="true"' ); ?>/>
-			</div>
-		</div>
-
-		<?php if ( 0 < count( $primaryBackupMethods ) ) : ?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-					<?php if ( $enableLegacyBackupFeature ) { ?>
-						<option value="" ><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
-					<?php } else { ?>
-						<option value="" ><?php esc_html_e( 'N/A', 'mainwp' ); ?></option>
-					<?php } ?>
-					<?php
-					foreach ( $primaryBackupMethods as $method ) {
-						echo '<option value="' . $method['value'] . '" ' . ( ( $primaryBackup == $method['value'] ) ? 'selected' : '' ) . '>' . $method['title'] . '</option>';
-					}
-					?>
-				</select>
-			</div>
-		</div>
-		<?php endif; ?>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?>>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Backups on server', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<input type="text" name="mainwp_options_backupOnServer" value="<?php echo ( false === $backupsOnServer ? 1 : $backupsOnServer ); ?>"/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?>>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Backups on remote storage', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" name="mainwp_options_backupOnExternalSources" value="<?php echo ( false === $backupOnExternalSources ? 1 : $backupOnExternalSources ); ?>"/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?>>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Archive format', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<select class="ui dropdown" name="mainwp_archiveFormat" id="mainwp_archiveFormat">
-					<option value="zip"
-					<?php
-					if ( 'zip' === $archiveFormat ) :
-						?>
-						selected<?php endif; ?>>Zip</option>
-					<option value="tar"
-					<?php
-					if ( 'tar' === $archiveFormat ) :
-						?>
-						selected<?php endif; ?>>Tar</option>
-					<option value="tar.gz"
-					<?php
-					if ( ( false === $archiveFormat ) || ( 'tar.gz' === $archiveFormat ) ) :
-						?>
-						selected<?php endif; ?>>Tar GZip</option>
-					<option value="tar.bz2"
-					<?php
-					if ( 'tar.bz2' === $archiveFormat ) :
-						?>
-						selected<?php endif; ?>>Tar BZip2</option>
-				</select>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
-		>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Auto detect maximum file descriptors on child sites', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_maximumFileDescriptorsAuto" id="mainwp_maximumFileDescriptorsAuto" value="1" <?php echo ( $maximumFileDescriptorsAuto ? 'checked="checked"' : '' ); ?>/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
-		>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum file descriptors fallback value', 'mainwp' ); ?></label>
-			<div class="ten wide column">
-				<input type="text" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors ); ?>"/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> <?php
-		if ( empty( $hiddenCls ) && 'zip' !== $archiveFormat ) {
-			echo 'style="display: none;"';}
-		?>
-		>
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Load files in memory before zipping', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_loadFilesBeforeZip" id="mainwp_options_loadFilesBeforeZip" value="1" <?php echo ( $loadFilesBeforeZip ? 'checked="checked"' : '' ); ?>/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> >
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Send email when backup fails', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo ( $notificationOnBackupFail ? 'checked="checked"' : '' ); ?>/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> >
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Send email when backup starts', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_notificationOnBackupStart"  id="mainwp_options_notificationOnBackupStart" value="1" <?php echo ( $notificationOnBackupStart ? 'checked="checked"' : '' ); ?>/>
-			</div>
-		</div>
-
-		<div class="ui grid field" <?php echo $hiddenCls; ?> >
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Execute backup tasks in chunks', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox">
-				<input type="checkbox" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo ( $chunkedBackupTasks ? 'checked="checked"' : '' ); ?>/>
-			</div>
-		</div>
-		<?php
 	}
 
 	/**
@@ -932,6 +792,36 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				<?php endif; ?>
+
+				<h3 class="ui dividing header"><?php esc_html_e( 'Sites Monitoring (Optional)', 'mainwp' ); ?></h3>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Disable Child sites monitoring (optional)', 'mainwp' ); ?></label>					
+					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 1 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
+					</div>
+				</div>				
+				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval (optional)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">					
+						<select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown">
+							<option value="5" <?php echo ( 5 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
+							<option value="10" <?php echo ( 10 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
+							<option value="30" <?php echo ( 30 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
+							<option value="60" <?php echo ( 60 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
+							<option value="180" <?php echo ( 180 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
+							<option value="360" <?php echo ( 360 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
+							<option value="720" <?php echo ( 720 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
+							<option value="1440" <?php echo ( 1440 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
+							<option value="1440" <?php echo ( 0 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
+					<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'Site health threshold (optional).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="text" name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" value="<?php echo intval( $website->health_threshold ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 0 - Use global setting', 'mainwp' ); ?></div>
+					</div>
+				</div>
 				<h3 class="ui dividing header"><?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify certificate (optional)', 'mainwp' ); ?></label>
@@ -987,9 +877,8 @@ class MainWP_Manage_Sites_View {
 				</div>
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
-				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_extension_sites_edit' ); // @deprecated Use 'mainwp_extension_sites_edit' instead.
+				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
 				do_action( 'mainwp_manage_sites_edit', $website );
-				do_action( 'mainwp_extension_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit_tablerow', $website );
 				?>
 				<div class="ui divider"></div>

@@ -33,7 +33,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_renderHeader', array( MainWP_UI::get_class_name(), 'render_header' ), 10, 2 );
 		add_action( 'mainwp_renderFooter', array( MainWP_UI::get_class_name(), 'render_footer' ), 10, 0 );
 
-		add_action( 'mainwp_notify_user', array( &$this, 'notify_user' ), 10, 3 );
+		add_action( 'mainwp_notify_user', array( &$this, 'hook_notify_user' ), 10, 3 );
 		add_action( 'mainwp_activePlugin', array( &$this, 'active_plugin' ), 10, 0 );
 		add_action( 'mainwp_deactivePlugin', array( &$this, 'deactive_plugin' ), 10, 0 );
 		add_action( 'mainwp_upgradePluginTheme', array( &$this, 'upgrade_plugin_theme' ), 10, 0 );
@@ -437,24 +437,16 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method notify_user()
+	 * Method hook_notify_user()
 	 *
-	 * Hook to send user a notification via wp_mail()
+	 * Hook to send user a notification.
 	 *
 	 * @param int    $userId User ID.
 	 * @param string $subject Email Subject.
 	 * @param string $content Email Content.
 	 */
-	public function notify_user( $userId, $subject, $content ) {
-		wp_mail(
-			MainWP_DB_Common::instance()->get_user_notification_email( $userId ),
-			$subject,
-			$content,
-			array(
-				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
-				'content-type: text/html',
-			)
-		);
+	public function hook_notify_user( $userId, $subject, $content ) {
+		MainWP_Notification::notify_user( $userId, $subject, $content );
 	}
 
 	/**
@@ -791,8 +783,8 @@ class MainWP_Hooks {
 						$website,
 						'upgradeplugintheme',
 						array(
-							'type'   => $type,
-							'list'   => urldecode( implode( ',', $slugs ) ),
+							'type' => $type,
+							'list' => urldecode( implode( ',', $slugs ) ),
 						)
 					);
 					if ( isset( $information['sync'] ) ) {

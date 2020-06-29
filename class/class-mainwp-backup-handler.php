@@ -14,7 +14,7 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method get_class_name()
-	 * 
+	 *
 	 * Get Class Name.
 	 *
 	 * @return string __CLASS__
@@ -25,15 +25,15 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method  backup_site()
-	 * 
+	 *
 	 * Backup Child Site.
-	 * 
+	 *
 	 * @param mixed $siteid Child Site ID.
 	 * @param mixed $pTask Task to perform.
 	 * @param mixed $subfolder Subfolder to place backup.
-	 * 
+	 *
 	 * @throws MainWP_Exception
-	 * 
+	 *
 	 * @return mixed $backup_result
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
@@ -197,8 +197,8 @@ class MainWP_Backup_Handler {
 						array(
 							'last_error' => wp_json_encode(
 								array(
-									'message'    => $e->getMessage(),
-									'extra'      => $e->get_message_extra(),
+									'message' => $e->getMessage(),
+									'extra'   => $e->get_message_extra(),
 								)
 							),
 						)
@@ -498,14 +498,14 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method backup_download_file()
-	 * 
+	 *
 	 * Download backup file.
-	 * 
+	 *
 	 * @param mixed $pSiteId Child Site ID.
 	 * @param mixed $pType full|db Type of backup.
 	 * @param mixed $pUrl Backup location.
 	 * @param mixed $pFile Backup File.
-	 * 
+	 *
 	 * @return boolean true|false
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
@@ -580,12 +580,12 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method backup_delete_file()
-	 * 
+	 *
 	 * Delete backup file.
-	 * 
+	 *
 	 * @param mixed $pSiteId Child Site ID
 	 * @param mixed $pFile File to delete.
-	 * 
+	 *
 	 * @return boolean true
 	 */
 	public static function backup_delete_file( $pSiteId, $pFile ) {
@@ -597,15 +597,15 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method backup_check_pid()
-	 * 
+	 *
 	 * Check backup pid.
-	 * 
+	 *
 	 * @param mixed $pSiteId Child Site id.
 	 * @param mixed $pid Backup pid.
 	 * @param mixed $type full|db Type of backup.
 	 * @param mixed $subfolder Subfolder for backup.
 	 * @param mixed $pFilename Backups filename
-	 * 
+	 *
 	 * @return array $status, $result.
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
@@ -700,19 +700,19 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method backup()
-	 * 
+	 *
 	 * Backup Child Site.
-	 * 
-	 * @param mixed $pSiteId Child Site ID.
-	 * @param mixed $pType full|db Typ of backup.
-	 * @param mixed $pSubfolder Subfolder to store backup.
-	 * @param mixed $pExclude Exclusion list.
-	 * @param mixed $excludebackup Exclued backup files. 
-	 * @param mixed $excludecache Exclude cache files.
-	 * @param mixed $excludenonwp Exclude no WP Files.
-	 * @param mixed $excludezip Exclude Zip files
-	 * @param null $pFilename Name of backup file.
-	 * @param string $pFileNameUID File name unique ID.
+	 *
+	 * @param mixed   $pSiteId Child Site ID.
+	 * @param mixed   $pType full|db Typ of backup.
+	 * @param mixed   $pSubfolder Subfolder to store backup.
+	 * @param mixed   $pExclude Exclusion list.
+	 * @param mixed   $excludebackup Exclued backup files.
+	 * @param mixed   $excludecache Exclude cache files.
+	 * @param mixed   $excludenonwp Exclude no WP Files.
+	 * @param mixed   $excludezip Exclude Zip files
+	 * @param null    $pFilename Name of backup file.
+	 * @param string  $pFileNameUID File name unique ID.
 	 * @param boolean $pArchiveFormat Achive format.
 	 * @param boolean $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
 	 * @param boolean $pMaximumFileDescriptorsAuto Auto maximum file descriptors.
@@ -720,30 +720,30 @@ class MainWP_Backup_Handler {
 	 * @param boolean $pLoadFilesBeforeZip Load files before zip.
 	 * @param boolean $pid Backup pid.
 	 * @param boolean $append Append to backup.
-	 * 
+	 *
 	 * @throw MainWP_Exception
-	 * 
+	 *
 	 * @return mixed $backup_result
 	 */
-	public static function backup( 
-		$pSiteId, 
-		$pType, 
-		$pSubfolder, 
-		$pExclude, 
-		$excludebackup, 
-		$excludecache, 
+	public static function backup(
+		$pSiteId,
+		$pType,
+		$pSubfolder,
+		$pExclude,
+		$excludebackup,
+		$excludecache,
 		$excludenonwp,
-		$excludezip, 
-		$pFilename = null, 
-		$pFileNameUID = '', 
+		$excludezip,
+		$pFilename = null,
+		$pFileNameUID = '',
 		$pArchiveFormat = false,
-		$pMaximumFileDescriptorsOverride = false, 
+		$pMaximumFileDescriptorsOverride = false,
 		$pMaximumFileDescriptorsAuto = false,
-		$pMaximumFileDescriptors = false, 
-		$pLoadFilesBeforeZip = false, 
-		$pid = false, 
+		$pMaximumFileDescriptors = false,
+		$pLoadFilesBeforeZip = false,
+		$pid = false,
 		$append = false ) {
-			
+
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}
@@ -844,20 +844,20 @@ class MainWP_Backup_Handler {
 		MainWP_Utility::end_session();
 
 		$params = array(
-			'type'                                         => $pType,
-			'exclude'                                      => $pExclude,
-			'excludebackup'                                => $excludebackup,
-			'excludecache'                                 => $excludecache,
-			'excludenonwp'                                 => $excludenonwp,
-			'excludezip'                                   => $excludezip,
-			'ext'                                          => $archiveFormat,
-			'file_descriptors_auto'                        => $maximumFileDescriptorsAuto,
-			'file_descriptors'                             => $maximumFileDescriptors,
-			'loadFilesBeforeZip'                           => $loadFilesBeforeZip,
-			'f'                                            => $file,
-			'fileUID'                                      => $pFileNameUID,
-			'pid'                                          => $pid,
-			'append'                                       => ( $append ? 1 : 0 ),
+			'type'                  => $pType,
+			'exclude'               => $pExclude,
+			'excludebackup'         => $excludebackup,
+			'excludecache'          => $excludecache,
+			'excludenonwp'          => $excludenonwp,
+			'excludezip'            => $excludezip,
+			'ext'                   => $archiveFormat,
+			'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+			'file_descriptors'      => $maximumFileDescriptors,
+			'loadFilesBeforeZip'    => $loadFilesBeforeZip,
+			'f'                     => $file,
+			'fileUID'               => $pFileNameUID,
+			'pid'                   => $pid,
+			'append'                => ( $append ? 1 : 0 ),
 		);
 
 		MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
@@ -935,16 +935,16 @@ class MainWP_Backup_Handler {
 			throw new MainWP_Exception( 'Database backup failed due to an undefined error' );
 		}
 	}
-		
+
 	/**
 	 * Method is_archive()
-	 * 
+	 *
 	 * Check if Archive.
-	 * 
-	 * @param mixed $pFileName File to check.
+	 *
+	 * @param mixed  $pFileName File to check.
 	 * @param string $pPrefix File prefix.
 	 * @param string $pSuffix File suffix.
-	 * 
+	 *
 	 * @return mixed Files that are archives.
 	 */
 	public static function is_archive( $pFileName, $pPrefix = '', $pSuffix = '' ) {
@@ -953,11 +953,11 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method is_sql_file()
-	 * 
+	 *
 	 * Check if file is SQL.
-	 * 
+	 *
 	 * @param mixed $pFileName File to check.
-	 * 
+	 *
 	 * @return mixed SQL Files.
 	 */
 	public static function is_sql_file( $pFileName ) {
@@ -966,11 +966,11 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method is_sql_archive()
-	 * 
+	 *
 	 * Check if is SQL Archive.
-	 * 
+	 *
 	 * @param mixed $pFileName File to check.
-	 * 
+	 *
 	 * @return mixed SQL archive.
 	 */
 	public static function is_sql_archive( $pFileName ) {
@@ -979,12 +979,12 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method get_current_archive_extension()
-	 * 
+	 *
 	 * Get extension of current Archive.
-	 * 
-	 * @param boolean $website true|false
+	 *
+	 * @param boolean        $website true|false
 	 * @param boolean|string $task true|false|global|site
-	 * 
+	 *
 	 * @return mixed $archiveFormat Format of Archive.
 	 */
 	public static function get_current_archive_extension( $website = false, $task = false ) {
@@ -1025,11 +1025,11 @@ class MainWP_Backup_Handler {
 
 	/**
 	 * Method get_real_extension()
-	 * 
+	 *
 	 * Get full file extension.
-	 * 
+	 *
 	 * @param mixed $path Path to file.
-	 * 
+	 *
 	 * @return mixed $check|pathinfo()
 	 */
 	public static function get_real_extension( $path ) {
@@ -1041,6 +1041,67 @@ class MainWP_Backup_Handler {
 		}
 
 		return '.' . pathinfo( $path, PATHINFO_EXTENSION );
+	}
+
+
+	/**
+	 * Method handle_settings_post()
+	 *
+	 * Update Child Site Settings.
+	 *
+	 * @return boolean true|false
+	 */
+	public static function handle_settings_post() {
+		if ( MainWP_System_Utility::is_admin() ) {
+			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
+					MainWP_Utility::update_option( 'mainwp_backupsOnServer', $_POST['mainwp_options_backupOnServer'] );
+				}
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
+					MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', $_POST['mainwp_options_maximumFileDescriptors'] );
+				}
+				MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
+				if ( MainWP_Utility::ctype_digit( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
+					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', $_POST['mainwp_options_backupOnExternalSources'] );
+				}
+				MainWP_Utility::update_option( 'mainwp_archiveFormat', $_POST['mainwp_archiveFormat'] );
+
+				$old_primaryBackup          = get_option( 'mainwp_primaryBackup' );
+				$old_enableLegacyBackup     = get_option( 'mainwp_enableLegacyBackupFeature' );
+				$updated_enableLegacyBackup = false;
+
+				if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
+					if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method.
+						MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', 0 );
+						MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
+						MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
+						if ( empty( $old_primaryBackup ) ) {
+							MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+							$updated_enableLegacyBackup = true;
+						}
+					}
+					MainWP_Utility::update_option( 'mainwp_primaryBackup', $_POST['mainwp_primaryBackup'] );
+				}
+
+				if ( ! isset( $_POST['mainwp_primaryBackup'] ) || empty( $_POST['mainwp_primaryBackup'] ) ) {
+					MainWP_Utility::update_option( 'mainwp_options_loadFilesBeforeZip', ( ! isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', ( ! isset( $_POST['mainwp_options_notificationOnBackupFail'] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', ( ! isset( $_POST['mainwp_options_notificationOnBackupStart'] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
+				}
+
+				$enableLegacyBackup = ( isset( $_POST['mainwp_options_enableLegacyBackupFeature'] ) && ! empty( $_POST['mainwp_options_enableLegacyBackupFeature'] ) ) ? 1 : 0;
+				if ( $enableLegacyBackup && empty( $old_enableLegacyBackup ) ) {
+					MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
+				}
+
+				if ( ! $updated_enableLegacyBackup ) {
+					MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', $enableLegacyBackup );
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

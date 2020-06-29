@@ -107,10 +107,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_autoupdate_and_trust_child', array( &$this, 'mainwp_autoupdate_and_trust_child' ) );
 		$this->add_action( 'mainwp_installation_warning_hide', array( &$this, 'mainwp_installation_warning_hide' ) );
 		$this->add_action( 'mainwp_force_destroy_sessions', array( &$this, 'mainwp_force_destroy_sessions' ) );
-		$this->add_action( 'mainwp_recheck_http', array( &$this, 'mainwp_recheck_http' ) );
+		$this->add_action( 'mainwp_recheck_http', array( &$this, 'ajax_recheck_http' ) );
 		$this->add_action( 'mainwp_ignore_http_response', array( &$this, 'mainwp_ignore_http_response' ) );
 		$this->add_action( 'mainwp_disconnect_site', array( &$this, 'ajax_disconnect_site' ) );
-		$this->add_action( 'mainwp_manage_display_rows', array( &$this, 'ajax_display_rows' ) );
+		$this->add_action( 'mainwp_manage_sites_display_rows', array( &$this, 'ajax_sites_display_rows' ) );
+		$this->add_action( 'mainwp_monitoring_sites_display_rows', array( &$this, 'ajax_monitoring_display_rows' ) );
 
 		$this->add_security_nonce( 'mainwp-common-nonce' );
 	}
@@ -560,8 +561,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -585,8 +586,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -610,8 +611,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -649,14 +650,25 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method ajax_display_rows()
+	 * Method ajax_sites_display_rows()
 	 *
 	 * Display rows via ajax,
 	 * Page: Manage Sites.
 	 */
-	public function ajax_display_rows() {
-		$this->secure_request( 'mainwp_manage_display_rows' );
-		MainWP_Manage_Sites::display_rows();
+	public function ajax_sites_display_rows() {
+		$this->secure_request( 'mainwp_manage_sites_display_rows' );
+		MainWP_Manage_Sites::ajax_optimize_display_rows();
+	}
+
+	/**
+	 * Method ajax_sites_display_rows()
+	 *
+	 * Display rows via ajax,
+	 * Page: Monitoring Sites.
+	 */
+	public function ajax_monitoring_display_rows() {
+		$this->secure_request( 'mainwp_monitoring_sites_display_rows' );
+		MainWP_Monitoring::ajax_optimize_display_rows();
 	}
 
 
@@ -789,11 +801,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Method mainwp_recheck_http()
+	 * Method ajax_recheck_http()
 	 *
 	 * Recheck Child Site http status code & message.
 	 */
-	public function mainwp_recheck_http() {
+	public function ajax_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
 			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
 		}
@@ -807,17 +819,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( -1 );
 		}
 
-		$result       = MainWP_Connect::is_website_available( $website );
+		$result       = MainWP_Monitoring_Handler::handle_check_website( $website );
 		$http_code    = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$check_result = MainWP_Connect::check_ignored_http_code( $http_code );
-		MainWP_DB::instance()->update_website_values(
-			$website->id,
-			array(
-				'offline_check_result'   => $check_result ? '1' : '-1',
-				'offline_checks_last'    => time(),
-				'http_response_code'     => $http_code,
-			)
-		);
 		die(
 			wp_json_encode(
 				array(

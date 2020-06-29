@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.21';
+	protected $mainwp_db_version = '8.31';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -93,10 +93,12 @@ class MainWP_Install extends MainWP_DB_Base {
   siteurl text NOT NULL,
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
-  offline_checks text NOT NULL,
   offline_checks_last int(11) NOT NULL,
   offline_check_result int(11) NOT NULL,
   http_response_code int(11) NOT NULL DEFAULT 0,
+  disable_status_check tinyint(1) NOT NULL DEFAULT 0,
+  status_check_interval tinyint(1) NOT NULL DEFAULT 0,
+  health_threshold int(11) NOT NULL DEFAULT 0,
   note text NOT NULL,
   note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
@@ -155,7 +157,7 @@ class MainWP_Install extends MainWP_DB_Base {
   dbsize int(11) NOT NULL DEFAULT 0,
   extauth text NOT NULL DEFAULT "",
   last_post_gmt int(11) NOT NULL DEFAULT 0,
-  health_issues int(11) NOT NULL DEFAULT 0,
+  health_value int(11) NOT NULL DEFAULT 0,
   KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 
@@ -190,6 +192,20 @@ class MainWP_Install extends MainWP_DB_Base {
 		if ( '' === $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_status' ) . ' (
+	statusid bigint(20) unsigned NOT NULL auto_increment,
+	wpid int(11) NOT NULL,
+	http_code smallint NOT NULL DEFAULT 0,
+	status tinyint(1) NOT NULL DEFAULT 0,
+	timestamp_status int(11) NOT NULL,
+	duration int(11) NOT NULL DEFAULT 0';
+		if ( '' === $currentVersion || version_compare( $currentVersion, '8.31', '<=' ) ) {
+			$tbl .= ',
+			PRIMARY KEY  (statusid)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
@@ -335,8 +351,8 @@ class MainWP_Install extends MainWP_DB_Base {
 						$this->wpdb->insert(
 							$this->table_name( 'wp_sync' ),
 							array(
-								'wpid'           => $rslt['id'],
-								$wpSyncColumn    => $rslt[ $wpSyncColumn ],
+								'wpid'        => $rslt['id'],
+								$wpSyncColumn => $rslt[ $wpSyncColumn ],
 							)
 						);
 					} else {
@@ -395,6 +411,16 @@ class MainWP_Install extends MainWP_DB_Base {
 			foreach ( $syncColumns as $column ) {
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+
+		// delete old columns.
+		if ( version_compare( $currentVersion, '8.24', '<' ) ) {
+			$delColumns = array( 'offline_checks' );
+			foreach ( $delColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
 				$this->wpdb->suppress_errors( $suppress );
 			}
 		}

@@ -39,25 +39,25 @@ class MainWP_Menu {
 		if ( null === $_mainwp_disable_menus_items ) {
 			$_mainwp_disable_menus_items = array(
 				// Compatible with old hooks.
-				'level_1'    => array(
+				'level_1' => array(
 					'not_set_this_level' => true,
 				),
-				'level_2'    => array(
+				'level_2' => array(
 					// 'mainwp_tab' - Do not hide this menu.
-					'UpdatesManage'      => false,
-					'managesites'        => false,
-					'PostBulkManage'     => false,
-					'PageBulkManage'     => false,
-					'ThemesManage'       => false,
-					'PluginsManage'      => false,
-					'UserBulkManage'     => false,
-					'ManageBackups'      => false,
-					'Settings'           => false,
-					'Extensions'         => false,
-					'ServerInformation'  => false,
+					'UpdatesManage'     => false,
+					'managesites'       => false,
+					'PostBulkManage'    => false,
+					'PageBulkManage'    => false,
+					'ThemesManage'      => false,
+					'PluginsManage'     => false,
+					'UserBulkManage'    => false,
+					'ManageBackups'     => false,
+					'Settings'          => false,
+					'Extensions'        => false,
+					'ServerInformation' => false,
 				),
 				// Compatible with old hooks.
-				'level_3'    => array(),
+				'level_3' => array(),
 			);
 		}
 	}
@@ -98,6 +98,9 @@ class MainWP_Menu {
 			}
 			if ( ! self::is_disable_menu_item( 3, 'ManageGroups' ) ) {
 				MainWP_Manage_Groups::init_menu();
+			}
+			if ( ! self::is_disable_menu_item( 3, 'MonitoringSites' ) ) {
+				MainWP_Monitoring::init_menu();
 			}
 			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
 				MainWP_Settings::init_menu();

@@ -177,7 +177,7 @@ class MainWP_Notification {
 				MainWP_Format::format_email(
 					$email,
 					$mail_content,
-					"Hi,"
+					'Hi,'
 				),
 				$content_type
 			);
@@ -203,7 +203,7 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );			
+			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );
 			self::send_wp_mail(
 				$email,
 				$mail_title = 'MainWP - Websites Health Status',

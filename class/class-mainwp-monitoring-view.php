@@ -21,7 +21,7 @@ class MainWP_Monitoring_View {
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
-		$sitehealthThreshold    = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold. 
+		$sitehealthThreshold    = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 		?>
 		<h3 class="ui dividing header">
 			<?php esc_html_e( 'Sites Monitoring', 'mainwp' ); ?>

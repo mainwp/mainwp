@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * WooCommerce API Password Handler
+ * WooCommerce API Password Handler.
  *
  * @package MainWP/MainWP_API_Passwords_Manager
  * @author Todd Lahman LLC
@@ -25,24 +25,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Password_Management {
 
 	/**
-	 * Encryption type
-	 *
-	 * Sets encryption type.
+	 * Set encryption type.
 	 *
 	 * @var string $ENCRYPT
 	 */
 	private static $ENCRYPT = 'AMEncrypt';
 
 	/**
-	 * Generate Password
+	 * Generate password. Creates a unique instance ID.
 	 *
-	 * Creates a unique instance ID.
+	 * @param int  $length              Length of ID.
+	 * @param bool $special_chars       Valid special characters.
+	 * @param bool $extra_special_chars Extra special characters.
 	 *
-	 * @param integer $length Length of ID.
-	 * @param boolean $special_chars Valid special characters.
-	 * @param boolean $extra_special_chars Extra special characters.
-	 *
-	 * @return mixed $password
+	 * @return string Password.
 	 */
 	public static function generate_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -63,22 +59,22 @@ class MainWP_Api_Manager_Password_Management {
 	}
 
 	/**
-	 * Encrypt String
+	 * Encrypt string.
 	 *
-	 * Encrypts $str.
+	 * @param string String to encrypt.
 	 *
-	 * @param mixed $str String to Encrypt.
+	 * @return string Encrypted string.
 	 */
 	public static function encrypt_string( $str ) {
 		return self::encrypt( $str, self::$ENCRYPT );
 	}
 
 	/**
-	 * Decrypts String
+	 * Decrypts string.
 	 *
-	 * Decrypts $encrypted
+	 * @param string Sting to decrypt.
 	 *
-	 * @param mixed $encrypted Sting to Decrypt.
+	 * @return string Decrypted string.
 	 */
 	public static function decrypt_string( $encrypted ) {
 		return self::decrypt( $encrypted, self::$ENCRYPT );
@@ -86,12 +82,12 @@ class MainWP_Api_Manager_Password_Management {
 
 
 	/**
-	 * Encrypt String
+	 * Encrypt.
 	 *
-	 * Encrypt $encrypted
+	 * @param string $str  String to encrypt.
+	 * @param string $pass String.
 	 *
-	 * @param mixed $str String to Encrypt.
-	 * @param mixed $pass String.
+	 * @return string Encrypted string.
 	 */
 	public static function encrypt( $str, $pass ) {
 		$pass = str_split( str_pad( '', strlen( $str ), $pass, STR_PAD_RIGHT ) );
@@ -105,12 +101,12 @@ class MainWP_Api_Manager_Password_Management {
 	}
 
 	/**
-	 * Decrypts String
+	 * Decrypt.
 	 *
-	 * Decrypts $encrypted
+	 * @param string $str String to Decrypt.
+	 * @param string $pass String.
 	 *
-	 * @param mixed $str String to Decrypt.
-	 * @param mixed $pass String.
+	 * @return string Decrypted string.
 	 */
 	public static function decrypt( $str, $pass ) {
 		$str  = base64_decode( $str ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

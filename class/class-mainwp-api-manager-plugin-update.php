@@ -46,7 +46,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
-	 * Method __construct()
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 
@@ -55,12 +55,10 @@ class MainWP_Api_Manager_Plugin_Update {
 
 
 	/**
-	 * Method create_upgrade_api_url()
-	 *
 	 * Create upgrade request API URL.
 	 *
-	 * @param array   $args Request arguments.
-	 * @param boolean $bulk_check Bulk check request.
+	 * @param array $args       Request arguments.
+	 * @param bool  $bulk_check Bulk check request.
 	 *
 	 * @return string Build URL.
 	 */
@@ -81,13 +79,11 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
-	 * Method update_check()
-	 *
 	 * Returns plugin information in an array.
 	 *
-	 * @param array $plugin Plugin information.
+	 * @param array $plugin Plugin to check.
 	 *
-	 * @return mixed Plugin information.
+	 * @return array Plugin information.
 	 */
 	public function update_check( $plugin ) {
 
@@ -110,13 +106,11 @@ class MainWP_Api_Manager_Plugin_Update {
 
 
 	/**
-	 * Methos bulk_update_check()
-	 *
 	 * Check if bulkupdateapi is true|false & grab domain name adn extensions list.
 	 *
 	 * @param array $plugins List of plugins (extensions).
 	 *
-	 * @return mixed args|boolen Plugin Information & bulkupdatecheck true|false
+	 * @return array Plugin Information & bulkupdatecheck.
 	 */
 	public function bulk_update_check( $plugins ) {
 		$args = array(
@@ -129,8 +123,6 @@ class MainWP_Api_Manager_Plugin_Update {
 
 
 	/**
-	 * Method request()
-	 *
 	 * Check $args, if there is a response, an object eists & response is not false.
 	 *
 	 * @param array $args Request arguments.
@@ -149,18 +141,16 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
-	 * Method plugin_information()
-	 *
-	 * Sends and receives data to and from the server API
+	 * Sends and receives data to and from the server API.
 	 *
 	 * @access public
 	 *
-	 * @since         1.0.0
+	 * @since       1.0.0
 	 *
-	 * @param array   $args Request arguments.
-	 * @param boolean $bulk_check Check if updating in bulk true|false.
+	 * @param array $args       Request arguments.
+	 * @param bool  $bulk_check Check if updating in bulk true|false.
 	 *
-	 * @return object $response Plugin information.
+	 * @return object Plugin information.
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );

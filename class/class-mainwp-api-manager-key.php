@@ -1,11 +1,10 @@
 <?php
 /**
- * MainWP Api Manager Key Handsler.
+ * MainWP API Manager Key handler.
  *
- * This class handles user authentication with MainWP.com License Servers
- * and provides the ability to grab license keys automatically.
+ * This class handles user authentication with MainWP.com License Servers and provides the ability to grab license keys automatically.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -16,10 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * MainWP Api Manager Key Handler.
+ * MainWP Api Manager Key handler.
  *
- * This class handles user authentication with MainWP.com License Servers
- * and providfes the ability to grab License Keys automatically.
+ * This class handles user authentication with MainWP.com License Servers and providfes the ability to grab License Keys automatically.
  *
  * @package MainWP API Manager/Key Handler
  * @author Todd Lahman LLC
@@ -29,8 +27,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Key {
 
 	/**
-	 * $instance
-	 *
 	 * Set initial $instance value.
 	 *
 	 * @var null
@@ -38,17 +34,13 @@ class MainWP_Api_Manager_Key {
 	protected static $instance = null;
 
 	/**
-	 * $apisslverify
-	 *
 	 * Set initial $apisslverify value.
 	 *
-	 * @var integer
+	 * @var int
 	 */
 	protected static $apisslverify = 1;
 
 	/**
-	 * Instance
-	 *
 	 * Create a new Self Instance.
 	 *
 	 * @return mixed self::$instance
@@ -63,24 +55,20 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * __construct
-	 *
-	 * Validate SSL Certificate.
-	 *
-	 * @return bool 1|0
+	 * Validate SSL certificate.
 	 */
 	public function __construct() {
 		self::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
 	}
 
 	/**
-	 * Extension Activate
+	 * Activate extension.
 	 *
-	 * This function checks the users login information & grabs the update URL
-	 * for the specific extension & activates it.
+	 * This function checks the users login information & grabs the update URL for the specific extension & activates it.
 	 *
-	 * @param mixed $args Extension Arguments.
-	 * @return mixed $response
+	 * @param array $args Extension arguments.
+	 *
+	 * @return array Request response.
 	 */
 	public function activate( $args ) {
 
@@ -114,13 +102,13 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Extension Deactivate
+	 * Deactivate extension .
 	 *
-	 * This function checks the users login information & grabs the update URL
-	 * for the specific extension & deactivates it.
+	 * This function checks the users login information & grabs the update URL for the specific extension & deactivates it.
 	 *
-	 * @param mixed $args Extension Arguments.
-	 * @return mixed $response
+	 * @param array $args Extension arguments.
+	 *
+	 * @return array Request response.
 	 */
 	public function deactivate( $args ) {
 
@@ -153,13 +141,13 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Grab extension API Key
+	 * Grab extension API Key.
 	 *
-	 * This function checks the users login information & grabs the update URL
-	 * for the specific extension & returns the API Key.
+	 * This function checks the users login information & grabs the update URL for the specific extension & returns the API Key.
 	 *
-	 * @param mixed $args Extension Arguments.
-	 * @return mixed $response
+	 * @param array $args Extension arguments.
+	 *
+	 * @return array Request response.
 	 */
 	public function grab_api_key( $args ) {
 
@@ -192,14 +180,15 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Test Login API
+	 * Test login API.
 	 *
-	 * This function checks the users login information & Tests
-	 * it against the MainWP.com Login Credentials stored on the license server.
+	 * This function checks the users login information & Tests it against the MainWP.com Login Credentials stored on the license server.
 	 *
-	 * @param mixed $args Login Arguments.
+	 * @param aray $args Login arguments.
+	 *
 	 * @throws \Exception Request error codes.
-	 * @return mixed $response
+	 *
+	 * @return array Request response.
 	 */
 	public function test_login_api( $args ) {
 
@@ -247,13 +236,13 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Get Purchased Software
+	 * Get purchased software.
 	 *
-	 * This function grabs a list of purchased MainWP Extensions
-	 * that are available for download.
+	 * This function grabs a list of purchased MainWP Extensions that are available for download.
 	 *
-	 * @param mixed $args Software Arguments.
-	 * @return mixed $response
+	 * @param array $args Software Arguments.
+	 *
+	 * @return array Request response.
 	 */
 	public function get_purchased_software( $args ) {
 
@@ -286,10 +275,11 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
-	 * Purchase Software
+	 * Purchase software.
 	 *
-	 * @param mixed $args Software Arguments.
-	 * @return mixed $response
+	 * @param array $args Software arguments.
+	 *
+	 * @return array Request response.
 	 */
 	public function purchase_software( $args ) {
 		$defaults = array(

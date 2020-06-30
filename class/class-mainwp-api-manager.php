@@ -5,11 +5,8 @@
  * This class handles MainWP Extensions API licensing.
  *
  * @package MainWP/MainWP API Manager
- *
  * @author Todd Lahman LLC
- *
  * @copyright Copyright (c) Todd Lahman LLC
- *
  * @since 1.0.0
  */
 
@@ -21,21 +18,21 @@ namespace MainWP\Dashboard;
 class MainWP_Api_Manager {
 
 	/**
-	 * Extensions upgrade URL
+	 * Extensions upgrade URL.
 	 *
 	 * @var string Default URL 'https://mainwp.com/'
 	 */
 	private $upgrade_url = 'https://mainwp.com/';
 
 	/**
-	 * Extensions license renewal URL
+	 * Extensions license renewal URL.
 	 *
 	 * @var string Default 'https://mainwp.com/my-account'
 	 */
 	private $renew_license_url = 'https://mainwp.com/my-account';
 
 	/**
-	 * MainWP installation domain name
+	 * MainWP installation domain name.
 	 *
 	 * @var string $domain Emtpy by default.
 	 */
@@ -49,11 +46,7 @@ class MainWP_Api_Manager {
 	protected static $instance = null;
 
 	/**
-	 * Method instance()
-	 *
 	 * Return the single instance of the class.
-	 *
-	 * @static
 	 *
 	 * @return mixed $instance The single instance of the class.
 	 */
@@ -67,8 +60,6 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method __clone()
-	 *
 	 * Cloning is forbidden.
 	 *
 	 * @since 1.2
@@ -77,8 +68,6 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method __wakeup()
-	 *
 	 * Unserializing instances of this class is forbidden.
 	 *
 	 * @since 1.2
@@ -87,31 +76,25 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method __construct()
-	 *
-	 * Replace HTTP procol to HTTPS
+	 * Replace HTTP procol to HTTPS.
 	 */
 	public function __construct() {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
 	}
 
 	/**
-	 * Method get_domain()
-	 *
 	 * Get domain.
 	 *
-	 * @return $this->domain current MainWP Dashboard URL.
+	 * @return string Current MainWP Dashboard URL.
 	 */
 	public function get_domain() {
 		return $this->domain;
 	}
 
 	/**
-	 * Method get_upgrade_url()
+	 * Get Upgrade URL.
 	 *
-	 * Get Upgrade URL
-	 *
-	 * @return $url activation upgrade URL.
+	 * @return string Activation upgrade URL.
 	 */
 	public function get_upgrade_url() {
 		$url = apply_filters( 'mainwp_api_manager_upgrade_url', $this->upgrade_url );
@@ -119,9 +102,7 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method get_activation_info()
-	 *
-	 * Get Activation Info
+	 * Get activation info.
 	 *
 	 * @param mixed $ext_key extension key.
 	 *
@@ -136,14 +117,12 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method set_activation_info()
+	 * Store activation info.
 	 *
-	 * Stores activation info.
+	 * @param mixed $ext_key Extension key.
+	 * @param mixed $info    Activation information.
 	 *
-	 * @param mixed $ext_key extension key.
-	 * @param mixed $info activation information.
-	 *
-	 * @return mixed update_option() set activation info.
+	 * @return mixed Set activation info.
 	 */
 	public function set_activation_info( $ext_key, $info ) {
 
@@ -158,15 +137,13 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method license_key_activation()
+	 * Check API Key & API Email again MainWP Servers.
 	 *
-	 * Checks API Key &  API Email again MainWP Servers.
-	 *
-	 * @param array  $api extension activation info.
-	 * @param string $api_key API license key.
+	 * @param array  $api       Extension activation info.
+	 * @param string $api_key   API license key.
 	 * @param string $api_email API email address.
 	 *
-	 * @return array $return activation info.
+	 * @return array Activation info.
 	 */
 	public function license_key_activation( $api, $api_key, $api_email ) {
 
@@ -245,13 +222,11 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method replace_license_key()
-	 *
 	 * Deactivate the current license key before activating the new license key.
 	 *
-	 * @param array $args request arguments.
+	 * @param array $args Request arguments.
 	 *
-	 * @return boolean True|False.
+	 * @return bool True on success, false on failure.
 	 */
 	private function replace_license_key( $args ) {
 		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation.
@@ -262,13 +237,11 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method license_key_deactivation()
+	 * Deactivate license Key.
 	 *
-	 * Deactivates license Key.
+	 * @param array $api Extension activation info.
 	 *
-	 * @param array $api extension activation info.
-	 *
-	 * @return array $return deactivation info.
+	 * @return array Deactivation info.
 	 */
 	public function license_key_deactivation( $api ) {
 
@@ -319,8 +292,6 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method test_login_api()
-	 *
 	 * Test the users MainWP.com Login details against MainWP Server.
 	 *
 	 * @param string $username MainWP registered username.
@@ -343,8 +314,6 @@ class MainWP_Api_Manager {
 
 
 	/**
-	 * Method purchase_software()
-	 *
 	 * Check if the user purchased the software.
 	 *
 	 * @param string $username MainWP registered username.
@@ -368,16 +337,14 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method get_purchase_software()
+	 * Get users purchased extensions.
 	 *
-	 * Get users purchased software.
+	 * @param string $username MainWP registered username.
+	 * @param string $password MainWP registered password.
+	 * @param string $productId extension (product) ID.
+	 * @param bool   $no_register registration request.
 	 *
-	 * @param string  $username MainWP registered username.
-	 * @param string  $password MainWP registered password.
-	 * @param string  $productId extension (product) ID.
-	 * @param boolean $no_register registration request.
-	 *
-	 * @return mixed get_purchased_software() purchased extensions.
+	 * @return array Purchased extensions.
 	 */
 	public function get_purchased_software( $username, $password, $productId = '', $no_register = false ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -395,15 +362,13 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method grab_license_key()
-	 *
 	 * Grab users associate MainWP License key for the selected Extension.
 	 *
-	 * @param array  $api extension activation info.
+	 * @param array  $api      Extension activation info.
 	 * @param string $username MainWP registered username.
 	 * @param string $password MainWP registered password.
 	 *
-	 * @return mixed $return activation info.
+	 * @return mixed Activation info.
 	 */
 	public function grab_license_key( $api, $username, $password ) {
 
@@ -474,11 +439,9 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method check_response_for_api_error()
-	 *
 	 * Check if $response contains any api errors.
 	 *
-	 * @param array $response response array.
+	 * @param array $response Response array.
 	 *
 	 * @return string $error Error message.
 	 */
@@ -522,12 +485,10 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method check_response_for_intall_errors()
-	 *
 	 * Check if $response contains any install errors.
 	 *
-	 * @param array  $response response array.
-	 * @param string $software_title extension title.
+	 * @param array  $response       Response array.
+	 * @param string $software_title Extension title.
 	 *
 	 * @return string $return Installation Error messages.
 	 */
@@ -555,11 +516,9 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method update_check()
-	 *
 	 * Check if Extensions have an update.
 	 *
-	 * @param array $args request arguments.
+	 * @param array $args Request arguments.
 	 *
 	 * @return mixed update_check() plugin info.
 	 */
@@ -570,13 +529,11 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Method request_plugin_information()
+	 * Request plugin information
 	 *
-	 * Request Plugin Information
+	 * @param array $args Request arguments.
 	 *
-	 * @param array $args request arguments.
-	 *
-	 * @return mixed request() plugin info.
+	 * @return array Plugin info.
 	 */
 	public function request_plugin_information( $args ) {
 		$args['domain'] = $this->domain;

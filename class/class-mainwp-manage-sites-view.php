@@ -803,7 +803,6 @@ class MainWP_Manage_Sites_View {
 				<?php
 				$check_interval = $website->status_check_interval;
 				?>
-								
 				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">					

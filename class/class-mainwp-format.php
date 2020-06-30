@@ -295,14 +295,14 @@ class MainWP_Format {
 		if ( $text_format ) {
 			$mail_content .= 'The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')' . "\r\n";
 			$mail_content .= "\r\n";
-			$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n";
+			$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
 			$mail_content .= "\r\n";
 			$mail_content .= 'Click here: ' . site_url() . ' to check your site status.' . "\r\n";
 		} else {
 			$mail_content .= '<div></div>';
 			$mail_content .= '<div>The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')</div>';
 			$mail_content .= '<div></div>';
-			$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );
+			$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
 			$mail_content .= '<div></div>';
 			$mail_content .= '<div><a href="' . site_url() . '">Click here</a> to check your site status.</div>';
 		}

@@ -597,7 +597,7 @@ class MainWP_Utility {
 	 *
 	 * @return array $array Health status value.
 	 */
-	public static function get_site_health_value( $issue_counts ) {
+	public static function get_site_health( $issue_counts ) {
 
 		if ( empty( $issue_counts ) ) {
 			$issue_counts = array(
@@ -687,5 +687,31 @@ class MainWP_Utility {
 		}
 
 		return isset( $http_codes[ $code ] ) ? $http_codes[ $code ] : '';
+	}
+
+	/**
+	 * Method valid_input_emails().
+	 *
+	 * @param string $emails Input emails string.
+	 *
+	 * @return string $valid_emails Valid emails string.
+	 */
+	public static function valid_input_emails( $emails ) {
+
+		if ( is_string( $emails ) ) {
+			$emails = array_filter( explode( ',', $emails ) );
+		}
+
+		$valid_emails = array();
+		if ( is_array( $emails ) ) {
+			foreach ( $emails as $email ) {
+				$email = esc_html( trim( $email ) );
+				if ( ! empty( $email ) && ! in_array( $email, $valid_emails, true ) ) {
+					$valid_emails[] = $email;
+				}
+			}
+		}
+		$valid_emails = implode( ',', $valid_emails );
+		return $valid_emails;
 	}
 }

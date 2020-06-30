@@ -288,8 +288,8 @@ class MainWP_Sync {
 
 		if ( isset( $information['health_site_status'] ) ) {
 			$health_status                     = $information['health_site_status'];
-			$hstatus                           = MainWP_Utility::get_site_health_value( $health_status );
-			$websiteSyncValues['health_value'] = $hstatus['critical'] * 100 + $hstatus['val']; // re-calculate health value so sorting by health correct.
+			$hstatus                           = MainWP_Utility::get_site_health( $health_status );
+			$websiteSyncValues['health_value'] = $hstatus['critical'] * 100 + $hstatus['val']; // computes health value to support sorting by sites health and sites health threshold.
 			$done                              = true;
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $health_status ) );
 		} else {

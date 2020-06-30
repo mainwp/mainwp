@@ -67,45 +67,45 @@ class MainWP_Setup_Wizard {
 			return;
 		}
 		$this->steps = array(
-			'introduction' => array(
-				'name'       => __( 'Introduction', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_introduction' ),
-				'handler'    => '',
+			'introduction'         => array(
+				'name'    => __( 'Introduction', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_introduction' ),
+				'handler' => '',
 			),
-			'installation' => array(
-				'name'       => __( 'Installation', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_installation' ),
-				'handler'    => array( $this, 'mwp_setup_installation_save' ),
+			'installation'         => array(
+				'name'    => __( 'Installation', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_installation' ),
+				'handler' => array( $this, 'mwp_setup_installation_save' ),
 			),
-			'system_check' => array(
-				'name'       => __( 'System', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_system_requirements' ),
-				'handler'    => '',
+			'system_check'         => array(
+				'name'    => __( 'System', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_system_requirements' ),
+				'handler' => '',
 			),
 			'install_mainwp_child' => array(
-				'name'       => __( 'Install MainWP Child', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_install_mainwp_child' ),
-				'handler'    => '',
+				'name'    => __( 'Install MainWP Child', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_install_mainwp_child' ),
+				'handler' => '',
 			),
-			'connect_first_site' => array(
-				'name'       => __( 'Connect First Site', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_connect_first_site' ),
-				'handler'    => '',
+			'connect_first_site'   => array(
+				'name'    => __( 'Connect First Site', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_connect_first_site' ),
+				'handler' => '',
 			),
-			'optimization' => array(
-				'name'       => __( 'Optimization', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_optimization' ),
-				'handler'    => array( $this, 'mwp_setup_optimization_save' ),
+			'optimization'         => array(
+				'name'    => __( 'Optimization', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_optimization' ),
+				'handler' => array( $this, 'mwp_setup_optimization_save' ),
 			),
-			'notification' => array(
-				'name'       => __( 'Notifications', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_notification' ),
-				'handler'    => array( $this, 'mwp_setup_notification_save' ),
+			'notification'         => array(
+				'name'    => __( 'Notifications', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_notification' ),
+				'handler' => array( $this, 'mwp_setup_notification_save' ),
 			),
-			'next_steps' => array(
-				'name'       => __( 'Finish', 'mainwp' ),
-				'view'       => array( $this, 'mwp_setup_ready' ),
-				'handler'    => '',
+			'next_steps'           => array(
+				'name'    => __( 'Finish', 'mainwp' ),
+				'view'    => array( $this, 'mwp_setup_ready' ),
+				'handler' => '',
 			),
 		);
 
@@ -418,14 +418,14 @@ class MainWP_Setup_Wizard {
 			<div class="ui info message">
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
 				<?php esc_html_e( 'If you have it installed, click the "MainWP Child Plugin Installed" button to connect the site, if not, follow these instructions to install it.', 'mainwp' ); ?><br /><br />
-				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %shelp document%s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
+				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
 			</div>
 			<ol>
-				<li><?php printf( __( 'Login to the WordPress site you want to connect %s(open it in a new browser tab)%s', 'mainwp' ), '<em>', '</em>' ); ?></li>
-				<li><?php printf( __( 'Go to the %sWP > Plugins%s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( 'Click %sAdd New%s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( 'In the %sSearch Field%s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
-				<li><?php printf( __( '%sActivate%s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+				<li><?php printf( __( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				<li><?php printf( __( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
 			</ol>
 			<div class="ui clearing hidden divider"></div>
 			<div class="ui hidden divider"></div>
@@ -760,17 +760,8 @@ class MainWP_Setup_Wizard {
 		$userExtension                                  = MainWP_DB_Common::instance()->get_user_extension();
 		$userExtension->offlineChecksOnlineNotification = $important_notification;
 
-		$save_emails = array();
-		$user_emails = $_POST['mainwp_options_email'];
-		if ( is_array( $user_emails ) ) {
-			foreach ( $user_emails as $email ) {
-				$email = esc_html( trim( $email ) );
-				if ( ! empty( $email ) && ! in_array( $email, $save_emails, true ) ) {
-					$save_emails[] = $email;
-				}
-			}
-		}
-		$save_emails               = implode( ',', $save_emails );
+		$user_emails               = wp_unslash( $_POST['mainwp_options_email'] );
+		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 		wp_safe_redirect( $this->get_next_step_link() );

@@ -52,12 +52,13 @@ class MainWP_Monitoring_Handler {
 			return false;
 		}
 
-		$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
+		$new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$online_detected = MainWP_Connect::check_ignored_http_code( $http_code );
 		$time            = time();
 
 		// computes duration before update website checking values.
-		$duration = self::get_duration_for_status( $website, $time );
+		$duration    = self::get_duration_for_status( $website, $time );
+		$new_noticed = self::get_http_noticed_status_value( $website );
 
 		// to save last status.
 		MainWP_DB::instance()->update_website_values(
@@ -65,7 +66,8 @@ class MainWP_Monitoring_Handler {
 			array(
 				'offline_check_result' => $online_detected ? 1 : -1,
 				'offline_checks_last'  => $time,
-				'http_response_code'   => $http_code,
+				'http_response_code'   => $new_code,
+				'http_code_noticed'    => $new_noticed,
 			)
 		);
 
@@ -74,13 +76,38 @@ class MainWP_Monitoring_Handler {
 			array(
 				'wpid'             => $website->id,
 				'timestamp_status' => $time,
-				'http_code'        => $http_code,
-				'status'           => self::get_site_checking_status( $http_code ),
+				'http_code'        => $new_code,
+				'status'           => self::get_site_checking_status( $new_code ),
 			),
 			$duration
 		);
 
 		return $result;
+	}
+
+	/**
+	 * Method get_http_noticed_status()
+	 *
+	 * Get new noticed value.
+	 *
+	 * @param object $website The website.
+	 *
+	 * @return int $noticed_value new noticed value.
+	 */
+	private static function get_http_noticed_status_value( $website ) {
+		$old_code      = $website->http_response_code;
+		$noticed_value = $website->http_code_noticed;
+
+		if ( 200 == $old_code && 200 != $new_code ) {
+			if ( 1 == $noticed_value ) {
+				$noticed_value = 0; // if new offline and noticed then update to notice again.
+			}
+		} elseif ( 200 != $old_code && 200 == $new_code ) {
+			if ( 0 == $noticed_value ) {
+				$noticed_value = 1; // if online and not noticed then update to abort notice.
+			}
+		}
+		return $noticed_value;
 	}
 
 	/**

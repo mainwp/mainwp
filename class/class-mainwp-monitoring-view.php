@@ -21,7 +21,7 @@ class MainWP_Monitoring_View {
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
-		$sitehealthThreshold    = get_option( 'mainwp_sitehealthThreshold', 80 );
+		$sitehealthThreshold    = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold. 
 		?>
 		<h3 class="ui dividing header">
 			<?php esc_html_e( 'Sites Monitoring', 'mainwp' ); ?>
@@ -50,8 +50,11 @@ class MainWP_Monitoring_View {
 		</div>
 		<div class="ui grid field" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold', 'mainwp' ); ?></label>
-			<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<input type="text" name="mainwp_sitehealthThreshold" id="mainwp_sitehealthThreshold" value="<?php echo intval( $sitehealthThreshold ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 80', 'mainwp' ); ?></div>
+			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
+				<select name="mainwp_sitehealthThreshold" id="mainwp_sitehealthThreshold" class="ui dropdown">
+					<option value="80" <?php echo ( ( 80 == $sitehealthThreshold || 0 == $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+					<option value="100" <?php echo ( 100 == $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+				</select>
 			</div>
 		</div>		
 		<?php

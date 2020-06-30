@@ -93,6 +93,6 @@ class MainWP_DB_Monitoring extends MainWP_DB {
 	 */
 	public function purge_monitoring_records() {
 		$days = 60; // default 60 days.
-		$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_status' ) . ' WHERE timestamp_status < %d ', time() - $days * 24 * 60 * 60 ) );
+		$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_status' ) . ' WHERE timestamp_status < %d ', time() - $days * DAY_IN_SECONDS ) );
 	}
 }

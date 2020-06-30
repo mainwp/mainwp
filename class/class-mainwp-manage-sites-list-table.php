@@ -1215,7 +1215,7 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
-				$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+				$hstatus  = MainWP_Utility::get_site_health( $health_status );
 				$hval     = $hstatus['val'];
 				$critical = $hstatus['critical'];
 
@@ -1504,7 +1504,7 @@ class MainWP_Manage_Sites_List_Table {
 			$t_color = 'green';
 		}
 
-		$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+		$hstatus  = MainWP_Utility::get_site_health( $health_status );
 		$hval     = $hstatus['val'];
 		$critical = $hstatus['critical'];
 

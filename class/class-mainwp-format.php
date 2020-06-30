@@ -266,51 +266,46 @@ class MainWP_Format {
 	}
 
 	/**
-	 * Method get_format_email_offline_sites().
+	 * Method get_format_email_offline_site().
 	 *
 	 * Get Websites offline status mail content.
 	 *
-	 * @param array $offlineStatusSites Offline status of sites.
+	 * @param array $site Offline status site.
 	 * @param bool  $text_format Text format.
 	 *
 	 * @return string $mail_content Email content
 	 */
-	public static function get_format_email_offline_sites( $offlineStatusSites, $text_format ) {
+	public static function get_format_email_offline_site( $site, $text_format ) {
 
-		if ( ! is_array( $offlineStatusSites ) ) {
-			$offlineStatusSites = array();
+		if ( empty( $site ) ) {
+			return false;
 		}
 
 		$mail_content = '';
 
-		if ( count( $offlineStatusSites ) != 0 ) {
-			$mail_lines = '';
+		$site_name = $site->name;
+		$site_url  = $site->url;
+		$code      = $site->http_response_code;
 
-			foreach ( $offlineStatusSites as $site ) {
-				$site_name = $site->name;
-				$site_url  = $site->url;
-				$http_code = $site->http_response_code;
-				if ( $text_format ) {
-					$mail_lines .= $site_name . ' - [' . $site_url . '] - [' . $http_code . "]\r\n";
-				} else {
-					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - [' . $http_code . ']</li>';
-
-				}
-			}
-
-			if ( $text_format ) {
-				$mail_content .= 'Websites Offline' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>Websites Offline</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
+		$code_string = MainWP_Utility::get_http_codes( $code );
+		if ( ! empty( $code_string ) ) {
+			$code .= ' - ' . $code_string;
 		}
 
+		if ( $text_format ) {
+			$mail_content .= 'The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')' . "\r\n";
+			$mail_content .= "\r\n";
+			$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n";
+			$mail_content .= "\r\n";
+			$mail_content .= 'Click here: ' . site_url() . ' to check your site status.' . "\r\n";
+		} else {
+			$mail_content .= '<div></div>';
+			$mail_content .= '<div>The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')</div>';
+			$mail_content .= '<div></div>';
+			$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );
+			$mail_content .= '<div></div>';
+			$mail_content .= '<div><a href="' . site_url() . '">Click here</a> to check your site status.</div>';
+		}
 		return $mail_content;
 	}
 
@@ -336,13 +331,14 @@ class MainWP_Format {
 			$mail_lines = '';
 
 			foreach ( $weakHealthSites as $site ) {
-				$site_name    = $site->name;
-				$site_url     = $site->url;
-				$health_value = $site->health_value;
+				$site_name   = $site->name;
+				$site_url    = $site->url;
+				$site_health = ( $site->health_value < 80 ) ? 'Should be improved' : 'Good';
+
 				if ( $text_format ) {
-					$mail_lines .= $site_name . ' - [' . $site_url . '] - Site Health [' . $health_value . "]\r\n";
+					$mail_lines .= $site_name . ' - [' . $site_url . '] - Site Health [' . $site_health . "]\r\n";
 				} else {
-					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - Site Health [' . $health_value . ']</li>';
+					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - Site Health [' . $site_health . ']</li>';
 
 				}
 			}
@@ -368,7 +364,7 @@ class MainWP_Format {
 	 *
 	 * Format email.
 	 *
-	 * @param string $to_email Send to email.
+	 * @param string $to_email Send to emails.
 	 * @param string $body Email's body.
 	 * @param string $title Email's title.
 	 * @param bool   $text_format text format.

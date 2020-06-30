@@ -337,18 +337,9 @@ class MainWP_Settings {
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-			$save_emails   = array();
-			$user_emails   = $_POST['mainwp_options_email'];
-			if ( is_array( $user_emails ) ) {
-				foreach ( $user_emails as $email ) {
-					$email = esc_html( trim( $email ) );
-					if ( ! empty( $email ) && ! in_array( $email, $save_emails ) ) {
-						$save_emails[] = $email;
-					}
-				}
-			}
+			$user_emails   = wp_unslash( $_POST['mainwp_options_email'] );
+			$save_emails   = MainWP_Utility::valid_input_emails( $user_emails );
 
-			$save_emails               = implode( ',', $save_emails );
 			$userExtension->user_email = $save_emails;
 			$userExtension->pluginDir  = '';
 

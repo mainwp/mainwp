@@ -742,7 +742,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
 
-		$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+		$hstatus  = MainWP_Utility::get_site_health( $health_status );
 		$hval     = $hstatus['val'];
 		$critical = $hstatus['critical'];
 
@@ -884,7 +884,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				$site_options  = MainWP_DB::instance()->get_website_options_array( $website, array( 'health_site_status' ) );
 				$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
 
-				$hstatus  = MainWP_Utility::get_site_health_value( $health_status );
+				$hstatus  = MainWP_Utility::get_site_health( $health_status );
 				$hval     = $hstatus['val'];
 				$critical = $hstatus['critical'];
 

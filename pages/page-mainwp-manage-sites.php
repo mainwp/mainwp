@@ -1115,6 +1115,11 @@ class MainWP_Manage_Sites {
 				}
 
 				MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+
+				$moniroting_emails = wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] );
+				$moniroting_emails = MainWP_Utility::valid_input_emails( $moniroting_emails );
+				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $moniroting_emails );
+
 				$updated = true;
 			}
 		}

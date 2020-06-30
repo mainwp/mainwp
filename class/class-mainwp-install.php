@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.31';
+	protected $mainwp_db_version = '8.33';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -95,6 +95,7 @@ class MainWP_Install extends MainWP_DB_Base {
   gas_id int(11) NOT NULL,
   offline_checks_last int(11) NOT NULL,
   offline_check_result int(11) NOT NULL,
+  http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
   http_response_code int(11) NOT NULL DEFAULT 0,
   disable_status_check tinyint(1) NOT NULL DEFAULT 0,
   status_check_interval tinyint(1) NOT NULL DEFAULT 0,

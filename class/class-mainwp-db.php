@@ -1280,31 +1280,50 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 	/**
-	 * Method get_websites_offline_status()
+	 * Method get_websites_offline_status_to_send_notice()
 	 *
 	 * Get websites offline status.
 	 */
-	public function get_websites_offline_status() {
-		$where = $this->get_sql_where_allow_access_sites( 'wp' );
-		return $this->wpdb->get_results( 'SELECT wp.* FROM ' . $this->table_name( 'wp' ) . ' wp WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0' . $where, OBJECT );
+	public function get_websites_offline_status_to_send_notice() {
+		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
+		$extra_view = array( 'monitoring_notification_emails' );
+
+		return $this->wpdb->get_results(
+			'SELECT wp.* FROM ' . $this->table_name( 'wp' ) . ' wp 
+			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+			WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0 AND wp.http_code_noticed = 0' . // http_response_code <> 200 and http_code_noticed = 0 -- not noticed yet.
+			$where,
+			OBJECT
+		);
 	}
 
 	/**
-	 * Method get_websites_not_good_health()
+	 * Method get_websites_to_notice_health_threshold()
 	 *
-	 * Get websites with not good site health.
+	 * Get websites to notice site health.
 	 *
-	 * @param int $globalThreshold Global Site Health threshold.
+	 * @param int $globalThreshold Global site health threshold.
 	 */
-	public function get_websites_not_good_health( $globalThreshold ) {
+	public function get_websites_to_notice_health_threshold( $globalThreshold ) {
+
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+
+		if ( 80 <= $globalThreshold ) { // actual is 80.
+			// if good site should-be-improved threshold.
+			$where_global_threshold = '( wp.health_threshold = 0 AND wp_sync.health_value < 80 )';
+		} else {
+			// if good site health threshold.
+			$where_global_threshold = '( wp.health_threshold = 0 AND wp_sync.health_value >= 80 )';
+		}
+
+		$where_site_threshold  = ' ( wp.health_threshold = 80 AND wp_sync.health_value < 80 ) '; // if good site should-be-improved threshold.
+		$where_site_threshold .= ' OR ( wp.health_threshold = 100 AND wp_sync.health_value >= 80 ) '; // if good site health threshold.
+
 		return $this->wpdb->get_results(
-			$this->wpdb->prepare(
-				'SELECT wp.*, wp_sync.health_value FROM ' . $this->table_name( 'wp' ) . ' wp 
-				JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-				WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ( wp.health_threshold = 0 AND wp_sync.health_value < %d ) OR ( wp.health_threshold <> 0 AND wp_sync.health_value < wp.health_threshold ) ) ' . $where, // site with critical issues will be weak.
-				intval( $globalThreshold )
-			),
+			'SELECT wp.*, wp_sync.health_value FROM ' . $this->table_name( 'wp' ) . ' wp 
+			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
+			WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) ' . $where,
 			OBJECT
 		);
 	}

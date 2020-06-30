@@ -1146,7 +1146,7 @@ class MainWP_System_Cron_Jobs {
 
 		$running           = get_option( 'mainwp_cron_checksites_running' );
 		$freq_minutes      = get_option( 'mainwp_frequencySitesChecking', 60 );
-		$lasttime_to_check = get_option( 'mainwp_cron_checksites_last_timestamp', time() );
+		$lasttime_to_check = get_option( 'mainwp_cron_checksites_last_timestamp', 0 );
 
 		if ( ( 'yes' != $running ) && time() < $lasttime_to_check + $freq_minutes * MINUTE_IN_SECONDS ) {
 			return;
@@ -1155,6 +1155,14 @@ class MainWP_System_Cron_Jobs {
 		if ( 'yes' != $running ) {
 			MainWP_Logger::instance()->info( 'CRON :: check  sites status starting...' );
 			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', 'yes' );
+
+			$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
+			$twice_a_day        = 12 * HOUR_IN_SECONDS; // twice a day.
+			if ( time() > $last_purge_records + $twice_a_day ) {
+				MainWP_DB_Monitoring::instance()->purge_monitoring_records();
+				MainWP_Utility::update_option( 'mainwp_cron_checksites_purge_records_last_timestamp', time() );
+			}
+			return; // run next time.
 		}
 
 		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 20 );
@@ -1170,7 +1178,7 @@ class MainWP_System_Cron_Jobs {
 			$text_format = apply_filters( 'mainwp_text_format_email', false );
 
 			$this->notice_sites_offline_status( $email, $text_format );
-			$this->notice_sites_not_good_site_health( $email, $text_format );
+			$this->notice_sites_site_health_threshold( $email, $text_format );
 			return;
 		}
 
@@ -1189,27 +1197,46 @@ class MainWP_System_Cron_Jobs {
 	 * @param string $email notification email.
 	 * @param bool   $text_format Text format.
 	 */
-	public static function notice_sites_offline_status( $email, $text_format ) {
-		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status();
+	public function notice_sites_offline_status( $email, $text_format ) {
+		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status_to_send_notice();
+
 		if ( ! empty( $offlineSites ) ) {
-			$mail_content = MainWP_Format::get_format_email_offline_sites( $offlineSites, $text_format );
-			MainWP_Notification::send_websites_status_notification( $email, $mail_content, $text_format );
+			foreach ( $offlineSites as $site ) {
+				$addition_emails = $site->monitoring_notification_emails;
+				if ( ! empty( $addition_emails ) ) {
+					$$email .= ',' . $addition_emails; // send to addition emails too.
+				}
+
+				$mail_content = MainWP_Format::get_format_email_offline_site( $site, $text_format );
+				if ( ! empty( $mail_content ) ) {
+					MainWP_Notification::send_websites_status_notification( $site, $email, $mail_content, $text_format );
+					// update noticed value.
+					MainWP_DB::instance()->update_website_values(
+						$site->id,
+						array(
+							'http_code_noticed' => 1, // noticed.
+						)
+					);
+
+					usleep( 200000 );
+				}
+			}
 		}
 	}
 
 	/**
-	 * Method notice_sites_with_not_good_site_health()
+	 * Method notice_sites_site_health_threshold()
 	 *
-	 * To notice sites online with not good site health.
+	 * To notice site health.
 	 *
 	 * @param string $email notification email.
 	 * @param bool   $text_format Text format.
 	 */
-	public static function notice_sites_not_good_site_health( $email, $text_format ) {
-		$threshold       = get_option( 'mainwp_sitehealthThreshold', 80 );
-		$weakHealthSites = MainWP_DB_Common::instance()->get_websites_not_good_health( $threshold );
-		if ( ! empty( $weakHealthSites ) ) {
-			$mail_content = MainWP_Format::get_format_email_health_status_sites( $weakHealthSites, $text_format );
+	public function notice_sites_site_health_threshold( $email, $text_format ) {
+		$globalThreshold = get_option( 'mainwp_sitehealthThreshold', 80 );
+		$healthSites = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
+		if ( ! empty( $healthSites ) ) {
+			$mail_content = MainWP_Format::get_format_email_health_status_sites( $healthSites, $text_format );
 			MainWP_Notification::send_websites_health_status_notification( $email, $mail_content, $text_format );
 		}
 	}

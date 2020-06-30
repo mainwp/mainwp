@@ -671,7 +671,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'monitoring_notification_emails' ) );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
@@ -799,27 +799,46 @@ class MainWP_Manage_Sites_View {
 					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 1 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
 					</div>
-				</div>				
+				</div>
+				<?php
+				$check_interval = $website->status_check_interval;
+				?>
+								
 				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Check interval (optional)', 'mainwp' ); ?>" data-inverted="" data-position="top left">					
 						<select name="mainwp_managesites_edit_checkInterval" id="mainwp_managesites_edit_checkInterval" class="ui dropdown">
-							<option value="5" <?php echo ( 5 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
-							<option value="10" <?php echo ( 10 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
-							<option value="30" <?php echo ( 30 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
-							<option value="60" <?php echo ( 60 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
-							<option value="180" <?php echo ( 180 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
-							<option value="360" <?php echo ( 360 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
-							<option value="720" <?php echo ( 720 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
-							<option value="1440" <?php echo ( 1440 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
-							<option value="1440" <?php echo ( 0 == $website->status_check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+							<option value="5" <?php echo ( 5 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
+							<option value="10" <?php echo ( 10 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
+							<option value="30" <?php echo ( 30 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
+							<option value="60" <?php echo ( 60 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every hour', 'mainwp' ); ?></option>
+							<option value="180" <?php echo ( 180 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 3 hours', 'mainwp' ); ?></option>
+							<option value="360" <?php echo ( 360 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 6 hours', 'mainwp' ); ?></option>
+							<option value="720" <?php echo ( 720 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice a day', 'mainwp' ); ?></option>
+							<option value="1440" <?php echo ( 1440 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Once a day', 'mainwp' ); ?></option>
+							<option value="0" <?php echo ( 0 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>
+				<?php
+					$healthThreshold = $website->health_threshold;
+				?>
+				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
+						<select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
+							<option value="80" <?php echo ( 80 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+							<option value="100" <?php echo ( 100 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+							<option value="0" <?php echo ( 0 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
 				</div>
 				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
-					<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'Site health threshold (optional).', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="text" name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" value="<?php echo intval( $website->health_threshold ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 0 - Use global setting', 'mainwp' ); ?></div>
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Additional notification emails (comma-separated)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">										
+						<div class="ui left labeled input">
+							<input type="text" id="mainwp_managesites_edit_monitoringNotificationEmails" name="mainwp_managesites_edit_monitoringNotificationEmails" value="<?php echo ! empty( $website->monitoring_notification_emails ) ? esc_html( $website->monitoring_notification_emails ) : ''; ?>"/>
+						</div>
 					</div>
 				</div>
 				<h3 class="ui dividing header"><?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>

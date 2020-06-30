@@ -156,11 +156,12 @@ class MainWP_Notification {
 	 *
 	 * Send websites status email notification.
 	 *
+	 * @param object $site The offline website.
 	 * @param string $email notification email.
 	 * @param string $mail_content email content.
 	 * @param bool   $text_format Text format.
 	 */
-	public static function send_websites_status_notification( $email, $mail_content, $text_format ) {
+	public static function send_websites_status_notification( $site, $email, $mail_content, $text_format ) {
 
 		if ( $text_format ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
@@ -170,29 +171,13 @@ class MainWP_Notification {
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
 			MainWP_Logger::instance()->debug( 'CRON :: websites status check :: send mail to ' . $email );
-			if ( $text_format ) {
-				$mail_content = "Following sites are offline:\r\n" .
-							"\r\n" .
-							$mail_content .
-							"\r\n" .
-							'Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online.' . site_url() .
-							"\r\n";
-			} else {
-				$mail_content = '<div>Following sites are offline:</div>
-							<div></div>
-							<ul>
-							' . $mail_content . '
-							</ul>
-							<div></div>
-                            <div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-			}
 			self::send_wp_mail(
 				$email,
-				$mail_title = 'MainWP - Offline Status Websites',
+				'MainWP Monitoring Alert for ' . $site->url,
 				MainWP_Format::format_email(
 					$email,
-					$mail_offline,
-					$mail_title
+					$mail_content,
+					"Hi,"
 				),
 				$content_type
 			);
@@ -218,29 +203,13 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );
-			if ( $text_format ) {
-				$mail_content = "Following sites are not good site health:\r\n" .
-							"\r\n" .
-							$mail_content .
-							"\r\n" .
-							'Please visit your MainWP Dashboard as soon as possible.' . site_url() .
-							"\r\n";
-			} else {
-				$mail_content = '<div>Following sites are not good site health:</div>
-							<div></div>
-							<ul>
-							' . $mail_content . '
-							</ul>
-							<div></div>
-                            <div>Please visit your MainWP Dashboard as soon as possible. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-			}
+			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );			
 			self::send_wp_mail(
 				$email,
 				$mail_title = 'MainWP - Websites Health Status',
 				MainWP_Format::format_email(
 					$email,
-					$mail_offline,
+					$mail_content,
 					$mail_title
 				),
 				$content_type

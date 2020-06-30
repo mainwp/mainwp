@@ -1234,7 +1234,7 @@ class MainWP_System_Cron_Jobs {
 	 */
 	public function notice_sites_site_health_threshold( $email, $text_format ) {
 		$globalThreshold = get_option( 'mainwp_sitehealthThreshold', 80 );
-		$healthSites = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
+		$healthSites     = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
 		if ( ! empty( $healthSites ) ) {
 			$mail_content = MainWP_Format::get_format_email_health_status_sites( $healthSites, $text_format );
 			MainWP_Notification::send_websites_health_status_notification( $email, $mail_content, $text_format );

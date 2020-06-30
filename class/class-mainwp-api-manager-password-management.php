@@ -61,7 +61,7 @@ class MainWP_Api_Manager_Password_Management {
 	/**
 	 * Encrypt string.
 	 *
-	 * @param string String to encrypt.
+	 * @param string $str String to encrypt.
 	 *
 	 * @return string Encrypted string.
 	 */
@@ -72,7 +72,7 @@ class MainWP_Api_Manager_Password_Management {
 	/**
 	 * Decrypts string.
 	 *
-	 * @param string Sting to decrypt.
+	 * @param string $encrypted Sting to decrypt.
 	 *
 	 * @return string Decrypted string.
 	 */

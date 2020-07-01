@@ -1,30 +1,31 @@
 <?php
 /**
- * MainWP Compatible Functions.
+ * MainWP compatible functions.
  *
- * @package     MainWP/Dashboard
+ * @package MainWP/Dashboard
  */
 
-// phpcs:disable -- compatible functions
+// phpcs:disable -- compatible functions.
 
 if ( ! class_exists( 'MainWP_DB' ) ) {
 
 	/**
 	 * MainWP Database Compatible class
+	 *
+	 * @ignore
 	 */
 	class MainWP_DB {
+
 		/**
-		 * @static
-		 * @var (self|null) $instance Instance of MainWP_DB_Backup or null.
+		 * Private static variable to hold the single instance of the class.
+		 *
+		 * @var mixed Default null
 		 */
 		private static $instance = null;
 
 		/**
-		 * Method instance()
-		 *
 		 * Create public static instance.
 		 *
-		 * @static
 		 * @return MainWP_DB
 		 */
 		public static function instance() {
@@ -35,11 +36,9 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		}
 
 		/**
-		 * Method getWebsiteById()
+		 * Get child site by ID.
 		 *
-		 * Get child site by id.
-		 *
-		 * @param int   $id Child site ID.
+		 * @param int   $id           Child site ID.
 		 * @param array $selectGroups Select groups.
 		 *
 		 * @return object|null Database query results or null on failure.
@@ -49,8 +48,6 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		}
 
 		/**
-		 * Method getWebsitesByIds()
-		 *
 		 * Get child sites by child site IDs.
 		 *
 		 * @param array $ids Child site IDs.
@@ -63,11 +60,9 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		}
 
 		/**
-		 * Method getWebsitesByGroupIds()
+		 * Get child sites by groups IDs.
 		 *
-		 * Get child sites by child site IDs.
-		 *
-		 * @param array $ids Child site IDs.
+		 * @param array $ids    Groups IDs.
 		 * @param int   $userId User ID.
 		 *
 		 * @return object|null Database uery result or null on failure.
@@ -83,6 +78,8 @@ if ( ! class_exists( 'MainWP_System' ) ) {
 
 	/**
 	 * MainWP System Compatible class
+	 *
+	 * @ignore
 	 */
 	class MainWP_System {
 
@@ -94,7 +91,8 @@ if ( ! class_exists( 'MainWP_System' ) ) {
 		public static $version = '4.0.7.2';
 
 		/**
-		 * @static
+		 * Create public static instance.
+		 *
 		 * @return MainWP_System
 		 */
 		static function Instance() {
@@ -107,16 +105,20 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 
 	/**
 	 * MainWP Extensions View Compatible class
+	 *
+	 * @ignore
 	 */
 	class MainWP_Extensions_View {
 
 		/**
-		* Method getAvailableExtensions()
-		*
-		* Static Arrays of all Available Extensions.
-		*
-		* @todo Move to MainWP Server via an XML file.
-		*/
+		 * Get all available extensions.
+		 *
+		 * @return array Available extensions.
+		 *
+		 * @todo Move to MainWP Server via an XML file.
+		 *
+		 * @ignore
+		 */
 		public static function getAvailableExtensions() {
 			return MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions();
 		}

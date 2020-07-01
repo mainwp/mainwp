@@ -81,21 +81,26 @@ class MainWP_Notification {
 
 		if ( ! empty( $email ) && '' != $mail_offline ) {
 			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-			$mail_offline   = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
+			$mail_offline = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
 							<div></div>
 							<ul>
 							' . $mail_offline . '
 							</ul>
 							<div></div>
 							<div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
+
+			$subject = 'MainWP - HTTP response check';
+
+			$formated_content = MainWP_Format::format_email(
+				$email,
+				$mail_offline,
+				$subject
+			);
+
 			self::send_wp_mail(
 				$email,
-				$mail_title = 'MainWP - HTTP response check',
-				MainWP_Format::format_email(
-					$email,
-					$mail_offline,
-					$mail_title
-				),
+				$subject,
+				$formated_content,
 				$content_type
 			);
 		}
@@ -136,16 +141,18 @@ class MainWP_Notification {
 			$mail_title = '';
 		}
 
+		$formated_content = MainWP_Format::format_email(
+			$email,
+			$mail_content,
+			$mail_title,
+			$text_format,
+			$updateAvaiable
+		);
+
 		self::send_wp_mail(
 			$email,
 			'Available Updates',
-			MainWP_Format::format_email(
-				$email,
-				$mail_content,
-				$mail_title,
-				$text_format,
-				$updateAvaiable
-			),
+			$formated_content,
 			$content_type
 		);
 	}
@@ -170,15 +177,16 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: websites status check :: send mail to ' . $email );
+			$formated_content = MainWP_Format::format_email(
+				$email,
+				$mail_content,
+				''
+			);
+			MainWP_Logger::instance()->debug( 'CRON :: websites status check :: send mail to [' . $email . ']' );
 			self::send_wp_mail(
 				$email,
 				'MainWP Monitoring Alert for ' . $site->url,
-				MainWP_Format::format_email(
-					$email,
-					$mail_content,
-					'Hi,'
-				),
+				$formated_content,
 				$content_type
 			);
 		}
@@ -204,14 +212,18 @@ class MainWP_Notification {
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
 			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );
+
+			$subject          = 'MainWP - Websites Health Status';
+			$formated_content = MainWP_Format::format_email(
+				$email,
+				$mail_content,
+				$subject
+			);
+
 			self::send_wp_mail(
 				$email,
-				$mail_title = 'MainWP - Websites Health Status',
-				MainWP_Format::format_email(
-					$email,
-					$mail_content,
-					$mail_title
-				),
+				$subject,
+				$formated_content,
 				$content_type
 			);
 		}
@@ -224,14 +236,14 @@ class MainWP_Notification {
 	 * Send email via wp_mail().
 	 *
 	 * @param string $email send to email.
-	 * @param string $mail_title email content.
+	 * @param string $subject email content.
 	 * @param bool   $mail_content Text format.
 	 * @param string $content_type email content.
 	 */
-	public static function send_wp_mail( $email, $mail_title, $mail_content, $content_type ) {
+	public static function send_wp_mail( $email, $subject, $mail_content, $content_type ) {
 		wp_mail(
 			$email,
-			$mail_title,
+			$subject,
 			$mail_content,
 			array(
 				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',

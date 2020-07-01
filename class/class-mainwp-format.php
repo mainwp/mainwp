@@ -343,13 +343,11 @@ class MainWP_Format {
 				}
 			}
 
-			if ( $text_format ) {
-				$mail_content .= 'Websites Site Health' . "\r\n";
+			if ( $text_format ) {				
 				$mail_content .= "\r\n";
 				$mail_content .= $mail_lines;
 				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>Websites Site Health</strong></div>';
+			} else {				
 				$mail_content .= '<ul>';
 				$mail_content .= $mail_lines;
 				$mail_content .= '</ul>';
@@ -644,12 +642,14 @@ class MainWP_Format {
                                                     <!-- // Begin: Standard Content \\ -->
 EOT;
 
+			$title_content = ! empty( $title ) ? '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> ' . $title . ' </b><br>' : '';
+
 			$mail_send['body'] = <<<EOT
                                                     <table border="0" cellpadding="20" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td valign="top" style="border-collapse: collapse;">
                                                                 <div style="color: #505050;font-family: Arial;font-size: 14px;line-height: 150%;text-align: left;"> Hi MainWP user, <br><br>
-                                                                <b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;"> {$title} </b><br>
+                                                                {$title_content}
                                                                 <br>{$body}<br>
                                                                 </div>
                                                             </td>

@@ -62,7 +62,7 @@ class MainWP_Hooks {
 
 		add_filter( 'mainwp_get_metaboxes_post', array( &$this, 'get_metaboxes_post' ), 10, 0 );
 		add_filter( 'mainwp_getnotificationemail', array( MainWP_System_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
-		add_filter( 'mainwp_getformatemail', array( &$this, 'get_format_email' ), 10, 3 );
+		add_filter( 'mainwp_getformatemail', array( &$this, 'get_formated_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
@@ -690,7 +690,7 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method get_format_email()
+	 * Method get_formated_email()
 	 *
 	 * Hook to format email.
 	 *
@@ -700,7 +700,7 @@ class MainWP_Hooks {
 	 *
 	 * @return string|bool Return error or true.
 	 */
-	public function get_format_email( $body, $email, $title = '' ) {
+	public function get_formated_email( $body, $email, $title = '' ) {
 		return MainWP_Format::format_email( $email, $body, $title );
 	}
 

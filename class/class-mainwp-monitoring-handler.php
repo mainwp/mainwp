@@ -55,7 +55,6 @@ class MainWP_Monitoring_Handler {
 		$new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
 		$online_detected = MainWP_Connect::check_ignored_http_code( $http_code );
 		$time            = time();
-
 		// computes duration before update website checking values.
 		$duration    = self::get_duration_for_status( $website, $time );
 		$new_noticed = self::get_http_noticed_status_value( $website );

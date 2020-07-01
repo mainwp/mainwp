@@ -28,7 +28,7 @@ class MainWP_Connect {
 	}
 
 	/**
-	 * Method try_visit()
+	 * Method try visit.
 	 *
 	 * Try connecting to Child Site via cURL.
 	 *
@@ -38,10 +38,11 @@ class MainWP_Connect {
 	 * @param string            $http_pass HTTPAuth Password. Default = null.
 	 * @param integer           $sslVersion Child Site SSL Version.
 	 * @param boolean true|null $forceUseIPv4 Option to fource IP4. Default = null.
+	 * @param boolean true|null $no_body Option to set CURLOPT_NOBODY option. Default = false.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
-	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -61,6 +62,9 @@ class MainWP_Connect {
 		}
 
 		curl_setopt( $ch, CURLOPT_URL, $url );
+		if ( $no_body ) {
+			curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'HEAD' ); // HTTP request is 'HEAD', but sometime return 4xx - error code.
+		}
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 		curl_setopt( $ch, CURLOPT_POST, true );
@@ -157,11 +161,11 @@ class MainWP_Connect {
 		$ip     = false;
 		$target = false;
 
+		$found     = false;
 		$dnsRecord = @dns_get_record( $host );
 		MainWP_Logger::instance()->debug( ' :: tryVisit :: [dnsRecord=' . MainWP_Utility::value_to_string( $dnsRecord, 1 ) . ']' );
-		if ( false === $dnsRecord ) {
-			$data = false;
-		} elseif ( is_array( $dnsRecord ) ) {
+
+		if ( false !== $dnsRecord && is_array( $dnsRecord ) ) {
 			if ( ! isset( $dnsRecord['ip'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
 					if ( isset( $dnsRec['ip'] ) ) {
@@ -173,7 +177,6 @@ class MainWP_Connect {
 				$ip = $dnsRecord['ip'];
 			}
 
-			$found = false;
 			if ( ! isset( $dnsRecord['host'] ) ) {
 				foreach ( $dnsRecord as $dnsRec ) {
 					if ( $dnsRec['host'] == $host ) {
@@ -190,10 +193,6 @@ class MainWP_Connect {
 					$target = $dnsRecord['target'];
 				}
 			}
-
-			if ( ! $found ) {
-				$data = false;
-			}
 		}
 
 		if ( false === $ip ) {
@@ -206,75 +205,14 @@ class MainWP_Connect {
 		$out = array(
 			'host'           => $host,
 			'httpCode'       => $http_status,
-			'error'          => ( '' == $err && false === $data ? 'Invalid host.' : $err ),
-			'httpCodeString' => self::get_http_status_error_string( $http_status ),
+			'error'          => ( '' == $err && false === $found ? 'Invalid host.' : $err ),
+			'httpCodeString' => MainWP_Utility::get_http_codes( $http_status ),
 		);
 		if ( false !== $ip ) {
 			$out['ip'] = $ip;
 		}
 
 		return $out;
-	}
-
-	/**
-	 * Method get_http_status_error_string()
-	 *
-	 * Grab HTTP Error code 100 - 505 & convert to String representation of error.
-	 *
-	 * @param int $httpCode Returned HTTP Code from cURL.
-	 *
-	 * @return mixed null|Error String.
-	 */
-	protected static function get_http_status_error_string( $httpCode ) {
-
-		$codeString = array(
-			100 => 'Continue',
-			101 => 'Switching Protocols',
-			200 => 'OK',
-			201 => 'Created',
-			202 => 'Accepted',
-			203 => 'Non-Authoritative Information',
-			204 => 'No Content',
-			205 => 'Reset Content',
-			206 => 'Partial Content',
-
-			300 => 'Multiple Choices',
-			301 => 'Moved Permanently',
-			302 => 'Found',
-			303 => 'See Other',
-			304 => 'Not Modified',
-			305 => 'Use Proxy',
-			306 => '(Unused)',
-			307 => 'Temporary Redirect',
-
-			400 => 'Bad Request',
-			401 => 'Unauthorized',
-			402 => 'Payment Required',
-			403 => 'Forbidden',
-			404 => 'Not Found',
-			405 => 'Method Not Allowed',
-			406 => 'Not Acceptable',
-			407 => 'Proxy Authentication Required',
-			408 => 'Request Timeout',
-			409 => 'Conflict',
-			410 => 'Gone',
-			411 => 'Length Required',
-			412 => 'Precondition Failed',
-			413 => 'Request Entity Too Large',
-			414 => 'Request-URI Too Long',
-			415 => 'Unsupported Media Type',
-			416 => 'Requested Range Not Satisfiable',
-			417 => 'Expectation Failed',
-
-			500 => 'Internal Server Error',
-			501 => 'Not Implemented',
-			502 => 'Bad Gateway',
-			503 => 'Service Unavailable',
-			504 => 'Gateway Timeout',
-			505 => 'HTTP Version Not Supported',
-		);
-
-		return isset( $codeString[ $httpCode ] ) ? $codeString[ $httpCode ] : null;
 	}
 
 	/**
@@ -312,7 +250,7 @@ class MainWP_Connect {
 	 *
 	 * @param array $website Child Site information.
 	 *
-	 * @return mixed False|try_visit().
+	 * @return mixed False|try visit result.
 	 */
 	public static function check_website_status( $website ) {
 		$http_user         = null;
@@ -335,7 +273,8 @@ class MainWP_Connect {
 			return false;
 		}
 
-		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+		$noBody = false;
+		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4, $noBody );
 	}
 
 	/**

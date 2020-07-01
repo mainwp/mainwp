@@ -163,6 +163,7 @@ class MainWP_Manage_Sites_List_Table {
 			case 'last_sync':
 			case 'last_post':
 			case 'site_health':
+			case 'status_code':
 			case 'notes':
 			case 'phpversion':
 			case 'site_actions':
@@ -185,6 +186,7 @@ class MainWP_Manage_Sites_List_Table {
 			'last_sync'   => array( 'last_sync', false ),
 			'last_post'   => array( 'last_post', false ),
 			'site_health' => array( 'site_health', false ),
+			'status_code' => array( 'status_code', false ),
 			'phpversion'  => array( 'phpversion', false ),
 			'update'      => array( 'update', false ),
 		);
@@ -213,6 +215,7 @@ class MainWP_Manage_Sites_List_Table {
 			'phpversion'    => __( 'PHP', 'mainwp' ),
 			'last_post'     => __( 'Last Post', 'mainwp' ),
 			'site_health'   => __( 'Site Health', 'mainwp' ),
+			'status_code'   => __( 'Status Code', 'mainwp' ),
 			'site_preview'  => '<i class="eye icon"></i>',
 			'notes'         => __( 'Notes', 'mainwp' ),
 		);
@@ -301,7 +304,7 @@ class MainWP_Manage_Sites_List_Table {
 			'className' => 'column-site-bulk',
 		);
 		$defines[] = array(
-			'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-last_sync-column', 'manage-last_post-column', 'manage-site_health-column', 'manage-site_actions-column', 'extra-column' ),
+			'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-last_sync-column', 'manage-last_post-column', 'manage-site_health-column', 'manage-status_code-column', 'manage-site_actions-column', 'extra-column' ),
 			'className' => 'collapsing',
 		);
 		$defines[] = array(
@@ -517,6 +520,8 @@ class MainWP_Manage_Sites_List_Table {
 											END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'last_post' === $req_orderby ) {
 					$orderby = 'wp_sync.last_post_gmt ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
+				} elseif ( 'status_code' === $req_orderby ) {
+					$orderby = 'wp.http_response_code ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'site_health' === $req_orderby ) {
 					$orderby = 'wp_sync.health_value ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				}
@@ -1074,6 +1079,9 @@ class MainWP_Manage_Sites_List_Table {
 		$all_rows  = array();
 		$info_rows = array();
 		$use_favi  = get_option( 'mainwp_use_favicon', 1 );
+
+		$http_error_codes = MainWP_Utility::get_http_codes();
+
 		if ( $this->items ) {
 			foreach ( $this->items as $website ) {
 				$rw_classes = '';
@@ -1283,6 +1291,14 @@ class MainWP_Manage_Sites_List_Table {
 							<?php } elseif ( 'site_health' === $column_name ) { ?>
 								<span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo $h_color; ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
 								<?php
+							} elseif ( 'status_code' === $column_name ) {
+								if ( $website['http_response_code'] ) {
+									$code = $website['http_response_code'];
+									echo esc_html( $code );
+									if ( isset( $http_error_codes[ $code ] ) ) {
+										echo ' - ' . $http_error_codes[ $code ];
+									}
+								}
 							} elseif ( 'notes' === $column_name ) {
 									$col_class = 'collapsing center aligned';
 								?>
@@ -1527,6 +1543,8 @@ class MainWP_Manage_Sites_List_Table {
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
 
+		$http_error_codes = MainWP_Utility::get_http_codes();
+
 		foreach ( $columns as $column_name => $column_display_name ) {
 
 			$classes    = "collapsing center aligned $column_name column-$column_name";
@@ -1591,6 +1609,18 @@ class MainWP_Manage_Sites_List_Table {
 				<td class="collapsing"><?php echo 0 != $website['last_post_gmt'] ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['last_post_gmt'] ) ) : ''; ?></td>
 			<?php } elseif ( 'site_health' === $column_name ) { ?>
 				<td class="collapsing"><span><a class="open_newwindow_wpadmin" href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo intval( $website['id'] ); ?>&location=<?php echo base64_encode( 'site-health.php' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible. ?>" data-tooltip="<?php echo esc_html__( 'Jump to the Site Health', 'mainwp' ); ?>" data-position="right center" data-inverted="" target="_blank"><span class="ui <?php echo $h_color; ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span></td>
+			<?php } elseif ( 'status_code' === $column_name ) { ?>
+				<td class="collapsing" data-order="<?php echo esc_html( $website['http_response_code'] ); ?>">
+					<?php
+					if ( $website['http_response_code'] ) {
+						$code = $website['http_response_code'];
+						echo esc_html( $code );
+						if ( isset( $http_error_codes[ $code ] ) ) {
+							echo ' - ' . $http_error_codes[ $code ];
+						}
+					}
+					?>
+				</td>
 			<?php } elseif ( 'notes' === $column_name ) { ?>
 				<td class="collapsing center aligned">
 					<?php if ( '' === $website['note'] ) : ?>

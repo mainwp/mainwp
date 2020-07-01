@@ -1153,7 +1153,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 'yes' != $running ) {
-			MainWP_Logger::instance()->info( 'CRON :: check  sites status starting...' );
+			MainWP_Logger::instance()->info( 'CRON :: check sites status starting...' );
 			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', 'yes' );
 
 			$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );

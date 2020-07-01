@@ -1240,7 +1240,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_websites_to_notice_health_threshold( $globalThreshold ) {
 
-		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
 		$extra_view = array( 'monitoring_notification_emails' );
 
 		if ( 80 <= $globalThreshold ) { // actual is 80.

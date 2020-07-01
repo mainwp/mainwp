@@ -1,8 +1,8 @@
 <?php
 /**
- * MainWP Client Reports
+ * MainWP Live Reports
  *
- * Legacy Client Reports Extension.
+ * Support for the legacy Managed Client Reports for WooCommerce.
  *
  * @package MainWP/Dashboard
  */
@@ -10,11 +10,13 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Live_Reports.
+ * Class MainWP_Live_Reports()
+ *
+ * Private static variable to hold the buffer.
  */
 class MainWP_Live_Reports {
 
-    // phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
+// phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - required to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * @static
@@ -83,32 +85,19 @@ class MainWP_Live_Reports {
 	private static $count_sec_footer = 0;
 
 	/**
-	 * Method __construct()
-	 *
-	 * A magic method defined, __construct() will be called automatically anytime
-	 * someone instantiates (creates) an object of this class.
-	 *
-	 * @return void
+	 * A magic method defined, __construct() will be called automatically anytime someone instantiates (creates) an object of this class.
 	 */
 	public function __construct() {
 	}
 
 	/**
-	 * Method init()
-	 *
 	 * Set up constants with default values, unless user overrides.
-	 *
-	 * @return void
 	 */
 	public static function init() {
 	}
 
 	/**
-	 * Method admin_init()
-	 *
 	 * Initiates the admin page when loaded & sets initial Class Variables.
-	 *
-	 * @return (bool) true|false Stores in class variables.
 	 */
 	public function admin_init() {
 
@@ -132,15 +121,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method managesite_backup()
-	 *
 	 * Manage child site backup.
 	 *
-	 * @param array $website Child site array.
-	 * @param array $args Backup arguments array.
+	 * @param array $website     Child site array.
+	 * @param array $args        Backup arguments array.
 	 * @param array $information Backup status information array.
 	 *
-	 * @return (mixed) The filtered value after all hooked functions are applied to it.
+	 * @return mixed The filtered value after all hooked functions are applied to it.
 	 */
 	public function managesite_backup( $website, $args, $information ) {
 		if ( empty( $website ) ) {
@@ -193,15 +180,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method managesite_schedule_backup()
-	 *
 	 * Manage child site schedualed backups.
 	 *
-	 * @param array  $website Child site.
-	 * @param array  $args Backup type. full|db.
+	 * @param array  $website      Child site.
+	 * @param array  $args         Backup type. full|db.
 	 * @param string $backupResult Backup results. error|success.
 	 *
-	 * @return (bool) true|false Stores in class variables.
+	 * @return bool true|false Stores in class variables.
 	 */
 	public static function managesite_schedule_backup( $website, $args, $backupResult ) {
 
@@ -286,8 +271,6 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method mainwp_postprocess_backup_sites_feedback()
-	 *
 	 * Child sites backup post process feedback.
 	 *
 	 * @param array $output Feedback output key.
@@ -306,8 +289,6 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method cal_schedule_nextsend()
-	 *
 	 * Schedule when to send the next report.
 	 *
 	 * @param mixed      $schedule Schedule type. Options are: daily, weekly, biweekly, monthly, quarterly, twice_a_year.
@@ -316,7 +297,7 @@ class MainWP_Live_Reports {
 	 *
 	 * @return string $next_report_date_to Date to send next report.
 	 */
-	public static function cal_schedule_nextsend( $schedule, $start_recurring_date, $scheduleLastSend = 0 ) { // phpcs:ignore -- not quite complex method.
+	public static function cal_schedule_nextsend( $schedule, $start_recurring_date, $scheduleLastSend = 0 ) { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		if ( empty( $schedule ) || empty( $start_recurring_date ) ) {
 			return 0;
 		}
@@ -378,8 +359,6 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method calc_next_schedule_send_date()
-	 *
 	 * Calculate next schedualed send date.
 	 *
 	 * @param mixed $recurring_date Schedualed recurring start date & time.
@@ -408,14 +387,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method save_report()
-	 *
 	 * Save client report.
 	 *
 	 * @deprecated
-	 * @return (array|null) $return Response array on success or null on failer.
+	 *
+	 * @return array|null $return Response array on success or null on failer.
 	 */
-	public static function save_report() { // phpcs:ignore -- complex function, deprecated.
+	public static function save_report() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
 			$messages             = array();
 			$errors               = array();
@@ -605,8 +583,8 @@ class MainWP_Live_Reports {
 				}
 			}
 
-			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
 
 			if ( 'schedule' === $_POST['mwp_creport_report_submit_action'] ) {
 				$report['scheduled'] = 1;
@@ -651,14 +629,12 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method delete_attach_files()
-	 *
 	 * Delete attatched files.
 	 *
 	 * @param array $files Array of files to delete.
-	 * @param mixed $dir Directory files are located.
+	 * @param mixed $dir   Directory files are located.
 	 *
-	 * @return boolean Returns TRUE on success or FALSE on failure.
+	 * @return bool Returns TRUE on success or FALSE on failure.
 	 */
 	public static function delete_attach_files( $files, $dir ) {
 		$files = explode( ',', $files );
@@ -674,12 +650,10 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method handle_upload_files()
-	 *
 	 * Upload files handler.
 	 *
 	 * @param mixed $file_input File to upload.
-	 * @param mixed $dest_dir Destination directory.
+	 * @param mixed $dest_dir   Destination directory.
 	 *
 	 * @return array $output Array of results.
 	 */
@@ -716,14 +690,12 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method gen_report_content()
-	 *
 	 * Generate report content.
 	 *
-	 * @param array   $reports Reports data.
-	 * @param boolean $combine_report Whether or not to combine the reports. Default: false.
+	 * @param array $reports        Reports data.
+	 * @param bool  $combine_report Whether or not to combine the reports. Default: false.
 	 *
-	 * @return string Report content html.
+	 * @return string Report content HTML.
 	 */
 	public static function gen_report_content( $reports, $combine_report = false ) {
 		if ( ! is_array( $reports ) ) {
@@ -809,8 +781,6 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * method do_filter_content()
-	 *
 	 * Filter content.
 	 *
 	 * @param mixed $content Content to filter.
@@ -822,12 +792,10 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method filter_report()
-	 *
 	 * Filter report.
 	 *
-	 * @param array $report Report data.
-	 * @param mixed $allowed_tokens Allowed report tokens.
+	 * @param array $report         Report data.
+	 * @param array $allowed_tokens Allowed report tokens.
 	 *
 	 * @return array $filtered_reports Array of filtered reports.
 	 */
@@ -863,17 +831,15 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method filter_report_website()
-	 *
 	 * Filter child site report.
 	 *
-	 * @param array $report Report data.
-	 * @param array $website Child site data.
-	 * @param array $allowed_tokens Allowed report tokens.
+	 * @param array  $report         Report data.
+	 * @param object $website        Child site data.
+	 * @param array  $allowed_tokens Allowed report tokens.
 	 *
 	 * @return array $output Filtered child site report.
 	 */
-	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) { // phpcs:ignore -- complex function, deprecated.
+	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		$output                  = new \stdClass();
 		$output->filtered_header = $report->header;
 		$output->filtered_body   = $report->body;
@@ -1096,11 +1062,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method section_mark_header()
+	 * Header section.
 	 *
-	 * Header Section.
-	 *
-	 * @param mixed $matches
+	 * @param array $matches Matches.
 	 *
 	 * @return string Report Header html.
 	 */
@@ -1126,11 +1090,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method section_mark_body()
-	 *
 	 * Report body section.
 	 *
-	 * @param mixed $matches
+	 * @param array $matches Matches.
 	 *
 	 * @return string Report Body html.
 	 */
@@ -1155,11 +1117,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method section_mark_footer()
-	 *
 	 * Report footer section.
 	 *
-	 * @param mixed $matches
+	 * @param array $matches Matches.
 	 *
 	 * @return string Report footer html.
 	 */
@@ -1185,13 +1145,11 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method sucuri_scan_done()
+	 * Sucuri scan content.
 	 *
-	 * Sucuri Scan content.
-	 *
-	 * @param int   $website_id Child Site ID.
+	 * @param int   $website_id  Child site ID.
 	 * @param mixed $scan_status Sucuri scan status.
-	 * @param array $data Scan data.
+	 * @param array $data        Scan data.
 	 *
 	 * @return mixed The filtered value after all hooked functions are applied to it.
 	 */
@@ -1215,7 +1173,7 @@ class MainWP_Live_Reports {
 		}
 		$post_data = array(
 			'mwp_action'  => 'save_sucuri_stream',
-			'result'      => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			'result'      => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility. Required to achieve desired results, pull request solutions appreciated.
 			'scan_status' => $scan_status,
 		);
 		global $mainwpLiveReportResponderActivator;
@@ -1223,12 +1181,10 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method replace_content()
-	 *
 	 * Replace report content.
 	 *
-	 * @param mixed $content Content to replace.
-	 * @param mixed $tokens Tokens to replace.
+	 * @param mixed $content        Content to replace.
+	 * @param mixed $tokens         Tokens to replace.
 	 * @param mixed $replace_tokens Token replacing with.
 	 *
 	 * @return string $content This function returns a string or an array with the replaced values.
@@ -1238,12 +1194,10 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method replace_section_content()
-	 *
 	 * Replace section content.
 	 *
-	 * @param mixed $content Content to replace.
-	 * @param mixed $tokens Tokens to replace.
+	 * @param mixed $content        Content to replace.
+	 * @param mixed $tokens         Tokens to replace.
 	 * @param mixed $replace_tokens Token replacing with.
 	 *
 	 * @return string This function returns a string with the replaced values.
@@ -1257,13 +1211,11 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method parse_report_content()
-	 *
 	 * Parse report content.
 	 *
-	 * @param array $content Report content to parse.
+	 * @param array $content             Report content to parse.
 	 * @param array $replaceTokensValues Tokens to replace.
-	 * @param array $allowed_tokens Allowed tokens.
+	 * @param array $allowed_tokens      Allowed tokens.
 	 *
 	 * @return array This function returns an array with the replaced values.
 	 */
@@ -1304,8 +1256,6 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method remove_section_tokens()
-	 *
 	 * Remove section tokens.
 	 *
 	 * @param array $content Report content.
@@ -1333,14 +1283,14 @@ class MainWP_Live_Reports {
 	 *
 	 * Google Analytics data.
 	 *
-	 * @param int     $site_id Child site ID.
-	 * @param mixed   $start_date Report Start date.
-	 * @param mixed   $end_date Report End date.
-	 * @param boolean $chart hether or not to show the data chart. Default: false.
+	 * @param int   $site_id    Child site ID.
+	 * @param mixed $start_date Report shorraytart date.
+	 * @param mixed $end_date   Report end date.
+	 * @param bool  $chart      Whether or not to show the data chart. Default: false.
 	 *
 	 * @return array $output This function returns an array with the google analytics data.
 	 */
-	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) { // phpcs:ignore -- complex function.
+	public static function ga_data( $site_id, $start_date, $end_date, $chart = false ) { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 
 		if ( null === self::$enabled_ga ) {
 			self::$enabled_ga = is_plugin_active( 'mainwp-google-analytics-extension/mainwp-google-analytics-extension.php' ) ? true : false;
@@ -1513,15 +1463,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method piwik_data()
-	 *
 	 * Piwiki report data.
 	 *
-	 * @param int   $site_id Child site ID.
+	 * @param int   $site_id    Child site ID.
 	 * @param mixed $start_date Report Start date.
-	 * @param mixed $end_date Report End date.
+	 * @param mixed $end_date   Report End date.
 	 *
-	 * @return array|boolean $output This function returns an array of data or FALSE on failer.
+	 * @return array|bool $output This function returns an array of data or FALSE on failer.
 	 */
 	public static function piwik_data( $site_id, $start_date, $end_date ) {
 		if ( null === self::$enabled_piwik ) {
@@ -1554,15 +1502,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method aum_data()
-	 *
 	 * Advanced Uptime Monitor report data.
 	 *
-	 * @param int   $site_id Child site ID.
-	 * @param mixed $start_date Report Start date.
-	 * @param mixed $end_date Report End date.
+	 * @param int   $site_id    Child site ID.
+	 * @param mixed $start_date Report start date.
+	 * @param mixed $end_date   Report end date.
 	 *
-	 * @return array|boolean $output This function returns an array of data or FALSE on failer.
+	 * @return array|bool $output This function returns an array of data or FALSE on failer.
 	 */
 	public static function aum_data( $site_id, $start_date, $end_date ) {
 
@@ -1598,15 +1544,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method woocomstatus_data()
-	 *
 	 * Woocomerce status report data.
 	 *
-	 * @param int   $site_id Child site ID.
-	 * @param mixed $start_date Report Start date.
-	 * @param mixed $end_date Report End date.
+	 * @param int   $site_id    Child site ID.
+	 * @param mixed $start_date Report start date.
+	 * @param mixed $end_date   Report end date.
 	 *
-	 * @return array|boolean $output This function returns an array of data or FALSE on failer.
+	 * @return array|bool $output This function returns an array of data or FALSE on failer.
 	 */
 	public static function woocomstatus_data( $site_id, $start_date, $end_date ) {
 
@@ -1651,11 +1595,11 @@ class MainWP_Live_Reports {
 	 *
 	 * Google pagespeed tokens report data.
 	 *
-	 * @param int   $site_id Child site ID.
+	 * @param int   $site_id    Child site ID.
 	 * @param mixed $start_date Report Start date.
-	 * @param mixed $end_date Report End date.
+	 * @param mixed $end_date   Report End date.
 	 *
-	 * @return array|boolean $data This function returns an array of data or FALSE on failer.
+	 * @return array|bool $data This function returns an array of data or FALSE on failer.
 	 */
 	public static function pagespeed_tokens( $site_id, $start_date, $end_date ) {
 
@@ -1682,15 +1626,13 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method brokenlink_tokens()
-	 *
 	 * Broken links report data.
 	 *
-	 * @param int   $site_id Child site ID.
+	 * @param int   $site_id    Child site ID.
 	 * @param mixed $start_date Report Start date.
-	 * @param mixed $end_date Report End date.
+	 * @param mixed $end_date   Report End date.
 	 *
-	 * @return array|boolean $data This function returns an array of data or FALSE on failer.
+	 * @return array|bool $data This function returns an array of data or FALSE on failer.
 	 */
 	public static function brokenlinks_tokens( $site_id, $start_date, $end_date ) {
 
@@ -1717,14 +1659,12 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method format_stats_values()
-	 *
 	 * Format stats values.
 	 *
-	 * @param mixed   $value Value to format.
-	 * @param boolean $round Whether to round. Default: false.
-	 * @param boolean $perc Whether to conver to percentage. Default: false.
-	 * @param boolean $showAsTime Whether to convert to time. Default: false.
+	 * @param string $value      Value to format.
+	 * @param bool   $round      Whether to round. Default: false.
+	 * @param bool   $perc       Whether to conver to percentage. Default: false.
+	 * @param bool   $showAsTime Whether to convert to time. Default: false.
 	 *
 	 * @return string $value Converted value.
 	 */
@@ -1743,12 +1683,10 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method sec2hms()
-	 *
 	 * Convert seconds to Hours:Minutes.
 	 *
-	 * @param mixed   $sec Time in seconds.
-	 * @param boolean $padHours Hpurs to pad.
+	 * @param int  $sec      Time in seconds.
+	 * @param bool $padHours Hpurs to pad.
 	 *
 	 * @return string $hms Time in Hours:Minutes.
 	 */
@@ -1768,10 +1706,10 @@ class MainWP_Live_Reports {
 	/**
 	 * Method fetch_stream_data()
 	 *
-	 * @param array $website Child Site data.
-	 * @param array $report Report data.
-	 * @param array $sections Sections to show.
-	 * @param array $tokens Tokens to show.
+	 * @param object $website  Child Site data.
+	 * @param array  $report   Report data.
+	 * @param array  $sections Sections to show.
+	 * @param array  $tokens   Tokens to show.
 	 *
 	 * @return array $information or error.
 	 */
@@ -1779,8 +1717,8 @@ class MainWP_Live_Reports {
 		global $mainwpLiveReportResponderActivator;
 		$post_data = array(
 			'mwp_action'   => 'get_stream',
-			'sections'     => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-			'other_tokens' => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			'sections'     => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
+			'other_tokens' => base64_encode( serialize( $tokens ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
 			'date_from'    => $report->date_from,
 			'date_to'      => $report->date_to,
 		);
@@ -1802,13 +1740,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method manage_site_token()
-	 *
 	 * Manage child site report data.
 	 *
-	 * @param array $post Post array.
-	 *
-	 * @return string Manage child sites report data html.
+	 * @param object $site Object containing the website information.
 	 */
 	public static function manage_site_token( $site ) {
 
@@ -1866,13 +1800,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method update_site_update_tokens()
-	 *
 	 * Update child site report update data.
 	 *
-	 * @param mixed $websiteId Child site ID.
-	 *
-	 * @return (string|bool) Return token value or false on failer.
+	 * @param int $websiteId Child site ID.
 	 */
 	public function update_site_update_tokens( $websiteId ) {
 		global $wpdb, $mainwpLiveReportResponderActivator;
@@ -1904,13 +1834,9 @@ class MainWP_Live_Reports {
 	}
 
 	/**
-	 * Method delete_site_delete_tokens()
-	 *
 	 * Delete child site delete tokens.
 	 *
-	 * @param array $website Child site data.
-	 *
-	 * @return (int|bool) Number of rows affected/selected for all other queries and Boolean true. Boolean false on error.
+	 * @param object $website Object containing the website information.
 	 */
 	public function delete_site_delete_tokens( $website ) {
 		if ( $website ) {

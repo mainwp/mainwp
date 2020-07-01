@@ -21,5 +21,6 @@
     <files>
         <directory>.</directory>
         <ignore>tests/*</ignore>
+        <ignore>includes/compatible.php</ignore>
     </files>
 </phpdoc>

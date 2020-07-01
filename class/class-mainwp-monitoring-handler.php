@@ -36,6 +36,24 @@ class MainWP_Monitoring_Handler {
 	}
 
 	/**
+	 * Method check to purge monitoring records.
+	 *
+	 * Check to clean records.
+	 *
+	 * @return bool True|False whether clean records.
+	 */
+	public static function check_to_purge_records() {
+		$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
+		$twice_a_day        = 12 * HOUR_IN_SECONDS; // twice a day.
+		if ( time() > $last_purge_records + $twice_a_day ) {
+			MainWP_DB_Monitoring::instance()->purge_monitoring_records();
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_purge_records_last_timestamp', time() );
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Method handle_check_website()
 	 *
 	 * Handle check website online status.
@@ -57,7 +75,7 @@ class MainWP_Monitoring_Handler {
 		$time            = time();
 		// computes duration before update website checking values.
 		$duration    = self::get_duration_for_status( $website, $time );
-		$new_noticed = self::get_http_noticed_status_value( $website );
+		$new_noticed = self::get_http_noticed_status_value( $website, $new_code );
 
 		// to save last status.
 		MainWP_DB::instance()->update_website_values(
@@ -87,13 +105,14 @@ class MainWP_Monitoring_Handler {
 	/**
 	 * Method get_http_noticed_status()
 	 *
-	 * Get new noticed value.
+	 * Get new http status noticed value.
 	 *
 	 * @param object $website The website.
+	 * @param int    $new_code The new http code value.
 	 *
-	 * @return int $noticed_value new noticed value.
+	 * @return int $noticed_value new noticed value for status.
 	 */
-	private static function get_http_noticed_status_value( $website ) {
+	private static function get_http_noticed_status_value( $website, $new_code ) {
 		$old_code      = $website->http_response_code;
 		$noticed_value = $website->http_code_noticed;
 
@@ -104,6 +123,34 @@ class MainWP_Monitoring_Handler {
 		} elseif ( 200 != $old_code && 200 == $new_code ) {
 			if ( 0 == $noticed_value ) {
 				$noticed_value = 1; // if online and not noticed then update to abort notice.
+			}
+		}
+		return $noticed_value;
+	}
+
+	/**
+	 * Method get_health_noticed_status_value()
+	 *
+	 * Get new site health noticed value.
+	 *
+	 * @param object $website The website.
+	 * @param object $new_health New site health value.
+	 *
+	 * @return int $noticed_value new noticed value for site health status.
+	 */
+	private static function get_health_noticed_status_value( $website, $new_health ) {
+
+		// for sure if property does not existed.
+		$old_value     = MainWP_DB::instance()->get_website_option( $website, 'health_value' );
+		$noticed_value = MainWP_DB::instance()->get_website_option( $website, 'health_site_noticed' );
+
+		if ( 80 <= $old_value && 80 > $new_health ) {
+			if ( 1 == $noticed_value ) {
+				$noticed_value = 0; // if new health status and noticed then update to notice again.
+			}
+		} elseif ( 80 > $old_value && 80 <= $new_health ) {
+			if ( 1 == $noticed_value ) {
+				$noticed_value = 0; // 0: to notice.
 			}
 		}
 		return $noticed_value;
@@ -185,6 +232,76 @@ class MainWP_Monitoring_Handler {
 			die( wp_json_encode( array( 'result' => 'success' ) ) );
 		} else {
 			die( wp_json_encode( array( 'error' => __( 'Request failed. Please, try again.', 'mainwp' ) ) ) );
+		}
+	}
+
+
+	/**
+	 * Method notice_sites_offline_status()
+	 *
+	 * To notice sites offline status.
+	 *
+	 * @param string $email notification email.
+	 * @param bool   $text_format Text format.
+	 */
+	public static function notice_sites_offline_status( $email, $text_format ) {
+		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status_to_send_notice();
+		MainWP_Logger::instance()->info( 'CRON :: check sites status :: notice site http :: found ' . ( $offlineSites ? count( $offlineSites ) : 0 ) );
+		if ( ! empty( $offlineSites ) ) {
+			foreach ( $offlineSites as $site ) {
+				$addition_emails = $site->monitoring_notification_emails;
+				if ( ! empty( $addition_emails ) ) {
+					$$email .= ',' . $addition_emails; // send to addition emails too.
+				}
+
+				$mail_content = MainWP_Format::get_format_email_offline_site( $site, $text_format );
+				if ( ! empty( $mail_content ) ) {
+					MainWP_Notification::send_websites_status_notification( $site, $email, $mail_content, $text_format );
+					// update noticed value.
+					MainWP_DB::instance()->update_website_values(
+						$site->id,
+						array(
+							'http_code_noticed' => 1, // noticed.
+						)
+					);
+
+					usleep( 200000 );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Method notice_sites_site_health_threshold()
+	 *
+	 * To notice site health.
+	 *
+	 * @param string $email notification email.
+	 * @param bool   $text_format Text format.
+	 */
+	public static function notice_sites_site_health_threshold( $email, $text_format ) {
+		$globalThreshold = get_option( 'mainwp_sitehealthThreshold', 80 );
+		$healthSites     = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
+		MainWP_Logger::instance()->info( 'CRON :: check sites status :: notice site health :: found ' . ( $healthSites ? count( $healthSites ) : 0 ) );
+		if ( ! empty( $healthSites ) ) {
+			foreach ( $healthSites as $site ) {
+				$addition_emails = $site->monitoring_notification_emails;
+				if ( ! empty( $addition_emails ) ) {
+					$$email .= ',' . $addition_emails; // send to addition emails too.
+				}
+				$mail_content = MainWP_Format::get_format_email_health_status_sites( $site, $text_format );
+				if ( ! empty( $mail_content ) ) {
+					MainWP_Notification::send_websites_health_status_notification( $site, $email, $mail_content, $text_format );
+					// update noticed value.
+					MainWP_DB::instance()->update_website_values(
+						$site->id,
+						array(
+							'health_site_noticed' => 1, // as noticed.
+						)
+					);
+					usleep( 200000 );
+				}
+			}
 		}
 	}
 }

@@ -1225,7 +1225,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			'SELECT wp.* FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0 AND wp.http_code_noticed = 0' . // http_response_code <> 200 and http_code_noticed = 0 -- not noticed yet.
+			WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
 			$where,
 			OBJECT
 		);
@@ -1241,6 +1241,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_websites_to_notice_health_threshold( $globalThreshold ) {
 
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		$extra_view = array( 'monitoring_notification_emails' );
 
 		if ( 80 <= $globalThreshold ) { // actual is 80.
 			// if good site should-be-improved threshold.
@@ -1256,7 +1257,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		return $this->wpdb->get_results(
 			'SELECT wp.*, wp_sync.health_value FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
-			WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) ' . $where,
+			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid			
+			WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' . $where,
 			OBJECT
 		);
 	}

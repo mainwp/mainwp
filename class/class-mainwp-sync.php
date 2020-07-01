@@ -289,9 +289,12 @@ class MainWP_Sync {
 		if ( isset( $information['health_site_status'] ) ) {
 			$health_status                     = $information['health_site_status'];
 			$hstatus                           = MainWP_Utility::get_site_health( $health_status );
-			$websiteSyncValues['health_value'] = $hstatus['critical'] * 100 + $hstatus['val']; // computes health value to support sorting by sites health and sites health threshold.
+			$new_health_value                  = $hstatus['critical'] * 100 + $hstatus['val']; // computes custom health value to support sorting by sites health and sites health threshold.
+			$websiteSyncValues['health_value'] = $new_health_value;
 			$done                              = true;
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', wp_json_encode( $health_status ) );
+			$new_noticed = MainWP_Monitoring_Handler::get_health_noticed_status_value( $pWebsite, $new_health_value );
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_noticed', $new_noticed );
 		} else {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'health_site_status', $emptyArray );
 		}

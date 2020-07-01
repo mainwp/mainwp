@@ -292,19 +292,20 @@ class MainWP_Format {
 			$code .= ' - ' . $code_string;
 		}
 
+		$location = admin_url( 'admin.php?page=MonitoringSites' );
 		if ( $text_format ) {
 			$mail_content .= 'The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')' . "\r\n";
 			$mail_content .= "\r\n";
 			$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
 			$mail_content .= "\r\n";
-			$mail_content .= 'Click here: ' . site_url() . ' to check your site status.' . "\r\n";
+			$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
 		} else {
 			$mail_content .= '<div></div>';
 			$mail_content .= '<div>The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')</div>';
-			$mail_content .= '<div></div>';
+			$mail_content .= '<div></div><br>';
 			$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
-			$mail_content .= '<div></div>';
-			$mail_content .= '<div><a href="' . site_url() . '">Click here</a> to check your site status.</div>';
+			$mail_content .= '<div></div><br>';
+			$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
 		}
 		return $mail_content;
 	}
@@ -314,43 +315,51 @@ class MainWP_Format {
 	 *
 	 * Get formated email content for websites with not good site health.
 	 *
-	 * @param array $weakHealthSites Weak sites health.
+	 * @param array $site The website.
 	 * @param bool  $text_format Text format.
 	 *
 	 * @return string $mail_content Email content
 	 */
-	public static function get_format_email_health_status_sites( $weakHealthSites, $text_format ) {
+	public static function get_format_email_health_status_sites( $site, $text_format ) {
 
-		if ( ! is_array( $weakHealthSites ) ) {
-			$weakHealthSites = array();
+		if ( empty( $site ) ) {
+			return false;
 		}
 
+		$site_name = $site->name;
+		$site_url  = $site->url;
+
 		$mail_content = '';
-
-		if ( count( $weakHealthSites ) != 0 ) {
-			$mail_lines = '';
-
-			foreach ( $weakHealthSites as $site ) {
-				$site_name   = $site->name;
-				$site_url    = $site->url;
-				$site_health = ( $site->health_value < 80 ) ? 'Should be improved' : 'Good';
-
-				if ( $text_format ) {
-					$mail_lines .= $site_name . ' - [' . $site_url . '] - Site Health [' . $site_health . "]\r\n";
-				} else {
-					$mail_lines .= '<li>' . $site_name . ' - [' . $site_url . '] - Site Health [' . $site_health . ']</li>';
-
-				}
+		$location     = admin_url( 'admin.php?page=MonitoringSites' );
+		if ( 80 <= $site->health_value ) {
+			if ( $text_format ) {
+				$mail_content .= 'The site health check shows that your site ' . $site_name . ' (' . $site_url . ') health is Good.' . "\r\n";
+				$mail_content .= "\r\n";
+				$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
+				$mail_content .= "\r\n";
+				$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
+			} else {
+				$mail_content .= '<div></div>';
+				$mail_content .= '<div>The site health check shows that your site ' . $site_name . ' (' . $site_url . ') health is Good.</div>';
+				$mail_content .= '<div></div><br>';
+				$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
+				$mail_content .= '<div></div><br>';
+				$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
 			}
-
-			if ( $text_format ) {				
+		} else {
+			if ( $text_format ) {
+				$mail_content .= 'The site health check shows that your site ' . $site_name . ' (' . $site_url . ') issues that should be addressed as soon as possible to improve its performance and security.' . "\r\n";
 				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
+				$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
 				$mail_content .= "\r\n";
-			} else {				
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
+				$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
+			} else {
+				$mail_content .= '<div></div>';
+				$mail_content .= '<div>The site health check shows that your site ' . $site_name . ' (' . $site_url . ') issues that should be addressed as soon as possible to improve its performance and security.</div>';
+				$mail_content .= '<div></div><br>';
+				$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
+				$mail_content .= '<div></div><br>';
+				$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
 			}
 		}
 
@@ -374,9 +383,9 @@ class MainWP_Format {
 		$current_year = gmdate( 'Y' );
 		if ( $text_format ) {
 				$mail_send['header'] = '';
-
-				$mail_send['body']   = $title . "\r\n\r\n" .
-									$body . "\r\n\r\n";
+				$mail_send['body']   = 'Hi,' . "\r\n\r\n" .
+										( ( ! empty( $title ) ) ? $title . "\r\n\r\n" : '' ) .
+										$body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
 										'Documentation: https://mainwp.com/help/' . "\r\n" .
@@ -648,7 +657,7 @@ EOT;
                                                     <table border="0" cellpadding="20" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td valign="top" style="border-collapse: collapse;">
-                                                                <div style="color: #505050;font-family: Arial;font-size: 14px;line-height: 150%;text-align: left;"> Hi MainWP user, <br><br>
+                                                                <div style="color: #505050;font-family: Arial;font-size: 14px;line-height: 150%;text-align: left;"> Hi, <br><br>
                                                                 {$title_content}
                                                                 <br>{$body}<br>
                                                                 </div>

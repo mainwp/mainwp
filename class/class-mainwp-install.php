@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.33';
+	protected $mainwp_db_version = '8.34';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -94,12 +94,12 @@ class MainWP_Install extends MainWP_DB_Base {
   ga_id text NOT NULL,
   gas_id int(11) NOT NULL,
   offline_checks_last int(11) NOT NULL,
-  offline_check_result int(11) NOT NULL,
-  http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
+  offline_check_result int(11) NOT NULL,  
   http_response_code int(11) NOT NULL DEFAULT 0,
+  http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
   disable_status_check tinyint(1) NOT NULL DEFAULT 0,
   status_check_interval tinyint(1) NOT NULL DEFAULT 0,
-  health_threshold int(11) NOT NULL DEFAULT 0,
+  health_threshold int(11) NOT NULL DEFAULT 0,  
   note text NOT NULL,
   note_lastupdate int(11) NOT NULL DEFAULT 0,
   statsUpdate int(11) NOT NULL,
@@ -159,6 +159,7 @@ class MainWP_Install extends MainWP_DB_Base {
   extauth text NOT NULL DEFAULT "",
   last_post_gmt int(11) NOT NULL DEFAULT 0,
   health_value int(11) NOT NULL DEFAULT 0,
+  health_site_noticed tinyint(1) NOT NULL DEFAULT 1,
   KEY idx_wpid (wpid)) ' . $charset_collate;
 		$sql[] = $tbl;
 

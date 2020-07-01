@@ -305,7 +305,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			$websites = array(); // ok, do check.
-		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
+			} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
 
 			return;
@@ -1153,16 +1153,16 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 'yes' != $running ) {
-			MainWP_Logger::instance()->info( 'CRON :: check sites status starting...' );
+			MainWP_Logger::instance()->info( 'CRON :: check sites status :: starting.' );
 			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', 'yes' );
 
-			$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
-			$twice_a_day        = 12 * HOUR_IN_SECONDS; // twice a day.
-			if ( time() > $last_purge_records + $twice_a_day ) {
-				MainWP_DB_Monitoring::instance()->purge_monitoring_records();
-				MainWP_Utility::update_option( 'mainwp_cron_checksites_purge_records_last_timestamp', time() );
+			// update to send notice (health|status) when checking finished.
+			update_option( 'mainwp_cron_checksites_noticed_website_status', false );
+			update_option( 'mainwp_cron_checksites_noticed_health_status', false );
+
+			if ( MainWP_Monitoring_Handler::check_to_purge_records() ) {
+				return; // to run next time.
 			}
-			return; // run next time.
 		}
 
 		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 20 );
@@ -1171,14 +1171,25 @@ class MainWP_System_Cron_Jobs {
 
 		if ( empty( $websites ) ) {
 
-			MainWP_Utility::update_option( 'mainwp_cron_checksites_last_timestamp', time() );
-			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', false );
-
 			$email       = MainWP_DB_Common::instance()->get_user_notification_email();
 			$text_format = apply_filters( 'mainwp_text_format_email', false );
 
-			$this->notice_sites_offline_status( $email, $text_format );
-			$this->notice_sites_site_health_threshold( $email, $text_format );
+			$noticed_status = get_option( 'mainwp_cron_checksites_noticed_website_status', false );
+			$noticed_health = get_option( 'mainwp_cron_checksites_noticed_health_status', false );
+
+			if ( ! $noticed_status ) {
+				MainWP_Monitoring_Handler::notice_sites_offline_status( $email, $text_format );
+				update_option( 'mainwp_cron_checksites_noticed_website_status', true );
+				return;
+			} elseif ( ! $noticed_health ) {
+				MainWP_Monitoring_Handler::notice_sites_site_health_threshold( $email, $text_format );
+				update_option( 'mainwp_cron_checksites_noticed_health_status', true );
+				return;
+			}
+
+			MainWP_Logger::instance()->info( 'CRON :: check sites status :: finished.' );
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_last_timestamp', time() );
+			MainWP_Utility::update_option( 'mainwp_cron_checksites_running', false );
 			return;
 		}
 
@@ -1186,59 +1197,6 @@ class MainWP_System_Cron_Jobs {
 			MainWP_Monitoring_Handler::handle_check_website( $website );
 		}
 		MainWP_DB::free_result( $websites );
-	}
-
-
-	/**
-	 * Method notice_sites_offline_status()
-	 *
-	 * To notice sites offline status.
-	 *
-	 * @param string $email notification email.
-	 * @param bool   $text_format Text format.
-	 */
-	public function notice_sites_offline_status( $email, $text_format ) {
-		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status_to_send_notice();
-
-		if ( ! empty( $offlineSites ) ) {
-			foreach ( $offlineSites as $site ) {
-				$addition_emails = $site->monitoring_notification_emails;
-				if ( ! empty( $addition_emails ) ) {
-					$$email .= ',' . $addition_emails; // send to addition emails too.
-				}
-
-				$mail_content = MainWP_Format::get_format_email_offline_site( $site, $text_format );
-				if ( ! empty( $mail_content ) ) {
-					MainWP_Notification::send_websites_status_notification( $site, $email, $mail_content, $text_format );
-					// update noticed value.
-					MainWP_DB::instance()->update_website_values(
-						$site->id,
-						array(
-							'http_code_noticed' => 1, // noticed.
-						)
-					);
-
-					usleep( 200000 );
-				}
-			}
-		}
-	}
-
-	/**
-	 * Method notice_sites_site_health_threshold()
-	 *
-	 * To notice site health.
-	 *
-	 * @param string $email notification email.
-	 * @param bool   $text_format Text format.
-	 */
-	public function notice_sites_site_health_threshold( $email, $text_format ) {
-		$globalThreshold = get_option( 'mainwp_sitehealthThreshold', 80 );
-		$healthSites     = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
-		if ( ! empty( $healthSites ) ) {
-			$mail_content = MainWP_Format::get_format_email_health_status_sites( $healthSites, $text_format );
-			MainWP_Notification::send_websites_health_status_notification( $email, $mail_content, $text_format );
-		}
 	}
 
 }

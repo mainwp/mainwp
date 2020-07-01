@@ -89,17 +89,15 @@ class MainWP_Notification {
 							<div></div>
 							<div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
 
-			$subject = 'MainWP - HTTP response check';
-
 			$formated_content = MainWP_Format::format_email(
 				$email,
 				$mail_offline,
-				$subject
+				'HTTP response check'
 			);
 
 			self::send_wp_mail(
 				$email,
-				$subject,
+				'MainWP - HTTP response check',
 				$formated_content,
 				$content_type
 			);
@@ -213,16 +211,15 @@ class MainWP_Notification {
 		if ( ! empty( $email ) && '' != $mail_content ) {
 			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );
 
-			$subject          = 'MainWP - Websites Health Status';
 			$formated_content = MainWP_Format::format_email(
 				$email,
 				$mail_content,
-				$subject
+				''
 			);
 
 			self::send_wp_mail(
 				$email,
-				$subject,
+				'MainWP Site Health Alert for ' . $site->url,
 				$formated_content,
 				$content_type
 			);

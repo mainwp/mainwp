@@ -343,11 +343,11 @@ class MainWP_Format {
 				}
 			}
 
-			if ( $text_format ) {				
+			if ( $text_format ) {
 				$mail_content .= "\r\n";
 				$mail_content .= $mail_lines;
 				$mail_content .= "\r\n";
-			} else {				
+			} else {
 				$mail_content .= '<ul>';
 				$mail_content .= $mail_lines;
 				$mail_content .= '</ul>';

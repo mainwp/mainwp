@@ -3,9 +3,11 @@
  * MainWP compatible functions.
  *
  * @package MainWP/Dashboard
+ *
+ * @ignore
  */
 
-// phpcs:disable -- compatible functions.
+// phpcs:disable -- legacy functions for backwards compatibility. Required.
 
 if ( ! class_exists( 'MainWP_DB' ) ) {
 

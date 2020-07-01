@@ -3,9 +3,6 @@
  * MainWP compatible functions.
  *
  * @package MainWP/Dashboard
- *
- * @ignore
- * @internal
  */
 
 // phpcs:disable -- legacy functions for backwards compatibility. Required.
@@ -15,7 +12,6 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 	/**
 	 * MainWP Database Compatible class
 	 *
-	 * @ignore
 	 * @internal
 	 */
 	class MainWP_DB {
@@ -83,7 +79,6 @@ if ( ! class_exists( 'MainWP_System' ) ) {
 	/**
 	 * MainWP System Compatible class
 	 *
-	 * @ignore
 	 * @internal
 	 */
 	class MainWP_System {
@@ -111,7 +106,6 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 	/**
 	 * MainWP Extensions View Compatible class
 	 *
-	 * @ignore
 	 * @internal
 	 */
 	class MainWP_Extensions_View {

@@ -364,7 +364,7 @@ class MainWP_System_Cron_Jobs {
 
 			update_option( 'mainwp_last_synced_all_sites', time() );
 
-			if ( ! $this->send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
+			if ( ! $this->send_updates_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) ) {
 				return;
 			}
 		} else {
@@ -826,7 +826,7 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Method send_notification().
+	 * Method send_updates_notification().
 	 *
 	 * Send email notification.
 	 *
@@ -837,7 +837,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 */
-	public function send_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {
+	public function send_updates_notification( $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $text_format ) {
 
 		MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
@@ -1178,13 +1178,16 @@ class MainWP_System_Cron_Jobs {
 			$noticed_health = get_option( 'mainwp_cron_checksites_noticed_health_status', false );
 
 			if ( ! $noticed_status ) {
-				MainWP_Monitoring_Handler::notice_sites_offline_status( $email, $text_format );
+				$noticed = MainWP_Monitoring_Handler::notice_sites_offline_status( $email, $text_format );
 				update_option( 'mainwp_cron_checksites_noticed_website_status', true );
-				return;
-			} elseif ( ! $noticed_health ) {
+				if ( $noticed ) {
+					return; // next time will notice site health.
+				}
+			}
+
+			if ( ! $noticed_health ) {
 				MainWP_Monitoring_Handler::notice_sites_site_health_threshold( $email, $text_format );
 				update_option( 'mainwp_cron_checksites_noticed_health_status', true );
-				return;
 			}
 
 			MainWP_Logger::instance()->info( 'CRON :: check sites status :: finished.' );

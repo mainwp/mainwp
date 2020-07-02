@@ -1222,7 +1222,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$extra_view = array( 'monitoring_notification_emails' );
 
 		return $this->wpdb->get_results(
-			'SELECT wp.* FROM ' . $this->table_name( 'wp' ) . ' wp 
+			'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
 			WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
@@ -1240,22 +1240,22 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_websites_to_notice_health_threshold( $globalThreshold ) {
 
-		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
 		$extra_view = array( 'monitoring_notification_emails' );
 
-		if ( 80 <= $globalThreshold ) { // actual is 80.
-			// if good site should-be-improved threshold.
+		if ( 80 >= $globalThreshold ) { // actual is 80.
+			// should-be-improved site health.
 			$where_global_threshold = '( wp.health_threshold = 0 AND wp_sync.health_value < 80 )';
 		} else {
-			// if good site health threshold.
+			// good site health.
 			$where_global_threshold = '( wp.health_threshold = 0 AND wp_sync.health_value >= 80 )';
 		}
 
-		$where_site_threshold  = ' ( wp.health_threshold = 80 AND wp_sync.health_value < 80 ) '; // if good site should-be-improved threshold.
-		$where_site_threshold .= ' OR ( wp.health_threshold = 100 AND wp_sync.health_value >= 80 ) '; // if good site health threshold.
+		$where_site_threshold  = ' ( wp.health_threshold = 80 AND wp_sync.health_value < 80 ) '; // should-be-improved site health.
+		$where_site_threshold .= ' OR ( wp.health_threshold = 100 AND wp_sync.health_value >= 80 ) '; // good site health.
 
 		return $this->wpdb->get_results(
-			'SELECT wp.*, wp_sync.health_value FROM ' . $this->table_name( 'wp' ) . ' wp 
+			'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid			
 			WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' . $where,

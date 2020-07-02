@@ -136,13 +136,17 @@ class MainWP_Monitoring_Handler {
 	 * @param object $website The website.
 	 * @param object $new_health New site health value.
 	 *
-	 * @return int $noticed_value new noticed value for site health status.
+	 * @return int|null $noticed_value new noticed value for site health status or failure.
 	 */
-	private static function get_health_noticed_status_value( $website, $new_health ) {
+	public static function get_health_noticed_status_value( $website, $new_health ) {
 
 		// for sure if property does not existed.
-		$old_value     = MainWP_DB::instance()->get_website_option( $website, 'health_value' );
-		$noticed_value = MainWP_DB::instance()->get_website_option( $website, 'health_site_noticed' );
+		if ( ! property_exists( $website, 'health_value' ) || ! property_exists( $website, 'health_site_noticed' ) ) {
+			return null;
+		}
+
+		$old_value     = $website->health_value;
+		$noticed_value = $website->health_site_noticed;
 
 		if ( 80 <= $old_value && 80 > $new_health ) {
 			if ( 1 == $noticed_value ) {
@@ -268,7 +272,9 @@ class MainWP_Monitoring_Handler {
 					usleep( 200000 );
 				}
 			}
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -293,7 +299,7 @@ class MainWP_Monitoring_Handler {
 				if ( ! empty( $mail_content ) ) {
 					MainWP_Notification::send_websites_health_status_notification( $site, $email, $mail_content, $text_format );
 					// update noticed value.
-					MainWP_DB::instance()->update_website_values(
+					MainWP_DB::instance()->update_website_sync_values(
 						$site->id,
 						array(
 							'health_site_noticed' => 1, // as noticed.
@@ -302,6 +308,8 @@ class MainWP_Monitoring_Handler {
 					usleep( 200000 );
 				}
 			}
+			return true;
 		}
+		return false;
 	}
 }

@@ -196,11 +196,12 @@ class MainWP_Notification {
 	 *
 	 * Send websites status email notification.
 	 *
+	 * @param object $site The website.
 	 * @param string $email notification email.
 	 * @param string $mail_content email content.
 	 * @param bool   $text_format Text format.
 	 */
-	public static function send_websites_health_status_notification( $email, $mail_content, $text_format ) {
+	public static function send_websites_health_status_notification( $site, $email, $mail_content, $text_format ) {
 
 		if ( $text_format ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";

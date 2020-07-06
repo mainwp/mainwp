@@ -294,7 +294,8 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( $lasttimeStartAutomaticUpdate <= $lasttimeAutomaticUpdate ) {
-			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', time() ); // starting new updates check.
+			$lasttimeStartAutomaticUpdate = time();
+			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // starting new updates check.
 		}
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {

@@ -74,7 +74,6 @@ class MainWP_Sync {
 				'stats',
 				array(
 					'optimize'                     => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
-					'heatMap'                      => 0,
 					'cloneSites'                   => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
 					'othersData'                   => wp_json_encode( $othersData ),
 					'server'                       => get_admin_url(),

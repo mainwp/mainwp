@@ -1114,12 +1114,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get websites check updates count.
 	 *
+	 * @param int $lasttime_start Lasttime start automatic update.
+	 *
 	 * @return int Child sites update count.
 	 */
-	public function get_websites_check_updates_count() {
+	public function get_websites_check_updates_count( $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ( wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ')' . $where );
 	}
 
 	/**
@@ -1130,7 +1132,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0) OR (DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW()))) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0)) ' . $where );
 	}
 
 	/**
@@ -1146,13 +1148,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get child sites check updates.
 	 *
 	 * @param int $limit Query limit.
+	 * @param int $lasttime_start Lasttime start automatic update.
 	 *
 	 * @return object|null Database query result or null on failure.
 	 */
-	public function get_websites_check_updates( $limit ) {
+	public function get_websites_check_updates( $limit, $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR DATE(FROM_UNIXTIME(wp_sync.dtsAutomaticSyncStart)) <> DATE(NOW())) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
+		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ') ' . $where . ' LIMIT 0,' . $limit, OBJECT );
 	}
 
 	/**

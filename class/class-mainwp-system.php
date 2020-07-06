@@ -242,6 +242,7 @@ class MainWP_System {
 				'mainwp_disableSitesChecking',
 				'mainwp_frequencySitesChecking',
 				'mainwp_sitehealthThreshold',
+				'mainwp_updatescheck_frequency_today_count',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";

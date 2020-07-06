@@ -113,7 +113,7 @@ class MainWP_Backup_Handler {
 			$file .= $ext;
 		}
 
-		if ( 'zip' === $pTask->archiveFormat ) {
+		if ( 'zip' == $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $pTask->loadFilesBeforeZip;
 		} elseif ( '' == $pTask->archiveFormat || 'site' == $pTask->archiveFormat ) {
 			$loadFilesBeforeZip = $website->loadFilesBeforeZip;
@@ -452,7 +452,7 @@ class MainWP_Backup_Handler {
 					$localBackupFile = $backupTaskProgress->downloadedFULL;
 				}
 
-				if ( 0 === $backupTaskProgress->downloadedFULLComplete ) {
+				if ( 0 == $backupTaskProgress->downloadedFULLComplete ) {
 					if ( file_exists( $localBackupFile ) ) {
 						$time = filemtime( $localBackupFile );
 

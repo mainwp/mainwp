@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.34';
+	protected $mainwp_db_version = '8.35';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -180,7 +180,6 @@ class MainWP_Install extends MainWP_DB_Base {
   userid int(11) NOT NULL,
   user_email text NOT NULL DEFAULT '',
   offlineChecksOnlineNotification tinyint(1) NOT NULL DEFAULT '0',
-  heatMap tinyint(1) NOT NULL DEFAULT '0',
   ignored_plugins longtext NOT NULL DEFAULT '',
   trusted_plugins longtext NOT NULL DEFAULT '',
   trusted_plugins_notes longtext NOT NULL DEFAULT '',
@@ -418,11 +417,17 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		// delete old columns.
-		if ( version_compare( $currentVersion, '8.24', '<' ) ) {
+		if ( version_compare( $currentVersion, '8.35', '<' ) ) {
 			$delColumns = array( 'offline_checks' );
 			foreach ( $delColumns as $column ) {
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+			$delColumns = array( 'heatMap' );
+			foreach ( $delColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
 				$this->wpdb->suppress_errors( $suppress );
 			}
 		}

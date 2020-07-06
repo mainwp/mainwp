@@ -1733,7 +1733,7 @@ class MainWP_Connect {
 	 *
 	 * @return mixed false|$data
 	 */
-	protected static function get_file_content( $url ) {
+	public static function get_file_content( $url ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$ch    = curl_init();
 

@@ -376,7 +376,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * Update MainWP DB for version 8.1.
 	 *
-	 * @param $current_version Current version DB.
+	 * @param string $current_version Current version DB.
 	 *
 	 * @return void
 	 */

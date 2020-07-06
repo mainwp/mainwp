@@ -326,7 +326,64 @@ class MainWP_Install extends MainWP_DB_Base {
 			return;
 		}
 
-		if ( version_compare( $currentVersion, '8.1', '<' ) ) {
+		$this->post_update_81( $currentVersion );
+
+		// delete old columns.
+		if ( version_compare( $currentVersion, '8.17', '<' ) ) {
+			$rankColumns = array(
+				'pagerank',
+				'indexed',
+				'alexia',
+				'pagerank_old',
+				'indexed_old',
+				'alexia_old',
+				'last_db_backup_size',
+			);
+
+			foreach ( $rankColumns as $rankColumn ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+
+			$syncColumns = array( 'uptodate' );
+			foreach ( $syncColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+
+		// delete old columns.
+		if ( version_compare( $currentVersion, '8.35', '<' ) ) {
+			$delColumns = array( 'offline_checks' );
+			foreach ( $delColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+			$delColumns = array( 'heatMap' );
+			foreach ( $delColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+	}
+
+	/**
+	 * Method post_update_81()
+	 *
+	 * Update MainWP DB for version 8.1.
+	 *
+	 * @param $current_version Current version DB.
+	 *
+	 * @return void
+	 */
+	public function post_update_81( $current_version ) {
+
+		if ( version_compare( $current_version, '8.1', '<' ) ) {
+
 			// We can't split up here!
 			$wpSyncColumns = array(
 				'version',
@@ -387,47 +444,6 @@ class MainWP_Install extends MainWP_DB_Base {
 
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $optionColumn );
-				$this->wpdb->suppress_errors( $suppress );
-			}
-		}
-		// delete old columns.
-		if ( version_compare( $currentVersion, '8.17', '<' ) ) {
-			$rankColumns = array(
-				'pagerank',
-				'indexed',
-				'alexia',
-				'pagerank_old',
-				'indexed_old',
-				'alexia_old',
-				'last_db_backup_size',
-			);
-
-			foreach ( $rankColumns as $rankColumn ) {
-				$suppress = $this->wpdb->suppress_errors();
-				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $rankColumn );
-				$this->wpdb->suppress_errors( $suppress );
-			}
-
-			$syncColumns = array( 'uptodate' );
-			foreach ( $syncColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
-				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
-			}
-		}
-
-		// delete old columns.
-		if ( version_compare( $currentVersion, '8.35', '<' ) ) {
-			$delColumns = array( 'offline_checks' );
-			foreach ( $delColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
-				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' DROP COLUMN ' . $column );
-				$this->wpdb->suppress_errors( $suppress );
-			}
-			$delColumns = array( 'heatMap' );
-			foreach ( $delColumns as $column ) {
-				$suppress = $this->wpdb->suppress_errors();
-				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
 				$this->wpdb->suppress_errors( $suppress );
 			}
 		}

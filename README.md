@@ -12,17 +12,17 @@ The [MainWP Dashboard](https://wordpress.org/plugins/mainwp/) is a stand-alone p
 
 The [MainWP Child](https://wordpress.org/plugins/mainwp-child/) plugin currently has an ![WordPress Plugin Active Installs](https://img.shields.io/wordpress/plugin/installs/mainwp-child?label=active%20install%20count%20of%20). The Child plugin is installed on the WordPress sites that you want to control from the MainWP Dashboard.
 
-### Documentation
+## Documentation
 
 - [MainWP Help Documentation](https://mainwp.com/help/)
 - [MainWP Codex](https://mainwp.com/codex/)
 - [MainWP Dev Community](https://meta.mainwp.com/c/dev/15)
 
-### Reporting Security Issues
+## Reporting Security Issues
 
 To disclose a security issue to our team, [please submit a report via HackerOne here](https://hackerone.com/mainwp).
 
-### Support
+## Support
 
 This repository is not suitable for support. Please don't use our issue tracker for support requests, but for core MainWP issues only. Support can take place through the appropriate channels:
 
@@ -33,6 +33,6 @@ This repository is not suitable for support. Please don't use our issue tracker 
 
 Support requests in issues on this repository will be closed on sight.
 
-### Contributing to MainWP
+## Contributing to MainWP
 
 If you have a patch or have stumbled upon an issue with the MainWP Plugin you can contribute this back to the code. Please read our [contributor guidelines](https://github.com/mainwp/mainwp/blob/master/.github/CONTRIBUTING.md) for more informationon how you can do this.

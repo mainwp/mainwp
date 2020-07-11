@@ -1,8 +1,6 @@
-<p align="center"><a href="https://mainwp.com"><img style="height: 50px" src="mainwp-logo.png" alt="MainWP"></a>
+<p align="center"><a href="https://mainwp.com"><img style="height: 50px" src="mainwp-logo.png" alt="MainWP"></a></p>
 
 [![license](https://poser.pugx.org/mainwp/mainwp/license)](https://packagist.org/packages/mainwp/mainwp) [![Latest Stable Version](https://poser.pugx.org/mainwp/mainwp/v/stable)](https://packagist.org/packages/mainwp/mainwp) ![WordPress Plugin Active Installs](https://img.shields.io/wordpress/plugin/installs/mainwp?label=MainWP%20Dashboard%20Active%20Installs) ![WordPress Plugin Rating](https://img.shields.io/wordpress/plugin/stars/mainwp)
-
-</p>
 
 Welcome to the [MainWP](https://mainwp.com) repository on GitHub. Here you can browse the source, look at open issues and keep track of development.
 
@@ -27,7 +25,7 @@ To disclose a security issue to our team, [please submit a report via HackerOne 
 This repository is not suitable for support. Please don't use our issue tracker for support requests, but for core MainWP issues only. Support can take place through the appropriate channels:
 
 - If you have a problem, you may want to start with the [Help Docs](https://mainwp.com/help/).
-- [The MainWP Community](https://meta.mainwp.com/) which is available for all MainWP (ideally non-developers).
+- [The MainWP Community](https://meta.mainwp.com/) which is available for all MainWP (even non-developers).
 - You can also [open a support ticket](https://mainwp.com/support/).
 - For customizations take a look at our list of [MainWP Experts](https://mainwp.com/mainwp-experts/) or [Codeable](https://codeable.io/).
 

@@ -25,7 +25,7 @@ To disclose a security issue to our team, [please submit a report via HackerOne 
 This repository is not suitable for support. Please don't use our issue tracker for support requests, but for core MainWP issues only. Support can take place through the appropriate channels:
 
 - If you have a problem, you may want to start with the [Help Docs](https://mainwp.com/help/).
-- [The MainWP Community](https://meta.mainwp.com/) which is available for all MainWP (even non-developers).
+- [The MainWP Community](https://meta.mainwp.com/) which is available for all MainWP users (even non-developers).
 - You can also [open a support ticket](https://mainwp.com/support/).
 - For customizations take a look at our list of [MainWP Experts](https://mainwp.com/mainwp-experts/) or [Codeable](https://codeable.io/).
 

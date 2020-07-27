@@ -37,7 +37,7 @@ class MainWP_Backup_Handler {
 	 * @return mixed $backup_result
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
-		// phpcs: ignore -- complex function.
+		// phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			return false;
 		}

@@ -21,7 +21,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.35';
+	protected $mainwp_db_version = '8.42';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -69,7 +69,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 
 		$rslt = self::instance()->query( "SHOW TABLES LIKE '" . $this->table_name( 'wp' ) . "'" );
-		if ( 0 === self::num_rows( $rslt ) ) {
+		if ( 0 == self::num_rows( $rslt ) ) {
 			$currentVersion = false;
 		}
 
@@ -98,6 +98,7 @@ class MainWP_Install extends MainWP_DB_Base {
   http_response_code int(11) NOT NULL DEFAULT 0,
   http_code_noticed tinyint(1) NOT NULL DEFAULT 1,
   disable_status_check tinyint(1) NOT NULL DEFAULT 0,
+  disable_health_check tinyint(1) NOT NULL DEFAULT 0,
   status_check_interval tinyint(1) NOT NULL DEFAULT 0,
   health_threshold int(11) NOT NULL DEFAULT 0,  
   note text NOT NULL,
@@ -138,7 +139,7 @@ class MainWP_Install extends MainWP_DB_Base {
   wpe tinyint(1) NOT NULL,
   is_staging tinyint(1) NOT NULL DEFAULT 0,
   KEY idx_userid (userid)';
-		if ( '' === $currentVersion ) {
+		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -179,7 +180,6 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'users' ) . " (
   userid int(11) NOT NULL,
   user_email text NOT NULL DEFAULT '',
-  offlineChecksOnlineNotification tinyint(1) NOT NULL DEFAULT '0',
   ignored_plugins longtext NOT NULL DEFAULT '',
   trusted_plugins longtext NOT NULL DEFAULT '',
   trusted_plugins_notes longtext NOT NULL DEFAULT '',
@@ -190,7 +190,7 @@ class MainWP_Install extends MainWP_DB_Base {
   pluginDir text NOT NULL DEFAULT '',
   dismissed_plugins longtext NOT NULL DEFAULT '',
   dismissed_themes longtext NOT NULL DEFAULT ''";
-		if ( '' === $currentVersion ) {
+		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (userid)  ';
 		}
@@ -202,9 +202,9 @@ class MainWP_Install extends MainWP_DB_Base {
 	wpid int(11) NOT NULL,
 	http_code smallint NOT NULL DEFAULT 0,
 	status tinyint(1) NOT NULL DEFAULT 0,
-	timestamp_status int(11) NOT NULL,
+	event_timestamp int(11) NOT NULL,
 	duration int(11) NOT NULL DEFAULT 0';
-		if ( '' === $currentVersion || version_compare( $currentVersion, '8.31', '<=' ) ) {
+		if ( '' == $currentVersion || version_compare( $currentVersion, '8.31', '<=' ) ) {
 			$tbl .= ',
 			PRIMARY KEY  (statusid)  ';
 		}
@@ -215,7 +215,7 @@ class MainWP_Install extends MainWP_DB_Base {
   id int(11) NOT NULL auto_increment,
   userid int(11) NOT NULL,
   name text NOT NULL';
-		if ( '' === $currentVersion ) {
+		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -275,7 +275,7 @@ class MainWP_Install extends MainWP_DB_Base {
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
-		if ( '' === $currentVersion ) {
+		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -289,7 +289,7 @@ class MainWP_Install extends MainWP_DB_Base {
   subnet text NOT NULL DEFAULT "",
   micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
   micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0';
-		if ( '' === $currentVersion || version_compare( $currentVersion, '5.7', '<=' ) ) {
+		if ( '' == $currentVersion || version_compare( $currentVersion, '5.7', '<=' ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
 		}
@@ -322,7 +322,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 
-		if ( false === $currentVersion ) {
+		if ( false == $currentVersion ) {
 			return;
 		}
 
@@ -363,6 +363,21 @@ class MainWP_Install extends MainWP_DB_Base {
 				$this->wpdb->suppress_errors( $suppress );
 			}
 			$delColumns = array( 'heatMap' );
+			foreach ( $delColumns as $column ) {
+				$suppress = $this->wpdb->suppress_errors();
+				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
+				$this->wpdb->suppress_errors( $suppress );
+			}
+		}
+
+		// change columns.
+		if ( version_compare( $currentVersion, '8.40', '<' ) && version_compare( $currentVersion, '8.30', '>' ) ) {
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_status' ) . ' CHANGE COLUMN `timestamp_status` `event_timestamp` int(11) NOT NULL' );
+		}
+
+		// delete columns.
+		if ( version_compare( $currentVersion, '8.42', '<' ) ) {
+			$delColumns = array( 'offlineChecksOnlineNotification' );
 			foreach ( $delColumns as $column ) {
 				$suppress = $this->wpdb->suppress_errors();
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );

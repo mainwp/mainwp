@@ -868,9 +868,22 @@ jQuery(document).ready(function ($) {
     var hiel = $(this).attr('hide-parent');    
     // if semantic ui checkbox is checked.
     if ($(this).find('input').is(':checked')) {
-      $('[hide-element=' + hiel + ']').fadeIn(200);
+      $('[hide-element=' + hiel + ']').fadeOut(200);
     } else {
+      $('[hide-element=' + hiel + ']').fadeIn(300);
+    }
+  });
+
+  jQuery('.mainwp-selecter-showhide-elements').on('change', function () {
+    var hiel = $(this).attr('hide-parent');
+    var hival = $(this).attr('hide-value');
+    hival = hival.split('-'); // support multi hide values.
+    var selval = $(this).val();
+    // if selected hide value.
+    if (hival.includes(selval)) {
       $('[hide-element=' + hiel + ']').fadeOut(300);
+    } else {      
+      $('[hide-element=' + hiel + ']').fadeIn(200);
     }
   });
 });

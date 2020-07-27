@@ -177,6 +177,8 @@ class MainWP_Manage_Sites_View {
 			$site_id = $_GET['dashboard'];
 		} elseif ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
 			$site_id = $_GET['scanid'];
+		} elseif ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) {
+			$site_id = $_GET['emailsettingsid'];
 		}
 
 		$managesites_pages = array(
@@ -208,27 +210,32 @@ class MainWP_Manage_Sites_View {
 		);
 
 		$site_pages = array(
-			'ManageSitesDashboard' => array(
+			'ManageSitesDashboard'     => array(
 				'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
 				'title'  => __( 'Overview', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
-			'ManageSitesEdit'      => array(
+			'ManageSitesEdit'          => array(
 				'href'   => 'admin.php?page=managesites&id=' . $site_id,
 				'title'  => __( 'Edit', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
-			'ManageSitesUpdates'   => array(
+			'ManageSitesUpdates'       => array(
 				'href'   => 'admin.php?page=managesites&updateid=' . $site_id,
 				'title'  => __( 'Updates', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
 			),
-			'ManageSitesBackups'   => array(
+			'ManageSitesEmailSettings' => array(
+				'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,
+				'title'  => __( 'Email Settings', 'mainwp' ),
+				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
+			),
+			'ManageSitesBackups'       => array(
 				'href'   => 'admin.php?page=managesites&backupid=' . $site_id,
 				'title'  => __( 'Backups', 'mainwp' ),
 				'access' => mainwp_current_user_have_right( 'dashboard', 'execute_backups' ),
 			),
-			'SecurityScan'         => array(
+			'SecurityScan'             => array(
 				'href'   => 'admin.php?page=managesites&scanid=' . $site_id,
 				'title'  => __( 'Security Scan', 'mainwp' ),
 				'access' => true,
@@ -671,7 +678,7 @@ class MainWP_Manage_Sites_View {
 			return;
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'monitoring_notification_emails' ) );
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'monitoring_notification_emails', 'settings_notification_emails' ) );
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			$website = null;
 		}
@@ -681,14 +688,11 @@ class MainWP_Manage_Sites_View {
 		}
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
-
 		?>
-
 		<div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
 			<?php if ( $updated ) : ?>
 			<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
 			<?php endif; ?>
-
 			<form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsite' . $website->id ); ?>" />
@@ -730,16 +734,13 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				</div>
-
 				<?php
-
 				$groupsSite  = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
 				$init_groups = '';
 				foreach ( $groups as $group ) {
 					$init_groups .= ( isset( $groupsSite[ $group->id ] ) && $groupsSite[ $group->id ] ) ? ',' . $group->id : '';
 				}
 				$init_groups = ltrim( $init_groups, ',' );
-
 				?>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Groups', 'mainwp' ); ?></label>
@@ -792,12 +793,11 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				<?php endif; ?>
-
-				<h3 class="ui dividing header"><?php esc_html_e( 'Sites Monitoring (Optional)', 'mainwp' ); ?></h3>
+				<h3 class="ui dividing header"><?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Disable Child sites monitoring (optional)', 'mainwp' ); ?></label>					
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' ); ?></label>					
 					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 1 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
+						<input type="checkbox" name="mainwp_managesites_edit_disableChecking" id="mainwp_managesites_edit_disableChecking" <?php echo ( 0 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableChecking"></label>
 					</div>
 				</div>
 				<?php
@@ -818,20 +818,7 @@ class MainWP_Manage_Sites_View {
 							<option value="0" <?php echo ( 0 == $check_interval ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
 						</select>
 					</div>
-				</div>
-				<?php
-					$healthThreshold = $website->health_threshold;
-				?>
-				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
-					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
-						<select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
-							<option value="80" <?php echo ( 80 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
-							<option value="100" <?php echo ( 100 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
-							<option value="0" <?php echo ( 0 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
-						</select>
-					</div>
-				</div>
+				</div>				
 				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Additional notification emails (comma-separated)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Additional notification emails (comma-separated).', 'mainwp' ); ?>" data-inverted="" data-position="top left">										
@@ -840,6 +827,26 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				</div>
+				<h3 class="ui dividing header"><?php esc_html_e( 'Sites Health Monitoring (Optional)', 'mainwp' ); ?></h3>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Child Site Health monitoring (optional)', 'mainwp' ); ?></label>					
+					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo ( 0 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
+					</div>
+				</div>
+				<?php
+				$healthThreshold = $website->health_threshold;
+				?>
+				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
+					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
+						<select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
+							<option value="80" <?php echo ( 80 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
+							<option value="100" <?php echo ( 100 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
+							<option value="0" <?php echo ( 0 == $healthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+						</select>
+					</div>
+				</div>				
 				<h3 class="ui dividing header"><?php esc_html_e( 'Advanced Settings (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify certificate (optional)', 'mainwp' ); ?></label>
@@ -908,6 +915,270 @@ class MainWP_Manage_Sites_View {
 	}
 
 	/**
+	 * Render signle site Email notification settings.
+	 *
+	 * Credits.
+	 *
+	 * Plugin-Name: WooCommerce.
+	 * Plugin URI: https://woocommerce.com/.
+	 * Author: Automattic.
+	 * Author URI: https://woocommerce.com.
+	 * License: GPLv3 or later.
+	 *
+	 * @param object $website       Object containng the website info.
+	 * @param string $type          Email type.
+	 * @param bool   $updated_templ True if page loaded after update, false if not.
+	 */
+	public static function render_site_edit_email_settings( $website, $type, $updated_templ ) {
+
+		$emails_settings = json_decode( $website->settings_notification_emails, true );
+		if ( ! is_array( $emails_settings ) ) {
+			$emails_settings = array();
+		}
+
+		$default = MainWP_Notification_Settings::get_default_emails_fields( $type );
+		$options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
+		$options = array_merge( $default, $options );
+
+		$title  = MainWP_Notification_Settings::get_notification_types( $type );
+		$siteid = $website->id;
+
+		$email_description = MainWP_Notification_Settings::get_settings_desc( $type );
+		?>
+				
+		<div class="ui segment">
+		<?php if ( $updated ) : ?>
+		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email settings saved successfully.', 'mainwp' ); ?></div>
+		<?php endif; ?>
+		<?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>		
+		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui form">
+			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ); ?>" />
+			<input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />				
+			<div class="ui info message"><?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if extensions are in use.', 'mainwp' ); ?></div>
+			<h3 class="ui header"><?php echo $title; ?></h3>
+			<div class="sub header"><?php echo $email_description; ?></h3></div>
+			<div class="ui divider"></div>
+			<div class="ui grid field">
+				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable', 'mainwp' ); ?></label>
+				<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable this email notification.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<input type="checkbox" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][disable]" <?php echo ( 0 == $options['disable'] ) ? 'checked="true"' : ''; ?>/>
+				</div>				
+			</div>					
+			<div class="ui grid field" >				
+				<label class="six wide column middle aligned"><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></label>
+				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'You can add multiple emails by separating them with comma.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][recipients]" value="<?php echo esc_html( $options['recipients'] ); ?>"/>
+				</div>
+			</div>
+			<div class="ui grid field" >				
+				<label class="six wide column middle aligned"><?php esc_html_e( 'Subject', 'mainwp' ); ?></label>
+				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the email subject.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][subject]" value="<?php echo esc_html( $options['subject'] ); ?>"/>
+				</div>
+			</div>
+			<div class="ui grid field" >				
+				<label class="six wide column middle aligned"><?php esc_html_e( 'Email heading', 'mainwp' ); ?></label>
+				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the email heading.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<input type="text" name="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" id="mainwp_managesites_edit_settingEmails[<?php echo esc_html( $type ); ?>][heading]" value="<?php echo esc_html( $options['heading'] ); ?>"/>
+				</div>
+			</div>
+			<div class="ui grid field" >				
+				<label class="six wide column middle aligned"><?php esc_html_e( 'HTML template', 'mainwp' ); ?></label>
+				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<?php
+				$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
+				$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
+				echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' ' . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+				?>
+				</div>		
+			</div>	
+			<div class="ui grid field" >				
+				<label class="six wide column middle aligned"></label>
+				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<?php
+				if ( $overrided ) {
+					?>
+					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Delete Template', 'mainwp' ); ?></a>
+					<?php
+				} else {
+					?>
+					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
+					<?php
+				}
+				?>
+				<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
+				</div>		
+			</div>	
+			<div class="ui divider"></div>
+			<a href="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
+			<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+			</form>
+		</div>
+		</div>		
+		<?php self::render_edit_template( $type, $siteid ); ?>
+		<?php
+	}
+
+	/**
+	 * Render the email notification edit form.
+	 *
+	 * Credits.
+	 *
+	 * Plugin-Name: WooCommerce.
+	 * Plugin URI: https://woocommerce.com/.
+	 * Author: Automattic.
+	 * Author URI: https://woocommerce.com.
+	 * License: GPLv3 or later.
+	 *
+	 * @param string $type   Email type.
+	 * @param int    $siteid Child site ID.
+	 */
+	public static function render_edit_template( $type, $siteid = false ) {
+
+		$template    = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
+		$default_dir = MainWP_Notification_Template::instance()->get_default_templates_dir();
+		$custom_dir  = MainWP_Notification_Template::instance()->get_custom_templates_dir();
+
+		$custom_file   = $custom_dir . $template;
+		$default_file  = $default_dir . $template;
+		$template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $website );
+
+		if ( $siteid ) {
+			$localion = 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type;
+		} else {
+			$localion = 'admin.php?page=SettingsEmail&edit-email=' . $type;
+		}
+
+		$editable = false;
+		?>
+			<div class="ui large modal" id="mainwp-edit-email-template-modal">
+				<div class="header"><?php esc_html_e( 'Edit Email Template', 'mainwp' ); ?></div>
+					<div class="scrolling header">
+					<form method="POST" id="email-template-form" action="<?php echo esc_html( $localion ); ?>" class="ui form">		
+						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'save-email-template' ); ?>" />
+						<div class="template <?php echo esc_attr( $type ); ?>">		
+							<?php if ( file_exists( $custom_file ) ) : ?>
+								<div class="editor">
+									<textarea class="code" cols="80" rows="20"
+									<?php
+									if ( ! is_writable( $custom_file ) ) : // phpcs:ignore WordPress.VIP.FileSystemWritesDisallow.file_ops_is_writable -- required to achieven desired results. Pull requests are welcome.
+										?>
+										readonly="readonly" disabled="disabled"
+										<?php
+									else :
+											$editable = true;
+										?>
+										name="edit_<?php echo esc_attr( $type ) . '_code'; ?>"<?php endif; ?>><?php echo esc_html( file_get_contents( $custom_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
+								</div>
+							<?php elseif ( file_exists( $template_file ) ) : ?>						
+								<div class="editor">
+									<textarea class="code" readonly="readonly" disabled="disabled" cols="25" rows="20"><?php echo esc_html( file_get_contents( $template_file ) );  // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- required to achieven desired results. Pull requests are welcome. ?></textarea>
+								</div>
+							<?php else : ?>
+								<p><?php esc_html_e( 'File was not found.', 'mainwp' ); ?></p>
+							<?php endif; ?>
+						</div>	
+					</form>			
+					</div>
+					<div class="actions">
+						<?php if ( $editable ) { ?>
+						<input type="submit" form="email-template-form" class="ui green button" value="<?php esc_attr_e( 'Save', 'mainwp' ); ?>"/>
+						<?php } ?>
+						<input type="button" class="ui cancel button" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>					
+					</div>			
+				</div>
+			</div>
+			<script type="text/javascript">
+				jQuery( document ).ready( function () {
+					mainwp_view_template = function( templ ) {
+						jQuery( "#mainwp-edit-email-template-modal" ).modal( {
+							closable: false,
+							onHide: function() {
+								location.href = '<?php echo esc_js( $localion ); ?>';
+							}
+						} ).modal( 'show' );
+					}
+				} );
+			</script>
+		<?php
+	}
+
+	/**
+	 * Render all email settings options.
+	 *
+	 * @param object $website Object containing the website info.
+	 * @param bool   $updated True if page loaded after update, false if not.
+	 */
+	public static function render_edit_site_email_settings( $website, $updated ) {
+		$emails_settings = json_decode( $website->settings_notification_emails, true );
+		if ( ! is_array( $emails_settings ) ) {
+			$emails_settings = array();
+		}
+		$email_description   = '';
+		$notification_emails = MainWP_Notification_Settings::get_notification_types();
+		$default_recipients  = MainWP_System_Utility::get_notification_email();
+		?>
+		<div class="ui segment">
+		<?php if ( $updated ) : ?>
+		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email settings saved successfully.', 'mainwp' ); ?></div>
+		<?php endif; ?>		
+		<div class="ui info message">
+			<?php esc_html_e( 'Email notifications sent from MainWP Dashboard about this child site are listed below. Click on an email to configure it.', 'mainwp' ); ?>
+		</div>
+			<table class="ui single line table" id="mainwp-emails-settings-table">
+				<thead>
+					<tr>						
+						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>						
+						<th style="text-align:right"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $notification_emails as $type => $name ) : ?>
+						<?php
+						$options           = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
+						$default           = MainWP_Notification_Settings::get_default_emails_fields( $type );
+						$options           = array_merge( $default, $options );
+						$email_description = MainWP_Notification_Settings::get_settings_desc( $type );
+						?>
+						<tr>
+							<td><?php echo ( ! $options['disable'] ) ? '<span data-tooltip="Enabled." data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>' : '<span data-tooltip="Disabled." data-position="right center" data-inverted=""><i class="circular x icon inverted disabled"></i></span>'; ?></td>
+							<td><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo esc_html( $name ); ?></a></td>
+							<td><?php echo esc_html( $email_description ); ?></td>
+							<td><?php echo esc_html( $options['recipients'] ); ?></td>
+							<td style="text-align:right"><a href="admin.php?page=managesites&emailsettingsid=<?php echo intval( $website->id ); ?>&edit-email=<?php echo rawurlencode( $type ); ?>" data-tooltip="<?php esc_html_e( 'Click to configure the email settings.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Manage', 'mainwp' ); ?></a></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+				<tfoot>
+					<tr>
+						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
+						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
+						<th></th>
+					</tr>
+				</tfoot>
+			</table>
+			<?php do_action( 'mainwp_manage_sites_email_settings', $website ); ?>	
+			<script type="text/javascript">
+			jQuery( document ).ready( function() {
+				jQuery( '#mainwp-emails-settings-table' ).DataTable( {						
+					"stateSave":  true,
+					"paging":   false,
+					"ordering": true,
+					"columnDefs": [ { "orderable": false, "targets": [ 0, 3 ] } ],
+					"order": [ [ 1, "asc" ] ]
+				} );
+			} );
+			</script>			
+		</div>
+		<?php
+	}
+
+	/**
 	 * Method m_reconnect_site()
 	 *
 	 * Reconnect chid site.
@@ -964,8 +1235,8 @@ class MainWP_Manage_Sites_View {
 						MainWP_DB::instance()->update_website_values(
 							$website->id,
 							array(
-								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
-								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+								'pubkey'   => base64_encode( $pubkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
+								'privkey'  => base64_encode( $privkey ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for backwards compatibility.
 								'nossl'    => $information['nossl'],
 								'nosslkey' => ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : '' ),
 								'uniqueId' => ( isset( $information['uniqueId'] ) ? $information['uniqueId'] : '' ),
@@ -1032,7 +1303,7 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @return array $message, $error, $id
 	 */
-	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- not quite complex method.
+	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$error   = '';
 		$message = '';
 		$id      = 0;

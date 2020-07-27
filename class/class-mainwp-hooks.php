@@ -21,7 +21,7 @@ class MainWP_Hooks {
 	 */
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
-		add_filter( 'mainwp_getmainwpdir', array( &$this, 'get_mainwp_dir' ), 10, 3 );
+		add_filter( 'mainwp_getmainwpdir', array( &$this, 'hook_get_mainwp_dir' ), 10, 3 );
 		add_filter( 'mainwp_is_multi_user', array( &$this, 'is_multi_user' ) );
 		add_filter( 'mainwp_qq2fileuploader', array( &$this, 'filter_qq2_file_uploader' ), 10, 2 );
 		add_action( 'mainwp_select_sites_box', array( &$this, 'select_sites_box' ), 10, 8 );
@@ -446,7 +446,7 @@ class MainWP_Hooks {
 	 * @param string $content Email Content.
 	 */
 	public function hook_notify_user( $userId, $subject, $content ) {
-		MainWP_Notification::notify_user( $userId, $subject, $content );
+		MainWP_Notification::send_notify_user( $userId, $subject, $content );
 	}
 
 	/**
@@ -584,7 +584,7 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method get_mainwp_dir()
+	 * Method hook_get_mainwp_dir()
 	 *
 	 * Hook to get MainWP Directory.
 	 *
@@ -594,62 +594,8 @@ class MainWP_Hooks {
 	 *
 	 * @return array $newdir, $url.
 	 */
-	public function get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
-
-		$dirs = MainWP_System_Utility::get_mainwp_dir();
-
-		$newdir = $dirs[0] . ( null != $dir ? $dir . DIRECTORY_SEPARATOR : '' );
-		$url    = $dirs[1] . '/' . $dir . '/';
-
-		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
-
-		global $wp_filesystem;
-
-		if ( null != $dir ) {
-
-			if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-
-				if ( ! $wp_filesystem->exists( $newdir ) ) {
-					$wp_filesystem->mkdir( $newdir, 0777, true );
-				}
-
-				if ( $direct_access ) {
-					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
-						$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
-					}
-					if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						$wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
-					}
-				} else {
-					if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', 'deny from all' );
-					}
-				}
-			} else {
-				// phpcs:disable -- to support when $wp_filesystem failed.
-				if ( ! file_exists( $newdir ) ) {
-					@mkdir( $newdir, 0777, true );
-				}
-
-				if ( $direct_access ) {
-					if ( ! file_exists(trailingslashit( $newdir ) . 'index.php' ) ) {
-						@touch( trailingslashit( $newdir ) . 'index.php' );
-					}
-					if ( file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						@unlink( trailingslashit( $newdir ) . '.htaccess' );
-					}
-				} else {
-					if ( ! file_exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
-						$file = @fopen( trailingslashit( $newdir  ) . '.htaccess', 'w+' );
-						@fwrite( $file, 'deny from all' );
-						@fclose( $file );
-					}
-				}
-				// phpcs:enable
-			}
-		}
-
-		return array( $newdir, $url );
+	public function hook_get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
+		return MainWP_System_Utility::get_mainwp_dir( $dir = null, $direct_access );
 	}
 
 

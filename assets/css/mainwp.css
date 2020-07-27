@@ -1409,6 +1409,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme{
 }
 
 /* to fix css issue */
+#mainwp-emails-settings-table.dataTable.table td span,
+#mainwp-emails-settings-table.dataTable.table th span,
 #mainwp-manage-sites-table.dataTable.table td span,
 #mainwp-manage-sites-table.dataTable.table th span{
   -webkit-box-sizing: border-box !important;

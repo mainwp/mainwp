@@ -920,7 +920,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 * 
 	 * @return (string|bool) Client Report token value. Boolean false on failer.
 	 */
-	public function update_report( $report ) { // phpcs:ignore -- complex function.
+	public function update_report( $report ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/** @var $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;

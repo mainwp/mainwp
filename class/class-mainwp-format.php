@@ -25,16 +25,13 @@ class MainWP_Format {
 
 
 	/**
-	 * Method get_format_email_update_plugins().
+	 * Method get_update_plugins_items().
 	 *
-	 * Get mail content for plugins update.
+	 * Get plugins update.
 	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content.
+	 * @return string $update_items Plugins update items.
 	 */
-	public static function get_format_email_update_plugins( $sitesCheckCompleted, $text_format ) {
+	public static function get_update_plugins_items() {
 
 		$pluginsNewUpdate = get_option( 'mainwp_updatescheck_mail_update_plugins_new' );
 		if ( ! is_array( $pluginsNewUpdate ) ) {
@@ -53,42 +50,22 @@ class MainWP_Format {
 			$notTrustedPluginsToUpdate = array();
 		}
 
-		$mail_content = '';
+		$update_items = array();
+		$update_items = MainWP_Utility::array_merge( $pluginsNewUpdate, $pluginsToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedPluginsToUpdate );
 
-		if ( ( count( $pluginsNewUpdate ) != 0 ) || ( count( $pluginsToUpdate ) != 0 ) || ( count( $notTrustedPluginsNewUpdate ) != 0 ) || ( count( $notTrustedPluginsToUpdate ) != 0 )
-			) {
-			$mail_lines  = '';
-			$mail_lines .= self::print_digest_lines( $pluginsNewUpdate );
-			$mail_lines .= self::print_digest_lines( $pluginsToUpdate, $sitesCheckCompleted );
-			$mail_lines .= self::print_digest_lines( $notTrustedPluginsNewUpdate );
-			$mail_lines .= self::print_digest_lines( $notTrustedPluginsToUpdate );
-
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Plugin Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Plugin Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
-		return $mail_content;
+		return $update_items;
 	}
 
 	/**
-	 * Method get_format_email_update_themes().
+	 * Method get_update_themes_items().
 	 *
-	 * Get themes update mail content.
+	 * Get themes update items to email.
 	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content
+	 * @return string $update_items Update themes.
 	 */
-	public static function get_format_email_update_themes( $sitesCheckCompleted, $text_format ) {
+	public static function get_update_themes_items() {
 
 		$themesNewUpdate = get_option( 'mainwp_updatescheck_mail_update_themes_new' );
 		if ( ! is_array( $themesNewUpdate ) ) {
@@ -107,43 +84,23 @@ class MainWP_Format {
 			$notTrustedThemesToUpdate = array();
 		}
 
-		$mail_content = '';
+		$update_items = array();
 
-		if ( ( count( $themesNewUpdate ) != 0 ) || ( count( $themesToUpdate ) != 0 ) || ( count( $notTrustedThemesNewUpdate ) != 0 ) || ( count( $notTrustedThemesToUpdate ) != 0 )
-			) {
-			$mail_lines  = '';
-			$mail_lines .= self::print_digest_lines( $themesNewUpdate );
-			$mail_lines .= self::print_digest_lines( $themesToUpdate, $sitesCheckCompleted );
-			$mail_lines .= self::print_digest_lines( $notTrustedThemesNewUpdate );
-			$mail_lines .= self::print_digest_lines( $notTrustedThemesToUpdate );
+		$update_items = MainWP_Utility::array_merge( $themesNewUpdate, $themesToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $notTrustedThemesToUpdate );
 
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Themes Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Themes Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
-
-		return $mail_content;
+		return $update_items;
 	}
 
 	/**
-	 * Method get_format_email_update_wp().
+	 * Method get_update_wp_items().
 	 *
-	 * Get mail content of WP update.
+	 * Get WP update to email.
 	 *
-	 * @param mixed $sitesCheckCompleted Completed sites.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content.
+	 * @return array $update_items WP update items.
 	 */
-	public static function get_format_email_update_wp( $sitesCheckCompleted, $text_format ) {
+	public static function get_update_wp_items() {
 
 		$coreNewUpdate = get_option( 'mainwp_updatescheck_mail_update_core_new' );
 		if ( ! is_array( $coreNewUpdate ) ) {
@@ -161,209 +118,49 @@ class MainWP_Format {
 		if ( ! is_array( $ignoredCoreToUpdate ) ) {
 			$ignoredCoreToUpdate = array();
 		}
-		$mail_content = '';
 
-		if ( ( count( $coreNewUpdate ) != 0 ) || ( count( $coreToUpdate ) != 0 ) || ( count( $ignoredCoreNewUpdate ) != 0 ) || ( count( $ignoredCoreToUpdate ) != 0 ) ) {
-			$mail_lines  = '';
-			$mail_lines .= self::print_digest_lines( $coreNewUpdate );
-			$mail_lines .= self::print_digest_lines( $coreToUpdate, $sitesCheckCompleted );
-			$mail_lines .= self::print_digest_lines( $ignoredCoreNewUpdate );
-			$mail_lines .= self::print_digest_lines( $ignoredCoreToUpdate );
+		$update_items = array();
 
-			if ( $text_format ) {
-				$mail_content .= 'WordPress Core Updates' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= $mail_lines;
-				$mail_content .= "\r\n";
-			} else {
-				$mail_content .= '<div><strong>WordPress Core Updates</strong></div>';
-				$mail_content .= '<ul>';
-				$mail_content .= $mail_lines;
-				$mail_content .= '</ul>';
-			}
-		}
+		$update_items = MainWP_Utility::array_merge( $coreNewUpdate, $coreToUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreNewUpdate );
+		$update_items = MainWP_Utility::array_merge( $update_items, $ignoredCoreToUpdate );
 
-		return $mail_content;
+		return $update_items;
 	}
 
 	/**
-	 * Method get_format_email_status_connections().
+	 * Method get_site_updates_items().
 	 *
-	 * Get mail content of connections.
+	 * Get Updates items of websites.
 	 *
-	 * @param mixed $sitesDisconnect Disconnected sites.
-	 * @param bool  $text_format Text format.
+	 * @param string $what values: plugin, theme, wpcore.
+	 * @param array  $sites_ids Websites ids filter (option).
 	 *
-	 * @return string $mail_content Email content.
+	 * @return array $update_items WP update items.
 	 */
-	public static function get_format_email_status_connections( $sitesDisconnect, $text_format ) {
-		$mail_lines   = self::print_digest_lines( $sitesDisconnect, null, 'disc_sites' );
-		$mail_content = '';
-		if ( $text_format ) {
-			$mail_content .= 'Disconnected sites' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= $mail_lines;
-			$mail_content .= "\r\n";
-		} else {
-			$mail_content .= '<b style="color: rgb(127, 177, 0); font-family: Helvetica, Sans; font-size: medium; line-height: normal;">Disconnected sites</b><br>';
-			$mail_content .= '<ul>';
-			$mail_content .= $mail_lines;
-			$mail_content .= '</ul>';
+	public static function get_site_updates_items( $what, $sites_ids = false ) {
+
+		$items = array();
+		if ( 'plugin' == $what ) {
+			$items = self::get_update_plugins_items();
+		} elseif ( 'theme' == $what ) {
+			$items = self::get_update_themes_items();
+		} elseif ( 'wpcore' == $what ) {
+			$items = self::get_update_wp_items();
 		}
-		return $mail_content;
-	}
 
-
-	/**
-	 * Method print_digest_lines()
-	 *
-	 * List of updates to be emailed.
-	 *
-	 * @param array  $array Array of URLs.
-	 * @param array  $backupChecks null|Child Site ID.
-	 * @param string $what disc_sites|null.
-	 *
-	 * @return html $output Email Body.
-	 */
-	public static function print_digest_lines( $array, $backupChecks = null, $what = 'update' ) {
-
-		$plain_text = apply_filters( 'mainwp_text_format_email', false );
-
-		$output = '';
-
-		if ( 'disc_sites' === $what ) {
-			if ( $plain_text ) {
-				foreach ( $array as $url ) {
-					$output .= $url . "\r\n";
+		$filters = array();
+		foreach ( $items as $item ) {
+			if ( isset( $item['id'] ) ) { // to valid and compatible data.
+				if ( ! empty( $sites_ids ) ) { // if filter by sites ids.
+					if ( ! in_array( $item['id'], $sites_ids ) ) {
+						continue;
+					}
 				}
-			} else {
-				foreach ( $array as $url ) {
-					$output .= '<li>' . $url . '</li>' . "\n";
-				}
-			}
-		} else {
-
-			if ( $plain_text ) {
-				foreach ( $array as $line ) {
-					$siteId      = $line[0];
-					$text        = $line[1];
-					$trustedText = $line[2];
-
-					$output .= $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . "\r\n";
-				}
-			} else {
-				foreach ( $array as $line ) {
-					$siteId      = $line[0];
-					$text        = $line[1];
-					$trustedText = $line[2];
-
-					$output .= '<li>' . $text . $trustedText . ( null == $backupChecks || ! isset( $backupChecks[ $siteId ] ) || ( true == $backupChecks[ $siteId ] ) ? '' : '(Requires manual backup)' ) . '</li>' . "\n";
-				}
+				$filters[] = $item;
 			}
 		}
-
-		return $output;
-	}
-
-	/**
-	 * Method get_format_email_offline_site().
-	 *
-	 * Get Websites offline status mail content.
-	 *
-	 * @param array $site Offline status site.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content
-	 */
-	public static function get_format_email_offline_site( $site, $text_format ) {
-
-		if ( empty( $site ) ) {
-			return false;
-		}
-
-		$mail_content = '';
-
-		$site_name = $site->name;
-		$site_url  = $site->url;
-		$code      = $site->http_response_code;
-
-		$code_string = MainWP_Utility::get_http_codes( $code );
-		if ( ! empty( $code_string ) ) {
-			$code .= ' - ' . $code_string;
-		}
-
-		$location = admin_url( 'admin.php?page=MonitoringSites' );
-		if ( $text_format ) {
-			$mail_content .= 'The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')' . "\r\n";
-			$mail_content .= "\r\n";
-			$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
-			$mail_content .= "\r\n";
-			$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
-		} else {
-			$mail_content .= '<div></div>';
-			$mail_content .= '<div>The monitor ' . $site_name . ' (' . $site_url . ') is currently DOWN (' . $code . ')</div>';
-			$mail_content .= '<div></div><br>';
-			$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
-			$mail_content .= '<div></div><br>';
-			$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
-		}
-		return $mail_content;
-	}
-
-	/**
-	 * Method get_format_email_health_status_sites().
-	 *
-	 * Get formated email content for websites with not good site health.
-	 *
-	 * @param array $site The website.
-	 * @param bool  $text_format Text format.
-	 *
-	 * @return string $mail_content Email content
-	 */
-	public static function get_format_email_health_status_sites( $site, $text_format ) {
-
-		if ( empty( $site ) ) {
-			return false;
-		}
-
-		$site_name = $site->name;
-		$site_url  = $site->url;
-
-		$mail_content = '';
-		$location     = admin_url( 'admin.php?page=MonitoringSites' );
-		if ( 80 <= $site->health_value ) {
-			if ( $text_format ) {
-				$mail_content .= 'The site health check shows that your site ' . $site_name . ' (' . $site_url . ') health is Good.' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
-				$mail_content .= "\r\n";
-				$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
-			} else {
-				$mail_content .= '<div></div>';
-				$mail_content .= '<div>The site health check shows that your site ' . $site_name . ' (' . $site_url . ') health is Good.</div>';
-				$mail_content .= '<div></div><br>';
-				$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
-				$mail_content .= '<div></div><br>';
-				$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
-			}
-		} else {
-			if ( $text_format ) {
-				$mail_content .= 'The site health check shows that your site ' . $site_name . ' (' . $site_url . ') issues that should be addressed as soon as possible to improve its performance and security.' . "\r\n";
-				$mail_content .= "\r\n";
-				$mail_content .= 'Event timestamp: ' . date( 'Y-m-d h:i:s e' ) . "\r\n"; // phpcs:ignore -- local date time.
-				$mail_content .= "\r\n";
-				$mail_content .= 'Click here: ' . $location . ' to check your site status.' . "\r\n";
-			} else {
-				$mail_content .= '<div></div>';
-				$mail_content .= '<div>The site health check shows that your site ' . $site_name . ' (' . $site_url . ') issues that should be addressed as soon as possible to improve its performance and security.</div>';
-				$mail_content .= '<div></div><br>';
-				$mail_content .= '<strong>Event timestamp:</strong> ' . date( 'Y-m-d h:i:s e' );  // phpcs:ignore -- local date time.
-				$mail_content .= '<div></div><br>';
-				$mail_content .= '<div><a href="' . $location . '">Click here</a> to check your site status.</div>';
-			}
-		}
-
-		return $mail_content;
+		return $filters;
 	}
 
 	/**
@@ -374,14 +171,14 @@ class MainWP_Format {
 	 * @param string $to_email Send to emails.
 	 * @param string $body Email's body.
 	 * @param string $title Email's title.
-	 * @param bool   $text_format text format.
+	 * @param bool   $plain_text text format.
 	 *
 	 * @return string Formatted content
 	 */
-	public static function format_email( $to_email = null, $body, $title = '', $text_format = false ) {
+	public static function format_email( $to_email = null, $body, $title = '', $plain_text = false ) {
 
 		$current_year = gmdate( 'Y' );
-		if ( $text_format ) {
+		if ( $plain_text ) {
 				$mail_send['header'] = '';
 				$mail_send['body']   = 'Hi,' . "\r\n\r\n" .
 										( ( ! empty( $title ) ) ? $title . "\r\n\r\n" : '' ) .

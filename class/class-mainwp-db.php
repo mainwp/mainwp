@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_DB extends MainWP_DB_Base {
 
-	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- unprepared SQL ok, accessing the database directly to custom database functions.
+	// phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -80,28 +80,39 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get disconnected child sites.
 	 *
+	 * @param array $sites_ids Websites ids - option field.
+	 *
 	 * @return array $disc_sites Array of disonnected sites.
 	 */
-	public function get_disconnected_websites() {
-		$sql      = self::instance()->get_sql_websites_for_current_user();
-		$websites = self::instance()->query( $sql );
+	public function get_disconnected_websites( $sites_ids = false ) {
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		if ( ! $websites ) {
-			return array();
-		}
+		$sql = 'SELECT wp.*,wp_sync.*
+				FROM ' . $this->table_name( 'wp' ) . ' wp
+				JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync 
+				ON wp.id = wp_sync.wpid
+				WHERE (wp_sync.sync_errors IS NOT NULL) AND (wp_sync.sync_errors <> "") ' .
+				$where;
 
+		$websites   = $this->wpdb->get_results( $sql );
 		$disc_sites = array();
+		if ( $websites ) {
+			foreach ( $websites as $website ) {
 
-		self::data_seek( $websites, 0 );
-		while ( $websites && ( $website      = self::fetch_object( $websites ) ) ) {
-			if ( empty( $website ) ) {
-				continue;
-			}
-			if ( '' !== $website->sync_errors ) {
-				$disc_sites[ $website->id ] = $website->url;
+				if ( ! empty( $sites_ids ) ) {
+					// filter sites.
+					if ( ! in_array( $website->id, $sites_ids ) ) {
+						continue;
+					}
+				}
+
+				$disc_sites[] = array(
+					'id'   => $website->id,
+					'name' => $website->name,
+					'url'  => $website->url,
+				);
 			}
 		}
-
 		return $disc_sites;
 	}
 
@@ -629,7 +640,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @return object|null Database query result or null on failure.
 	 */
-	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array( 'favi_icon' ) ) {
+	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
 
 		if ( empty( $extra_view ) ) {
 			$extra_view = array( 'favi_icon' );
@@ -1063,6 +1074,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$sslVersion = 0,
 		$disableChecking,
 		$checkInterval,
+		$disableHealthChecking,
 		$healthThreshold,
 		$wpe = 0 ) {
 
@@ -1070,7 +1082,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$website = self::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// update admin.
-				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
+				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET url="' . $this->escape( $url ) . '", name="' . $this->escape( wp_strip_all_tags( $name ) ) . '", adminname="' . $this->escape( $siteadmin ) . '",pluginDir="' . $this->escape( $pluginDir ) . '",maximumFileDescriptorsOverride = ' . ( $maximumFileDescriptorsOverride ? 1 : 0 ) . ',maximumFileDescriptorsAuto= ' . ( $maximumFileDescriptorsAuto ? 1 : 0 ) . ',maximumFileDescriptors = ' . $maximumFileDescriptors . ', verify_certificate="' . intval( $verifyCertificate ) . '", ssl_version="' . intval( $sslVersion ) . '", wpe="' . intval( $wpe ) . '", uniqueId="' . $this->escape( $uniqueId ) . '", http_user="' . $this->escape( $http_user ) . '", http_pass="' . $this->escape( $http_pass ) . '", disable_status_check="' . $this->escape( $disableChecking ) . '", status_check_interval="' . $this->escape( $checkInterval ) . '", disable_health_check="' . $this->escape( $disableHealthChecking ) . '", health_threshold="' . $this->escape( $healthThreshold ) . '" WHERE id=%d', $websiteid ) );
 				$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_settings_backup' ) . ' SET archiveFormat = "' . $this->escape( $archiveFormat ) . '" WHERE wpid=%d', $websiteid ) );
 				// remove groups.
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
@@ -1222,13 +1234,13 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_websites_offline_status_to_send_notice() {
 		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
-		$extra_view = array( 'monitoring_notification_emails' );
+		$extra_view = array( 'monitoring_notification_emails', 'settings_notification_emails' );
 
 		return $this->wpdb->get_results(
 			'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE wp.disable_status_check <> 1 AND wp.http_response_code <> 200 AND wp.http_response_code <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
+			WHERE wp.disable_status_check <> 1 AND wp.offline_check_result <> 1 AND wp.offline_check_result <> 0 AND wp.http_code_noticed = 0' . // http_code_noticed = 0: not noticed yet.
 			$where,
 			OBJECT
 		);
@@ -1240,11 +1252,12 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get websites to notice site health.
 	 *
 	 * @param int $globalThreshold Global site health threshold.
+	 * @param int $count Limit count.
 	 */
-	public function get_websites_to_notice_health_threshold( $globalThreshold ) {
+	public function get_websites_to_notice_health_threshold( $globalThreshold, $count = 10 ) {
 
 		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
-		$extra_view = array( 'monitoring_notification_emails' );
+		$extra_view = array( 'monitoring_notification_emails', 'settings_notification_emails' );
 
 		if ( 80 >= $globalThreshold ) { // actual is 80.
 			// should-be-improved site health.
@@ -1261,7 +1274,27 @@ class MainWP_DB extends MainWP_DB_Base {
 			'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
 			JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
 			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid			
-			WHERE wp.disable_status_check <> 1 AND wp.http_response_code = 200 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' . $where,
+			WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( ' . $where_global_threshold . ' OR' . $where_site_threshold . ' ) AND wp_sync.health_site_noticed = 0 ' .
+			$where,
+			OBJECT
+		);
+	}
+
+
+	/**
+	 * Get websites offline status.
+	 *
+	 * @return array Sites with offline status.
+	 */
+	public function get_websites_offline_check_status() {
+		$where      = $this->get_sql_where_allow_access_sites( 'wp' );
+		$extra_view = array( 'settings_notification_emails' );
+
+		return $this->wpdb->get_results(
+			'SELECT wp.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp 
+			JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
+			WHERE wp.disable_status_check <> 1 AND wp.offline_check_result = -1' . // offline checked status.
+			$where,
 			OBJECT
 		);
 	}

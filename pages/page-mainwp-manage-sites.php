@@ -208,7 +208,7 @@ class MainWP_Manage_Sites {
 			if ( 'new' === $_REQUEST['do'] ) {
 				return;
 			}
-		} elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) ) {
+		} elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) ) {
 			return;
 		}
 
@@ -816,6 +816,39 @@ class MainWP_Manage_Sites {
 	}
 
 	/**
+	 * Method render_email_settings()
+	 *
+	 * Render email settings.
+	 *
+	 * @param mixed $website Child Site.
+	 * @param bool  $updated updated settings.
+	 * @param bool  $updated_templ updated template file.
+	 */
+	public static function render_email_settings( $website, $updated, $updated_templ ) {
+		$website   = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload
+	
+		MainWP_System_Utility::set_current_wpid( $website->id );
+
+		$edit       = false;
+		$email_type = isset( $_GET['edit-email'] ) ? $_GET['edit-email'] : false;
+		
+		if ( false !== $email_type ) {
+			$notification_emails = MainWP_Notification_Settings::get_notification_types();
+			if ( isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
+				$edit = true;
+			}
+		}
+
+		self::render_header( 'ManageSitesEmailSettings' );
+		if ( $edit ) {
+			MainWP_Manage_Sites_View::render_site_edit_email_settings( $website, $email_type, $updated_templ );
+		} else {
+			MainWP_Manage_Sites_View::render_edit_site_email_settings( $website, $updated );
+		}
+		self::render_footer( 'ManageSitesEmailSettings' );
+	}
+
+	/**
 	 * Method render_dashboard()
 	 *
 	 * Render Manage Sites Dashboard.
@@ -1025,20 +1058,62 @@ class MainWP_Manage_Sites {
 			}
 		}
 
+		if ( isset( $_GET['emailsettingsid'] ) && $_GET['emailsettingsid'] ) {
+			$websiteid = intval( $_GET['emailsettingsid'] );
+			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'settings_notification_emails' ) );
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+				// Edit email settings.
+				$updated       = self::update_site_emails_settings_handle( $website );
+				$updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
+				self::render_email_settings( $website, $updated, $updated_templ );
+				return;
+			}
+		}
+
 		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
 			$websiteid = $_GET['id'];
-
-			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// Edit website!
-				$updated = self::update_site_handle( $website );
+				$updated = self::update_site_handle( $website );				
 				self::render_edit_site( $websiteid, $updated );
 				return;
 			}
 		}
 		self::render_all_sites();
 	}
+	
 
+	/**
+	 * Method update_site_emails_settings_handle()
+	 *
+	 * Handle site email settings update.
+	 *
+	 * @param mixed $website Child Site object.
+	 *
+	 * @return bool $updated Updated.
+	 */
+	private static function update_site_emails_settings_handle( $website ) {
+		$updated = false;
+		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsiteEmailSettings' . $_GET['emailsettingsid'] ) ) {
+			$settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
+			$settings_emails = json_decode( $settings_emails, true );
+			if ( ! is_array( $settings_emails ) ) {
+				$settings_emails = array();
+			}
+			$notification_emails = MainWP_Notification_Settings::get_notification_types();
+			$edit_settingEmails  = $_POST['mainwp_managesites_edit_settingEmails'];
+			$type                = $_POST['mainwp_managesites_setting_emails_type'];
+			if ( isset( $notification_emails[ $type ] ) ) {
+				$settings_emails[ $type ]               = $edit_settingEmails[ $type ];
+				$settings_emails[ $type ]['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
+				$settings_emails[ $type ]['disable'] = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.			
+				MainWP_DB::instance()->update_website_option( $website, 'settings_notification_emails', wp_json_encode( $settings_emails ) );
+				$updated = true;
+			}
+		}
+		return $updated;
+	}
 
 	/**
 	 * Method update_site_handle()
@@ -1084,11 +1159,12 @@ class MainWP_Manage_Sites {
 				$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
 				$url       = $_POST['mainwp_managesites_edit_siteurl_protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
 
-				$disableChecking = isset( $_POST['mainwp_managesites_edit_disableChecking'] ) ? 1 : 0;
-				$checkInterval   = intval( $_POST['mainwp_managesites_edit_checkInterval'] );
-				$healthThreshold = intval( $_POST['mainwp_managesites_edit_healthThreshold'] );
+				$disableChecking       = isset( $_POST['mainwp_managesites_edit_disableChecking'] ) ? 0 : 1;
+				$checkInterval         = intval( $_POST['mainwp_managesites_edit_checkInterval'] );
+				$disableHealthChecking = isset( $_POST['mainwp_managesites_edit_disableSiteHealthMonitoring'] ) ? 0 : 1;
+				$healthThreshold       = intval( $_POST['mainwp_managesites_edit_healthThreshold'] );
 
-				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'], $disableChecking, $checkInterval, $healthThreshold );
+				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'], $disableChecking, $checkInterval, $disableHealthChecking, $healthThreshold );
 				do_action( 'mainwp_update_site', $website->id );
 
 				$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;
@@ -1119,7 +1195,6 @@ class MainWP_Manage_Sites {
 				$moniroting_emails = wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] );
 				$moniroting_emails = MainWP_Utility::valid_input_emails( $moniroting_emails );
 				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $moniroting_emails );
-
 				$updated = true;
 			}
 		}

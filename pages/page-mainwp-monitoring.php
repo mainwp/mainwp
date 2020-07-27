@@ -49,7 +49,6 @@ class MainWP_Monitoring {
 	 *
 	 * Add Monitoring Sub Menu.
 	 */
-	/** Initiate menu. */
 	public static function init_menu() {
 		self::$page = add_submenu_page(
 			'mainwp_tab',
@@ -80,8 +79,6 @@ class MainWP_Monitoring {
 	 * Method render_all_sites()
 	 *
 	 * Render monitoring sites content.
-	 *
-	 * @return html MainWP Groups Table.
 	 */
 	public static function render_all_sites() {
 

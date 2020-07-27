@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Monitoring Sites List Table.
+ * MainWP sites monitoring list.
  *
  * @todo The only variables that seam to be used are $column_headers.
  */
@@ -33,7 +33,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Get the default primary column name.
 	 *
-	 * @return string Child Site name.
+	 * @return string Child site name.
 	 */
 	protected function get_default_primary_column_name() {
 		return 'site';
@@ -43,10 +43,10 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Set the column names.
 	 *
-	 * @param mixed  $item MainWP Sitetable Item.
+	 * @param mixed  $item        MainWP site table item.
 	 * @param string $column_name Column name to use.
 	 *
-	 * @return string Column Name.
+	 * @return string Column name.
 	 */
 	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -138,7 +138,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Get column defines.
 	 *
-	 * @return array $defines
+	 * @return array $defines Array of defines.
 	 */
 	public function get_columns_defines() {
 		$defines   = array();
@@ -175,9 +175,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	}
 
 	/**
-	 * Create Bulk Actions Drop Down.
+	 * Create bulk actions drop down.
 	 *
-	 * @return apply_filters $actions.
+	 * @return array $actions Return actions through the mainwp_monitoringsites_bulk_actions filter.
 	 */
 	public function get_bulk_actions() {
 
@@ -190,7 +190,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	}
 
 	/**
-	 * Render Manage Sites Table Top.
+	 * Render manage sites table top.
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
@@ -278,7 +278,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Prepair the items to be listed.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimize.
+	 * @param bool $optimize true|false Whether or not to optimize.
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -304,9 +304,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					$orderby = 'wp.url ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'status' === $req_orderby ) {
 					$orderby = 'CASE true
-								WHEN (http_response_code = 200)
+								WHEN (offline_check_result = 1)
 									THEN 1
-								WHEN (http_response_code <> 200)
+								WHEN (offline_check_result <> 1)
 									THEN 2
 								END ' . ( 'asc' === $req_order ? 'asc' : 'desc' );
 				} elseif ( 'status_code' === $req_orderby ) {
@@ -366,11 +366,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		if ( '' !== $site_status && 'all' !== $site_status ) {
 			if ( 'online' === $site_status ) {
-				$where = 'wp.http_response_code = 200';
+				$where = 'wp.offline_check_result = 1';
 			} elseif ( 'undefined' === $site_status ) {
 				$where = 'wp.http_response_code = ""';
 			} elseif ( 'offline' === $site_status ) {
-				$where = 'wp.http_response_code <> "" AND wp.http_response_code <> 200'; // 200: OK status.
+				$where = 'wp.offline_check_result <> "" AND wp.offline_check_result <> 1';
 			}
 		}
 
@@ -415,6 +415,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			MainWP_DB::free_result( $total_websites );
 		}
 
+		$params['extra_view'] = array( 'favi_icon', 'health_site_status' );
+
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
 		$site_ids = array();
@@ -433,7 +435,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Display the table.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimize.
+	 * @param bool $optimize true|false Whether or not to optimize.
 	 */
 	public function display( $optimize = true ) {
 
@@ -599,8 +601,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Echo the column headers.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimise.
-	 * @param boolean $top true|false.
+	 * @param bool $optimize true|false Whether or not to optimise.
+	 * @param bool $top true|false.
 	 */
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
@@ -688,9 +690,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 
 	/**
-	 * Single Row.
+	 * Single row.
 	 *
-	 * @param mixed $website Child Site.
+	 * @param mixed $website Object containing the site info.
 	 */
 	public function single_row( $website ) {
 		$classes = '';
@@ -709,14 +711,30 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			}
 		}
 
-		$statusUndefined = ( '' == $website['http_response_code'] );
-		$statusOnline    = ( 200 == $website['http_response_code'] );
+		$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 
-		$classes = trim( $classes );
-		$classes = ' class="child-site mainwp-child-site-' . $website['id'] . ' ' . ( $statusOnline ? '' : 'error' ) . ' ' . ( $statusUndefined ? 'warning' : '' ) . ' ' . $classes . '"';
+		$hstatus     = MainWP_Utility::get_site_health( $health_status );
+		$hval        = $hstatus['val'];
+		$critical    = $hstatus['critical'];
+		$good_health = false;
+
+		if ( 80 <= $hval && 0 == $critical ) {
+			$good_health = true;
+		}
+
+		$statusUndefined = ( '' == $website['http_response_code'] );
+		$statusOnline    = ( 1 == $website['offline_check_result'] );
+
+		$classes        = trim( $classes );
+		$status_classes = $statusOnline ? '' : 'error';
+		if ( empty( $status_classes ) ) {
+			$status_classes = $good_health ? '' : 'warning';
+		}
+
+		$classes = ' class="child-site mainwp-child-site-' . $website['id'] . ' ' . $status_classes . ' ' . $classes . '"';
 
 		echo '<tr id="child-site-' . $website['id'] . '"' . $classes . ' siteid="' . $website['id'] . '" site-url="' . $website['url'] . '">';
-		$this->single_row_columns( $website );
+		$this->single_row_columns( $website, $good_health );
 		echo '</tr>';
 	}
 
@@ -724,15 +742,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Columns for a single row.
 	 *
-	 * @param mixed $website Child Site.
+	 * @param mixed  $website     Object containing the site info.
+	 * @param string $site_health Site health info.
 	 */
-	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-
-		$site_options  = MainWP_DB::instance()->get_website_options_array( $website, array( 'health_site_status' ) );
-		$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
+	protected function single_row_columns( $website, $good_health ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$statusUndefined = ( '' == $website['http_response_code'] );
-		$statusOnline    = ( 200 == $website['http_response_code'] );
+		$statusOnline    = ( 1 == $website['offline_check_result'] );
 
 		$note       = html_entity_decode( $website['note'] );
 		$esc_note   = MainWP_Utility::esc_content( $note );
@@ -742,11 +758,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		$use_favi = get_option( 'mainwp_use_favicon', 1 );
 
-		$hstatus  = MainWP_Utility::get_site_health( $health_status );
-		$hval     = $hstatus['val'];
-		$critical = $hstatus['critical'];
-
-		if ( 80 <= $hval && 0 == $critical ) {
+		if ( $good_health ) {
 			$h_color = 'green';
 			$h_text  = __( 'Good', 'mainwp' );
 		} else {
@@ -772,8 +784,19 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				<td class="center aligned collapsing">
 					<?php if ( $statusUndefined ) : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be undefined.', 'mainwp' ); ?>"  data-position="right center"  data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
-					<?php elseif ( $statusOnline ) : ?>
-						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted green check icon"></i></span>
+						<?php
+					elseif ( $statusOnline ) :
+						if ( ! $good_health ) {
+							?>
+							<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted yellow heartbeat icon"></i></span>
+							<?php
+						} else {
+							?>
+							<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted green check icon"></i></span>
+							<?php
+						}
+						?>
+												
 					<?php else : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be offline.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
 					<?php endif; ?>
@@ -855,7 +878,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 *
 	 * Optimize for shared hosting or big networks.
 	 *
-	 * @return html Rows html.
+	 * @return array Table rows HTML.
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();
@@ -869,10 +892,27 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				$rw_classes = '';
 
 				$statusUndefined = ( '' == $website['http_response_code'] );
-				$statusOnline    = ( 200 == $website['http_response_code'] );
+				$statusOnline    = ( 1 == $website['offline_check_result'] );
+
+				$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
+
+				$hstatus     = MainWP_Utility::get_site_health( $health_status );
+				$hval        = $hstatus['val'];
+				$critical    = $hstatus['critical'];
+				$good_health = false;
+
+				if ( 80 <= $hval && 0 == $critical ) {
+					$good_health = true;
+				}
 
 				$rw_classes = trim( $rw_classes );
-				$rw_classes = 'child-site mainwp-child-site-' . $website['id'] . ' ' . ( $statusOnline ? '' : 'error' ) . ' ' . ( $statusUndefined ? 'warning' : '' ) . ' ' . $rw_classes;
+
+				$status_classes = $statusOnline ? '' : 'error';
+				if ( empty( $status_classes ) ) {
+					$status_classes = $good_health ? '' : 'warning';
+				}
+
+				$rw_classes = 'child-site mainwp-child-site-' . $website['id'] . ' ' . $status_classes . ' ' . $rw_classes;
 
 				$info_item = array(
 					'rowClass'  => esc_html( $rw_classes ),
@@ -881,14 +921,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					'syncError' => ( '' !== $website['sync_errors'] ? true : false ),
 				);
 
-				$site_options  = MainWP_DB::instance()->get_website_options_array( $website, array( 'health_site_status' ) );
-				$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
-
-				$hstatus  = MainWP_Utility::get_site_health( $health_status );
-				$hval     = $hstatus['val'];
-				$critical = $hstatus['critical'];
-
-				if ( 80 <= $hval && 0 == $critical ) {
+				if ( $good_health ) {
 					$h_color = 'green';
 					$h_text  = __( 'Good', 'mainwp' );
 				} else {
@@ -909,8 +942,19 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							<?php } elseif ( 'status' === $column_name ) { ?>
 								<?php if ( $statusUndefined ) : ?>
 									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be undefined.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
-								<?php elseif ( $statusOnline ) : ?>
-								<span data-tooltip="<?php esc_attr_e( 'The site status appears to be online.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>
+									<?php
+								elseif ( $statusOnline ) :
+									if ( ! $good_health ) {
+										?>
+									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be online.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular inverted yellow heartbeat icon"></i></span>
+										<?php
+									} else {
+										?>
+									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be online.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><i class="circular green check inverted icon"></i></span>
+										<?php
+									}
+									?>
+																	
 								<?php else : ?>
 									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be offline.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
 								<?php endif; ?>

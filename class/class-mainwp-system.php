@@ -240,9 +240,14 @@ class MainWP_System {
 				'mainwp_settings_hide_widgets',
 				'mainwp_settings_hide_manage_sites_columns',
 				'mainwp_disableSitesChecking',
+				'mainwp_disableSitesHealthMonitoring',
 				'mainwp_frequencySitesChecking',
 				'mainwp_sitehealthThreshold',
 				'mainwp_updatescheck_frequency_today_count',
+				'mainwp_settings_notification_emails',
+				'mainwp_ignore_HTTP_response_status',
+				'mainwp_check_http_response',
+				'mainwp_setup_important_notification',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -369,10 +374,19 @@ class MainWP_System {
 	/**
 	 * Method mainwp_croncheckstatus_action()
 	 *
-	 * Run cron check childs action.
+	 * Run cron check sites status action.
 	 */
 	public function mainwp_croncheckstatus_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_check_websites_status();
+	}
+
+	/**
+	 * Method mainwp_cronchecksitehealth_action()
+	 *
+	 * Run cron check sites health action.
+	 */
+	public function mainwp_cronchecksitehealth_action() {
+		MainWP_System_Cron_Jobs::instance()->cron_check_websites_health();
 	}
 
 	/**

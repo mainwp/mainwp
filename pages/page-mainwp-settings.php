@@ -70,7 +70,7 @@ class MainWP_Settings {
 
 	/** Instantiate the Settings Menu  */
 	public static function init_menu() {
-		$_page = add_submenu_page(
+		add_submenu_page(
 			'mainwp_tab',
 			__( 'Settings Global options', 'mainwp' ),
 			' <span id="mainwp-Settings">' . __( 'Settings', 'mainwp' ) . '</span>',
@@ -83,7 +83,7 @@ class MainWP_Settings {
 		);
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
-			$_page = add_submenu_page(
+			add_submenu_page(
 				'mainwp_tab',
 				__( 'MainWP Tools', 'mainwp' ),
 				' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>',
@@ -97,7 +97,7 @@ class MainWP_Settings {
 		}
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
-			$_page = add_submenu_page(
+			add_submenu_page(
 				'mainwp_tab',
 				__( 'Advanced Options', 'mainwp' ),
 				' <div class="mainwp-hidden">' . __( 'Advanced Options', 'mainwp' ) . '</div>',
@@ -110,9 +110,23 @@ class MainWP_Settings {
 			);
 		}
 
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Email Settings', 'mainwp' ),
+				' <div class="mainwp-hidden">' . __( 'Email Settings', 'mainwp' ) . '</div>',
+				'read',
+				'SettingsEmail',
+				array(
+					self::get_class_name(),
+					'render_email_settings',
+				)
+			);
+		}
+
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
-				$_page = add_submenu_page(
+				add_submenu_page(
 					'mainwp_tab',
 					__( 'Managed Client Reports', 'mainwp' ),
 					' <div class="mainwp-hidden">' . __( 'Managed Client Reports', 'mainwp' ) . '</div>',
@@ -158,9 +172,12 @@ class MainWP_Settings {
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=SettingsAdvanced' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Options', 'mainwp' ); ?></a>
 					<?php } ?>
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=SettingsEmail' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
+					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'MainWP Tools', 'mainwp' ); ?></a>
-					<?php } ?>
+					<?php } ?>					
 					<?php
 					if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
@@ -224,6 +241,13 @@ class MainWP_Settings {
 				'right'      => '',
 			),
 			array(
+				'title'      => __( 'Email Settings', 'mainwp' ),
+				'parent_key' => 'Settings',
+				'href'       => 'admin.php?page=SettingsEmail',
+				'slug'       => 'SettingsEmail',
+				'right'      => '',
+			),
+			array(
 				'title'      => __( 'MainWP Tools', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=MainWPTools',
@@ -278,6 +302,14 @@ class MainWP_Settings {
 				'title'  => __( 'Advanced Options', 'mainwp' ),
 				'href'   => 'admin.php?page=SettingsAdvanced',
 				'active' => ( 'Advanced' == $shownPage ) ? true : false,
+			);
+		}
+
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) {
+			$renderItems[] = array(
+				'title'  => __( 'Email Settings', 'mainwp' ),
+				'href'   => 'admin.php?page=SettingsEmail',
+				'active' => ( 'Emails' == $shownPage ) ? true : false,
 			);
 		}
 
@@ -337,10 +369,6 @@ class MainWP_Settings {
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-			$user_emails   = wp_unslash( $_POST['mainwp_options_email'] );
-			$save_emails   = MainWP_Utility::valid_input_emails( $user_emails );
-
-			$userExtension->user_email = $save_emails;
 			$userExtension->pluginDir  = '';
 
 			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -413,39 +441,6 @@ class MainWP_Settings {
 							</div>
 						</div>
 						<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Notification email(s)', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Enter your email address(es) to receive email notifications from your MainWP Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
-								<div class="mainwp-multi-emails">
-									<?php
-									$user_emails = MainWP_System_Utility::get_notification_email();
-									$user_emails = explode( ',', $user_emails );
-									$i           = 0;
-									foreach ( $user_emails as $email ) {
-										$i++;
-										?>
-										<div class="ui action input">
-											<input type="text" class="" id="mainwp_options_email" name="mainwp_options_email[<?php echo $i; ?>]" value="<?php echo $email; ?>"/>
-											<a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="<?php esc_attr_e( 'Remove this email address', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-										</div>
-										<div class="ui hidden fitted divider"></div>
-									<?php } ?>
-									<a href="#" id="mainwp-multi-emails-add" class="ui button basic green" data-tooltip="<?php esc_attr_e( 'Add another email address to receive email notifications to multiple email addresses.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Add Another Email', 'mainwp' ); ?></a>
-								</div>
-							</div>
-						</div>
-						<script type="text/javascript">
-							jQuery( document ).ready( function () {
-								jQuery( '#mainwp-multi-emails-add' ).on( 'click', function () {
-										jQuery( '#mainwp-multi-emails-add' ).before( '<div class="ui action input"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" class="ui button basic red mainwp-multi-emails-remove" data-tooltip="Remove this email address" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a></div><div class="ui hidden fitted divider"></div>' );
-										return false;
-								} );
-								jQuery( '.mainwp-multi-emails-remove' ).on( 'click', function () {
-										jQuery( this ).closest( '.ui.action.input' ).remove();
-										return false;
-								} );
-							} );
-						</script>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable WP Cron', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -933,6 +928,20 @@ class MainWP_Settings {
 			echo $csv;
 			exit();
 		}
+	}
+
+	/** Render MainWP Email Settings SubPage */
+	public static function render_email_settings() {
+		$notification_emails = MainWP_Notification_Settings::get_notification_types();
+		self::render_header( 'Emails' );
+		if ( isset( $_GET['edit-email'] ) && isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
+			$updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
+			MainWP_Notification_Settings::instance()->render_edit_settings( $_GET['edit-email'], $updated_templ );
+		} else {
+			$updated = MainWP_Notification_Settings::emails_general_settings_handle();
+			MainWP_Notification_Settings::instance()->render_all_settings( $updated );
+		}
+		self::render_footer( 'Emails' );
 	}
 
 	/**

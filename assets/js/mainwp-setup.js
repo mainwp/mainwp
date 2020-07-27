@@ -444,13 +444,20 @@ mainwp_setup_secure_data = function ( data )
     return data;
 };
 
-jQuery( document ).ready( function () {
+jQuery( document ).ready( function ($) {
 
-  jQuery( document ).on( 'click', '#mainwp-multi-emails-add', function () {
-      jQuery( '#mainwp-multi-emails-add' ).before( '<div id="mainwp-multi-emails"><input type="text" name="mainwp_options_email[]" value=""/><a href="#" id="mainwp-multi-emails-remove" class="ui button basic red">Remove Email</a></div>' );
-      return false;
-  } );
+   jQuery('.ui.checkbox:not(.not-auto-init)').checkbox();
 
+   jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
+    var hiel = $(this).attr('hide-parent');    
+    // if semantic ui checkbox is checked.
+    if ($(this).find('input').is(':checked')) {
+      $('[hide-element=' + hiel + ']').fadeIn(200);
+    } else {
+      $('[hide-element=' + hiel + ']').fadeOut(300);
+    }
+  });
+  
   jQuery( document ).on( 'click', '#mainwp-multi-emails-remove', function () {
       jQuery( this ).closest( '#mainwp-multi-emails' ).remove();
       return false;

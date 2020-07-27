@@ -25,7 +25,7 @@ class MainWP_Notification {
 
 
 	/**
-	 * Method notify_user()
+	 * Method send_notify_user()
 	 *
 	 * To send user a notification.
 	 *
@@ -33,7 +33,7 @@ class MainWP_Notification {
 	 * @param string $subject Email Subject.
 	 * @param string $content Email Content.
 	 */
-	public static function notify_user( $userId, $subject, $content ) {
+	public static function send_notify_user( $userId, $subject, $content ) {
 		$content_type = 'content-type: text/html';
 		self::send_wp_mail(
 			MainWP_DB_Common::instance()->get_user_notification_email( $userId ),
@@ -45,183 +45,185 @@ class MainWP_Notification {
 
 
 	/**
-	 * Method send_http_response_notification().
+	 * Method send_http_check_notification().
 	 *
 	 * Send HTTP response email notification.
 	 *
-	 * @param bool $sitesHttpCheckIds Sites IDs.
-	 * @param bool $text_format Text format.
+	 * @param array $sites_status Websites http status.
+	 * @param bool  $plain_text Text format.
+	 * @param mixed $email_settings Email settings.
+	 * @param bool  $general Either general or individual notification.
 	 *
 	 * @return bool False if failed.
 	 */
-	public static function send_http_response_notification( $sitesHttpCheckIds, $text_format ) {
+	public static function send_http_check_notification( $email_settings, $sites_status, $plain_text, $general = true ) {
 
-		if ( ! is_array( $sitesHttpCheckIds ) || empty( $sitesHttpCheckIds ) ) {
-			return false;
-		}
-
-		if ( $text_format ) {
+		if ( $plain_text ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
 		} else {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		$mail_offline = '';
-		$sitesOffline = MainWP_DB::instance()->get_websites_by_ids( $sitesHttpCheckIds );
+		$heading = $email_settings['heading'];
+		$subject = $email_settings['subject'];
 
-		if ( is_array( $sitesOffline ) && count( $sitesOffline ) > 0 ) {
-			foreach ( $sitesOffline as $site ) {
-				if ( -1 == $site->offline_check_result ) {
-					$mail_offline .= '<li>' . $site->name . ' - [' . $site->url . '] - [' . $site->http_response_code . ']</li>';
-				}
-			}
+		$formated_content = MainWP_Notification_Template::instance()->get_template_html(
+			'emails/mainwp-after-update-http-check-email.php',
+			array(
+				'sites_statuses' => $sites_status,
+				'heading'        => $heading,
+			)
+		);
+
+		$email = '';
+
+		// do not send individual data to admin.
+		if ( $general ) {
+			$email = get_option( 'mainwp_updatescheck_mail_email' );
 		}
 
-		$email = get_option( 'mainwp_updatescheck_mail_email' );
+		if ( ! empty( $email_settings['recipients'] ) ) {
+			$email .= ',' . $email_settings['recipients']; // send to recipients.
+		}
 
-		if ( ! empty( $email ) && '' != $mail_offline ) {
-			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to ' . $email );
-			$mail_offline = '<div>After running auto updates, following sites are not returning expected HTTP request response:</div>
-							<div></div>
-							<ul>
-							' . $mail_offline . '
-							</ul>
-							<div></div>
-							<div>Please visit your MainWP Dashboard as soon as possible and make sure that your sites are online. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>';
-
-			$formated_content = MainWP_Format::format_email(
-				$email,
-				$mail_offline,
-				'HTTP response check'
-			);
-
+		if ( ! empty( $email ) ) {
+			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to :: ' . $email );
 			self::send_wp_mail(
 				$email,
-				'MainWP - HTTP response check',
+				$subject,
 				$formated_content,
 				$content_type
 			);
+			return true;
 		}
+
+		return false;
 	}
 
 	/**
-	 * Method send_updates_notification().
+	 * Method send_daily_digets_notification().
 	 *
 	 * Sent available updates notification email.
 	 *
-	 * @param mixed $email Admin email.
-	 * @param mixed $content Mail content.
-	 * @param bool  $text_format Text format.
-	 * @param bool  $updateAvaiable Update avaiable.
+	 * @param array  $email_settings Email settings.
+	 * @param bool   $available_updates Update avaiable.
+	 * @param mixed  $wp_updates WP updates.
+	 * @param mixed  $plugin_updates Plugins updates.
+	 * @param mixed  $theme_updates Themes updates.
+	 * @param mixed  $sites_disconnected Sites disconnected.
+	 * @param bool   $plain_text Text format.
+	 * @param array  $sites_ids Websites ids - default false (option).
+	 * @param bool   $to_admin Send to admin or not - default false (option).
+	 * @param object $email_site current report site.
 	 */
-	public static function send_updates_notification( $email, $content, $text_format, $updateAvaiable ) {
+	public static function send_daily_digets_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
-		if ( $text_format ) {
+		if ( $email_settings['disable'] ) {
+			return false; // disabled send daily digets notification.
+		}
+
+		$email = '';
+
+		if ( empty( $sites_ids ) || $to_admin ) {
+			$email = get_option( 'mainwp_updatescheck_mail_email' ); // general notification, do not send individual notification to admin.
+		}
+
+		if ( ! empty( $email_settings['recipients'] ) ) {
+			$email .= ',' . $email_settings['recipients']; // send to recipients.
+		}
+
+		if ( empty( $email ) ) {
+			return false;
+		}
+
+		if ( $plain_text ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
 		} else {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		if ( $text_format ) {
-			$mail_content  = $updateAvaiable ? 'We noticed the following updates are available on your MainWP Dashboard. (' . site_url() . ')' . "\r\n" : '';
-			$mail_content .= $content . "\r\n";
-			$mail_content .= $updateAvaiable ? 'If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.' . "\r\n" : '';
-		} else {
-			$mail_content  = $updateAvaiable ? '<div>We noticed the following updates are available on your MainWP Dashboard. (<a href="' . site_url() . '">' . site_url() . '</a>)</div>' : '';
-			$mail_content .= '<div></div>';
-			$mail_content .= $content;
-			$mail_content .= '<div> </div>';
-			$mail_content .= $updateAvaiable ? '<div>If your MainWP is configured to use Auto Updates these updates will be installed in the next 24 hours.</div>' : '';
-		}
+		$other_digest = apply_filters( 'mainwp_daily_digest_content', false, $sites_ids, $plain_text );
 
-		$mail_title = 'Available Updates';
-		if ( ! $updateAvaiable ) {
-			$mail_title = '';
-		}
+		$heading = $email_settings['heading'];
 
-		$formated_content = MainWP_Format::format_email(
-			$email,
-			$mail_content,
-			$mail_title,
-			$text_format,
-			$updateAvaiable
+		$formated_content = MainWP_Notification_Template::instance()->get_template_html(
+			'emails/mainwp-daily-digest-email.php',
+			array(
+				'available_updates'  => $available_updates,
+				'wp_updates'         => $wp_updates,
+				'plugin_updates'     => $plugin_updates,
+				'theme_updates'      => $theme_updates,
+				'sites_disconnected' => $sites_disconnected,
+				'other_digest'       => $other_digest,
+				'heading'            => $heading,
+				'current_email_site' => $email_site, // support tokens process.
+			)
 		);
 
+		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digets :: send mail to [' . $email . ']' );
+		$subject = $email_settings['subject'];
 		self::send_wp_mail(
 			$email,
-			'Available Updates',
+			$subject,
 			$formated_content,
 			$content_type
 		);
+		return true;
 	}
 
 
 	/**
-	 * Method send_websites_status_notification().
+	 * Method send_websites_uptime_monitoring().
 	 *
 	 * Send websites status email notification.
 	 *
-	 * @param object $site The offline website.
-	 * @param string $email notification email.
+	 * @param string $emails notification emails.
 	 * @param string $mail_content email content.
-	 * @param bool   $text_format Text format.
+	 * @param bool   $plain_text Text format.
 	 */
-	public static function send_websites_status_notification( $site, $email, $mail_content, $text_format ) {
+	public static function send_websites_uptime_monitoring( $emails, $subject, $mail_content, $plain_text ) {
 
-		if ( $text_format ) {
+		if ( $plain_text ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
 		} else {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
-		if ( ! empty( $email ) && '' != $mail_content ) {
-			$formated_content = MainWP_Format::format_email(
-				$email,
-				$mail_content,
-				''
-			);
-			MainWP_Logger::instance()->debug( 'CRON :: websites status check :: send mail to [' . $email . ']' );
+		if ( ! empty( $emails ) && '' != $mail_content ) {
+			MainWP_Logger::instance()->debug( 'CRON :: sites status :: send mail to [' . $emails . ']' );
 			self::send_wp_mail(
-				$email,
-				'MainWP Monitoring Alert for ' . $site->url,
-				$formated_content,
+				$emails,
+				$subject,
+				$mail_content,
 				$content_type
 			);
 		}
 	}
-
 
 	/**
 	 * Method send_websites_health_status_notification().
 	 *
 	 * Send websites status email notification.
 	 *
-	 * @param object $site The website.
 	 * @param string $email notification email.
+	 * @param string $subject subject.
 	 * @param string $mail_content email content.
-	 * @param bool   $text_format Text format.
+	 * @param bool   $plain_text Text format.
 	 */
-	public static function send_websites_health_status_notification( $site, $email, $mail_content, $text_format ) {
+	public static function send_websites_health_status_notification( $email, $subject, $mail_content, $plain_text ) {
 
-		if ( $text_format ) {
+		if ( $plain_text ) {
 			$content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
 		} else {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: websites health status :: send mail to ' . $email );
-
-			$formated_content = MainWP_Format::format_email(
-				$email,
-				$mail_content,
-				''
-			);
-
+			MainWP_Logger::instance()->debug( 'CRON :: sites health :: send mail to [' . $email . ']' );
 			self::send_wp_mail(
 				$email,
-				'MainWP Site Health Alert for ' . $site->url,
-				$formated_content,
+				$subject,
+				$mail_content,
 				$content_type
 			);
 		}

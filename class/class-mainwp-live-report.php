@@ -857,16 +857,16 @@ class MainWP_Live_Reports {
 		if ( null !== $website ) {
 			$tokens                = MainWP_Live_Reports_Responder_DB::get_instance()->get_tokens();
 			$site_tokens           = MainWP_Live_Reports_Responder_DB::get_instance()->get_site_tokens( $website['url'] );
-			$replace_tokens_values = array();
+			$repl_tokens_values = array();
 			foreach ( $tokens as $token ) {
-				$replace_tokens_values[ '[' . $token->token_name . ']' ] = isset( $site_tokens[ $token->id ] ) ? $site_tokens[ $token->id ]->token_value : '';
+				$repl_tokens_values[ '[' . $token->token_name . ']' ] = isset( $site_tokens[ $token->id ] ) ? $site_tokens[ $token->id ]->token_value : '';
 			}
 
 			if ( $get_piwik_tokens ) {
 				$piwik_tokens = self::piwik_data( $website['id'], $report->date_from, $report->date_to );
 				if ( is_array( $piwik_tokens ) ) {
 					foreach ( $piwik_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
@@ -875,7 +875,7 @@ class MainWP_Live_Reports {
 				$ga_tokens = self::ga_data( $website['id'], $report->date_from, $report->date_to, $get_ga_chart );
 				if ( is_array( $ga_tokens ) ) {
 					foreach ( $ga_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
@@ -884,7 +884,7 @@ class MainWP_Live_Reports {
 				$aum_tokens = self::aum_data( $website['id'], $report->date_from, $report->date_to );
 				if ( is_array( $aum_tokens ) ) {
 					foreach ( $aum_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
@@ -893,7 +893,7 @@ class MainWP_Live_Reports {
 				$wcomstatus_tokens = self::woocomstatus_data( $website['id'], $report->date_from, $report->date_to );
 				if ( is_array( $wcomstatus_tokens ) ) {
 					foreach ( $wcomstatus_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
@@ -901,7 +901,7 @@ class MainWP_Live_Reports {
 				$pagespeed_tokens = self::pagespeed_tokens( $website['id'], $report->date_from, $report->date_to );
 				if ( is_array( $pagespeed_tokens ) ) {
 					foreach ( $pagespeed_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
@@ -910,20 +910,20 @@ class MainWP_Live_Reports {
 				$brokenlinks_tokens = self::brokenlinks_tokens( $website['id'], $report->date_from, $report->date_to );
 				if ( is_array( $brokenlinks_tokens ) ) {
 					foreach ( $brokenlinks_tokens as $token => $value ) {
-						$replace_tokens_values[ '[' . $token . ']' ] = $value;
+						$repl_tokens_values[ '[' . $token . ']' ] = $value;
 					}
 				}
 			}
 
-			$replace_tokens_values['[report.daterange]'] = MainWP_Utility::format_timestamp( $report->date_from ) . ' - ' . MainWP_Utility::format_timestamp( $report->date_to );
+			$repl_tokens_values['[report.daterange]'] = MainWP_Utility::format_timestamp( $report->date_from ) . ' - ' . MainWP_Utility::format_timestamp( $report->date_to );
 
-			$replace_tokens_values = apply_filters( 'mainwp_client_reports_custom_tokens', $replace_tokens_values, $report );
+			$repl_tokens_values = apply_filters( 'mainwp_client_reports_custom_tokens', $repl_tokens_values, $report );
 
 			$report_header = $report->header;
 			$report_body   = $report->body;
 			$report_footer = $report->footer;
 
-			$result = self::parse_report_content( $report_header, $replace_tokens_values, $allowed_tokens );
+			$result = self::parse_report_content( $report_header, $repl_tokens_values, $allowed_tokens );
 
 			if ( ! empty( $allowed_tokens ) ) {
 				$newarrayallowedtokens = array();
@@ -941,14 +941,14 @@ class MainWP_Live_Reports {
 			$filtered_header                    = $result['filtered_content'];
 			unset( $result );
 
-			$result                           = self::parse_report_content( $report_body, $replace_tokens_values, $allowed_tokens );
+			$result                           = self::parse_report_content( $report_body, $repl_tokens_values, $allowed_tokens );
 			self::$buffer['sections']['body'] = $result['sections'];
 			$sections['body']                 = $result['sections'];
 			$other_tokens['body']             = $result['other_tokens'];
 			$filtered_body                    = $result['filtered_content'];
 			unset( $result );
 
-			$result = self::parse_report_content( $report_footer, $replace_tokens_values, $allowed_tokens );
+			$result = self::parse_report_content( $report_footer, $repl_tokens_values, $allowed_tokens );
 
 			self::$buffer['sections']['footer'] = $result['sections'];
 			$sections['footer']                 = $result['sections'];

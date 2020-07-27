@@ -42,7 +42,7 @@ class MainWP_Connect {
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
-	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -228,7 +228,6 @@ class MainWP_Connect {
 		if ( 200 == $value ) {
 			return true;
 		}
-
 		$ignored_code = get_option( 'mainwp_ignore_HTTP_response_status', '' );
 		$ignored_code = trim( $ignored_code );
 		if ( ! empty( $ignored_code ) ) {
@@ -1156,20 +1155,7 @@ class MainWP_Connect {
 		if ( $updating_website ) {
 			do_action( 'mainwp_website_updated', $website, $type, $list, $information );
 			if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
-				$result          = MainWP_Monitoring_Handler::handle_check_website( $website );
-				$http_code       = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-				$online_detected = self::check_ignored_http_code( $http_code );
-				if ( defined( 'DOING_CRON' ) && DOING_CRON && ! $online_detected ) {
-					$sitesHttpChecks = get_option( 'mainwp_automaticUpdate_httpChecks' );
-					if ( ! is_array( $sitesHttpChecks ) ) {
-						$sitesHttpChecks = array();
-					}
-
-					if ( ! in_array( $website->id, $sitesHttpChecks ) ) {
-						$sitesHttpChecks[] = $website->id;
-						MainWP_Utility::update_option( 'mainwp_automaticUpdate_httpChecks', $sitesHttpChecks );
-					}
-				}
+				MainWP_Monitoring_Handler::handle_check_website( $website );
 			}
 		}
 

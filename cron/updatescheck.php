@@ -10,5 +10,7 @@
 // include cron/bootstrap.php.
 require_once 'bootstrap.php';
 
-// fire off mainWP->mainwp_cronupdatescheck_action.
-$mainWP->mainwp_cronupdatescheck_action();
+if ( isset( $mainWP ) ) {
+	// fire off mainWP->mainwp_cronupdatescheck_action.
+	$mainWP->mainwp_cronupdatescheck_action();
+}

@@ -132,11 +132,14 @@ class MainWP_System_Utility {
 	 * Method get_mainwp_dir()
 	 *
 	 * Get the MainWP directory,
-	 * if it doesn't exite create it.
+	 * if it doesn't exist create it.
+	 *
+	 * @param string|null $dir mainwp sub diectories.
+	 * @param boolean     $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $dir, $url
 	 */
-	public static function get_mainwp_dir() {
+	public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
 		$hasWPFileSystem = self::get_wp_file_system();
 		global $wp_filesystem;
 
@@ -150,7 +153,46 @@ class MainWP_System_Utility {
 			$wp_filesystem->touch( $dir . 'index.php' );
 		}
 
+		if ( null != $subdir && ! stristr( $subdir, '..' ) ) {
+			$newdir = $dir . $subdir . DIRECTORY_SEPARATOR;
+			$url    = $url . $subdir . '/';
+
+			if ( ! $wp_filesystem->exists( $newdir ) ) {
+				$wp_filesystem->mkdir( $newdir, 0777, true );
+			}
+
+			if ( $direct_access ) {
+				if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
+					$wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
+				}
+				if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+					$wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
+				}
+			} else {
+				if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
+					$wp_filesystem->put_contents( trailingslashit( $newdir ) . '.htaccess', 'deny from all' );
+				}
+			}
+			return array( $newdir, $url );
+		}
+
 		return array( $dir, $url );
+	}
+
+	/**
+	 * Method get_mainwp_sub_dir()
+	 *
+	 * Get the MainWP directory,
+	 * if it doesn't exist create it.
+	 *
+	 * @param string|null $dir mainwp sub diectories.
+	 * @param boolean     $direct_access Return true if Direct access file system. Default: false.
+	 *
+	 * @return string $dir mainwp sub-directory.
+	 */
+	public static function get_mainwp_sub_dir( $subdir = null, $direct_access = false ) {
+		$dirs = self::get_mainwp_dir( $subdir, $direct_access );
+		return $dirs[0];
 	}
 
 	/**
@@ -409,4 +451,42 @@ class MainWP_System_Utility {
 		return $setup_conf_loc;
 	}
 
+	/**
+	 * Method get_tokens_site_values()
+	 *
+	 * Get values of site tokens.
+	 */
+	public static function get_tokens_site_values( $site ) {
+
+		$tokens_values = array(
+			'[site.name]' => $site->name,
+			'[site.url]'  => $site->url,
+		);
+
+		$site_info = json_decode( MainWP_DB::instance()->get_website_option( $site, 'site_info' ), true );
+		if ( is_array( $site_info ) ) {
+			$map_site_tokens = array(
+				'client.site.version' => 'wpversion',   // Displays the WP version of the child site,
+				'client.site.theme'   => 'themeactivated', // Displays the currently active theme for the child site
+				'client.site.php'     => 'phpversion', // Displays the PHP version of the child site
+				'client.site.mysql'   => 'mysql_version', // Displays the MySQL version of the child site
+			);
+			foreach ( $map_site_tokens as $tok => $val ) {
+				$tokens_value[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
+			}
+		}
+
+		return $tokens_values;
+	}
+
+	/**
+	 * Method replace_tokens_values()
+	 *
+	 * Replace site tokens.
+	 */
+	public static function replace_tokens_values( $string, $replace_tokens ) {
+		$tokens = array_keys( $replace_tokens );
+		$values = array_values( $replace_tokens );
+		return str_replace( $tokens, $values, $string );
+	}
 }

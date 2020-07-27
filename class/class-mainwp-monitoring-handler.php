@@ -9,25 +9,26 @@ namespace MainWP\Dashboard;
 
 /**
  * MainWP Monitoring Sites Handler.
+ *
+ * This class handles the $_POST of Settings Options.
  */
 class MainWP_Monitoring_Handler {
 
 	/**
-	 * Method handle_settings_post().
-	 *
-	 * This class handles the $_POST of Settings Options.
+	 * Manage the settings post.
 	 *
 	 * @uses MainWP_Utility::update_option()
 	 *
-	 * @return boolean True|False Posts On True.
+	 * @return bool True on success, false on failure.
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			if ( MainWP_System_Utility::is_admin() ) {
-				MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 0 : 1 ) );
-				$val = intval( $_POST['mainwp_frequencySitesChecking'] );
+				MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_disableSitesChecking'] ) ? 1 : 0 ) );
+				$val = intval( $_POST['mainwp_frequency_sitesChecking'] );
 				MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
-				$val = intval( $_POST['mainwp_sitehealthThreshold'] );
+				MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
+				$val = intval( $_POST['mainwp_site_healthThreshold'] );
 				MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
 				return true;
 			}
@@ -36,11 +37,9 @@ class MainWP_Monitoring_Handler {
 	}
 
 	/**
-	 * Method check to purge monitoring records.
+	 * Check to purge monitoring records.
 	 *
-	 * Check to clean records.
-	 *
-	 * @return bool True|False whether clean records.
+	 * @return bool True for cleaning.
 	 */
 	public static function check_to_purge_records() {
 		$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
@@ -54,13 +53,11 @@ class MainWP_Monitoring_Handler {
 	}
 
 	/**
-	 * Method handle_check_website()
+	 * Check a website HTTP header status.
 	 *
-	 * Handle check website online status.
+	 * @param object $website Object containing the website info.
 	 *
-	 * @param object $website The website.
-	 *
-	 * @return mixed $result Result of checking.
+	 * @return array Check result.
 	 */
 	public static function handle_check_website( $website ) {
 
@@ -71,13 +68,13 @@ class MainWP_Monitoring_Handler {
 		}
 
 		$new_code        = ( is_array( $result ) && isset( $result['httpCode'] ) ) ? $result['httpCode'] : 0;
-		$online_detected = MainWP_Connect::check_ignored_http_code( $http_code );
+		$online_detected = MainWP_Connect::check_ignored_http_code( $new_code );
 		$time            = time();
-		// computes duration before update website checking values.
+		// Computes duration before update website checking values.
 		$duration    = self::get_duration_for_status( $website, $time );
 		$new_noticed = self::get_http_noticed_status_value( $website, $new_code );
 
-		// to save last status.
+		// Save last status.
 		MainWP_DB::instance()->update_website_values(
 			$website->id,
 			array(
@@ -88,55 +85,48 @@ class MainWP_Monitoring_Handler {
 			)
 		);
 
-		// to save status.
+		// Save status.
 		MainWP_DB_Monitoring::instance()->insert_website_status(
 			array(
-				'wpid'             => $website->id,
-				'timestamp_status' => $time,
-				'http_code'        => $new_code,
-				'status'           => self::get_site_checking_status( $new_code ),
-			),
-			$duration
+				'wpid'            => $website->id,
+				'event_timestamp' => $time,
+				'http_code'       => $new_code,
+				'status'          => self::get_site_checking_status( $new_code ),
+				'duration'        => $duration,
+			)
 		);
 
 		return $result;
 	}
 
 	/**
-	 * Method get_http_noticed_status()
+	 * Get a new HTTP status notice.
 	 *
-	 * Get new http status noticed value.
+	 * @param object $website  Object containing the website info.
+	 * @param int    $new_code The new HTTP code value.
 	 *
-	 * @param object $website The website.
-	 * @param int    $new_code The new http code value.
-	 *
-	 * @return int $noticed_value new noticed value for status.
+	 * @return int $noticed_value New HTTP status.
 	 */
 	private static function get_http_noticed_status_value( $website, $new_code ) {
 		$old_code      = $website->http_response_code;
 		$noticed_value = $website->http_code_noticed;
-
-		if ( 200 == $old_code && 200 != $new_code ) {
-			if ( 1 == $noticed_value ) {
-				$noticed_value = 0; // if new offline and noticed then update to notice again.
-			}
+		if ( 200 != $new_code && $old_code != $new_code ) {
+			$noticed_value = 0;
 		} elseif ( 200 != $old_code && 200 == $new_code ) {
 			if ( 0 == $noticed_value ) {
-				$noticed_value = 1; // if online and not noticed then update to abort notice.
+				$noticed_value = 1;
 			}
 		}
 		return $noticed_value;
 	}
 
 	/**
-	 * Method get_health_noticed_status_value()
+	 * Get new site health value.
 	 *
-	 * Get new site health noticed value.
-	 *
-	 * @param object $website The website.
+	 * @param object $website    Object containing the website info.
 	 * @param object $new_health New site health value.
 	 *
-	 * @return int|null $noticed_value new noticed value for site health status or failure.
+	 * @return int $noticed_value new site health status.
 	 */
 	public static function get_health_noticed_status_value( $website, $new_health ) {
 
@@ -150,25 +140,23 @@ class MainWP_Monitoring_Handler {
 
 		if ( 80 <= $old_value && 80 > $new_health ) {
 			if ( 1 == $noticed_value ) {
-				$noticed_value = 0; // if new health status and noticed then update to notice again.
+				$noticed_value = 0;
 			}
 		} elseif ( 80 > $old_value && 80 <= $new_health ) {
 			if ( 1 == $noticed_value ) {
-				$noticed_value = 0; // 0: to notice.
+				$noticed_value = 0;
 			}
 		}
 		return $noticed_value;
 	}
 
 	/**
-	 * Method get_duration_for_status()
-	 *
 	 * Computes duration status value.
 	 *
-	 * @param object $website The Website.
+	 * @param object $website Object containing the website info.
 	 * @param int    $time The current compution time.
 	 *
-	 * @return int $duration duration value.
+	 * @return int Duration value.
 	 */
 	private static function get_duration_for_status( $website, $time ) {
 
@@ -202,9 +190,7 @@ class MainWP_Monitoring_Handler {
 	}
 
 	/**
-	 * Method get_site_checking_status()
-	 *
-	 * To notice sites offline status.
+	 * Determin if site is up or down based on HTTP code.
 	 *
 	 * @param int $http_code HTTP code.
 	 */
@@ -214,9 +200,7 @@ class MainWP_Monitoring_Handler {
 
 
 	/**
-	 * Method ajax_check_status_site()
-	 *
-	 * Check status Child Site via ajx.
+	 * Check child site status via AJAX.
 	 */
 	public static function ajax_check_status_site() {
 		$website = null;
@@ -241,75 +225,135 @@ class MainWP_Monitoring_Handler {
 
 
 	/**
-	 * Method notice_sites_offline_status()
+	 * Basic site uptime monitoring.
 	 *
-	 * To notice sites offline status.
-	 *
-	 * @param string $email notification email.
-	 * @param bool   $text_format Text format.
+	 * @param array  $websites       Array containing the websites.
+	 * @param string $admin_email    Notification email.
+	 * @param string $email_settings Email settings.
+	 * @param bool   $plain_text     Determines if the plain text format should be used.
+	 * @param bool   $general        Determines if it's a general notification.
+	 * @param bool   $to_admin Send to admin or not.
 	 */
-	public static function notice_sites_offline_status( $email, $text_format ) {
-		$offlineSites = MainWP_DB_Common::instance()->get_websites_offline_status_to_send_notice();
-		MainWP_Logger::instance()->info( 'CRON :: check sites status :: notice site http :: found ' . ( $offlineSites ? count( $offlineSites ) : 0 ) );
-		if ( ! empty( $offlineSites ) ) {
-			foreach ( $offlineSites as $site ) {
-				$addition_emails = $site->monitoring_notification_emails;
-				if ( ! empty( $addition_emails ) ) {
-					$$email .= ',' . $addition_emails; // send to addition emails too.
-				}
+	public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $general = true, $to_admin = false ) {
 
-				$mail_content = MainWP_Format::get_format_email_offline_site( $site, $text_format );
-				if ( ! empty( $mail_content ) ) {
-					MainWP_Notification::send_websites_status_notification( $site, $email, $mail_content, $text_format );
-					// update noticed value.
-					MainWP_DB::instance()->update_website_values(
-						$site->id,
-						array(
-							'http_code_noticed' => 1, // noticed.
-						)
-					);
+		$heading = $email_settings['heading'];
+		$subject = $email_settings['subject'];
 
-					usleep( 200000 );
-				}
+		if ( $to_admin && ! empty( $admin_email ) ) {
+			$mail_content = MainWP_Notification_Template::instance()->get_template_html(
+				'emails/mainwp-uptime-monitoring-email.php',
+				array(
+					'sites'   => $websites,
+					'heading' => $heading,
+				)
+			);
+			if ( ! empty( $mail_content ) ) {
+				MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text );
+				usleep( 100000 );
 			}
-			return true;
+			return;
 		}
-		return false;
+
+		// for individual notification, one site loop.
+		foreach ( $websites as $site ) {
+			$addition_emails = $site->monitoring_notification_emails;
+			if ( ! empty( $addition_emails ) ) {
+				$email .= ',' . $addition_emails; // send to addition emails too.
+			}
+
+			$mail_content = MainWP_Notification_Template::instance()->get_template_html(
+				'emails/mainwp-uptime-monitoring-email.php',
+				array(
+					'current_email_site' => $site, // support tokens process.
+					'heading'            => $heading,
+				)
+			);
+
+			if ( ! empty( $email_settings['recipients'] ) ) {
+				$email .= ',' . $email_settings['recipients']; // send to recipients.
+			}
+
+			if ( ! empty( $mail_content ) ) {
+				MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
+				// update noticed value.
+				MainWP_DB::instance()->update_website_values(
+					$site->id,
+					array(
+						'http_code_noticed' => 1, // noticed.
+					)
+				);
+				usleep( 100000 );
+			}
+		}
 	}
 
 	/**
-	 * Method notice_sites_site_health_threshold()
+	 * Site health monitoring.
 	 *
-	 * To notice site health.
-	 *
-	 * @param string $email notification email.
-	 * @param bool   $text_format Text format.
+	 * @param string $email_settings Email settings.
+	 * @param array  $websites       Array containing the websites.
+	 * @param string $email          Notification email.
+	 * @param bool   $plain_text     Determines if the plain text format should be used.
+	 * @param bool   $general        Determines if it's a general notification.
+	 * @param bool   $to_admin Send to admin or not.
 	 */
-	public static function notice_sites_site_health_threshold( $email, $text_format ) {
-		$globalThreshold = get_option( 'mainwp_sitehealthThreshold', 80 );
-		$healthSites     = MainWP_DB::instance()->get_websites_to_notice_health_threshold( $globalThreshold );
-		MainWP_Logger::instance()->info( 'CRON :: check sites status :: notice site health :: found ' . ( $healthSites ? count( $healthSites ) : 0 ) );
-		if ( ! empty( $healthSites ) ) {
-			foreach ( $healthSites as $site ) {
+	public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) {
+
+		$admin_email = MainWP_DB_Common::instance()->get_user_notification_email();
+
+		$heading = $email_settings['heading'];
+		$subject = $email_settings['subject'];
+
+		if ( $to_admin && ! empty( $admin_email ) ) {
+			$mail_content = MainWP_Notification_Template::instance()->get_template_html(
+				'emails/mainwp-site-health-monitoring-email.php',
+				array(
+					'sites'   => $websites,
+					'heading' => $heading,
+				)
+			);
+			if ( ! empty( $mail_content ) ) {
+				$subject = $email_settings['subject'];
+				MainWP_Notification::send_websites_health_status_notification( $admin_email, $subject, $mail_content, $plain_text );
+				usleep( 100000 );
+			}
+			return;
+		}
+
+		$email = $general ? $admin_email : '';
+
+		foreach ( $websites as $site ) {
+
+			if ( ! $general ) {
 				$addition_emails = $site->monitoring_notification_emails;
 				if ( ! empty( $addition_emails ) ) {
-					$$email .= ',' . $addition_emails; // send to addition emails too.
-				}
-				$mail_content = MainWP_Format::get_format_email_health_status_sites( $site, $text_format );
-				if ( ! empty( $mail_content ) ) {
-					MainWP_Notification::send_websites_health_status_notification( $site, $email, $mail_content, $text_format );
-					// update noticed value.
-					MainWP_DB::instance()->update_website_sync_values(
-						$site->id,
-						array(
-							'health_site_noticed' => 1, // as noticed.
-						)
-					);
-					usleep( 200000 );
+					$email .= ',' . $addition_emails; // send to addition emails too.
 				}
 			}
-			return true;
+
+			$mail_content = MainWP_Notification_Template::instance()->get_template_html(
+				'emails/mainwp-site-health-monitoring-email.php',
+				array(
+					'current_email_site' => $site,  // support tokens process.
+					'heading'            => $heading,
+				)
+			);
+
+			if ( ! empty( $email_settings['recipients'] ) ) {
+				$email .= ',' . $email_settings['recipients']; // send to recipients.
+			}
+
+			if ( ! empty( $email ) && ! empty( $mail_content ) ) {
+				MainWP_Notification::send_websites_health_status_notification( $email, $subject, $mail_content, $plain_text );
+				// update noticed value.
+				MainWP_DB::instance()->update_website_sync_values(
+					$site->id,
+					array(
+						'health_site_noticed' => 1, // as noticed.
+					)
+				);
+				usleep( 100000 );
+			}
 		}
-		return false;
 	}
 }

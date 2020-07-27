@@ -415,8 +415,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -429,7 +429,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Update plugin or theme.
 	 */
-	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- not quite complex method.
+	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! isset( $_POST['type'] ) ) {
 			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );

@@ -629,7 +629,8 @@ class MainWP_Manage_Sites_List_Table {
 			MainWP_DB::free_result( $total_websites );
 		}
 
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
+		$params['extra_view'] = array( 'favi_icon', 'health_site_status' );
+		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_search_websites_for_current_user( $params ) );
 
 		$site_ids = array();
 		while ( $websites && ( $site = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1117,9 +1118,8 @@ class MainWP_Manage_Sites_List_Table {
 				$total_plugin_upgrades = 0;
 				$total_theme_upgrades  = 0;
 
-				$site_options  = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'health_site_status' ) );
-				$wp_upgrades   = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
-				$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
+				$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+				$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
 
 				if ( $website['is_ignoreCoreUpdates'] ) {
 					$wp_upgrades = array();
@@ -1223,9 +1223,10 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
-				$hstatus  = MainWP_Utility::get_site_health( $health_status );
-				$hval     = $hstatus['val'];
-				$critical = $hstatus['critical'];
+				$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
+				$hstatus       = MainWP_Utility::get_site_health( $health_status );
+				$hval          = $hstatus['val'];
+				$critical      = $hstatus['critical'];
 
 				if ( 80 <= $hval && 0 == $critical ) {
 					$h_color = 'green';
@@ -1409,9 +1410,8 @@ class MainWP_Manage_Sites_List_Table {
 		$total_plugin_upgrades = 0;
 		$total_theme_upgrades  = 0;
 
-		$site_options  = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'health_site_status' ) );
-		$wp_upgrades   = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
-		$health_status = isset( $site_options['health_site_status'] ) ? json_decode( $site_options['health_site_status'], true ) : array();
+		$site_options = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+		$wp_upgrades  = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
 
 		if ( $website['is_ignoreCoreUpdates'] ) {
 			$wp_upgrades = array();
@@ -1520,9 +1520,10 @@ class MainWP_Manage_Sites_List_Table {
 			$t_color = 'green';
 		}
 
-		$hstatus  = MainWP_Utility::get_site_health( $health_status );
-		$hval     = $hstatus['val'];
-		$critical = $hstatus['critical'];
+		$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
+		$hstatus       = MainWP_Utility::get_site_health( $health_status );
+		$hval          = $hstatus['val'];
+		$critical      = $hstatus['critical'];
 
 		if ( 80 <= $hval && 0 == $critical ) {
 			$h_color = 'green';

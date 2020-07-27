@@ -343,7 +343,7 @@ class MainWP_Twitter {
 	 *
 	 * @return string Tweet to send.
 	 */
-	public static function get_twit_to_send( $what, $twId = 0 ) { // phpcs:ignore -- not quite complex method.
+	public static function get_twit_to_send( $what, $twId = 0 ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$filters = self::get_filter();
 

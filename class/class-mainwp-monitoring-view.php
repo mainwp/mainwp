@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Monotoring Sites View.
+ * MainWP monotoring sites view
  *
  * @package MainWP/Dashboard
  */
@@ -8,35 +8,35 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Monitoring Sites View.
+ * MainWP monotoring sites view
  */
 class MainWP_Monitoring_View {
 
 	/**
-	 * Method render_settings()
-	 *
 	 * Render monitoring sites settings.
 	 */
 	public static function render_settings() {
 
 		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
-		$sitehealthThreshold    = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
+
+		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 		?>
 		<h3 class="ui dividing header">
-			<?php esc_html_e( 'Sites Monitoring', 'mainwp' ); ?>
+			<?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
 		</h3>
 		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Disable Child sites monitoring', 'mainwp' ); ?></label>
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
-				<input type="checkbox" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo ( 0 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
+				<input type="checkbox" name="mainwp_disableSitesChecking" id="mainwp_disableSitesChecking" <?php echo ( 1 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
 			</div>
 		</div>
 
 		<div class="ui grid field" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Check interval', 'mainwp' ); ?></label>
-			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Check interval', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<select name="mainwp_frequencySitesChecking" id="mainwp_frequencySitesChecking" class="ui dropdown">
+			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select preferred checking interval.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<select name="mainwp_frequency_sitesChecking" id="mainwp_frequency_sitesChecking" class="ui dropdown">
 					<option value="5" <?php echo ( 5 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 5 minutes', 'mainwp' ); ?></option>
 					<option value="10" <?php echo ( 10 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 10 minutes', 'mainwp' ); ?></option>
 					<option value="30" <?php echo ( 30 == $frequencySitesChecking ? 'selected' : '' ); ?>><?php esc_html_e( 'Every 30 minutes', 'mainwp' ); ?></option>
@@ -48,15 +48,25 @@ class MainWP_Monitoring_View {
 				</select>
 			</div>
 		</div>
-		<div class="ui grid field" <?php echo $disableSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="monitoring">
+		<h3 class="ui dividing header">
+			<?php esc_html_e( 'Site Health Monitoring', 'mainwp' ); ?>
+		</h3>
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Site Health monitoring', 'mainwp' ); ?></label>
+			<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring">
+				<input type="checkbox" name="mainwp_disable_sitesHealthMonitoring" id="mainwp_disable_sitesHealthMonitoring" <?php echo ( 1 == $disableSitesHealthMonitoring ? '' : 'checked="true"' ); ?>/>
+			</div>
+		</div>
+
+		<div class="ui grid field" <?php echo $disableSitesHealthMonitoring ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold', 'mainwp' ); ?></label>
-			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
-				<select name="mainwp_sitehealthThreshold" id="mainwp_sitehealthThreshold" class="ui dropdown">
+			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set preferred site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<select name="mainwp_site_healthThreshold" id="mainwp_site_healthThreshold" class="ui dropdown">
 					<option value="80" <?php echo ( ( 80 == $sitehealthThreshold || 0 == $sitehealthThreshold ) ? 'selected' : '' ); ?>><?php esc_html_e( 'Should be improved', 'mainwp' ); ?></option>
 					<option value="100" <?php echo ( 100 == $sitehealthThreshold ? 'selected' : '' ); ?>><?php esc_html_e( 'Good', 'mainwp' ); ?></option>
 				</select>
 			</div>
-		</div>		
+		</div>
 		<?php
 	}
 

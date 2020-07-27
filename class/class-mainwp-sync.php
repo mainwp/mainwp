@@ -118,7 +118,7 @@ class MainWP_Sync {
 	 *
 	 * @return mixed do_action( 'mainwp-site-synced', $pWebsite, $information ).
 	 */
-	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- complex method.
+	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$emptyArray        = wp_json_encode( array() );
 		$websiteValues     = array(
 			'directories'          => $emptyArray,
@@ -409,14 +409,8 @@ class MainWP_Sync {
 						$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 						global $wp_filesystem;
 
-						$dirs     = MainWP_System_Utility::get_mainwp_dir();
-						$iconsDir = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
-						if ( $hasWPFileSystem && ! $wp_filesystem->is_dir( $iconsDir ) ) {
-							$wp_filesystem->mkdir( $iconsDir, 0777, true );
-						}
-						if ( $hasWPFileSystem && ! $wp_filesystem->exists( $iconsDir . 'index.php' ) ) {
-							$wp_filesystem->touch( $iconsDir . 'index.php' );
-						}
+						$dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+						$iconsDir = $dirs[0];
 						$filename = basename( $information['faviIconUrl'] );
 						$filename = strtok( $filename, '?' );
 						if ( $filename ) {

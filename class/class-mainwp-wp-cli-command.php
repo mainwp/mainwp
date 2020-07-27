@@ -255,7 +255,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
 	 */
-	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- complex method.
+	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
 		if ( 0 < count( $args ) ) {
 			$args_exploded = explode( ',', $args[0] );
@@ -518,7 +518,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
 	 */
-	public function theme( $args, $assoc_args ) { // phpcs:ignore -- complex function.
+	public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
 		if ( count( $args ) > 0 ) {
 			$args_exploded = explode( ',', $args[0] );

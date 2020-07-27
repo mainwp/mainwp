@@ -71,7 +71,7 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 * @global string $term
 	 * @global string $wp_version
 	 */
-	public function prepare_items() { // phpcs:ignore -- complex method.
+	public function prepare_items() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include ABSPATH . 'wp-admin/includes/plugin-install.php';
 
 		global $tab; // required.
@@ -110,15 +110,15 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 		}
 
 		$args = array(
-			'page'               => $paged,
-			'per_page'           => $per_page,
-			'fields'             => array(
-				'last_updated'       => true,
-				'icons'              => true,
-				'active_installs'    => true,
+			'page'              => $paged,
+			'per_page'          => $per_page,
+			'fields'            => array(
+				'last_updated'    => true,
+				'icons'           => true,
+				'active_installs' => true,
 			),
-			'locale'             => get_locale(),
-			'installed_plugins'  => array(),
+			'locale'            => get_locale(),
+			'installed_plugins' => array(),
 		);
 
 		switch ( $tab ) {
@@ -186,8 +186,8 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		$this->set_pagination_args(
 			array(
-				'total_items'    => $api->info['results'],
-				'per_page'       => $args['per_page'],
+				'total_items' => $api->info['results'],
+				'per_page'    => $args['per_page'],
 			)
 		);
 
@@ -401,28 +401,28 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 	 */
 	public function display_rows() {
 		$plugins_allowedtags = array(
-			'a'            => array(
+			'a'       => array(
 				'href'   => array(),
 				'title'  => array(),
 				'target' => array(),
 			),
-			'abbr'         => array( 'title' => array() ),
-			'acronym'      => array( 'title' => array() ),
-			'code'         => array(),
-			'pre'          => array(),
-			'em'           => array(),
-			'strong'       => array(),
-			'ul'           => array(),
-			'ol'           => array(),
-			'li'           => array(),
-			'p'            => array(),
-			'br'           => array(),
+			'abbr'    => array( 'title' => array() ),
+			'acronym' => array( 'title' => array() ),
+			'code'    => array(),
+			'pre'     => array(),
+			'em'      => array(),
+			'strong'  => array(),
+			'ul'      => array(),
+			'ol'      => array(),
+			'li'      => array(),
+			'p'       => array(),
+			'br'      => array(),
 		);
 
 		$plugins_group_titles = array(
-			'Performance'    => _x( 'Performance', 'Plugin installer group title' ),
-			'Social'         => _x( 'Social', 'Plugin installer group title' ),
-			'Tools'          => _x( 'Tools', 'Plugin installer group title' ),
+			'Performance' => _x( 'Performance', 'Plugin installer group title' ),
+			'Social'      => _x( 'Social', 'Plugin installer group title' ),
+			'Tools'       => _x( 'Tools', 'Plugin installer group title' ),
 		);
 
 		$group = null;

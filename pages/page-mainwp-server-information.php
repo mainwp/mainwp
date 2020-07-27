@@ -686,8 +686,17 @@ class MainWP_Server_Information {
 			'Check for available updates' => array( 'mainwp_updatescheck_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
 			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
 			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
-			'Check childs sites'          => array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', __( 'Once every minute', 'mainwp' ) ),
 		);
+
+		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
+		if ( ! $disableSitesMonitoring ) {
+			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', __( 'Once every minute', 'mainwp' ) );
+		}
+
+		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		if ( ! $disableHealthChecking ) {
+			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', __( 'Once hourly', 'mainwp' ) );
+		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
 			$cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', __( 'Once hourly', 'mainwp' ) );

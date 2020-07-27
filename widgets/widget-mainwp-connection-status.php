@@ -38,7 +38,7 @@ class MainWP_Connection_Status {
 	 * Method render_sites()
 	 *
 	 * Build the Connection Status Widget
-	 * Displays $SYNCERRORS|$DOWN|$UP|$ALL.
+	 * Displays $SYNCERRORS|$UP|$ALL.
 	 */
 	public static function render_sites() { // phpcs:ignore -- complex method.
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -54,11 +54,10 @@ class MainWP_Connection_Status {
 		$count_connected    = 0;
 		$count_disconnected = 0;
 
-		// Loop 4 times, first we show the conflicts, then we show the down sites, then we show the up sites.
+		// Loop 3 times.
 		$SYNCERRORS = 0;
-		$DOWN       = 1;
-		$UP         = 2;
-		$ALL        = 3;
+		$UP         = 1;
+		$ALL        = 2;
 
 		$html_online_sites = '';
 		$html_other_sites  = '';
@@ -66,7 +65,7 @@ class MainWP_Connection_Status {
 
 		$disconnect_site_ids = array();
 
-		for ( $j = 0; $j < 4; $j ++ ) {
+		for ( $j = 0; $j < 3; $j ++ ) {
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty( $website ) ) {
@@ -74,8 +73,7 @@ class MainWP_Connection_Status {
 				}
 
 				$hasSyncErrors = ( '' != $website->sync_errors );
-				$isDown        = ( ! $hasSyncErrors && ( -1 == $website->offline_check_result ) );
-				$isUp          = ( ! $hasSyncErrors && ! $isDown );
+				$isUp          = ! $hasSyncErrors;
 				$md5Connection = ( 1 == $website->nossl );
 
 				if ( $j != $ALL ) {
@@ -84,13 +82,8 @@ class MainWP_Connection_Status {
 							continue;
 						}
 					}
-					if ( $j == $DOWN ) {
-						if ( ! $md5Connection && ! $isDown ) {
-							continue;
-						}
-					}
 					if ( $j == $UP ) {
-						if ( $md5Connection || ! $isUp ) {
+						if ( ! $isUp ) {
 							continue;
 						}
 					}

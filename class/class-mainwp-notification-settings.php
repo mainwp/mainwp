@@ -271,7 +271,7 @@ class MainWP_Notification_Settings {
 	 * Get email settings description.
 	 *
 	 * @param string $type Email notification type.
-	 * 
+	 *
 	 * @return string $email_description Email settings Description.
 	 */
 	public static function get_settings_desc( $type ) {

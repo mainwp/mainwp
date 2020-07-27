@@ -134,7 +134,7 @@ class MainWP_System_Utility {
 	 * Get the MainWP directory,
 	 * if it doesn't exist create it.
 	 *
-	 * @param string|null $dir mainwp sub diectories.
+	 * @param string|null $subdir mainwp sub diectories.
 	 * @param boolean     $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $dir, $url
@@ -452,9 +452,11 @@ class MainWP_System_Utility {
 	}
 
 	/**
-	 * Method get_tokens_site_values()
+	 * Get tokens of site.
 	 *
-	 * Get values of site tokens.
+	 * @param object $site The website.
+	 *
+	 * @return array Array of tokens.
 	 */
 	public static function get_tokens_site_values( $site ) {
 
@@ -466,10 +468,10 @@ class MainWP_System_Utility {
 		$site_info = json_decode( MainWP_DB::instance()->get_website_option( $site, 'site_info' ), true );
 		if ( is_array( $site_info ) ) {
 			$map_site_tokens = array(
-				'client.site.version' => 'wpversion',   // Displays the WP version of the child site,
-				'client.site.theme'   => 'themeactivated', // Displays the currently active theme for the child site
-				'client.site.php'     => 'phpversion', // Displays the PHP version of the child site
-				'client.site.mysql'   => 'mysql_version', // Displays the MySQL version of the child site
+				'client.site.version' => 'wpversion',   // Displays the WP version of the child site.
+				'client.site.theme'   => 'themeactivated', // Displays the currently active theme for the child site.
+				'client.site.php'     => 'phpversion', // Displays the PHP version of the child site.
+				'client.site.mysql'   => 'mysql_version', // Displays the MySQL version of the child site.
 			);
 			foreach ( $map_site_tokens as $tok => $val ) {
 				$tokens_value[ '[' . $tok . ']' ] = ( is_array( $site_info ) && isset( $site_info[ $val ] ) ) ? $site_info[ $val ] : '';
@@ -480,9 +482,13 @@ class MainWP_System_Utility {
 	}
 
 	/**
-	 * Method replace_tokens_values()
 	 *
 	 * Replace site tokens.
+	 *
+	 * @param string $string String data.
+	 * @param array  $replace_tokens array of tokens.
+	 *
+	 * @return string content with replaced tokens.
 	 */
 	public static function replace_tokens_values( $string, $replace_tokens ) {
 		$tokens = array_keys( $replace_tokens );

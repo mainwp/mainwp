@@ -36,7 +36,7 @@ class MainWP_Notification_Settings {
 	 *
 	 * @return mixed self::$instance
 	 */
-	static function instance() {
+	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}
@@ -234,7 +234,7 @@ class MainWP_Notification_Settings {
 						<?php
 						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
-						echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' ' . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+						echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
 						?>
 						</div>		
 					</div>
@@ -271,7 +271,8 @@ class MainWP_Notification_Settings {
 	 * Get email settings description.
 	 *
 	 * @param string $type Email notification type.
-	 * @param string $email_description Email settings Description.
+	 * 
+	 * @return string $email_description Email settings Description.
 	 */
 	public static function get_settings_desc( $type ) {
 		$email_description = '';
@@ -448,7 +449,7 @@ class MainWP_Notification_Settings {
 	 * Replace site tokens for settings.
 	 *
 	 * @param array  $options array of fields to find and replace tokens.
-	 * @param array  $field fields names to find.
+	 * @param array  $fields fields names to find.
 	 * @param object $website The website.
 	 *
 	 * @return array $options array of fields.

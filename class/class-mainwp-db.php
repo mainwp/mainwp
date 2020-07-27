@@ -1049,6 +1049,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int    $sslVersion SSL Version.
 	 * @param int    $disableChecking Wether or not disable sites status checking.
 	 * @param int    $checkInterval Status checking interval.
+	 * @param bool   $disableHealthChecking Disable Site health threshold.
 	 * @param int    $healthThreshold Site health threshold.
 	 * @param int    $wpe Is it WP Engine hosted site.
 	 *

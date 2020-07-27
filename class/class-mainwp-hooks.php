@@ -595,7 +595,7 @@ class MainWP_Hooks {
 	 * @return array $newdir, $url.
 	 */
 	public function hook_get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
-		return MainWP_System_Utility::get_mainwp_dir( $dir = null, $direct_access );
+		return MainWP_System_Utility::get_mainwp_dir( $dir, $direct_access );
 	}
 
 

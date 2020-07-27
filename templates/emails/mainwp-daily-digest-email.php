@@ -1,4 +1,13 @@
 <?php
+/**
+ * Email template for the Daily Digest Notification.
+ *
+ * To overwrite this template, make a new template with the same filename and place it in the ../wp-content/uploads/mainwp/templates/email/ directory.
+ *
+ * @package     MainWP/Dashboard
+ * 
+ */
+
 
 defined( 'ABSPATH' ) || exit;
 
@@ -153,7 +162,7 @@ if ( empty( $heading ) ) {
 				</tr>
 			</table>
 			<div style="text-align:center;font-size:11px;margin-bottom:30px;">
-				 <?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>.
+				<?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>.
 			</div>
 			<?php do_action( 'mainwp_daily_digest_email_footer' ); ?>
 		</div>

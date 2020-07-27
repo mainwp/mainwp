@@ -742,8 +742,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Columns for a single row.
 	 *
-	 * @param mixed  $website     Object containing the site info.
-	 * @param string $site_health Site health info.
+	 * @param mixed $website     Object containing the site info.
+	 * @param bool  $good_health Good site health info.
 	 */
 	protected function single_row_columns( $website, $good_health ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -795,8 +795,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							<span data-tooltip="<?php esc_attr_e( 'Site status appears to be online.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><i class="circular inverted green check icon"></i></span>
 							<?php
 						}
-						?>
-												
+						?>		
 					<?php else : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be offline.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
 					<?php endif; ?>
@@ -954,7 +953,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 										<?php
 									}
 									?>
-																	
 								<?php else : ?>
 									<span data-tooltip="<?php esc_attr_e( 'The site status appears to be offline.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
 								<?php endif; ?>

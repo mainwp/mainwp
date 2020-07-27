@@ -825,7 +825,7 @@ class MainWP_Manage_Sites {
 	 * @param bool  $updated_templ updated template file.
 	 */
 	public static function render_email_settings( $website, $updated, $updated_templ ) {
-		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload
+		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload.
 
 		MainWP_System_Utility::set_current_wpid( $website->id );
 

@@ -945,7 +945,6 @@ class MainWP_Manage_Sites_View {
 
 		$email_description = MainWP_Notification_Settings::get_settings_desc( $type );
 		?>
-				
 		<div class="ui segment">
 		<?php if ( $updated ) : ?>
 		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email settings saved successfully.', 'mainwp' ); ?></div>
@@ -988,7 +987,7 @@ class MainWP_Manage_Sites_View {
 				<?php
 				$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 				$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
-				echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' ' . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+				echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
 				?>
 				</div>		
 			</div>	

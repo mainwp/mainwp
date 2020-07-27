@@ -372,7 +372,7 @@ class MainWP_System_Cron_Jobs {
 			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_today_count );
 
 			$diff_day = false;
-			if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) {
+			if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) { //phpcs:ignore -- local time.
 				$diff_day = true;
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
 			}

@@ -49,9 +49,9 @@ class MainWP_Notification {
 	 *
 	 * Send HTTP response email notification.
 	 *
+	 * @param mixed $email_settings Email settings.
 	 * @param array $sites_status Websites http status.
 	 * @param bool  $plain_text Text format.
-	 * @param mixed $email_settings Email settings.
 	 * @param bool  $general Either general or individual notification.
 	 *
 	 * @return bool False if failed.
@@ -178,6 +178,7 @@ class MainWP_Notification {
 	 * Send websites status email notification.
 	 *
 	 * @param string $emails notification emails.
+	 * @param string $subject email subject.
 	 * @param string $mail_content email content.
 	 * @param bool   $plain_text Text format.
 	 */

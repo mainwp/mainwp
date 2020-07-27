@@ -52,7 +52,7 @@ class MainWP_Notification_Template {
 	 *
 	 * @return mixed self::$instance
 	 */
-	static function instance() {
+	public static function instance() {
 		if ( null == self::$instance ) {
 			self::$instance = new self();
 		}

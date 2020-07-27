@@ -796,8 +796,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							<?php
 						}
 						?>								
-					<?php else : 
-						?>
+					<?php else : ?>
 						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be offline.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
 					<?php endif; 
 					?>

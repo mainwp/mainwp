@@ -368,8 +368,8 @@ class MainWP_Settings {
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
-			$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-			$userExtension->pluginDir  = '';
+			$userExtension            = MainWP_DB_Common::instance()->get_user_extension();
+			$userExtension->pluginDir = '';
 
 			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 			if ( MainWP_System_Utility::is_admin() ) {

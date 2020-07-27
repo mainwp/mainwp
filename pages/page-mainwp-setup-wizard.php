@@ -753,7 +753,6 @@ class MainWP_Setup_Wizard {
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
 		</form>
 		<?php
-
 	}
 
 	/**

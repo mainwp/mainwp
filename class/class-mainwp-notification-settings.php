@@ -47,7 +47,6 @@ class MainWP_Notification_Settings {
 	 * Class constructor
 	 */
 	public function __construct() {
-
 	}
 
 	/**

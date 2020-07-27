@@ -825,13 +825,13 @@ class MainWP_Manage_Sites {
 	 * @param bool  $updated_templ updated template file.
 	 */
 	public static function render_email_settings( $website, $updated, $updated_templ ) {
-		$website   = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload
-	
+		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload
+
 		MainWP_System_Utility::set_current_wpid( $website->id );
 
 		$edit       = false;
 		$email_type = isset( $_GET['edit-email'] ) ? $_GET['edit-email'] : false;
-		
+
 		if ( false !== $email_type ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
 			if ( isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
@@ -1075,14 +1075,14 @@ class MainWP_Manage_Sites {
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// Edit website!
-				$updated = self::update_site_handle( $website );				
+				$updated = self::update_site_handle( $website );
 				self::render_edit_site( $websiteid, $updated );
 				return;
 			}
 		}
 		self::render_all_sites();
 	}
-	
+
 
 	/**
 	 * Method update_site_emails_settings_handle()
@@ -1107,7 +1107,7 @@ class MainWP_Manage_Sites {
 			if ( isset( $notification_emails[ $type ] ) ) {
 				$settings_emails[ $type ]               = $edit_settingEmails[ $type ];
 				$settings_emails[ $type ]['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
-				$settings_emails[ $type ]['disable'] = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.			
+				$settings_emails[ $type ]['disable']    = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
 				MainWP_DB::instance()->update_website_option( $website, 'settings_notification_emails', wp_json_encode( $settings_emails ) );
 				$updated = true;
 			}

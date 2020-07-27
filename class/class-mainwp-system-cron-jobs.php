@@ -1018,7 +1018,6 @@ class MainWP_System_Cron_Jobs {
 		foreach ( $empty_fields as $field ) {
 			MainWP_Utility::update_option( $field, '' );
 		}
-
 	}
 
 	/**

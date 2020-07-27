@@ -1001,7 +1001,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render Manage Sites Page.
 	 */
-	public static function render_manage_sites() {
+	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {

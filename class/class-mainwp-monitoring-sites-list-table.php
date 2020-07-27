@@ -796,9 +796,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							<?php
 						}
 						?>								
-					<?php else : ?>
+					<?php else : 
+						?>
 						<span data-tooltip="<?php esc_attr_e( 'Site status appears to be offline.', 'mainwp' ); ?>"  data-position="right center" data-inverted=""><a href="#"><i class="circular inverted exclamation red icon"></i></a></span>
-					<?php endif; ?>
+					<?php endif; 
+					?>
 				</td>
 				<?php
 			} elseif ( 'site' === $column_name ) {
@@ -812,9 +814,11 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				<td class="collapsing">
 				<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
 					<i class="sign in icon"></i>
-				<?php else : ?>
+				<?php else : 
+					?>
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>" data-position="right center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
-				<?php endif; ?>
+				<?php endif; 
+				?>
 				</td>
 				<?php
 			} elseif ( 'url' === $column_name ) {

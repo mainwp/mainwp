@@ -375,4 +375,18 @@ jQuery( document ).on( 'keyup', '#mainwp-select-sites-filter', function () {
     }
 } );
 
+jQuery( document ).on( 'keyup', '#mainwp-sites-menu-filter', function () {
+    var filter = jQuery(this).val().toLowerCase();
+    var parent = jQuery( '#mainwp-sites-sidebar-menu' );
+    var siteItems = parent.find( '.mainwp-site-menu-item' );
 
+    for ( var i = 0; i < siteItems.length; i++ ) {
+        var currentElement = jQuery( siteItems[i] );
+        var value = currentElement.find('label').text().toLowerCase();
+        if ( value.indexOf( filter ) > -1 ) {
+            currentElement.show();
+        } else {
+            currentElement.hide();
+        }
+    }
+} );

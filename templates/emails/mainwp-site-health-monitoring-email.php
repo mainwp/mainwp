@@ -7,7 +7,6 @@
  * @package     MainWP/Dashboard
  */
 
-
 defined( 'ABSPATH' ) || exit;
 
 if ( empty( $heading ) ) {

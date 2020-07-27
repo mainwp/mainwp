@@ -378,8 +378,60 @@ class MainWP_UI {
 			$sidebarPosition = 1;
 		}
 
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+
 		?>
-		<div class="ui segment right wide sidebar" id="mainwp-documentation-sidebar">
+		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
+			<div class="ui segment" style="margin-bottom:0px">
+				<div class="ui header"><?php esc_html_e( 'Quick Site Shortcuts', 'mainwp' ); ?></div>
+			</div>
+			<div class="ui fitted divider"></div>
+			<div class="ui segment" style="margin-bottom:0px">
+				<div class="ui mini fluid icon input">
+					<input type="text" id="mainwp-sites-menu-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
+					<i class="filter icon"></i>
+				</div>
+			</div>
+			<div class="ui fluid vertical accordion menu" id="mainwp-sites-sidebar-menu" style="margin-top:0px;border-radius:0px;box-shadow:none;">
+				<?php foreach ( $websites as $website ) : ?>
+					<div class="item mainwp-site-menu-item">
+						<a class="title">
+							<i class="dropdown icon"></i>
+							<label><?php echo $website['name']; ?></label>
+						</a>
+						<div class="content">
+							<div class="ui link tiny list">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>">
+									<i class="grid layout icon"></i>
+									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
+								</a>
+								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website['id']; ?>">
+									<i class="sync alternate icon"></i>
+									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
+								</a>
+								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website['id']; ?>">
+									<i class="edit icon"></i>
+									<?php esc_html_e( 'Edit Site', 'mainwp' ); ?>
+								</a>
+								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&scanid=' . $website['id']; ?>">
+									<i class="shield icon"></i>
+									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
+								</a>
+								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
+									<i class="sign-in icon"></i>
+									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
+								</a>
+								<a class="item" href="<?php echo esc_url( $website['url'] ); ?>">
+									<i class="globe icon"></i>
+									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
+								</a>
+							</div>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<div class="ui segment right wide help sidebar" id="mainwp-documentation-sidebar">
 			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<?php do_action( 'mainwp_help_sidebar_content' ); ?>
@@ -404,12 +456,20 @@ class MainWP_UI {
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
-					jQuery( '.ui.sidebar' ).sidebar( {
+					jQuery( '.ui.help.sidebar' ).sidebar( {
 						transition: 'overlay'
 					} );
-					jQuery( '.ui.sidebar' ).sidebar( 'toggle' );
+					jQuery( '.ui.help.sidebar' ).sidebar( 'toggle' );
 					return false;
 				} );
+				jQuery( '#mainwp-sites-sidebar' ).on( 'click', function() {
+					jQuery( '.ui.sites.sidebar' ).sidebar( {
+						transition: 'overlay'
+					} );
+					jQuery( '.ui.sites.sidebar' ).sidebar( 'toggle' );
+					return false;
+				} );
+				jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
 			} );
 			</script>
 			<?php do_action( 'mainwp_after_header' ); ?>
@@ -545,6 +605,10 @@ class MainWP_UI {
 			echo $actions;
 		}
 		?>
+		<a class="ui button basic icon" id="mainwp-sites-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Quick sites shortcuts', 'mainwp' ); ?>">
+			<i class="globe icon"></i>
+		</a>
+
 		<a class="ui button basic icon" id="mainwp-help-sidebar" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_attr_e( 'Need help?', 'mainwp' ); ?>">
 			<i class="life ring icon"></i>
 		</a>

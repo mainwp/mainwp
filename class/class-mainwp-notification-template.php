@@ -161,7 +161,7 @@ class MainWP_Notification_Template {
 					$timestamp_from_date = $now_timestamp - DAY_IN_SECONDS;
 					$timestamp_to_date   = $now_timestamp;
 				}
-				
+
 				if ( preg_match( '/\[[^\]]+\]/is', $content, $matches ) ) {
 					// support Pro Reports extension.
 					$content = apply_filters( 'mainwp_pro_reports_generate_content', $content, $current_email_site->id, $timestamp_from_date, $timestamp_to_date );

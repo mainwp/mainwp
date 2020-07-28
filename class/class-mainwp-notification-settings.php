@@ -476,6 +476,15 @@ class MainWP_Notification_Settings {
 			}
 		}
 
+		$client_report_tokens = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
+		if ( is_array( $client_report_tokens ) ) {
+			foreach ( $fields as $field ) {
+				if ( isset( $options[ $field ] ) ) {
+					$options[ $field ] = MainWP_System_Utility::replace_tokens_values( $options[ $field ], $client_report_tokens );
+				}
+			}
+		}
+
 		return $options;
 	}
 
@@ -493,16 +502,25 @@ class MainWP_Notification_Settings {
 
 		$content = MainWP_System_Utility::replace_tokens_values( $content, $tokens_values );
 
-		$boilerplate_tokens = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
+		// if tokens existed.
+		if ( preg_match( '/\[[^\]]+\]/is', $content, $matches ) ) {
+			$boilerplate_tokens = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
 
-		if ( is_array( $boilerplate_tokens ) ) {
-			$content = MainWP_System_Utility::replace_tokens_values( $content, $boilerplate_tokens );
-		}
+			if ( is_array( $boilerplate_tokens ) ) {
+				$content = MainWP_System_Utility::replace_tokens_values( $content, $boilerplate_tokens );
+			}
 
-		$report_tokens = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
+			$report_tokens = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
 
-		if ( is_array( $report_tokens ) ) {
-			$content = MainWP_System_Utility::replace_tokens_values( $content, $report_tokens );
+			if ( is_array( $report_tokens ) ) {
+				$content = MainWP_System_Utility::replace_tokens_values( $content, $report_tokens );
+			}
+
+			$client_report_tokens = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
+
+			if ( is_array( $client_report_tokens ) ) {
+				$content = MainWP_System_Utility::replace_tokens_values( $content, $client_report_tokens );
+			}
 		}
 
 		return $content;

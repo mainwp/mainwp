@@ -154,11 +154,19 @@ class MainWP_Notification_Template {
 			$content = MainWP_Notification_Settings::replace_tokens_for_content( $content, $current_email_site );
 
 			if ( isset( $child_site_tokens ) && ! empty( $child_site_tokens ) ) {
-				$now_timestamp = time();
-				$now_timestamp = MainWP_Utility::get_timestamp( $now_timestamp );
-				$to_date       = $now_timestamp;
-				$from_date     = $now_timestamp - DAY_IN_SECONDS;
-				$content       = apply_filters( 'mainwp_pro_reports_generate_content', $content, $current_email_site->id, $from_date, $to_date );
+
+				if ( ! isset( $timestamp_from_date ) || empty( $timestamp_from_date ) || ! isset( $timestamp_to_date ) || empty( $timestamp_to_date ) ) {
+					$now_timestamp       = time();
+					$now_timestamp       = MainWP_Utility::get_timestamp( $now_timestamp );
+					$timestamp_from_date = $now_timestamp - DAY_IN_SECONDS;
+					$timestamp_to_date   = $now_timestamp;
+				}
+				if ( preg_match( '/\[[^\]]+\]/is', $content, $matches ) ) {
+					// support Pro Reports extension.
+					$content = apply_filters( 'mainwp_pro_reports_generate_content', $content, $current_email_site->id, $timestamp_from_date, $timestamp_to_date );
+					// support Client Reports extension.
+					$content = apply_filters( 'mainwp_client_report_generate_content', $content, $current_email_site->id, $timestamp_from_date, $timestamp_to_date );
+				}
 			}
 		}
 

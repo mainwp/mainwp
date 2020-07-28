@@ -9,6 +9,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+
+$child_site_tokens = false;
+
 if ( empty( $heading ) ) {
 	$heading = 'Uptime Monitoring';
 }

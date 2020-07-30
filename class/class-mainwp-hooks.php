@@ -483,7 +483,7 @@ class MainWP_Hooks {
 	 * Hook to get Child site options.
 	 *
 	 * @param mixed  $boolean Boolean check.
-	 * @param object $website Child site information object.
+	 * @param object $website Child site object.
 	 * @param string $name Option table name.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
@@ -509,9 +509,9 @@ class MainWP_Hooks {
 	 * Hook to get Child site options.
 	 *
 	 * @param mixed  $boolean Boolean check.
-	 * @param object $website Child site information object.
-	 * @param string $name Option name.
-	 * @param string $name Option value.
+	 * @param object $website Child site object.
+	 * @param string $option Option name.
+	 * @param string $value Option value.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
 	 */

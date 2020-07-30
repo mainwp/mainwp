@@ -76,6 +76,9 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_editsite', array( &$this, 'mainwp_edit_site' ), 10, 1 );
 		add_action( 'mainwp_add_sub_leftmenu', array( &$this, 'hook_add_sub_left_menu' ), 10, 6 );
 		add_filter( 'mainwp_getwebsiteoptions', array( &$this, 'hook_get_site_options' ), 10, 3 );
+		add_filter( 'mainwp_updatewebsiteoptions', array( &$this, 'hook_update_site_options' ), 10, 4 );
+		add_filter( 'mainwp_getwebsitesbyuserid', array( &$this, 'hook_get_websites_by_user_id' ), 10, 5 );
+
 		add_filter( 'mainwp_addgroup', array( MainWP_Extensions_Handler::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
@@ -498,6 +501,37 @@ class MainWP_Hooks {
 		}
 
 		return MainWP_DB::instance()->get_website_option( $website, $name );
+	}
+
+	/**
+	 * Method hook_update_site_options()
+	 *
+	 * Hook to get Child site options.
+	 *
+	 * @param mixed  $boolean Boolean check.
+	 * @param object $website Child site information object.
+	 * @param string $name Option name.
+	 * @param string $name Option value.
+	 *
+	 * @return string|null Database query result (as string), or null on failure
+	 */
+	public function hook_update_site_options( $boolean, $website, $option, $value ) {
+		return MainWP_DB::instance()->update_website_option( $website, $option, $value );
+	}
+
+	/**
+	 * Get sites by user ID.
+	 *
+	 * @param mixed  $boolean Boolean check.
+	 * @param int    $userid       User ID.
+	 * @param bool   $selectgroups Selected groups.
+	 * @param null   $search_site  Site search field value.
+	 * @param string $orderBy      Order list by. Default: URL.
+	 *
+	 * @return object|null Database query results or null on failure.
+	 */
+	public function hook_get_websites_by_user_id( $boolean, $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
+		return MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
 	}
 
 	/**

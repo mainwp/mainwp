@@ -388,7 +388,7 @@ class MainWP_UI {
 			<div class="ui fitted divider"></div>
 			<div class="ui segment" style="margin-bottom:0px">
 				<div class="ui mini fluid icon input">
-					<input type="text" id="mainwp-sites-menu-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo esc_attr( count( $websites ) > 0 ? 'style="display: none;"' : '' ); ?> />
+					<input type="text" id="mainwp-sites-menu-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo $websites ? 'style="display: none;"' : ''; ?> />
 					<i class="filter icon"></i>
 				</div>
 			</div>
@@ -397,7 +397,7 @@ class MainWP_UI {
 					<div class="item mainwp-site-menu-item">
 						<a class="title">
 							<i class="dropdown icon"></i>
-							<label><?php echo $website['name']; ?></label>
+							<label><?php echo esc_html( $website['name'] ); ?></label>
 						</a>
 						<div class="content">
 							<div class="ui link tiny list">

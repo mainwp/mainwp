@@ -231,7 +231,7 @@ class MainWP_Notification_Template {
 	 */
 	public static function get_template_name_by_notification_type( $type = '' ) {
 		$types = array(
-			'daily_digets' => 'emails/mainwp-daily-digest-email.php',
+			'daily_digest' => 'emails/mainwp-daily-digest-email.php',
 			'uptime'       => 'emails/mainwp-uptime-monitoring-email.php',
 			'site_health'  => 'emails/mainwp-site-health-monitoring-email.php',
 			'http_check'   => 'emails/mainwp-after-update-http-check-email.php',

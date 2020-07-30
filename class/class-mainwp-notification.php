@@ -101,7 +101,7 @@ class MainWP_Notification {
 	}
 
 	/**
-	 * Method send_daily_digets_notification().
+	 * Method send_daily_digest_notification().
 	 *
 	 * Sent available updates notification email.
 	 *
@@ -116,10 +116,10 @@ class MainWP_Notification {
 	 * @param bool   $to_admin Send to admin or not - default false (option).
 	 * @param object $email_site current report site.
 	 */
-	public static function send_daily_digets_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
+	public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
 		if ( $email_settings['disable'] ) {
-			return false; // disabled send daily digets notification.
+			return false; // disabled send daily digest notification.
 		}
 
 		$email = '';
@@ -160,7 +160,7 @@ class MainWP_Notification {
 			)
 		);
 
-		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digets :: send mail to [' . $email . ']' );
+		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digest :: send mail to [' . $email . ']' );
 		$subject = $email_settings['subject'];
 		self::send_wp_mail(
 			$email,

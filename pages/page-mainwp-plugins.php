@@ -693,7 +693,10 @@ class MainWP_Plugins {
 				$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
 				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
 				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
-				$pluginsVersion[ $pn ]         = esc_html( $plugin['name'] . ' ' . $plugin['version'] );
+				$pluginsVersion[ $pn ]         = array(
+					'name' => $plugin['name'],
+					'ver'  => $plugin['version'],
+				);
 				$pluginsMainWP[ $pn ]          = isset( $plugin['mainwp'] ) ? esc_html( $plugin['mainwp'] ) : 'F';
 				$pluginsRealVersion[ $pn ]     = rawurlencode( $plugin['version'] );
 
@@ -703,7 +706,16 @@ class MainWP_Plugins {
 
 				$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
 			}
-				asort( $pluginsVersion );
+				uasort(
+					$pluginsVersion,
+					function( $a, $b ) {
+						$ret = strcasecmp( $a['name'], $b['name'] );
+						if ( 0 != $ret ) {
+							return $ret;
+						}
+						return version_compare( $a['ver'], $b['ver'] );
+					}
+				);
 
 				self::render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion );
 
@@ -779,10 +791,11 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th></th>
-					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
+					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 						<?php
-						$th_id = strtolower( $plugin_name );
-						$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
+						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
+						$th_id        = strtolower( $plugin_name );
+						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_html( $th_id ); ?>">
 							<div class="ui checkbox not-auto-init">
@@ -803,7 +816,7 @@ class MainWP_Plugins {
 						<label><?php echo esc_html( $site_url ); ?></label>
 					</div>
 					</td>
-					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_title ) : ?>
+					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 					<td class="center aligned">
 						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
 							<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>

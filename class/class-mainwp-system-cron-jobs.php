@@ -378,26 +378,26 @@ class MainWP_System_Cron_Jobs {
 			}
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
-			$individual_digetsWebsites = get_option( 'mainwp_updatescheck_individual_digets_websites' );
+			$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
 
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
-			$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digets' );
+			$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
 			if ( ! $gen_email_settings['disable'] ) {
 				// send general daily digests.
-				$this->start_notification_daily_digets( $gen_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text ); // general email.
+				$this->start_notification_daily_digest( $gen_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text ); // general email.
 			}
 
-			$to_admin_digetsWebsites = array();
+			$to_admin_digestWebsites = array();
 
-			if ( is_array( $individual_digetsWebsites ) && 0 < count( $individual_digetsWebsites ) ) {
+			if ( is_array( $individual_digestWebsites ) && 0 < count( $individual_digestWebsites ) ) {
 				// send individual site daily digests, one email for one site.
-				foreach ( $individual_digetsWebsites as $siteid ) {
+				foreach ( $individual_digestWebsites as $siteid ) {
 					$website        = MainWP_DB::instance()->get_website_by_id( $siteid, false, array( 'settings_notification_emails' ) );
-					$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'daily_digets', $website );  // get site email settings.
+					$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'daily_digest', $website );  // get site email settings.
 					if ( ! $email_settings['disable'] ) {
-						$to_admin_digetsWebsites[] = $siteid;
-						$sent                      = $this->start_notification_daily_digets( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, array( $siteid ), false, $website );
+						$to_admin_digestWebsites[] = $siteid;
+						$sent                      = $this->start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, array( $siteid ), false, $website );
 						if ( $sent ) {
 							usleep( 100000 );
 						}
@@ -405,12 +405,12 @@ class MainWP_System_Cron_Jobs {
 				}
 			}
 
-			if ( 0 < count( $to_admin_digetsWebsites ) ) {
-				$admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'daily_digets', '', true ); // get default subject and heading only.
+			if ( 0 < count( $to_admin_digestWebsites ) ) {
+				$admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'daily_digest', '', true ); // get default subject and heading only.
 				$admin_email_settings['disable']    = 0;
 				$admin_email_settings['recipients'] = ''; // sent to admin only.
-				// send all individual daily digets to admin in one email.
-				$this->start_notification_daily_digets( $admin_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $to_admin_digetsWebsites, true ); // true: so will send email to admin.
+				// send all individual daily digest to admin in one email.
+				$this->start_notification_daily_digest( $admin_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $to_admin_digestWebsites, true ); // true: so will send email to admin.
 			}
 
 			// send http check notification.
@@ -469,7 +469,7 @@ class MainWP_System_Cron_Jobs {
 
 			$allWebsites = array();
 
-			$individualDailyDigetsWebsites = array();
+			$individualDailyDigestWebsites = array();
 
 			$updatescheckSitesIcon = get_option( 'mainwp_updatescheck_sites_icon' );
 			if ( ! is_array( $updatescheckSitesIcon ) ) {
@@ -498,7 +498,7 @@ class MainWP_System_Cron_Jobs {
 				}
 				$website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
-				$check_individual_digets = false;
+				$check_individual_digest = false;
 
 				/** Check core updates * */
 				$websiteLastCoreUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'last_wp_upgrades' ), true );
@@ -507,7 +507,7 @@ class MainWP_System_Cron_Jobs {
 				if ( isset( $websiteCoreUpgrades['current'] ) ) {
 					$newUpdate = ! ( isset( $websiteLastCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['current'] == $websiteCoreUpgrades['current'] ) && ( $websiteLastCoreUpgrades['new'] == $websiteCoreUpgrades['new'] ) );
 					if ( ! $website->is_ignoreCoreUpdates ) {
-						$check_individual_digets = true;
+						$check_individual_digest = true;
 						$item                    = array(
 							'id'          => $website->id,
 							'name'        => $website->name,
@@ -572,7 +572,7 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 
-					$check_individual_digets = true;
+					$check_individual_digest = true;
 
 					$change_log = '';
 					if ( $pluginInfo['update']['url'] && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
@@ -626,7 +626,7 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 
-					$check_individual_digets = true;
+					$check_individual_digest = true;
 
 					$newUpdate = ! ( isset( $websiteLastThemes[ $themeSlug ] ) && ( $themeInfo['Version'] == $websiteLastThemes[ $themeSlug ]['Version'] ) && ( $themeInfo['update']['new_version'] == $websiteLastThemes[ $themeSlug ]['update']['new_version'] ) );
 
@@ -677,24 +677,24 @@ class MainWP_System_Cron_Jobs {
 					$updatescheckSitesIcon[] = $website->id;
 				}
 
-				if ( $check_individual_digets ) {
-					$individualDailyDigetsWebsites[] = $website->id;
+				if ( $check_individual_digest ) {
+					$individualDailyDigestWebsites[] = $website->id;
 				}
 			}
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_sites_icon', $updatescheckSitesIcon );
 
-			if ( 0 != count( $individualDailyDigetsWebsites ) ) {
-				$individualDailyDigetsWebsitesSaved = get_option( 'mainwp_updatescheck_individual_digets_websites' );
-				if ( ! is_array( $individualDailyDigetsWebsitesSaved ) ) {
-					$individualDailyDigetsWebsitesSaved = array();
+			if ( 0 != count( $individualDailyDigestWebsites ) ) {
+				$individualDailyDigestWebsitesSaved = get_option( 'mainwp_updatescheck_individual_digest_websites' );
+				if ( ! is_array( $individualDailyDigestWebsitesSaved ) ) {
+					$individualDailyDigestWebsitesSaved = array();
 				}
-				foreach ( $individualDailyDigetsWebsites as $sid ) {
-					if ( ! in_array( $sid, $individualDailyDigetsWebsitesSaved ) ) {
-						$individualDailyDigetsWebsitesSaved[] = $sid;
+				foreach ( $individualDailyDigestWebsites as $sid ) {
+					if ( ! in_array( $sid, $individualDailyDigestWebsitesSaved ) ) {
+						$individualDailyDigestWebsitesSaved[] = $sid;
 					}
 				}
-				MainWP_Utility::update_option( 'mainwp_updatescheck_individual_digets_websites', $individualDailyDigetsWebsitesSaved );
+				MainWP_Utility::update_option( 'mainwp_updatescheck_individual_digest_websites', $individualDailyDigestWebsitesSaved );
 			}
 
 			if ( count( $coreNewUpdate ) != 0 ) {
@@ -926,7 +926,7 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Method start_notification_daily_digets().
+	 * Method start_notification_daily_digest().
 	 *
 	 * Send email notification.
 	 *
@@ -941,7 +941,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 */
-	public function start_notification_daily_digets( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
+	public function start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
 		$sendMail       = false;
 		$updateAvaiable = false;
@@ -981,7 +981,7 @@ class MainWP_System_Cron_Jobs {
 			return false;
 		}
 
-		return MainWP_Notification::send_daily_digets_notification( $email_settings, $updateAvaiable, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids, $to_admin, $email_site );
+		return MainWP_Notification::send_daily_digest_notification( $email_settings, $updateAvaiable, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids, $to_admin, $email_site );
 	}
 
 	/**
@@ -1007,7 +1007,7 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_updatescheck_mail_ignore_plugins_new',
 			'mainwp_updatescheck_mail_ignore_themes_new',
 			'mainwp_updatescheck_ready_sendmail',
-			'mainwp_updatescheck_individual_digets_websites',
+			'mainwp_updatescheck_individual_digest_websites',
 		);
 
 		// refresh one time per day.
@@ -1037,7 +1037,7 @@ class MainWP_System_Cron_Jobs {
 		$sites_offline = MainWP_DB::instance()->get_websites_offline_check_status();
 		if ( is_array( $sites_offline ) && count( $sites_offline ) > 0 ) {
 			foreach ( $sites_offline as $site ) {
-				$email_settings_sites[ $site->id ] = $site->settings_notification_emails;
+				$email_settings_sites[ $site->id ] = $site->settings_notification_emails; // ok.
 				$code                              = $site->http_response_code;
 				$code_string                       = MainWP_Utility::get_http_codes( $code );
 				if ( ! empty( $code_string ) ) {
@@ -1073,7 +1073,7 @@ class MainWP_System_Cron_Jobs {
 			$website->url  = $site['url'];
 			$website->name = $site['name'];
 
-			$website->settings_notification_emails = $email_settings_sites[ $site['id'] ];
+			$website->settings_notification_emails = $email_settings_sites[ $site['id'] ]; // ok.
 
 			$settings = MainWP_Notification_Settings::get_site_email_settings( 'http_check', $website ); // get site email settings.
 

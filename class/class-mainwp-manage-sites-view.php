@@ -936,6 +936,12 @@ class MainWP_Manage_Sites_View {
 			$emails_settings = array();
 		}
 
+		// to fix incorrect field name.
+		if ( isset( $emails_settings['daily_digets'] ) ) {
+			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
+			unset( $emails_settings['daily_digets'] );
+		}
+
 		$default = MainWP_Notification_Settings::get_default_emails_fields( $type );
 		$options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
 		$options = array_merge( $default, $options );
@@ -1113,6 +1119,13 @@ class MainWP_Manage_Sites_View {
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
 		}
+
+		// to fix incorrect field name.
+		if ( isset( $emails_settings['daily_digets'] ) ) {
+			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
+			unset( $emails_settings['daily_digets'] );
+		}
+
 		$email_description   = '';
 		$notification_emails = MainWP_Notification_Settings::get_notification_types();
 		$default_recipients  = MainWP_System_Utility::get_notification_email();

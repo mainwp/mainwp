@@ -673,14 +673,27 @@ class MainWP_Themes {
 				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
 				$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];
 				$themesSlug[ $theme['name'] . '_' . $theme['version'] ]        = $theme['slug'];
-				$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = $theme['title'] . ' ' . $theme['version'];
+				$themesVersion[ $theme['name'] . '_' . $theme['version'] ]     = array(
+					'title' => $theme['title'],
+					'ver'   => $theme['version'],
+				);
 				$themesRealVersion[ $theme['name'] . '_' . $theme['version'] ] = $theme['version'];
 				if ( ! isset( $siteThemes[ $theme['websiteid'] ] ) || ! is_array( $siteThemes[ $theme['websiteid'] ] ) ) {
 					$siteThemes[ $theme['websiteid'] ] = array();
 				}
 				$siteThemes[ $theme['websiteid'] ][ $theme['name'] . '_' . $theme['version'] ] = $theme;
 			}
-			asort( $themesVersion );
+
+			uasort(
+				$themesVersion,
+				function( $a, $b ) {
+					$ret = strcasecmp( $a['name'], $b['name'] );
+					if ( 0 != $ret ) {
+						return $ret;
+					}
+					return version_compare( $a['ver'], $b['ver'] );
+				}
+			);
 
 			ob_start();
 			self::render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion );
@@ -714,10 +727,11 @@ class MainWP_Themes {
 			<thead>
 				<tr>
 					<th></th>
-					<?php foreach ( $themesVersion as $theme_name => $theme_title ) : ?>
+					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<?php
-						$th_id = strtolower( $theme_name );
-						$th_id = preg_replace( '/[[:space:]]+/', '_', $th_id );
+						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
+						$th_id       = strtolower( $theme_name );
+						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
 						<th id="<?php echo esc_attr( $th_id ); ?>">
 							<div class="ui checkbox not-auto-init">
@@ -738,7 +752,7 @@ class MainWP_Themes {
 							<label><?php echo esc_html( $site_url ); ?></label>
 						</div>
 					</td>
-					<?php foreach ( $themesVersion as $theme_name => $theme_title ) : ?>
+					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<td class="center aligned">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
 								<div class="ui checkbox">

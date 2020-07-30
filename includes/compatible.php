@@ -69,6 +69,42 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
 		}
 
+		/**
+		 * Get sites by user ID.
+		 *
+		 * @param int    $userid       User ID.
+		 * @param bool   $selectgroups Selected groups.
+		 * @param null   $search_site  Site search field value.
+		 * @param string $orderBy      Order list by. Default: URL.			
+		 *
+		 * @return object|null Database query results or null on failure.
+		 */
+		public function getWebsitesByUserId( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
+			return MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
+		}
+
+		/**
+		 * Get Child site wp_options database table.
+		 *
+		 * @param array $website Child Site array.
+		 * @param mixed $option  Child Site wp_options table name.
+		 *
+		 * @return string|null Database query result (as string), or null on failure.
+		 */
+		public function getWebsiteOption( $website, $option ) {
+			return MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $website, $option );
+		}
+
+		/**
+		 * Update child site options.
+		 *
+		 * @param object $website Child site object.
+		 * @param mixed  $option  Option to update.
+		 * @param mixed  $value   Value to update with.
+		 */
+		public function updateWebsiteOption( $website, $option, $value ) {
+			return MainWP\Dashboard\MainWP_DB::instance()->update_website_option( $website, $option, $value );
+		}
 	}
 }
 

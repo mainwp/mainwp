@@ -1101,6 +1101,12 @@ class MainWP_Manage_Sites {
 			if ( ! is_array( $settings_emails ) ) {
 				$settings_emails = array();
 			}
+			// to fix incorrect field name.
+			if ( isset( $settings_emails['daily_digets'] ) ) {
+				$settings_emails['daily_digest'] = $settings_emails['daily_digets'];
+				unset( $settings_emails['daily_digets'] );
+			}
+
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
 			$edit_settingEmails  = $_POST['mainwp_managesites_edit_settingEmails'];
 			$type                = $_POST['mainwp_managesites_setting_emails_type'];

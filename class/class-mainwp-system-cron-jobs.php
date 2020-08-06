@@ -237,11 +237,14 @@ class MainWP_System_Cron_Jobs {
 			}
 		);
 
+		$dtsnow = time();
+		$local_timestamp = MainWP_Utility::get_timestamp( $dtsnow );
+
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
 		$run_timestamp   = 0;
 		if ( ! empty( $timeDailyUpdate ) ) {
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
-			if ( time() < $run_timestamp ) { // not run this time.
+			if ( $local_timestamp < $run_timestamp ) { // not run this time.
 				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 				return;
 			}

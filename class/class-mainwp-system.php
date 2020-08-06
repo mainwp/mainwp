@@ -25,7 +25,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1-beta1';
+	public static $version = '4.1-beta2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -553,7 +553,7 @@ class MainWP_System {
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 
-		$en_params = array( 'jquery-ui-dialog' );
+		$en_params = array( 'jquery-ui-dialog', 'jquery-migrate' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}

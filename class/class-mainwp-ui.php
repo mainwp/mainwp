@@ -387,8 +387,8 @@ class MainWP_UI {
 			</div>
 			<div class="ui fitted divider"></div>
 			<div class="ui segment" style="margin-bottom:0px">
-				<div class="ui mini fluid icon input">
-					<input type="text" id="mainwp-sites-menu-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo $websites ? 'style="display: none;"' : ''; ?> />
+				<div class="ui mini fluid icon input" <?php echo $websites ? '' : 'style="display: none;"'; ?> >
+					<input type="text" id="mainwp-sites-menu-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" />
 					<i class="filter icon"></i>
 				</div>
 			</div>
@@ -413,7 +413,7 @@ class MainWP_UI {
 									<i class="edit icon"></i>
 									<?php esc_html_e( 'Edit Site', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&scanid=' . $website['id']; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&scanid=' . $website['id']; ?>">
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>

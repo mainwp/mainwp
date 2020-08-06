@@ -707,7 +707,7 @@ class MainWP_System {
 
 		global $wp_version;
 		if ( version_compare( $wp_version, '5.5', '>=' ) ) {
-			wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version ); 
+			wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version );
 		}
 
 		if ( $load_cust_scripts ) {

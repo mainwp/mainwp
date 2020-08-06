@@ -705,6 +705,11 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
 		}
 
+		global $wp_version;
+		if ( version_compare( $wp_version, '5.5', '=' ) ) {
+			wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version ); 
+		}
+
 		if ( $load_cust_scripts ) {
 			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
 		}

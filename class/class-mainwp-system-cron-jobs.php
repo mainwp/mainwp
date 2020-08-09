@@ -237,7 +237,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		);
 
-		$dtsnow = time();
+		$dtsnow          = time();
 		$local_timestamp = MainWP_Utility::get_timestamp( $dtsnow );
 
 		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );

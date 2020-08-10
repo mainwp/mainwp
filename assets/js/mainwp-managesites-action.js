@@ -12,12 +12,12 @@ jQuery( document ).on( 'click', '#mainwp-do-sites-bulk-actions', function () {
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function ( action ) {
 
-  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' ) {
+  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' ) {
 
     if ( bulkManageSitesTaskRunning )
       return false;
       
-    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' ) {
+    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'update_everything' ) {
       var confirmMsg = '';
       var _selection_cancelled = false;      
       switch ( action ) {
@@ -39,6 +39,9 @@ mainwp_managesites_doaction = function ( action ) {
             case 'update_translations':
                 confirmMsg = __( "You are about to update translations on the selected sites?" );
                 _selection_cancelled = true;
+            case 'update_everything':
+                confirmMsg = __( "You are about to update everything on the selected sites?" );
+                _selection_cancelled = true;
             break;            
       }
       
@@ -53,7 +56,7 @@ mainwp_managesites_doaction = function ( action ) {
 
       var updateType; // undefined
 
-      if ( action == 'update_plugins' || action == 'update_themes'  || action == 'update_translations' ) {
+      if ( action == 'update_plugins' || action == 'update_themes' || action == 'update_translations' || action == 'update_everything' ) {
           updateType = 2; // multi update
       }
 
@@ -112,9 +115,13 @@ mainwp_managesites_doaction_process = function( action ) {
 	} else if ( action == 'update_themes' ) {            
 	  mainwp_update_pluginsthemes( 'theme', selectedIds );
 	} else if ( action == 'update_wpcore' ) {            
-	  managesites_wordpress_global_upgrade_all( selectedIds );
+	  managesites_wordpress_global_upgrade_all( selectedIds, false );
 	} else if ( action == 'update_translations' ) {            
 	  mainwp_update_pluginsthemes( 'translation', selectedIds );
+	} else if ( action == 'update_everything' ) {
+    jQuery('#sync_selected_site_ids').val( selectedIds.join( ',' ) );
+    // start update wpcore first.
+	  managesites_wordpress_global_upgrade_all( selectedIds, true );
 	} else if (action == 'refresh_favico') {            
 	  mainwp_managesites_bulk_refresh_favico(selectedIds);
 	} else if (action == 'checknow') {            

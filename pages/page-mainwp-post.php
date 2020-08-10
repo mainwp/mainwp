@@ -1005,7 +1005,7 @@ class MainWP_Post {
 						</td>
 					<?php endif; ?>
 
-					<td class="date column-date"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
+					<td class="date column-date" data-order="<?php echo esc_attr( $raw_dts ); ?>"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
 					<td class="status column-status"><?php echo self::get_status( $post['status'] ); ?></td>
 

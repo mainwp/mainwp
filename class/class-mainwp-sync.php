@@ -209,7 +209,30 @@ class MainWP_Sync {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'premium_upgrades', $emptyArray );
 		}
 
-		if ( isset( $information['securityIssues'] ) && MainWP_Utility::ctype_digit( $information['securityIssues'] ) && $information['securityIssues'] >= 0 ) {
+		if ( isset( $information['securityStats'] ) ) {
+			$total_securityIssues = 0;
+			$securityStats        = $information['securityStats'];
+			if ( is_array( $securityStats ) ) {
+				$filterStats = apply_filters( 'mainwp_security_issues_stats', false, $securityStats, $pWebsite );
+				if ( false !== $filterStats && is_array( $filterStats ) ) {
+					$securityStats = array_merge( $securityStats, $filterStats );
+				}
+
+				$tmp_issues           = array_filter(
+					$securityStats,
+					function( $v, $k ) {
+						return $v == 'N';
+					},
+					ARRAY_FILTER_USE_BOTH
+				);
+				$total_securityIssues = count( $tmp_issues );
+				$securityStats        = wp_json_encode( $securityStats );
+			} else {
+				$securityStats = $emptyArray;
+			}
+			$websiteValues['securityIssues'] = $total_securityIssues;
+			$done                            = true;
+		} elseif ( isset( $information['securityIssues'] ) && MainWP_Utility::ctype_digit( $information['securityIssues'] ) && $information['securityIssues'] >= 0 ) {
 			$websiteValues['securityIssues'] = $information['securityIssues'];
 			$done                            = true;
 		}

@@ -451,14 +451,34 @@ class MainWP_DB extends MainWP_DB_Base {
 		$for_manager  = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
 		$extra_view   = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
 		$is_staging   = isset( $params['is_staging'] ) && 'yes' == $params['is_staging'] ? 'yes' : 'no';
+		$is_count     = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
+		$group_ids    = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
 
-		$group_id = isset( $params['group_id'] ) && $params['group_id'] ? intval( $params['group_id'] ) : false;
+		if ( ! is_array( $group_ids ) ) {
+			$group_ids = array();
+		}
+
+		// valid data.
+		$group_ids = array_filter(
+			$group_ids,
+			function( $e ) {
+				if ( 'nogroups' == $e ) {
+					return true;
+				}
+				$e = intval( $e );
+				return ( 0 < $e ) ? true : false;
+			}
+		);
 
 		if ( $selectgroups ) {
 			$staging_group = get_option( 'mainwp_stagingsites_group_id' );
 			if ( $staging_group ) {
-				if ( $group_id == $staging_group ) {
-					$is_staging = 'yes';
+				if ( in_array( $staging_group, $group_ids ) ) {
+					if ( 0 == count( $group_ids ) ) {
+						$is_staging = 'yes';
+					} else {
+						$is_staging = 'nocheckstaging';
+					}
 				}
 			}
 		}
@@ -482,16 +502,37 @@ class MainWP_DB extends MainWP_DB_Base {
 			$where .= $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 		}
 
-		if ( 'wp.url' === $orderBy ) {
+		if ( $is_count ) {
+			$orderBy = '';
+		} elseif ( 'wp.url' === $orderBy ) {
 			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+		}
+
+		if ( ! empty( $orderBy ) ) {
+			$orderBy = ' ORDER BY ' . $orderBy;
 		}
 
 		$join_group  = '';
 		$where_group = '';
 
-		if ( MainWP_Utility::ctype_digit( $group_id ) && $group_id > 0 ) {
+		if ( in_array( 'nogroups', $group_ids ) ) {
+			$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+			$group_ids  = array_filter(
+				$group_ids,
+				function( $e ) {
+					return 'nogroups' != $e;
+				}
+			);
+			if ( 0 < count( $group_ids ) ) {
+				$groups      = implode( ',', $group_ids );
+				$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
+			} else {
+				$where_group = ' AND wpgroup.groupid IS NULL ';
+			}
+		} elseif ( $group_ids && 0 < count( $group_ids ) ) {
+			$groups      = implode( ',', $group_ids );
 			$join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
-			$where_group = ' AND wpgroup.groupid = ' . $group_id;
+			$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
 		}
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
@@ -504,22 +545,21 @@ class MainWP_DB extends MainWP_DB_Base {
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . '
-            GROUP BY wp.id
-            ORDER BY ' . $orderBy;
+			GROUP BY wp.id ' .
+			$orderBy;
 		} else {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
 			$join_group . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-            WHERE 1 ' . $where . $where_group . '
-            ORDER BY ' . $orderBy;
+			WHERE 1 ' . $where . $where_group .
+			$orderBy;
 		}
 
 		if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 			$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
 		}
-
 		return $qry;
 	}
 

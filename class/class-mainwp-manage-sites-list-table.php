@@ -343,6 +343,7 @@ class MainWP_Manage_Sites_List_Table {
 			'update_themes'       => __( 'Update Themes', 'mainwp' ),
 			'update_wpcore'       => __( 'Update WordPress', 'mainwp' ),
 			'update_translations' => __( 'Update Translations', 'mainwp' ),
+			'update_everything'   => __( 'Update Everything', 'mainwp' ),
 
 		);
 
@@ -356,7 +357,7 @@ class MainWP_Manage_Sites_List_Table {
 		$items_bulk = $this->get_bulk_actions();
 
 		$selected_status = isset( $_REQUEST['status'] ) ? $_REQUEST['status'] : '';
-		$selected_group  = isset( $_REQUEST['g'] ) ? $_REQUEST['g'] : '';
+		$selected_group  = isset( $_REQUEST['g'] ) ? trim( $_REQUEST['g'] ) : '';
 
 		if ( empty( $selected_status ) && empty( $selected_group ) ) {
 			$selected_status = get_option( 'mainwp_managesites_filter_status' );
@@ -391,19 +392,20 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui dropdown" id="mainwp-filter-sites-group">
-							<div class="text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
+						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
+							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 							<div class="menu">
-								<div class="item" data-value="-1" ><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 								<?php
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
-									<div class="item" data-value="<?php echo $group->id; ?>" ><?php echo stripslashes( $group->name ); ?></div>
+									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></div>
 									<?php
 								}
 								?>
+								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui dropdown" id="mainwp-filter-sites-status">
@@ -420,12 +422,8 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 		</div>
 		</div>
-
 		<script type="text/javascript">
-			jQuery( document ).ready( function () {
-				<?php if ( '' !== $selected_group ) { ?>
-				jQuery( '#mainwp-filter-sites-group' ).dropdown( "set selected", "<?php echo esc_js( $selected_group ); ?>" );
-				<?php } ?>
+			jQuery( document ).ready( function () {				
 				<?php if ( '' !== $selected_status ) { ?>
 				jQuery( '#mainwp-filter-sites-status' ).dropdown( "set selected", "<?php echo esc_js( $selected_status ); ?>" );
 				<?php } ?>
@@ -542,9 +540,9 @@ class MainWP_Manage_Sites_List_Table {
 		$search = isset( $_REQUEST['search']['value'] ) ? trim( $_REQUEST['search']['value'] ) : '';
 
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
-		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( isset( $_REQUEST['g'] ) && -1 == $_REQUEST['g'] ) ? true : false;
+		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( empty( $_REQUEST['g'] ) ) ? true : false;
 
-		$group_id    = false;
+		$group_ids   = false;
 		$site_status = '';
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
@@ -562,13 +560,13 @@ class MainWP_Manage_Sites_List_Table {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 		} elseif ( ! isset( $_REQUEST['g'] ) ) {
 			if ( $get_saved_state ) {
-				$group_id = get_option( 'mainwp_managesites_filter_group' );
+				$group_ids = get_option( 'mainwp_managesites_filter_group' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 			}
 		} else {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', $_REQUEST['g'] );
-			$group_id = $_REQUEST['g'];
+			$group_ids = $_REQUEST['g']; // may be multi groups.
 		}
 
 		$where = null;
@@ -588,10 +586,9 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		}
 
+		$total_params = array( 'count_only' => true );
+
 		if ( $get_all ) {
-
-			$total_params = array();
-
 			$params = array(
 				'selectgroups' => true,
 				'orderby'      => $orderby,
@@ -600,9 +597,7 @@ class MainWP_Manage_Sites_List_Table {
 			);
 		} else {
 
-			$total_params = array(
-				'search' => $search,
-			);
+			$total_params['search'] = $search;
 
 			$params = array(
 				'selectgroups' => true,
@@ -612,9 +607,13 @@ class MainWP_Manage_Sites_List_Table {
 				'search'       => $search,
 			);
 
-			if ( 0 < $group_id ) {
-				$total_params['group_id'] = $group_id;
-				$params['group_id']       = $group_id;
+			if ( ! empty( $group_ids ) ) {
+				$group_ids = explode( ',', $group_ids ); // convert to array.
+			}
+
+			if ( ! empty( $group_ids ) ) {
+				$total_params['group_id'] = $group_ids;
+				$params['group_id']       = $group_ids;
 			}
 
 			if ( ! empty( $where ) ) {
@@ -927,11 +926,8 @@ class MainWP_Manage_Sites_List_Table {
 					<?php if ( ! $optimize ) { ?>
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
-
-						var params = '';
-						if ( group != '' ) {
-							params += '&g=' + group;
-						}
+						var params = '';						
+						params += '&g=' + group;						
 						if ( status != '' )
 							params += '&status=' + status;
 
@@ -1403,8 +1399,9 @@ class MainWP_Manage_Sites_List_Table {
 	 * Columns for a single row.
 	 *
 	 * @param mixed $website Child Site.
+	 * @param bool  $good_health Good site health info.
 	 */
-	protected function single_row_columns( $website ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$total_wp_upgrades     = 0;
 		$total_plugin_upgrades = 0;

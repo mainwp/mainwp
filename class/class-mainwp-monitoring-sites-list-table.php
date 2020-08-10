@@ -231,19 +231,20 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui dropdown" id="mainwp-filter-sites-group">
-							<div class="text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
+						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
+							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 							<div class="menu">
-								<div class="item" data-value="-1" ><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
 								<?php
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
-									<div class="item" data-value="<?php echo $group->id; ?>" ><?php echo stripslashes( $group->name ); ?></div>
+									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></div>
 									<?php
 								}
 								?>
+								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
 							</div>
 						</div>
 						<div class="ui dropdown" id="mainwp-filter-sites-status">
@@ -260,12 +261,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				</div>
 		</div>
 		</div>
-
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				<?php if ( '' !== $selected_group ) { ?>
-				jQuery( '#mainwp-filter-sites-group' ).dropdown( "set selected", "<?php echo esc_js( $selected_group ); ?>" );
-				<?php } ?>
 				<?php if ( '' !== $selected_status ) { ?>
 				jQuery( '#mainwp-filter-sites-status' ).dropdown( "set selected", "<?php echo esc_js( $selected_status ); ?>" );
 				<?php } ?>
@@ -335,7 +332,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( isset( $_REQUEST['g'] ) && -1 == $_REQUEST['g'] ) ? true : false;
 
-		$group_id    = false;
+		$group_ids   = false;
 		$site_status = '';
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
@@ -353,13 +350,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
 		} elseif ( ! isset( $_REQUEST['g'] ) ) {
 			if ( $get_saved_state ) {
-				$group_id = get_option( 'mainwp_monitoringsites_filter_group' );
+				$group_ids = get_option( 'mainwp_monitoringsites_filter_group' );
 			} else {
 				MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
 			}
 		} else {
 			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', $_REQUEST['g'] );
-			$group_id = $_REQUEST['g'];
+			$group_ids = $_REQUEST['g']; // may be multi groups.
 		}
 
 		$where = null;
@@ -374,10 +371,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			}
 		}
 
+		$total_params = array( 'count_only' => true );
 		if ( $get_all ) {
-
-			$total_params = array();
-
 			$params = array(
 				'selectgroups' => true,
 				'orderby'      => $orderby,
@@ -385,12 +380,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				'rowcount'     => $perPage,
 			);
 		} else {
-
-			$total_params = array(
-				'search' => $search,
-			);
-
-			$params = array(
+			$total_params['search'] = $search;
+			$params                 = array(
 				'selectgroups' => true,
 				'orderby'      => $orderby,
 				'offset'       => $start,
@@ -398,9 +389,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				'search'       => $search,
 			);
 
-			if ( 0 < $group_id ) {
-				$total_params['group_id'] = $group_id;
-				$params['group_id']       = $group_id;
+			if ( ! empty( $group_ids ) ) {
+				$group_ids = explode( ',', $group_ids ); // convert to array.
+			}
+
+			if ( $group_ids && 0 < count( $group_ids ) ) {
+				$total_params['group_id'] = $group_ids;
+				$params['group_id']       = $group_ids;
 			}
 
 			if ( ! empty( $where ) ) {
@@ -580,10 +575,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
 
-						var params = '';
-						if ( group != '' ) {
-							params += '&g=' + group;
-						}
+						var params = '';						
+						params += '&g=' + group;						
 						if ( status != '' )
 							params += '&status=' + status;
 

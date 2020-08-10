@@ -703,6 +703,8 @@ class MainWP_System_View {
 			</div>
 		</div>
 
+		<input type="hidden" id="sync_selected_site_ids" value="" />
+
 		<div class="ui tiny modal" id="mainwp-modal-confirm">
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">

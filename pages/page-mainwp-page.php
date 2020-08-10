@@ -824,7 +824,7 @@ class MainWP_Page {
 							</a>
 						</div>
 					</td>
-					<td class="date">
+					<td class="date" data-order="<?php echo esc_attr( $raw_dts ); ?>">
 						<abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
 					</td>
 					<td class="status"><?php echo self::get_status( $page['status'] ); ?>

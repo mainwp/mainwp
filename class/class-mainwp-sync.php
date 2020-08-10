@@ -221,7 +221,7 @@ class MainWP_Sync {
 				$tmp_issues           = array_filter(
 					$securityStats,
 					function( $v, $k ) {
-						return $v == 'N';
+						return 'N' == $v;
 					},
 					ARRAY_FILTER_USE_BOTH
 				);

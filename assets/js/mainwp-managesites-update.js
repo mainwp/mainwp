@@ -1,3 +1,6 @@
+/* eslint complexity: ["error", 100] */
+// current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
 ugradingWebsiteAll = false;
 ugradingAllCurrentStep = '';
 managesites_update_all_next_step = function(){

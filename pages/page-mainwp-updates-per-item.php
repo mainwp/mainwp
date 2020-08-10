@@ -148,7 +148,7 @@ class MainWP_Updates_Per_Item {
 												</a>
 											</td>
 											<td><?php echo ( in_array( $slug, $trustedPlugins ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
-											<td><?php echo ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ) ; ?></td>
+											<td><?php echo ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
 											<td class="right aligned">
 											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
@@ -293,7 +293,7 @@ class MainWP_Updates_Per_Item {
 											</td>
 											<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
 											<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-											<td><?php echo ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ) ; ?></td>
+											<td><?php echo ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
 											<td class="right aligned">
 											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>

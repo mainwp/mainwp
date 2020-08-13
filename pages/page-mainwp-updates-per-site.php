@@ -222,8 +222,7 @@ class MainWP_Updates_Per_Site {
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
 											$action_rendered = isset( $row_columns['action'] ) ? true : false;
 											if ( ! $action_rendered ) :
-												?>
-																						
+											?>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 													<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
@@ -364,7 +363,6 @@ class MainWP_Updates_Per_Site {
 											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
 										);
 										?>
-																					
 										<tr theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? esc_attr( $theme_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
 											<?php
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );

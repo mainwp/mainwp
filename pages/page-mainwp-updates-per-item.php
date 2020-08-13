@@ -62,7 +62,6 @@ class MainWP_Updates_Per_Item {
 			<?php
 			$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
 			?>
-										
 			<tbody id="plugins-updates-global" class="ui accordion">
 				<?php foreach ( $allPlugins as $slug => $val ) : ?>
 					<?php

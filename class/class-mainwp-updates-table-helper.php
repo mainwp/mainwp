@@ -124,8 +124,8 @@ class MainWP_Updates_Table_Helper {
 	/**
 	 *  Echo columns.
 	 *
-	 * @param array Array of columns.
-	 * @param object The website.
+	 * @param array  $columns Array of columns.
+	 * @param object $website The website.
 	 *
 	 * @return array Row columns.
 	 */

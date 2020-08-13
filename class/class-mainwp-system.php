@@ -835,9 +835,6 @@ class MainWP_System {
 					}
 					if ( $group_ids ) {
 						$staging_group = get_option( 'mainwp_stagingsites_group_id' );
-						if ( in_array( $staging_group, $group_ids ) ) {
-							// is_staging = yes, disable this.
-						}
 					}
 				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) {
 					$staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) ? true : false;

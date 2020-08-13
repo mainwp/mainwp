@@ -331,15 +331,14 @@ class MainWP_Manage_Sites_Update_View {
 							<?php $theme_name = rawurlencode( $slug ); ?>
 							<?php $indent_hidden = '<input type="hidden" id="wp_upgraded_theme_' . esc_attr( $website->id ) . '_' . $theme_name . '" value="0" />'; ?>
 							<?php
-								$row_columns = array(
-									'title'   => esc_html( $theme_upgrade['Name'] ) . $indent_hidden,
-									'version' => esc_html( $theme_upgrade['Version'] ),
-									'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
-									'trusted' => ( in_array( $slug, $trustedThemes, true ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ),
-									'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
-								);
-								?>
-														
+							$row_columns = array(
+								'title'   => esc_html( $theme_upgrade['Name'] ) . $indent_hidden,
+								'version' => esc_html( $theme_upgrade['Version'] ),
+								'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
+								'trusted' => ( in_array( $slug, $trustedThemes, true ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ),
+								'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
+							);
+							?>
 							<tr theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? esc_attr( $theme_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
 								<?php
 								$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );

@@ -32,10 +32,10 @@ class MainWP_Connect {
 	 *
 	 * Try connecting to Child Site via cURL.
 	 *
-	 * @param string            $url Child Site URL.
+	 * @param string $url Child Site URL.
 	 * @param bool   $verifyCertificate Option to check SSL Certificate. Default = null.
-	 * @param string            $http_user HTTPAuth Username. Default = null.
-	 * @param string            $http_pass HTTPAuth Password. Default = null.
+	 * @param string $http_user HTTPAuth Username. Default = null.
+	 * @param string $http_pass HTTPAuth Password. Default = null.
 	 * @param int    $sslVersion        Child Site SSL Version.
 	 * @param bool   $forceUseIPv4      Option to fource IP4. Default = null.
 	 * @param bool   $no_body           Option to set CURLOPT_NOBODY option. Default = false.
@@ -345,9 +345,9 @@ class MainWP_Connect {
 	 *
 	 * Get authorized $_GET data & build query.
 	 *
-	 * @param mixed   $website Child Site data.
-	 * @param mixed   $paramValue OpenSSL parameter.
-	 * @param string  $paramName Parameter name.
+	 * @param mixed  $website Child Site data.
+	 * @param mixed  $paramValue OpenSSL parameter.
+	 * @param string $paramName Parameter name.
 	 * @param bool   $asArray true|false Default is false.
 	 *
 	 * @return string $url
@@ -1110,13 +1110,13 @@ class MainWP_Connect {
 	 *
 	 * Updates the child site via authenticated request.
 	 *
-	 * @param object  $website Website information.
-	 * @param string  $what Function to perform.
-	 * @param null    $params Function paramerters.
+	 * @param object $website Website information.
+	 * @param string $what Function to perform.
+	 * @param null   $params Function paramerters.
 	 * @param bool   $checkConstraints Whether or not to check contraints.
 	 * @param bool   $pForceFetch      Whether or not to force the fetch.
 	 * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
-	 * @param null    $rawResponse Raw response.
+	 * @param null   $rawResponse Raw response.
 	 *
 	 * @return mixed $information
 	 */

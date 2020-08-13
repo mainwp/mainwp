@@ -811,7 +811,7 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th></th>
-					<?php do_action( 'mainwp_manage_plugins_table_header' );?>
+					<?php do_action( 'mainwp_manage_plugins_table_header' ); ?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 						<?php
 						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
@@ -837,7 +837,7 @@ class MainWP_Plugins {
 						<label><?php echo esc_html( $site_url ); ?></label>
 					</div>
 					</td>
-					<?php do_action( 'mainwp_manage_plugins_table_column', $site_id );?>
+					<?php do_action( 'mainwp_manage_plugins_table_column', $site_id ); ?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 					<td class="center aligned">
 						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>

@@ -297,7 +297,7 @@ class MainWP_System_Cron_Jobs {
 		$plugin_automaticDailyUpdate = get_option( 'mainwp_pluginAutomaticDailyUpdate' );
 		$theme_automaticDailyUpdate  = get_option( 'mainwp_themeAutomaticDailyUpdate' );
 
-		$mainwpLastAutomaticUpdate          = get_option( 'mainwp_updatescheck_last' );
+		$mainwpLastAutomaticUpdate = get_option( 'mainwp_updatescheck_last' );
 
 		/**
 		 * Filter: mainwp_updatescheck_hours_interval
@@ -370,7 +370,7 @@ class MainWP_System_Cron_Jobs {
 			MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
 		}
 
-		$plain_text        = get_option( 'mainwp_daily_digest_plain_text', false );
+		$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 
 		/**
 		 * Filter: mainwp_text_format_email

@@ -222,7 +222,7 @@ class MainWP_Updates_Per_Site {
 											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
 											$action_rendered = isset( $row_columns['action'] ) ? true : false;
 											if ( ! $action_rendered ) :
-											?>
+												?>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 													<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>

@@ -486,7 +486,6 @@ class MainWP_System_View {
 	 * Render Admin Footer.
 	 */
 	public static function admin_footer() {
-
 		$disabled_confirm = get_option( 'mainwp_disable_update_confirmations', 0 );
 		?>
 		<input type="hidden" id="mainwp-disable-update-confirmations" value="<?php echo intval( $disabled_confirm ); ?>">
@@ -500,6 +499,13 @@ class MainWP_System_View {
 			);
 		</script>
 		<?php
+		/**
+		 * Filter: mainwp_open_hide_referrer
+		 *
+		 * Filters whether the MainWP should hide referrer when going to child site.
+		 *
+		 * @since Unknown
+		 */
 		$hide_ref = apply_filters( 'mainwp_open_hide_referrer', false );
 		if ( $hide_ref ) {
 			?>
@@ -633,6 +639,13 @@ class MainWP_System_View {
 			}
 		}
 
+		/**
+		 * Action: mainwp_admin_footer
+		 *
+		 * Fires at the bottom of MainWP content.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_admin_footer' );
 
 		?>
@@ -648,51 +661,37 @@ class MainWP_System_View {
 					if ( is_array( $websites ) ) {
 						$count = count( $websites );
 						for ( $i = 0; $i < $count; $i ++ ) {
-							$nice_url = MainWP_Utility::get_nice_url( $website->url );
-							$website  = $websites[ $i ];
-							if ( '' == $website->sync_errors ) {
-								?>
-								<div class="item">
-									<div class="right floated content">
-										<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
-									</div>
-									<div class="content"><?php echo esc_html( $nice_url ); ?></div>
+							$nice_url    = MainWP_Utility::get_nice_url( $website->url );
+							$website     = $websites[ $i ];
+							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
+							?>
+							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
+								<div class="right floated content">
+									<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
 								</div>
-								<?php
-							} else {
-								?>
-								<div class="item disconnected-site">
-									<div class="right floated content">
-										<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
-									</div>
-									<div class="content"><?php echo esc_html( $nice_url ); ?></div>
+								<div class="content">
+								<?php echo esc_html( $nice_url ); ?>
+								<?php do_action( 'mainwp_sync_popup_content', $website ); ?>
 								</div>
-								<?php
-							}
+							</div>
+							<?php
 						}
 					} else {
 						MainWP_DB::data_seek( $websites, 0 );
 						while ( $website = MainWP_DB::fetch_object( $websites ) ) {
-							$nice_url = MainWP_Utility::get_nice_url( $website->url );
-							if ( '' == $website->sync_errors ) {
-								?>
-								<div class="item">
-									<div class="right floated content">
-										<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="clock outline icon"></i></div>
-									</div>
-									<div class="content"><?php echo esc_html( $nice_url ); ?></div>
+							$nice_url    = MainWP_Utility::get_nice_url( $website->url );
+							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
+							?>
+							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
+								<div class="right floated content">
+									<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
 								</div>
-								<?php
-							} else {
-								?>
-								<div class="item disconnected-site">
-									<div class="right floated content">
-										<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="exclamation red icon"></i></div>
-									</div>
-									<div class="content"><?php echo esc_html( $nice_url ); ?></div>
+								<div class="content">
+								<?php echo esc_html( $nice_url ); ?>
+								<?php do_action( 'mainwp_sync_popup_content', $website ); ?>
 								</div>
-								<?php
-							}
+							</div>
+							<?php
 						}
 					}
 					?>

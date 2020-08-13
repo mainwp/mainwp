@@ -223,6 +223,16 @@ class MainWP_Extensions_Handler {
 		$snMenuExtensions[] = $slug;
 
 		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
+
+		/**
+		 * Adds Extension to the navigation menu
+		 *
+		 * Adds Extension instance to the Extensions located in the main MainWP navigation menu.
+		 *
+		 * @param string $slug Extension slug.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_added_extension_menu', $slug );
 
 		return true;
@@ -357,6 +367,15 @@ class MainWP_Extensions_Handler {
 
 					if ( $activatePlugin ) {
 						activate_plugin( $path . $srcFile, '', false, true );
+
+						/**
+						 * Extension API activation
+						 *
+						 * Activates the extension API license upon the extension installation.
+						 *
+						 * @since Unknown
+						 * @ignore
+						 */
 						do_action( 'mainwp_api_extension_activated', $path . $srcFile );
 					}
 
@@ -856,6 +875,7 @@ class MainWP_Extensions_Handler {
 
 			$id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1 );
 
+			/** This action is documented in class\class-mainwp-manage-sites-view.php */
 			do_action( 'mainwp_added_new_site', $id );
 
 			if ( $id ) {
@@ -936,6 +956,8 @@ class MainWP_Extensions_Handler {
 			}
 
 			MainWP_DB::instance()->remove_website( $clone_site->id );
+
+			/** This action is documented in pages\page-mainwp-manage-sites-handler.php */
 			do_action( 'mainwp_delete_site', $clone_site );
 			return array( 'result' => 'SUCCESS' );
 		}
@@ -961,6 +983,8 @@ class MainWP_Extensions_Handler {
 		global $current_user;
 		if ( ! empty( $newName ) ) {
 			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ) );
+
+			/** This action is documented in pages\page-mainwp-manage-groups.php */
 			do_action( 'mainwp_added_new_group', $groupId );
 			return $groupId;
 		}

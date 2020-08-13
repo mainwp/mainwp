@@ -141,6 +141,8 @@ class MainWP_Updates_Per_Site {
 			</thead>
 			<tbody id="plugins-updates-global" class="ui accordion">
 				<?php
+				$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
+
 				MainWP_DB::data_seek( $websites, 0 );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( $website->is_ignorePluginUpdates ) {
@@ -199,32 +201,29 @@ class MainWP_Updates_Per_Site {
 							<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table">
 								<thead>
 									<tr>
-										<th><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
+									<?php $updates_table_helper->print_column_headers(); ?>
 									</tr>
 								</thead>
 								<tbody class="plugins-bulk-updates" id="wp_plugin_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 									<?php foreach ( $plugin_upgrades as $slug => $plugin_upgrade ) : ?>
 										<?php $plugin_name = rawurlencode( $slug ); ?>
+										<?php
+										$indent_hidden = '<input type="hidden" id="wp_upgraded_plugin_' . esc_attr( $website->id ) . '_' . $plugin_name . '" value="0" />';
+										$row_columns   = array(
+											'title'   => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887" target="_blank" class="thickbox open-plugin-details-modal">' . esc_html( $plugin_upgrade['Name'] ) . '</a>' . $indent_hidden,
+											'version' => esc_html( $plugin_upgrade['Version'] ),
+											'latest'  => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887" target="_blank" class="thickbox open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+											'trusted' => ( in_array( $slug, $trustedPlugins ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ),
+											'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
+										);
+										?>
 										<tr plugin_slug="<?php echo $plugin_name; ?>" premium="<?php echo ( isset( $plugin_upgrade['premium'] ) ? esc_attr( $plugin_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['Name'] ); ?>
-												</a>
-												<input type="hidden" id="wp_upgraded_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0" />
-											</td>
-											<td><?php echo esc_html( $plugin_upgrade['Version'] ); ?></td>
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
-												</a>
-											</td>
-											<td><?php echo ( in_array( $slug, $trustedPlugins ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
-											<td><?php echo ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+											<?php
+											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+											$action_rendered = isset( $row_columns['action'] ) ? true : false;
+											if ( ! $action_rendered ) :
+												?>
+																						
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 													<a href="javascript:void(0)" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
@@ -233,6 +232,7 @@ class MainWP_Updates_Per_Site {
 													<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_plugin( <?php echo esc_attr( $website->id ); ?>, '<?php echo $plugin_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 												<?php endif; ?>
 											</td>
+											<?php endif; ?>
 										</tr>
 									<?php endforeach; ?>
 								</tbody>
@@ -290,6 +290,7 @@ class MainWP_Updates_Per_Site {
 			</thead>
 			<tbody id="themes-updates-global" class="ui accordion">
 				<?php
+				$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
 				MainWP_DB::data_seek( $websites, 0 );
 				while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 					if ( $website->is_ignoreThemeUpdates ) {
@@ -347,26 +348,29 @@ class MainWP_Updates_Per_Site {
 							<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table">
 								<thead>
 									<tr>
-										<th><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
+									<?php $updates_table_helper->print_column_headers(); ?>
 									</tr>
 								</thead>
 								<tbody class="themes-bulk-updates" id="wp_theme_upgrades_<?php echo intval( $website->id ); ?>" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>">
 									<?php foreach ( $theme_upgrades as $slug => $theme_upgrade ) : ?>
 										<?php $theme_name = rawurlencode( $slug ); ?>
+										<?php $indent_hidden = '<input type="hidden" id="wp_upgraded_theme_' . esc_attr( $website->id ) . '_' . $theme_name . '" value="0" />'; ?>
+										<?php
+										$row_columns = array(
+											'title'   => esc_html( $theme_upgrade['Name'] ) . $indent_hidden,
+											'version' => esc_html( $theme_upgrade['Version'] ),
+											'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
+											'trusted' => ( in_array( $slug, $trustedThemes, true ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ),
+											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
+										);
+										?>
+																					
 										<tr theme_slug="<?php echo $theme_name; ?>" premium="<?php echo ( isset( $theme_upgrade['premium'] ) ? esc_attr( $theme_upgrade['premium'] ) : 0 ) ? 1 : 0; ?>" updated="0">
-											<td>
-												<?php echo esc_html( $theme_upgrade['Name'] ); ?>
-												<input type="hidden" id="wp_upgraded_theme_<?php echo esc_attr( $website->id ); ?>_<?php echo $theme_name; ?>" value="0" />
-											</td>
-											<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-											<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-											<td><?php echo ( in_array( $slug, $trustedThemes ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
-											<td><?php echo ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+											<?php
+											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+											$action_rendered = isset( $row_columns['action'] ) ? true : false;
+											if ( ! $action_rendered ) :
+												?>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 													<a href="javascript:void(0)" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )" class="ui mini button"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
@@ -375,6 +379,7 @@ class MainWP_Updates_Per_Site {
 													<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_upgrade_theme( <?php echo esc_attr( $website->id ); ?>, '<?php echo $theme_name; ?>' )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 												<?php endif; ?>
 											</td>
+											<?php endif; ?>
 										</tr>
 									<?php endforeach; ?>
 								</tbody>

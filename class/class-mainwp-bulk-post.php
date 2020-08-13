@@ -42,6 +42,16 @@ class MainWP_Bulk_Post {
 			edit_post();
 
 			$location = admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $post_id . '&message=1' );
+
+			/**
+			 * Filter: redirect_post_location
+			 *
+			 * Filters the location for the Edit process.
+			 *
+			 * @param int $post_id Post ID.
+			 *
+			 * @since Unknown
+			 */
 			$location = apply_filters( 'redirect_post_location', $location, $post_id );
 			wp_safe_redirect( $location );
 			exit();
@@ -127,11 +137,30 @@ class MainWP_Bulk_Post {
 		MainWP_System::instance()->metaboxes->add_tags_handle( $post_id, 'bulkpost' );
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpost' );
 		MainWP_Post_Page_Handler::add_sticky_handle( $post_id );
+
+		/**
+		 * Action: mainwp_save_bulkpost
+		 *
+		 * Fires when saving the bulkpost.
+		 *
+		 * @param int $post_id Post ID.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_save_bulkpost', $post_id );
 
 		if ( $pid == $post_id ) {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpost' ), 10, 2 );
 		} else {
+			/**
+			 * Action: mainwp_before_redirect_posting_bulkpost
+			 *
+			 * Fires before redirection to posting 'bulkpost' page after post submission.
+			 *
+			 * @param object $_post Object containing post data.
+			 *
+			 * @since 4.0
+			 */
 			do_action( 'mainwp_before_redirect_posting_bulkpost', $_post );
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPost&id=' . $post_id . '&hideall=1' );
 			die();
@@ -175,11 +204,29 @@ class MainWP_Bulk_Post {
 		MainWP_System::instance()->metaboxes->add_slug_handle( $post_id, 'bulkpage' );
 		MainWP_Page::add_status_handle( $post_id );
 
+		/**
+		 * Action: mainwp_save_bulkpage
+		 *
+		 * Fires when saving the bulkpage.
+		 *
+		 * @param int $post_id Post ID.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_save_bulkpage', $post_id );
 
 		if ( $pid == $post_id ) {
 			add_filter( 'redirect_post_location', array( $this, 'redirect_edit_bulkpage' ), 10, 2 );
 		} else {
+			/**
+			 * Action: mainwp_before_redirect_posting_bulkpage
+			 *
+			 * Fires before redirection to posting 'bulkpage' page after post submission.
+			 *
+			 * @param object $_post Object containing post data.
+			 *
+			 * @since 4.0
+			 */
 			do_action( 'mainwp_before_redirect_posting_bulkpage', $_post );
 			wp_safe_redirect( get_site_url() . '/wp-admin/admin.php?page=PostingBulkPage&id=' . $post_id . '&hideall=1' );
 			die();
@@ -214,10 +261,10 @@ class MainWP_Bulk_Post {
 		);
 
 		$args = array(
-			'labels'                 => $labels,
-			'hierarchical'           => false,
-			'description'            => 'description...',
-			'supports'               => array(
+			'labels'              => $labels,
+			'hierarchical'        => false,
+			'description'         => 'description...',
+			'supports'            => array(
 				'title',
 				'editor',
 				'excerpt',
@@ -226,16 +273,16 @@ class MainWP_Bulk_Post {
 				'comments',
 				'revisions',
 			),
-			'public'                 => true,
-			'show_ui'                => true,
-			'show_in_nav_menus'      => false,
-			'publicly_queryable'     => $queryable,
-			'exclude_from_search'    => true,
-			'has_archive'            => false,
-			'query_var'              => false,
-			'can_export'             => false,
-			'rewrite'                => false,
-			'capabilities'           => array(
+			'public'              => true,
+			'show_ui'             => true,
+			'show_in_nav_menus'   => false,
+			'publicly_queryable'  => $queryable,
+			'exclude_from_search' => true,
+			'has_archive'         => false,
+			'query_var'           => false,
+			'can_export'          => false,
+			'rewrite'             => false,
+			'capabilities'        => array(
 				'edit_post'          => 'read',
 				'edit_posts'         => 'read',
 				'edit_others_posts'  => 'read',
@@ -264,10 +311,10 @@ class MainWP_Bulk_Post {
 		);
 
 		$args = array(
-			'labels'                 => $labels,
-			'hierarchical'           => false,
-			'description'            => 'description...',
-			'supports'               => array(
+			'labels'              => $labels,
+			'hierarchical'        => false,
+			'description'         => 'description...',
+			'supports'            => array(
 				'title',
 				'editor',
 				'excerpt',
@@ -276,16 +323,16 @@ class MainWP_Bulk_Post {
 				'comments',
 				'revisions',
 			),
-			'public'                 => true,
-			'show_ui'                => true,
-			'show_in_nav_menus'      => false,
-			'publicly_queryable'     => $queryable,
-			'exclude_from_search'    => true,
-			'has_archive'            => false,
-			'query_var'              => false,
-			'can_export'             => false,
-			'rewrite'                => false,
-			'capabilities'           => array(
+			'public'              => true,
+			'show_ui'             => true,
+			'show_in_nav_menus'   => false,
+			'publicly_queryable'  => $queryable,
+			'exclude_from_search' => true,
+			'has_archive'         => false,
+			'query_var'           => false,
+			'can_export'          => false,
+			'rewrite'             => false,
+			'capabilities'        => array(
 				'edit_post'          => 'read',
 				'edit_posts'         => 'read',
 				'edit_others_posts'  => 'read',

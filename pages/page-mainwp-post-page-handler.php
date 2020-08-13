@@ -236,6 +236,15 @@ class MainWP_Post_Page_Handler {
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Post', 'mainwp' ) : esc_html_e( 'New Post', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 				<?php
+				/**
+				 * Before Post post action
+				 *
+				 * Fires right before posting the 'bulkpost' to child sites.
+				 *
+				 * @param int $_GET['id'] Page ID.
+				 *
+				 * @since Unknown
+				 */
 				do_action( 'mainwp_bulkpost_before_post', $_GET['id'] );
 
 				$skip_post = false;
@@ -290,6 +299,16 @@ class MainWP_Post_Page_Handler {
 							$mainwp_upload_dir   = wp_upload_dir();
 
 							$post_status = get_post_meta( $id, '_edit_post_status', true );
+
+							/**
+							 * Post status
+							 *
+							 * Sets post status when posting 'bulkpost' to child sites.
+							 *
+							 * @param int $id Post ID.
+							 *
+							 * @since Unknown
+							 */
 							$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 							$new_post    = array(
 								'post_title'     => $_post->post_title,
@@ -402,16 +421,46 @@ class MainWP_Post_Page_Handler {
 									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
 									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
+									/**
+									 * Posting post
+									 *
+									 * Fires while posting post.
+									 *
+									 * @param object $website                          Object containing child site data.
+									 * @param int    $output->added_id[ $website->id ] Child site ID.
+									 * @param array  $links                            Links.
+									 *
+									 * @since Unknown
+									 */
 									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], $links );
+
+									/**
+									 * Posting post completed
+									 *
+									 * Fires after the post posting process is completed.
+									 *
+									 * @param array  $_post   Array containing the post data.
+									 * @param object $website Object containing child site data.
+									 * @param array  $output  Output data.
+									 *
+									 * @since Unknown
+									 */
 									do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 								} else {
 									$failed_posts[] = $website->id;
 								}
 							}
 
-							/*
-							* @deprecated Use 'mainwp_after_posting_bulkpost_result' instead.
+							/**
+							 * After posting a new post
 							*
+							 * Sets data after the posting process to show the process feedback.
+							 *
+							 * @param array $_post      Array containing the post data.
+							 * @param array $dbwebsites Array containing processed sites.
+							 * @param array $output     Output data.
+							 *
+							 * @since Unknown
 							*/
 							$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
 							$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );

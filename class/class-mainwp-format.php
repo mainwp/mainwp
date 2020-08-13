@@ -23,7 +23,6 @@ class MainWP_Format {
 		return __CLASS__;
 	}
 
-
 	/**
 	 * Method get_update_plugins_items().
 	 *

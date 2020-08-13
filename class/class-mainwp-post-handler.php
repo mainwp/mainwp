@@ -405,6 +405,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		if ( 'last_sync_sites' === $_POST['status'] ) {
 			update_option( 'mainwp_last_synced_all_sites', time() );
+
+			/**
+			 * Action: mainwp_synced_all_sites
+			 *
+			 * Fires upon successfull synchronization process.
+			 *
+			 * @since 3.5.1
+			 */
 			do_action( 'mainwp_synced_all_sites' );
 			die( 'ok' );
 		}

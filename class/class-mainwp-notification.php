@@ -142,6 +142,16 @@ class MainWP_Notification {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
 
+		/**
+		 * Filter: mainwp_daily_digest_content
+		 *
+		 * Filters the Daily Digest email content and adds support for enabling text/plain emails.
+		 *
+		 * @param array $sites_ids Array of sites IDs.
+		 * @param bool  $plain_text Wether plain text mode is enabled.
+		 *
+		 * @since 4.1
+		 */
 		$other_digest = apply_filters( 'mainwp_daily_digest_content', false, $sites_ids, $plain_text );
 
 		$heading = $email_settings['heading'];

@@ -122,12 +122,17 @@ class MainWP_Manage_Groups {
 
 			return;
 		}
+
+		/**
+		 * Sites Page header
+		 *
+		 * Renders the tabs on the Sites screen.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_pageheader_sites', 'ManageGroups' );
-
 		?>
-
 		<div id="mainwp-manage-groups" class="ui segment">
-
 			<div id="mainwp-message-zone" style="display: none;">
 				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
 			</div>
@@ -161,10 +166,15 @@ class MainWP_Manage_Groups {
 					</tr>
 				</tfoot>
 			</table>
-
 		</div>
-
 		<?php
+		/**
+		 * Sites Page Footer
+		 *
+		 * Renders the footer on the Sites screen.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
 		?>
 
@@ -455,6 +465,14 @@ class MainWP_Manage_Groups {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
 			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $_POST['newName'] ) );
+
+			/**
+			 * New Group Added
+			 *
+			 * Fires after a new sites group has been created.
+			 *
+			 * @param int $groupId Group ID.
+			 */
 			do_action( 'mainwp_added_new_group', $groupId );
 			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
 			self::create_group_item( $group );

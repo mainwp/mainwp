@@ -108,9 +108,11 @@ class MainWP_Post {
 		);
 
 		/**
-		 * This hook allows you to add extra sub pages to the Post page via the 'mainwp-getsubpages-post' filter.
+		 * Posts Subpages
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-post
+		 * Filters subpages for the Posts page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = array();
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-post', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_post' );  // @deprecated Use 'mainwp_getsubpages_post' instead.
@@ -493,10 +495,28 @@ class MainWP_Post {
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 								</select>
 								<button class="ui mini button" id="mainwp-do-posts-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-								<?php do_action( 'mainwp_posts_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Posts actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Posts screen, after the Bulk Actions menu.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_posts_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
-								<?php do_action( 'mainwp_posts_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Posts actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Posts screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_posts_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>
@@ -623,6 +643,13 @@ class MainWP_Post {
 					<option value="any"><?php esc_html_e( 'All post types', 'mainwp' ); ?></option>
 					<option value="post"><?php esc_html_e( 'Post', 'mainwp' ); ?></option>
 					<?php
+					/**
+					 * Default post types
+					 *
+					 * Set default custom post types to exclude from the CPT extension options.
+					 *
+					 * @since 4.0
+					 */
 					$default_post_types = apply_filters( 'mainwp_custom_post_types_default', array() );
 					foreach ( get_post_types( array( '_builtin' => false ) ) as $key ) {
 						if ( ! in_array( $key, $default_post_types ) ) {
@@ -859,6 +886,13 @@ class MainWP_Post {
 				$post_data['userId'] = $userId;
 			}
 
+			/**
+			 * Get all posts data
+			 *
+			 * Set search parameters for the fetch process.
+			 *
+			 * @since 3.4
+			 */
 			$post_data = apply_filters( 'mainwp_get_all_posts_data', $post_data );
 			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
@@ -1733,12 +1767,30 @@ class MainWP_Post {
 				<div class="field postbox-container">
 				<?php
 
+				/**
+				 * Edit bulkpost
+				 *
+				 * First on the Edit post screen after default fields.
+				 *
+				 * @param object $post      Object containing the Post data.
+				 * @param string $post_type Post type.
+				 */
 				do_action( 'mainwp_bulkpost_edit', $post, $post_type );
 
 				self::do_meta_boxes( null, 'normal', $post );
 
 				self::do_meta_boxes( null, 'advanced', $post );
 
+				/**
+				 * Edit bulkpost metaboxes
+				 *
+				 * Fires after all built-in meta boxes have been added.
+				 *
+				 * @param object $post      Object containing the Post data.
+				 * @param string $post_type Post type.
+				 *
+				 * @see https://developer.wordpress.org/reference/hooks/add_meta_boxes/
+				 */
 				do_action( 'add_meta_boxes', $post_type, $post );
 
 				self::do_meta_boxes( $post_type, 'normal', $post );
@@ -1765,11 +1817,29 @@ class MainWP_Post {
 					?>
 					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
 					<div class="ui divider"></div>
-					<?php do_action( 'mainwp_edit_posts_before_submit_button' ); ?>
+					<?php
+					/**
+					 * Edit Post - before submit button
+					 *
+					 * Fires right before the Submit button.
+					 *
+					 * @since 4.0
+					 */
+					do_action( 'mainwp_edit_posts_before_submit_button' );
+					?>
 					<div class="mainwp-search-submit" id="bulkpost-publishing-action">
 						<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
 					</div>
-					<?php do_action( 'mainwp_edit_posts_after_submit_button' ); ?>
+					<?php
+					/**
+					 * Edit Post - after submit button
+					 *
+					 * Fires right after the Submit button.
+					 *
+					 * @since 4.0
+					 */
+					do_action( 'mainwp_edit_posts_after_submit_button' );
+					?>
 				</div>
 			</form>
 			<script type="text/javascript">

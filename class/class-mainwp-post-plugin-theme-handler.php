@@ -459,6 +459,15 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			$websiteId = $_POST['websiteId'];
 
 			if ( $chunk_support ) {
+				/**
+				 * Filter: mainwp_update_plugintheme_max
+				 *
+				 * Filters the max number of plugins/themes to be updated in one run in order to improve performance.
+				 *
+				 * @param int $websiteId Child site ID.
+				 *
+				 * @since Unknown
+				 */
 				$max_update = apply_filters( 'mainwp_update_plugintheme_max', false, $websiteId );
 				if ( empty( $max_update ) ) {
 					$chunk_support = false; // there is no hook so disable chunk update support.

@@ -141,11 +141,12 @@ class MainWP_Settings {
 		}
 
 		/**
-		 * This hook allows you to add extra sub pages to the Settings page via the 'mainwp-getsubpages-settings' filter.
+		 * Settings Subpages
 		 *
-		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
+		 * Filters subpages for the Settings page.
+		 *
+		 * @since Unknown
 		 */
-
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-settings', array( array() ), '4.0.7.2', 'mainwp_getsubpages_settings' );  // @deprecated Use 'mainwp_getsubpages_settings' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_settings', $sub_pages );
 

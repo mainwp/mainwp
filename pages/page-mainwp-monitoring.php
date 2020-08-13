@@ -94,8 +94,8 @@ class MainWP_Monitoring {
 			self::$sitesTable->prepare_items( false );
 		}
 
+		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
 		do_action( 'mainwp_pageheader_sites', 'MonitoringSites' );
-
 		?>
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
@@ -108,7 +108,7 @@ class MainWP_Monitoring {
 			</form>
 		</div>		
 		<?php
-
+		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
 		do_action( 'mainwp_pagefooter_sites', 'MonitoringSites' );
 	}
 

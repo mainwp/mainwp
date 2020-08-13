@@ -62,9 +62,11 @@ class MainWP_Extensions {
 		$save_extensions = array();
 
 		/**
-		 * Filter is being replaced with mainwp_getextensions
+		 * Get extensions
 		 *
-		 * @deprecated
+		 * Adds extension to MainWP system.
+		 *
+		 * @since 4.1
 		 */
 		$init_extensions = array();
 		$init_extensions = apply_filters_deprecated( 'mainwp-getextensions', array( $init_extensions ), '4.0.7.2', 'mainwp_getextensions' );
@@ -240,12 +242,12 @@ class MainWP_Extensions {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
 			MainWP_Menu::add_left_menu(
 				array(
-					'title'             => __( 'Extensions', 'mainwp' ),
-					'parent_key'        => 'mainwp_tab',
-					'slug'              => 'Extensions',
-					'href'              => 'admin.php?page=Extensions',
-					'icon'              => '<i class="plug icon"></i>',
-					'id'                => 'menu-item-extensions',
+					'title'      => __( 'Extensions', 'mainwp' ),
+					'parent_key' => 'mainwp_tab',
+					'slug'       => 'Extensions',
+					'href'       => 'admin.php?page=Extensions',
+					'icon'       => '<i class="plug icon"></i>',
+					'id'         => 'menu-item-extensions',
 				),
 				1
 			);
@@ -364,6 +366,14 @@ class MainWP_Extensions {
 
 					if ( isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
 
+						/**
+						 * API Manager Upgrade URL
+						 *
+						 * Filters the Upgrade URL for extensions.
+						 *
+						 * @since Unknown
+						 * @ignore
+						 */
 						$package_url = apply_filters( 'mainwp_api_manager_upgrade_url', $product_info['package'] );
 
 						$item_html = '

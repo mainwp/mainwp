@@ -128,9 +128,11 @@ class MainWP_Themes {
 		);
 
 		/**
-		 * This hook allows you to add extra sub pages to the Themes page via the 'mainwp-getsubpages-themes' filter.
+		 * Themes Subpages
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-themes
+		 * Filters subpages for the Themes page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-themes', array( array() ), '4.0.7.2', 'mainwp_getsubpages_themes' );  // @deprecated Use 'mainwp_getsubpages_themes' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_themes', $sub_pages );
@@ -374,11 +376,29 @@ class MainWP_Themes {
 								}
 								?>
 								</div>
-								<?php do_action( 'mainwp_themes_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Themes actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Themes screen, after the Bulk Actions menu.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_themes_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
 								<button id="mainwp-install-themes-to-selected-sites" class="ui green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
-								<?php do_action( 'mainwp_themes_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Themes actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Themes screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_themes_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>
@@ -727,6 +747,7 @@ class MainWP_Themes {
 			<thead>
 				<tr>
 					<th></th>
+					<?php do_action( 'mainwp_manage_themes_table_header' );?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<?php
 						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
@@ -752,6 +773,7 @@ class MainWP_Themes {
 							<label><?php echo esc_html( $site_url ); ?></label>
 						</div>
 					</td>
+					<?php do_action( 'mainwp_manage_themes_table_column', $site_id );?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<td class="center aligned">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
@@ -881,7 +903,15 @@ class MainWP_Themes {
 									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container"></div>
 									<div class="results"></div>
 								</div>
-								<?php do_action( 'mainwp_install_themes_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Install Themes actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Install Themes screen, after the search form.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_install_themes_actions_bar_left' ); ?>
 							</div>
 							<div class="right aligned column">
 								<div class="ui buttons">
@@ -889,7 +919,16 @@ class MainWP_Themes {
 									<div class="or"></div>
 									<a href="#" class="ui button upload" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
 								</div>
-								<?php do_action( 'mainwp_install_themes_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Install Themes actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Install Themes screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_install_themes_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>
@@ -939,6 +978,13 @@ class MainWP_Themes {
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
 				<?php
+				/**
+				 * Disables themes installation
+				 *
+				 * Filters whether file modifications are allowed on the Dashboard site. If not, installation process will be disabled too.
+				 *
+				 * @since 4.1
+				 */
 				$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_theme' );
 				if ( $allow_install ) {
 					?>

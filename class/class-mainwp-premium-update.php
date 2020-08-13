@@ -74,8 +74,22 @@ class MainWP_Premium_Update {
 				'gp-premium/gp-premium.php',
 			);
 
+			/**
+			 * Filter: mainwp_detect_premiums_updates
+			 *
+			 * Use mainwp_detect_premium_plugins_update instead.
+			 *
+			 * @deprecated
+			 */
 			$premiums = apply_filters( 'mainwp_detect_premiums_updates', $premiums );
 
+			/**
+			 * Filter: mainwp_detect_premium_plugins_update
+			 *
+			 * Filters supported premium plugins to fix compatiblity issues with detecting premium plugins updates.
+			 *
+			 * @since Unknown
+			 */
 			$premiums = apply_filters( 'mainwp_detect_premium_plugins_update', $premiums );
 
 			if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
@@ -93,6 +107,13 @@ class MainWP_Premium_Update {
 
 			$premiums = array();
 
+			/**
+			 * Filter: mainwp_detect_premium_themes_update
+			 *
+			 * Filters supported premium themes to fix compatiblity issues with detecting premium themes updates.
+			 *
+			 * @since Unknown
+			 */
 			$premiums = apply_filters( 'mainwp_detect_premium_themes_update', $premiums );
 
 			if ( is_array( $premiums ) && 0 < count( $premiums ) ) {
@@ -173,10 +194,10 @@ class MainWP_Premium_Update {
 	 *
 	 * Check if any updates are on the premiums list.
 	 *
-	 * @param mixed $list List of updates.
-	 * @param mixed $type Type of update. plugin|theme.
+	 * @param array  $list List of updates.
+	 * @param string $type Type of update. plugin|theme.
 	 *
-	 * @return boolean true|false.
+	 * @return bool true|false.
 	 */
 	public static function check_request_update_premium( $list, $type ) {
 
@@ -196,6 +217,13 @@ class MainWP_Premium_Update {
 				'yith-woocommerce-request-a-quote-premium/init.php',
 			);
 
+			/**
+			 * Filter: mainwp_request_update_premium_plugins
+			 *
+			 * Filters supported premium plugins to fix compatibility problmes with updating premium plugins.
+			 *
+			 * @since Unknown
+			 */
 			$update_premiums = apply_filters( 'mainwp_request_update_premium_plugins', $update_premiums );
 
 			if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
@@ -210,6 +238,14 @@ class MainWP_Premium_Update {
 		} elseif ( 'theme' === $type ) {
 
 			$update_premiums = array();
+
+			/**
+			 * Filter: mainwp_request_update_premium_themes
+			 *
+			 * Filters supported premium themes to fix compatibility problmes with updating premium themes.
+			 *
+			 * @since Unknown
+			 */
 			$update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
 			if ( is_array( $update_premiums ) && 0 < count( $update_premiums ) ) {
 				foreach ( $themes as $slug ) {

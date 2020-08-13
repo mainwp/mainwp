@@ -160,9 +160,11 @@ class MainWP_Overview {
 	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
-		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
+		 * Get getmetaboxes
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
+		 * Adds metaboxes (widgets) to the Overview page.
+		 *
+		 * @since Unknown
 		 */
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
@@ -175,7 +177,16 @@ class MainWP_Overview {
 
 		$values = self::$enable_widgets;
 
-		// hook to support enable/disable overview widgets.
+		/**
+		 * Unset unwanted Widgets
+		 *
+		 * Contains the list of enabled widgets and allows user to unset unwanted widgets.
+		 *
+		 * @param array $values           Array containing enabled widgets.
+		 * @param int   $dashboard_siteid Child site (Overview) ID.
+		 *
+		 * @since 4.0
+		 */
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, null );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
@@ -319,7 +330,16 @@ class MainWP_Overview {
 				</div>
 			<?php endif; ?>
 
-			<?php do_action( 'mainwp_before_overview_widgets' ); ?>
+			<?php
+			/**
+			 * Before overview widgets
+			 *
+			 * Fires at the top of the Overview page (before first widget).
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_overview_widgets' );
+			?>
 
 		<?php
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
@@ -343,7 +363,16 @@ class MainWP_Overview {
 			<?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ); ?>
 		</div>
 			</div>
-			<?php do_action( 'mainwp_after_overview_widgets' ); ?>
+			<?php
+			/**
+			 * After overview widgets
+			 *
+			 * Fires at the bottom of the Overview page (after the last widget).
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_overview_widgets' );
+			?>
 
 		<div class="ui modal" id="mainwp-overview-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>

@@ -610,20 +610,15 @@ class MainWP_Manage_Sites_View {
 	 * Render Security Scan sub page.
 	 *
 	 * @param mixed $website Child Site.
-	 *
-	 * @return html Security Scan sub page.
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 			mainwp_do_not_have_permissions( __( 'security scan', 'mainwp' ) );
 			return;
 		}
-
 		?>
-
 		<div class="ui segment">
 			<h3 class="ui dividing header"><?php esc_html_e( 'Basic Security Check', 'mainwp' ); ?></h3>
-
 			<?php
 			// Render security check issues.
 			$websiteid = isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ? $_GET['scanid'] : null;
@@ -633,6 +628,18 @@ class MainWP_Manage_Sites_View {
 			}
 			if ( mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
 				do_action_deprecated( 'mainwp-securityissues-sites', array( $website ), '4.0.7.2', 'mainwp_securityissues_sites' ); // @deprecated Use 'mainwp_securityissues_sites' instead.
+
+				/**
+				 * Action: mainwp_securityissues_sites
+				 *
+				 * Fires on a child site Security Scan page at top.
+				 *
+				 * @hooked MainWP basic security scan features.
+				 *
+				 * @param object $website Object containing child site info.
+				 *
+				 * @since Unknown
+				 */
 				do_action( 'mainwp_securityissues_sites', $website );
 			}
 			?>
@@ -642,6 +649,18 @@ class MainWP_Manage_Sites_View {
 			if ( mainwp_current_user_have_right( 'extension', 'mainwp-sucuri-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-sucuri-extension/mainwp-sucuri-extension.php' ) ) {
 					do_action_deprecated( 'mainwp-sucuriscan-sites', array( $website ), '4.0.7.2', 'mainwp_sucuriscan_sites' ); // @deprecated Use 'mainwp_sucuriscan_sites' instead.
+
+					/**
+					 * Action: mainwp_sucuriscan_sites
+					 *
+					 * Fires on a child site Security Scan page.
+					 *
+					 * @hooked MainWP Sucuri Extension data.
+					 *
+					 * @param object $website Object containing child site info.
+					 *
+					 * @since Unknown
+					 */
 					do_action( 'mainwp_sucuriscan_sites', $website );
 				}
 			}
@@ -652,6 +671,18 @@ class MainWP_Manage_Sites_View {
 			if ( mainwp_current_user_have_right( 'extension', 'mainwp-wordfence-extension' ) ) {
 				if ( is_plugin_active( 'mainwp-wordfence-extension/mainwp-wordfence-extension.php' ) ) {
 					do_action_deprecated( 'mainwp-wordfence-sites', array( $website ), '4.0.7.2', 'mainwp_wordfence_sites' ); // @deprecated Use 'mainwp_wordfence_sites' instead.
+
+					/**
+					 * Action: mainwp_wordfence_sites
+					 *
+					 * Fires on a child site Security Scan page.
+					 *
+					 * @hooked MainWP Wordfence Extension data.
+					 *
+					 * @param object $website Object containing child site info.
+					 *
+					 * @since Unknown
+					 */
 					do_action( 'mainwp_wordfence_sites', $website );
 
 				}
@@ -903,6 +934,8 @@ class MainWP_Manage_Sites_View {
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
 				do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+
+				/** This action is documented in ../pages/page-mainwp-manage-sites.php */
 				do_action( 'mainwp_manage_sites_edit', $website );
 				do_action( 'mainwp_extension_sites_edit_tablerow', $website );
 				?>
@@ -1174,7 +1207,18 @@ class MainWP_Manage_Sites_View {
 					</tr>
 				</tfoot>
 			</table>
-			<?php do_action( 'mainwp_manage_sites_email_settings', $website ); ?>	
+			<?php
+			/**
+			 * Action: mainwp_manage_sites_email_settings
+			 *
+			 * Fires on the Email Settigns page at bottom.
+			 *
+			 * @param object $website Object containing the website info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_manage_sites_email_settings', $website );
+			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-emails-settings-table' ).DataTable( {						
@@ -1424,7 +1468,17 @@ class MainWP_Manage_Sites_View {
 						} else {
 							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}
+						/**
+						 * New site added
+						 *
+						 * Fires after adding a website to MainWP Dashboard.
+						 *
+						 * @param int $id Child site ID.
+						 *
+						 * @since 3.4
+						 */
 						do_action( 'mainwp_added_new_site', $id );
+
 						$website = MainWP_DB::instance()->get_website_by_id( $id );
 						MainWP_Sync::sync_information_array( $website, $information );
 					} else {

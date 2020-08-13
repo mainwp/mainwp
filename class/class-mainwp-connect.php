@@ -33,12 +33,12 @@ class MainWP_Connect {
 	 * Try connecting to Child Site via cURL.
 	 *
 	 * @param string            $url Child Site URL.
-	 * @param boolean true|null $verifyCertificate Option to check SSL Certificate. Default = null.
+	 * @param bool   $verifyCertificate Option to check SSL Certificate. Default = null.
 	 * @param string            $http_user HTTPAuth Username. Default = null.
 	 * @param string            $http_pass HTTPAuth Password. Default = null.
-	 * @param integer           $sslVersion Child Site SSL Version.
-	 * @param boolean true|null $forceUseIPv4 Option to fource IP4. Default = null.
-	 * @param boolean true|null $no_body Option to set CURLOPT_NOBODY option. Default = false.
+	 * @param int    $sslVersion        Child Site SSL Version.
+	 * @param bool   $forceUseIPv4      Option to fource IP4. Default = null.
+	 * @param bool   $no_body           Option to set CURLOPT_NOBODY option. Default = false.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
 	 */
@@ -306,6 +306,7 @@ class MainWP_Connect {
 			}
 			$data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
+			/** This filter is documented in ../widgets/widget-mainwp-recent-posts.php */
 			$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 			if ( 5 !== $recent_number ) {
 				$data['recent_number'] = $recent_number;
@@ -315,6 +316,17 @@ class MainWP_Connect {
 
 			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
 				if ( is_object( $current_user ) && property_exists( $current_user, 'ID' ) && $current_user->ID ) {
+
+					/**
+					 * Filter: mainwp_alter_login_user
+					 *
+					 * Filtes users accounts so it allows you user to jump to child site under alternative administartor account.
+					 *
+					 * @param int $website->id Child site ID.
+					 * @param int $current_user->ID User ID.
+					 *
+					 * @since Unknown
+					 */
 					$alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
 					if ( ! empty( $alter_user ) ) {
 						$data['alt_user'] = rawurlencode( $alter_user );
@@ -336,9 +348,9 @@ class MainWP_Connect {
 	 * @param mixed   $website Child Site data.
 	 * @param mixed   $paramValue OpenSSL parameter.
 	 * @param string  $paramName Parameter name.
-	 * @param boolean $asArray true|false Default is false.
+	 * @param bool   $asArray true|false Default is false.
 	 *
-	 * @return mixed $url
+	 * @return string $url
 	 */
 	public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false ) {
 		$params = array();
@@ -365,6 +377,7 @@ class MainWP_Connect {
 			global $current_user;
 			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
 				if ( $current_user && $current_user->ID ) {
+					/** This filter is documented in ../class/class-mainwp-connect.php */
 					$alter_user = apply_filters( 'mainwp_alter_login_user', false, $website->id, $current_user->ID );
 					if ( ! empty( $alter_user ) ) {
 						$params['alt_user'] = rawurlencode( $alter_user );
@@ -455,6 +468,13 @@ class MainWP_Connect {
 		}
 
 		if ( $is_external_hook ) {
+			/**
+			 * Filter: mainwp_response_json_format
+			 *
+			 * Filters whether response should be in the JSON format.
+			 *
+			 * @since Unknown
+			 */
 			$json_format = apply_filters( 'mainwp_response_json_format', false );
 		} else {
 			$json_format = true;
@@ -527,6 +547,13 @@ class MainWP_Connect {
 					'mainwp_pre_posting_posts'
 				);
 
+				/**
+				 * Filter: mainwp_pre_posting_posts
+				 *
+				 * Prepares parameters for the authenticated cURL post.
+				 *
+				 * @since 4.1
+				 */
 				$params = apply_filters(
 					'mainwp_pre_posting_posts',
 					( is_array( $params ) ? $params : array() ),
@@ -751,6 +778,7 @@ class MainWP_Connect {
 					'mainwp_pre_posting_posts'
 				);
 
+				/** This filter is documented in ../class/class-mainwp-connect.php */
 				$params = apply_filters(
 					'mainwp_pre_posting_posts',
 					( is_array( $params ) ? $params : array() ),
@@ -1080,12 +1108,14 @@ class MainWP_Connect {
 	/**
 	 * Method fetch_url_authed()
 	 *
+	 * Updates the child site via authenticated request.
+	 *
 	 * @param object  $website Website information.
 	 * @param string  $what Function to perform.
 	 * @param null    $params Function paramerters.
-	 * @param boolean $checkConstraints true|false Whether or not to check contraints.
-	 * @param boolean $pForceFetch true|false Whether or not to force the fetch.
-	 * @param boolean $pRetryFailed true|false Whether or not to retry the fetch process.
+	 * @param bool   $checkConstraints Whether or not to check contraints.
+	 * @param bool   $pForceFetch      Whether or not to force the fetch.
+	 * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
 	 * @param null    $rawResponse Raw response.
 	 *
 	 * @return mixed $information
@@ -1131,6 +1161,17 @@ class MainWP_Connect {
 		}
 
 		if ( $updating_website ) {
+			/**
+			 * Action: mainwp_website_before_updated
+			 *
+			 * Fires before the child site update process.
+			 *
+			 * @param object $website Object conaining child site info.
+			 * @param string $type    Type parameter.
+			 * @param string $list    List parameter.
+			 *
+			 * @since Unknown
+			 */
 			do_action( 'mainwp_website_before_updated', $website, $type, $list );
 		}
 
@@ -1153,6 +1194,18 @@ class MainWP_Connect {
 		}
 
 		if ( $updating_website ) {
+			/**
+			 * Action: mainwp_website_updated
+			 *
+			 * Fires after the child site update process.
+			 *
+			 * @param object $website     Object conaining child site info.
+			 * @param string $type        Type parameter.
+			 * @param string $list        List parameter.
+			 * @param array  $information Array containng the information fetched from the child site.
+			 *
+			 * @since Unknown
+			 */
 			do_action( 'mainwp_website_updated', $website, $type, $list, $information );
 			if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
 				MainWP_Monitoring_Handler::handle_check_website( $website );

@@ -453,12 +453,13 @@ class MainWP_DB extends MainWP_DB_Base {
 		$is_staging   = isset( $params['is_staging'] ) && 'yes' == $params['is_staging'] ? 'yes' : 'no';
 		$is_count     = isset( $params['count_only'] ) && $params['count_only'] ? true : false;
 		$group_ids    = isset( $params['group_id'] ) && ! empty( $params['group_id'] ) ? $params['group_id'] : array();
+		$is_not       = isset( $params['isnot'] ) && ! empty( $params['isnot'] ) ? true : false;
 
 		if ( ! is_array( $group_ids ) ) {
 			$group_ids = array();
 		}
 
-		// valid data.
+		// valid group ids.
 		$group_ids = array_filter(
 			$group_ids,
 			function( $e ) {
@@ -524,15 +525,27 @@ class MainWP_DB extends MainWP_DB_Base {
 				}
 			);
 			if ( 0 < count( $group_ids ) ) {
-				$groups      = implode( ',', $group_ids );
-				$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
+				$groups = implode( ',', $group_ids );
+				if ( $is_not ) {
+					$where_group = ' AND wpgroup.groupid IS NOT NULL AND wpgroup.groupid NOT IN (' . $groups . ') ';
+				} else {
+					$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
+				}
 			} else {
-				$where_group = ' AND wpgroup.groupid IS NULL ';
+				if ( $is_not ) {
+					$where_group = ' AND wpgroup.groupid IS NOT NULL ';
+				} else {
+					$where_group = ' AND wpgroup.groupid IS NULL ';
+				}
 			}
 		} elseif ( $group_ids && 0 < count( $group_ids ) ) {
-			$groups      = implode( ',', $group_ids );
-			$join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
-			$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
+			$groups     = implode( ',', $group_ids );
+			$join_group = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+			if ( $is_not ) {
+				$where_group = ' AND wpgroup.groupid NOT IN (' . $groups . ') ';
+			} else {
+				$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
+			}
 		}
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
@@ -569,7 +582,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param string $site_table_alias Child site table alias.
 	 * @param string $is_staging       yes|no Is child site a staging site.
 	 *
-	 * @return boolean|null $_where Database query results or null on failer.
+	 * @return boolean|null $_where Database query results or null on failure.
 	 */
 	public function get_sql_where_allow_access_sites( $site_table_alias = '', $is_staging = 'no' ) {
 
@@ -599,6 +612,13 @@ class MainWP_DB extends MainWP_DB_Base {
 			return $_where;
 		}
 
+		/**
+		 * Filter: mainwp_currentuserallowedaccesssites
+		 *
+		 * Filters allowed sites for the current user.
+		 *
+		 * @since Unknown
+		 */
 		$allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
 
 		if ( 'all' === $allowed_sites ) {
@@ -645,6 +665,13 @@ class MainWP_DB extends MainWP_DB_Base {
 		// end staging filter.
 		$_where = $where_staging_group;
 
+		/**
+		 * Filter: mainwp_currentuserallowedaccessgroups
+		 *
+		 * Filters allowed groups for the current user.
+		 *
+		 * @since Unknown
+		 */
 		$allowed_groups = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
 
 		if ( 'all' === $allowed_groups ) {
@@ -1129,7 +1156,18 @@ class MainWP_DB extends MainWP_DB_Base {
 				$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
 				// Remove GA stats.
 				$showErrors = $this->wpdb->hide_errors();
+
+				/**
+				 * Action: mainwp_ga_delete_site
+				 *
+				 * Fires upon site removal process in order to delete Google Analytics data.
+				 *
+				 * @param int $websiteid Child site ID.
+				 *
+				 * @since Unknown
+				 */
 				do_action( 'mainwp_ga_delete_site', $websiteid );
+
 				if ( $showErrors ) {
 					$this->wpdb->show_errors();
 				}

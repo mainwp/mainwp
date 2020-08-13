@@ -41,6 +41,13 @@ class MainWP_Recent_Posts {
 	 */
 	public static function render_sites() {
 
+		/**
+		 * Sets number of recent posts & pages
+		 *
+		 * Limits the number of recent posts & pages to show in the widget. Min 0, Max 30, Default 5.
+		 *
+		 * @since 4.0
+		 */
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30.
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

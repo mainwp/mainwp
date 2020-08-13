@@ -129,9 +129,11 @@ class MainWP_Plugins {
 		);
 
 		/**
-		 * This hook allows you to add extra sub pages to the Plugins page via the 'mainwp-getsubpages-plugins' filter.
+		 * Plugins Subpages
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-plugins
+		 * Filters subpages for the Plugins page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-plugins', array( array() ), '4.0.7.2', 'mainwp_getsubpages_plugins' );  // @deprecated Use 'mainwp_getsubpages_plugins' instead.
 		self::$subPages = apply_filters( 'mainwp_getsubpages_plugins', $sub_pages );
@@ -390,13 +392,31 @@ class MainWP_Plugins {
 									}
 									?>
 								</div>
-								<?php do_action( 'mainwp_plugins_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Plugins actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Plugins screen, after the Bulk Actions menu.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_plugins_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
 								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui small button"><?php esc_html_e( 'Select all', 'mainwp' ); ?></a>
 								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui small button"><?php esc_html_e( 'Select none', 'mainwp' ); ?></a>
 								<button id="mainwp-install-to-selected-sites" class="ui olive basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
-								<?php do_action( 'mainwp_plugins_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Plugins actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Plugins screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_plugins_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>
@@ -791,6 +811,7 @@ class MainWP_Plugins {
 			<thead>
 				<tr>
 					<th></th>
+					<?php do_action( 'mainwp_manage_plugins_table_header' );?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 						<?php
 						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
@@ -816,6 +837,7 @@ class MainWP_Plugins {
 						<label><?php echo esc_html( $site_url ); ?></label>
 					</div>
 					</td>
+					<?php do_action( 'mainwp_manage_plugins_table_column', $site_id );?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 					<td class="center aligned">
 						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
@@ -907,7 +929,16 @@ class MainWP_Plugins {
 									} );
 								} );
 							</script>
-							<?php do_action( 'mainwp_install_plugins_actions_bar_left' ); ?>
+							<?php
+							/**
+							 * Install Plugins actions bar (left)
+							 *
+							 * Fires at the left side of the actions bar on the Install Plugins screen, after the Search bar.
+							 *
+							 * @since 4.0
+							 */
+							do_action( 'mainwp_install_plugins_actions_bar_left' );
+							?>
 						</div>
 					<div class="right aligned column">
 						<div class="ui buttons">
@@ -915,7 +946,16 @@ class MainWP_Plugins {
 							<div class="or"></div>
 							<a href="#" id="MainWPInstallBulkNavUpload" class="ui button" ><?php esc_html_e( 'Upload .zip file', 'mainwp' ); ?></a>
 						</div>
-					<?php do_action( 'mainwp_install_plugins_actions_bar_right' ); ?>
+					<?php
+					/**
+					 * Install Plugins actions bar (right)
+					 *
+					 * Fires at the left side of the actions bar on the Install Plugins screen, after the Nav buttons.
+					 *
+					 * @since 4.0
+					 */
+					do_action( 'mainwp_install_plugins_actions_bar_right' );
+					?>
 					</div>
 				</div>
 			</div>
@@ -973,6 +1013,13 @@ class MainWP_Plugins {
 		<div class="ui divider"></div>
 		<div class="mainwp-search-submit">
 		<?php
+		/**
+		 * Disables plugin installation
+		 *
+		 * Filters whether file modifications are allowed on the Dashboard site. If not, installation process will be disabled too.
+		 *
+		 * @since 4.1
+		 */
 		$allow_install = apply_filters( 'file_mod_allowed', true, 'mainwp_install_plugin' );
 		if ( $allow_install ) {
 			?>

@@ -52,9 +52,9 @@ class MainWP_Server_Information_Handler {
 		$api = plugins_api(
 			'plugin_information',
 			array(
-				'slug'       => 'mainwp',
-				'fields'     => array( 'sections' => false ),
-				'timeout'    => 60,
+				'slug'    => 'mainwp',
+				'fields'  => array( 'sections' => false ),
+				'timeout' => 60,
 			)
 		);
 		if ( is_object( $api ) && isset( $api->version ) ) {
@@ -646,13 +646,21 @@ class MainWP_Server_Information_Handler {
 	 * Check if server self-connect is possible.
 	 */
 	public static function server_self_connect() {
-		$url         = site_url( 'wp-cron.php' );
-		$query_args  = array( 'mainwp_run' => 'test' );
-		$url         = esc_url_raw( add_query_arg( $query_args, $url ) );
+		$url        = site_url( 'wp-cron.php' );
+		$query_args = array( 'mainwp_run' => 'test' );
+		$url        = esc_url_raw( add_query_arg( $query_args, $url ) );
+
+		/**
+		 * Server self-check SSL verification switch
+		 *
+		 * Filters whether the server-self check shoul verify SSL Cert.
+		 *
+		 * @since Unknown
+		 */
 		$args        = array(
-			'blocking'   => true,
-			'sslverify'  => apply_filters( 'https_local_ssl_verify', true ),
-			'timeout'    => 15,
+			'blocking'  => true,
+			'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
+			'timeout'   => 15,
 		);
 		$response    = wp_remote_post( $url, $args );
 		$test_result = '';
@@ -886,6 +894,13 @@ class MainWP_Server_Information_Handler {
 			);
 		}
 
+		/**
+		 * Primary backup method Options
+		 *
+		 * Filters the primary backup options for the select menu in Settings.
+		 *
+		 * @since 4.0
+		 */
 		$primaryBackup        = get_option( 'mainwp_primaryBackup' );
 		$primary_methods      = array();
 		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead.

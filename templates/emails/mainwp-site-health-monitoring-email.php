@@ -25,7 +25,15 @@ if ( empty( $heading ) ) {
 	</head>
 	<body marginwidth="0" topmargin="0" marginheight="0" offset="0" style="background-color:#f7f7f7;font-family:'Lato',sans-serif;">
 		<div id="mainwp-email-wrapper" style="padding: 30px 0;">
-			<?php do_action( 'mainwp_site_health_monitoring_email_header' ); ?>
+			<?php
+			/**
+			 * Site Health Monitoring Email Header
+			 *
+			 * Fires at the top of the site health monitoring email template.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_site_health_monitoring_email_header' ); ?>
 			<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" style="margin-top:30px;margin-bottom:30px;">
 				<tr>
 					<td align="center" valign="top">
@@ -103,7 +111,16 @@ if ( empty( $heading ) ) {
 			<div style="text-align:center;font-size:11px;margin-bottom:30px;">
 				<?php esc_html_e( 'Powered by ', 'mainwp' ); ?> <a href="https://mainwp.com/" style="color:#7fb100;"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>.
 			</div>
-			<?php do_action( 'mainwp_site_health_monitoring_email_footer' ); ?>
+			<?php
+			/**
+			 * Site Health Monitoring Email Footer
+			 *
+			 * Fires at the bottom of the site health monitoring email template.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_site_health_monitoring_email_footer' );
+			?>
 		</div>
 	</body>
 </html>

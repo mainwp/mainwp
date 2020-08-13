@@ -125,6 +125,15 @@ class MainWP_Manage_Sites_Handler {
 			die( wp_json_encode( array( 'error' => __( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
 		}
 
+		/**
+		 * Apply plugin settings
+		 *
+		 * Fires to apply certain plugin settigns automatically while adding a new site.
+		 *
+		 * @param int $site_id Child site ID.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_applypluginsettings_' . $ext_dir_slug, $site_id );
 		die( wp_json_encode( array( 'error' => __( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
 	}
@@ -191,6 +200,16 @@ class MainWP_Manage_Sites_Handler {
 
 				// Remove from DB.
 				MainWP_DB::instance()->remove_website( $website->id );
+
+				/**
+				 * Delete Child Sites
+				 *
+				 * Fires after a child site has been removed from MainWP Dashboard
+				 *
+				 * @param object $website Object containing child site data.
+				 *
+				 * @since 3.4
+				 */
 				do_action( 'mainwp_delete_site', $website );
 
 				if ( 'NOMAINWP' === $error ) {

@@ -47,6 +47,13 @@ class MainWP_System_Cron_Jobs {
 	 */
 	public function init_cron_jobs() {
 
+		/**
+		 * Action: mainwp_cronload_action
+		 *
+		 * Hooks MainWP cron jobs actions.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_cronload_action' );
 
 		add_action( 'mainwp_cronstats_action', array( $this, 'cron_stats' ) );
@@ -291,6 +298,14 @@ class MainWP_System_Cron_Jobs {
 		$theme_automaticDailyUpdate  = get_option( 'mainwp_themeAutomaticDailyUpdate' );
 
 		$mainwpLastAutomaticUpdate          = get_option( 'mainwp_updatescheck_last' );
+
+		/**
+		 * Filter: mainwp_updatescheck_hours_interval
+		 *
+		 * Filters the status check interval.
+		 *
+		 * @since 3.4
+		 */
 		$mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval', false );
 
 		if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
@@ -313,6 +328,14 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
+
+			/**
+			 * Filter: mainwp_updatescheck_sendmail_at_time
+			 *
+			 * Filters the the time when the Daily Digest email will be sent.
+			 *
+			 * @since 3.4
+			 */
 			$send_noti_at = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
 			if ( ! empty( $send_noti_at ) ) {
 				$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at );
@@ -348,6 +371,14 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$plain_text        = get_option( 'mainwp_daily_digest_plain_text', false );
+
+		/**
+		 * Filter: mainwp_text_format_email
+		 *
+		 * Filters whether the email shuld bein plain text format.
+		 *
+		 * @since 3.5
+		 */
 		$filter_plain_text = apply_filters( 'mainwp_text_format_email', $plain_text );
 
 		if ( $plain_text !== $filter_plain_text ) {
@@ -665,6 +696,16 @@ class MainWP_System_Cron_Jobs {
 					}
 				}
 
+				/**
+				 * Action: mainwp_daily_digest_action
+				 *
+				 * Hooks the daily digest email notification send process.
+				 *
+				 * @param object $website    Object conaining child site info.
+				 * @param bool   $plain_text Whether plain text email should be sent.
+				 *
+				 * @since 4.1
+				 */
 				do_action( 'mainwp_daily_digest_action', $website, $plain_text );
 
 				$user  = get_userdata( $website->userid );
@@ -924,6 +965,23 @@ class MainWP_System_Cron_Jobs {
 				$coreToUpdateNow = array();
 			}
 
+			/**
+			 * Action: mainwp_cronupdatecheck_action
+			 *
+			 * Fires upon checking for available updates scheduled action.
+			 *
+			 * @param array $pluginsNewUpdate   Array of new available plugin updates.
+			 * @param array $pluginsToUpdate    Array of new available plugin updates that should be processed.
+			 * @param array $pluginsToUpdateNow Array of new available plugin updates that should be processed now.
+			 * @param array $themesNewUpdate    Array of new available themes updates.
+			 * @param array $themesToUpdate     Array of new available themes updates that should be processed.
+			 * @param array $themesToUpdateNow  Array of new available themes updates that should be processed now.
+			 * @param array $coreNewUpdate      Array of new available WP updates.
+			 * @param array $coreToUpdate       Array of new available WP updates that should be processed.
+			 * @param array $coreToUpdateNow    Array of new available WP updates that should be processed now.
+			 *
+			 * @since Unknown
+			 */
 			do_action( 'mainwp_cronupdatecheck_action', $pluginsNewUpdate, $pluginsToUpdate, $pluginsToUpdateNow, $themesNewUpdate, $themesToUpdate, $themesToUpdateNow, $coreNewUpdate, $coreToUpdate, $coreToUpdateNow );
 		}
 	}
@@ -1305,6 +1363,13 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
+		/**
+		 * Filter: mainwp_check_sites_status_chunk_size
+		 *
+		 * Filters the chunk size (number of sites) to process in status check action.
+		 *
+		 * @since Unknown
+		 */
 		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 20 );
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );

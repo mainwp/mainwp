@@ -90,7 +90,16 @@ class MainWP_Site_Info {
 		<div class="ui section hidden divider"></div>
 
 		<div class="mainwp-widget-site-info">
-			<?php do_action( 'mainwp_site_info_widget_top' ); ?>
+			<?php
+			/**
+			 * Site info widget top
+			 *
+			 * Fires at the top of the Site Info widget on the Individual site overview page.
+			 *
+			 * @since 4.0
+			 */
+			do_action( 'mainwp_site_info_widget_top' );
+			?>
 			<?php
 			if ( ! is_array( $website_info ) || ! isset( $website_info['wpversion'] ) ) {
 				?>
@@ -109,7 +118,16 @@ class MainWP_Site_Info {
 				?>
 			<table class="ui celled striped table">
 				<tbody>
-				<?php do_action( 'mainwp_site_info_table_top' ); ?>
+				<?php
+				/**
+				 * Site info table top
+				 *
+				 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
+				 *
+				 * @since 4.0
+				 */
+				do_action( 'mainwp_site_info_table_top' );
+				?>
 				<?php
 				foreach ( $child_site_info as $index => $title ) {
 					$val = '';
@@ -126,11 +144,29 @@ class MainWP_Site_Info {
 						<td><?php echo esc_html( $val ); ?></td>
 						</tr>
 				<?php } ?>
-				<?php do_action( 'mainwp_site_info_table_bottom' ); ?>
+				<?php
+				/**
+				 * Site info table bottom
+				 *
+				 * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
+				 *
+				 * @since 4.0
+				 */
+				do_action( 'mainwp_site_info_table_bottom' );
+				?>
 				</tbody>
 			</table>
 			<?php } ?>
-			<?php do_action( 'mainwp_site_info_widget_bottom' ); ?>
+			<?php
+			/**
+			 * Site info widget bottom
+			 *
+			 * Fires at the bottom of the Site Info widget on the Individual site overview page.
+			 *
+			 * @since 4.0
+			 */
+			do_action( 'mainwp_site_info_widget_bottom' );
+			?>
 		</div>
 		<?php
 	}

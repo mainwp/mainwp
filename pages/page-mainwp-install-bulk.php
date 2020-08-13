@@ -94,7 +94,16 @@ class MainWP_Install_Bulk {
 							element: document.getElementById( 'mainwp-file-uploader' ),
 							action: location.href,
 							<?php
-							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type ); // support mainwp favorites extension.
+							/**
+							 * Uploader options
+							 *
+							 * Adds extra options to the bulk upload process as a support for the Favorites extension.
+							 *
+							 * @param string $type Determines if plugins or themes are being installed.
+							 *
+							 * @since Unknown
+							 */
+							$extraOptions = apply_filters( 'mainwp_uploadbulk_uploader_options', '', $type );
 							$extraOptions = trim( $extraOptions );
 							$extraOptions = trim( trim( $extraOptions, ',' ) );
 							if ( '' != $extraOptions ) {
@@ -211,6 +220,14 @@ class MainWP_Install_Bulk {
 	 * @return mixed $post_data Bulk post addition data.
 	 */
 	public static function addition_post_data( &$post_data = array() ) {
+
+		/**
+		 * Clean and Lock extension options
+		 *
+		 * Adds additional options related to Clean and Lock options in order to avoid conflicts when HTTP Basic auth is set.
+		 *
+		 * @since Unknown
+		 */
 		$clear_and_lock_opts = apply_filters( 'mainwp_clear_and_lock_options', array() );
 		if ( isset( $post_data['url'] ) && false !== strpos( $post_data['url'], 'mwpdl' ) && false !== strpos( $post_data['url'], 'sig' ) ) {
 			if ( is_array( $clear_and_lock_opts ) && isset( $clear_and_lock_opts['wpadmin_user'] ) && ! empty( $clear_and_lock_opts['wpadmin_user'] ) && isset( $clear_and_lock_opts['wpadmin_passwd'] ) && ! empty( $clear_and_lock_opts['wpadmin_passwd'] ) ) {
@@ -245,7 +262,15 @@ class MainWP_Install_Bulk {
 		 */
 		self::addition_post_data( $post_data );
 
-		// hook to support addition data: wpadmin_user, wpadmin_passwd.
+		/**
+		 * Perform insatallation additional data
+		 *
+		 * Adds support for additional data such as HTTP User and HTTP Password.
+		 *
+		 * @param array $post_data Array containg the post data.
+		 *
+		 * @since Unknown
+		 */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
 		$post_data['url'] = wp_json_encode( $_POST['url'] );
@@ -326,6 +351,14 @@ class MainWP_Install_Bulk {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
+
+		/**
+		 * Prepare upload
+		 *
+		 * Prepares upload URLs for the bulk install process.
+		 *
+		 * @since Unknown
+		 */
 		$output['urls'] = apply_filters( 'mainwp_installbulk_prepareupload', $output['urls'] );
 
 		wp_send_json( $output );
@@ -353,7 +386,7 @@ class MainWP_Install_Bulk {
 		// deprecated from 3.5.6.
 		self::addition_post_data( $post_data );
 
-		// hook to support addition data: wpadmin_user, wpadmin_passwd.
+		/** This filter is documented in pages/page-mainwp-install-bulk.php */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
 		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );

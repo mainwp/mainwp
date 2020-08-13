@@ -263,6 +263,18 @@ class MainWP_Security_Issues {
 
 		$information = MainWP_Connect::fetch_url_authed( $website, 'security' );
 
+		/**
+		 * Filters security issues
+		 *
+		 * Filters the default security checks and enables user to disable certain checks.
+		 *
+		 * @param bool   false        Whether security issues should be filtered.
+		 * @param object $information Object containing data from che chid site related to security issues.
+		 *                            Available options: 'listing', 'wp_version', 'rsd', 'wlw', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'readme'.
+		 * @param object $website     Object containing child site data.
+		 *
+		 * @since 4.1
+		 */
 		$filterStats = apply_filters( 'mainwp_security_issues_stats', false, $information, $website );
 		if ( false !== $filterStats && is_array( $filterStats ) ) {
 			$information = array_merge( $information, $filterStats );
@@ -296,6 +308,19 @@ class MainWP_Security_Issues {
 			'registered_versions',
 			'readme',
 		);
+
+		/**
+		 * Filters security issues from fixing
+		 *
+		 * Filters the default security checks and enables user to disable certain issues from being fixed by using the Fix All button.
+		 *
+		 * @param bool   false          Whether security issues should be filtered.
+		 * @param object $skip_features Object containing data from che chid site related to security issues.
+		 *                              Available options: 'listing', 'wp_version', 'rsd', 'wlw', 'db_reporting', 'php_reporting', 'versions', 'registered_versions', 'readme'.
+		 * @param object $website       Object containing child site data.
+		 *
+		 * @since 4.1
+		 */
 		$skip_features = apply_filters( 'mainwp_security_post_data', false, $skip_features, $website );
 
 		$post_data = array( 'feature' => $_REQUEST['feature'] );

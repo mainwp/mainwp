@@ -102,7 +102,6 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 
 		$nonmenu_tabs = array( 'plugin-information' );
 		// Valid actions to perform which do not have a Menu item.
-		// $nonmenu_tabs = apply_filters( 'install_plugins_nonmenu_tabs', $nonmenu_tabs );
 		// If a non-valid menu tab has been selected, And it's not a non-menu action.
 		if ( empty( $tab ) || ( ! isset( $tabs[ $tab ] ) && ! in_array( $tab, (array) $nonmenu_tabs ) ) ) {
 
@@ -483,17 +482,26 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 			?>
 
 			<div class="card plugin-card-<?php echo sanitize_html_class( $plugin['slug'] ); ?>">
-				<?php do_action( 'mainwp_install_plugin_card_top' ); ?>
+			<?php
+			/**
+			 * Action: mainwp_install_plugin_card_top
+			 *
+			 * Fires at the plugin card at top on the Install Plugins page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_install_plugin_card_top' );
+			?>
 			<div class="content">
 			<a class="right floated mini ui image thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><img src="<?php echo esc_attr( $plugin_icon_url ); ?>" /></a>
 			<div class="header">
 				<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $details_link ); ?>"><?php echo $title; ?></a>
 					</div>
 			<div class="meta">
-						<?php echo $author; // html content. ?>
+						<?php echo $author; ?>
 					</div>
 			<div class="description">
-				<?php echo wp_strip_all_tags( $description ); // html content. ?>
+			<?php echo wp_strip_all_tags( $description ); ?>
 				</div>
 					</div>
 				<div class="extra content">
@@ -517,7 +525,16 @@ class MainWP_Plugins_Install_List_Table extends \WP_List_Table {
 						<label><?php esc_html_e( 'Install this Plugin', 'mainwp' ); ?></label>
 						</div>
 					</div>
-				<?php do_action( 'mainwp_install_plugin_card_bottom', $plugin ); ?>
+				<?php
+				/**
+				 * Action: mainwp_install_plugin_card_bottom
+				 *
+				 * Fires at the plugin card at bottom on the Install Plugins page.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_install_plugin_card_bottom', $plugin );
+				?>
 				</div>
 			<?php
 		}

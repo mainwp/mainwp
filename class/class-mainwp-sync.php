@@ -36,6 +36,13 @@ class MainWP_Sync {
 
 		try {
 
+			/**
+			 * Filter: mainwp_clone_enabled
+			 *
+			 * Filters whether the Clone feature is enabled or disabled.
+			 *
+			 * @since Unknown
+			 */
 			$cloneEnabled = apply_filters( 'mainwp_clone_enabled', false );
 			$cloneSites   = array();
 			if ( $cloneEnabled ) {
@@ -67,6 +74,16 @@ class MainWP_Sync {
 			$primaryBackup = MainWP_System_Utility::get_primary_backup();
 
 			$othersData = apply_filters_deprecated( 'mainwp-sync-others-data', array( array(), $pWebsite ), '4.0.7.2', 'mainwp_sync_others_data' );  // @deprecated Use 'mainwp_sync_others_data' instead.
+
+			/**
+			 * Filter: mainwp_sync_others_data
+			 *
+			 * Filters additional data in the sync request. Allows extensions or 3rd party plugins to hook data to the sync request.
+			 *
+			 * @param object $pWebsite Object contaning child site data.
+			 *
+			 * @since Unknown
+			 */
 			$othersData = apply_filters( 'mainwp_sync_others_data', $othersData, $pWebsite );
 
 			$information = MainWP_Connect::fetch_url_authed(
@@ -109,14 +126,14 @@ class MainWP_Sync {
 	 *
 	 * Grab all Child Site Information.
 	 *
-	 * @param mixed   $pWebsite The website object.
-	 * @param mixed   $information Filter mainwp_before_save_sync_result.
-	 * @param string  $sync_errors Check for Sync Errors.
-	 * @param integer $check_result Check if offline.
-	 * @param boolean $error True|False.
-	 * @param boolean $pAllowDisconnect True|False.
+	 * @param object $pWebsite The website object.
+	 * @param array  $information Array contaning information returned from child site.
+	 * @param string $sync_errors Check for Sync Errors.
+	 * @param int    $check_result Check if offline.
+	 * @param bool   $error True|False.
+	 * @param bool   $pAllowDisconnect True|False.
 	 *
-	 * @return mixed do_action( 'mainwp-site-synced', $pWebsite, $information ).
+	 * @return bool true|false True on success, false on failure.
 	 */
 	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$emptyArray        = wp_json_encode( array() );
@@ -139,6 +156,15 @@ class MainWP_Sync {
 
 		$done = false;
 
+		/**
+		 * Filter: mainwp_before_save_sync_result
+		 *
+		 * Filters data returned from child site before sasving to the database.
+		 *
+		 * @param object $pWebsite Object contaning child site data.
+		 *
+		 * @since 3.4
+		 */
 		$information = apply_filters( 'mainwp_before_save_sync_result', $information, $pWebsite );
 
 		if ( isset( $information['siteurl'] ) ) {
@@ -213,6 +239,7 @@ class MainWP_Sync {
 			$total_securityIssues = 0;
 			$securityStats        = $information['securityStats'];
 			if ( is_array( $securityStats ) ) {
+				/** This filter is documented in ../pages/page-mainwp-security-issues.php */
 				$filterStats = apply_filters( 'mainwp_security_issues_stats', false, $securityStats, $pWebsite );
 				if ( false !== $filterStats && is_array( $filterStats ) ) {
 					$securityStats = array_merge( $securityStats, $filterStats );
@@ -397,6 +424,17 @@ class MainWP_Sync {
 		// Sync action.
 		if ( ! $error ) {
 			do_action_deprecated( 'mainwp-site-synced', array( $pWebsite, $information ), '4.0.7.2', 'mainwp_site_synced' ); // @deprecated Use 'mainwp_site_synced' instead.
+
+			/**
+			 * Action: mainwp_site_synced
+			 *
+			 * Fires upon successfull site sinchronization.
+			 *
+			 * @param object $pWebsite    Object contaning child site info.
+			 * @param array  $information Array contaning information returned from child site.
+			 *
+			 * @since 3.4
+			 */
 			do_action( 'mainwp_site_synced', $pWebsite, $information );
 		}
 

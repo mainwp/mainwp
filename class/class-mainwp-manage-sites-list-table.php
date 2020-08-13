@@ -79,6 +79,17 @@ class MainWP_Manage_Sites_List_Table {
 		 * @deprecated
 		 */
 		$backupnow_lnk = apply_filters_deprecated( 'mainwp-managesites-getbackuplink', array( '', $item['id'], $lastBackup ), '4.0.7.2', 'mainwp_managesites_getbackuplink' );
+
+		/**
+		 * Filter: mainwp_managesites_getbackuplink
+		 *
+		 * Filters the link for the last backup item.
+		 *
+		 * @param int    $item['id'] Child site ID.
+		 * @param string $lastBackup Last backup timestamp for the child site.
+		 *
+		 * @since Unknown
+		 */
 		$backupnow_lnk = apply_filters( 'mainwp_managesites_getbackuplink', $backupnow_lnk, $item['id'], $lastBackup );
 
 		if ( ! empty( $backupnow_lnk ) ) {
@@ -148,6 +159,16 @@ class MainWP_Manage_Sites_List_Table {
 		 * @deprecated
 		 */
 		$item = apply_filters_deprecated( 'mainwp-sitestable-item', array( $item, $item ), '4.0.7.2', 'mainwp_sitestable_item' );
+
+		/**
+		 * Filter: mainwp_sitestable_item
+		 *
+		 * Filters the Manage Sites table column items. Allows user to create new column item.
+		 *
+		 * @param array $item Array containing child site data.
+		 *
+		 * @since Unknown
+		 */
 		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
 
 		switch ( $column_name ) {
@@ -238,6 +259,16 @@ class MainWP_Manage_Sites_List_Table {
 		 * @deprecated
 		 */
 		$columns = apply_filters_deprecated( 'mainwp-sitestable-getcolumns', array( $columns, $columns ), '4.0.7.2', 'mainwp_sitestable_getcolumns' );
+
+		/**
+		 * Filter: mainwp_sitestable_getcolumns
+		 *
+		 * Filters the Manage Sites table columns. Allows user to create a new column.
+		 *
+		 * @param array $columns Array containing table columns.
+		 *
+		 * @since Unknown
+		 */
 		$columns = apply_filters( 'mainwp_sitestable_getcolumns', $columns, $columns );
 
 		$columns['site_actions'] = '';
@@ -246,13 +277,9 @@ class MainWP_Manage_Sites_List_Table {
 		$primaryBackup  = get_option( 'mainwp_primaryBackup' );
 
 		$primary_methods = array();
+		$primary_methods = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );
 
-		/**
-		 * Filter is being replaced with mainwp_getprimarybackup_methods
-		 *
-		 * @deprecated
-		 */
-		$primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );
+		/** This filter is documented in ../pages/page-mainwp-server-information-handler.php */
 		$primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
 		if ( empty( $primaryBackup ) ) {
@@ -326,7 +353,7 @@ class MainWP_Manage_Sites_List_Table {
 	/**
 	 * Create Bulk Actions Drop Down.
 	 *
-	 * @return apply_filters $actions.
+	 * @return array $actions Available bulk actions.
 	 */
 	public function get_bulk_actions() {
 
@@ -347,6 +374,13 @@ class MainWP_Manage_Sites_List_Table {
 
 		);
 
+		/**
+		 * Filter: mainwp_managesites_bulk_actions
+		 *
+		 * Filters bulk actions on the Manage Sites page. Allows user to hook in new actions or remove default ones.
+		 *
+		 * @since Unknown
+		 */
 		return apply_filters( 'mainwp_managesites_bulk_actions', $actions );
 	}
 
@@ -358,10 +392,12 @@ class MainWP_Manage_Sites_List_Table {
 
 		$selected_status = isset( $_REQUEST['status'] ) ? $_REQUEST['status'] : '';
 		$selected_group  = isset( $_REQUEST['g'] ) ? trim( $_REQUEST['g'] ) : '';
+		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		if ( empty( $selected_status ) && empty( $selected_group ) ) {
 			$selected_status = get_option( 'mainwp_managesites_filter_status' );
 			$selected_group  = get_option( 'mainwp_managesites_filter_group' );
+			$is_not          = get_option( 'mainwp_managesites_filter_is_not' );
 		}
 
 		?>
@@ -369,8 +405,8 @@ class MainWP_Manage_Sites_List_Table {
 			<div class="equal width row">
 			<div class="middle aligned column">
 					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
-					<div id="mainwp-sites-bulk-actions-menu" class="ui dropdown">
-						<div class="text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
+					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
+						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<?php
@@ -392,6 +428,16 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
+						<div class="ui checkbox">
+							<input type="checkbox"
+							<?php
+							if ( $is_not ) {
+								echo 'checked="checked"';
+							}
+							?>
+							id="mainwp_is_not_site" name="mainwp_is_not_site" value="">
+							<label for="mainwp_is_not_site" ><?php esc_html_e( 'Is not', 'mainwp' ); ?></label>
+						</div>						
 						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
@@ -408,27 +454,21 @@ class MainWP_Manage_Sites_List_Table {
 								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div class="ui dropdown" id="mainwp-filter-sites-status">
-							<div class="text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
+						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
+							<input type="hidden" value="<?php echo esc_html( $selected_status ); ?>">
+							<div class="default text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
 							<i class="dropdown icon"></i>
 							<div class="menu">
 								<div class="item" data-value="all" ><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
 								<div class="item" data-value="connected"><?php esc_html_e( 'Connected', 'mainwp' ); ?></div>
 								<div class="item" data-value="disconnected"><?php esc_html_e( 'Disconnected', 'mainwp' ); ?></div>
 								<div class="item" data-value="update"><?php esc_html_e( 'Available update', 'mainwp' ); ?></div>
-						</div>
+							</div>
 						</div>
 						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
-		</div>
-		</div>
-		<script type="text/javascript">
-			jQuery( document ).ready( function () {				
-				<?php if ( '' !== $selected_status ) { ?>
-				jQuery( '#mainwp-filter-sites-status' ).dropdown( "set selected", "<?php echo esc_js( $selected_status ); ?>" );
-				<?php } ?>
-			} );
-		</script>
+			</div>
+		</div>		
 		<?php
 	}
 
@@ -454,17 +494,19 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Method has_items().
+	 *
+	 * Verify if items exist.
 	 */
 	public function has_items() {
 		return ! empty( $this->items );
 	}
 
 	/**
-	 * Prepair the items to be listed.
+	 * Prepare the items to be listed.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimize.
+	 * @param bool $optimize true|false Whether or not to optimize.
 	 */
-	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( null == $this->userExtension ) {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
@@ -541,6 +583,7 @@ class MainWP_Manage_Sites_List_Table {
 
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( empty( $_REQUEST['g'] ) ) ? true : false;
+		$is_not          = ( isset( $_REQUEST['isnot'] ) && 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		$group_ids   = false;
 		$site_status = '';
@@ -553,6 +596,7 @@ class MainWP_Manage_Sites_List_Table {
 			}
 		} else {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', $_REQUEST['status'] );
+			MainWP_Utility::update_option( 'mainwp_managesites_filter_is_not', $is_not );
 			$site_status = $_REQUEST['status'];
 		}
 
@@ -607,6 +651,9 @@ class MainWP_Manage_Sites_List_Table {
 				'search'       => $search,
 			);
 
+			$total_params['isnot'] = $is_not;
+			$params['isnot']       = $is_not;
+
 			if ( ! empty( $group_ids ) ) {
 				$group_ids = explode( ',', $group_ids ); // convert to array.
 			}
@@ -643,6 +690,16 @@ class MainWP_Manage_Sites_List_Table {
 		 */
 		do_action_deprecated( 'mainwp-sitestable-prepared-items', array( $websites, $site_ids ), '4.0.7.2', 'mainwp_sitestable_prepared_items' );
 
+		/**
+		 * Action: mainwp_sitestable_prepared_items
+		 *
+		 * Fires before the Sites table itemes are prepared.
+		 *
+		 * @param object $websites Object containing child sites data.
+		 * @param array  $site_ids Array containing IDs of all child sites.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
 		MainWP_DB::data_seek( $websites, 0 );
@@ -825,24 +882,29 @@ class MainWP_Manage_Sites_List_Table {
 				return false;
 			};
 
-			jQuery( document ).ready( function( $ ) {
+			jQuery( document ).ready( function( $ ) {				
 			<?php if ( ! $optimize ) { ?>
-				$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
-					"colReorder" : {
-						fixedColumnsLeft: 1,
-						fixedColumnsRight: 1
-					},
-					"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-					"stateSave":  true,
-					"stateDuration": 0,
-					"scrollX": true,
-					"pagingType": "full_numbers",
-					"order": [],
-					"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-					"pageLength": <?php echo intval( $sites_per_page ); ?>
-				} );
-				mainwp_datatable_fix_menu_overflow();
+				try {				
+					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+						"colReorder" : {
+							fixedColumnsLeft: 1,
+							fixedColumnsRight: 1
+						},
+						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
+						"stateSave":  true,
+						"stateDuration": 0,
+						"scrollX": true,
+						"pagingType": "full_numbers",
+						"order": [],
+						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+						"pageLength": <?php echo intval( $sites_per_page ); ?>
+					} );
+				} catch(err) {
+					// to fix js error.
+				}
+					mainwp_datatable_fix_menu_overflow();				
 			<?php } else { ?>
+				try {	
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
 						if (!processing) {
@@ -869,7 +931,8 @@ class MainWP_Manage_Sites_List_Table {
 								return $.extend( {}, d, mainwp_secure_data( {
 									action: 'mainwp_manage_sites_display_rows',
 									status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
-									g: jQuery("#mainwp-filter-sites-group").dropdown("get value")
+									g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
+									isnot: jQuery("#mainwp_is_not_site").is(':checked') ? 'yes' : '',
 								} )
 							);
 							},
@@ -910,13 +973,20 @@ class MainWP_Manage_Sites_List_Table {
 								jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
 							};
 						}
-					} );
+					} );	
+				} catch(err) {
+					// to fix js error.
+				}			
 					<?php } ?>
 					_init_manage_sites_screen = function() {
 						jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_hide_column_"]' ).each( function() {
 							var col_id = jQuery( this ).attr( 'id' );
 							col_id = col_id.replace( "mainwp_hide_column_", "" );
-							$manage_sites_table.column( '#' + col_id ).visible( !jQuery(this).is( ':checked' ) );
+							try {	
+								$manage_sites_table.column( '#' + col_id ).visible( !jQuery(this).is( ':checked' ) );
+							} catch(err) {
+								// to fix js error.
+							}
 						} );
 					};
 					_init_manage_sites_screen();
@@ -926,18 +996,25 @@ class MainWP_Manage_Sites_List_Table {
 					<?php if ( ! $optimize ) { ?>
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
+						var isNot = jQuery("#mainwp_is_not_site").is(':checked');
 						var params = '';						
 						params += '&g=' + group;						
-						if ( status != '' )
+						if ( status != '' ) {
 							params += '&status=' + status;
-
+						}
+						if (isNot){
+							params += '&isnot=yes';
+						}
 						window.location = 'admin.php?page=managesites' + params;
 						return false;
 					<?php } else { ?>
-						$manage_sites_table.ajax.reload();
+						try {
+							$manage_sites_table.ajax.reload();
+						} catch(err) {
+							// to fix js error.
+						}
 					<?php } ?>
-				};
-
+				};			
 				</script>
 		<?php
 	}

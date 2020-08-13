@@ -354,6 +354,14 @@ class MainWP_UI {
 	public static function render_top_header( $params = array() ) {
 
 		$title = isset( $params['title'] ) ? $params['title'] : '';
+
+		/**
+		 * Filter: mainwp_header_title
+		 *
+		 * Filter the MainWP page title in the header element.
+		 *
+		 * @since 4.0
+		 */
 		$title = apply_filters( 'mainwp_header_title', $title );
 
 		$show_menu      = true;
@@ -363,10 +371,24 @@ class MainWP_UI {
 			$show_menu = $params['show_menu'];
 		}
 
+		/**
+		 * Filter: mainwp_header_left
+		 *
+		 * Filter the MainWP header element left side content.
+		 *
+		 * @since 4.0
+		 */
 		$left = apply_filters( 'mainwp_header_left', $title );
 
 		$right = self::render_header_actions();
 
+		/**
+		 * Filter: mainwp_header_right
+		 *
+		 * Filter the MainWP header element right side content.
+		 *
+		 * @since 4.0
+		 */
 		$right = apply_filters( 'mainwp_header_right', $right );
 
 		if ( $show_menu ) {
@@ -434,7 +456,16 @@ class MainWP_UI {
 		<div class="ui segment right wide help sidebar" id="mainwp-documentation-sidebar">
 			<div class="ui header"><?php esc_html_e( 'MainWP Documenation', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
-			<?php do_action( 'mainwp_help_sidebar_content' ); ?>
+			<?php
+			/**
+			 * Action: mainwp_help_sidebar_content
+			 *
+			 * Fires Help sidebar content
+			 *
+			 * @since 4.0
+			 */
+			do_action( 'mainwp_help_sidebar_content' );
+			?>
 			<div class="ui hidden divider"></div>
 			<a href="https://mainwp.com/help/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
 			<div class="ui hidden divider"></div>
@@ -443,7 +474,16 @@ class MainWP_UI {
 			</div>
 		</div>
 		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>">
-			<?php do_action( 'mainwp_before_header' ); ?>
+			<?php
+			/**
+			 * Action: mainwp_before_header
+			 *
+			 * Fires before the MainWP header element.
+			 *
+			 * @since 4.0
+			 */
+			do_action( 'mainwp_before_header' );
+			?>
 			<div id="mainwp-top-header" class="ui sticky">
 				<div class="ui stackable grid">
 					<div class="two column row">
@@ -472,7 +512,16 @@ class MainWP_UI {
 				jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
 			} );
 			</script>
-			<?php do_action( 'mainwp_after_header' ); ?>
+			<?php
+			/**
+			 * Action: mainwp_after_header
+			 *
+			 * Fires after the MainWP header element.
+			 *
+			 * @since 4.0
+			 */
+			do_action( 'mainwp_after_header' );
+			?>
 		<?php
 	}
 
@@ -486,6 +535,14 @@ class MainWP_UI {
 	 * @return void Render second top header html.
 	 */
 	public static function render_second_top_header( $which = '' ) {
+
+		/**
+		 * Action: mainwp_before_subheader
+		 *
+		 * Fires before the MainWP sub-header element.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_before_subheader' );
 		if ( has_action( 'mainwp_subheader_actions' ) || 'overview' === $which || 'managesites' === $which || 'monitoringsites' === $which ) {
 			?>
@@ -498,13 +555,38 @@ class MainWP_UI {
 				</div>
 				<?php endif; ?>
 					<?php if ( 'managesites' === $which || 'monitoringsites' === $which ) : ?>
-						<?php do_action( 'mainwp_managesites_tabletop' ); ?>
+						<?php
+						/**
+						 * Action: mainwp_managesites_tabletop
+						 *
+						 * Fires at the table top on the Manage Sites and Monitoring page.
+						 *
+						 * @since 4.0
+						 */
+						do_action( 'mainwp_managesites_tabletop' );
+						?>
 					<?php else : ?>
-						<?php do_action( 'mainwp_subheader_actions' ); ?>
+						<?php
+						/**
+						 * Action: mainwp_subheader_actions
+						 *
+						 * Fires at the subheader element to hook available actions.
+						 *
+						 * @since 4.0
+						 */
+						do_action( 'mainwp_subheader_actions' );
+						?>
 				<?php endif; ?>
 			</div>
 			<?php
 		}
+		/**
+		 * Action: mainwp_after_subheader
+		 *
+		 * Fires after the MainWP sub-header element.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_after_subheader' );
 	}
 
@@ -600,6 +682,13 @@ class MainWP_UI {
 		</a>
 		<?php endif; ?>
 		<?php
+		/**
+		 * Filter: mainwp_header_actions_right
+		 *
+		 * Filters the MainWP header element actions.
+		 *
+		 * @since 4.0
+		 */
 		$actions = apply_filters( 'mainwp_header_actions_right', '' );
 		if ( ! empty( $actions ) ) {
 			echo $actions;
@@ -652,7 +741,11 @@ class MainWP_UI {
 	public static function render_page_navigation( $subitems = array(), $name_caller = null ) {
 
 		/**
-		 * This hook allows you to add extra pages navigation via the 'mainwp_page_navigation' filter.
+		 * Filter: mainwp_page_navigation
+		 *
+		 * Filters MainWP page navigation menu items.
+		 *
+		 * @since 4.0
 		 */
 		$subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
 		?>
@@ -1059,6 +1152,14 @@ class MainWP_UI {
 		);
 
 		$custom_opts = apply_filters_deprecated( 'mainwp-widgets-screen-options', array( array() ), '4.0.7.2', 'mainwp_widgets_screen_options' );  // @deprecated Use 'mainwp_widgets_screen_options' instead.
+
+		/**
+		 * Filter: mainwp_widgets_screen_options
+		 *
+		 * Filters available widgets on the Overview page allowing users to unsent unwanted widgets.
+		 *
+		 * @since 4.0
+		 */
 		$custom_opts = apply_filters( 'mainwp_widgets_screen_options', $custom_opts );
 
 		if ( is_array( $custom_opts ) && 0 < count( $custom_opts ) ) {

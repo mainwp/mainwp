@@ -155,7 +155,16 @@ class MainWP_Notification_Settings {
 					</tr>
 				</tfoot>
 			</table>
-			<?php do_action( 'mainwp_settings_email_settings' ); ?>					
+			<?php
+			/**
+			 * Action: mainwp_settings_email_settings
+			 *
+			 * Fires after the default email settings.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_settings_email_settings' );
+			?>
 			<script type="text/javascript">
 			jQuery( document ).ready( function() {
 				jQuery( '#mainwp-emails-settings-table' ).DataTable( {					
@@ -494,6 +503,15 @@ class MainWP_Notification_Settings {
 	 */
 	public static function replace_tokens_for_settings( $options, $fields = array(), $website ) {
 
+		/**
+		 * Filter: mainwp_boilerplate_get_tokens
+		 *
+		 * Enables and filters the Boilerplate extension tokens.
+		 *
+		 * @param object $website Object containing the child site data.
+		 *
+		 * @since 4.1
+		 */
 		$boilerplate_tokens = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
 
 		if ( is_array( $boilerplate_tokens ) ) {
@@ -504,6 +522,15 @@ class MainWP_Notification_Settings {
 			}
 		}
 
+		/**
+		 * Filter: mainwp_pro_reports_get_site_tokens
+		 *
+		 * Enables and filters the Pro Reports extension tokens.
+		 *
+		 * @param object $website Object containing the child site data.
+		 *
+		 * @since 4.1
+		 */
 		$report_tokens = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
 
 		if ( is_array( $report_tokens ) ) {
@@ -514,6 +541,15 @@ class MainWP_Notification_Settings {
 			}
 		}
 
+		/**
+		 * Filter: mainwp_client_report_get_site_tokens
+		 *
+		 * Enables and filters the Client Reports extension tokens.
+		 *
+		 * @param object $website Object containing the child site data.
+		 *
+		 * @since 4.1
+		 */
 		$client_report_tokens = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
 		if ( is_array( $client_report_tokens ) ) {
 			foreach ( $fields as $field ) {
@@ -542,18 +578,22 @@ class MainWP_Notification_Settings {
 
 		// if tokens existed.
 		if ( preg_match( '/\[[^\]]+\]/is', $content, $matches ) ) {
+
+			/** This filter is documented in ../class/class-mainwp-notification-settings.php */
 			$boilerplate_tokens = apply_filters( 'mainwp_boilerplate_get_tokens', false, $website );
 
 			if ( is_array( $boilerplate_tokens ) ) {
 				$content = MainWP_System_Utility::replace_tokens_values( $content, $boilerplate_tokens );
 			}
 
+			/** This filter is documented in ../class/class-mainwp-notification-settings.php */
 			$report_tokens = apply_filters( 'mainwp_pro_reports_get_site_tokens', false, $website->id );
 
 			if ( is_array( $report_tokens ) ) {
 				$content = MainWP_System_Utility::replace_tokens_values( $content, $report_tokens );
 			}
 
+			/** This filter is documented in ../class/class-mainwp-notification-settings.php */
 			$client_report_tokens = apply_filters( 'mainwp_client_report_get_site_tokens', false, $website->id );
 
 			if ( is_array( $client_report_tokens ) ) {

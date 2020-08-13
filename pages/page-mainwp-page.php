@@ -95,9 +95,11 @@ class MainWP_Page {
 		add_submenu_page( 'mainwp_tab', __( 'Posting new bulkpage', 'mainwp' ), '<div class="mainwp-hidden">' . __( 'Add New Page', 'mainwp' ) . '</div>', 'read', 'PostingBulkPage', array( self::get_class_name(), 'posting' ) ); // removed from menu afterwards.
 
 		/**
-		 * This hook allows you to add extra sub pages to the Page page via the 'mainwp-getsubpages-page' filter.
+		 * Pages Subpages
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-page
+		 * Filters subpages for the Pages page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = array();
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-page', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_page' );  // @deprecated Use 'mainwp_getsubpages_page' instead.
@@ -427,10 +429,28 @@ class MainWP_Page {
 									<option value="delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></option>
 								</select>
 								<button class="ui mini button" id="mainwp-do-pages-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-								<?php do_action( 'mainwp_pages_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Pages actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Pages screen, after the Bulk Actions menu.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_pages_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
-								<?php do_action( 'mainwp_pages_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Pages actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Pages screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_pages_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>
@@ -710,6 +730,13 @@ class MainWP_Page {
 				$post_data['WPSEOEnabled'] = 1;
 			}
 
+			/**
+			 * Get all pages data
+			 *
+			 * Set search parameters for the fetch process.
+			 *
+			 * @since 3.4
+			 */
 			$post_data = apply_filters( 'mainwp_get_all_pages_data', $post_data );
 			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_pages', $post_data, array( self::get_class_name(), 'pages_search_handler' ), $output );
 		}
@@ -997,7 +1024,7 @@ class MainWP_Page {
 	 *
 	 * @return void Posting page modal window html.
 	 */
-	public static function posting() { // phpcs:ignore -- complex function.
+	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
 			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );
@@ -1013,7 +1040,15 @@ class MainWP_Page {
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Page', 'mainwp' ) : esc_html_e( 'New Page', 'mainwp' ); ?></div>
 			<div class="scrolling content">
 			<?php
-
+			/**
+			 * Before Page post action
+			 *
+			 * Fires right before posting the 'bulkpage' to child sites.
+			 *
+			 * @param int $_GET['id'] Page ID.
+			 *
+			 * @since Unknown
+			 */
 			do_action( 'mainwp_bulkpage_before_post', $_GET['id'] );
 
 			$skip_post = false;
@@ -1043,6 +1078,16 @@ class MainWP_Page {
 						$mainwp_upload_dir   = wp_upload_dir();
 
 						$post_status = get_post_meta( $id, '_edit_post_status', true );
+
+						/**
+						 * Page status
+						 *
+						 * Sets page status when posting 'bulkpage' to child sites.
+						 *
+						 * @param int $id Page ID.
+						 *
+						 * @since Unknown
+						 */
 						$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
 
 						$new_post = array(
@@ -1128,6 +1173,16 @@ class MainWP_Page {
 								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 							);
+
+							/**
+							 * Posting new page
+							 *
+							 * Sets Page data to post to child sites.
+							 *
+							 * @param int $id Page ID.
+							 *
+							 * @since Unknown
+							 */
 							$post_data = apply_filters( 'mainwp_bulkpage_posting', $post_data, $id );
 							MainWP_Connect::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
 						}
@@ -1140,13 +1195,47 @@ class MainWP_Page {
 								do_action_deprecated( 'mainwp-post-posting-page', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_page' ); // @deprecated Use 'mainwp_post_posting_page' instead.
 								do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
 
+								/**
+								 * Posting page
+								 *
+								 * Fires while posting page.
+								 *
+								 * @param object $website                          Object containing child site data.
+								 * @param int    $output->added_id[ $website->id ] Child site ID.
+								 * @param array  $links                            Links.
+								 *
+								 * @since Unknown
+								 */
 								do_action( 'mainwp_post_posting_page', $website, $output->added_id[ $website->id ], $links );
+
+								/**
+								 * Posting page completed
+								 *
+								 * Fires after the page posting process is completed.
+								 *
+								 * @param array  $_post   Array containing the post data.
+								 * @param object $website Object containing child site data.
+								 * @param array  $output  Output data.
+								 *
+								 * @since Unknown
+								 */
 								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
 							} else {
 								$failed_posts[] = $website->id;
 							}
 						}
 
+						/**
+						 * After posting a new page
+						 *
+						 * Sets data after the posting process to show the process feedback.
+						 *
+						 * @param array $_post      Array containing the post data.
+						 * @param array $dbwebsites Array containing processed sites.
+						 * @param array $output     Output data.
+						 *
+						 * @since Unknown
+						 */
 						$after_posting = apply_filters_deprecated( 'mainwp-after-posting-bulkpage-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpage_result' );  // @deprecated Use 'mainwp_after_posting_bulkpage_result' instead.
 						$after_posting = apply_filters( 'mainwp_after_posting_bulkpage_result', $after_posting, $_post, $dbwebsites, $output );
 

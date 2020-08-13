@@ -57,9 +57,9 @@ class MainWP_Updates_Overview {
 		}
 
 		$args    = array(
-			'timeout'    => 15,
-			'body'       => array(
-				'action'     => $action,
+			'timeout' => 15,
+			'body'    => array(
+				'action'  => $action,
 				'request'    => serialize( $args ), // phpcs:ignore -- WP org api params
 			),
 		);
@@ -363,7 +363,13 @@ class MainWP_Updates_Overview {
 			$trustedThemes = array();
 		}
 
-		// the hook using to set maximum number of plugins/themes for huge number of updates.
+		/**
+		 * Limits number of updates to process.
+		 *
+		 * Limits the number of updates that will be processed in a single run on Update Everything action.
+		 *
+		 * @since 4.0
+		 */
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
 		$continue_update   = '';
 		if ( $limit_updates_all > 0 ) {

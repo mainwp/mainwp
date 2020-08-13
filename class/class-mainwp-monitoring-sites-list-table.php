@@ -50,6 +50,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 */
 	public function column_default( $item, $column_name ) { 	// phpcs:ignore -- comlex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
+		/**
+		 * Filter: mainwp_monitoring_sitestable_item
+		 *
+		 * Filters the Monitoring Sites table column items. Allows user to create new column item.
+		 *
+		 * @param array $item Array containing child site data.
+		 *
+		 * @since 4.1
+		 */
 		$item = apply_filters( 'mainwp_monitoring_sitestable_item', $item, $item );
 
 		switch ( $column_name ) {
@@ -114,6 +123,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	public function get_columns() {
 
 		$columns = $this->get_default_columns();
+
+		/**
+		 * Filter: mainwp_monitoring_sitestable_getcolumns
+		 *
+		 * Filters the Monitoring Sites table columns. Allows user to create a new column.
+		 *
+		 * @param array $columns Array containing table columns.
+		 *
+		 * @since 4.1
+		 */
 		$columns = apply_filters( 'mainwp_monitoring_sitestable_getcolumns', $columns, $columns );
 
 		$columns['site_actions'] = '';
@@ -186,6 +205,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'sync'     => __( 'Sync Data', 'mainwp' ),
 		);
 
+		/**
+		 * Filter: mainwp_monitoringsites_bulk_actions
+		 *
+		 * Filters bulk actions on the Monitoring Sites page. Allows user to hook in new actions or remove default ones.
+		 *
+		 * @since 4.1
+		 */
 		return apply_filters( 'mainwp_monitoringsites_bulk_actions', $actions );
 	}
 
@@ -208,8 +234,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			<div class="equal width row">
 			<div class="middle aligned column">
 					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
-					<div id="mainwp-sites-bulk-actions-menu" class="ui dropdown">
-						<div class="text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
+					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
+						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<?php
@@ -247,8 +273,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
 							</div>
 						</div>
-						<div class="ui dropdown" id="mainwp-filter-sites-status">
-							<div class="text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
+						<div class="ui selection dropdown" id="mainwp-filter-sites-status">
+							<div class="default text"><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
 							<i class="dropdown icon"></i>
 							<div class="menu">
 								<div class="item" data-value="all" ><?php esc_html_e( 'All statuses', 'mainwp' ); ?></div>
@@ -257,7 +283,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								<div class="item" data-value="undefined"><?php esc_html_e( 'Undefined', 'mainwp' ); ?></div>
 						</div>
 						</div>
-						<button onclick="mainwp_manage_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+						<button onclick="mainwp_manage_monitor_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
 				</div>
 		</div>
 		</div>
@@ -419,6 +445,16 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			$site_ids[] = $site->id;
 		}
 
+		/**
+		 * Action: mainwp_monitoring_sitestable_prepared_items
+		 *
+		 * Fires before the Monitoring Sites table itemes are prepared.
+		 *
+		 * @param object $websites Object containing child sites data.
+		 * @param array  $site_ids Array containing IDs of all child sites.
+		 *
+		 * @since 4.1
+		 */
 		do_action( 'mainwp_monitoring_sitestable_prepared_items', $websites, $site_ids );
 
 		MainWP_DB::data_seek( $websites, 0 );
@@ -483,22 +519,27 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	<script type="text/javascript">	
 			jQuery( document ).ready( function( $ ) {
 			<?php if ( ! $optimize ) { ?>
-				$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
-					"colReorder" : {
-						fixedColumnsLeft: 1,
-						fixedColumnsRight: 1
-					},
-					"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-					"stateSave":  true,
-					"stateDuration": 0,
-					"scrollX": true,
-					"pagingType": "full_numbers",
-					"order": [],
-					"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-					"pageLength": <?php echo intval( $sites_per_page ); ?>
-				} );
+				try {
+					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+						"colReorder" : {
+							fixedColumnsLeft: 1,
+							fixedColumnsRight: 1
+						},
+						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
+						"stateSave":  true,
+						"stateDuration": 0,
+						"scrollX": true,
+						"pagingType": "full_numbers",
+						"order": [],
+						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+						"pageLength": <?php echo intval( $sites_per_page ); ?>
+					} );
+				} catch(err) {
+					// to fix js error.
+				}
 				mainwp_datatable_fix_menu_overflow();
 			<?php } else { ?>
+				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
 						if (!processing) {
@@ -567,10 +608,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 							};
 						}
 					} );
+				} catch(err) {
+					// to fix js error.
+				}
 					<?php } ?>
 				} );
 
-				mainwp_manage_sites_filter = function() {
+				mainwp_manage_monitor_sites_filter = function() {
 					<?php if ( ! $optimize ) { ?>
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
@@ -580,10 +624,14 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						if ( status != '' )
 							params += '&status=' + status;
 
-						window.location = 'admin.php?page=managesites' + params;
+						window.location = 'admin.php?page=MonitoringSites' + params;
 						return false;
 					<?php } else { ?>
-						$manage_sites_table.ajax.reload();
+						try {
+							$manage_sites_table.ajax.reload();
+						} catch(err) {
+							// to fix js error.
+						}
 					<?php } ?>
 				};
 

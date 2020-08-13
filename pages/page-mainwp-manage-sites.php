@@ -160,9 +160,11 @@ class MainWP_Manage_Sites {
 		);
 
 		/**
-		 * This hook allows you to add extra sub pages to the Sites page via the 'mainwp-getsubpages-sites' filter.
+		 * Sites Subpages
 		 *
-		 * @link http://codex.mainwp.com/#mainwp-getsubpages-sites
+		 * Filters subpages for the Sites page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = array();
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-sites', array( $sub_pages ), '4.0.7.2', 'mainwp_getsubpages_sites' ); // @deprecated Use 'mainwp_getsubpages_sites' instead.
@@ -592,6 +594,14 @@ class MainWP_Manage_Sites {
 
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
+
+				/**
+				 * Edit site
+				 *
+				 * Fires on the Edit child site page and allows user to hook in new site options.
+				 *
+				 * @param bool false
+				 */
 				do_action( 'mainwp_manage_sites_edit', false );
 				?>
 
@@ -703,7 +713,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Add individual meta boxes.
 	 */
-	public static function on_load_page_dashboard() { // phpcs:ignore -- not quite complex method.
+	public static function on_load_page_dashboard() { // phpcs:ignore -- current complexity is required to achieve desired results. Pull request solutions are welcome.
 		wp_enqueue_script( 'common' );
 		wp_enqueue_script( 'wp-lists' );
 		wp_enqueue_script( 'postbox' );
@@ -712,12 +722,14 @@ class MainWP_Manage_Sites {
 
 		$dashboard_siteid = isset( $_GET['dashboard'] ) ? $_GET['dashboard'] : null;
 
-		/**
-		 * This hook allows you to add extra metaboxes to the dashboard via the 'mainwp-getmetaboxes' filter.
-		 *
-		 * @link http://codex.mainwp.com/#mainwp-getmetaboxes
-		 */
 
+		/**
+		 * Get getmetaboxes
+		 *
+		 * Adds metaboxes (widgets) to the Overview page.
+		 *
+		 * @since Unknown
+		 */
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp-getmetaboxes', array() );  // @deprecated Use 'mainwp_getmetaboxes' instead.
 		$extMetaBoxs = MainWP_System_Handler::instance()->apply_filters( 'mainwp_getmetaboxes', $extMetaBoxs );
 
@@ -729,7 +741,17 @@ class MainWP_Manage_Sites {
 		}
 
 		$values = self::$enable_widgets;
-		// hook to support enable/disable overview widgets.
+
+		/**
+		 * Unset unwanted Widgets
+		 *
+		 * Contains the list of enabled widgets and allows user to unset unwanted widgets.
+		 *
+		 * @param array $values           Array containing enabled widgets.
+		 * @param int   $dashboard_siteid Child site (Overview) ID.
+		 *
+		 * @since 4.0
+		 */
 		$values               = apply_filters( 'mainwp_overview_enabled_widgets', $values, $dashboard_siteid );
 		self::$enable_widgets = array_merge( self::$enable_widgets, $values );
 
@@ -1171,6 +1193,16 @@ class MainWP_Manage_Sites {
 				$healthThreshold       = intval( $_POST['mainwp_managesites_edit_healthThreshold'] );
 
 				MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $_POST['mainwp_managesites_edit_sitename'], $_POST['mainwp_managesites_edit_siteadmin'], $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $_POST['mainwp_managesites_edit_verifycertificate'], $archiveFormat, isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? $_POST['mainwp_managesites_edit_uniqueId'] : '', $http_user, $http_pass, $_POST['mainwp_managesites_edit_ssl_version'], $disableChecking, $checkInterval, $disableHealthChecking, $healthThreshold );
+
+				/**
+				 * Update site
+				 *
+				 * Fires after updating a website settings.
+				 *
+				 * @param int $website->id Child site ID.
+				 *
+				 * @since 3.4
+				 */
 				do_action( 'mainwp_update_site', $website->id );
 
 				$backup_before_upgrade = isset( $_POST['mainwp_backup_before_upgrade'] ) ? intval( $_POST['mainwp_backup_before_upgrade'] ) : 2;

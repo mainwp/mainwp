@@ -1117,6 +1117,8 @@ class MainWP_Setup_Wizard {
 					$product_info   = $purchased_data[ $product_id ];
 					$software_title = isset( $all_available_exts[ $product_id ] ) ? esc_html( $all_available_exts[ $product_id ]['title'] ) : esc_html( $product_id );
 					$error_message  = '';
+
+					/** This filter is documented in ../pages/page-mainwp-extensions.php */
 					if ( isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
 						$package_url = apply_filters( 'mainwp_api_manager_upgrade_url', $product_info['package'] );
 						$html       .= '<div class="extension_to_install" download-link="' . esc_attr( $package_url ) . '" product-id="' . esc_attr( $product_id ) . '">';
@@ -1169,6 +1171,8 @@ class MainWP_Setup_Wizard {
 		}
 		if ( current_user_can( 'activate_plugins' ) ) {
 			activate_plugin( $slug, '', false, true );
+
+			/** This action is ../pages/page-mainwp-extensions-handler.php */
 			do_action( 'mainwp_api_extension_activated', WP_PLUGIN_DIR . '/' . $slug );
 			die( 'SUCCESS' );
 		}

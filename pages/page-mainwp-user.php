@@ -346,10 +346,28 @@ class MainWP_User {
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 								</select>
 								<button class="ui mini button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
-								<?php do_action( 'mainwp_users_actions_bar_left' ); ?>
+								<?php
+								/**
+								 * Users actions bar (left)
+								 *
+								 * Fires at the left side of the actions bar on the Users screen, after the Bulk Actions menu.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_users_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
-								<?php do_action( 'mainwp_users_actions_bar_right' ); ?>
+								<?php
+								/**
+								 * Users actions bar (right)
+								 *
+								 * Fires at the right side of the actions bar on the Users screen.
+								 *
+								 * @since 4.0
+								 */
+								do_action( 'mainwp_users_actions_bar_right' );
+								?>
 							</div>
 						</div>
 					</div>

@@ -125,7 +125,16 @@ class MainWP_Notification_Template {
 
 		$template = $this->locate_template( $template_name );
 
-		// Support 3rd party plugin filter template file.
+		/**
+		 * Filter: mainwp_get_template
+		 *
+		 * Filters available templates and adds support for 3rd party templates.
+		 *
+		 * @param string $template_name Template name.
+		 * @param array  $args          Args.
+		 *
+		 * @since 4.1
+		 */
 		$filter_template = apply_filters( 'mainwp_get_template', $template, $template_name, $args );
 
 		if ( $filter_template !== $template ) {
@@ -141,10 +150,32 @@ class MainWP_Notification_Template {
 
 		ob_start();
 
+		/**
+		 * Action: mainwp_before_template_part
+		 *
+		 * Fires before the email template is loaded.
+		 *
+		 * @param string   $template_name Template name.
+		 * @param resource $located Template file.
+		 * @param array    $args    Args.
+		 *
+		 * @since 4.1
+		 */
 		do_action( 'mainwp_before_template_part', $template_name, $located, $args );
 
 		include $located;
 
+		/**
+		 * Action: mainwp_after_template_part
+		 *
+		 * Fires after the email template is loaded.
+		 *
+		 * @param string   $template_name Template name.
+		 * @param resource $located Template file.
+		 * @param array    $args    Args.
+		 *
+		 * @since 4.1
+		 */
 		do_action( 'mainwp_after_template_part', $template_name, $located, $args );
 
 		$content = ob_get_clean();
@@ -163,9 +194,23 @@ class MainWP_Notification_Template {
 				}
 
 				if ( preg_match( '/\[[^\]]+\]/is', $content, $matches ) ) {
-					// support Pro Reports extension.
+
+					/**
+					 * Filter: mainwp_pro_reports_generate_content
+					 *
+					 * Filters the Pro Reports available content.
+					 *
+					 * @since 4.1
+					 */
 					$content = apply_filters( 'mainwp_pro_reports_generate_content', $content, $current_email_site->id, $timestamp_from_date, $timestamp_to_date );
-					// support Client Reports extension.
+
+					/**
+					 * Filter: mainwp_client_report_generate_content
+					 *
+					 * Filters the Client Reports available content.
+					 *
+					 * @since 4.1
+					 */
 					$content = apply_filters( 'mainwp_client_report_generate_content', $content, $current_email_site->id, $timestamp_from_date, $timestamp_to_date );
 				}
 			}
@@ -204,6 +249,16 @@ class MainWP_Notification_Template {
 			$template      = $template_path . $template_name;
 		}
 
+		/**
+		 * Filer: mainwp_locate_template
+		 *
+		 * Filters the template location.
+		 *
+		 * @param $string $template_name Template name.
+		 * @param $string $template_path Template path.
+		 *
+		 * @since 4.1
+		 */
 		return apply_filters( 'mainwp_locate_template', $template, $template_name, $template_path );
 	}
 

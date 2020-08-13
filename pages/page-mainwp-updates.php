@@ -140,11 +140,11 @@ class MainWP_Updates {
 
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'             => __( 'Updates', 'mainwp' ),
-				'parent_key'        => 'mainwp_tab',
-				'slug'              => 'UpdatesManage',
-				'href'              => 'admin.php?page=UpdatesManage',
-				'icon'              => '<i class="sync icon"></i>',
+				'title'      => __( 'Updates', 'mainwp' ),
+				'parent_key' => 'mainwp_tab',
+				'slug'       => 'UpdatesManage',
+				'href'       => 'admin.php?page=UpdatesManage',
+				'icon'       => '<i class="sync icon"></i>',
 			),
 			1
 		);
@@ -182,11 +182,17 @@ class MainWP_Updates {
 	 * Generate individual site overview page link
 	 *
 	 * @param object $website The site object.
+	 * @param bool $echo Either echo or not.
+	 *
+	 * @return string Dashboard link.
 	 */
-	public static function render_site_link_dashboard( $website ) {
-		?>
-		<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"  data-inverted="" data-tooltip="<?php echo esc_html__( 'Visit this dashboard', 'mainwp' ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-		<?php
+	public static function render_site_link_dashboard( $website, $echo = true ) {
+		$lnk = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
+		if ( $echo ) {
+			echo $lnk;
+		} else {
+			return $lnk;
+		}
 	}
 
 	/**
@@ -464,9 +470,9 @@ class MainWP_Updates {
 						}
 
 						$translationsInfo[ $slug ] = array(
-							'name'       => isset( $translation_upgrade['name'] ) ? esc_html( $translation_upgrade['name'] ) : $slug,
-							'slug'       => $slug,
-							'version'    => esc_html( $translation_upgrade['version'] ),
+							'name'    => isset( $translation_upgrade['name'] ) ? esc_html( $translation_upgrade['name'] ) : $slug,
+							'slug'    => $slug,
+							'version' => esc_html( $translation_upgrade['version'] ),
 						);
 					}
 				}
@@ -483,10 +489,10 @@ class MainWP_Updates {
 						}
 
 						$pluginsInfo[ $slug ] = array(
-							'name'       => esc_html( $plugin_upgrade['Name'] ),
-							'slug'       => esc_html( $plugin_upgrade['update']['slug'] ),
-							'premium'    => ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ),
-							'PluginURI'  => esc_html( $plugin_upgrade['PluginURI'] ),
+							'name'      => esc_html( $plugin_upgrade['Name'] ),
+							'slug'      => esc_html( $plugin_upgrade['update']['slug'] ),
+							'premium'   => ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ),
+							'PluginURI' => esc_html( $plugin_upgrade['PluginURI'] ),
 						);
 					}
 				}
@@ -503,8 +509,8 @@ class MainWP_Updates {
 						}
 
 						$themesInfo[ $slug ] = array(
-							'name'       => esc_html( $theme_upgrade['Name'] ),
-							'premium'    => ( isset( $theme_upgrade['premium'] ) ? esc_html( $theme_upgrade['premium'] ) : 0 ),
+							'name'    => esc_html( $theme_upgrade['Name'] ),
+							'premium' => ( isset( $theme_upgrade['premium'] ) ? esc_html( $theme_upgrade['premium'] ) : 0 ),
 						);
 					}
 				}
@@ -552,6 +558,13 @@ class MainWP_Updates {
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
+		/**
+		 * Limits number of updates to process.
+		 *
+		 * Limits the number of updates that will be processed in a single run on Update Everything action.
+		 *
+		 * @since 4.0
+		 */
 		$limit_updates_all = apply_filters( 'mainwp_limit_updates_all', 0 );
 
 		if ( 0 < $limit_updates_all ) {
@@ -974,7 +987,14 @@ class MainWP_Updates {
 			<div class="ui grid">
 				<div class="equal width row">
 				<div class="middle aligned column">
-						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); ?>
+						<?php
+						/**
+						 * Widget Updates Actions Top
+						 *
+						 * Filters the udpates actions top content.
+						 */
+						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
+						?>
 					</div>
 					<div class="right aligned middle aligned column">
 						<form method="post" action="" class="ui mini form">
@@ -1037,6 +1057,14 @@ class MainWP_Updates {
 
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
+
+		/**
+		 * Custom backup pages
+		 *
+		 * Filters backup options to set correct page for restore options.
+		 *
+		 * @since 4.0
+		 */
 		$customPage           = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
 		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 

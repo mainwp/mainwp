@@ -162,6 +162,13 @@ class MainWP_System {
 
 		do_action_deprecated( 'mainwp-activated', array(), '4.0.7.2', 'mainwp_activated' ); // @deprecated Use 'mainwp_activated' instead.
 
+		/**
+		 * Action: mainwp_activated
+		 *
+		 * Fires upon MainWP plugin activation.
+		 *
+		 * @since Unknown
+		 */
 		do_action( 'mainwp_activated' );
 
 		MainWP_Updates::init();
@@ -416,6 +423,13 @@ class MainWP_System {
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_disablemenuitems', $_mainwp_disable_menus_items );
 
+		/**
+		 * Filter: mainwp_main_menu_disable_menu_items
+		 *
+		 * Filters disabled MainWP navigation items.
+		 *
+		 * @since Unknown
+		 */
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_main_menu_disable_menu_items', $_mainwp_disable_menus_items );
 
 		if ( ! function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
@@ -546,6 +560,13 @@ class MainWP_System {
 		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
 
+		/**
+		 * Filter: mainwp_ui_use_wp_calendar
+		 *
+		 * Filters whether default jQuery datepicker should be used to avoid potential problems with Senatic UI Calendar library.
+		 *
+		 * @since 4.0.5
+		 */
 		$use_wp_datepicker = apply_filters( 'mainwp_ui_use_wp_calendar', false );
 		if ( $use_wp_datepicker ) {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
@@ -808,11 +829,14 @@ class MainWP_System {
 			$is_staging = 'no';
 			if ( isset( $_GET['page'] ) ) {
 				if ( ( 'managesites' == $_GET['page'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['do'] ) && ! isset( $_GET['dashboard'] ) ) {
-					$filter_group = get_option( 'mainwp_managesites_filter_group' );
-					if ( $filter_group ) {
+					$group_ids = get_option( 'mainwp_managesites_filter_group' );
+					if ( ! empty( $group_ids ) ) {
+						$group_ids = explode( ',', $group_ids ); // convert to array.
+					}
+					if ( $group_ids ) {
 						$staging_group = get_option( 'mainwp_stagingsites_group_id' );
-						if ( $staging_group == $filter_group ) {
-							$is_staging = 'yes';
+						if ( in_array( $staging_group, $group_ids ) ) {
+							// is_staging = yes, disable this.
 						}
 					}
 				} elseif ( 'UpdatesManage' == $_GET['page'] || 'mainwp_tab' == $_GET['page'] ) {
@@ -829,6 +853,10 @@ class MainWP_System {
 		}
 
 		MainWP_System_View::render_footer_content( $websites );
+		if ( empty( $current_wpid ) ) {
+			MainWP_DB::free_result( $websites );
+		}
+
 		MainWP_System_View::admin_footer();
 		MainWP_Menu::init_subpages_menu();
 		global $_mainwp_disable_menus_items;

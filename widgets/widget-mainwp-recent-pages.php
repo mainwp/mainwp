@@ -41,6 +41,7 @@ class MainWP_Recent_Pages {
 	 */
 	public static function render_sites() {
 
+		/** This filter is documented in /widgets/widget-mainwp-recent-posts.php */
 		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

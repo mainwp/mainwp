@@ -106,6 +106,14 @@ class MainWP_Menu {
 				MainWP_Settings::init_menu();
 			}
 			MainWP_Extensions::init_menu();
+
+			/**
+			 * Action: mainwp_admin_menu
+			 *
+			 * Hooks main navigation menu items.
+			 *
+			 * @since 4.0
+			 */
 			do_action( 'mainwp_admin_menu' );
 
 			if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
@@ -155,7 +163,16 @@ class MainWP_Menu {
 		if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
 			MainWP_Settings::init_subpages_menu();
 		}
+
+		/**
+		 * Action: mainwp_admin_menu_sub
+		 *
+		 * Hooks main navigation sub-menu items.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_admin_menu_sub' );
+
 		if ( ! self::is_disable_menu_item( 2, 'ServerInformation' ) ) {
 			MainWP_Server_Information::init_subpages_menu();
 		}
@@ -288,7 +305,22 @@ class MainWP_Menu {
 
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs, $plugin_page;
 
-		$mainwp_leftmenu     = apply_filters( 'mainwp_main_menu', $mainwp_leftmenu );
+		/**
+		 * Filter: mainwp_main_menu
+		 *
+		 * Filters main navigation menu items
+		 *
+		 * @since 4.0
+		 */
+		$mainwp_leftmenu = apply_filters( 'mainwp_main_menu', $mainwp_leftmenu );
+
+		/**
+		 * Filter: mainwp_main_menu_submenu
+		 *
+		 * Filters main navigation subt-menu items
+		 *
+		 * @since 4.0
+		 */
 		$mainwp_sub_leftmenu = apply_filters( 'mainwp_main_menu_submenu', $mainwp_sub_leftmenu );
 
 		$mainwp_leftmenu = isset( $mainwp_leftmenu['mainwp_tab'] ) ? $mainwp_leftmenu['mainwp_tab'] : array();
@@ -302,7 +334,16 @@ class MainWP_Menu {
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">
-				<?php do_action( 'before_mainwp_menu' ); ?>
+				<?php
+				/**
+				 * Action: before_mainwp_menu
+				 *
+				 * Fires before the main navigation element.
+				 *
+				 * @since 4.0
+				 */
+				do_action( 'before_mainwp_menu' );
+				?>
 				<div id="mainwp-main-menu"  class="ui inverted vertical accordion menu stackable">
 					<?php
 					if ( is_array( $mainwp_leftmenu ) && ! empty( $mainwp_leftmenu ) ) {
@@ -356,7 +397,15 @@ class MainWP_Menu {
 						'tip'  => __( 'Click to go back to the site WP Admin area.', 'mainwp' ),
 					);
 
+					/**
+					 * Filter: mainwp_go_back_wpadmin_link
+					 *
+					 * Filters URL for the Go to WP Admin button in Main navigation.
+					 *
+					 * @since 4.0
+					 */
 					$go_back_link = apply_filters( 'mainwp_go_back_wpadmin_link', $link );
+
 					if ( is_array( $go_back_link ) ) {
 						if ( isset( $go_back_link['url'] ) ) {
 							$link['url'] = $go_back_link['url'];
@@ -378,7 +427,16 @@ class MainWP_Menu {
 						<span class="hamburger-bun"></span>
 					</div>
 				</div>
-					<?php do_action( 'after_mainwp_menu' ); ?>
+				<?php
+				/**
+				 * Action: after_mainwp_menu
+				 *
+				 * Fires after the main navigation element.
+				 *
+				 * @since 4.0
+				 */
+				do_action( 'after_mainwp_menu' );
+				?>
 			</div>
 		</div>
 			<script type="text/javascript">

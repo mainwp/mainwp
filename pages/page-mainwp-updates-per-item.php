@@ -59,6 +59,10 @@ class MainWP_Updates_Per_Item {
 					</th>
 				</tr>
 			</thead>
+			<?php
+			$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
+			?>
+										
 			<tbody id="plugins-updates-global" class="ui accordion">
 				<?php foreach ( $allPlugins as $slug => $val ) : ?>
 					<?php
@@ -97,12 +101,7 @@ class MainWP_Updates_Per_Item {
 							<table id="mainwp-plugins-updates-sites-inner-table" class="ui stackable single line table">
 								<thead>
 									<tr>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
+									<?php $updates_table_helper->print_column_headers(); ?>										
 									</tr>
 								</thead>
 								<tbody plugin_slug="<?php echo $plugin_name; ?>">
@@ -136,27 +135,30 @@ class MainWP_Updates_Per_Item {
 											continue;
 										}
 										$plugin_upgrade = $plugin_upgrades[ $slug ];
+
+										$row_columns = array(
+											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
+											'version' => esc_html( $plugin_upgrade['Version'] ),
+											'latest'  => '<a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887" target="_blank" class="thickbox open-plugin-details-modal">' . esc_html( $plugin_upgrade['update']['new_version'] ) . '</a>',
+											'trusted' => ( in_array( $slug, $trustedPlugins ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ),
+											'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
+										);
 										?>
 										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-											<td>
-											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
-											</td>
-											<td><?php echo esc_html( $plugin_upgrade['Version'] ); ?></td>
-											<td>
-												<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_upgrade['update']['slug'] . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal">
-													<?php echo esc_html( $plugin_upgrade['update']['new_version'] ); ?>
-												</a>
-											</td>
-											<td><?php echo ( in_array( $slug, $trustedPlugins ) ? MainWP_Updates::$trusted_label : MainWP_Updates::$not_trusted_label ); ?></td>
-											<td><?php echo ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+											<?php
+											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+											$action_rendered = isset( $row_columns['action'] ) ? true : false;
+											if ( ! $action_rendered ) :
+												?>
 											<td class="right aligned">
-											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
+												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_ignore_detail( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $plugin_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 											<?php endif; ?>
-											<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
+												<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 												<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_upgrade( '<?php echo $plugin_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											</td>
+											<?php endif; ?>		
 										</tr>
 										<?php
 									}
@@ -193,6 +195,7 @@ class MainWP_Updates_Per_Item {
 	 * @param array  $trustedThemes trusted themes.
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
+		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
 		?>
 		<table class="ui stackable single line table" id="mainwp-themes-updates-table">
 			<thead>
@@ -249,11 +252,7 @@ class MainWP_Updates_Per_Item {
 							<table id="mainwp-themes-updates-sites-inner-table" class="ui stackable single line table">
 								<thead>
 									<tr>
-										<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Version', 'mainwp' ); ?></th>
-										<th class="no-sort"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-										<th class="no-sort"></th>
+									<?php $updates_table_helper->print_column_headers(); ?>
 									</tr>
 								</thead>
 								<tbody theme_slug="<?php echo $theme_name; ?>">
@@ -286,22 +285,28 @@ class MainWP_Updates_Per_Item {
 											continue;
 										}
 										$theme_upgrade = $theme_upgrades[ $slug ];
+										$row_columns   = array(
+											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
+											'version' => esc_html( $theme_upgrade['Version'] ),
+											'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
+											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ),
+										);
 										?>
 										<tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="0">
-											<td>
-											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
-											</td>
-											<td><?php echo esc_html( $theme_upgrade['Version'] ); ?></td>
-											<td><?php echo esc_html( $theme_upgrade['update']['new_version'] ); ?></td>
-											<td><?php echo ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? __( 'Active', 'mainwp' ) : __( 'Inactive', 'mainwp' ); ?></td>
+											<?php
+											$row_columns     = $updates_table_helper->render_columns( $row_columns, $website );
+											$action_rendered = isset( $row_columns['action'] ) ? true : false;
+											if ( ! $action_rendered ) :
+												?>
 											<td class="right aligned">
-											<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
+												<?php if ( MainWP_Updates::user_can_ignore_updates() ) : ?>
 												<a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_ignore_detail( '<?php echo $theme_name; ?>', '<?php echo rawurlencode( $theme_upgrade['Name'] ); ?>', <?php echo esc_attr( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Update', 'mainwp' ); ?></a>
 											<?php endif; ?>
-											<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
+												<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 												<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_themes_upgrade( '<?php echo $theme_name; ?>', <?php echo esc_attr( $website->id ); ?> )"><?php esc_html_e( 'Update Now', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											</td>
+											<?php endif; ?>
 										</tr>
 										<?php
 									}

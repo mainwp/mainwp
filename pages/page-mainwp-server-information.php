@@ -119,9 +119,11 @@ class MainWP_Server_Information {
 		}
 
 		/**
-		 * Filter is being replaced with mainwp_getsubpages_server.
+		 * Status Subpages
 		 *
-		 * @deprecated
+		 * Filters subpages for the Status page.
+		 *
+		 * @since Unknown
 		 */
 		$sub_pages      = apply_filters_deprecated( 'mainwp-getsubpages-server', array( array() ), '4.0.7.2', 'mainwp_getsubpages_server' );
 		self::$subPages = apply_filters( 'mainwp_getsubpages_server', $sub_pages );
@@ -347,6 +349,13 @@ class MainWP_Server_Information {
 
 		self::render_header( '' );
 
+		/**
+		 * Before Server Info table
+		 *
+		 * Fires on the top of the Status page, before the Server Info table.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_before_server_info_table' );
 
 		?>
@@ -615,6 +624,13 @@ class MainWP_Server_Information {
 			</div>
 		<?php
 
+		/**
+		 * After Server Info table
+		 *
+		 * Fires on the bottom of the Status page, after the Server Info table.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_after_server_info_table' );
 
 		self::render_footer( '' );
@@ -705,7 +721,16 @@ class MainWP_Server_Information {
 
 		?>
 
-		<?php do_action( 'mainwp_before_cron_jobs_table' ); ?>
+		<?php
+		/**
+		 * Before Cron Jobs table
+		 *
+		 * Renders on the top of the Cron Jobs page, before the Schedules table.
+		 *
+		 * @since 4.0
+		 */
+		do_action( 'mainwp_before_cron_jobs_table' );
+		?>
 
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
 			<thead>
@@ -731,6 +756,13 @@ class MainWP_Server_Information {
 					</tr>
 					<?php
 				}
+				/**
+				 * Cron Job list item
+				 *
+				 * Renders as the last row of the Schedules table.
+				 *
+				 * @since 4.0
+				 */
 				do_action( 'mainwp_cron_jobs_list' );
 				?>
 			</tbody>
@@ -742,6 +774,13 @@ class MainWP_Server_Information {
 		</script>
 		<?php
 
+		/**
+		 * After Cron Jobs table
+		 *
+		 * Renders on the bottom of the Cron Jobs page, after the Schedules table.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_after_cron_jobs_table' );
 
 		self::render_footer( 'ServerInformationCron' );
@@ -950,7 +989,22 @@ class MainWP_Server_Information {
 		}
 
 		$error_log = ini_get( 'error_log' );
+		/**
+		 * Default error log
+		 *
+		 * Sets the default error log.
+		 *
+		 * @since Unknown
+		 */
 		$logs      = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
+
+		/**
+		 * Error log limit
+		 *
+		 * Limits the number of error log records to be displayed. Default value, 50.
+		 *
+		 * @since Unknown
+		 */
 		$count     = apply_filters( 'error_log_mainwp_lines', 50 );
 		$lines     = array();
 

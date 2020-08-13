@@ -195,6 +195,8 @@ class MainWP_Hooks {
 		}
 
 		MainWP_DB::instance()->remove_website( $site->id );
+
+		/** This action is documented in pages\page-mainwp-manage-sites-handler.php */
 		do_action( 'mainwp_delete_site', $site );
 		return array( 'result' => 'SUCCESS' );
 	}
@@ -331,6 +333,17 @@ class MainWP_Hooks {
 				$error = $e->getMessage();
 			}
 		}
+
+		/**
+		 * Action: mainwp_updated_site
+		 *
+		 * Fires after updatig the child site options.
+		 *
+		 * @param int   $website->id Child site ID.
+		 * @param array $data        Child site data.
+		 *
+		 * @since 3.5.1
+		 */
 		do_action( 'mainwp_updated_site', $website->id, $data );
 		return $website->id;
 	}

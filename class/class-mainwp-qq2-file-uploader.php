@@ -45,9 +45,9 @@ class MainWP_QQ2_File_Uploader {
 		$this->allowedExtensions = $allowedExtensions;
 
 		/**
-		* Filter 'mainwp_file_uploader_size_limit'
+		* Filter: 'mainwp_file_uploader_size_limit'
 		*
-		* Set maximum upload file size.
+		* Filters the maximum upload file size. Default: 8388608 Bytes (B) = 8 Megabytes (MB)
 		*
 		* @since 4.1
 		*/

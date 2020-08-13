@@ -506,7 +506,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pUrl Backup location.
 	 * @param mixed $pFile Backup File.
 	 *
-	 * @return boolean true|false
+	 * @return bool true|false
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -586,7 +586,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pSiteId Child Site ID
 	 * @param mixed $pFile File to delete.
 	 *
-	 * @return boolean true
+	 * @return bool true
 	 */
 	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -703,23 +703,23 @@ class MainWP_Backup_Handler {
 	 *
 	 * Backup Child Site.
 	 *
-	 * @param mixed   $pSiteId Child Site ID.
-	 * @param mixed   $pType full|db Typ of backup.
-	 * @param mixed   $pSubfolder Subfolder to store backup.
-	 * @param mixed   $pExclude Exclusion list.
-	 * @param mixed   $excludebackup Exclued backup files.
-	 * @param mixed   $excludecache Exclude cache files.
-	 * @param mixed   $excludenonwp Exclude no WP Files.
-	 * @param mixed   $excludezip Exclude Zip files
-	 * @param null    $pFilename Name of backup file.
-	 * @param string  $pFileNameUID File name unique ID.
-	 * @param boolean $pArchiveFormat Achive format.
-	 * @param boolean $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
-	 * @param boolean $pMaximumFileDescriptorsAuto Auto maximum file descriptors.
-	 * @param boolean $pMaximumFileDescriptors Maximum file decriptors.
-	 * @param boolean $pLoadFilesBeforeZip Load files before zip.
-	 * @param boolean $pid Backup pid.
-	 * @param boolean $append Append to backup.
+	 * @param mixed  $pSiteId Child Site ID.
+	 * @param mixed  $pType full|db Typ of backup.
+	 * @param mixed  $pSubfolder Subfolder to store backup.
+	 * @param mixed  $pExclude Exclusion list.
+	 * @param mixed  $excludebackup Exclued backup files.
+	 * @param mixed  $excludecache Exclude cache files.
+	 * @param mixed  $excludenonwp Exclude no WP Files.
+	 * @param mixed  $excludezip Exclude Zip files
+	 * @param null   $pFilename Name of backup file.
+	 * @param string $pFileNameUID File name unique ID.
+	 * @param bool   $pArchiveFormat Achive format.
+	 * @param bool   $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
+	 * @param bool   $pMaximumFileDescriptorsAuto Auto maximum file descriptors.
+	 * @param bool   $pMaximumFileDescriptors Maximum file decriptors.
+	 * @param bool   $pLoadFilesBeforeZip Load files before zip.
+	 * @param bool   $pid Backup pid.
+	 * @param bool   $append Append to backup.
 	 *
 	 * @throw MainWP_Exception
 	 *
@@ -982,8 +982,8 @@ class MainWP_Backup_Handler {
 	 *
 	 * Get extension of current Archive.
 	 *
-	 * @param boolean        $website true|false
-	 * @param boolean|string $task true|false|global|site
+	 * @param bool        $website true|false
+	 * @param bool|string $task true|false|global|site
 	 *
 	 * @return mixed $archiveFormat Format of Archive.
 	 */
@@ -1049,7 +1049,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * Update Child Site Settings.
 	 *
-	 * @return boolean true|false
+	 * @return bool true|false
 	 */
 	public static function handle_settings_post() {
 		if ( MainWP_System_Utility::is_admin() ) {

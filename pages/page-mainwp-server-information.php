@@ -996,7 +996,7 @@ class MainWP_Server_Information {
 		 *
 		 * @since Unknown
 		 */
-		$logs      = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
+		$logs = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
 
 		/**
 		 * Error log limit
@@ -1005,8 +1005,8 @@ class MainWP_Server_Information {
 		 *
 		 * @since Unknown
 		 */
-		$count     = apply_filters( 'error_log_mainwp_lines', 50 );
-		$lines     = array();
+		$count = apply_filters( 'error_log_mainwp_lines', 50 );
+		$lines = array();
 
 		foreach ( $logs as $log ) {
 

@@ -33,7 +33,8 @@ if ( empty( $heading ) ) {
 			 *
 			 * @since 4.1
 			 */
-			do_action( 'mainwp_site_health_monitoring_email_header' ); ?>
+			do_action( 'mainwp_site_health_monitoring_email_header' );
+			?>
 			<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" style="margin-top:30px;margin-bottom:30px;">
 				<tr>
 					<td align="center" valign="top">

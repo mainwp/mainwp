@@ -747,7 +747,7 @@ class MainWP_Themes {
 			<thead>
 				<tr>
 					<th></th>
-					<?php do_action( 'mainwp_manage_themes_table_header' );?>
+					<?php do_action( 'mainwp_manage_themes_table_header' ); ?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<?php
 						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
@@ -773,7 +773,7 @@ class MainWP_Themes {
 							<label><?php echo esc_html( $site_url ); ?></label>
 						</div>
 					</td>
-					<?php do_action( 'mainwp_manage_themes_table_column', $site_id );?>
+					<?php do_action( 'mainwp_manage_themes_table_column', $site_id ); ?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<td class="center aligned">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
@@ -911,7 +911,8 @@ class MainWP_Themes {
 								 *
 								 * @since 4.0
 								 */
-								do_action( 'mainwp_install_themes_actions_bar_left' ); ?>
+								do_action( 'mainwp_install_themes_actions_bar_left' );
+								?>
 							</div>
 							<div class="right aligned column">
 								<div class="ui buttons">

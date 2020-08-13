@@ -722,7 +722,6 @@ class MainWP_Manage_Sites {
 
 		$dashboard_siteid = isset( $_GET['dashboard'] ) ? $_GET['dashboard'] : null;
 
-
 		/**
 		 * Get getmetaboxes
 		 *

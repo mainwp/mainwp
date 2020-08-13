@@ -182,7 +182,7 @@ class MainWP_Updates {
 	 * Generate individual site overview page link
 	 *
 	 * @param object $website The site object.
-	 * @param bool $echo Either echo or not.
+	 * @param bool   $echo Either echo or not.
 	 *
 	 * @return string Dashboard link.
 	 */
@@ -1065,8 +1065,8 @@ class MainWP_Updates {
 		 *
 		 * @since 4.0
 		 */
-		$customPage           = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
-		$customPage           = apply_filters( 'mainwp_getcustompage_backups', $customPage );
+		$customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead.
+		$customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
 
 		$restorePageSlug = '';
 		if ( empty( $enable_legacy_backup ) && ! empty( $mainwp_primaryBackup ) && is_array( $customPage ) && isset( $customPage['managesites_slug'] ) ) {

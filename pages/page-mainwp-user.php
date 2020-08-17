@@ -636,6 +636,7 @@ class MainWP_User {
 			<thead>
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+					<?php do_action( 'mainwp_users_table_header' ); ?>
 					<th><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Username', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'E-mail', 'mainwp' ); ?></th>
@@ -948,6 +949,7 @@ class MainWP_User {
 			?>
 			<tr>
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="user[]" value="1"></span></td>
+					<?php do_action( 'mainwp_users_table_column', $user, $website ); ?>
 					<td class="name column-name">
 					<input class="userId" type="hidden" name="id" value="<?php echo esc_attr( $user['id'] ); ?>" />
 					<input class="userName" type="hidden" name="name" value="<?php echo esc_attr( $user['login'] ); ?>" />

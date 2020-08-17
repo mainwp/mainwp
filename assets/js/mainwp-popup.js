@@ -124,17 +124,13 @@
                     this.$overlayElementId.find( '.mainwp-modal-progress' ).progress( 'set progress', value);
                 },            
                 setProgressSite: function ( value ) {
-                    var pVal = value;                   
                     // progress label.
-                    var lb = pVal + ' / ' + this.totalSites + ' ' + this.statusText;
-                    this.setStatusText(lb); 
-                    // calculate new progress value.                       
-                    pVal = pVal + this.getProgressValue();
-                    if ( pVal > this.progressMax ){
-                        pVal = this.progressMax;
-                    }
-                    this.setProgressValue(pVal);
-                },
+                    var lb = value + ' / ' + this.totalSites + ' ' + this.statusText;
+                    this.setStatusText(lb);
+                    pVal = this.getProgressValue();
+                    pVal += 1;
+                    this.setProgressValue(pVal);                    
+                },                
                 appendItemsList: function ( left, right ) {
                     if ( this.$overlayElementId == null )
                         this.$overlayElementId;

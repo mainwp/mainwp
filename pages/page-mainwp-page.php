@@ -245,16 +245,16 @@ class MainWP_Page {
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
-			'title'              => 'Title',
-			'author'             => 'Author',
-			'comments'           => 'Comments',
-			'date'               => 'Date',
-			'status'             => 'Status',
-			'seo-links'          => 'Links',
-			'seo-linked'         => 'Linked',
-			'seo-score'          => 'SEO Score',
-			'seo-readability'    => 'Readability score',
-			'website'            => 'Website',
+			'title'           => 'Title',
+			'author'          => 'Author',
+			'comments'        => 'Comments',
+			'date'            => 'Date',
+			'status'          => 'Status',
+			'seo-links'       => 'Links',
+			'seo-linked'      => 'Linked',
+			'seo-score'       => 'SEO Score',
+			'seo-readability' => 'Readability score',
+			'website'         => 'Website',
 		);
 
 		if ( ! MainWP_Utility::enabled_wp_seo() ) {
@@ -348,9 +348,9 @@ class MainWP_Page {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PageBulkAdd' ) ) {
 				$renderItems[] = array(
-					'title'      => __( 'Add New', 'mainwp' ),
-					'href'       => 'admin.php?page=PageBulkAdd',
-					'active'     => ( 'BulkAdd' == $shownPage ) ? true : false,
+					'title'  => __( 'Add New', 'mainwp' ),
+					'href'   => 'admin.php?page=PageBulkAdd',
+					'active' => ( 'BulkAdd' == $shownPage ) ? true : false,
 				);
 			}
 		}
@@ -612,6 +612,7 @@ class MainWP_Page {
 			<thead class="full-width">
 				<tr>
 					<th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+					<?php do_action( 'mainwp_pages_table_header' ); ?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-comments"><i class="comment icon"></i></th>
@@ -744,14 +745,14 @@ class MainWP_Page {
 		MainWP_Cache::add_context(
 			'Page',
 			array(
-				'count'      => $output->pages,
-				'keyword'    => $keyword,
-				'dtsstart'   => $dtsstart,
-				'dtsstop'    => $dtsstop,
-				'status'     => $status,
-				'sites'      => ( '' != $sites ) ? $sites : '',
-				'groups'     => ( '' != $groups ) ? $groups : '',
-				'search_on'  => $search_on,
+				'count'     => $output->pages,
+				'keyword'   => $keyword,
+				'dtsstart'  => $dtsstart,
+				'dtsstop'   => $dtsstop,
+				'status'    => $status,
+				'sites'     => ( '' != $sites ) ? $sites : '',
+				'groups'    => ( '' != $groups ) ? $groups : '',
+				'search_on' => $search_on,
 			)
 		);
 
@@ -825,6 +826,7 @@ class MainWP_Page {
 				?>
 				<tr>
 					<td  class="check-column"><span class="ui checkbox"><input type="checkbox" name="page[]" value="1"></span></td>
+					<?php do_action( 'mainwp_pages_table_column', $page, $website ); ?>
 					<td class="page-title  column-title">
 						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
@@ -1109,10 +1111,10 @@ class MainWP_Page {
 							$post_featured_image = $img[0];
 							$attachment          = get_post( $featured_image_id );
 							$featured_image_data = array(
-								'alt'            => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-								'caption'        => $attachment->post_excerpt,
-								'description'    => $attachment->post_content,
-								'title'          => $attachment->post_title,
+								'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
+								'caption'     => $attachment->post_excerpt,
+								'description' => $attachment->post_content,
+								'title'       => $attachment->post_title,
 							);
 						}
 
@@ -1125,12 +1127,12 @@ class MainWP_Page {
 								$attachment = get_post( $attachment_id );
 								if ( $attachment ) {
 									$post_gallery_images[] = array(
-										'id'             => $attachment_id,
-										'alt'            => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-										'caption'        => $attachment->post_excerpt,
-										'description'    => $attachment->post_content,
-										'src'            => $attachment->guid,
-										'title'          => $attachment->post_title,
+										'id'          => $attachment_id,
+										'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+										'caption'     => $attachment->post_excerpt,
+										'description' => $attachment->post_content,
+										'src'         => $attachment->guid,
+										'title'       => $attachment->post_title,
 									);
 								}
 							}
@@ -1166,12 +1168,12 @@ class MainWP_Page {
 
 						if ( 0 < count( $dbwebsites ) ) {
 							$post_data = array(
-								'new_post'               => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_custom'            => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_featured_image'    => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'post_gallery_images'    => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'mainwp_upload_dir'      => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								'featured_image_data'    => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+								'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 							);
 
 							/**

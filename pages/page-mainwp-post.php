@@ -715,6 +715,7 @@ class MainWP_Post {
 			<thead class="full-width">
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
+					<?php do_action( 'mainwp_posts_table_header' ); ?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-categories"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
@@ -1001,7 +1002,7 @@ class MainWP_Post {
 
 				<tr>
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
-
+					<?php do_action( 'mainwp_posts_table_column', $post, $website ); ?>
 					<td class="title column-title">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />

@@ -145,8 +145,7 @@ updatesoverview_wordpress_global_upgrade_all = function ( groupId ) {
         return function () {
           var initData = {
               title: __( 'Updating All' ),
-              total: pSitesCount,
-              pMax: pSitesCount
+              progressMax: pSitesCount,
           };
 
             updatesoverview_update_popup_init( initData );
@@ -220,7 +219,7 @@ updatesoverview_wordpress_upgrade_all_update_done = function ()
     if ( !bulkTaskRunning )
         return;
     websitesDone++;
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
     if ( websitesDone == websitesTotal )
     {
@@ -352,8 +351,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId )
 
                 var initData = {
                     title: __( 'Updating all...' ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
 
@@ -440,8 +438,7 @@ updatesoverview_translations_upgrade_all = function ( slug, translationName )
 
                 var initData = {
                     title: __( 'Updating %1', decodeURIComponent( translationName ) ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
                 var dateObj = new Date();
@@ -520,7 +517,7 @@ updatesoverview_translations_upgrade_all_update_done = function ()
     if ( !bulkTaskRunning )
         return;
     websitesDone++;
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
     if ( websitesDone == websitesTotal )
     {
@@ -770,8 +767,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId )
 
                 var initData = {
                     title: __( 'Updating all' ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
 
@@ -856,8 +852,7 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName )
 
                 var initData = {
                     title: __( 'Updating %1', decodeURIComponent( pluginName ) ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
 
@@ -962,7 +957,7 @@ updatesoverview_plugins_upgrade_all_update_done = function ()
         return;
     websitesDone++;
 
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
     if ( websitesDone == websitesTotal )
     {
@@ -1214,8 +1209,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId )
 
                 var initData = {
                     title: __( 'Updating all...' ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
 
@@ -1295,8 +1289,7 @@ updatesoverview_themes_upgrade_all = function ( slug, themeName )
 
                 var initData = {
                     title: __( 'Updating %1', decodeURIComponent( themeName ) ),
-                    total: pSitesCount,
-                    pMax: pSitesCount
+                    progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init( initData );
 
@@ -1375,7 +1368,7 @@ updatesoverview_themes_upgrade_all_update_done = function ()
         return;
     websitesDone++;
 
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
     if ( websitesDone == websitesTotal )
     {
@@ -1725,8 +1718,7 @@ updatesoverview_global_upgrade_all = function ( which )
 
                     var initData = {
                         title: __( 'Updating All' ),
-                        total: pSitesCount,
-                        pMax: pSitesCount
+                        progressMax: pSitesCount
                     };
                     updatesoverview_update_popup_init( initData );
                     
@@ -1842,7 +1834,7 @@ updatesoverview_upgrade_all_update_done = function ()
         return;
     websitesDone++;
 
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
     if ( websitesDone == websitesTotal )
     {
@@ -3096,8 +3088,7 @@ updatesoverview_upgrade_plugintheme_list_popup  = function ( what, pId, pSiteNam
 
     var initData = {
         title: __( 'Updating all' ),
-        total: 1, // update for one site
-        pMax: 1
+        progressMax: 1
     };
     updatesoverview_update_popup_init( initData );
     var data = mainwp_secure_data( {
@@ -3117,7 +3108,7 @@ updatesoverview_upgrade_plugintheme_list_popup  = function ( what, pId, pSiteNam
         {
             updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pId) );
         }
-        mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( 1 );
+        mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( 1 );
         setTimeout( function ()
         {
             mainwpPopup( '#mainwp-sync-sites-modal' ).close(true);

@@ -275,10 +275,11 @@ class MainWP_Install_Bulk {
 
 		$post_data['url'] = wp_json_encode( $_POST['url'] );
 
-		$output         = new \stdClass();
-		$output->ok     = array();
-		$output->errors = array();
-		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+		$output          = new \stdClass();
+		$output->ok      = array();
+		$output->errors  = array();
+		$output->results = array();
+		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
@@ -391,10 +392,11 @@ class MainWP_Install_Bulk {
 
 		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );
 
-		$output         = new \stdClass();
-		$output->ok     = array();
-		$output->errors = array();
-		$websites       = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+		$output          = new \stdClass();
+		$output->ok      = array();
+		$output->errors  = array();
+		$output->results = array();
+		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
 		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
@@ -457,7 +459,8 @@ class MainWP_Install_Bulk {
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) );
 
 			if ( isset( $information['installation'] ) && 'SUCCESS' == $information['installation'] ) {
-				$output->ok[ $website->id ] = array( $website->name );
+				$output->ok[ $website->id ]      = array( $website->name );
+				$output->results[ $website->id ] = isset( $information['install_results'] ) ? $information['install_results'] : array();
 			} elseif ( isset( $information['error'] ) ) {
 				$error = $information['error'];
 				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {

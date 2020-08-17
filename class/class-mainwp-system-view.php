@@ -216,6 +216,8 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with these plugin? Check out the %1Documentation%2.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', __( 'Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'is_activated_parent', __( '%1 is parent of activated theme.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'is_activated_theme', __( '%1 is activated theme.', 'mainwp' ) );
 
 		return $mainwpTranslations;
 	}

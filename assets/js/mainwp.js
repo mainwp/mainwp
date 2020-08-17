@@ -619,8 +619,7 @@ mainwp_sync_sites_data = function ( syncSiteIds, pAction ) {
 
   mainwpPopup( '#mainwp-sync-sites-modal' ).init( {
     title: ( pAction == 'checknow' ? __('Check Now') : __( 'Data Synchronization' ) ),
-    total: allWebsiteIds.length,
-    pMax: nrOfWebsites,
+    progressMax: nrOfWebsites,
     statusText: ( pAction == 'checknow' ? 'checked' : 'synced' ),
     callback: function () {
       bulkTaskRunning = false;
@@ -697,7 +696,7 @@ dashboard_update_done = function ( pAction ) {
   if ( websitesDone > websitesTotal )
     websitesDone = websitesTotal;
 
-  mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+  mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
   if ( websitesDone == websitesTotal ) {
     setTimeout( function () {
@@ -768,8 +767,7 @@ mainwp_tool_disconnect_sites = function () {
 
   mainwpPopup( '#mainwp-sync-sites-modal' ).init( {
     title: __( 'Disconnect All Sites' ),
-    total: allWebsiteIds.length,
-    pMax: nrOfWebsites,
+    progressMax: nrOfWebsites,
     statusText: __( 'disconnected' ),
     callback: function () {
       window.location.href = location.href;
@@ -797,7 +795,7 @@ mainwp_tool_disconnect_sites_done = function () {
   if ( websitesDone > websitesTotal )
     websitesDone = websitesTotal;
 
-  mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( websitesDone );
+  mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
 
   mainwp_tool_disconnect_sites_loop_next();
 };
@@ -1989,18 +1987,29 @@ mainwp_upload_bulk_start_specific = function ( pType, pUrls, pActivatePlugin, pO
 
             pSiteToInstall.find( '.progress' ).hide();
             var statusEl = pSiteToInstall.find( '.status' );
+            var siteid = pSiteToInstall.attr( 'siteid' );
             statusEl.show();
-
+            
             if ( response.error != undefined )
             {
                 statusEl.html( response.error );
                 statusEl.css( 'color', 'red' );
-            } else if ( ( response.ok != undefined ) && ( response.ok[pSiteToInstall.attr( 'siteid' )] != undefined ) )
+            } else if ( ( response.ok != undefined ) && ( response.ok[siteid] != undefined ) )
             {
-                statusEl.html( '<i class="check circle green icon"></i> ' + __( 'Installed successfully.' ) + '</span>' );
-            } else if ( ( response.errors != undefined ) && ( response.errors[pSiteToInstall.attr( 'siteid' )] != undefined ) )
+                var results = '';
+                if ( ( response.results != undefined ) && ( response.results[siteid] != undefined ) ) {
+                    entries = Object.entries(response.results[siteid]);
+                    for (var entry of entries) {
+                      results += (entry[1] ? '<i class="check circle green icon"></i>' : '<i class="times circle red icon"></i>') + ' ' + entry[0] + '<br/>';
+                    }
+                    if (results != ''){
+                      results = '<br/>' + results;
+                    }
+                }
+                statusEl.html( '<i class="check circle green icon"></i> ' + __( 'Installed successfully.' ) + results + '</span>' );
+            } else if ( ( response.errors != undefined ) && ( response.errors[siteid] != undefined ) )
             {
-                statusEl.html( '<i class="times circle red icon"></i> ' + __( 'Installation failed!' ) + '(' + response.errors[pSiteToInstall.attr( 'siteid' )][1]  + ')' );
+                statusEl.html( '<i class="times circle red icon"></i> ' + __( 'Installation failed!' ) + '(' + response.errors[siteid][1]  + ')' );
 
             } else
             {
@@ -2707,7 +2716,7 @@ mainwp_force_destroy_sessions = function () {
     mainwp_force_destroy_sessions_websites = jQuery( '.dashboard_wp_id' ).map( function ( indx, el ) {
       return jQuery( el ).val();
     } );
-    mainwpPopup( '#mainwp-sync-sites-modal' ).init( { pMax: mainwp_force_destroy_sessions_websites.length } );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).init( { progressMax: mainwp_force_destroy_sessions_websites.length } );
     mainwp_force_destroy_sessions_part_2( 0 );
   });
 };
@@ -2732,7 +2741,7 @@ mainwp_force_destroy_sessions_part_2 = function ( id ) {
     var counter = id + 1;
     mainwp_force_destroy_sessions_part_2( counter );
 
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( counter );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( counter );
 
     if ( 'error' in response ) {
       dashboard_update_site_status( website_id, '<i class="exclamation red icon"></i>' );
@@ -2745,7 +2754,7 @@ mainwp_force_destroy_sessions_part_2 = function ( id ) {
   }, 'json' ).fail( function () {
     var counter = id + 1;
     mainwp_force_destroy_sessions_part_2( counter );
-    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressValue( counter );
+    mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( counter );
 
     dashboard_update_site_status( website_id, '<i class="exclamation red icon"></i>' );
   } );

@@ -405,7 +405,7 @@ class MainWP_Manage_Sites_List_Table {
 			<div class="equal width row">
 			<div class="middle aligned column">
 					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
-					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
+					<div id="mainwp-sites-bulk-actions-menu" class="ui mini selection dropdown">
 						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
@@ -428,16 +428,15 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui checkbox">
-							<input type="checkbox"
-							<?php
-							if ( $is_not ) {
-								echo 'checked="checked"';
-							}
-							?>
-							id="mainwp_is_not_site" name="mainwp_is_not_site" value="">
-							<label for="mainwp_is_not_site" ><?php esc_html_e( 'Is not', 'mainwp' ); ?></label>
-						</div>						
+						<div class="ui selection dropdown" id="mainwp_is_not_site" style="min-width:5em;">
+							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
+							<div class="menu">
+								<div class="item" data-value=""><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
+								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
+							</div>
+						</div>										
 						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
@@ -932,7 +931,7 @@ class MainWP_Manage_Sites_List_Table {
 									action: 'mainwp_manage_sites_display_rows',
 									status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
 									g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
-									isnot: jQuery("#mainwp_is_not_site").is(':checked') ? 'yes' : '',
+									isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
 								} )
 							);
 							},
@@ -996,13 +995,13 @@ class MainWP_Manage_Sites_List_Table {
 					<?php if ( ! $optimize ) { ?>
 						var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 						var status = jQuery( "#mainwp-filter-sites-status" ).dropdown( "get value" );
-						var isNot = jQuery("#mainwp_is_not_site").is(':checked');
+						var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
 						var params = '';						
 						params += '&g=' + group;						
 						if ( status != '' ) {
 							params += '&status=' + status;
 						}
-						if (isNot){
+						if ( 'yes' == isNot ){
 							params += '&isnot=yes';
 						}
 						window.location = 'admin.php?page=managesites' + params;

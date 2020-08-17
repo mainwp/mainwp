@@ -3,7 +3,6 @@
     if ( !window.mainwpPopup ) {
         mainwpPopup = function ( selector ) {
             var popup = mainwpListPopups.getItem( selector );
-            console.log( selector );
             if ( popup === null ) {
                 popup = new mainwpInstancePopup();
                 popup.initWrapper( selector );
@@ -38,9 +37,11 @@
                 $overlayElementId: null,
                 actionsCloseCallback: null,
                 title: '',
-                total: 0,
-                pMax: 0, // length of process bar
+                totalSites: 0,
+                progressMax: 0, // length of process bar
+                progressInit: 0, // init value of process bar
                 statusText: '',
+                hideStatusText: false,                
                 doCloseCallback: null,
                 init: function ( data ) {
                     data = data || { };
@@ -51,13 +52,17 @@
                     }
                     var defaultVal = {
                         //title: 'Syncing Websites',
-                        total: 0,
-                        pMax: 0,
+                        totalSites: 0,
+                        progressMax: 0,
+                        progressInit: 0,
                         statusText: 'synced'
                     };
                     this.doCloseCallback = true; // default is yes
                     $.extend( this, defaultVal, data );
-                    this.initProgress( { value: 0, max: this.pMax , statusText: this.statusText} );
+                    if ( 0 == this.totalSites ){
+                        this.totalSites = this.progressMax;
+                    }
+                    this.initProgress();
                     this.render();
                     this.bindEvents();
                 },
@@ -65,29 +70,30 @@
                     this.overlayId = el;
                     this.$overlayElementId = $( this.overlayId );
                 },
-                initProgress: function ( data ) {
-                    this.$overlayElementId.find( '.mainwp-modal-progress' ).progress( {
-                        value: data.value,
-                        total: data.max ,
-                        text: {
-                            active  : '{value} / {total} ' + data.statusText
-                        }
-                    });
+                initProgress: function () {
+                    var pData = {
+                        value: this.progressInit,
+                        total: this.progressMax,                        
+                    };
+                    if ( ! this.hideStatusText ){                       
+                        this.setStatusText( '0 / ' + this.totalSites + ' ' + this.statusText );
+                    }
+                    this.$overlayElementId.find( '.mainwp-modal-progress' ).progress( pData );
                 },
                 render: function () {
                     if ( this.title ) {
                         this.$overlayElementId.find( '.header' ).html( this.title );
                     }
 
-                    if ( !this.total || !this.pMax )
+                    if ( ! this.progressMax )
                         this.$overlayElementId.find( '.mainwp-modal-progress' ).hide(); // hide status and progress
                     else
                         this.$overlayElementId.find( '.mainwp-modal-progress' ).show();
                     //this.$overlayElementId.modal({closable: false});
                     var self = this;
                     this.$overlayElementId.modal( { onHide: function (){
-                                            self.onHideModal();
-                                        }} ).modal('show').modal('set active'); // trick to fix diplay issue
+                                                        self.onHideModal();
+                                                    }} ).modal('show').modal('set active'); // trick to fix diplay issue
                 },
                 onHideModal: function() {
                     if (this.doCloseCallback) {
@@ -108,8 +114,26 @@
                 setTitle: function ( title ) {
                       this.$overlayElementId.find( '.header' ).html( title );
                 },
+                setStatusText: function ( label ) {
+                    this.$overlayElementId.find( '.mainwp-modal-progress' ).find('.label').html(label);
+                },               
+                getProgressValue: function () {
+                    return this.$overlayElementId.find( '.mainwp-modal-progress' ).progress( 'get value');
+                },
                 setProgressValue: function ( value ) {
                     this.$overlayElementId.find( '.mainwp-modal-progress' ).progress( 'set progress', value);
+                },            
+                setProgressSite: function ( value ) {
+                    var pVal = value;                   
+                    // progress label.
+                    var lb = pVal + ' / ' + this.totalSites + ' ' + this.statusText;
+                    this.setStatusText(lb); 
+                    // calculate new progress value.                       
+                    pVal = pVal + this.getProgressValue();
+                    if ( pVal > this.progressMax ){
+                        pVal = this.progressMax;
+                    }
+                    this.setProgressValue(pVal);
                 },
                 appendItemsList: function ( left, right ) {
                     if ( this.$overlayElementId == null )

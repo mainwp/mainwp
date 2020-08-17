@@ -48,20 +48,6 @@ class MainWP_Updates {
 	public static $user_can_update_plugins = null;
 
 	/**
-	 * Placeholder for trusted label.
-	 *
-	 * @var string $trusted_label Placeholder for trusted label.
-	 */
-	public static $trusted_label = '';
-
-	/**
-	 * Placeholder for not trusted label.
-	 *
-	 * @var string $not_trusted_label Placeholder for not trusted label.
-	 */
-	public static $not_trusted_label = '';
-
-	/**
 	 * Placeholder for continue selector.
 	 *
 	 * @var string $continue_selector Placeholder for continue selector.
@@ -602,9 +588,6 @@ class MainWP_Updates {
 			self::render_http_checks( $websites );
 		}
 
-		self::$trusted_label     = '<span class="ui tiny green label">Trusted</span>';
-		self::$not_trusted_label = '<span class="ui tiny grey label">Not Trusted</span>';
-
 		if ( 'wordpress-updates' === $current_tab ) {
 			self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
 		} elseif ( 'plugins-updates' === $current_tab ) {
@@ -773,7 +756,7 @@ class MainWP_Updates {
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
 		?>
 		<!-- Translations Updates -->
-		<?php if ( 1 === $mainwp_show_language_updates ) { ?>
+		<?php if ( 1 == $mainwp_show_language_updates ) { ?>
 		<div class="ui active tab" data-tab="translations-updates">
 			<?php
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {

@@ -238,7 +238,7 @@ class MainWP_Connection_Status {
 				<div class="ui horizontal statistics large">
 					<div class="green statistic">
 						<div class="value">
-							<?php echo $count_connected; ?>
+							<a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','connected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).removeClass( 'active' );"><?php echo esc_html( $count_connected ); ?></a>
 						</div>
 						<div class="label">
 							<?php esc_html_e( 'Connected', 'mainwp' ); ?>
@@ -249,8 +249,8 @@ class MainWP_Connection_Status {
 			<div class="column center aligned">
 				<div class="ui horizontal statistics large">
 					<div class="<?php echo ( 0 < $count_disconnected ) ? 'red' : 'green'; ?> statistic">
-						<div class="value">
-							<?php echo $count_disconnected; ?>
+						<div class="value">						
+							<a href="javascript:void(0);" onclick="jQuery( '#widget-connect-status-dropdown-selector' ).dropdown( 'set selected','disconnected' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=disconnected]' ).addClass( 'active' );jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab=connected]' ).removeClass( 'active' );"><?php echo esc_html( $count_disconnected ); ?></a>
 						</div>
 						<div class="label">
 							<?php esc_html_e( 'Disconnected', 'mainwp' ); ?>

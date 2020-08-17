@@ -119,9 +119,8 @@ mainwp_managesites_doaction_process = function( action ) {
 	} else if ( action == 'update_translations' ) {            
 	  mainwp_update_pluginsthemes( 'translation', selectedIds );
 	} else if ( action == 'update_everything' ) {
-    jQuery('#sync_selected_site_ids').val( selectedIds.join( ',' ) );
-    // start update wpcore first.
-	  managesites_wordpress_global_upgrade_all( selectedIds, true );
+    jQuery('#sync_selected_site_ids').val( selectedIds.join( ',' ) );    
+	  managesites_wordpress_global_upgrade_all( selectedIds, true ); // Update everything, start update wpcore first.
 	} else if (action == 'refresh_favico') {            
 	  mainwp_managesites_bulk_refresh_favico(selectedIds);
 	} else if (action == 'checknow') {            
@@ -342,8 +341,7 @@ mainwp_managesites_bulk_refresh_favico = function ( siteIds )
         siteNames[allWebsiteIds[i]] = jQuery( '.sync-site-status[siteid="' + allWebsiteIds[i] + '"]' ).attr( 'niceurl' );
     }
     var initData = {
-        total: allWebsiteIds.length,
-        pMax: nrOfWebsites,
+        progressMax: nrOfWebsites,
         title: 'Refresh Favicon',
         statusText: __( 'updated' ),
         callback: function () {

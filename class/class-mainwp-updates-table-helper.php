@@ -78,7 +78,7 @@ class MainWP_Updates_Table_Helper {
 		}
 		$columns            = $this->get_columns();
 		$sortable           = $this->get_sortable_columns();
-		$this->columns_info = apply_filters( 'mainwp_updates_table_columns_header', array( $columns, $sortable ), $this->type, $this->view_per, $top );
+		$this->columns_info = apply_filters( 'mainwp_updates_table_columns_header', array( $columns, $sortable ), $this->type, $this->view_per );
 		return $this->columns_info;
 	}
 
@@ -121,6 +121,44 @@ class MainWP_Updates_Table_Helper {
 		}
 	}
 
+
+	/**
+	 * Trusted column.
+	 *
+	 * @param mixed $value Value of column.
+	 */
+	public function column_trusted( $value ) {
+		if ( $value ) {
+			$label = '<span class="ui tiny green label">Trusted</span>';
+		} else {
+			$label = '<span class="ui tiny grey label">Not Trusted</span>';
+		}
+		return '<td>' . $label . '</td>';
+	}
+
+	/**
+	 * Status column.
+	 *
+	 * @param mixed $value Value of column.
+	 */
+	public function column_status( $value ) {
+		if ( $value ) {
+			$label = '<span class="ui tiny green label">Active</span>';
+		} else {
+			$label = '<span class="ui tiny grey label">Inactive</span>';
+		}
+		return '<td>' . $label . '</td>';
+	}
+
+	/**
+	 * Default column.
+	 *
+	 * @param mixed $value Value of column.
+	 */
+	public function column_default( $value ) {
+		return '<td>' . $value . '</td>';
+	}
+
 	/**
 	 *  Echo columns.
 	 *
@@ -134,7 +172,12 @@ class MainWP_Updates_Table_Helper {
 		list( $columns_header ) = $this->get_column_info();
 		foreach ( $columns_header as $col => $title ) {
 			if ( isset( $row_columns[ $col ] ) ) {
-				echo '<td>' . $row_columns[ $col ] . '</td>';
+				$value = $row_columns[ $col ];
+				if ( method_exists( $this, 'column_' . $col ) ) {
+					echo call_user_func( array( &$this, 'column_' . $col ), $value );
+				} else {
+					echo $this->column_default( $value );
+				}
 			}
 		}
 		return $row_columns;

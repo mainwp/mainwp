@@ -584,7 +584,7 @@ jQuery( document ).ready( function () {
             } else if ( action == 'delete' ) {
                 var themesToDelete = [ ];
                 for ( var i = 0; i < selectedThemes.length; i++ ) {
-          themesToDelete.push( jQuery( selectedThemes[i] ).attr( 'slug' ) );
+                    themesToDelete.push( jQuery( selectedThemes[i] ).attr( 'slug' ) );
                 }
                 var data = mainwp_secure_data( {
                     action: 'mainwp_theme_delete',
@@ -593,7 +593,14 @@ jQuery( document ).ready( function () {
                 } );
 
                 themeCountSent++;
-                jQuery.post( ajaxurl, data, function () {
+                jQuery.post( ajaxurl, data, function (response) {
+                    if ( response.error != undefined && response.error === Object(response.error) ){ // check if .error is object.
+                        entries = Object.entries(response.error);
+                        for (var entry of entries) {
+                            warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
+                            jQuery( '#mainwp-message-zone' ).after('<div class="ui info message yellow"><i class="times circle red icon"></i> <i class="ui close icon"></i><span>' + warnings + '</span></div>');
+                        }
+                    }
                     themeCountReceived++;
                     if ( themeResetAllowed && themeCountReceived == themeCountSent ) {
                         themeCountReceived = 0;

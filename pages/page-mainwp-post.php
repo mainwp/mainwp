@@ -14,7 +14,7 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Post {
 
-	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Complexity file.
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- Current complexity required to achieve desired results. Pull request solutions appreciated.
 
 	/**
 	 * Method get_class_name()
@@ -493,11 +493,24 @@ class MainWP_Post {
 									<option value="trash"><?php esc_html_e( 'Trash', 'mainwp' ); ?></option>
 									<option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+									<?php
+									/**
+									 * Action: mainwp_posts_bulk_action
+									 *
+									 * Adds new action to the Bulk Actions menu on Manage Posts.
+									 *
+									 * Suggested HTML Markup:
+									 * <option value="Your custom value">Your custom text</option>
+									 *
+									 * @since 4.1
+									 */
+									do_action( 'mainwp_posts_bulk_action' );
+									?>
 								</select>
 								<button class="ui mini button" id="mainwp-do-posts-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 								<?php
 								/**
-								 * Posts actions bar (left)
+								 * Action: mainwp_posts_actions_bar_left
 								 *
 								 * Fires at the left side of the actions bar on the Posts screen, after the Bulk Actions menu.
 								 *
@@ -509,7 +522,7 @@ class MainWP_Post {
 							<div class="right aligned column">
 								<?php
 								/**
-								 * Posts actions bar (right)
+								 * Action: mainwp_posts_actions_bar_right
 								 *
 								 * Fires at the right side of the actions bar on the Posts screen.
 								 *
@@ -526,12 +539,52 @@ class MainWP_Post {
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php
+				/**
+				 * Action: mainwp_manage_posts_sidebar_top
+				 *
+				 * Fires at the top of the sidebar on Manage posts.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_posts_sidebar_top' );
+				?>
 				<div class="mainwp-select-sites">
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_before_select_sites
+					 *
+					 * Fires before the Select Sites section on Manage posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_before_select_sites' );
+					?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_after_select_sites
+					 *
+					 * Fires after the Select Sites section on Manage posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_after_select_sites' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_before_search_options
+					 *
+					 * Fires before the Search Options on Manage Posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_before_search_options' );
+					?>
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_post_search_type">
@@ -550,11 +603,51 @@ class MainWP_Post {
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 					<?php self::render_search_options(); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_after_search_options
+					 *
+					 * Fires after the Search Options on Manage Posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_after_search_options' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_before_submit_button
+					 *
+					 * Fires before the Submit Button on Manage Posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_before_submit_button' );
+					?>
 					<input type="button" name="mainwp_show_posts" id="mainwp_show_posts" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Posts', 'mainwp' ); ?>"/>
+					<?php
+					/**
+					 * Action: mainwp_manage_posts_after_submit_button
+					 *
+					 * Fires after the Submit Button on Manage Posts.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_posts_after_submit_button' );
+					?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_manage_posts_sidebar_bottom
+				 *
+				 * Fires at the bottom of the sidebar on Manage posts.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_posts_sidebar_bottom' );
+				?>
 			</div>
 			<div class="ui hidden clearing divider"></div>
 		</div>
@@ -684,21 +777,19 @@ class MainWP_Post {
 	}
 
 	/**
-	 * Method render_table()
+	 * Renders Posts table.
 	 *
-	 * Render Posts table.
-	 *
-	 * @param boolean $cached Show cached data or not. Default: true.
-	 * @param mixed   $keyword Search keywords.
-	 * @param mixed   $dtsstart Date & time of Session start.
-	 * @param mixed   $dtsstop Date & time of Session stop.
-	 * @param mixed   $status Page statuses.
-	 * @param mixed   $groups Groups to display.
-	 * @param mixed   $sites Site URLS.
-	 * @param integer $postId Post ID.
-	 * @param integer $userId Current user ID.
-	 * @param string  $post_type Post type.
-	 * @param string  $search_on Site on all sites. Default = all.
+	 * @param bool   $cached Show cached data or not. Default: true.
+	 * @param mixed  $keyword Search keywords.
+	 * @param mixed  $dtsstart Date & time of Session start.
+	 * @param mixed  $dtsstop Date & time of Session stop.
+	 * @param mixed  $status Page statuses.
+	 * @param mixed  $groups Groups to display.
+	 * @param mixed  $sites Site URLS.
+	 * @param int    $postId Post ID.
+	 * @param int    $userId Current user ID.
+	 * @param string $post_type Post type.
+	 * @param string $search_on Site on all sites. Default = all.
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -711,11 +802,30 @@ class MainWP_Post {
 			</div>
 		</div>
 
+		<?php
+		/**
+		 * Action: mainwp_before_posts_table
+		 *
+		 * Fires before the Manage Posts table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_posts_table' );
+		?>
 		<table id="mainwp-posts-table" class="ui selectable single line table" style="width:100%">
 			<thead class="full-width">
 				<tr>
 					<th class="no-sort collapsing check-column"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<?php do_action( 'mainwp_posts_table_header' ); ?>
+					<?php
+					/**
+					 * Action: mainwp_posts_table_header
+					 *
+					 * Adds new column header to the Manage posts table.
+					 *
+					 *  @since 4.1
+					 */
+					do_action( 'mainwp_posts_table_header' );
+					?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-categories"><?php esc_html_e( 'Categories', 'mainwp' ); ?></th>
@@ -749,18 +859,46 @@ class MainWP_Post {
 		?>
 			</tbody>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_after_posts_table
+		 *
+		 * Fires after the Manage Posts table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_posts_table' );
+
+		$table_features = array(
+			'searching'  => 'true',
+			'paging'     => 'true',
+			'info'       => 'true',
+			'stateSave'  => 'true',
+			'scrollX'    => 'true',
+			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'order'      => '[]',
+		);
+
+		/**
+		 * Filter: mainwp_posts_table_fatures
+		 *
+		 * Filters the Manage Posts table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_posts_table_fatures', $table_features );
+		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-posts-table' ).DataTable( {
-					"colReorder": {
-						fixedColumnsLeft: 1,
-						fixedColumnsRight: 1
-					},
-					"stateSave":  true,
-					"pagingType": "full_numbers",
-					"order": [],
-					"scrollX" : true,
+					"searching" : <?php echo $table_features['searching']; ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; ?>,
+					"stateSave":  <?php echo $table_features['stateSave']; ?>,
+					"paging": <?php echo $table_features['paging']; ?>,
+					"info": <?php echo $table_features['info']; ?>,
+					"order": <?php echo $table_features['order']; ?>,
+					"scrollX" : <?php echo $table_features['scrollX']; ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 					"columnDefs": [ {
 						"targets": 'no-sort',
@@ -1002,7 +1140,19 @@ class MainWP_Post {
 
 				<tr>
 					<td class="check-column"><span class="ui checkbox"><input type="checkbox" name="post[]" value="1"></span></td>
-					<?php do_action( 'mainwp_posts_table_column', $post, $website ); ?>
+					<?php
+					/**
+					 * Action: mainwp_posts_table_column
+					 *
+					 * Adds a new column item in the Manage posts table.
+					 *
+					 * @param array $post    Array containing the post data.
+					 * @param array $website Object containing the website data.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_posts_table_column', $post, $website );
+					?>
 					<td class="title column-title">
 						<input class="postId" type="hidden" name="id" value="<?php echo esc_attr( $post['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'publish' === $post['status'] ) ? 'unpublish|' : ''; ?><?php echo ( 'pending' === $post['status'] ) ? 'approve|' : ''; ?><?php echo ( 'trash' === $post['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' === $post['status'] || 'draft' === $post['status'] ) ? 'publish|' : ''; ?>" />
@@ -1096,6 +1246,22 @@ class MainWP_Post {
 									<a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
 									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+									<?php
+									/**
+									 * Action: mainwp_posts_table_action
+									 *
+									 * Adds a new item in the Actions menu in Manage Posts table.
+									 *
+									 * Suggested HTML markup:
+									 * <a class="item" href="Your custom URL">Your custom label</a>
+									 *
+									 * @param array $post    Array containing the post data.
+									 * @param array $website Object containing the website data.
+									 *
+									 * @since 4.1
+									 */
+									do_action( 'mainwp_posts_table_action', $post, $website );
+									?>
 							</div>
 						</div>
 					</td>
@@ -1498,7 +1664,7 @@ class MainWP_Post {
 	 *
 	 * @return string Metabox html
 	 */
-	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- not quite comple method.
+	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
 
 		global $wp_meta_boxes;
 		static $already_sorted = false;
@@ -1613,9 +1779,7 @@ class MainWP_Post {
 	}
 
 	/**
-	 * Method render_bulkpost()
-	 *
-	 * Render bulkpost to edit.
+	 * Renders bulkpost to edit.
 	 *
 	 * @param mixed $post_id Post ID.
 	 * @param mixed $input_type Post type.
@@ -1820,7 +1984,7 @@ class MainWP_Post {
 					<div class="ui divider"></div>
 					<?php
 					/**
-					 * Edit Post - before submit button
+					 * Action: mainwp_edit_posts_before_submit_button
 					 *
 					 * Fires right before the Submit button.
 					 *
@@ -1833,7 +1997,7 @@ class MainWP_Post {
 					</div>
 					<?php
 					/**
-					 * Edit Post - after submit button
+					 * Action: mainwp_edit_posts_after_submit_button
 					 *
 					 * Fires right after the Submit button.
 					 *
@@ -1860,9 +2024,7 @@ class MainWP_Post {
 	}
 
 	/**
-	 * Method render_categories()
-	 *
-	 * Render Select Categories form
+	 * Renders Select Categories form
 	 *
 	 * @param object $post Post object.
 	 */
@@ -2133,6 +2295,20 @@ class MainWP_Post {
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
+				<?php
+				/**
+				 * Action: mainwp_posts_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Posts page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_posts_help_item' );
+				?>
 			</div>
 			<?php
 		}

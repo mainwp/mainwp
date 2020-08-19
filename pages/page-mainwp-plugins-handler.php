@@ -78,8 +78,7 @@ class MainWP_Plugins_Handler {
 
 	/** Ignore Plugin. */
 	public static function ignore_updates() {
-		$websiteIdEnc = $_POST['websiteId'];
-		$websiteId    = $websiteIdEnc;
+		$websiteId = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
@@ -109,7 +108,27 @@ class MainWP_Plugins_Handler {
 					$decodedIgnoredPlugins[ $slug ] = urldecode( $name );
 				}
 			}
+
+			/**
+			* Action: mainwp_before_plugin_ignore
+			*
+			* Fires before plugin ignore.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_plugin_ignore', $decodedIgnoredPlugins, $website );
+
 			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_plugins' => wp_json_encode( $decodedIgnoredPlugins ) ) );
+
+			/**
+			* Action: mainwp_after_plugin_ignore
+			*
+			* Fires after plugin ignore.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_plugin_ignore', $decodedIgnoredPlugins, $website );
+
 		}
 
 		die( wp_json_encode( array( 'result' => true ) ) );
@@ -123,8 +142,7 @@ class MainWP_Plugins_Handler {
 	 * @return mixed error|true
 	 */
 	public static function action( $pAction ) {
-		$websiteIdEnc = $_POST['websiteId'];
-		$websiteId    = $websiteIdEnc;
+		$websiteId = $_POST['websiteId'];
 
 		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
@@ -137,8 +155,18 @@ class MainWP_Plugins_Handler {
 		}
 
 		try {
-			$plugin      = implode( '||', $_POST['plugins'] );
-			$plugin      = urldecode( $plugin );
+			$plugin = implode( '||', $_POST['plugins'] );
+			$plugin = urldecode( $plugin );
+
+			/**
+			* Action: mainwp_before_plugin_action
+			*
+			* Fires before plugin activate/deactivate/delete actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_plugin_action', $pAction, $plugin, $website );
+
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'plugin_action',
@@ -147,6 +175,16 @@ class MainWP_Plugins_Handler {
 					'plugin' => $plugin,
 				)
 			);
+
+			/**
+			* Action: mainwp_after_plugin_action
+			*
+			* Fires after plugin activate/deactivate/delete actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_plugin_action', $information, $pAction, $plugin, $website );
+
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}

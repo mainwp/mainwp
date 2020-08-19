@@ -280,6 +280,16 @@ class MainWP_Install_Bulk {
 		$output->errors  = array();
 		$output->results = array();
 		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+
+		/**
+		* Action: mainwp_before_plugin_theme_install
+		*
+		* Fires before plugin/theme install.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_plugin_theme_install', $post_data, $websites );
+
 		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
@@ -292,6 +302,15 @@ class MainWP_Install_Bulk {
 			null,
 			array( 'upgrade' => true )
 		);
+
+		/**
+		* Action: mainwp_after_plugin_theme_install
+		*
+		* Fires after plugin/theme install.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_plugin_theme_install', $output, $post_data, $websites );
 
 		wp_send_json( $output );
 	}
@@ -397,6 +416,16 @@ class MainWP_Install_Bulk {
 		$output->errors  = array();
 		$output->results = array();
 		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+
+		/**
+		* Action: mainwp_before_plugin_theme_install
+		*
+		* Fires before plugin/theme install.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_plugin_theme_install', $post_data, $websites );
+
 		MainWP_Connect::fetch_urls_authed(
 			$websites,
 			'installplugintheme',
@@ -409,6 +438,15 @@ class MainWP_Install_Bulk {
 			null,
 			array( 'upgrade' => true )
 		);
+
+		/**
+		* Action: mainwp_after_plugin_theme_install
+		*
+		* Fires after plugin/theme install.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_plugin_theme_install', $output, $post_data, $websites );
 
 		wp_send_json( $output );
 	}

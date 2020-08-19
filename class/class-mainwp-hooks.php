@@ -772,6 +772,15 @@ class MainWP_Hooks {
 			if ( MainWP_Utility::ctype_digit( $websiteId ) ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 				if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+					/**
+					* Action: mainwp_before_plugin_theme_translation_update
+					*
+					* Fires before plugin/theme/translation update actions.
+					*
+					* @since 4.1
+					*/
+					do_action( 'mainwp_before_plugin_theme_translation_update', $type, implode( ',', $slugs ), $website );
+
 					$information = MainWP_Connect::fetch_url_authed(
 						$website,
 						'upgradeplugintheme',
@@ -780,6 +789,16 @@ class MainWP_Hooks {
 							'list' => urldecode( implode( ',', $slugs ) ),
 						)
 					);
+
+					/**
+					* Action: mainwp_after_plugin_theme_translation_update
+					*
+					* Fires before plugin/theme/translation update actions.
+					*
+					* @since 4.1
+					*/
+					do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, implode( ',', $slugs ), $website );
+
 					if ( isset( $information['sync'] ) ) {
 						unset( $information['sync'] );
 					}

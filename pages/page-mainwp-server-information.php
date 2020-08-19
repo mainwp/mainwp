@@ -119,7 +119,7 @@ class MainWP_Server_Information {
 		}
 
 		/**
-		 * Status Subpages
+		 * Filter mainwp_getsubpages_server
 		 *
 		 * Filters subpages for the Status page.
 		 *
@@ -140,9 +140,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method init_subpages_menu()
-	 *
-	 * Render Sub Pages Menu.
+	 * Renders Sub Pages Menu.
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -190,9 +188,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method init_left_menu()
-	 *
-	 * Initiate Server Information left menu.
+	 * Initiates Server Information left menu.
 	 *
 	 * @param array $subPages array of subpages.
 	 */
@@ -265,9 +261,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_header()
-	 *
-	 * Render Server Information header.
+	 * Renders Server Information header.
 	 *
 	 * @param string $shownPage Current page.
 	 */
@@ -325,39 +319,34 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_footer()
+	 * Renders Server Information footer.
 	 *
-	 * @param string $shownPage Page that is shown.
+	 * @param string $shownPage Current page.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
 	/**
-	 * Method render()
-	 *
-	 * Render Server Information page.
+	 * Renders Server Information page.
 	 *
 	 * @return void
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'server information', 'mainwp' );
-
 			return;
 		}
-
 		self::render_header( '' );
 
 		/**
-		 * Before Server Info table
+		 * Action: mainwp_before_server_info_table
 		 *
 		 * Fires on the top of the Status page, before the Server Info table.
 		 *
 		 * @since 4.0
 		 */
 		do_action( 'mainwp_before_server_info_table' );
-
 		?>
 			<div class="ui two column grid">
 			<div class="column"></div>
@@ -625,7 +614,7 @@ class MainWP_Server_Information {
 		<?php
 
 		/**
-		 * After Server Info table
+		 * Action: mainwp_after_server_info_table
 		 *
 		 * Fires on the bottom of the Status page, after the Server Info table.
 		 *
@@ -637,11 +626,19 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_quick_setup_system_check()
+	 * Renders MainWP system requirements check.
 	 *
-	 * Render MainWP system requirements check.
+	 * @return void
 	 */
 	public static function render_quick_setup_system_check() {
+		/**
+		 * Action: mainwp_before_system_requirements_check
+		 *
+		 * Fires on the bottom of the System Requirements page, in Quick Setup Wizard.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_system_requirements_check' );
 		?>
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
 			<thead>
@@ -662,12 +659,18 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 		<?php
+		/**
+		 * Action: mainwp_after_system_requirements_check
+		 *
+		 * Fires on the bottom of the System Requirements page, in Quick Setup Wizard.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_system_requirements_check' );
 	}
 
 	/**
-	 * Method get_mainwp_version_check()
-	 *
-	 * Compare the detected MainWP Dashboard version agains the verion in WP.org.
+	 * Compares the detected MainWP Dashboard version agains the verion in WP.org.
 	 *
 	 * @return mixed Pass|self::get_warning_html().
 	 */
@@ -682,17 +685,13 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_cron()
+	 * Renders the Cron Schedule page.
 	 *
-	 * Render the Cron Schedule page
-	 *
-	 * @return html Cron Schedual Page html.
+	 * @return void
 	 */
 	public static function render_cron() {
-
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'cron schedules', 'mainwp' );
-
 			return;
 		}
 
@@ -719,11 +718,8 @@ class MainWP_Server_Information {
 			$cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', __( 'Once every five minutes', 'mainwp' ) );
 		}
 
-		?>
-
-		<?php
 		/**
-		 * Before Cron Jobs table
+		 * Action: mainwp_before_cron_jobs_table
 		 *
 		 * Renders on the top of the Cron Jobs page, before the Schedules table.
 		 *
@@ -757,7 +753,7 @@ class MainWP_Server_Information {
 					<?php
 				}
 				/**
-				 * Cron Job list item
+				 * Action: mainwp_cron_jobs_list
 				 *
 				 * Renders as the last row of the Schedules table.
 				 *
@@ -767,15 +763,32 @@ class MainWP_Server_Information {
 				?>
 			</tbody>
 		</table>
+		<?php
+		$table_features = array(
+			'searching' => 'true',
+			'paging'    => 'false',
+			'info'      => 'false',
+		);
+		/**
+		 * Filter: mainwp_cron_jobs_table_features
+		 *
+		 * Filters the Cron Schedules table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_cron_jobs_table_features', $table_features );
+		?>
 		<script type="text/javascript">
 		jQuery( '#mainwp-cron-jobs-table' ).DataTable( {
-				"paging": false,
+			"searching": <?php echo $table_features['searching']; ?>,
+			"paging": <?php echo $table_features['paging']; ?>,
+			"info": <?php echo $table_features['info']; ?>,
 		} );
 		</script>
 		<?php
 
 		/**
-		 * After Cron Jobs table
+		 * Action: mainwp_after_cron_jobs_table
 		 *
 		 * Renders on the bottom of the Cron Jobs page, after the Schedules table.
 		 *
@@ -787,11 +800,9 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method check_directory_mainwp_directory()
+	 * Checks if the ../wp-content/uploads/mainwp/ directory is writable.
 	 *
-	 * Check if the ../wp-content/uploads/mainwp/ directory is writable
-	 *
-	 * @return boolean true|false.
+	 * @return bool True if writable, false if not.
 	 */
 	public static function check_directory_mainwp_directory() {
 		$dirs = MainWP_System_Utility::get_mainwp_dir();
@@ -824,16 +835,14 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_directory_row()
+	 * Renders the directory check row.
 	 *
-	 * Render the directory check row.
+	 * @param string $name check name.
+	 * @param string $check desired result.
+	 * @param string $result detected result.
+	 * @param bool   $passed true|false check result.
 	 *
-	 * @param string  $name check name.
-	 * @param string  $check desired result.
-	 * @param string  $result detected result.
-	 * @param boolean $passed true|false check result.
-	 *
-	 * @return boolean true.
+	 * @return bool true.
 	 */
 	public static function render_directory_row( $name, $check, $result, $passed ) {
 		?>
@@ -848,9 +857,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_row()
-	 *
-	 * Render server information table row.
+	 * Renders server information table row.
 	 *
 	 * @param string $config configuraion check.
 	 * @param string $compare comparison operator.
@@ -883,9 +890,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_row_with_description()
-	 *
-	 * Render server information table row with description.
+	 * Renders server information table row with description.
 	 *
 	 * @param string $config configuraion check.
 	 * @param string $compare comparison operator.
@@ -918,9 +923,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method get_file_system_method_check()
-	 *
-	 * Check if file system method is direct.
+	 * Checks if file system method is direct.
 	 *
 	 * @return mixed html|self::get_warning_html().
 	 */
@@ -934,9 +937,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_error_log_page()
-	 *
-	 * Render Error Log page.
+	 * Renders Error Log page.
 	 *
 	 * Plugin-Name: Error Log Dashboard Widget
 	 * Plugin URI: http://wordpress.org/extend/plugins/error-log-dashboard-widget/
@@ -949,14 +950,20 @@ class MainWP_Server_Information {
 	 * Includes last_lines() function by phant0m, licensed under cc-wiki and GPLv2+
 	 */
 	public static function render_error_log_page() {
-
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'error log', 'mainwp' );
-
 			return;
 		}
-
 		self::render_header( 'ErrorLog' );
+
+		/**
+		 * Action: mainwp_before_error_log_table
+		 *
+		 * Fires before the Error Log table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_error_log_table' );
 		?>
 		<table class="ui stackable celled table" id="mainwp-error-log-table">
 			<thead>
@@ -970,15 +977,22 @@ class MainWP_Server_Information {
 			</tbody>
 		</table>
 		<?php
+		/**
+		 * Action: mainwp_after_error_log_table
+		 *
+		 * Fires before the Error Log table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_error_log_table' );
+
 		self::render_footer( 'ErrorLog' );
 	}
 
 	/**
-	 * Method render_error_log()
+	 * Renders error log page.
 	 *
-	 * Render error log page.
-	 *
-	 * @return html Error log page html.
+	 * @return void
 	 */
 	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
@@ -990,16 +1004,16 @@ class MainWP_Server_Information {
 
 		$error_log = ini_get( 'error_log' );
 		/**
-		 * Default error log
+		 * Filter: error_log_mainwp_logs
 		 *
-		 * Sets the default error log.
+		 * Filters the error log files to show.
 		 *
 		 * @since Unknown
 		 */
 		$logs = apply_filters( 'error_log_mainwp_logs', array( $error_log ) );
 
 		/**
-		 * Error log limit
+		 * Filter: error_log_mainwp_lines
 		 *
 		 * Limits the number of error log records to be displayed. Default value, 50.
 		 *
@@ -1009,7 +1023,6 @@ class MainWP_Server_Information {
 		$lines = array();
 
 		foreach ( $logs as $log ) {
-
 			if ( is_readable( $log ) ) {
 				$lines = array_merge( $lines, MainWP_Server_Information_Handler::last_lines( $log, $count ) );
 			}
@@ -1026,26 +1039,22 @@ class MainWP_Server_Information {
 		}
 
 		foreach ( $lines as $key => $line ) {
-
 			if ( false !== strpos( $line, ']' ) ) {
 				list( $time, $error ) = explode( ']', $line, 2 );
 			} else {
 				list( $time, $error ) = array( '', $line );
 			}
-
 			$time          = trim( $time, '[]' );
 			$error         = trim( $error );
 			$lines[ $key ] = compact( 'time', 'error' );
 		}
 
 		if ( 1 < count( $lines ) ) {
-
 			uasort( $lines, array( MainWP_Server_Information_Handler::get_class_name(), 'time_compare' ) );
 			$lines = array_slice( $lines, 0, $count );
 		}
 
 		foreach ( $lines as $line ) {
-
 			$error = esc_html( $line['error'] );
 			$time  = esc_html( $line['time'] );
 			if ( ! empty( $error ) ) {
@@ -1055,21 +1064,25 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_wp_config()
+	 * Renders the wp comfig page.
 	 *
-	 * Render the wp comfig page.
-	 *
-	 * @return html WP Config page html.
+	 * @return void
 	 */
 	public static function render_wp_config() {
-
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( 'WP-Config.php', 'mainwp' );
-
 			return;
 		}
 
 		self::render_header( 'WPConfig' );
+		/**
+		 * Action: mainwp_before_wp_config_section
+		 *
+		 * Fires before the WP Config section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_wp_config_section' );
 		?>
 		<div id="mainwp-show-wp-config">
 			<?php
@@ -1083,7 +1096,6 @@ class MainWP_Server_Information {
 				if ( file_exists( ABSPATH . 'wp-config.php' ) ) {
 					show_source( ABSPATH . 'wp-config.php' );
 				} else {
-
 					$files       = get_included_files();
 					$configFound = false;
 					if ( is_array( $files ) ) {
@@ -1095,7 +1107,6 @@ class MainWP_Server_Information {
 							}
 						}
 					}
-
 					if ( ! $configFound ) {
 						esc_html_e( 'wp-config.php not found', 'mainwp' );
 					}
@@ -1104,13 +1115,20 @@ class MainWP_Server_Information {
 			?>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_after_wp_config_section
+		 *
+		 * Fires after the WP Config section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_wp_config_section' );
+
 		self::render_footer( 'WPConfig' );
 	}
 
 	/**
-	 * Method render_action_logs()
-	 *
-	 * Render action logs page.
+	 * Renders action logs page.
 	 */
 	public static function render_action_logs() {
 		self::render_header( 'Action logs' );
@@ -1172,21 +1190,24 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method render_htaccess()
+	 * Renders .htaccess File page.
 	 *
-	 * Render htaccess page.
-	 *
-	 * @return html Htaccess page html.
+	 * @return void
 	 */
 	public static function render_htaccess() {
-
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
 			mainwp_do_not_have_permissions( '.htaccess', 'mainwp' );
-
 			return;
 		}
-
 		self::render_header( '.htaccess' );
+		/**
+		 * Action: mainwp_before_htaccess_section
+		 *
+		 * Fires before the .htaccess file section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_htaccess_section' );
 		?>
 		<div id="mainwp-show-htaccess">
 			<?php
@@ -1202,13 +1223,21 @@ class MainWP_Server_Information {
 			?>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_after_htaccess_section
+		 *
+		 * Fires after the .htaccess file section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_htaccess_section' );
 		self::render_footer( '.htaccess' );
 	}
 
 	/**
-	 * Method php_disabled_functions()
+	 * Checks for disable PHP Functions.
 	 *
-	 * Check for disable PHP Functions.
+	 * @return void
 	 */
 	public static function php_disabled_functions() {
 		$disabled_functions = ini_get( 'disable_functions' );
@@ -1225,9 +1254,9 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method display_mainwp_options()
+	 * Renders MainWP Settings 'Options'.
 	 *
-	 * Render MainWP Settings 'Options'.
+	 * @return void
 	 */
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();
@@ -1237,13 +1266,11 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Method get_warning_html()
-	 *
-	 * Render PHP Warning HTML.
+	 * Renders PHP Warning HTML.
 	 *
 	 * @param int $errorType Global variable self::WARNING = 1.
 	 *
-	 * @return html PHP Warning html.
+	 * @return string PHP Warning html.
 	 */
 	private static function get_warning_html( $errorType = self::WARNING ) {
 		if ( self::WARNING == $errorType ) {

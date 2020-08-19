@@ -56,12 +56,27 @@ class MainWP_UI {
 				$selected_groups = array();
 			}
 		}
-
+		/**
+		 * Action: mainwp_before_seclect_sites
+		 *
+		 * Fires before the Select Sites box.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_seclect_sites' );
 		?>
 		<div id="mainwp-select-sites" class="mainwp_select_sites_wrapper">
 		<?php self::select_sites_box_body( $selected_websites, $selected_groups, $type, $show_group, $show_select_all, false, $enableOfflineSites, $postId ); ?>
 	</div>
 		<?php
+		/**
+		 * Action: mainwp_after_seclect_sites
+		 *
+		 * Fires after the Select Sites box.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_seclect_sites' );
 	}
 
 	/**
@@ -69,16 +84,14 @@ class MainWP_UI {
 	 *
 	 * Select sites box Body.
 	 *
-	 * @param array   $selected_websites Child Site that are selected.
-	 * @param array   $selected_groups Group that are selected.
-	 * @param string  $type Selector type.
-	 * @param boolean $show_group Whether or not to show group, Default: true.
-	 * @param boolean $show_select_all Whether or not to show select all, Default: true.
-	 * @param boolean $updateQty Whether or not to update quantity, Default = false.
-	 * @param boolean $enableOfflineSites Whether or not to enable offline sites, Default: true.
-	 * @param integer $postId Post ID.
-	 *
-	 * @return void Injects js to handle menu & passes off variables to other methods.
+	 * @param array  $selected_websites Child Site that are selected.
+	 * @param array  $selected_groups Group that are selected.
+	 * @param string $type Selector type.
+	 * @param bool   $show_group         Whether or not to show group, Default: true.
+	 * @param bool   $show_select_all    Whether or not to show select all, Default: true.
+	 * @param bool   $updateQty          Whether or not to update quantity, Default = false.
+	 * @param bool   $enableOfflineSites Whether or not to enable offline sites, Default: true.
+	 * @param int    $postId             Post ID.
 	 */
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 
@@ -126,17 +139,24 @@ class MainWP_UI {
 	 *
 	 * Render selected sites header.
 	 *
-	 * @param mixed   $tab_id Datatab ID.
-	 * @param boolean $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
-	 * @param mixed   $selected_groups Selected groups.
+	 * @param int   $tab_id          Datatab ID.
+	 * @param bool  $staging_enabled True, if in the active plugins list. False, not in the list.
+	 * @param array $selected_groups Selected groups.
 	 *
 	 * @todo Move to view folder.
-	 *
-	 * @return void Render the header html.
 	 */
 	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups ) {
+
+		/**
+		 * Action: mainwp_before_select_sites_filters
+		 *
+		 * Fires before the Select Sites box filters.
+	 *
+		 * @since 4.1
+	 */
+		do_action( 'mainwp_before_select_sites_filters' );
 		?>
-	<div id="mainwp-select-sites-footer">
+		<div id="mainwp-select-sites-filters">
 			<div class="ui grid">
 				<div class="four wide column">
 					<div class="ui basic icon mini buttons">
@@ -152,6 +172,16 @@ class MainWP_UI {
 				</div>
 			</div>
 		</div>
+		<?php
+		/**
+		 * Action: mainwp_after_select_sites_filters
+		 *
+		 * Fires after the Select Sites box filters.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_select_sites_filters' );
+		?>
 		<input type="hidden" name="select_by" id="select_by" value="<?php echo esc_attr( 0 < count( $selected_groups ) ? 'group' : 'site' ); ?>"/>
 		<input type="hidden" id="select_sites_tab" value="<?php echo esc_attr( 0 < count( $selected_groups ) ? 'group' : 'site' ); ?>"/>
 		<div id="mainwp-select-sites-header">
@@ -170,18 +200,30 @@ class MainWP_UI {
 	/**
 	 * Method render_select_sites()
 	 *
-	 * @param mixed   $websites Child sites to render.
-	 * @param string  $type Selector type.
-	 * @param mixed   $tab_id Datatab ID.
-	 * @param mixed   $selected_websites Selected Child Sites.
-	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
-	 * @param mixed   $edit_site_id Child Site ID to edit.
+	 * @param object $websites Object containing child sites info.
+	 * @param string $type Selector type.
+	 * @param mixed  $tab_id Datatab ID.
+	 * @param mixed  $selected_websites Selected Child Sites.
+	 * @param bool   $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param mixed  $edit_site_id Child Site ID to edit.
 	 *
 	 * @return void Render Select Sites html.
 	 */
 	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
 		?>
 		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
+			<?php
+			/**
+			 * Action: mainwp_before_select_sites_list
+			 *
+			 * Fires before the Select Sites list.
+			 *
+			 * @param object $websites Object containing child sites info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_select_sites_list', $websites );
+			?>
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-sites-list">
 					<?php if ( ! $websites ) : ?>
@@ -229,6 +271,18 @@ class MainWP_UI {
 						?>
 				</div>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_select_sites_list
+			 *
+			 * Fires after the Select Sites list.
+			 *
+			 * @param object $websites Object containing child sites info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_select_sites_list', $websites );
+			?>
 		</div>
 		<?php
 	}
@@ -311,6 +365,18 @@ class MainWP_UI {
 	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ) {
 		?>
 		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
+			<?php
+			/**
+			 * Action: mainwp_before_select_groups_list
+			 *
+			 * Fires before the Select Groups list.
+			 *
+			 * @param object $groups Object containing groups info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_select_groups_list', $groups );
+			?>
 			<div id="mainwp-select-sites-body">
 				<div class="ui relaxed divided list" id="mainwp-select-groups-list">
 					<?php
@@ -338,6 +404,18 @@ class MainWP_UI {
 					?>
 				</div>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_select_groups_list
+			 *
+			 * Fires after the Select Groups list.
+			 *
+			 * @param object $groups Object containing groups info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_select_groups_list', $groups );
+			?>
 		</div>
 		<?php
 	}
@@ -348,8 +426,6 @@ class MainWP_UI {
 	 * Render top header.
 	 *
 	 * @param array $params Page parameters.
-	 *
-	 * @return void Render page top header html.
 	 */
 	public static function render_top_header( $params = array() ) {
 
@@ -447,6 +523,25 @@ class MainWP_UI {
 									<i class="globe icon"></i>
 									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
 								</a>
+								<?php
+								/**
+								 * Action: mainwp_quick_sites_shortcut
+								 *
+								 * Adds a new shortcut item in the Quick Sites Shortcuts sidebar menu.
+								 *
+								 * @param array $website Array containing the child site data.
+								 *
+								 * Suggested HTML markup:
+								 *
+								 * <a class="item" href="your custom URL">
+								 *   <i class="your custom icon"></i>
+								 *   Your custom label  text
+								 * </a>
+								 *
+								 * @since 4.1
+								 */
+								do_action( 'mainwp_quick_sites_shortcut', $website );
+								?>
 							</div>
 						</div>
 					</div>
@@ -473,6 +568,18 @@ class MainWP_UI {
 				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
 			</div>
 		</div>
+		<?php
+		/**
+		 * Action: mainwp_before_mainwp_content_wrap
+		 *
+		 * Fires before the #mainwp-content-wrap element.
+		 *
+		 * @param array $websites Array containing the child site data.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_mainwp_content_wrap', $websites );
+		?>
 		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>">
 			<?php
 			/**
@@ -480,9 +587,11 @@ class MainWP_UI {
 			 *
 			 * Fires before the MainWP header element.
 			 *
+			 * @param array $websites Array containing the child site data.
+			 *
 			 * @since 4.0
 			 */
-			do_action( 'mainwp_before_header' );
+			do_action( 'mainwp_before_header', $websites );
 			?>
 			<div id="mainwp-top-header" class="ui sticky">
 				<div class="ui stackable grid">
@@ -518,9 +627,11 @@ class MainWP_UI {
 			 *
 			 * Fires after the MainWP header element.
 			 *
+			 * @param array $websites Array containing the child site data.
+			 *
 			 * @since 4.0
 			 */
-			do_action( 'mainwp_after_header' );
+			do_action( 'mainwp_after_header', $websites );
 			?>
 		<?php
 	}
@@ -658,17 +769,42 @@ class MainWP_UI {
 		$website_id  = '';
 		ob_start();
 		?>
-		<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>"><?php esc_html_e( 'Sync Dashboard with Child Sites', 'mainwp' ); ?></button>
+		<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
+			<?php
+			/**
+			 * Filter: mainwp_main_sync_button_text
+			 *
+			 * Filters the Sync Dashboard with Child Sites button text.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_main_sync_button_text', __( 'Sync Dashboard with Child Sites', 'mainwp' ) ) );
+			?>
+		</button>
 		<div class="ui <?php echo ( 0 == $sites_count ? 'green' : '' ); ?> buttons" id="mainwp-add-new-buttons">
 			<a class="ui button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 			<div class="ui floating dropdown icon button"  style="z-index: 999;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'More options', 'mainwp' ); ?>">
 				<i class="dropdown icon"></i>
 				<div class="menu">
+					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Website', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Post to your child sites', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=PostBulkAdd' ) ); ?>"><?php esc_html_e( 'Post', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Add a new Page to your child sites', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=PageBulkAdd' ) ); ?>"><?php esc_html_e( 'Page', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Install a new Plugin to your child sites', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=PluginsInstall' ) ); ?>"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Install a new Theme to your child sites', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=ThemesInstall' ) ); ?>"><?php esc_html_e( 'Theme', 'mainwp' ); ?></a>
 					<a class="item" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Create a new User to your child sites', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=UserBulkAdd' ) ); ?>"><?php esc_html_e( 'User', 'mainwp' ); ?></a>
+					<?php
+					/**
+					 * Action: mainwp_add_new_menu_option
+					 *
+					 * Fires at bottom of the Add New menu options list.
+					 *
+					 * Suggested HTML markup:
+					 * <a class="item" href="your custom URL">Your custom label</a>
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_add_new_menu_option' );
+					?>
 				</div>
 			</div>
 		</div>
@@ -962,7 +1098,25 @@ class MainWP_UI {
 						echo '<div class="column grid-item" id="widget-' . esc_html( $box['id'] ) . '">' . "\n";
 						echo '<div class="ui segment mainwp-widget" >' . "\n";
 
+						/**
+						* Action: mainwp_widget_content_top
+						*
+						* Fires at the top of widget content.
+						*
+						* @since 4.1
+						*/
+						do_action( 'mainwp_widget_content_top', $box, $page );
+
 						call_user_func( $box['callback'], $object, $box );
+
+						/**
+						* Action: mainwp_widget_content_bottom
+						*
+						* Fires at the botton of widget content.
+						*
+						* @since 4.1
+						*/
+						do_action( 'mainwp_widget_content_bottom', $box, $page );
 
 						echo "</div>\n";
 						echo "</div>\n";
@@ -976,8 +1130,6 @@ class MainWP_UI {
 	 * Method render_empty_bulk_actions()
 	 *
 	 * Render empty bulk actions when drop down is disabled.
-	 *
-	 * @return void Render disabled bulk actions drop down.
 	 */
 	public static function render_empty_bulk_actions() {
 		?>
@@ -996,8 +1148,6 @@ class MainWP_UI {
 	 * Render modal window for installing plugins & themes.
 	 *
 	 * @param string $what Which window to render, plugin|theme.
-	 *
-	 * @return void Modal Window html.
 	 */
 	public static function render_modal_install_plugin_theme( $what = 'plugin' ) {
 		?>
@@ -1011,7 +1161,29 @@ class MainWP_UI {
 			}
 			?>
 			</div>
-			<div id="plugintheme-installation-queue" class="scrolling content"></div>
+			<div class="scrolling content">
+				<?php
+				/**
+				 * Action: mainwp_before_plugin_theme_install_progress
+				 *
+				 * Fires before the progress list in the install modal element.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_before_plugin_theme_install_progress' );
+				?>
+				<div id="plugintheme-installation-queue" ></div>
+				<?php
+				/**
+				 * Action: mainwp_after_plugin_theme_install_progress
+				 *
+				 * Fires after the progress list in the install modal element.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_after_plugin_theme_install_progress' );
+				?>
+			</div>
 			<div class="actions">
 				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
@@ -1028,7 +1200,18 @@ class MainWP_UI {
 	 */
 	public static function render_show_all_updates_button() {
 		?>
-		<a href="javascript:void(0)" class="ui mini button trigger-all-accordion"><?php esc_html_e( 'Show All Updates', 'mainwp' ); ?></a>
+		<a href="javascript:void(0)" class="ui mini button trigger-all-accordion">
+			<?php
+			/**
+			 * Filter: mainwp_show_all_updates_button_text
+			 *
+			 * Filters the Show All Updates button text.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_show_all_updates_button_text', __( 'Show All Updates', 'mainwp' ) ) );
+			?>
+		</a>
 		<?php
 	}
 
@@ -1059,6 +1242,16 @@ class MainWP_UI {
 		<div id="mainwp-notes" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Notes', 'mainwp' ); ?></div>
 			<div class="content" id="mainwp-notes-content">
+				<?php
+				/**
+				 * Action: mainwp_before_edit_site_note
+				 *
+				 * Fires before the site note content in the Edit Note modal element.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_before_edit_site_note' );
+				?>
 				<div id="mainwp-notes-html"></div>
 				<div id="mainwp-notes-editor" class="ui form" style="display:none;">
 					<div class="field">
@@ -1067,6 +1260,16 @@ class MainWP_UI {
 					</div>
 					<div><?php esc_html_e( 'Allowed HTML tags:', 'mainwp' ); ?> &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;br&gt;, &lt;hr&gt;, &lt;a&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;h1&gt;, &lt;h2&gt; </div>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_after_edit_site_note
+				 *
+				 * Fires after the site note content in the Edit Note modal element.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_after_edit_site_note' );
+				?>
 			</div>
 			<div class="actions">
 				<div class="ui grid">
@@ -1093,7 +1296,7 @@ class MainWP_UI {
 	 *
 	 * Integrate UserSnap.
 	 *
-	 * @return boolean True, Inject UserSnap meta data. False if $showtime is false.
+	 * @return bool True, Inject UserSnap meta data. False if $showtime is false.
 	 */
 	public static function usersnap_integration() {
 
@@ -1171,6 +1374,14 @@ class MainWP_UI {
 			$hide_widgets = array();
 		}
 
+		/**
+		 * Action: mainwp_screen_options_modal_top
+		 *
+		 * Fires at the top of the Screen Options modal element.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_screen_options_modal_top' );
 		?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
@@ -1253,5 +1464,13 @@ class MainWP_UI {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_screen_options_modal_bottom
+		 *
+		 * Fires at the bottom of the Screen Options modal element.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_screen_options_modal_bottom' );
 	}
 }

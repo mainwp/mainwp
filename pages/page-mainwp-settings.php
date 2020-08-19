@@ -374,6 +374,16 @@ class MainWP_Settings {
 
 			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
 			if ( MainWP_System_Utility::is_admin() ) {
+
+				/**
+				* Action: mainwp_before_save_general_settings
+				*
+				* Fires before general settings save.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_before_save_general_settings', $_POST );
+
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
 				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : $_POST['mainwp_pluginAutomaticDailyUpdate'] );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
@@ -409,6 +419,15 @@ class MainWP_Settings {
 
 				$check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
 				MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
+
+				/**
+				* Action: mainwp_after_save_general_settings
+				*
+				* Fires after save general settings.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_after_save_general_settings', $_POST );
 			}
 
 			return true;
@@ -434,6 +453,16 @@ class MainWP_Settings {
 					<form method="POST" action="admin.php?page=Settings" id="mainwp-settings-page-form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'Settings' ); ?>" />
+						<?php
+						/**
+						 * Action: mainwp_settings_form_top
+						 *
+						 * Fires at the top of settings form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_settings_form_top' );
+						?>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Optimization', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
@@ -629,6 +658,16 @@ class MainWP_Settings {
 						</div>
 						<?php MainWP_Monitoring_View::render_settings(); ?>
 						<?php MainWP_Manage_Backups::render_settings(); ?>
+						<?php
+						/**
+						 * Action: mainwp_settings_form_bottom
+						 *
+						 * Fires at the bottom of settings form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_settings_form_bottom' );
+						?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
@@ -711,6 +750,16 @@ class MainWP_Settings {
 		}
 
 		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) {
+
+			/**
+			* Action: mainwp_before_save_advanced_settings
+			*
+			* Fires before save advanced settings.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_save_advanced_settings', $_POST );
+
 			MainWP_Utility::update_option( 'mainwp_maximumRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumRequests'] ) ? intval( $_POST['mainwp_maximumRequests'] ) : 4 );
 			MainWP_Utility::update_option( 'mainwp_minimumDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
 			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
@@ -728,6 +777,15 @@ class MainWP_Settings {
 					MainWP_Utility::update_option( 'mainwp_opensslLibLocation', stripslashes( $openssl_loc ) );
 				}
 			}
+
+			/**
+			* Action: mainwp_after_save_advanced_settings
+			*
+			* Fires after advanced settings save.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_save_advanced_settings', $_POST );
 		}
 		self::render_header( 'Advanced' );
 		?>
@@ -741,6 +799,16 @@ class MainWP_Settings {
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsAdvanced' ); ?>" />
 						<?php
+
+						/**
+						 * Action: mainwp_advanced_settings_form_top
+						 *
+						 * Fires at the top of advanced settings form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_advanced_settings_form_top' );
+
 						if ( self::show_openssl_lib_config() ) {
 							if ( self::is_local_window_config() ) {
 								$openssl_loc = get_option( 'mwp_setup_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
@@ -820,6 +888,18 @@ class MainWP_Settings {
 								<input type="checkbox" name="mainwp_forceUseIPv4" id="mainwp_forceUseIPv4" value="checked" <?php echo ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: No', 'mainwp' ); ?></label>
 							</div>
 						</div>
+						<?php
+
+						/**
+						 * Action: mainwp_advanced_settings_form_bottom
+						 *
+						 * Fires at the bottom of advanced settings form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_advanced_settings_form_bottom' );
+
+						?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
@@ -850,6 +930,16 @@ class MainWP_Settings {
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPTools' ); ?>" />
 						<h3 class="ui dividing header"><?php esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3>
+						<?php
+						/**
+						 * Action: mainwp_tools_form_top
+						 *
+						 * Fires at the top of mainwp tools form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_tools_form_top' );
+						?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force your MainWP Dashboard to establish a new connection', 'mainwp' ); ?></label>
 							<div class="ten wide column"  data-tooltip="<?php esc_attr_e( 'Force your MainWP Dashboard to reconnect with your child sites. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" name="" id="force-destroy-sessions-button" class="ui green basic button" value="<?php esc_attr_e( 'Re-establish Connections', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Forces your dashboard to reconnect with your child sites. This feature will log out any currently logged in users on the Child sites and require them to re-log in. Only needed if suggested by MainWP Support.', 'mainwp' ); ?>" data-inverted=""/></div>
@@ -889,6 +979,16 @@ class MainWP_Settings {
 								<input type="checkbox" name="enable_managed_cr_for_wc" <?php echo ( ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
+						<?php
+						/**
+						 * Action: mainwp_tools_form_bottom
+						 *
+						 * Fires at the bottom of mainwp tools form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_tools_form_bottom' );
+						?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>

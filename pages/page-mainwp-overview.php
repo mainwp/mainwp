@@ -275,11 +275,11 @@ class MainWP_Overview {
 	 *
 	 * Render the Dasboard Body content.
 	 *
-	 * @param mixed $websites Array of Child Sites.
-	 * @param mixed $pDashboard Dashboard.
-	 * @param mixed $pScreenLayout Screen Layout.
+	 * @param object $websites      Object containing child sites info.
+	 * @param mixed  $dashboard     Dashboard.
+	 * @param int    $screen_layout Screen Layout.
 	 */
-	public static function render_dashboard_body( $websites, $pDashboard, $pScreenLayout ) {
+	public static function render_dashboard_body( $websites, $dashboard, $screen_layout ) {
 
 		$current_wp_id = MainWP_System_Utility::get_current_wpid();
 		$website       = null;
@@ -322,7 +322,6 @@ class MainWP_Overview {
 
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<div class="mainwp-primary-content-wrap">
-
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
@@ -332,7 +331,7 @@ class MainWP_Overview {
 
 			<?php
 			/**
-			 * Before overview widgets
+			 * Action: mainwp_before_overview_widgets
 			 *
 			 * Fires at the top of the Overview page (before first widget).
 			 *
@@ -348,24 +347,77 @@ class MainWP_Overview {
 		if ( 3 == $overviewColumns ) {
 			$cls_grid = 'three';
 		}
-
 		?>
 			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
 		<div class="column" id="mainwp-grid-left" widget-context="left">
-			<?php MainWP_UI::do_widget_boxes( $screen->id, 'left' ); ?>
+						<?php
+						/**
+						 * Action: mainwp_overview_before_left_column
+						 *
+						 * Fires at the top of the left column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_before_left_column' );
+						MainWP_UI::do_widget_boxes( $screen->id, 'left' );
+						/**
+						 * Action: mainwp_overview_after_left_column
+						 *
+						 * Fires at the bottom of the left column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_after_left_column' );
+						?>
 		</div>
 		<?php if ( 3 == $overviewColumns ) : ?>
 		<div class="column" id="mainwp-grid-middle" widget-context="middle">
-			<?php MainWP_UI::do_widget_boxes( $screen->id, 'middle' ); ?>
+						<?php
+						/**
+						 * Action: mainwp_overview_before_middle_column
+						 *
+						 * Fires at the top of the middle column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_before_middle_column' );
+						MainWP_UI::do_widget_boxes( $screen->id, 'middle' );
+						/**
+						 * Action: mainwp_overview_after_middle_column
+						 *
+						 * Fires at the bottom of the middle column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_after_middle_column' );
+						?>
 		</div>
 		<?php endif; ?>
 		<div class="column" id="mainwp-grid-right" widget-context="right">
-			<?php MainWP_UI::do_widget_boxes( $screen->id, 'right' ); ?>
+						<?php
+						/**
+						 * Action: mainwp_overview_before_right_column
+						 *
+						 * Fires at the top of the right column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_before_right_column' );
+						MainWP_UI::do_widget_boxes( $screen->id, 'right' );
+						/**
+						 * Action: mainwp_overview_after_right_column
+						 *
+						 * Fires at the bottom of the right column on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_after_right_column' );
+						?>
 		</div>
 			</div>
 			<?php
 			/**
-			 * After overview widgets
+			 * Action: 'mainwp_after_overview_widgets'
 			 *
 			 * Fires at the bottom of the Overview page (after the last widget).
 			 *
@@ -377,10 +429,30 @@ class MainWP_Overview {
 		<div class="ui modal" id="mainwp-overview-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="content ui form">
+						<?php
+						/**
+						 * Action: mainwp_overview_screen_options_top
+						 *
+						 * Fires at the top of the Sceen Options modal on the Overview page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_overview_screen_options_top' );
+						?>
 				<form method="POST" action="">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
 					<?php echo MainWP_UI::render_screen_options( false ); ?>
+							<?php
+							/**
+							 * Action: mainwp_overview_screen_options_bottom
+							 *
+							 * Fires at the bottom of the Sceen Options modal on the Overview page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_overview_screen_options_bottom' );
+							?>
 			</div>
 			<div class="actions">
 				<input type="submit" class="ui green button" name="submit" id="submit" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
@@ -434,7 +506,13 @@ class MainWP_Overview {
 		<?php
 	}
 
-	/** Hook the section help content to the Help Sidebar element. */
+	/**
+	 * Method mainwp_help_content()
+	 *
+	 * Hook the section help content to the Help Sidebar element
+	 *
+	 * @return void
+	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) {
 			?>
@@ -446,6 +524,20 @@ class MainWP_Overview {
 				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/mainwp-tables/" target="_blank">MainWP Tables</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
+				<?php
+				/**
+				 * Action: mainwp_overview_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Overview page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_overview_help_item' );
+				?>
 			</div>
 			<?php
 		}

@@ -128,9 +128,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method init_subpages_menu()
-	 *
-	 * Initiate sub pages menue.
+	 * Initiates sub pages menu.
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -169,12 +167,10 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method init_left_menu()
+	 * Initiates Users menu.
 	 *
-	 * Initiate Users Menu.
-	 *
-	 * @param array   $subPages Sub pages array.
-	 * @param integer $level What level to display on.
+	 * @param array $subPages Sub pages array.
+	 * @param int   $level What level to display on.
 	 */
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
 		MainWP_Menu::add_left_menu(
@@ -306,11 +302,9 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render()
+	 * Renders manage users dashboard.
 	 *
-	 * Render manage users dashboard.
-	 *
-	 * @return html Users page.
+	 * @return void
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
@@ -334,7 +328,6 @@ class MainWP_User {
 
 		self::render_header( '' );
 		?>
-
 		<div id="mainwp-manage-users" class="ui alt segment">
 			<div class="mainwp-main-content">
 				<div class="mainwp-actions-bar ui mini form">
@@ -344,6 +337,19 @@ class MainWP_User {
 								<select class="ui dropdown" id="mainwp-bulk-actions">
 									<option value="edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+									<?php
+									/**
+									 * Action: mainwp_users_bulk_action
+									 *
+									 * Adds new Bulk Actions option under on Manage Users.
+									 *
+									 * Suggested HTML Markup:
+									 * <option value="Your custom value">Your custom label</option>
+									 *
+									 * @since 4.1
+									 */
+									do_action( 'mainwp_users_bulk_action' );
+									?>
 								</select>
 								<button class="ui mini button" id="mainwp-do-users-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 								<?php
@@ -389,9 +395,39 @@ class MainWP_User {
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php
+				/**
+				 * Action: mainwp_manage_users_sidebar_top
+				 *
+				 * Fires on top of the sidebar on Manage Users page.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_users_sidebar_top' );
+				?>
 				<div class="mainwp-select-sites">
+					<?php
+					/**
+					 * Action: mainwp_manage_users_before_select_sites
+					 *
+					 * Fires before the Select Sites section on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_before_select_sites' );
+					?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_users_after_select_sites
+					 *
+					 * Fires after the Select Sites section on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_after_select_sites' );
+					?>
 				</div>
 
 				<?php
@@ -410,6 +446,16 @@ class MainWP_User {
 
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php
+					/**
+					 * Action: mainwp_manage_users_before_search_options
+					 *
+					 * Fires before the Search Options section on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_before_search_options' );
+					?>
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
@@ -427,6 +473,16 @@ class MainWP_User {
 							</select>
 						</div>
 					</div>
+					<?php
+					/**
+					 * Action: mainwp_manage_users_after_search_options
+					 *
+					 * Fires after the Search Options section on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_after_search_options' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
@@ -435,8 +491,38 @@ class MainWP_User {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php
+					/**
+					 * Action: mainwp_manage_users_before_submit_button
+					 *
+					 * Fires before the Submit Button on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_before_submit_button' );
+					?>
 					<input type="button" name="mainwp_show_users" id="mainwp_show_users" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Users', 'mainwp' ); ?>"/>
+					<?php
+					/**
+					 * Action: mainwp_manage_users_after_submit_button
+					 *
+					 * Fires after the Submit Button on Manage Users page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_users_after_submit_button' );
+					?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_manage_users_sidebar_bottom
+				 *
+				 * Fires at the bottom of the sidebar on Manage Users page.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_users_sidebar_bottom' );
+				?>
 			</div>
 			<div class="ui hidden clearing divider"></div>
 		</div>
@@ -482,9 +568,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_update_users()
-	 *
-	 * Render Edit Users Modal window.
+	 * Renders Edit Users Modal window.
 	 */
 	public static function render_update_users() {
 
@@ -614,23 +698,29 @@ class MainWP_User {
 				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
 				<input type="button" class="ui green button" id="mainwp_btn_update_user" value="<?php esc_attr_e( 'Update', 'mainwp' ); ?>">
 			</div>
-
 		</div>
 		<?php
 	}
 
 	/**
-	 * Method render_table()
+	 * Renders Users Table.
 	 *
-	 * Render Users Table.
-	 *
-	 * @param boolean $cached true|false Cached or not.
-	 * @param string  $role Current user role.
-	 * @param string  $groups Current user groups.
-	 * @param string  $sites Current Child Sites the user is on.
-	 * @param null    $search Search field.
+	 * @param bool   $cached true|false Cached or not.
+	 * @param string $role Current user role.
+	 * @param string $groups Current user groups.
+	 * @param string $sites Current Child Sites the user is on.
+	 * @param null   $search Search field.
 	 */
 	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
+
+		/**
+		 * Action: mainwp_before_users_table
+		 *
+		 * Fires before the User table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_users_table' );
 		?>
 		<table id="mainwp-users-table" class="ui tablet stackable single line table" style="width:100%">
 			<thead>
@@ -656,18 +746,45 @@ class MainWP_User {
 			?>
 			</tbody>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_after_users_table
+		 *
+		 * Fires after the User table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_users_table' );
+
+		/**
+		 * Filter: mainwp_users_table_fatures
+		 *
+		 * Filters the Manage Users table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = array(
+			'searching'  => 'true',
+			'paging'     => 'true',
+			'info'       => 'true',
+			'stateSave'  => 'true',
+			'scrollX'    => 'true',
+			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'order'      => '[]',
+		);
+		$table_features = apply_filters( 'mainwp_users_table_fatures', $table_features );
+		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-users-table' ).DataTable( {
-					"colReorder" : {
-						fixedColumnsLeft: 1,
-						fixedColumnsRight: 1
-					},
-					"stateSave":  true,
-					"pagingType": "full_numbers",
-					"order": [],
-					"scrollX" : true,
+					"searching" : <?php echo $table_features['searching']; ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; ?>,
+					"stateSave":  <?php echo $table_features['stateSave']; ?>,
+					"paging": <?php echo $table_features['paging']; ?>,
+					"info": <?php echo $table_features['info']; ?>,
+					"order": <?php echo $table_features['order']; ?>,
+					"scrollX" : <?php echo $table_features['scrollX']; ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 					"columnDefs": [ {
 						"targets": 'no-sort',
@@ -689,16 +806,14 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_table_body()
-	 *
-	 * Render the table body.
+	 * Renders the table body.
 	 *
 	 * @param string $role User Role.
 	 * @param string $groups Usr Group.
 	 * @param string $sites Users Sites.
 	 * @param null   $search Search field.
 	 */
-	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- not quite complex function.
+	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		MainWP_Cache::init_cache( 'Users' );
 
 		$output         = new \stdClass();
@@ -890,9 +1005,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_cache_not_found()
-	 *
-	 * Render when cache is not found.
+	 * Renders when cache is not found.
 	 */
 	public static function render_cache_not_found() {
 		ob_start();
@@ -905,9 +1018,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method get_role()
-	 *
-	 * Get the selected users current role.
+	 * Gets the selected users current role.
 	 *
 	 * @param string $role Selected Users Role.
 	 */
@@ -932,14 +1043,12 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method users_search_handler_renderer()
+	 * Renders Search results.
 	 *
-	 * Render Search results.
+	 * @param array  $users Users array.
+	 * @param object $website Object containing the child site info.
 	 *
-	 * @param array $users Users array.
-	 * @param array $website Child Sites array.
-	 *
-	 * @return html Search results table.
+	 * @return mixed Search results table.
 	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
@@ -975,6 +1084,22 @@ class MainWP_User {
 							<a href="javascript:void(0)" class="item" data-tooltip="This user is used for our secure link, it can not be deleted." data-inverted="" data-position="left center"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 							<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+							<?php
+							/**
+							 * Action: mainwp_users_table_action
+							 *
+							 * Adds a new item in the Actions menu in Manage Users table.
+							 *
+							 * Suggested HTML markup:
+							 * <a class="item" href="Your custom URL">Your custom label</a>
+							 *
+							 * @param array $user    Array containing the user data.
+							 * @param array $website Object containing the website data.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_users_table_action', $user, $website );
+							?>
 						</div>
 					</div>
 				</td>
@@ -990,9 +1115,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method user_search_handler()
-	 *
-	 * Handle user search.
+	 * Handles user search.
 	 *
 	 * @param mixed $data Search data.
 	 * @param mixed $website Child Site.
@@ -1011,9 +1134,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method delete()
-	 *
-	 * Delete user.
+	 * Deletes user.
 	 */
 	public static function delete() {
 		self::action( 'delete' );
@@ -1021,9 +1142,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method edit()
-	 *
-	 * Edit user.
+	 * Edits user.
 	 */
 	public static function edit() {
 		$information = self::action( 'edit' );
@@ -1031,9 +1150,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method update_user()
-	 *
-	 * Update user.
+	 * Updates user.
 	 */
 	public static function update_user() {
 		self::action( 'update_user' );
@@ -1041,9 +1158,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method update_password()
-	 *
-	 * Update users password.
+	 * Updates users password.
 	 */
 	public static function update_password() {
 		self::action( 'update_password' );
@@ -1051,16 +1166,14 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method action()
-	 *
-	 * User action.
+	 * Users actions.
 	 *
 	 * @param mixed  $pAction Action to perform delete|update_user|update_password.
 	 * @param string $extra Additional Roles to add if any.
 	 *
 	 * @return mixed $information User update info that is returned.
 	 */
-	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- not quite complex function.
+	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$userId       = $_POST['userId'];
 		$userName     = $_POST['userName'];
 		$websiteIdEnc = $_POST['websiteId'];
@@ -1103,6 +1216,15 @@ class MainWP_User {
 
 		$optimize = ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0;
 
+		/**
+		* Action: mainwp_before_user_action
+		*
+		* Fires before user edit/delete/update_user/update_password actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_user_action', $pAction, $userId, $extra, $pass, $optimize, $website );
+
 		try {
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
@@ -1118,6 +1240,15 @@ class MainWP_User {
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
+
+		/**
+		* Action: mainwp_after_user_action
+		*
+		* Fires after user edit/delete/update_user/update_password actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_user_action', $information, $pAction, $userId, $extra, $pass, $optimize, $website );
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
 			wp_send_json( array( 'error' => $information['error'] ) );
@@ -1145,24 +1276,49 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_bulk_add()
-	 *
-	 * Render Bulk Add Users form.
+	 * Renders the Add New user form.
 	 */
 	public static function render_bulk_add() {
+
+		/**
+		 * Filter: mainwp_new_user_password_complexity
+		 *
+		 * Filters the Password lenght for the Add New user, Password field.
+	 *
+		 * Since 4.1
+	 */
+		$pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
 		self::render_header( 'Add' );
 		?>
-
 		<div class="ui alt segment" id="mainwp-add-users">
+			<?php
+			/**
+			 * Action: mainwp_before_new_user_form
+			 *
+			 * Fires before the Add New user form.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_new_user_form' );
+			?>
 			<form action="" method="post" name="createuser" id="createuser" class="add:users: validate">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
 					<div id="mainwp-add-new-user-form" class="ui segment">
+						<?php
+						/**
+						 * Action: mainwp_before_new_user_form_fields
+						 *
+						 * Fires before the Add New user form fields.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_before_new_user_form_fields' );
+						?>
 						<div class="ui form">
 							<h3 class="ui dividing header"><?php esc_html_e( 'Create a New User', 'mainwp' ); ?></h3>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
@@ -1171,7 +1327,6 @@ class MainWP_User {
 									</div>
 								</div>
 							</div>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
@@ -1180,7 +1335,6 @@ class MainWP_User {
 									</div>
 								</div>
 							</div>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
@@ -1189,7 +1343,6 @@ class MainWP_User {
 									</div>
 								</div>
 							</div>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Last Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
@@ -1198,7 +1351,6 @@ class MainWP_User {
 									</div>
 								</div>
 							</div>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
@@ -1207,13 +1359,12 @@ class MainWP_User {
 									</div>
 								</div>
 							</div>
-
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled action input">
 										<input class="hidden" value=" "/>
-										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( 24 ) ); ?>">
+										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
 										<button class="ui green right button wp-generate-pw"><?php esc_html_e( 'Generate Password', 'mainwp' ); ?></button>
 									</div>
 								</div>
@@ -1236,7 +1387,6 @@ class MainWP_User {
 							);
 							$user_roles = apply_filters_deprecated( 'mainwp-users-manage-roles', array( $user_roles ), '4.0.7.2', 'mainwp_users_manage_roles' );  // @deprecated Use 'mainwp_users_manage_roles' instead.
 							$user_roles = apply_filters( 'mainwp_users_manage_roles', $user_roles );
-
 							?>
 
 							<div class="ui grid field">
@@ -1258,20 +1408,100 @@ class MainWP_User {
 							</div>
 
 						</div>
+						<?php
+						/**
+						 * Action: mainwp_after_new_user_form_fields
+						 *
+						 * Fires after the Add New user form fields.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_after_new_user_form_fields' );
+						?>
 					</div>
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
+					<?php
+					/**
+					 * Action: mainwp_add_new_user_sidebar_top
+					 *
+					 * Fires at the top of the sidebar on Add New user page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_add_new_user_sidebar_top' );
+					?>
 					<div class="mainwp-select-sites">
+						<?php
+						/**
+						 * Action: mainwp_add_new_user_before_select_sites
+						 *
+						 * Fires before the Select Sites section on the Add New user page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_add_new_user_before_select_sites' );
+						?>
 						<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<?php MainWP_UI::select_sites_box(); ?>
+						<?php
+						/**
+						 * Action: mainwp_add_new_user_after_select_sites
+						 *
+						 * Fires after the Select Sites section on the Add New user page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_add_new_user_after_select_sites' );
+						?>
 					</div>
 					<div class="ui divider"></div>
 					<div class="mainwp-search-submit">
+						<?php
+						/**
+						 * Action: mainwp_add_new_user_before_submit_button
+						 *
+						 * Fires before the Submit button on the Add New user page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_add_new_user_before_submit_button' );
+						?>
 						<input type="button" name="createuser" id="bulk_add_createuser" class="ui big green fluid button" value="<?php esc_attr_e( 'Add New User', 'mainwp' ); ?> "/>
+						<?php
+						/**
+						 * Action: mainwp_add_new_user_after_submit_button
+						 *
+						 * Fires after the Submit button on the Add New user page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_add_new_user_after_submit_button' );
+						?>
 					</div>
+					<?php
+					/**
+					 * Action: mainwp_add_new_user_sidebar_bottom
+					 *
+					 * Fires at the bottom of the sidebar on Add New user page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_add_new_user_sidebar_bottom' );
+					?>
 				</div>
 				<div style="clear:both"></div>
 			</form>
+			<?php
+			/**
+			 * Action: mainwp_after_new_user_form
+			 *
+			 * Fires after the Add New user form.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_new_user_form' );
+			?>
 		</div>
 
 		<?php
@@ -1279,11 +1509,9 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_bulk_import_users()
+	 * Renders bulk Import Users form.
 	 *
-	 * Render Bulk Import Users form.
-	 *
-	 * @return html bulk Import users form.
+	 * @return void
 	 */
 	public static function render_bulk_import_users() {
 		if ( isset( $_FILES['import_user_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
@@ -1312,6 +1540,16 @@ class MainWP_User {
 		<div class="ui segment" id="mainwp-import-sites">
 			<div class="ui hidden divider"></div>
 			<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
+			<?php
+			/**
+			 * Action: mainwp_before_import_users
+			 *
+			 * Fires above the Import Users section.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_import_users' );
+			?>
 			<h3 class="ui dividing header"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></h3>
 				<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 				<div class="ui segment form">
@@ -1330,10 +1568,31 @@ class MainWP_User {
 							</div>
 						</div>
 						<div class="ui divider"></div>
-						<a href="https://mainwp.com/csv/sample_users.csv" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+					<a href="
+					<?php
+					/**
+					 * Filter: mainwp_import_users_download_CSV_url
+					 *
+					 * Filters the Import Users Download Sample CSV file URL.
+					 *
+					 * @since 4.1
+					 */
+					echo apply_filter( 'mainwp_import_users_download_CSV_url', 'https://mainwp.com/csv/sample_users.csv' );
+					?>
+					" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 						<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green right floated button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>"/>
 					</form>
 				</div>
+			<?php
+			/**
+			 * Action: mainwp_after_import_users
+			 *
+			 * Fires under the Import Users section.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_import_users' );
+			?>
 			</div>
 		<?php
 	}
@@ -1343,7 +1602,7 @@ class MainWP_User {
 	 *
 	 * Bulk User addition $_POST Handler.
 	 */
-	public static function do_bulk_add() { // phpcs:ignore -- not quite complex function.
+	public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 		$errors      = array();
 		$errorFields = array();
 
@@ -1461,6 +1720,16 @@ class MainWP_User {
 				$output         = new \stdClass();
 				$output->ok     = array();
 				$output->errors = array();
+
+				/**
+				* Action: mainwp_before_user_create
+				*
+				* Fires before user create.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_before_user_create', $post_data, $dbwebsites );
+
 				MainWP_Connect::fetch_urls_authed(
 					$dbwebsites,
 					'newuser',
@@ -1471,6 +1740,15 @@ class MainWP_User {
 					),
 					$output
 				);
+
+				/**
+				* Action: mainwp_after_user_create
+				*
+				* Fires after user create.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_after_user_create', $output, $post_data, $dbwebsites );
 			}
 
 			$countSites     = 0;
@@ -1495,9 +1773,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_twitter_notice()
-	 *
-	 * Render twitter bragger notice.
+	 * Renders twitter bragger notice.
 	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
@@ -1518,9 +1794,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_bulk_add_modal()
-	 *
-	 * Render Bulk User addition Modal window.
+	 * Renders Bulk User addition Modal window.
 	 *
 	 * @param mixed $dbwebsites Child sites list.
 	 * @param mixed $output Modal window content.
@@ -1547,9 +1821,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method render_bulk_upload()
-	 *
-	 * Render Import Users Modal window.
+	 * Renders Import Users Modal window.
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
@@ -1607,7 +1879,17 @@ class MainWP_User {
 					?>
 					<div class="ui modal" id="mainwp-import-users-modal">
 						<div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
-						<div class="scrolling header">
+						<div class="scrolling content">
+							<?php
+							/**
+							 * Action: mainwp_import_users_modal_top
+							 *
+							 * Fires on the top of the Import Users modal.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_import_users_modal_top' );
+							?>
 							<div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
 							<input type="hidden" id="import_user_do_import" value="1"/>
 							<input type="hidden" id="import_user_total_import" value="<?php echo $i; ?>"/>
@@ -1619,6 +1901,16 @@ class MainWP_User {
 							<div id="import_user_import_failed_rows" style="display: none;">
 								<span><?php echo esc_html( $header_line ); ?></span>
 							</div>
+							<?php
+							/**
+							 * Action: mainwp_import_users_modal_bottom
+							 *
+							 * Fires on the bottom of the Import Users modal.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_import_users_modal_bottom' );
+							?>
 						</div>
 						<div class="actions">
 							<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
@@ -1666,11 +1958,9 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method do_import()
-	 *
 	 * User Import $_POST handler.
 	 */
-	public static function do_import() { // phpcs:ignore -- not quire complex method.
+	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 		if ( isset( $_POST['select_by'] ) ) {
 			$selected_sites = array();
 			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
@@ -1768,6 +2058,16 @@ class MainWP_User {
 			$output         = new \stdClass();
 			$output->ok     = array();
 			$output->errors = array();
+
+			/**
+			* Action: mainwp_before_user_create
+			*
+			* Fires before user create.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_user_create', $post_data, $dbwebsites );
+
 			MainWP_Connect::fetch_urls_authed(
 				$dbwebsites,
 				'newuser',
@@ -1778,6 +2078,15 @@ class MainWP_User {
 				),
 				$output
 			);
+
+			/**
+			* Action: mainwp_after_user_create
+			*
+			* Fires after user create.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_user_create', $output, $post_data, $dbwebsites );
 		}
 
 		$ret['ok_list']    = array();
@@ -1806,9 +2115,7 @@ class MainWP_User {
 	}
 
 	/**
-	 * Method mainwp_help_content()
-	 *
-	 * Hook the section help content to the Help Sidebar element.
+	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'UserBulkManage' === $_GET['page'] || 'UserBulkAdd' === $_GET['page'] || 'UpdateAdminPasswords' === $_GET['page'] ) ) {
@@ -1820,6 +2127,20 @@ class MainWP_User {
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/delete-users/" target="_blank">Delete User(s)</a></div>
+				<?php
+				/**
+				 * Action: mainwp_users_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Users page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_users_help_item' );
+				?>
 			</div>
 			<?php
 		}

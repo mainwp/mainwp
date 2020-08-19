@@ -231,7 +231,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 		?>
 		<div class="ui grid">
-			<div class="equal width row">
+			<div class="equal width row ui mini form">
 			<div class="middle aligned column">
 					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
 					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
@@ -516,22 +516,42 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	</div>
 	</div>
 
+		<?php
+		$table_features = array(
+			'searching'     => 'true',
+			'paging'        => 'true',
+			'pagingType'    => '"full_numbers"',
+			'info'          => 'true',
+			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'stateSave'     => 'true',
+			'stateDuration' => '0',
+			'order'         => '[]',
+		);
+
+		/**
+		 * Filter: mainwp_monitoring_table_features
+		 *
+		 * Filter the Monitoring table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_monitoring_table_features', $table_features );
+		?>
 	<script type="text/javascript">	
 			jQuery( document ).ready( function( $ ) {
 			<?php if ( ! $optimize ) { ?>
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
-						"colReorder" : {
-							fixedColumnsLeft: 1,
-							fixedColumnsRight: 1
-						},
-						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-						"stateSave":  true,
-						"stateDuration": 0,
-						"scrollX": true,
-						"pagingType": "full_numbers",
-						"order": [],
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"pagingType" : <?php echo $table_features['pagingType']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave" : <?php echo $table_features['stateSave']; ?>,
+						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+						"order" : <?php echo $table_features['order']; ?>,
 						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>
 					} );
 				} catch(err) {
@@ -580,15 +600,15 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 								return json.data;
 							}
 						},
-						"pagingType": "full_numbers",
-						"colReorder" : {
-							fixedColumnsLeft: 1,
-							fixedColumnsRight: 1
-						},
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"pagingType" : <?php echo $table_features['pagingType']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave" : <?php echo $table_features['stateSave']; ?>,
+						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+						"order" : <?php echo $table_features['order']; ?>,
 						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
-						"stateSave":  true,
-						"stateDuration": 0,
-						"scrollX": true,
 						serverSide: true,
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,

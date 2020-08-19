@@ -1132,11 +1132,32 @@ class MainWP_Manage_Sites {
 			$edit_settingEmails  = $_POST['mainwp_managesites_edit_settingEmails'];
 			$type                = $_POST['mainwp_managesites_setting_emails_type'];
 			if ( isset( $notification_emails[ $type ] ) ) {
-				$settings_emails[ $type ]               = $edit_settingEmails[ $type ];
-				$settings_emails[ $type ]['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
-				$settings_emails[ $type ]['disable']    = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
+				$update_settings               = $edit_settingEmails[ $type ];
+				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
+				$update_settings['disable']    = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
+
+				/**
+				* Action: mainwp_before_save_email_settings
+				*
+				* Fires before save email settings.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_before_save_email_settings', $type, $update_settings, $website );
+
+				$settings_emails[ $type ] = $update_settings;
 				MainWP_DB::instance()->update_website_option( $website, 'settings_notification_emails', wp_json_encode( $settings_emails ) );
 				$updated = true;
+
+				/**
+				* Action: mainwp_after_save_email_settings
+				*
+				* Fires after save email settings.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_after_save_email_settings', $settings_emails );
+
 			}
 		}
 		return $updated;

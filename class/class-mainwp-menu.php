@@ -220,10 +220,10 @@ class MainWP_Menu {
 	 *
 	 * Check if $_mainwp_disable_menus_items contains any menu items to hide.
 	 *
-	 * @param mixed $level The level the menu item is on.
-	 * @param mixed $item The menu items meta data.
+	 * @param string $level The level the menu item is on.
+	 * @param array  $item The menu items meta data.
 	 *
-	 * @return booleen True|False, default is False.
+	 * @return bool True|False, default is False.
 	 */
 	public static function is_disable_menu_item( $level, $item ) {
 
@@ -327,10 +327,30 @@ class MainWP_Menu {
 
 		?>
 		<div class="mainwp-nav-wrap">
-
-
 			<div id="mainwp-logo">
-				<img src="<?php echo MAINWP_PLUGIN_URL . 'assets/images/logo.png'; ?>" alt="MainWP"/>
+				<img src="
+				<?php
+				/**
+				 * Filter: mainwp_menu_logo_src
+				 *
+				 * Filters the Logo src attribute.
+				 *
+				 * @since 4.1
+				 */
+				echo apply_filters( 'mainwp_menu_logo_src', MAINWP_PLUGIN_URL . 'assets/images/logo.png' );
+				?>
+				" alt="
+				<?php
+				/**
+				 * Filter: mainwp_menu_logo_alt
+				 *
+				 * Filters the Logo alt attribute.
+				 *
+				 * @since 4.1
+				 */
+				echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' );
+				?>
+				" />
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">

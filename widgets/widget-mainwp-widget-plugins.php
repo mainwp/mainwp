@@ -43,9 +43,9 @@ class MainWP_Widget_Plugins {
 
 		$args = array(
 			'fields' => array(
-				'last_updated'       => true,
-				'icons'              => true,
-				'active_installs'    => true,
+				'last_updated'    => true,
+				'icons'           => true,
+				'active_installs' => true,
 			),
 		);
 
@@ -94,13 +94,12 @@ class MainWP_Widget_Plugins {
 	}
 
 	/**
-	 *
 	 * Method render_html_widget().
 	 *
-	 * Render html plugins widget for current site
+	 * Render HTML plugins widget for current site
 	 *
-	 * @param mixed $website Current site.
-	 * @param mixed $allPlugins All plugins.
+	 * @param object $website    Object containing the child site info.
+	 * @param array  $allPlugins Arrau containing all detected plugins data.
 	 */
 	public static function render_html_widget( $website, $allPlugins ) {
 
@@ -114,7 +113,18 @@ class MainWP_Widget_Plugins {
 	<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e( 'Plugins', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_plugins_widget_title
+					 *
+					 * Filters the Plugins widget title text.
+					 *
+					 * @param object $website Object containing the child site info.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_plugins_widget_title', __( 'Plugins', 'mainwp' ), $website ) );
+					?>
 					<div class="sub header"><?php esc_html_e( 'Installed plugins on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -130,7 +140,33 @@ class MainWP_Widget_Plugins {
 			</div>
 		</div>
 		<div class="ui section hidden divider"></div>
+		<?php
+		/**
+		 * Action: mainwp_plugins_widget_top
+		 *
+		 * Fires at the top of the Plugins widget on the Individual site overview page.
+		 *
+		 * @param object $website    Object containing the child site info.
+		 * @param array  $allPlugins Array containing all detected plugins data.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_plugins_widget_top', $website, $allPlugins );
+		?>
 		<div id="mainwp-widget-active-plugins" class="ui tab active" data-tab="active_plugins">
+			<?php
+			/**
+			 * Action: mainwp_before_active_plugins_list
+			 *
+			 * Fires before the active plugins list in the Plugins widget on the Individual site overview page.
+			 *
+			 * @param object $website         Object containing the child site info.
+			 * @param array  $actived_plugins Array containing all active plugins data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_active_plugins_list', $website, $actived_plugins );
+			?>
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $actived_plugins );
@@ -156,8 +192,34 @@ class MainWP_Widget_Plugins {
 					</div>
 					<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_active_plugins_list
+			 *
+			 * Fires after the active plugins list in the Plugins widget on the Individual site overview page.
+			 *
+			 * @param object $website         Object containing the child site info.
+			 * @param array  $actived_plugins Array containing all active plugins data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_active_plugins_list', $website, $actived_plugins );
+			?>
 		</div>
 		<div id="mainwp-widget-inactive-plugins" class="ui tab" data-tab="inactive_plugins">
+			<?php
+			/**
+			 * Action: mainwp_before_inactive_plugins_list
+			 *
+			 * Fires before the inactive plugins list in the Plugins widget on the Individual site overview page.
+			 *
+			 * @param object $website          Object containing the child site info.
+			 * @param array  $inactive_plugins Array containing all active plugins data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_inactive_plugins_list', $website, $inactive_plugins );
+			?>
 			<div class="ui middle aligned divided selection list">
 				<?php
 				$_count = count( $inactive_plugins );
@@ -186,8 +248,32 @@ class MainWP_Widget_Plugins {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_inactive_plugins_list
+			 *
+			 * Fires after the inactive plugins list in the Plugins widget on the Individual site overview page.
+			 *
+			 * @param object $website          Object containing the child site info.
+			 * @param array  $inactive_plugins Array containing all active plugins data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_inactive_plugins_list', $website, $inactive_plugins );
+			?>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_plugins_widget_bottom
+		 *
+		 * Fires at the bottom of the Plugins widget on the Individual site overview page.
+		 *
+		 * @param object $website    Object containing the child site info.
+		 * @param array  $allPlugins Array containing all detected plugins data.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_plugins_widget_bottom', $website, $allPlugins );
 	}
 
 	/**
@@ -225,9 +311,9 @@ class MainWP_Widget_Plugins {
 	 *
 	 * Initiate try catch for chosen Action
 	 *
-	 * @param mixed $pAction Plugin Action.
+	 * @param mixed $action Plugin Action.
 	 */
-	public static function action( $pAction ) {
+	public static function action( $action ) {
 		$plugin       = $_POST['plugin'];
 		$websiteIdEnc = $_POST['websiteId'];
 
@@ -245,14 +331,34 @@ class MainWP_Widget_Plugins {
 		}
 
 		try {
+
+			/**
+			* Action: mainwp_before_plugin_action
+			*
+			* Fires before plugin activate/deactivate/delete actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_plugin_action', $pAction, $plugin, $website );
+
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'plugin_action',
 				array(
-					'action' => $pAction,
+					'action' => $action,
 					'plugin' => $plugin,
 				)
 			);
+
+			/**
+			* Action: mainwp_after_plugin_action
+			*
+			* Fires after plugin activate/deactivate/delete actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_plugin_action', $information, $pAction, $plugin, $website );
+
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}

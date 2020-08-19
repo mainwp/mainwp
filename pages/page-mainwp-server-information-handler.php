@@ -12,12 +12,10 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Server_Information_Handler {
 
-	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions
+	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions.
 
 	/**
-	 * Method get_class_name()
-	 *
-	 * Get Class Name.
+	 * Gets Class Name.
 	 *
 	 * @return string __CLASS__
 	 */
@@ -26,9 +24,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_current_version()
-	 *
-	 * Get current MainWP Plugin version.
+	 * Gets current MainWP Plugin version.
 	 *
 	 * @return mixed $currentVersion verion number/
 	 */
@@ -38,9 +34,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_mainwp_version()
-	 *
-	 * Get current MainWP Dashboard version.
+	 * Gets current MainWP Dashboard version.
 	 *
 	 * @return mixed false|version
 	 */
@@ -66,26 +60,21 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method check_if_multisite()
+	 * Checks if WP environment is Mutisilte or not.
 	 *
-	 * Check if WP environment is Mutisilte or not.
-	 *
-	 * @return boolean true|false.
+	 * @return bool true|false.
 	 */
 	public static function check_if_multisite() {
 		$isMultisite = ! is_multisite() ? true : false;
-
 		return $isMultisite;
 	}
 
 	/**
-	 * Method filesize_compare()
+	 * Compares filesize.
 	 *
-	 * Compare Filesize.
-	 *
-	 * @param mixed $value1 first file size.
-	 * @param mixed $value2 second file size.
-	 * @param null  $operator comparison operator.
+	 * @param mixed $value1   First file size.
+	 * @param mixed $value2   Second file size.
+	 * @param null  $operator Comparison operator.
 	 *
 	 * @return mixed version_compare() value.
 	 */
@@ -108,12 +97,10 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method curlssl_compare()
+	 * Compares cURL SSL Version.
 	 *
-	 * Compare cURL SSL Version.
-	 *
-	 * @param mixed $value cURL SSL version number.
-	 * @param null  $operator comparison operator.
+	 * @param mixed $value    CURL SSL version number.
+	 * @param null  $operator Comparison operator.
 	 *
 	 * @return mixed false|version
 	 */
@@ -126,9 +113,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_file_system_method()
-	 *
-	 * Get file system method.
+	 * Gets file system method.
 	 *
 	 * @return string $fs File System Method.
 	 */
@@ -139,9 +124,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_loaded_php_extensions()
-	 *
-	 * Get loaded PHP Extensions.
+	 * Gets loaded PHP Extensions.
 	 */
 	public static function get_loaded_php_extensions() {
 		$extensions = get_loaded_extensions();
@@ -150,9 +133,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_wordpress_memory_limit()
-	 *
-	 * Get the WP_MEMORY_LIMIT value.
+	 * Gets the WP_MEMORY_LIMIT value.
 	 *
 	 * @return mixed WP_MEMORY_LIMIT WordPress Memmory Limit.
 	 */
@@ -406,7 +387,7 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get PHP Safe Mode.
 	 *
-	 * @return boolean true|false.
+	 * @return bool true|false.
 	 */
 	public static function get_php_safe_mode() {
 		if ( version_compare( self::get_php_version(), '5.3.0' ) >= 0 ) {
@@ -438,9 +419,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_php_allow_url_fopen()
-	 *
-	 * Check if PHP fopen is allowed.
+	 * Checks if PHP fopen is allowed.
 	 */
 	public static function get_php_allow_url_fopen() {
 		if ( ini_get( 'allow_url_fopen' ) ) {
@@ -550,9 +529,9 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Check if server software is apache.
 	 *
-	 * @param boolean $return = false.
+	 * @param bool $return = false.
 	 *
-	 * @return boolean True|false.
+	 * @return bool True|false.
 	 */
 	public static function is_apache_server_software( $return = false ) {
 		$server = self::get_server_software( true );
@@ -560,18 +539,14 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_server_protocol()
-	 *
-	 * Get server protocol.
+	 * Gets server protocol.
 	 */
 	public static function get_server_protocol() {
 		echo $_SERVER['SERVER_PROTOCOL'];
 	}
 
 	/**
-	 * Method get_server_request_time()
-	 *
-	 * Get server request time.
+	 * Gets server request time.
 	 */
 	public static function get_server_request_time() {
 		echo $_SERVER['REQUEST_TIME'];
@@ -579,18 +554,14 @@ class MainWP_Server_Information_Handler {
 
 
 	/**
-	 * Method get_server_http_accept()
-	 *
-	 * Get server http accept.
+	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
 		echo $_SERVER['HTTP_ACCEPT'];
 	}
 
 	/**
-	 * Method get_server_accept_charset()
-	 *
-	 * Get server accepted character set.
+	 * Gets server accepted character set.
 	 */
 	public static function get_server_accept_charset() {
 		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) {
@@ -601,36 +572,28 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_http_host()
-	 *
-	 * Get HTTP host.
+	 * Gets HTTP host.
 	 */
 	public static function get_http_host() {
 		echo $_SERVER['HTTP_HOST'];
 	}
 
 	/**
-	 * Method get_complete_url()
-	 *
-	 * Get complete url.
+	 * Gets complete URL.
 	 */
 	public static function get_complete_url() {
 		echo isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
 	}
 
 	/**
-	 * Method get_user_agent()
-	 *
-	 * Get user agent.
+	 * Gets user agent.
 	 */
 	public static function get_user_agent() {
 		echo $_SERVER['HTTP_USER_AGENT'];
 	}
 
 	/**
-	 * Method get_https()
-	 *
-	 * Check if HTTPS is enabled.
+	 * Checks if HTTPS is enabled.
 	 */
 	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
@@ -651,7 +614,7 @@ class MainWP_Server_Information_Handler {
 		$url        = esc_url_raw( add_query_arg( $query_args, $url ) );
 
 		/**
-		 * Server self-check SSL verification switch
+		 * Filter: https_local_ssl_verify
 		 *
 		 * Filters whether the server-self check shoul verify SSL Cert.
 		 *
@@ -684,18 +647,14 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_remote_address()
-	 *
-	 * Get server remote address.
+	 * Gets server remote address.
 	 */
 	public static function get_remote_address() {
 		echo $_SERVER['REMOTE_ADDR'];
 	}
 
 	/**
-	 * Method get_remote_host()
-	 *
-	 * Get server remote host.
+	 * Gets server remote host.
 	 */
 	public static function get_remote_host() {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( '' === $_SERVER['REMOTE_HOST'] ) ) {
@@ -706,18 +665,14 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method get_remote_port()
-	 *
-	 * Get server remote port.
+	 * Gets server remote port.
 	 */
 	public static function get_remote_port() {
 		echo $_SERVER['REMOTE_PORT'];
 	}
 
 	/**
-	 * Method get_script_file_name()
-	 *
-	 * Get server script filename.
+	 * Gets server script filename.
 	 */
 	public static function get_script_file_name() {
 		echo $_SERVER['SCRIPT_FILENAME'];
@@ -751,9 +706,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method time_compare()
-	 *
-	 * Compare time.
+	 * Compares time.
 	 *
 	 * @param mixed $a first time to compare.
 	 * @param mixed $b second time to compare.
@@ -768,9 +721,7 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method last_lines()
-	 *
-	 * Get line count.
+	 * Gets line count.
 	 *
 	 * @param mixed $path the error log file location.
 	 * @param int   $line_count number of lines in the error log.
@@ -818,13 +769,11 @@ class MainWP_Server_Information_Handler {
 	}
 
 	/**
-	 * Method mainwp_options()
-	 *
-	 * Get MainWP Set Options.
+	 * Gets MainWP Set Options.
 	 *
 	 * @return array $options_value MainWP Options array.
 	 */
-	public static function mainwp_options() { // phpcs:ignore -- not quite complex function.
+	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
 		$mainwp_options = array(
 			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),
 			'mainwp_wp_cron'                         => __( 'Use WP-Cron', 'mainwp' ),
@@ -895,7 +844,7 @@ class MainWP_Server_Information_Handler {
 		}
 
 		/**
-		 * Primary backup method Options
+		 * Filter: mainwp_getprimarybackup_methods
 		 *
 		 * Filters the primary backup options for the select menu in Settings.
 		 *

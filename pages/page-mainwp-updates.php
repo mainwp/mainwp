@@ -69,9 +69,7 @@ class MainWP_Updates {
 	public static $continue_update_slug = '';
 
 	/**
-	 * Method get_class_name()
-	 *
-	 * Get Class Name.
+	 * Gets Class Name.
 	 *
 	 * @return object
 	 */
@@ -80,9 +78,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method init()
-	 *
-	 * Instantiate MainWP Updates Page.
+	 * Instantiates MainWP Updates Page.
 	 */
 	public static function init() {
 		/**
@@ -107,9 +103,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method init_menu()
-	 *
-	 * Render init updates menu
+	 * Renders init updates menu.
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -137,10 +131,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render_header()
-	 *
-	 * Set the MainWP Update page page title and pass it off to
-	 * method MainWP_UI::render_top_header()
+	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
@@ -154,18 +145,14 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render_footer()
-	 *
-	 * Close the page container.
+	 * Closes the page container.
 	 */
 	public static function render_footer() {
 		echo '</div>';
 	}
 
 	/**
-	 * Method render_site_link_dashboard()
-	 *
-	 * Generate individual site overview page link
+	 * Generates individual site overview page link.
 	 *
 	 * @param object $website The site object.
 	 * @param bool   $echo Either echo or not.
@@ -182,11 +169,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method user_can_ignore_updates()
+	 * Checks if the current user has permission to uignore updates.
 	 *
-	 * Check if the current user has permission to uignore updates.
-	 *
-	 * @return true|false user can ignore updates or not.
+	 * @return bool Whether user can ignore updates or not.
 	 */
 	public static function user_can_ignore_updates() {
 		if ( null === self::$user_can_ignore_updates ) {
@@ -196,11 +181,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method user_can_update_trans()
+	 * Checks if the current user has permission to update translations.
 	 *
-	 * Check if the current user has permission to update translations.
-	 *
-	 * @return true|false user can update translations.
+	 * @return bool Whether user can update translations or not.
 	 */
 	public static function user_can_update_trans() {
 		if ( null === self::$user_can_update_trans ) {
@@ -210,11 +193,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method user_can_update_wp()
+	 * Checks if the current user has permission to update WordPress core files.
 	 *
-	 * Check if the current user has permission to update WordPress core files.
-	 *
-	 * @return true|false user can update WordPress.
+	 * @return bool Whether user can update WordPress or not.
 	 */
 	public static function user_can_update_wp() {
 		if ( null === self::$user_can_update_wp ) {
@@ -224,11 +205,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method user_can_update_themes()
+	 * Checks if the current user has permission to update themes.
 	 *
-	 * Check if the current user has permission to update themes.
-	 *
-	 * @return true|false user can update themes.
+	 * @return bool Whether user can update themes or not.
 	 */
 	public static function user_can_update_themes() {
 		if ( null === self::$user_can_update_themes ) {
@@ -238,11 +217,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method user_can_update_plugins()
+	 * Checks if the current user has permission to update plugins.
 	 *
-	 * Check if the current user has permission to update plugins.
-	 *
-	 * @return true|false user can update plugins.
+	 * @return bool Whether user can update plugins or not.
 	 */
 	public static function user_can_update_plugins() {
 		if ( null === self::$user_can_update_plugins ) {
@@ -252,12 +229,9 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render()
-	 *
-	 * Render updates page
+	 * Renders updates page.
 	 */
-	public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function.
-		// current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$websites      = self::get_sites();
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$site_view     = $userExtension->site_view;
@@ -508,6 +482,7 @@ class MainWP_Updates {
 							$allPluginsOutdate[ $slug ] = array(
 								'name' => esc_html( $plugin_outdate['Name'] ),
 								'cnt'  => 1,
+								'uri'  => esc_html( $plugin_outdate['PluginURI'] ),
 							);
 						} else {
 							$allPluginsOutdate[ $slug ]['cnt'] ++;
@@ -534,13 +509,57 @@ class MainWP_Updates {
 				$total_sync_errors ++;
 			}
 		}
-		// End of While.
 
-		MainWP_Utility::array_sort( $allTranslations, 'name' );
-		MainWP_Utility::array_sort( $allPlugins, 'name' );
-		MainWP_Utility::array_sort( $allThemes, 'name' );
-		MainWP_Utility::array_sort( $allPluginsOutdate, 'name' );
-		MainWP_Utility::array_sort( $allThemesOutdate, 'name' );
+		/**
+		 * Filter: mainwp_updates_translation_sort_by
+		 *
+		 * Filters the default sorting option for Translation updates.
+		 *
+		 * @since 4.1
+		 */
+		$allTranslationsSortBy = apply_filters( 'mainwp_updates_translation_sort_by', 'name' );
+
+		/**
+		 * Filter: mainwp_updates_plugins_sort_by
+		 *
+		 * Filters the default sorting option for Plugin updates.
+		 *
+		 * @since 4.1
+		 */
+		$allPluginsSortBy = apply_filters( 'mainwp_updates_plugins_sort_by', 'name' );
+
+		/**
+		 * Filter: mainwp_updates_themes_sort_by
+		 *
+		 * Filters the default sorting option for Theme updates.
+		 *
+		 * @since 4.1
+		 */
+		$allThemesSortBy = apply_filters( 'mainwp_updates_themes_sort_by', 'name' );
+
+		/**
+		 * Filter: mainwp_updates_abandoned_plugins_sort_by
+		 *
+		 * Filters the default sorting option for Abandoned plugins.
+		 *
+		 * @since 4.1
+		 */
+		$allPluginsOutdateSortBy = apply_filters( 'mainwp_updates_abandoned_plugins_sort_by', 'name' );
+
+		/**
+		 * Filter: mainwp_updates_abandoned_themes_sort_by
+		 *
+		 * Filters the default sorting option for Abandoned themes.
+		 *
+		 * @since 4.1
+		 */
+		$allThemesOutdateSortBy = apply_filters( 'mainwp_updates_abandoned_themes_sort_by', 'name' );
+
+		MainWP_Utility::array_sort( $allTranslations, $allTranslationsSortBy );
+		MainWP_Utility::array_sort( $allPlugins, $allPluginsSortBy );
+		MainWP_Utility::array_sort( $allThemes, $allThemesSortBy );
+		MainWP_Utility::array_sort( $allPluginsOutdate, $allPluginsOutdateSortBy );
+		MainWP_Utility::array_sort( $allThemesOutdate, $allThemesOutdateSortBy );
 
 		$mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
 
@@ -580,6 +599,7 @@ class MainWP_Updates {
 		self::render_twitter_notice();
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
+
 		?>
 		<div class="ui segment" id="mainwp-manage-updates">
 		<?php
@@ -613,269 +633,941 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render_wp_update_tab()
+	 * Render WP updates tab.
 	 *
-	 * Render WP updates tab
-	 *
-	 * @param object $websites the websites.
-	 * @param int    $total_wp_upgrades total update.
-	 * @param array  $all_groups_sites all groups of sites.
-	 * @param array  $all_groups all groups.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current view.
+	 * @param object $websites               Object containing child sites info.
+	 * @param int    $total_wp_upgrades      Number of available WP upates.
+	 * @param array  $all_groups_sites       Array containing all groups and sites.
+	 * @param array  $all_groups             Array containing all groups.
+	 * @param int    $site_offset_for_groups Offset value.
+	 * @param string $site_view              Current view.
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view ) {
 		?>
-			<!-- WordPress Updates -->
 			<div class="ui active tab" data-tab="wordpress-updates">
 				<?php
+				/**
+				 * Action: mainwp_updates_before_wp_updates
+				 *
+				 * Fires at the top of the WP updates tab.
+				 *
+				 * @param object $websites               Object containing child sites info.
+				 * @param int    $total_wp_upgrades      Number of available WP upates.
+				 * @param array  $all_groups_sites       Array containing all groups and sites.
+				 * @param array  $all_groups             Array containing all groups.
+				 * @param int    $site_offset_for_groups Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_before_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
 				if ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+					/**
+					 * Action: mainwp_updates_pergroup_before_wp_updates
+					 *
+					 * Fires at the top of the WP updates tab, per Group view.
+					 *
+					 * @param object $websites               Object containing child sites info.
+					 * @param int    $total_wp_upgrades      Number of available WP upates.
+					 * @param array  $all_groups_sites       Array containing all groups and sites.
+					 * @param array  $all_groups             Array containing all groups.
+					 * @param int    $site_offset_for_groups Offset value.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_updates_pergroup_before_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
 					MainWP_Updates_Per_Group::render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
-				} else { // sites/items view.
+					/**
+					 * Action: mainwp_updates_pergroup_after_wp_updates
+					 *
+					 * Fires at the bottom of the WP updates tab, per Group view.
+					 *
+					 * @param object $websites               Object containing child sites info.
+					 * @param int    $total_wp_upgrades      Number of available WP upates.
+					 * @param array  $all_groups_sites       Array containing all groups and sites.
+					 * @param array  $all_groups             Array containing all groups.
+					 * @param int    $site_offset_for_groups Offset value.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_updates_pergroup_after_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
+				} else {
+					/**
+					 * Action: mainwp_updates_persite_before_wp_updates
+					 *
+					 * Fires at the top of the WP updates tab, per Site view.
+					 *
+					 * @param object $websites               Object containing child sites info.
+					 * @param int    $total_wp_upgrades      Number of available WP upates.
+					 * @param array  $all_groups_sites       Array containing all groups and sites.
+					 * @param array  $all_groups             Array containing all groups.
+					 * @param int    $site_offset_for_groups Offset value.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_updates_pergroup_before_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
 					MainWP_DB::data_seek( $websites, 0 );
 					MainWP_Updates_Per_Site::render_wpcore_updates( $websites, $total_wp_upgrades );
+					/**
+					 * Action: mainwp_updates_persite_after_wp_updates
+					 *
+					 * Fires at the bottom of the WP updates tab, per Site view.
+					 *
+					 * @param object $websites               Object containing child sites info.
+					 * @param int    $total_wp_upgrades      Number of available WP upates.
+					 * @param array  $all_groups_sites       Array containing all groups and sites.
+					 * @param array  $all_groups             Array containing all groups.
+					 * @param int    $site_offset_for_groups Offset value.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_updates_persite_after_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
 				};
+				/**
+				 * Action: mainwp_updates_after_wp_updates
+				 *
+				 * Fires at the top of the WP updates tab.
+				 *
+				 * @param object $websites               Object containing child sites info.
+				 * @param int    $total_wp_upgrades      Number of available WP upates.
+				 * @param array  $all_groups_sites       Array containing all groups and sites.
+				 * @param array  $all_groups             Array containing all groups.
+				 * @param int    $site_offset_for_groups Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_after_wp_updates', $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
 				?>
 			</div>
-			<!-- END WordPress Updates -->
 		<?php
 	}
 
 	/**
-	 * Method render_plugins_update_tab()
+	 * Renders WP updates tab.
 	 *
-	 * Render WP updates tab
-	 *
-	 * @param object $websites the websites.
-	 * @param int    $total_plugin_upgrades total plugins update.
-	 * @param object $userExtension user extension.
-	 * @param array  $all_groups_sites groups of sites.
-	 * @param array  $all_groups all groups.
-	 * @param array  $allPlugins all plugins.
-	 * @param array  $pluginsInfo all plugins info.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current view.
+	 * @param object $websites               Object containing child sites info.
+	 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+	 * @param object $userExtension          User extension.
+	 * @param array  $all_groups_sites       Array of all groups and sites.
+	 * @param array  $all_groups             Array of all groups.
+	 * @param array  $allPlugins             Array of all plugins.
+	 * @param array  $pluginsInfo            Array of all plugins info.
+	 * @param int    $site_offset_for_groups Offset value.
+	 * @param string $site_view              Current view.
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view ) {
-
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-
 		?>
-		<!-- Plugins Updates -->
 		<div class="ui active tab" data-tab="plugins-updates">
 		<?php
+		/**
+		 * Action: mainwp_updates_before_plugin_updates
+		 *
+		 * Fires at the top of the Plugin updates tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+		 * @param object $userExtension          User extension.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allPlugins             Array of all plugins.
+		 * @param array  $pluginsInfo            Array of all plugins info.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-			?>
-				<!-- Per Site -->
-				<?php
+			/**
+			 * Action: mainwp_updates_persite_before_plugin_updates
+			 *
+			 * Fires at the top of the Plugin updates tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_before_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 				MainWP_Updates_Per_Site::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins );
+			/**
+			 * Action: mainwp_updates_persite_after_plugin_updates
+			 *
+			 * Fires at the bottom of the Plugin updates tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_after_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-			?>
-				<!-- Per Group -->
-				<?php
+			/**
+			 * Action: mainwp_updates_pergroup_before_plugin_updates
+			 *
+			 * Fires at the top of the Plugin updates tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_before_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 				MainWP_Updates_Per_Group::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins );
+			/**
+			 * Action: mainwp_updates_pergroup_after_plugin_updates
+			 *
+			 * Fires at the bottom of the Plugin updates tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_after_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 		} else {
-			?>
-				<!-- Per Item -->
-				<?php
+			/**
+			 * Action: mainwp_updates_perplugin_before_plugin_updates
+			 *
+			 * Fires at the top of the Plugin updates tab, per Plugin view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_perplugin_before_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 				MainWP_Updates_Per_Item::render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins );
+			/**
+			 * Action: mainwp_updates_perplugin_after_plugin_updates
+			 *
+			 * Fires at the bottom of the Plugin updates tab, per Plugin view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allPlugins             Array of all plugins.
+			 * @param array  $pluginsInfo            Array of all plugins info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_perplugin_after_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 		}
+		/**
+		 * Action: mainwp_updates_after_plugin_updates
+		 *
+		 * Fires at the bottom of the Plugin updates tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param int    $total_plugin_upgrades  Number of available plugin updates.
+		 * @param object $userExtension          User extension.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allPlugins             Array of all plugins.
+		 * @param array  $pluginsInfo            Array of all plugins info.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_plugin_updates', $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups );
 		?>
 		</div>
-		<!-- END Plugins Updates -->
 		<?php
 	}
 
 	/**
-	 * Method render_plugins_update_tab()
+	 * Renders theme update tab.
 	 *
-	 * Render themes update tab
-	 *
-	 * @param object $websites the websites.
-	 * @param int    $total_theme_upgrades total updates.
-	 * @param object $userExtension user extension.
-	 * @param array  $all_groups_sites all groups of sites.
-	 * @param array  $all_groups all groups.
-	 * @param array  $allThemes all themes.
-	 * @param array  $themesInfo all themes info.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current site view.
+	 * @param object $websites               Object containing child sites info.
+	 * @param int    $total_theme_upgrades   Number of available theme updates.
+	 * @param object $userExtension          User extension.
+	 * @param array  $all_groups_sites       Array of all groups and sites.
+	 * @param array  $all_groups             Array of all groups.
+	 * @param array  $allThemes              Array of all themes.
+	 * @param array  $themesInfo             Array of all themes info.
+	 * @param int    $site_offset_for_groups Offset value.
+	 * @param string $site_view              Current view.
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view ) {
-
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
-
 		?>
-		<!-- Themes Updates -->
 		<div class="ui active tab" data-tab="themes-updates">
 		<?php
+		/**
+		 * Action: mainwp_updates_before_theme_updates
+		 *
+		 * Fires at the top of the Theme updates tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param int    $total_theme_upgrades   Number of available theme updates.
+		 * @param object $userExtension          User extension.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allThemes              Array of all themes.
+		 * @param array  $themesInfo             Array of all themes info.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-			?>
-			<!-- Per Site -->
-			<?php
+			/**
+			 * Action: mainwp_updates_persite_before_theme_updates
+			 *
+			 * Fires at the top of the Theme updates tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_before_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 			MainWP_Updates_Per_Site::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes );
+			/**
+			 * Action: mainwp_updates_persite_after_theme_updates
+			 *
+			 * Fires at the bottom of the Theme updates tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_after_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-			?>
-			<!-- Per Group -->
-			<?php
+			/**
+			 * Action: mainwp_updates_pergroup_before_theme_updates
+			 *
+			 * Fires at the top of the Theme updates tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_before_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 			MainWP_Updates_Per_Group::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes );
+			/**
+			 * Action: mainwp_updates_pergroup_after_theme_updates
+			 *
+			 * Fires at the bottom of the Theme updates tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_after_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 		} else {
-			?>
-			<!-- Per Item -->
-			<?php
+			/**
+			 * Action: mainwp_updates_pertheme_before_theme_updates
+			 *
+			 * Fires at the top of the Theme updates tab, per Theme view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pertheme_before_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 			MainWP_Updates_Per_Item::render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes );
+			/**
+			 * Action: mainwp_updates_pertheme_after_theme_updates
+			 *
+			 * Fires at the bottom of the Theme updates tab, per Theme view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param int    $total_theme_upgrades   Number of available theme updates.
+			 * @param object $userExtension          User extension.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemes              Array of all themes.
+			 * @param array  $themesInfo             Array of all themes info.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pertheme_after_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 		}
+		/**
+		 * Action: mainwp_updates_after_theme_updates
+		 *
+		 * Fires at the bottom of the Theme updates tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param int    $total_theme_upgrades   Number of available theme updates.
+		 * @param object $userExtension          User extension.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allThemes              Array of all themes.
+		 * @param array  $themesInfo             Array of all themes info.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_theme_updates', $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups );
 		?>
 		</div>
-		<!-- END Themes Updates -->
 		<?php
 	}
 
 	/**
-	 * Method render_trans_update_tab()
+	 * Renders translations update tab.
 	 *
-	 * Render translations update tab
-	 *
-	 * @param object $websites the websites.
-	 * @param int    $total_translation_upgrades total updates.
-	 * @param object $userExtension user extension.
-	 * @param array  $all_groups_sites all groups of sites.
-	 * @param array  $all_groups all groups.
-	 * @param array  $allTranslations all translations.
-	 * @param array  $translationsInfo translations info.
-	 * @param bool   $mainwp_show_language_updates show translation update.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current site view.
+	 * @param object $websites                   Object containing child sites info.
+	 * @param int    $total_translation_upgrades Number of available translation updates.
+	 * @param object $userExtension              User extension.
+	 * @param array  $all_groups_sites           Array of all groups and sites.
+	 * @param array  $all_groups                 Array of all groups.
+	 * @param array  $allTranslations            Array of all translations.
+	 * @param array  $translationsInfo           Array of all translations info.
+	 * @param int    $site_offset_for_groups     Offset value.
+	 * @param string $site_view current          Site view.
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
-		?>
-		<!-- Translations Updates -->
-		<?php if ( 1 == $mainwp_show_language_updates ) { ?>
+		if ( 1 === $mainwp_show_language_updates ) {
+			?>
 		<div class="ui active tab" data-tab="translations-updates">
 			<?php
+			/**
+			 * Action: mainwp_updates_before_translation_updates
+			 *
+			 * Fires at the top of the Translation updates tab.
+			 *
+			 * @param object $websites                   Object containing child sites info.
+			 * @param int    $total_translation_upgrades Number of available translation updates.
+			 * @param object $userExtension              User extension.
+			 * @param array  $all_groups_sites           Array of all groups and sites.
+			 * @param array  $all_groups                 Array of all groups.
+			 * @param array  $allTranslations            Array of all translations.
+			 * @param array  $translationsInfo           Array of all translations info.
+			 * @param int    $site_offset_for_groups     Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
 			if ( MAINWP_VIEW_PER_SITE == $site_view ) {
+				/**
+				 * Action: mainwp_updates_persite_before_translation_updates
+				 *
+				 * Fires at the top of the Translation updates tab, per Site view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_persite_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
 				MainWP_Updates_Per_Site::render_trans_update( $websites, $total_translation_upgrades );
+				/**
+				 * Action: mainwp_updates_persite_after_translation_updates
+				 *
+				 * Fires at the bottom of the Translation updates tab, per Site view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_persite_after_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
 			} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
+				/**
+				 * Action: mainwp_updates_pergroup_before_translation_updates
+				 *
+				 * Fires at the top of the Translation updates tab, per Group view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_pergroup_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
 				MainWP_Updates_Per_Group::render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups );
+				/**
+				 * Action: mainwp_updates_pergroup_after_translation_updates
+				 *
+				 * Fires at the bottom of the Translation updates tab, per Group view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_pergroup_after_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
 			} else {
-				?>
-				<!-- Per Item -->
-				<?php MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ); ?>
-			<?php } ?>
+				/**
+				 * Action: mainwp_updates_pertranslation_before_translation_updates
+				 *
+				 * Fires at the top of the Translation updates tab, per Translation view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_pertranslation_before_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
+				MainWP_Updates_Per_Item::render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo );
+				/**
+				 * Action: mainwp_updates_pertranslation_after_translation_updates
+				 *
+				 * Fires at the bottom of the Translation updates tab, per Translation view.
+				 *
+				 * @param object $websites                   Object containing child sites info.
+				 * @param int    $total_translation_upgrades Number of available translation updates.
+				 * @param object $userExtension              User extension.
+				 * @param array  $all_groups_sites           Array of all groups and sites.
+				 * @param array  $all_groups                 Array of all groups.
+				 * @param array  $allTranslations            Array of all translations.
+				 * @param array  $translationsInfo           Array of all translations info.
+				 * @param int    $site_offset_for_groups     Offset value.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_pertranslation_after_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
+			}
+			/**
+			 * Action: mainwp_updates_after_translation_updates
+			 *
+			 * Fires at the bottom of the Translation updates tab.
+			 *
+			 * @param object $websites                   Object containing child sites info.
+			 * @param int    $total_translation_upgrades Number of available translation updates.
+			 * @param object $userExtension              User extension.
+			 * @param array  $all_groups_sites           Array of all groups and sites.
+			 * @param array  $all_groups                 Array of all groups.
+			 * @param array  $allTranslations            Array of all translations.
+			 * @param array  $translationsInfo           Array of all translations info.
+			 * @param int    $site_offset_for_groups     Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_after_translation_updates', $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups );
+			?>
 		</div>
-		<?php } ?>
-		<!-- END Translations Updates -->
-		<?php
+			<?php
+		}
 	}
 
 	/**
-	 * Method render_abandoned_plugins_tab()
+	 * Renders abandoned plugins tab.
 	 *
-	 * Render abandoned plugins tab
-	 *
-	 * @param object $websites the websites.
-	 * @param array  $all_groups_sites all groups of sites.
-	 * @param array  $all_groups all groups.
-	 * @param array  $allPluginsOutdate all outdate plugins.
-	 * @param array  $decodedDismissedPlugins dismissed outdate plugins.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current site view.
+	 * @param object $websites                Object containing child sites info.
+	 * @param array  $all_groups_sites        Array of all groups and sites.
+	 * @param array  $all_groups              Array of all groups.
+	 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+	 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+	 * @param int    $site_offset_for_groups  Offset value.
+	 * @param string $site_view               Current site view.
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view ) {
 		?>
-		<!-- Abandoned Plugins -->
 		<div class="ui active tab" data-tab="abandoned-plugins">
 		<?php
+		/**
+		 * Action: mainwp_updates_before_abandoned_plugins
+		 *
+		 * Fires at the top of the Abandoned plugins tab.
+		 *
+		 * @param object $websites                Object containing child sites info.
+		 * @param array  $all_groups_sites        Array of all groups and sites.
+		 * @param array  $all_groups              Array of all groups.
+		 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+		 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+		 * @param int    $site_offset_for_groups  Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-			?>
-			<!-- Per Site -->
-			<?php
+			/**
+			 * Action: mainwp_updates_persite_before_abandoned_plugins
+			 *
+			 * Fires at the top of the Abandoned plugins tab, per Site view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 			MainWP_Updates_Per_Site::render_abandoned_plugins( $websites, $decodedDismissedPlugins );
+			/**
+			 * Action: mainwp_updates_persite_after_abandoned_plugins
+			 *
+			 * Fires at the bottom of the Abandoned plugins tab, per Site view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-			?>
-			<!-- Per Group -->
-			<?php
+			/**
+			 * Action: mainwp_updates_pergroup_before_abandoned_plugins
+			 *
+			 * Fires at the top of the Abandoned plugins tab, per Group view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 			MainWP_Updates_Per_Group::render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins );
+			/**
+			 * Action: mainwp_updates_pergroup_after_abandoned_plugins
+			 *
+			 * Fires at the bottom of the Abandoned plugins tab, per Group view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 		} else {
-			?>
-			<!-- Per Item -->
-			<?php
+			/**
+			 * Action: mainwp_updates_perplugin_before_abandoned_plugins
+			 *
+			 * Fires at the top of the Abandoned plugins tab, per Plugin view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_perplugin_before_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 			MainWP_Updates_Per_Item::render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins );
+			/**
+			 * Action: mainwp_updates_perplugin_after_abandoned_plugins
+			 *
+			 * Fires at the bottom of the Abandoned plugins tab, per Plugin view.
+			 *
+			 * @param object $websites                Object containing child sites info.
+			 * @param array  $all_groups_sites        Array of all groups and sites.
+			 * @param array  $all_groups              Array of all groups.
+			 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups  Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_perplugin_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 		};
+		/**
+		 * Action: mainwp_updates_after_abandoned_plugins
+		 *
+		 * Fires at the bottom of the Abandoned plugins tab.
+		 *
+		 * @param object $websites                Object containing child sites info.
+		 * @param array  $all_groups_sites        Array of all groups and sites.
+		 * @param array  $all_groups              Array of all groups.
+		 * @param array  $allPluginsOutdate       Array of all abandoned plugins.
+		 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
+		 * @param int    $site_offset_for_groups  Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_abandoned_plugins', $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups );
 		?>
 		</div>
-		<!-- END Abandoned Plugins -->
 		<?php
 	}
 
 	/**
-	 * Method render_abandoned_themes_tab()
+	 * Renders abandoned themes tab.
 	 *
-	 * Render abandoned themes tab
-	 *
-	 * @param object $websites the websites.
-	 * @param array  $all_groups_sites all groups sites.
-	 * @param array  $all_groups all groups.
-	 * @param array  $allThemesOutdate all outdate themes.
-	 * @param array  $decodedDismissedThemes dismissed themes.
-	 * @param int    $site_offset_for_groups offset value.
-	 * @param string $site_view current site view.
+	 * @param object $websites               Object containing child sites info.
+	 * @param array  $all_groups_sites       Array of all groups and sites.
+	 * @param array  $all_groups             Array of all groups.
+	 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+	 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+	 * @param int    $site_offset_for_groups Offset value.
+	 * @param string $site_view              Current site view.
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view ) {
 		?>
-		<!-- Abandoned Themes -->
 		<div class="ui active tab" data-tab="abandoned-themes">
 		<?php
+		/**
+		 * Action: mainwp_updates_before_abandoned_themes
+		 *
+		 * Fires at the top of the Abandoned themes tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+		 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 		if ( MAINWP_VIEW_PER_SITE == $site_view ) {
-			?>
-			<!-- Per Site -->
-			<?php
+			/**
+			 * Action: mainwp_updates_persite_before_abandoned_themes
+			 *
+			 * Fires at the top of the Abandoned themes tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 			MainWP_Updates_Per_Site::render_abandoned_themes( $websites, $decodedDismissedThemes );
+			/**
+			 * Action: mainwp_updates_persite_after_abandoned_themes
+			 *
+			 * Fires at the bottom of the Abandoned themes tab, per Site view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_persite_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 		} elseif ( MAINWP_VIEW_PER_GROUP == $site_view ) {
-			?>
-			<!-- Per Group -->
-			<?php
+			/**
+			 * Action: mainwp_updates_pergroup_before_abandoned_themes
+			 *
+			 * Fires at the top of the Abandoned themes tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 			MainWP_Updates_Per_Group::render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes );
+			/**
+			 * Action: mainwp_updates_pergroup_after_abandoned_themes
+			 *
+			 * Fires at the bottom of the Abandoned themes tab, per Group view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pergroup_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 		} else {
-			?>
-			<!-- Per Item -->
-			<?php
+			/**
+			 * Action: mainwp_updates_pertheme_before_abandoned_themes
+			 *
+			 * Fires at the top of the Abandoned themes tab, per Theme view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pertheme_before_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
 			MainWP_Updates_Per_Item::render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes );
-			?>
-		<?php }; ?>
+			/**
+			 * Action: mainwp_updates_pertheme_after_abandoned_themes
+			 *
+			 * Fires at the bottom of the Abandoned themes tab, per Theme view.
+			 *
+			 * @param object $websites               Object containing child sites info.
+			 * @param array  $all_groups_sites       Array of all groups and sites.
+			 * @param array  $all_groups             Array of all groups.
+			 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+			 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+			 * @param int    $site_offset_for_groups Offset value.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_pertheme_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
+		};
+		/**
+		 * Action: mainwp_updates_after_abandoned_themes
+		 *
+		 * Fires at the bottom of the Abandoned themes tab.
+		 *
+		 * @param object $websites               Object containing child sites info.
+		 * @param array  $all_groups_sites       Array of all groups and sites.
+		 * @param array  $all_groups             Array of all groups.
+		 * @param array  $allThemesOutdate       Array of all abandoned plugins.
+		 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
+		 * @param int    $site_offset_for_groups Offset value.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_abandoned_themes', $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups );
+		?>
 		</div>
-		<!-- END Abandoned Themes -->
 		<?php
 	}
 
 	/**
-	 * Method render_js_updates()
-	 *
-	 * Render js for update page
+	 * Renders JavaScript for update page.
 	 *
 	 * @param string $site_view current site view.
 	 */
 	public static function render_js_updates( $site_view ) {
+		$table_features = array(
+			'searching' => 'false',
+			'paging'    => 'false',
+			'stateSave' => 'true',
+			'info'      => 'false',
+			'exclusive' => 'false',
+			'duration'  => '200',
+		);
+		/**
+		 * Filter: mainwp_updates_table_features
+		 *
+		 * Filters the Updates table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_updates_table_features', $table_features );
 		?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
-				jQuery( 'table table:not( .mainwp-per-group-table )' ).DataTable( {
-					searching: false,
-					paging : false,
-					stateSave: true,
-					info : false,
-					columnDefs : [ { "orderable": false, "targets": "no-sort" } ],
-					language : { "emptyTable": "No available updates. Please sync your MainWP Dashboard with Child Sites to see if there are any new updates available." }
-				} );
 				jQuery( '#mainwp-manage-updates .ui.accordion' ).accordion( {
-					exclusive: false,
-					duration: 200,
+					"exclusive": <?php echo $table_features['exclusive']; ?>,
+					"duration": <?php echo $table_features['duration']; ?>,
 				} );
 			} );
 
@@ -912,11 +1604,9 @@ class MainWP_Updates {
 
 
 	/**
-	 * Method get_sites()
+	 * Gets sites for updates
 	 *
-	 * Get sites for updates
-	 *
-	 * @return mixed results.
+	 * @return object Object containing websites info.
 	 */
 	public static function get_sites() {
 		global $current_user;
@@ -938,9 +1628,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render_header_tabs()
-	 *
-	 * Render header tabs
+	 * Renders header tabs
 	 *
 	 * @param bool   $show_language_updates show language update.
 	 * @param string $current_tab current tab.
@@ -953,6 +1641,15 @@ class MainWP_Updates {
 	 * @param string $site_view current site view.
 	 */
 	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) {
+
+		/**
+		 * Action: mainwp_updates_before_nav_tabs
+		 *
+		 * Fires before the navigation tabs on the Updtes page.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_nav_tabs' );
 		?>
 		<div id="mainwp-page-navigation-wrapper">
 			<div class="ui secondary green pointing menu stackable mainwp-page-navigation">
@@ -966,15 +1663,36 @@ class MainWP_Updates {
 				<a class="<?php echo( 'abandoned-themes' === $current_tab ? 'active' : '' ); ?> item" data-tab="abandoned-themes" href="admin.php?page=UpdatesManage&tab=abandoned-themes"><?php esc_html_e( 'Abandoned Themes', 'mainwp' ); ?><div class="ui small <?php echo 0 === $total_themes_outdate ? 'green' : 'red'; ?> label"><?php echo $total_themes_outdate; ?></div></a>
 			</div>
 		</div>
+		<?php
+		/**
+		 * Action: mainwp_updates_after_nav_tabs
+		 *
+		 * Fires after the navigation tabs on the Updtes page.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_nav_tabs' );
+
+		/**
+		 * Action: mainwp_updates_before_actions_bar
+		 *
+		 * Fires before the actions bar on the Updtes page.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_before_actions_bar' );
+		?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">
 				<div class="equal width row">
 				<div class="middle aligned column">
 						<?php
 						/**
-						 * Widget Updates Actions Top
+						 * Filter: mainwp_widgetupdates_actions_top
 						 *
 						 * Filters the udpates actions top content.
+						 *
+						 * @since Unknown
 						 */
 						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
 						?>
@@ -996,12 +1714,18 @@ class MainWP_Updates {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_after_actions_bar
+		 *
+		 * Fires after the actions bar on the Updtes page.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_after_actions_bar' );
 	}
 
 	/**
-	 * Method render_twitter_notice()
-	 *
-	 * Render the twitter bragger message.
+	 * Renders the twitter bragger message.
 	 */
 	public static function render_twitter_notice() {
 
@@ -1030,9 +1754,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method render_http_checks()
-	 *
-	 * Render the HTTP Check html content.
+	 * Renders the HTTP Check html content.
 	 *
 	 * @param object $websites Child Sites.
 	 */
@@ -1059,6 +1781,16 @@ class MainWP_Updates {
 		}
 		?>
 		<div class="" id="mainwp-http-response-issues">
+			<?php
+			/**
+			 * Action: mainwp_updates_before_http_response_table
+			 *
+			 * Fires before the HTTP responses table on the Updates pages
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_before_http_response_table' );
+			?>
 			<table class="ui stackable single line red table" id="mainwp-http-response-issues-table">
 				<thead>
 					<tr>
@@ -1113,12 +1845,38 @@ class MainWP_Updates {
 					</tr>
 				</tfoot>
 			</table>
+			<?php
+			/**
+			 * Action: mainwp_updates_after_http_response_table
+			 *
+			 * Fires after the HTTP responses table on the Updates pages
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_after_http_response_table' );
+
+			$table_features = array(
+				'searching' => 'false',
+				'paging'    => 'false',
+				'stateSave' => 'true',
+				'info'      => 'false',
+			);
+
+			/**
+			 * Filter: mainwp_updates_http_responses_datatable_features
+			 *
+			 * Filters the DataTable options for the HTTP Responses table on the Updates page.
+			 *
+			 * @since 4.1
+			 */
+			$table_features = apply_filters( 'mainwp_updates_http_responses_datatable_features', $table_features );
+			?>
 			<script>
 			jQuery( '#mainwp-http-response-issues-table' ).DataTable( {
-				"searching": false,
-				"paging" : false,
-				"stateSave": true,
-				"info" : false,
+				"searching": <?php echo $table_features['searching']; ?>,
+				"paging" : <?php echo $table_features['paging']; ?>,
+				"stateSave": <?php echo $table_features['stateSave']; ?>,
+				"info" : <?php echo $table_features['info']; ?>,
 				"columnDefs" : [ { "orderable": false, "targets": "no-sort" } ],
 				"language" : { "emptyTable": "No HTTP issues detected." }
 		} );
@@ -1129,9 +1887,7 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method activated_primary_backup_plugin()
-	 *
-	 * Chek which primary backup plugin is being used.
+	 * Cheks which primary backup plugin is being used.
 	 *
 	 * @param mixed  $what Which backup plugin is being use.
 	 * @param object $website Website array of information.
@@ -1173,10 +1929,10 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method set_continue_update_html_selector()
+	 * Sets the HTML selector to continue updates.
 	 *
-	 * @param string  $current_update current update string.
-	 * @param boolean $slug Whether to update slug.
+	 * @param string $current_update current update string.
+	 * @param bool   $slug Whether to update slug.
 	 */
 	public static function set_continue_update_html_selector( $current_update, $slug = false ) {
 
@@ -1193,18 +1949,16 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method get_continue_update_selector()
+	 * Gets the HTML selector to continue updates.
 	 *
-	 * @return Get continue update html selector
+	 * @return string HTML selector.
 	 */
 	public static function get_continue_update_selector() {
 		return self::$continue_selector;
 	}
 
 	/**
-	 * Method render_updates_modal()
-	 *
-	 * Display the updates modal window during updates.
+	 * Displays the updates modal window during updates.
 	 */
 	public static function render_updates_modal() {
 		?>
@@ -1221,8 +1975,6 @@ class MainWP_Updates {
 	}
 
 	/**
-	 * Method mainwp_help_content()
-	 *
 	 * MainWP Help Box content. Hook the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
@@ -1239,6 +1991,20 @@ class MainWP_Updates {
 				<div class="item"><a href="https://mainwp.com/help/docs/update-wordpress-core/" target="_blank">Update WordPress Core</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/auto-update-wordpress-core/" target="_blank">Auto Update WordPress Core</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/ignore-wordpress-core-update/" target="_blank">Ignore WordPress Core Update</a></div>
+				<?php
+				/**
+				 * Action: mainwp_updates_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Updates page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_updates_help_item' );
+				?>
 			</div>
 			<?php
 		}

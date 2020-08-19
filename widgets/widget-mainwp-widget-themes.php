@@ -70,8 +70,8 @@ class MainWP_Widget_Themes {
 	 *
 	 * Render html themes widget for current site.
 	 *
-	 * @param mixed $website Current site.
-	 * @param mixed $allThemes All themes.
+	 * @param object $website   Object containing the child site info.
+	 * @param array  $allThemes Array containing all detected themes data.
 	 */
 	public static function render_html_widget( $website, $allThemes ) {
 
@@ -85,7 +85,16 @@ class MainWP_Widget_Themes {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e( 'Themes', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_themes_widget_title
+					 *
+					 * Filters the Themes widget title text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_themes_widget_title', __( 'Themes', 'mainwp' ), $website ) );
+					?>
 					<div class="sub header"><?php esc_html_e( 'Installed themes on the child site', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -101,7 +110,33 @@ class MainWP_Widget_Themes {
 			</div>
 		</div>
 		<div class="ui section hidden divider"></div>
+		<?php
+		/**
+		 * Action: mainwp_themes_widget_top
+		 *
+		 * Fires at the top of the Themes widget on the Individual site overview page.
+		 *
+		 * @param object $website   Object containing the child site info.
+		 * @param array  $allThemes Array containing all detected themes data.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_themes_widget_top', $website, $allThemes );
+		?>
 		<div id="mainwp-widget-active-themes" class="ui tab active" data-tab="active_themes">
+			<?php
+			/**
+			 * Action: mainwp_before_active_themes_list
+			 *
+			 * Fires before the active theme list in the Themes widget on the Individual site overview page.
+			 *
+			 * @param object $website        Object containing the child site info.
+			 * @param array  $actived_themes Array containing all active themes data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_active_themes_list', $website, $actived_themes );
+			?>
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $actived_themes );
@@ -123,8 +158,34 @@ class MainWP_Widget_Themes {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_active_themes_list
+			 *
+			 * Fires after the active themes list in the Themes widget on the Individual site overview page.
+			 *
+			 * @param object $website        Object containing the child site info.
+			 * @param array  $actived_themes Array containing all active themes data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_active_themes_list', $website, $actived_themes );
+			?>
 		</div>
 		<div id="mainwp-widget-inactive-themes" class="ui tab" data-tab="inactive_themes">
+			<?php
+			/**
+			 * Action: mainwp_before_inactive_themes_list
+			 *
+			 * Fires before the inactive themes list in the Themes widget on the Individual site overview page.
+			 *
+			 * @param object $website        Object containing the child site info.
+			 * @param array  $actived_themes Array containing all inactive themes data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_inactive_themes_list', $website, $inactive_themes );
+			?>
 			<div class="ui divided selection list">
 				<?php
 				$_count = count( $inactive_themes );
@@ -152,8 +213,32 @@ class MainWP_Widget_Themes {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_after_inactive_themes_list
+			 *
+			 * Fires after the inactive themes list in the Themes widget on the Individual site overview page.
+			 *
+			 * @param object $website        Object containing the child site info.
+			 * @param array  $actived_themes Array containing all inactive themes data.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_inactive_themes_list', $website, $inactive_themes );
+			?>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_themes_widget_bottom
+		 *
+		 * Fires at the bottom of the Themes widget on the Individual site overview page.
+		 *
+		 * @param object $website   Object containing the child site info.
+		 * @param array  $allThemes Array containing all detected themes data.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_themes_widget_bottom', $website, $allThemes );
 	}
 
 	/**
@@ -200,6 +285,14 @@ class MainWP_Widget_Themes {
 			die( wp_json_encode( array( 'error' => __( 'You cannot edit this website.', 'mainwp' ) ) ) );
 		}
 
+		/**
+		* Action: mainwp_before_theme_action
+		*
+		* Fires before theme activate/delete actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_theme_action', $pAction, $theme, $website );
 		try {
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
@@ -212,6 +305,15 @@ class MainWP_Widget_Themes {
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
+
+		/**
+		* Action: mainwp_after_theme_action
+		*
+		* Fires after theme activate/delete actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );

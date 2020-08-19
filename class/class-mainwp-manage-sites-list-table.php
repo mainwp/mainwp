@@ -402,10 +402,10 @@ class MainWP_Manage_Sites_List_Table {
 
 		?>
 		<div class="ui grid">
-			<div class="equal width row">
+			<div class="equal width row ui mini form">
 			<div class="middle aligned column">
 					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
-					<div id="mainwp-sites-bulk-actions-menu" class="ui mini selection dropdown">
+					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
 						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
@@ -428,7 +428,7 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui selection dropdown" id="mainwp_is_not_site" style="min-width:5em;">
+						<div class="ui selection dropdown" id="mainwp_is_not_site" style="min-width:8em;">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
@@ -811,7 +811,7 @@ class MainWP_Manage_Sites_List_Table {
 	/**
 	 * Display the table.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimize.
+	 * @param bool $optimize true|false Whether or not to optimize.
 	 */
 	public function display( $optimize = true ) {
 
@@ -837,6 +837,14 @@ class MainWP_Manage_Sites_List_Table {
 		$pagelength_val   = implode( ',', array_keys( $pages_length ) );
 		$pagelength_title = implode( ',', array_values( $pages_length ) );
 
+		/**
+		 * Action: mainwp_before_manage_sites_table
+		 *
+		 * Fires before the Manage Sites table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_manage_sites_table' );
 		?>
 		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable stackable table">
 			<thead>
@@ -855,11 +863,43 @@ class MainWP_Manage_Sites_List_Table {
 				</tr>
 	</tfoot>
 	</table>
+	<?php
+	/**
+	 * Action: mainwp_after_manage_sites_table
+	 *
+	 * Fires after the Manage Sites table.
+	 *
+	 * @since 4.1
+	 */
+	do_action( 'mainwp_after_manage_sites_table' );
+	?>
 	<div id="mainwp-loading-sites" style="display: none;">
 	<div class="ui active inverted dimmer">
 	<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
 	</div>
 	</div>
+
+	<?php
+	$table_features = array(
+		'searching'     => 'true',
+		'paging'        => 'true',
+		'pagingType'    => '"full_numbers"',
+		'info'          => 'true',
+		'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+		'stateSave'     => 'true',
+		'stateDuration' => '0',
+		'order'         => '[]',
+	);
+
+	/**
+	 * Filter: mainwp_sites_table_features
+	 *
+	 * Filter the Monitoring table features.
+	 *
+	 * @since 4.1
+	 */
+	$table_features = apply_filters( 'mainwp_sites_table_features', $table_features );
+	?>
 
 	<script type="text/javascript">
 		mainwp_manage_sites_screen_options = function () {
@@ -885,16 +925,15 @@ class MainWP_Manage_Sites_List_Table {
 			<?php if ( ! $optimize ) { ?>
 				try {				
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
-						"colReorder" : {
-							fixedColumnsLeft: 1,
-							fixedColumnsRight: 1
-						},
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"pagingType" : <?php echo $table_features['pagingType']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave" : <?php echo $table_features['stateSave']; ?>,
+						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+						"order" : <?php echo $table_features['order']; ?>,
 						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-						"stateSave":  true,
-						"stateDuration": 0,
-						"scrollX": true,
-						"pagingType": "full_numbers",
-						"order": [],
 						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>
 					} );
@@ -945,15 +984,15 @@ class MainWP_Manage_Sites_List_Table {
 								return json.data;
 							}
 						},
-						"pagingType": "full_numbers",
-						"colReorder" : {
-							fixedColumnsLeft: 1,
-							fixedColumnsRight: 1
-						},
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"pagingType" : <?php echo $table_features['pagingType']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave" : <?php echo $table_features['stateSave']; ?>,
+						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+						"order" : <?php echo $table_features['order']; ?>,
 						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
-						"stateSave":  true,
-						"stateDuration": 0,
-						"scrollX": true,
 						serverSide: true,
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
@@ -1402,6 +1441,18 @@ class MainWP_Manage_Sites_List_Table {
 											<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 											<?php endif; ?>
 											<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
+											<?php
+											/**
+											 * Action: mainwp_manage_sites_action
+											 *
+											 * Adds custom manage sites action item.
+											 *
+											 * @param array $website Array containing website data.
+											 *
+											 * @since 4.1
+											 */
+											do_action( 'mainwp_manage_sites_action', $website );
+											?>
 										</div>
 									</div>
 										<?php
@@ -1728,6 +1779,18 @@ class MainWP_Manage_Sites_List_Table {
 							<a class="item" href="admin.php?page=managesites&scanid=<?php echo $website['id']; ?>"><?php esc_html_e( 'Security Scan', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<a class="item" onclick="return managesites_remove( '<?php echo $website['id']; ?>' )"><?php esc_html_e( 'Remove Site', 'mainwp' ); ?></a>
+							<?php
+							/**
+							 * Action: mainwp_manage_sites_action
+							 *
+							 * Adds custom manage sites action item.
+							 *
+							 * @param array $website Array containing website data.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_manage_sites_action', $website );
+							?>
 							</div>
 						</div>
 					</td>

@@ -96,6 +96,15 @@ class MainWP_Themes_Handler {
 			die( 'FAIL' );
 		}
 
+		/**
+		* Action: mainwp_before_theme_action
+		*
+		* Fires before theme activate/delete actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_theme_action', $pAction, $theme, $website );
+
 		try {
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
@@ -108,6 +117,15 @@ class MainWP_Themes_Handler {
 		} catch ( MainWP_Exception $e ) {
 			die( 'FAIL' );
 		}
+
+		/**
+		* Action: mainwp_after_theme_action
+		*
+		* Fires after theme activate/delete actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
 
 		if ( isset( $information['error'] ) ) {
 			wp_send_json( $information );
@@ -153,7 +171,25 @@ class MainWP_Themes_Handler {
 					$decodedIgnoredThemes[ $slug ] = urldecode( $name );
 				}
 			}
+
+			/**
+			* Action: mainwp_before_theme_ignore
+			*
+			* Fires before theme ignore.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_theme_ignore', $website, $decodedIgnoredThemes );
 			MainWP_DB::instance()->update_website_values( $website->id, array( 'ignored_themes' => wp_json_encode( $decodedIgnoredThemes ) ) );
+
+			/**
+			* Action: mainwp_after_theme_ignore
+			*
+			* Fires after theme ignore.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_theme_ignore', $website, $decodedIgnoredThemes );
 		}
 
 		die( wp_json_encode( array( 'result' => true ) ) );

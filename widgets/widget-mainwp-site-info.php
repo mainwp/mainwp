@@ -70,20 +70,40 @@ class MainWP_Site_Info {
 			'last_status'   => __( 'Last Check Status', 'mainwp' ),
 		);
 
+		/**
+		 * Filter: mainwp_child_site_info_widget_content
+		 *
+		 * Filters the Child Info array for the Site Info widget.
+		 *
+		 * @since 4.1
+		 */
+		$child_site_info = apply_filters( 'mainwp_child_site_info_widget_content', $child_site_info );
+
 		self::render_info( $website, $website_info, $child_site_info );
 	}
 
 	/**
 	 * Render Sites Info.
 	 *
-	 * @param object $website Website object.
+	 * @param object $website Object containing the child site info.
 	 * @param array  $website_info Website data.
 	 * @param array  $child_site_info Website info to display.
 	 */
 	public static function render_info( $website, $website_info, $child_site_info ) {
 		?>
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e( 'Site Info', 'mainwp' ); ?>
+			<?php
+			/**
+			 * Filter: mainwp_site_info_widget_title
+			 *
+			 * Filters the Site info widget title text.
+			 *
+			 * @param object $website Object containing the child site info.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_site_info_widget_title', __( 'Site Info', 'mainwp' ), $website ) );
+			?>
 			<div class="sub header"><?php esc_html_e( 'Basic child site system information', 'mainwp' ); ?></div>
 		</h3>
 
@@ -92,13 +112,15 @@ class MainWP_Site_Info {
 		<div class="mainwp-widget-site-info">
 			<?php
 			/**
-			 * Site info widget top
+			 * Actoin: mainwp_site_info_widget_top
 			 *
 			 * Fires at the top of the Site Info widget on the Individual site overview page.
 			 *
+			 * @param object $website Object containing the child site info.
+			 *
 			 * @since 4.0
 			 */
-			do_action( 'mainwp_site_info_widget_top' );
+			do_action( 'mainwp_site_info_widget_top', $website );
 			?>
 			<?php
 			if ( ! is_array( $website_info ) || ! isset( $website_info['wpversion'] ) ) {
@@ -120,13 +142,15 @@ class MainWP_Site_Info {
 				<tbody>
 				<?php
 				/**
-				 * Site info table top
+				 * Action: mainwp_site_info_table_top
 				 *
 				 * Fires at the top of the Site Info table in Site Info widget on the Individual site overview page.
 				 *
+				 * @param object $website Object containing the child site info.
+				 *
 				 * @since 4.0
 				 */
-				do_action( 'mainwp_site_info_table_top' );
+				do_action( 'mainwp_site_info_table_top', $website );
 				?>
 				<?php
 				foreach ( $child_site_info as $index => $title ) {
@@ -146,26 +170,30 @@ class MainWP_Site_Info {
 				<?php } ?>
 				<?php
 				/**
-				 * Site info table bottom
+				 * Action: mainwp_site_info_table_bottom
 				 *
 				 * Fires at the bottom of the Site Info table in Site Info widget on the Individual site overview page.
 				 *
+				 * @param object $website Object containing the child site info.
+				 *
 				 * @since 4.0
 				 */
-				do_action( 'mainwp_site_info_table_bottom' );
+				do_action( 'mainwp_site_info_table_bottom', $website );
 				?>
 				</tbody>
 			</table>
 			<?php } ?>
 			<?php
 			/**
-			 * Site info widget bottom
+			 * Action: mainwp_site_info_widget_bottom
 			 *
 			 * Fires at the bottom of the Site Info widget on the Individual site overview page.
 			 *
+			 * @param object $website Object containing the child site info.
+			 *
 			 * @since 4.0
 			 */
-			do_action( 'mainwp_site_info_widget_bottom' );
+			do_action( 'mainwp_site_info_widget_bottom', $website );
 			?>
 		</div>
 		<?php

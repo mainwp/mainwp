@@ -78,6 +78,16 @@ class MainWP_Manage_Groups {
 				<a href="#" class="managegroups-rename ui button mini"><?php esc_html_e( 'Rename Group', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php esc_html_e( 'Save Group Name', 'mainwp' ); ?></a>
 				<a href="#" class="managegroups-delete ui button basic red mini"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+				<?php
+				/**
+				 * Action: mainwp_groups_action
+				 *
+				 * Adds action to the Group actions row.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_groups_action', $group );
+				?>
 			</td>
 		</tr>
 		<tr id="mainwp-group-<?php echo esc_attr( $group->id ); ?>-sites" class="mainwp-group-sites-row">
@@ -136,6 +146,16 @@ class MainWP_Manage_Groups {
 			<div id="mainwp-message-zone" style="display: none;">
 				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_before_groups_table
+			 *
+			 * Fires before the Manage Groups table.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_before_groups_table' );
+			?>
 			<table id="mainwp-groups-table" class="ui table">
 				<thead>
 					<tr>
@@ -166,6 +186,16 @@ class MainWP_Manage_Groups {
 					</tr>
 				</tfoot>
 			</table>
+			<?php
+			/**
+			 * Action: mainwp_after_groups_table
+			 *
+			 * Fires after the Manage Groups table.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_groups_table' );
+			?>
 		</div>
 		<?php
 		/**

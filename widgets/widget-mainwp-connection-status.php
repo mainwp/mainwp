@@ -40,7 +40,7 @@ class MainWP_Connection_Status {
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$UP|$ALL.
 	 */
-	public static function render_sites() { // phpcs:ignore -- complex method.
+	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
@@ -97,6 +97,7 @@ class MainWP_Connection_Status {
 				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : '';
 
 				ob_start();
+
 				if ( $j == $ALL ) {
 					self::render_all_item( $website, $lastSyncTime, $md5Connection, $output_md5, $hasSyncErrors );
 				} elseif ( $j == $UP ) {
@@ -104,6 +105,16 @@ class MainWP_Connection_Status {
 				} else {
 					self::render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 );
 				}
+
+				/**
+				 * Action: mainwp_connection_status_widget_bottom
+				 *
+				 * Fires at the bottom of the Connection Status widget.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_connection_status_widget_bottom' );
+
 				$output = ob_get_clean();
 
 				if ( $j == $ALL ) {
@@ -144,7 +155,16 @@ class MainWP_Connection_Status {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e( 'Connection Status', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_connection_status_widget_title
+					 *
+					 * Filters the Connection Status widget title text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_connection_status_widget_title', __( 'Connection Status', 'mainwp' ) ) );
+					?>
 					<div class="sub header"><?php esc_html_e( 'Child sites connection status', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -184,15 +204,33 @@ class MainWP_Connection_Status {
 		</div>
 		<div class="ui hidden divider"></div>
 		<?php
+		/**
+		 * Action: mainwp_connection_status_widget_top
+		 *
+		 * Fires at the top of the Connection Status widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_connection_status_widget_top' );
 	}
 
 	/**
-	 * Render the MainWP Overview page COnection Status Widget Content.
+	 * Render the MainWP Overview page Conection Status Widget Content.
 	 *
 	 * @param mixed $site Site list.
 	 * @param mixed $count_connected Connection Count.
 	 */
 	public static function render_current_status( $site, $count_connected ) {
+		/**
+		 * Action: mainwp_connection_status_widget_single_top
+		 *
+		 * Fires at the top of the Connection Status widget.
+		 *
+		 * @param object $site Object containing the child site info.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_connection_status_widget_single_top', $site );
 		if ( $count_connected > 0 ) :
 			?>
 			<div class="ui two column stackable grid">
@@ -223,13 +261,23 @@ class MainWP_Connection_Status {
 			</div>
 			<?php
 		endif;
+		/**
+		 * Action: mainwp_connection_status_widget_single_bottom
+		 *
+		 * Fires at the bottom of the Connection Status widget.
+		 *
+		 * @param object $site Object containing the child site info.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_connection_status_widget_single_bottom', $site );
 	}
 
 	/**
-	 * Render Count UI
+	 * Render connection status summary section.
 	 *
-	 * @param mixed $count_connected Connected Count.
-	 * @param mixed $count_disconnected Disconnected Count.
+	 * @param int $count_connected    Connected Count.
+	 * @param int $count_disconnected Disconnected Count.
 	 */
 	public static function render_multi_status( $count_connected, $count_disconnected ) {
 		?>
@@ -276,21 +324,81 @@ class MainWP_Connection_Status {
 		<div class="ui active tab" data-tab="no-sites"></div>
 
 		<div class="ui tab" data-tab="all-sites">
+			<?php
+			/**
+			 * Action: mainwp_connection_status_before_all_sites_list
+			 *
+			 * Fires before the list of all sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_before_all_sites_list' )
+			?>
 			<div class="ui middle aligned divided selection list">
 				<?php echo $html_all_sites; ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_connection_status_after_all_sites_list
+			 *
+			 * Fires after the list of all sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_after_all_sites_list' )
+			?>
 		</div>
 
 		<div class="ui tab" data-tab="connected">
+			<?php
+			/**
+			 * Action: mainwp_connection_status_before_connected_sites_list
+			 *
+			 * Fires before the list of connected sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_before_connected_sites_list' )
+			?>
 			<div class="ui middle aligned divided selection list">
 				<?php echo $html_online_sites; ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_connection_status_after_connected_sites_list
+			 *
+			 * Fires after the list of connected sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_after_connected_sites_list' )
+			?>
 		</div>
 
 		<div class="ui tab" data-tab="disconnected">
+			<?php
+			/**
+			 * Action: mainwp_connection_status_before_disconnected_sites_list
+			 *
+			 * Fires before the list of disconnected sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_before_disconnected_sites_list' )
+			?>
 			<div class="ui middle aligned divided selection list">
 				<?php echo $html_other_sites; ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_connection_status_after_disconnected_sites_list
+			 *
+			 * Fires after the list of disconnected sites in the connection status widgets
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_connection_status_after_disconnected_sites_list' )
+			?>
 		</div>
 		<?php
 	}
@@ -310,7 +418,29 @@ class MainWP_Connection_Status {
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
-					<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
+					<a href="
+					<?php
+					/**
+					 * Filter: mainwp_connection_status_list_item_title_url
+					 *
+					 * Filters the Connection Status widget list item title URL.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					?>
+					">
+						<?php
+						/**
+						 * Filter: mainwp_connection_status_list_item_title
+						 *
+						 * Filters the Connection Status widget list item title text.
+						 *
+						 * @since 4.1
+						 */
+						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						?>
+					</a>
 				</div>
 				<div class="one wide column middle aligned">
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
@@ -344,17 +474,39 @@ class MainWP_Connection_Status {
 	/**
 	 * Render Connected Sites List.
 	 *
-	 * @param mixed $website Website Info.
-	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
-	 * @param mixed $md5Connection md5 Connection.
-	 * @param mixed $output_md5 md5 decoded output.
+	 * @param object $website       Object containing the child site info.
+	 * @param string $lastSyncTime  Last time the Child Site was synced to.
+	 * @param bool   $md5Connection MD5 connection.
+	 * @param string $output_md5    MD5 decoded output.
 	 */
 	public static function render_up_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>
 	<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 		<div class="ui grid">
 			<div class="six wide column middle aligned">
-				<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
+					<a href="
+					<?php
+					/**
+					 * Filter: mainwp_connection_status_list_item_title_url
+					 *
+					 * Filters the Connection Status widget list item title URL.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					?>
+					">
+						<?php
+						/**
+						 * Filter: mainwp_connection_status_list_item_title
+						 *
+						 * Filters the Connection Status widget list item title text.
+						 *
+						 * @since 4.1
+						 */
+						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						?>
+					</a>
 			</div>
 			<div class="one wide column middle aligned">
 				<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
@@ -384,17 +536,39 @@ class MainWP_Connection_Status {
 	/**
 	 * Render Disconected Sites List.
 	 *
-	 * @param mixed $website Website Info.
-	 * @param mixed $lastSyncTime Last time the Child Site was synced to.
-	 * @param mixed $md5Connection md5 Connection.
-	 * @param mixed $output_md5 md5 decoded output.
+	 * @param object $website       Object containing the child site info.
+	 * @param string $lastSyncTime  Last time the Child Site was synced to.
+	 * @param bool   $md5Connection MD5 connection.
+	 * @param string $output_md5    MD5 decoded output.
 	 */
 	public static function render_down_item( $website, $lastSyncTime, $md5Connection, $output_md5 ) {
 		?>
 		<div class="item mainwp_wp_sync" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo rawurlencode( $website->name ); ?>">
 			<div class="ui grid">
 				<div class="six wide column middle aligned">
-					<a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo $website->name; ?></a>
+					<a href="
+					<?php
+					/**
+					 * Filter: mainwp_connection_status_list_item_title_url
+					 *
+					 * Filters the Connection Status widget list item title URL.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_attr( apply_filters( 'mainwp_connection_status_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+					?>
+					">
+						<?php
+						/**
+						 * Filter: mainwp_connection_status_list_item_title
+						 *
+						 * Filters the Connection Status widget list item title text.
+						 *
+						 * @since 4.1
+						 */
+						echo stripslashes( apply_filters( 'mainwp_connection_status_list_item_title', $website->name, $website ) );
+						?>
+					</a>
 				</div>
 				<div class="one wide column middle aligned">
 					<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" target="_blank" data-tooltip="<?php esc_attr_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign in alternate icon"></i></a>
@@ -412,7 +586,9 @@ class MainWP_Connection_Status {
 				} else {
 					?>
 					<a href="#" class="mainwp-updates-overview-reconnect-site" siteid="<?php echo intval( $website->id ); ?>" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
-			<?php } ?>
+					<?php
+				}
+				?>
 				</div>
 			</div>
 		</div>

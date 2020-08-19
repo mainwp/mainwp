@@ -77,31 +77,33 @@ class MainWP_Recent_Pages {
 			MainWP_DB::free_result( $websites );
 		}
 
+		self::render_top_grid();
+
+		/**
+		 * Action: mainwp_recent_pages_widget_top
+		 *
+		 * Fires at the top of the Recent Pages widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_pages_widget_top' );
+
+		self::render_published_posts( $allPages, $recent_number );
+		self::render_draft_posts( $allPages, $recent_number );
+		self::render_pending_posts( $allPages, $recent_number );
+		self::render_future_posts( $allPages, $recent_number );
+		self::render_trash_posts( $allPages, $recent_number );
+
+		/**
+		 * Action: mainwp_recent_pages_after_lists
+		 *
+		 * Fires after the recent pages lists, before the bottom actions section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_pages_after_lists' );
+
 		?>
-
-		<?php self::render_top_grid(); ?>
-
-		<!-- Published List -->
-		<?php self::render_published_posts( $allPages, $recent_number ); ?>
-
-		<!-- END Published List -->
-
-		<!-- Draft List -->
-		<?php self::render_draft_posts( $allPages, $recent_number ); ?>
-		<!-- END Draft List -->
-
-		<!-- Pending List -->
-		<?php self::render_pending_posts( $allPages, $recent_number ); ?>
-		<!-- END Pending List -->
-
-		<!-- Future List -->
-		<?php self::render_future_posts( $allPages, $recent_number ); ?>
-		<!-- END Future  List -->
-
-		<!-- Trash List -->
-		<?php self::render_trash_posts( $allPages, $recent_number ); ?>
-		<!-- END Trash  List -->
-
 		<div class="ui hidden divider"></div>
 
 		<div class="ui two column grid">
@@ -113,6 +115,14 @@ class MainWP_Recent_Pages {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_recent_pages_widget_bottom
+		 *
+		 * Fires at the bottom of the Recent Pages widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_pages_widget_bottom' );
 	}
 
 	/**
@@ -123,7 +133,16 @@ class MainWP_Recent_Pages {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e( 'Recent Pages', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_recent_pages_widget_title
+					 *
+					 * Filters the recent pages widget title text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_recent_pages_widget_title', __( 'Recent Pages', 'mainwp' ) ) );
+					?>
 					<div class="sub header"><?php esc_html_e( 'The most recent pages from your websites', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -141,7 +160,6 @@ class MainWP_Recent_Pages {
 				</div>
 			</div>
 			</div>
-
 			<div class="ui section hidden divider"></div>
 		<?php
 	}
@@ -149,8 +167,8 @@ class MainWP_Recent_Pages {
 	/**
 	 * Render Published Pages.
 	 *
-	 * @param mixed $allPages All pages data.
-	 * @param mixed $recent_number Number of pages.
+	 * @param array $allPages      All pages data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_published_posts( $allPages, $recent_number ) {
 
@@ -159,7 +177,20 @@ class MainWP_Recent_Pages {
 
 		?>
 	<div class="recent_posts_published ui tab active" data-tab="page-published">
-			<?php if ( count( $recent_pages_published ) == 0 ) : ?>
+			<?php
+			/**
+			 * Action: mainwp_recent_pages_before_publised_list
+			 *
+			 * Fires before the list of recent published Pages.
+			 *
+			 * @param array $allPages      All pages data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_before_publised_list', $allPages, $recent_number );
+			if ( count( $recent_pages_published ) == 0 ) :
+				?>
 			<h2 class="ui icon header">
 				<i class="folder open outline icon"></i>
 				<div class="content">
@@ -213,6 +244,19 @@ class MainWP_Recent_Pages {
 				</div>
 			<?php } ?>
 		</div>
+		<?php
+		/**
+		 * Action: mainwp_recent_pages_after_publised_list
+		 *
+		 * Fires after the list of recent published Pages.
+		 *
+		 * @param array $allPages      All pages data.
+		 * @param int   $recent_number Number of pages.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_pages_after_publised_list', $allPages, $recent_number );
+		?>
 		</div>
 		<?php
 	}
@@ -220,8 +264,8 @@ class MainWP_Recent_Pages {
 	/**
 	 * Render all draft pages.
 	 *
-	 * @param mixed $allPages All pages data.
-	 * @param mixed $recent_number Number of pages.
+	 * @param array $allPages      All pages data.
+	 * @param int   $recent_number Number of pages.
 	 */
 	public static function render_draft_posts( $allPages, $recent_number ) {
 
@@ -231,7 +275,18 @@ class MainWP_Recent_Pages {
 		?>
 		<div class="recent_posts_draft ui tab" data-tab="page-draft">
 				<?php
-				if ( count( $recent_pages_draft ) == 0 ) {
+				/**
+				 * Action: mainwp_recent_pages_before_draft_list
+				 *
+				 * Fires before the list of recent draft Pages.
+				 *
+				 * @param array $allPages      All pages data.
+				 * @param int   $recent_number Number of pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_pages_before_draft_list', $allPages, $recent_number );
+				if ( 0 == count( $recent_pages_draft ) ) {
 					?>
 					<h2 class="ui icon header">
 						<i class="folder open outline icon"></i>
@@ -285,6 +340,19 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_pages_after_draft_list
+			 *
+			 * Fires after the list of recent draft Pages.
+			 *
+			 * @param array $allPages      All pages data.
+			 * @param int   $recent_number Number of pages.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_pages_after_draft_list', $allPages, $recent_number );
+			?>
 			</div>
 		<?php
 	}
@@ -292,8 +360,8 @@ class MainWP_Recent_Pages {
 	/**
 	 * Render all pending pages.
 	 *
-	 * @param mixed $allPages All pages data.
-	 * @param mixed $recent_number Number of pages.
+	 * @param array $allPages      All pages data.
+	 * @param int   $recent_number Number of pages.
 	 */
 	public static function render_pending_posts( $allPages, $recent_number ) {
 
@@ -303,6 +371,17 @@ class MainWP_Recent_Pages {
 		?>
 	<div class="recent_posts_pending ui bottom attached tab" data-tab="page-pending">
 				<?php
+				/**
+				 * Action: mainwp_recent_pages_before_pending_list
+				 *
+				 * Fires before the list of recent pending pages.
+				 *
+				 * @param array $allPages      All pages data.
+				 * @param int   $recent_number Number of pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_pages_before_pending_list', $allPages, $recent_number );
 				if ( count( $recent_pages_pending ) == 0 ) {
 					?>
 					<h2 class="ui icon header">
@@ -357,6 +436,19 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_pages_after_pending_list
+			 *
+			 * Fires after the list of recent pending pages.
+			 *
+			 * @param array $allPages      All pages data.
+			 * @param int   $recent_number Number of pages.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_pages_after_pending_list', $allPages, $recent_number );
+			?>
 			</div>
 		<?php
 	}
@@ -364,8 +456,8 @@ class MainWP_Recent_Pages {
 	/**
 	 * Render all future pages.
 	 *
-	 * @param mixed $allPages All pages data.
-	 * @param mixed $recent_number Number of pages.
+	 * @param array $allPages      All pages data.
+	 * @param int   $recent_number Number of pages.
 	 */
 	public static function render_future_posts( $allPages, $recent_number ) {
 		$recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
@@ -374,6 +466,17 @@ class MainWP_Recent_Pages {
 		?>
 	<div class="recent_posts_future ui tab" data-tab="page-future">
 				<?php
+				/**
+				 * Action: mainwp_recent_pages_before_future_list
+				 *
+				 * Fires before the list of recent future Pages.
+				 *
+				 * @param array $allPages      All pages data.
+				 * @param int   $recent_number Number of pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_pages_before_future_list', $allPages, $recent_number );
 				if ( count( $recent_pages_future ) == 0 ) {
 					?>
 					<h2 class="ui icon header">
@@ -429,6 +532,19 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_pages_after_future_list
+			 *
+			 * Fires after the list of recent future Pages.
+			 *
+			 * @param array $allPages      All pages data.
+			 * @param int   $recent_number Number of pages.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_pages_after_future_list', $allPages, $recent_number );
+			?>
 			</div>
 		<?php
 	}
@@ -436,8 +552,8 @@ class MainWP_Recent_Pages {
 	/**
 	 * Render all trashed pages.
 	 *
-	 * @param mixed $allPages All pages data.
-	 * @param mixed $recent_number Number of pages.
+	 * @param array $allPages      All pages data.
+	 * @param int   $recent_number Number of pages.
 	 */
 	public static function render_trash_posts( $allPages, $recent_number ) {
 		$recent_pages_trash = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'trash' );
@@ -446,6 +562,17 @@ class MainWP_Recent_Pages {
 		?>
 	<div class="recent_posts_trash ui tab" data-tab="page-trash">
 				<?php
+				/**
+				 * Action: mainwp_recent_pages_before_trash_list
+				 *
+				 * Fires before the list of recent trash Pages.
+				 *
+				 * @param array $allPages      All pages data.
+				 * @param int   $recent_number Number of pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_pages_before_trash_list', $allPages, $recent_number );
 				if ( count( $recent_pages_trash ) == 0 ) {
 					?>
 					<h2 class="ui icon header">
@@ -499,6 +626,19 @@ class MainWP_Recent_Pages {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_pages_after_trash_list
+			 *
+			 * Fires after the list of recent trash Pages.
+			 *
+			 * @param array $allPages      All pages data.
+			 * @param int   $recent_number Number of pages.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_pages_after_trash_list', $allPages, $recent_number );
+			?>
 		</div>
 		<?php
 	}

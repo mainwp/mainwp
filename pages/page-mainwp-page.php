@@ -389,11 +389,9 @@ class MainWP_Page {
 	}
 
 	/**
-	 * Method render()
+	 * Renders Bulk Page Manager.
 	 *
-	 * Render Bulk Page Manager.
-	 *
-	 * @return void Render MainWP Bulk Page Manager.
+	 * @return void
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -427,11 +425,24 @@ class MainWP_Page {
 									<option value="trash"><?php esc_html_e( 'Move to trash', 'mainwp' ); ?></option>
 									<option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></option>
+									<?php
+									/**
+									 * Action: mainwp_pages_bulk_action
+									 *
+									 * Adds new action to the Bulk Actions menu on Manage Pages.
+									 *
+									 * Suggested HTML Markup:
+									 * <option value="Your custom value">Your custom text</option>
+									 *
+									 * @since 4.1
+									 */
+									do_action( 'mainwp_pages_bulk_action' );
+									?>
 								</select>
 								<button class="ui mini button" id="mainwp-do-pages-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 								<?php
 								/**
-								 * Pages actions bar (left)
+								 * Action: mainwp_pages_actions_bar_left
 								 *
 								 * Fires at the left side of the actions bar on the Pages screen, after the Bulk Actions menu.
 								 *
@@ -443,7 +454,7 @@ class MainWP_Page {
 							<div class="right aligned column">
 								<?php
 								/**
-								 * Pages actions bar (right)
+								 * Action: mainwp_pages_actions_bar_right
 								 *
 								 * Fires at the right side of the actions bar on the Pages screen.
 								 *
@@ -460,12 +471,52 @@ class MainWP_Page {
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php
+				/**
+				 * Action: mainwp_manage_pages_sidebar_top
+				 *
+				 * Fires at the top of the sidebar on Manage pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_pages_sidebar_top' );
+				?>
 				<div class="mainwp-select-sites">
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_before_select_sites
+					 *
+					 * Fires before the Select Sites section on Manage pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_before_select_sites' );
+					?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_after_select_sites
+					 *
+					 * Fires after the Select Sites section on Manage pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_after_select_sites' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_before_search_options
+					 *
+					 * Fires before the Search Options on Manage Pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_before_search_options' );
+					?>
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_page_search_type">
@@ -484,11 +535,51 @@ class MainWP_Page {
 				<div class="mainwp-search-options">
 					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 					<?php self::render_search_options(); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_after_search_options
+					 *
+					 * Fires after the Search Options on Manage Pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_after_search_options' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_before_submit_button
+					 *
+					 * Fires before the Submit Button on Manage Pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_before_submit_button' );
+					?>
 					<input type="button" name="mainwp_show_pages" id="mainwp_show_pages" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Pages', 'mainwp' ); ?>"/>
+					<?php
+					/**
+					 * Action: mainwp_manage_pages_after_submit_button
+					 *
+					 * Fires after the Submit Button on Manage Pages.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_pages_after_submit_button' );
+					?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_manage_pages_sidebar_bottom
+				 *
+				 * Fires at the bottom of the sidebar on Manage pages.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_pages_sidebar_bottom' );
+				?>
 			</div>
 			<div class="ui hidden clearing divider"></div>
 		</div>
@@ -608,11 +699,30 @@ class MainWP_Page {
 				<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Pages...', 'mainwp' ); ?></div>
 			</div>
 		</div>
+		<?php
+		/**
+		 * Action: mainwp_before_pages_table
+		 *
+		 * Fires before the Manage Pages table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_pages_table' );
+		?>
 		<table id="mainwp-pages-table" class="ui selectable single line table" style="width:100%">
 			<thead class="full-width">
 				<tr>
 					<th  class="no-sort check-column collapsing"><span class="ui checkbox"><input id="cb-select-all-top" type="checkbox" /></span></th>
-					<?php do_action( 'mainwp_pages_table_header' ); ?>
+					<?php
+					/**
+					 * Action: mainwp_pages_table_header
+					 *
+					 * Adds new column header to the Manage pages table.
+					 *
+					 *  @since 4.1
+					 */
+					do_action( 'mainwp_pages_table_header' );
+					?>
 					<th id="mainwp-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
 					<th id="mainwp-author"><?php esc_html_e( 'Author', 'mainwp' ); ?></th>
 					<th id="mainwp-comments"><i class="comment icon"></i></th>
@@ -638,19 +748,47 @@ class MainWP_Page {
 				?>
 			</tbody>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_after_pages_table
+		 *
+		 * Fires after the Manage Pages table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_pages_table' );
+
+		$table_features = array(
+			'searching'  => 'true',
+			'paging'     => 'true',
+			'info'       => 'true',
+			'stateSave'  => 'true',
+			'scrollX'    => 'true',
+			'colReorder' => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'order'      => '[]',
+		);
+
+		/**
+		 * Filter: mainwp_pages_table_fatures
+		 *
+		 * Filters the Manage Pages table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_pages_table_fatures', $table_features );
+		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
 				jQuery( '#mainwp-pages-table' ).DataTable( {
-					"colReorder": {
-						fixedColumnsLeft: 1,
-						fixedColumnsRight: 1
-					},
-					"stateSave":  true,
-					"pagingType": "full_numbers",
-					"scrollX" : true,
+					"searching" : <?php echo $table_features['searching']; ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; ?>,
+					"stateSave":  <?php echo $table_features['stateSave']; ?>,
+					"paging": <?php echo $table_features['paging']; ?>,
+					"info": <?php echo $table_features['info']; ?>,
+					"order": <?php echo $table_features['order']; ?>,
+					"scrollX" : <?php echo $table_features['scrollX']; ?>,
 					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-					"order": [],
 					"columnDefs": [ {
 						"targets": 'no-sort',
 						"orderable": false
@@ -826,7 +964,19 @@ class MainWP_Page {
 				?>
 				<tr>
 					<td  class="check-column"><span class="ui checkbox"><input type="checkbox" name="page[]" value="1"></span></td>
-					<?php do_action( 'mainwp_pages_table_column', $page, $website ); ?>
+					<?php
+					/**
+					 * Action: mainwp_pages_table_column
+					 *
+					 * Adds a new column item in the Manage pages table.
+					 *
+					 * @param array $page    Array containing the page data.
+					 * @param array $website Object containing the website data.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_pages_table_column', $page, $website );
+					?>
 					<td class="page-title  column-title">
 						<input class="pageId" type="hidden" name="id" value="<?php echo intval( $page['id'] ); ?>"/>
 						<input class="allowedBulkActions" type="hidden" name="allowedBulkActions" value="|get_edit|trash|delete|<?php echo ( 'trash' == $page['status'] ) ? 'restore|' : ''; ?><?php echo ( 'future' == $page['status'] || 'draft' == $page['status'] ) ? 'publish|' : ''; ?>" />
@@ -901,6 +1051,22 @@ class MainWP_Page {
 									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>
 								<?php } ?>
 								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
+								<?php
+								/**
+								 * Action: mainwp_pages_table_action
+								 *
+								 * Adds a new item in the Actions menu in Manage Pages table.
+								 *
+								 * Suggested HTML markup:
+								 * <a class="item" href="Your custom URL">Your custom label</a>
+								 *
+								 * @param array $post    Array containing the page data.
+								 * @param array $website Object containing the website data.
+								 *
+								 * @since 4.1
+								 */
+								do_action( 'mainwp_pages_table_action', $page, $website );
+								?>
 							</div>
 						</div>
 					</td>
@@ -923,7 +1089,7 @@ class MainWP_Page {
 	 * Publish page.
 	 */
 	public static function publish() {
-		MainWP_Recent_Posts::action( 'publish' );
+		MainWP_Recent_Posts::action( 'publish', 'page' );
 		die( wp_json_encode( array( 'result' => 'Page has been published!' ) ) );
 	}
 
@@ -933,7 +1099,7 @@ class MainWP_Page {
 	 * Unpublish page.
 	 */
 	public static function unpublish() {
-		MainWP_Recent_Posts::action( 'unpublish' );
+		MainWP_Recent_Posts::action( 'unpublish', 'page' );
 		die( wp_json_encode( array( 'result' => 'Page has been unpublished!' ) ) );
 	}
 
@@ -943,7 +1109,7 @@ class MainWP_Page {
 	 * Trash page.
 	 */
 	public static function trash() {
-		MainWP_Recent_Posts::action( 'trash' );
+		MainWP_Recent_Posts::action( 'trash', 'page' );
 		die( wp_json_encode( array( 'result' => 'Page has been moved to trash!' ) ) );
 	}
 
@@ -953,7 +1119,7 @@ class MainWP_Page {
 	 * Delete page.
 	 */
 	public static function delete() {
-		MainWP_Recent_Posts::action( 'delete' );
+		MainWP_Recent_Posts::action( 'delete', 'page' );
 		die( wp_json_encode( array( 'result' => 'Page has been permanently deleted!' ) ) );
 	}
 
@@ -963,7 +1129,7 @@ class MainWP_Page {
 	 * Restore page.
 	 */
 	public static function restore() {
-		MainWP_Recent_Posts::action( 'restore' );
+		MainWP_Recent_Posts::action( 'restore', 'page' );
 		die( wp_json_encode( array( 'result' => 'Page has been restored!' ) ) );
 	}
 
@@ -1351,6 +1517,20 @@ class MainWP_Page {
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/view-an-existing-page/" target="_blank">View an Existing Page</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/manage-pages/delete-pages/" target="_blank">Delete Page(s)</a></div>
+				<?php
+				/**
+				 * Action: mainwp_pages_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Pages page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_pages_help_item' );
+				?>
 			</div>
 			<?php
 		}

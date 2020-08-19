@@ -67,10 +67,31 @@ class MainWP_Notification_Settings {
 				unset( $emails_settings['daily_digets'] );
 			}
 
-			$type                                = $_POST['mainwp_setting_emails_type'];
-			$emails_settings[ $type ]            = $_POST['mainwp_settingEmails'][ $type ];
-			$emails_settings[ $type ]['disable'] = ( isset( $_POST['mainwp_settingEmails'][ $type ] ) && isset( $_POST['mainwp_settingEmails'][ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
+			$type                       = $_POST['mainwp_setting_emails_type'];
+			$update_settings            = $_POST['mainwp_settingEmails'][ $type ];
+			$update_settings['disable'] = ( isset( $_POST['mainwp_settingEmails'][ $type ] ) && isset( $_POST['mainwp_settingEmails'][ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
+			$emails_settings[ $type ]   = $update_settings;
+
+			/**
+			* Action: mainwp_before_save_email_settings
+			*
+			* Fires before save email settings.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_save_email_settings', $type, $update_settings );
+
 			MainWP_Utility::update_option( 'mainwp_settings_notification_emails', $emails_settings );
+
+			/**
+			* Action: mainwp_after_save_email_settings
+			*
+			* Fires after save email settings.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_save_email_settings', $emails_settings );
+
 			return true;
 		}
 		return false;

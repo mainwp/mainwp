@@ -394,7 +394,7 @@ class MainWP_Plugins {
 								</div>
 								<?php
 								/**
-								 * Plugins actions bar (left)
+								 * Action: mainwp_plugins_actions_bar_left
 								 *
 								 * Fires at the left side of the actions bar on the Plugins screen, after the Bulk Actions menu.
 								 *
@@ -409,7 +409,7 @@ class MainWP_Plugins {
 								<button id="mainwp-install-to-selected-sites" class="ui olive basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
-								 * Plugins actions bar (right)
+								 * Action: mainwp_plugins_actions_bar_right
 								 *
 								 * Fires at the right side of the actions bar on the Plugins screen.
 								 *
@@ -439,12 +439,52 @@ class MainWP_Plugins {
 			</div>
 
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php
+				/**
+				 * Action: mainwp_manage_plugins_sidebar_top
+				 *
+				 * Fires at the top of the sidebar on Manage themes.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_plugins_sidebar_top' );
+				?>
 				<div class="mainwp-select-sites">
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_before_select_sites
+					 *
+					 * Fires before the Select Sites elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_before_select_sites' );
+					?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_after_select_sites
+					 *
+					 * Fires after the Select Sites elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_after_select_sites' );
+					?>
 					</div>
 					<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_before_search_options
+					 *
+					 * Fires before the Search Options elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_before_search_options' );
+					?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-manage-info"></i>
 						<?php esc_html_e( 'A plugin needs to be Inactive in order for it to be Activated or Deleted.', 'mainwp' ); ?>
@@ -458,6 +498,16 @@ class MainWP_Plugins {
 							</select>
 						</div>
 					</div>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_after_search_options
+					 *
+					 * Fires after the Search Options elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_after_search_options' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
@@ -466,8 +516,38 @@ class MainWP_Plugins {
 					</div>
 					<div class="ui divider"></div>
 					<div class="mainwp-search-submit">
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_before_submit_button
+					 *
+					 * Fires before the Submit Button elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_before_submit_button' );
+					?>
 					<input type="button" name="mainwp-show-plugins" id="mainwp-show-plugins" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Plugins', 'mainwp' ); ?>"/>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_after_submit_button
+					 *
+					 * Fires after the Submit Button elemnt on Manage plugins.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_after_submit_button' );
+					?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_manage_plugins_sidebar_bottom
+				 *
+				 * Fires at the bottom of the sidebar on Manage themes.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_plugins_sidebar_bottom' );
+				?>
 			</div>
 			<div style="clear:both"></div>
 		</div>
@@ -782,6 +862,18 @@ class MainWP_Plugins {
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 			<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
 		<?php endif; ?>
+		<?php
+		/**
+		 * Action: mainwp_plugins_bulk_action
+		 *
+		 * Adds a new action to the Manage Plugins bulk actions menu.
+		 *
+		 * @param string $status Status search parameter.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_plugins_bulk_action' );
+		?>
 		</div>
 	</div>
 	<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
@@ -806,12 +898,28 @@ class MainWP_Plugins {
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
+
+		/**
+		 * Action: mainwp_before_plugins_table
+		 *
+		 * Fires before the Plugins table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_plugins_table' );
 		?>
 		<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
 					<th></th>
-					<?php do_action( 'mainwp_manage_plugins_table_header' ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_table_header
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_table_header' );
+					?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 						<?php
 						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
@@ -837,7 +945,16 @@ class MainWP_Plugins {
 						<label><?php echo esc_html( $site_url ); ?></label>
 					</div>
 					</td>
-					<?php do_action( 'mainwp_manage_plugins_table_column', $site_id ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_table_column
+					 *
+					 * @param int $site_id Site ID.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_table_column', $site_id );
+					?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
 					<td class="center aligned">
 						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
@@ -855,6 +972,39 @@ class MainWP_Plugins {
 				<?php endforeach; ?>
 				</tbody>
 			</table>
+			<?php
+			/**
+			 * Action: mainwp_after_plugins_table
+			 *
+			 * Fires after the Plugins table.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_after_plugins_table' );
+
+			$table_features = array(
+				'searching'      => 'true',
+				'paging'         => 'false',
+				'info'           => 'false',
+				'colReorder'     => 'true',
+				'stateSave'      => 'true',
+				'ordering'       => 'true',
+				'scrollCollapse' => 'true',
+				'scrollY'        => '500',
+				'scrollX'        => 'true',
+				'scroller'       => 'true',
+				'fixedColumns'   => 'true',
+			);
+
+			/**
+			 * Filter: mainwp_plugins_table_features
+			 *
+			 * Filter the Plugins table features.
+			 *
+			 * @since 4.1
+			 */
+			$table_features = apply_filters( 'mainwp_plugins_table_features', $table_features );
+			?>
 			<style type="text/css">
 			.DTFC_LeftBodyLiner { overflow-x: hidden; }
 			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
@@ -865,16 +1015,18 @@ class MainWP_Plugins {
 			jQuery( document ).ready( function( $ ) {
 				try {
 					jQuery( '#mainwp-manage-plugins-table' ).DataTable( {
-						"paging" : false,
-						"colReorder" : true,
-						"stateSave" :  true,
-						"ordering" : true,
+						"paging" : <?php echo $table_features['paging']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave" :  <?php echo $table_features['stateSave']; ?>,
+						"ordering" : <?php echo $table_features['ordering']; ?>,
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"info" : <?php echo $table_features['info']; ?>,
+						"scrollCollapse" : <?php echo $table_features['scrollCollapse']; ?>,
+						"scrollY" : <?php echo $table_features['scrollY']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
+						"scroller" : <?php echo $table_features['scroller']; ?>,
+						"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
 						"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-						"scrollCollapse" : true,
-						"scrollY" : 500,
-						"scrollX" : true,
-						"scroller" : true,
-						"fixedColumns" : true,
 					} );
 				} catch( err ) {
 					// to fix js issues.
@@ -987,13 +1139,17 @@ class MainWP_Plugins {
 		}
 		?>
 	<div class="mainwp-side-content mainwp-no-padding">
+		<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
 		<div class="mainwp-select-sites">
+			<?php do_action( 'mainwp_manage_plugins_before_select_sites' ); ?>
 			<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>			
 			<?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+			<?php do_action( 'mainwp_manage_plugins_after_select_sites' ); ?>
 		</div>
 		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( '-', $selected_sites ) ); ?>" />
 		<div class="ui divider"></div>
 		<div class="mainwp-search-options">
+			<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 			<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
 			<div class="ui form">
 				<div class="field">
@@ -1009,9 +1165,11 @@ class MainWP_Plugins {
 					</div>
 				</div>
 			</div>
+			<?php do_action( 'mainwp_manage_plugins_after_search_options' ); ?>
 		</div>
 		<div class="ui divider"></div>
 		<div class="mainwp-search-submit">
+			<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 		<?php
 		/**
 		 * Disables plugin installation
@@ -1027,7 +1185,9 @@ class MainWP_Plugins {
 			<?php
 		}
 		?>
+			<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 		</div>
+		<?php do_action( 'mainwp_manage_plugins_sidebar_bottom' ); ?>
 	</div>
 	<div class="ui clearing hidden divider"></div>
 	</div>
@@ -1069,6 +1229,16 @@ class MainWP_Plugins {
 											<div class="menu">
 												<div class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></div>
 												<div class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></div>
+												<?php
+												/**
+												 * Action: mainwp_plugins_auto_updates_bulk_action
+												 *
+												 * Adds new action to the bulk actions menu on Plugins Auto Updates.
+												 *
+												 * @since 4.1
+												 */
+												do_action( 'mainwp_plugins_auto_updates_bulk_action' );
+												?>
 											</div>
 										</div>
 										<input type="button" name="" id="mainwp-bulk-trust-plugins-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
@@ -1096,7 +1266,9 @@ class MainWP_Plugins {
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
 				<div class="mainwp-search-options">
+					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-auto-updates"></i>
 						<p><?php esc_html_e( 'The MainWP Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
@@ -1113,6 +1285,7 @@ class MainWP_Plugins {
 							</select>
 						</div>
 					</div>
+					<?php do_action( 'mainwp_manage_plugins_after_search_options' ); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
@@ -1135,8 +1308,11 @@ class MainWP_Plugins {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 					<a href="#" class="ui green big fluid button" id="mainwp_show_all_active_plugins"><?php esc_html_e( 'Show Plugins', 'mainwp' ); ?></a>
+					<?php do_action( 'mainwp_manage_plugins_after_submit_button' ); ?>
 				</div>
+				<?php do_action( 'mainwp_manage_plugins_sidebar_bottom' ); ?>
 			</div>
 		</div>
 			<?php
@@ -1307,6 +1483,15 @@ class MainWP_Plugins {
 	 * @param array $trustedPluginsNotes Trusted plugins notes.
 	 */
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
+
+		/**
+		 * Action: mainwp_plugins_before_auto_updates_table
+		 *
+		 * Fires before the Auto Update Plugins table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_plugins_before_auto_updates_table' );
 		?>
 		<table class="ui single line table" id="mainwp-all-active-plugins-table">
 			<thead>
@@ -1370,15 +1555,46 @@ class MainWP_Plugins {
 				</tr>
 			</tfoot>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_plugins_after_auto_updates_table
+		 *
+		 * Fires after the Auto Update Plugins table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_plugins_after_auto_updates_table' );
+
+		$table_features = array(
+			'searching'  => 'true',
+			'stateSave'  => 'true',
+			'colReorder' => 'true',
+			'info'       => 'true',
+			'paging'     => 'false',
+			'ordering'   => 'true',
+			'order'      => '[ [ 2, "asc" ] ]',
+		);
+
+		/**
+		 * Filter: mainwp_plugin_auto_updates_table_fatures
+		 *
+		 * Filters the Plugin Auto Updates table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_plugin_auto_updates_table_fatures', $table_features );
+		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function() {
 			jQuery( '#mainwp-all-active-plugins-table' ).DataTable( {
-				"colReorder" : true,
-				"stateSave":  true,
-				"paging":   false,
-				"ordering": true,
+				"searching" : <?php echo $table_features['searching']; ?>,
+				"stateSave" : <?php echo $table_features['stateSave']; ?>,
+				"colReorder" : <?php echo $table_features['colReorder']; ?>,
+				"info" : <?php echo $table_features['info']; ?>,
+				"paging" : <?php echo $table_features['paging']; ?>,
+				"ordering" : <?php echo $table_features['ordering']; ?>,
+				"order" : <?php echo $table_features['order']; ?>,
 				"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-				"order": [ [ 2, "asc" ] ]
 			} );
 		} );
 		</script>
@@ -1417,8 +1633,18 @@ class MainWP_Plugins {
 		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
+			<?php
+			/**
+			 * Action: mainwp_plugins_before_ignored_updates
+			 *
+			 * Fires on the top of the Ignored Plugins Updates page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_plugins_before_ignored_updates', $ignoredPlugins, $websites );
+			?>
 			<h3 class="ui header">
-				<?php esc_html_e( 'Globally Ignored Plugins' ); ?>
+				<?php esc_html_e( 'Globally Ignored Plugins', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
 			<?php
@@ -1430,6 +1656,16 @@ class MainWP_Plugins {
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
 			<?php self::render_sites_ignored( $cnt, $websites ); ?>
+			<?php
+			/**
+			 * Action: mainwp_plugins_after_ignored_updates
+			 *
+			 * Fires on the bottom of the Ignored Plugins Updates page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_plugins_after_ignored_updates', $ignoredPlugins, $websites );
+			?>
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
@@ -1584,6 +1820,16 @@ class MainWP_Plugins {
 		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-plugins" class="ui segment">
+			<?php
+			/**
+			 * Action: mainwp_plugins_before_ignored_abandoned
+			 *
+			 * Fires on the top of the Ignored Plugins Abandoned page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_plugins_before_ignored_abandoned', $ignoredPlugins, $websites );
+			?>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Globally Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
@@ -1594,8 +1840,16 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Per Site Ignored Abandoned Plugins' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
 			</h3>
+			<?php self::render_sites_ignored_abandoned( $cnt, $websites ); ?>
 			<?php
-			self::render_sites_ignored_abandoned( $cnt, $websites );
+			/**
+			 * Action: mainwp_plugins_after_ignored_abandoned
+			 *
+			 * Fires on the bottom of the Ignored Plugins Abandoned page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_plugins_after_ignored_abandoned', $ignoredPlugins, $websites );
 			?>
 		</div>
 		<?php
@@ -1732,9 +1986,7 @@ class MainWP_Plugins {
 	}
 
 	/**
-	 * Method mainwp_help_content()
-	 *
-	 * Hook the section help content to the Help Sidebar element.
+	 * Hooks the section help content to the Help Sidebar element.
 	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'PluginsManage' === $_GET['page'] || 'PluginsInstall' === $_GET['page'] || 'PluginsAutoUpdate' === $_GET['page'] || 'PluginsIgnore' === $_GET['page'] || 'PluginsIgnoredAbandoned' === $_GET['page'] ) ) {
@@ -1749,6 +2001,20 @@ class MainWP_Plugins {
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
+				<?php
+				/**
+				 * Action: mainwp_plugins_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Plugins page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_plugins_help_item' );
+				?>
 			</div>
 			<?php
 		}

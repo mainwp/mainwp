@@ -902,6 +902,16 @@ class MainWP_System_Cron_Jobs {
 					MainWP_Logger::instance()->info_update( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
 
 					try {
+
+						/**
+						* Action: mainwp_before_plugin_theme_translation_update
+						*
+						* Fires before plugin/theme/translation update actions.
+						*
+						* @since 4.1
+						*/
+						do_action( 'mainwp_before_plugin_theme_translation_update', 'plugin', implode( ',', $slugs ), $allWebsites[ $websiteId ] );
+
 						$information = MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
 							'upgradeplugintheme',
@@ -910,6 +920,15 @@ class MainWP_System_Cron_Jobs {
 								'list' => urldecode( implode( ',', $slugs ) ),
 							)
 						);
+
+						/**
+						* Action: mainwp_after_plugin_theme_translation_update
+						*
+						* Fires before plugin/theme/translation update actions.
+						*
+						* @since 4.1
+						*/
+						do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'plugin', implode( ',', $slugs ), $allWebsites[ $websiteId ] );
 
 						if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 							MainWP_Sync::sync_information_array( $allWebsites[ $websiteId ], $information['sync'] );
@@ -928,6 +947,15 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 
+					/**
+					* Action: mainwp_before_plugin_theme_translation_update
+					*
+					* Fires before plugin/theme/translation update actions.
+					*
+					* @since 4.1
+					*/
+					do_action( 'mainwp_before_plugin_theme_translation_update', 'theme', implode( ',', $slugs ), $allWebsites[ $websiteId ] );
+
 					try {
 						$information = MainWP_Connect::fetch_url_authed(
 							$allWebsites[ $websiteId ],
@@ -944,6 +972,16 @@ class MainWP_System_Cron_Jobs {
 					} catch ( \Exception $e ) {
 						// ok.
 					}
+
+					/**
+					* Action: mainwp_after_plugin_theme_translation_update
+					*
+					* Fires before plugin/theme/translation update actions.
+					*
+					* @since 4.1
+					*/
+					do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'theme', implode( ',', $slugs ), $allWebsites[ $websiteId ] );
+
 				}
 			} else {
 				$themesToUpdateNow = array();

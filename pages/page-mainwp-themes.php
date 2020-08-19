@@ -378,7 +378,7 @@ class MainWP_Themes {
 								</div>
 								<?php
 								/**
-								 * Themes actions bar (left)
+								 * Action: mainwp_themes_actions_bar_left
 								 *
 								 * Fires at the left side of the actions bar on the Themes screen, after the Bulk Actions menu.
 								 *
@@ -391,7 +391,7 @@ class MainWP_Themes {
 								<button id="mainwp-install-themes-to-selected-sites" class="ui green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
-								 * Themes actions bar (right)
+								 * Action: mainwp_themes_actions_bar_right
 								 *
 								 * Fires at the right side of the actions bar on the Themes screen.
 								 *
@@ -421,12 +421,52 @@ class MainWP_Themes {
 			</div>
 
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php
+				/**
+				 * Action: mainwp_manage_themes_sidebar_top
+				 *
+				 * Fires at the top of the sidebar on Manage themes.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_themes_sidebar_top' );
+				?>
 				<div class="mainwp-select-sites">
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_before_select_sites
+					 *
+					 * Fires before the Select Sites elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_before_select_sites' );
+					?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_after_select_sites
+					 *
+					 * Fires after the Select Sites elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_after_select_sites' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_before_search_options
+					 *
+					 * Fires before the Search Options elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_before_search_options' );
+					?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="themes-manage-info"></i>
 						<?php esc_html_e( 'A theme needs to be Inactive in order for it to be Activated or Deleted.', 'mainwp' ); ?>
@@ -440,6 +480,16 @@ class MainWP_Themes {
 							</select>
 						</div>
 					</div>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_after_search_options
+					 *
+					 * Fires after the Search Options elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_after_search_options' );
+					?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
@@ -448,8 +498,38 @@ class MainWP_Themes {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_before_submit_button
+					 *
+					 * Fires before the Submit Button elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_before_submit_button' );
+					?>
 					<input type="button" name="mainwp_show_themes" id="mainwp_show_themes" class="ui green big fluid button" value="<?php esc_attr_e( 'Show Themes', 'mainwp' ); ?>"/>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_after_submit_button
+					 *
+					 * Fires after the Submit Button elemnt on Manage themes.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_after_submit_button' );
+					?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_manage_themes_sidebar_bottom
+				 *
+				 * Fires at the bottom of the sidebar on Manage themes.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_manage_themes_sidebar_bottom' );
+				?>
 			</div>
 			<div style="clear:both"></div>
 		</div>
@@ -742,12 +822,28 @@ class MainWP_Themes {
 	 * @param string $themesRealVersion Current theme version.
 	 */
 	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
+
+		/**
+		 * Action: mainwp_before_themes_table
+		 *
+		 * Fires before the Themes table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_themes_table' );
 		?>
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
 					<th></th>
-					<?php do_action( 'mainwp_manage_themes_table_header' ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_table_header
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_table_header' );
+					?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<?php
 						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
@@ -773,7 +869,16 @@ class MainWP_Themes {
 							<label><?php echo esc_html( $site_url ); ?></label>
 						</div>
 					</td>
-					<?php do_action( 'mainwp_manage_themes_table_column', $site_id ); ?>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_table_column
+					 *
+					 * @param int $site_id Site ID.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_table_column', $site_id );
+					?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
 						<td class="center aligned">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
@@ -787,6 +892,39 @@ class MainWP_Themes {
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_after_themes_table
+		 *
+		 * Fires after the Themes table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_themes_table' );
+
+		$table_features = array(
+			'searching'      => 'true',
+			'paging'         => 'false',
+			'info'           => 'false',
+			'colReorder'     => 'true',
+			'stateSave'      => 'true',
+			'ordering'       => 'true',
+			'scrollCollapse' => 'true',
+			'scrollY'        => '500',
+			'scrollX'        => 'true',
+			'scroller'       => 'true',
+			'fixedColumns'   => 'true',
+		);
+
+		/**
+		 * Filter: mainwp_themes_table_features
+		 *
+		 * Filter the Themes table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
+		?>
 		<style type="text/css">
 			.DTFC_LeftBodyLiner { overflow-x: hidden; }
 			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
@@ -796,16 +934,18 @@ class MainWP_Themes {
 		<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
 				jQuery( '#mainwp-manage-themes-table' ).DataTable( {
-					"paging" : false,
-					"colReorder" : true,
-					"stateSave" :  true,
-					"ordering" : true,
+					"paging" : <?php echo $table_features['paging']; ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; ?>,
+					"stateSave" :  <?php echo $table_features['stateSave']; ?>,
+					"ordering" : <?php echo $table_features['ordering']; ?>,
+					"searching" : <?php echo $table_features['searching']; ?>,
+					"info" : <?php echo $table_features['info']; ?>,
+					"scrollCollapse" : <?php echo $table_features['scrollCollapse']; ?>,
+					"scrollY" : <?php echo $table_features['scrollY']; ?>,
+					"scrollX" : <?php echo $table_features['scrollX']; ?>,
+					"scroller" : <?php echo $table_features['scroller']; ?>,
+					"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
-					"scrollCollapse" : true,
-					"scrollY" : 500,
-					"scrollX" : true,
-					"scroller" : true,
-					"fixedColumns" : true,
 				} );
 				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
 			} );
@@ -841,6 +981,18 @@ class MainWP_Themes {
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
 					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
 				<?php endif; ?>
+				<?php
+				/**
+				 * Action: mainwp_themes_bulk_action
+				 *
+				 * Adds a new action to the Manage Themes bulk actions menu.
+				 *
+				 * @param string $status Status search parameter.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_themes_bulk_action' );
+				?>
 			</div>
 		</div>
 		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
@@ -950,7 +1102,9 @@ class MainWP_Themes {
 				</div>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
 				<div class="mainwp-select-sites">
+					<?php do_action( 'mainwp_manage_themes_before_select_sites' ); ?>
 					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 					<?php
 					$selected_sites  = array();
@@ -963,9 +1117,11 @@ class MainWP_Themes {
 					}
 					?>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<?php do_action( 'mainwp_manage_themes_after_select_sites' ); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<?php do_action( 'mainwp_manage_themes_before_search_options' ); ?>
 					<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
 					<div class="ui form">
 						<div class="field">
@@ -975,9 +1131,11 @@ class MainWP_Themes {
 							</div>
 						</div>
 					</div>
+					<?php do_action( 'mainwp_manage_themes_after_search_options' ); ?>
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-submit">
+					<?php do_action( 'mainwp_manage_themes_before_submit_button' ); ?>
 				<?php
 				/**
 				 * Disables themes installation
@@ -993,7 +1151,9 @@ class MainWP_Themes {
 					<?php
 				}
 				?>
+				<?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
 				</div>
+				<?php do_action( 'mainwp_manage_themes_sidebar_bottom' ); ?>
 			</div>
 			<div class="ui clearing hidden divider"></div>
 		</div>
@@ -1118,6 +1278,16 @@ class MainWP_Themes {
 											<div class="menu">
 												<div class="item" data-value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></div>
 												<div class="item" data-value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></div>
+												<?php
+												/**
+												 * Action: mainwp_themes_auto_updates_bulk_action
+												 *
+												 * Adds new action to the bulk actions menu on Themes Auto Updates.
+												 *
+												 * @since 4.1
+												 */
+												do_action( 'mainwp_themes_auto_updates_bulk_action' );
+												?>
 											</div>
 										</div>
 										<input type="button" name="" id="mainwp-bulk-trust-themes-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
@@ -1145,6 +1315,7 @@ class MainWP_Themes {
 					</div>
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
+					<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
 					<div class="mainwp-search-options" style="margin-top:1rem">
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="themes-auto-updates"></i>
@@ -1165,6 +1336,7 @@ class MainWP_Themes {
 					</div>
 					<div class="ui divider"></div>
 					<div class="mainwp-search-options">
+						<?php do_action( 'mainwp_manage_themes_before_search_options' ); ?>
 						<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
 						<div class="ui mini form">
 							<div class="field">
@@ -1181,11 +1353,15 @@ class MainWP_Themes {
 								</div>
 							</div>
 						</div>
+						<?php do_action( 'mainwp_manage_themes_after_search_options' ); ?>
 					</div>
 					<div class="ui divider"></div>
 					<div class="mainwp-search-submit">
+						<?php do_action( 'mainwp_manage_themes_before_submit_button' ); ?>
 						<a href="#" class="ui green big fluid button" id="mainwp_show_all_active_themes"><?php esc_html_e( 'Show Themes', 'mainwp' ); ?></a>
+						<?php do_action( 'mainwp_manage_themes_after_submit_button' ); ?>
 					</div>
+					<?php do_action( 'mainwp_manage_themes_sidebar_bottom' ); ?>
 				</div>
 			</div>
 			<?php
@@ -1336,6 +1512,15 @@ class MainWP_Themes {
 	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
 	 */
 	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
+
+		/**
+		 * Action: mainwp_themes_before_auto_updates_table
+		 *
+		 * Fires before the Auto Update Themes table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_themes_before_auto_updates_table' );
 		?>
 		<table class="ui single line table" id="mainwp-all-active-themes-table">
 			<thead>
@@ -1403,17 +1588,48 @@ class MainWP_Themes {
 				</tr>
 			</tfoot>
 		</table>
+		<?php
+		/**
+		 * Action: mainwp_themes_after_auto_updates_table
+		 *
+		 * Fires before the Auto Update Themes table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_themes_after_auto_updates_table' );
+
+		$table_features = array(
+			'searching'  => 'true',
+			'stateSave'  => 'true',
+			'colReorder' => 'true',
+			'info'       => 'true',
+			'paging'     => 'false',
+			'ordering'   => 'true',
+			'order'      => '[ [ 2, "asc" ] ]',
+		);
+
+		/**
+		 * Filter: mainwp_theme_auto_updates_table_fatures
+		 *
+		 * Filters the Theme Auto Updates table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_theme_auto_updates_table_fatures', $table_features );
+		?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function() {
 				jQuery( '.mainwp-ui-page .ui.checkbox' ).checkbox();
 
 				jQuery( '#mainwp-all-active-themes-table' ).DataTable( {
-					"colReorder" : true,
-					"stateSave":  true,
-					"paging":   false,
-					"ordering": true,
+					"searching" : <?php echo $table_features['searching']; ?>,
+					"stateSave" : <?php echo $table_features['stateSave']; ?>,
+					"colReorder" : <?php echo $table_features['colReorder']; ?>,
+					"info" : <?php echo $table_features['info']; ?>,
+					"paging" : <?php echo $table_features['paging']; ?>,
+					"ordering" : <?php echo $table_features['ordering']; ?>,
+					"order" : <?php echo $table_features['order']; ?>,
 					"columnDefs": [ { "orderable": false, "targets": [ 0, 1, 6 ] } ],
-					"order": [ [ 2, "asc" ] ]
 				} );
 			} );
 		</script>
@@ -1446,6 +1662,16 @@ class MainWP_Themes {
 		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
+			<?php
+			/**
+			 * Action: mainwp_themes_before_ignored_updates
+			 *
+			 * Fires on the top of the Ignored Themes Updates page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_themes_before_ignored_updates', $ignoredThemes, $websites );
+			?>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Globally Ignored Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
@@ -1457,6 +1683,16 @@ class MainWP_Themes {
 			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
 		</h3>
 		<?php self::render_sites_ignored( $cnt, $websites ); ?>
+		<?php
+		/**
+		 * Action: mainwp_themes_after_ignored_updates
+		 *
+		 * Fires on the bottom of the Ignored Themes Updates page.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_themes_before_ignored_updates', $ignoredThemes, $websites );
+		?>
 		</div>
 		<?php
 		self::render_footer( 'Ignore' );
@@ -1607,6 +1843,16 @@ class MainWP_Themes {
 		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-themes" class="ui segment">
+			<?php
+			/**
+			 * Action: mainwp_themes_before_ignored_abandoned
+			 *
+			 * Fires on the top of the Ignored Themes Abandoned page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_themes_before_ignored_abandoned', $ignoredThemes, $websites );
+			?>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Globally Ignored Abandoned Themes', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Themes Tolerance date', 'mainwp' ); ?></div>
@@ -1618,6 +1864,16 @@ class MainWP_Themes {
 			<div class="sub header"><?php esc_html_e( 'These are themes you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Theme Tolerance date', 'mainwp' ); ?></div>
 		</h3>
 			<?php self::render_sites_ignored_abandoned( $cnt, $websites ); ?>
+			<?php
+			/**
+			 * Action: mainwp_themes_after_ignored_abandoned
+			 *
+			 * Fires on the bottom of the Ignored Themes Abandoned page.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_themes_after_ignored_abandoned', $ignoredThemes, $websites );
+			?>
 		</div>
 		<?php
 		self::render_footer( 'IgnoreAbandoned' );
@@ -1747,7 +2003,9 @@ class MainWP_Themes {
 	}
 
 
-	/** Hook the section help content to the Help Sidebar element */
+	/**
+	 * Hooks the section help content to the Help Sidebar element.
+	 */
 	public static function mainwp_help_content() {
 		if ( isset( $_GET['page'] ) && ( 'ThemesManage' === $_GET['page'] || 'ThemesInstall' === $_GET['page'] || 'ThemesAutoUpdate' === $_GET['page'] || 'ThemesIgnore' === $_GET['page'] || 'ThemesIgnoredAbandoned' === $_GET['page'] ) ) {
 			?>
@@ -1761,6 +2019,20 @@ class MainWP_Themes {
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
 				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
+				<?php
+				/**
+				 * Action: mainwp_themes_help_item
+				 *
+				 * Fires at the bottom of the help articles list in the Help sidebar on the Themes page.
+				 *
+				 * Suggested HTML markup:
+				 *
+				 * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_themes_help_item' );
+				?>
 			</div>
 			<?php
 		}

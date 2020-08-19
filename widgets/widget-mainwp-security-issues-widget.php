@@ -65,14 +65,30 @@ class MainWP_Security_Issues_Widget {
 	public static function render_issues( $websites, $total_securityIssues ) {
 		?>
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e( 'Security Issues', 'mainwp' ); ?>
+			<?php
+			/**
+			 * Filter: mainwp_security_issues_widget_title
+			 *
+			 * Filters the Security Issues widget title text.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_security_issues_widget_title', __( 'Security Issues', 'mainwp' ) ) );
+			?>
 			<div class="sub header"><?php esc_html_e( 'Detected security issues', 'mainwp' ); ?></div>
 		</h3>
 
 		<div class="ui section hidden divider"></div>
 
 		<?php
-		// We found some with security issues!
+		/**
+		 * Action: mainwp_security_issues_widget_top
+		 *
+		 * Fires at the bottom of the Security Issues widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_security_issues_widget_top' );
 		if ( $total_securityIssues > 0 ) {
 			?>
 		<div class="ui two column grid stackable">
@@ -104,7 +120,29 @@ class MainWP_Security_Issues_Widget {
 				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
 				<div class="column middle aligned">
-					<a href="admin.php?page=managesites&dashboard=<?php echo esc_attr( $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							<a href="
+							<?php
+							/**
+							 * Filter: mainwp_security_issues_list_item_title_url
+							 *
+							 * Filters the Security Issues widget list item title URL.
+							 *
+							 * @since 4.1
+							 */
+							echo esc_attr( apply_filters( 'mainwp_security_issues_list_item_title_url', 'admin.php?page=managesites&dashboard=' . $website->id, $website ) );
+							?>
+							">
+								<?php
+								/**
+								 * Filter: mainwp_security_issues_list_item_title
+								 *
+								 * Filters the Security Issues widget list item title text.
+								 *
+								 * @since 4.1
+								 */
+								echo stripslashes( apply_filters( 'mainwp_security_issues_list_item_title', $website->name, $website ) );
+								?>
+							</a>
 				</div>
 				<div class="column middle aligned">
 							<?php
@@ -119,6 +157,24 @@ class MainWP_Security_Issues_Widget {
 							}
 							?>
 				</div>
+						<?php
+						/**
+						 * Action: mainwp_security_issues_list_item_column
+						 *
+						 * Fires before the last (actions) colum in the security issues list.
+						 *
+						 * Preferred HTML structure:
+						 *
+						 * <div class="column middle aligned">
+						 * Your content here!
+						 * </div>
+						 *
+						 * @param object $website Object containing the child site info.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_security_issues_list_item_column', $website );
+						?>
 				<div class="column right aligned">
 					<a href="admin.php?page=managesites&scanid=<?php echo esc_attr( $website->id ); ?>" class="ui button mini basic" data-tooltip="<?php esc_attr_e( 'Click here to see details.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Details', 'mainwp' ); ?></a>
 					<?php if ( 0 == $website->securityIssues ) { ?>
@@ -131,9 +187,7 @@ class MainWP_Security_Issues_Widget {
 				</div>
 			<?php } ?>
 		</div>
-
 		<div class="ui active inverted dimmer" style="display:none" id="mainwp-secuirty-issues-loader"><div class="ui text loader">Please wait...</div></div>
-
 			<?php
 		} else {
 			?>
@@ -146,6 +200,14 @@ class MainWP_Security_Issues_Widget {
 		</h2>
 			<?php
 		}
+		/**
+		 * Action: mainwp_security_issues_widget_bottom
+		 *
+		 * Fires at the bottom of the Security Issues widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_security_issues_widget_bottom' );
 	}
 
 }

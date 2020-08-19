@@ -63,6 +63,9 @@ mainwp_update_pluginsthemes = function ( updateType, updateSiteIds )
                     title = __( "Updating everything: Translations..." );
                 }
                 mainwpPopup( '#mainwp-sync-sites-modal' ).setTitle( title ); // popup displayed.
+                mainwpPopup( '#mainwp-sync-sites-modal' ).setStatusText( '0 / ' + nrOfWebsites + ' ' + __( 'updated' ) ); // popup displayed.
+
+                
             } else {
                 if ( pType == 'plugin' )
                     title = __( "Updating plugins..." );

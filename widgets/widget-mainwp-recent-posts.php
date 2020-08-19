@@ -48,7 +48,7 @@ class MainWP_Recent_Posts {
 		 *
 		 * @since 4.0
 		 */
-		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 ); // $recent_number: support >=0 and <= 30.
+		$recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
 
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
@@ -84,26 +84,32 @@ class MainWP_Recent_Posts {
 		}
 
 		self::render_top_grid();
+
+		/**
+		 * Action: mainwp_recent_posts_widget_top
+		 *
+		 * Fires at the top of the Recent Posts widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_widget_top' );
+
+		self::render_published_posts( $allPosts, $recent_number );
+		self::render_draft_posts( $allPosts, $recent_number );
+		self::render_pending_posts( $allPosts, $recent_number );
+		self::render_future_posts( $allPosts, $recent_number );
+		self::render_trash_posts( $allPosts, $recent_number );
+
+		/**
+		 * Action: mainwp_recent_posts_after_lists
+		 *
+		 * Fires after the recent posts lists, before the bottom actions section.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_after_lists' );
 		?>
-		<!-- Published List -->
-		<?php self::render_published_posts( $allPosts, $recent_number ); ?>
-		<!-- END Published List -->
 
-		<!-- Draft List -->
-		<?php self::render_draft_posts( $allPosts, $recent_number ); ?>
-		<!-- END Draft List -->
-
-		<!-- Pending List -->
-		<?php self::render_pending_posts( $allPosts, $recent_number ); ?>
-		<!-- END Pending List -->
-
-		<!-- Future List -->
-		<?php self::render_future_posts( $allPosts, $recent_number ); ?>
-		<!-- END Future List -->
-
-		<!-- Trash List -->
-		<?php self::render_trash_posts( $allPosts, $recent_number ); ?>
-		<!-- END Trash List -->
 
 		<div class="ui hidden divider"></div>
 
@@ -116,6 +122,14 @@ class MainWP_Recent_Posts {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_recent_posts_widget_bottom
+		 *
+		 * Fires at the bottom of the Recent Posts widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_recent_posts_widget_bottom' );
 	}
 
 	/**
@@ -126,7 +140,16 @@ class MainWP_Recent_Posts {
 		<div class="ui grid">
 			<div class="twelve wide column">
 				<h3 class="ui header handle-drag">
-					<?php esc_html_e( 'Recent Posts', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_recent_posts_widget_title
+					 *
+					 * Filters the recent posts widget title text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_recent_posts_widget_title', __( 'Recent Posts', 'mainwp' ) ) );
+					?>
 					<div class="sub header"><?php esc_html_e( 'The most recent posts from your websites', 'mainwp' ); ?></div>
 				</h3>
 			</div>
@@ -151,8 +174,8 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render Published Posts.
 	 *
-	 * @param mixed $allPosts All posts data.
-	 * @param mixed $recent_number Number of posts.
+	 * @param array $allPosts      All posts data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
@@ -160,6 +183,17 @@ class MainWP_Recent_Posts {
 		?>
 		<div class="recent_posts_published ui tab active" data-tab="published">
 			<?php
+			/**
+			 * Action: mainwp_recent_posts_before_publised_list
+			 *
+			 * Fires before the list of recent published Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_before_publised_list', $allPosts, $recent_number );
 			if ( 0 == count( $recent_posts_published ) ) {
 				?>
 			<h2 class="ui icon header">
@@ -216,6 +250,19 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_posts_after_publised_list
+			 *
+			 * Fires after the list of recent published Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_after_publised_list', $allPosts, $recent_number );
+			?>
 		</div>
 		<?php
 	}
@@ -223,8 +270,8 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all draft posts.
 	 *
-	 * @param mixed $allPosts All posts data.
-	 * @param mixed $recent_number Number of Posts.
+	 * @param array $allPosts      All posts data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_draft_posts( $allPosts, $recent_number ) {
 
@@ -233,6 +280,17 @@ class MainWP_Recent_Posts {
 		?>
 		<div class="recent_posts_draft ui tab" data-tab="draft">
 			<?php
+			/**
+			 * Action: mainwp_recent_posts_before_draft_list
+			 *
+			 * Fires before the list of recent draft Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_before_draft_list', $allPosts, $recent_number );
 			if ( 0 == count( $recent_posts_draft ) ) {
 				?>
 			<h2 class="ui icon header">
@@ -286,6 +344,19 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_posts_after_draft_list
+			 *
+			 * Fires after the list of recent draft Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_after_draft_list', $allPosts, $recent_number );
+			?>
 		</div>
 		<?php
 	}
@@ -293,8 +364,8 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all pending posts.
 	 *
-	 * @param mixed $allPosts All posts data.
-	 * @param mixed $recent_number Number of posts.
+	 * @param array $allPosts      All posts data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_pending_posts( $allPosts, $recent_number ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
@@ -303,6 +374,17 @@ class MainWP_Recent_Posts {
 		?>
 		<div class="recent_posts_pending ui bottom attached tab" data-tab="pending">
 				<?php
+				/**
+				 * Action: mainwp_recent_posts_before_pending_list
+				 *
+				 * Fires before the list of recent pending Posts.
+				 *
+				 * @param array $allPosts      All posts data.
+				 * @param int   $recent_number Number of posts.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_posts_before_pending_list', $allPosts, $recent_number );
 				if ( 0 == count( $recent_posts_pending ) ) {
 					?>
 				<h2 class="ui icon header">
@@ -356,6 +438,19 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_posts_after_pending_list
+			 *
+			 * Fires after the list of recent pending Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_after_pending_list', $allPosts, $recent_number );
+			?>
 		</div>
 		<?php
 	}
@@ -363,17 +458,26 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all future posts.
 	 *
-	 * @param mixed $allPosts All posts data.
-	 * @param mixed $recent_number Number of post.
+	 * @param array $allPosts      All posts data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_future_posts( $allPosts, $recent_number ) {
-
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
 		$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
-
 		?>
 		<div class="recent_posts_future ui tab" data-tab="future">
 				<?php
+				/**
+				 * Action: mainwp_recent_posts_before_future_list
+				 *
+				 * Fires before the list of recent future Posts.
+				 *
+				 * @param array $allPosts      All posts data.
+				 * @param int   $recent_number Number of posts.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_posts_before_future_list', $allPosts, $recent_number );
 				if ( 0 == count( $recent_posts_future ) ) {
 					?>
 				<h2 class="ui icon header">
@@ -428,6 +532,19 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_posts_after_future_list
+			 *
+			 * Fires after the list of recent future Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_after_future_list', $allPosts, $recent_number );
+			?>
 		</div>
 		<?php
 	}
@@ -435,8 +552,8 @@ class MainWP_Recent_Posts {
 	/**
 	 * Render all trashed posts.
 	 *
-	 * @param mixed $allPosts All posts data.
-	 * @param mixed $recent_number Number of posts.
+	 * @param array $allPosts      All posts data.
+	 * @param int   $recent_number Number of posts.
 	 */
 	public static function render_trash_posts( $allPosts, $recent_number ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
@@ -445,6 +562,17 @@ class MainWP_Recent_Posts {
 		?>
 		<div class="recent_posts_trash ui tab" data-tab="trash">
 				<?php
+				/**
+				 * Action: mainwp_recent_posts_before_trash_list
+				 *
+				 * Fires before the list of recent trash Posts.
+				 *
+				 * @param array $allPosts      All posts data.
+				 * @param int   $recent_number Number of posts.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_recent_posts_before_trash_list', $allPosts, $recent_number );
 				if ( 0 == count( $recent_posts_trash ) ) {
 					?>
 				<h2 class="ui icon header">
@@ -497,6 +625,19 @@ class MainWP_Recent_Posts {
 					</div>
 				<?php } ?>
 			</div>
+			<?php
+			/**
+			 * Action: mainwp_recent_posts_after_trash_list
+			 *
+			 * Fires after the list of recent trash Posts.
+			 *
+			 * @param array $allPosts      All posts data.
+			 * @param int   $recent_number Number of posts.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_recent_posts_after_trash_list', $allPosts, $recent_number );
+			?>
 		</div>
 		<?php
 	}
@@ -566,9 +707,10 @@ class MainWP_Recent_Posts {
 	 *
 	 * Initiate try catch for chosen Action
 	 *
-	 * @param mixed $pAction Post Action.
+	 * @param string $pAction Post Action.
+	 * @param string $type Post type.
 	 */
-	public static function action( $pAction ) {
+	public static function action( $pAction, $type = 'post' ) {
 		$postId       = $_POST['postId'];
 		$websiteIdEnc = $_POST['websiteId'];
 
@@ -585,6 +727,15 @@ class MainWP_Recent_Posts {
 			die( wp_json_encode( array( 'error' => 'You can not edit this website!' ) ) );
 		}
 
+		/**
+		* Action: mainwp_before_post_action
+		*
+		* Fires before post/page publish/unpublish/trash/delete/restore actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_before_post_action', $type, $pAction, $postId, $website );
+
 		try {
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
@@ -597,6 +748,15 @@ class MainWP_Recent_Posts {
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
 		}
+
+		/**
+		* Action: mainwp_after_post_action
+		*
+		* Fires after post/page publish/unpublish/trash/delete/restore actions.
+		*
+		* @since 4.1
+		*/
+		do_action( 'mainwp_after_post_action', $information, $type, $pAction, $postId, $website );
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' != $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error!' ) ) );
@@ -634,9 +794,9 @@ class MainWP_Recent_Posts {
 				$website,
 				'post_action',
 				array(
-					'action'     => $pAction,
-					'id'         => $postId,
-					'post_data'  => $post_data,
+					'action'    => $pAction,
+					'id'        => $postId,
+					'post_data' => $post_data,
 				)
 			);
 		} catch ( MainWP_Exception $e ) {

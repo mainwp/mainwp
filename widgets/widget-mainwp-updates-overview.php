@@ -60,7 +60,7 @@ class MainWP_Updates_Overview {
 			'timeout' => 15,
 			'body'    => array(
 				'action'  => $action,
-				'request'    => serialize( $args ), // phpcs:ignore -- WP org api params
+				'request'    => serialize( $args ), // phpcs:ignore -- WP.org API params
 			),
 		);
 		$request = wp_remote_post( $url, $args );
@@ -133,7 +133,7 @@ class MainWP_Updates_Overview {
 	 *
 	 * Grab available Child Sites updates a build Widget.
 	 */
-	public static function render_sites() { // phpcs:ignore -- complex method.
+	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
 		$globalView = true;
 		global $current_user;
@@ -228,7 +228,7 @@ class MainWP_Updates_Overview {
 
 							$premiumUpgrade = array_filter( $premiumUpgrade );
 							if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-								$plugin_upgrades[ $crrSlug ] = array(); // to fix warning.
+								$plugin_upgrades[ $crrSlug ] = array();
 							}
 
 							$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
@@ -364,7 +364,7 @@ class MainWP_Updates_Overview {
 		}
 
 		/**
-		 * Limits number of updates to process.
+		 * Filter: mainwp_limit_updates_all
 		 *
 		 * Limits the number of updates that will be processed in a single run on Update Everything action.
 		 *
@@ -408,31 +408,15 @@ class MainWP_Updates_Overview {
 
 		$can_total_update = ( $user_can_update_wordpress && $user_can_update_plugins && $user_can_update_themes && $user_can_update_translation ) ? true : false;
 
-		?>
-		<?php self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all ); ?>
-		<!-- END Total Updates -->
-
-		<?php self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END WP Updates -->
-		<?php self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END Plugins Updates -->
-		<?php self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END Themes Updates -->
-
-		<?php if ( 1 == $mainwp_show_language_updates ) : ?>
-			<?php self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ); ?>
-		<!-- END Language Updates -->
-		<?php endif; ?>
-
-		<?php self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid ); ?>
-		<!-- END Abandoned plugins -->
-
-		<?php self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid ); ?>
-		<!-- END Abandoned themes -->
-
-		<?php // Invisible section to support global updates all. ?>
-
-		<?php
+		self::render_total_update( $total_upgrades, $lastSyncMsg, $can_total_update, $limit_updates_all );
+		self::render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update );
+		self::render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update );
+		self::render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update );
+		if ( 1 == $mainwp_show_language_updates ) {
+			self::render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update );
+		}
+		self::render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid );
+		self::render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid );
 		self::render_global_update(
 			$user_can_update_wordpress,
 			$total_wp_upgrades,
@@ -448,7 +432,6 @@ class MainWP_Updates_Overview {
 			$total_translation_upgrades,
 			$all_translations_updates
 		);
-
 		self::render_bottom( $websites, $globalView );
 	}
 
@@ -465,13 +448,32 @@ class MainWP_Updates_Overview {
 		<div class="ui grid">
 			<div class="sixteen wide column">
 				<h3 class="ui header handle-drag">
-				<?php esc_html_e( 'Updates Overview', 'mainwp' ); ?>
+					<?php
+					/**
+					 * Filter: mainwp_updates_overview_widget_title
+					 *
+					 * Filters the Updates Overview widget title text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_updates_overview_widget_title', __( 'Updates Overview', 'mainwp' ) ) );
+					?>
 					<div class="sub header"><?php echo $lastSyncMsg; ?></div>
 				</h3>
 			</div>
 		</div>
 		<input type="hidden" name="updatesoverview_limit_updates_all" id="updatesoverview_limit_updates_all" value="<?php echo intval( $limit_updates_all ); ?>">
-			<div class="ui two column stackable grid"><!-- Total Updates -->
+			<?php
+			/**
+			 * Action: mainwp_updates_overview_before_total_updates
+			 *
+			 * Fires before the total updates section in the Updates Overview widget.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_overview_before_total_updates' );
+			?>
+			<div class="ui two column stackable grid">
 				<div class="column">
 					<div class="ui large statistic horizontal">
 						<div class="value">
@@ -483,37 +485,79 @@ class MainWP_Updates_Overview {
 					</div>
 				</div>
 				<div class="column middle aligned">
-		<?php if ( $can_total_update ) : ?>
-			<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
-					<a href="#"
-					<?php
-					if ( 0 == $total_upgrades ) {
-						echo 'disabled';
-					} else {
-						?>
-						onClick="return updatesoverview_global_upgrade_all( 'all' );"  <?php } ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update Everything', 'mainwp' ); ?></a>
+				<?php
+				/**
+				 * Filter:  mainwp_update_everything_button_text
+				 *
+				 * Filters the Update Everything button text.
+				 *
+				 * @since 4.1
+				 */
+				if ( $can_total_update ) :
+					?>
+					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
+					<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
 		<?php endif; ?>
 				</div>
 			</div>
 		<?php
+			/**
+			 * Action: mainwp_updates_overview_after_total_updates
+			 *
+			 * Fires after the total updates section in the Updates Overview widget.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_updates_overview_before_total_updates' );
+		?>
+		<?php
 	}
 
 	/**
-	 * Render WordPress update detail.
+	 * Render WordPress update details.
 	 *
-	 * @param bool true|false $user_can_update_wordpress permission to update WordPress.
-	 * @param int             $total_wp_upgrades  total number of WordPress update.
-	 * @param bool true|false $globalView global view or not.
-	 * @param int             $current_wpid  current site id.
-	 * @param string          $continue_update  string of continue update.
+	 * @param bool   $user_can_update_wordpress Permission to update WordPress.
+	 * @param int    $total_wp_upgrades         Total number of WordPress update.
+	 * @param bool   $globalView                Global view or not.
+	 * @param int    $current_wpid              Current site ID.
+	 * @param string $continue_update           String of continue update.
 	 */
 	public static function render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update ) {
 		?>
 		<div class="ui hidden divider"></div>
-		<div class="ui horizontal divider"><?php esc_html_e( 'Update Details', 'mainwp' ); ?></div>
+		<div class="ui horizontal divider">
+			<?php
+			/**
+			 * Filter: mainwp_updates_overview_update_details_divider
+			 *
+			 * Filters the Update Details divider text in the Updates Overview widget.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_updates_overview_update_details_divider', __( 'Update Details', 'mainwp' ) ) );
+			?>
+		</div>
 		<div class="ui hidden divider"></div>
+		<?php
+		/**
+		 * Action: mainwp_updates_overview_before_update_details
+		 *
+		 * Fires at the top of the Update Details section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_update_details' );
 
+		/**
+		 * Action: mainwp_updates_overview_before_wordpress_updates
+		 *
+		 * Fires before the WordPress updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_wordpress_updates' );
+		?>
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
@@ -548,6 +592,14 @@ class MainWP_Updates_Overview {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_overview_after_wordpress_updates
+		 *
+		 * Fires after the WordPress updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_wordpress_updates' );
 	}
 
 	/**
@@ -560,6 +612,14 @@ class MainWP_Updates_Overview {
 	 * @param string          $continue_update  string of continue update.
 	 */
 	public static function render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update ) {
+		/**
+		 * Action: mainwp_updates_overview_before_plugin_updates
+		 *
+		 * Fires before the Plugin updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_plugin_updates' );
 		?>
 	<div class="ui grid">
 		<div class="two column row">
@@ -589,7 +649,6 @@ class MainWP_Updates_Overview {
 								<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					} else {
-
 						?>
 							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 							<a href="#" onClick="return updatesoverview_global_upgrade_all('plugin');" class="ui basic green button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update all Plugins on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
@@ -601,6 +660,14 @@ class MainWP_Updates_Overview {
 						</div>
 				</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_overview_after_plugin_updates
+		 *
+		 * Fires after the Plugin updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_plugin_updates' );
 	}
 
 	/**
@@ -613,6 +680,14 @@ class MainWP_Updates_Overview {
 	 * @param string          $continue_update  string of continue update.
 	 */
 	public static function render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update ) {
+		/**
+		 * Action: mainwp_updates_overview_before_theme_updates
+		 *
+		 * Fires before the Theme updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_theme_updates' );
 		?>
 	<div class="ui grid">
 		<div class="two column row">
@@ -652,17 +727,33 @@ class MainWP_Updates_Overview {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_overview_after_theme_updates
+		 *
+		 * Fires after the Theme updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_theme_updates' );
 	}
 	/**
-	 * Render language update detail.
+	 * Render language update details.
 	 *
-	 * @param bool   $user_can_update_translation permission to update.
-	 * @param int    $total_translation_upgrades  total number of update.
-	 * @param bool   $globalView global view or not.
-	 * @param int    $current_wpid  current site id.
-	 * @param string $continue_update  string of continue update.
+	 * @param bool   $user_can_update_translation Permission to update.
+	 * @param int    $total_translation_upgrades  Total number of update.
+	 * @param bool   $globalView                  Global view or not.
+	 * @param int    $current_wpid                Current site id.
+	 * @param string $continue_update             String of continue update.
 	 */
 	public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ) {
+		/**
+		 * Action: mainwp_updates_overview_before_translation_updates
+		 *
+		 * Fires before the Translation updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_translation_updates' );
 		?>
 	<div class="ui grid">
 		<div class="two column row">
@@ -702,6 +793,23 @@ class MainWP_Updates_Overview {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_overview_after_translation_updates
+		 *
+		 * Fires after the Translation updates section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_translation_updates' );
+
+		/**
+		 * Action: mainwp_updates_overview_after_update_details
+		 *
+		 * Fires at the bottom of the Update Details section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_update_details' );
 	}
 
 	/**
@@ -714,8 +822,29 @@ class MainWP_Updates_Overview {
 	public static function render_abandoned_plugins( $total_plugins_outdate, $globalView, $current_wpid ) {
 		?>
 		<div class="ui hidden divider"></div>
-		<div class="ui horizontal divider"><?php esc_html_e( 'Abandoned Plugins & Themes', 'mainwp' ); ?></div>
+		<div class="ui horizontal divider">
+		<?php
+		/**
+		 * Filter: mainwp_updates_overview_abandoned_plugins_themes_divider
+		 *
+		 * Filters the Abandoned Plugins & Themes divider text in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		echo esc_html( apply_filters( 'mainwp_updates_overview_abandoned_plugins_themes_divider', __( 'Abandoned Plugins & Themes', 'mainwp' ) ) );
+		?>
+		</div>
 		<div class="ui hidden divider"></div>
+		<?php
+		/**
+		 * Action: mainwp_updates_overview_before_abandoned_plugins_themes
+		 *
+		 * Fires at the top of the Abandoned Plugins & Themes section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_before_abandoned_plugins_themes' );
+		?>
 		<div class="ui grid">
 			<div class="two column row">
 				<div class="column">
@@ -746,9 +875,9 @@ class MainWP_Updates_Overview {
 	/**
 	 * Render abandoned themes detail.
 	 *
-	 * @param int             $total_themes_outdate  total number of update.
-	 * @param bool true|false $globalView global view or not.
-	 * @param int             $current_wpid  current site id.
+	 * @param int  $total_themes_outdate Total number of update.
+	 * @param bool $globalView global    View or not.
+	 * @param int  $current_wpid         Current site ID.
 	 */
 	public static function render_abandoned_themes( $total_themes_outdate, $globalView, $current_wpid ) {
 		?>
@@ -777,6 +906,14 @@ class MainWP_Updates_Overview {
 			</div>
 		</div>
 		<?php
+		/**
+		 * Action: mainwp_updates_overview_after_abandoned_plugins_themes
+		 *
+		 * Fires at the bottom of the Abandoned Plugins & Themes section in the Updates Overview widget.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_updates_overview_after_abandoned_plugins_themes' );
 	}
 
 	/**
@@ -784,13 +921,13 @@ class MainWP_Updates_Overview {
 	 *
 	 * Render global updates.
 	 *
-	 * @param bool  $user_can_update_wordpress permission to update WordPress.
-	 * @param int   $total_wp_upgrades total WordPress update.
-	 * @param mixed $all_wp_updates all WordPress update list.
+	 * @param bool  $user_can_update_wordpress Permission to update WordPress.
+	 * @param int   $total_wp_upgrades         Total WordPress update.
+	 * @param array $all_wp_updates            All WordPress update list.
 	 *
 	 * @param bool  $user_can_update_plugins permission to update plugings.
 	 * @param int   $total_plugin_upgrades total WordPress update.
-	 * @param mixed $all_plugins_updates all WordPress update list.
+	 * @param array $all_plugins_updates all WordPress update list.
 	 *
 	 * @param bool  $user_can_update_themes permission to update themes.
 	 * @param int   $total_theme_upgrades total themes update.
@@ -879,8 +1016,8 @@ class MainWP_Updates_Overview {
 	/**
 	 * Render bottom of widget.
 	 *
-	 * @param object  $websites all sites.
-	 * @param boolean $globalView global view or not.
+	 * @param object $websites   Object containing child sites info.
+	 * @param bool   $globalView Whether it's global or individual site view.
 	 */
 	public static function render_bottom( $websites, $globalView ) {
 
@@ -891,9 +1028,17 @@ class MainWP_Updates_Overview {
 			$site_ids[] = $website->id;
 		}
 
+		/**
+		 * Action: mainwp_updatesoverview_widget_bottom
+		 *
+		 * Fires at the bottom of the Updates Overview widgets.
+		 *
+		 * @param array $side_ids Array of sites IDs.
+		 * @param bool  $globalView Whether it's global or individual site view.
+		 *
+		 * @since 4.0
+		 */
 		do_action( 'mainwp_updatesoverview_widget_bottom', $site_ids, $globalView );
-
-		// render modal.
 		?>
 		<div class="ui modal" id="updatesoverview-backup-box" tabindex="0">
 				<div class="header"><?php esc_html_e( 'Backup Check', 'mainwp' ); ?></div>
@@ -912,9 +1057,9 @@ class MainWP_Updates_Overview {
 	/**
 	 * Method dismiss_sync_errors()
 	 *
-	 * @param boolean $dismiss true|false.
+	 * @param bool $dismiss true|false.
 	 *
-	 * @return boolean true
+	 * @return bool true
 	 */
 	public static function dismiss_sync_errors( $dismiss = true ) {
 		global $current_user;

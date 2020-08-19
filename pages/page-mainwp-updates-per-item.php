@@ -288,6 +288,7 @@ class MainWP_Updates_Per_Item {
 											'title'   => MainWP_Updates::render_site_link_dashboard( $website, false ),
 											'version' => esc_html( $theme_upgrade['Version'] ),
 											'latest'  => esc_html( $theme_upgrade['update']['new_version'] ),
+											'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
 											'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
 										);
 										?>
@@ -474,11 +475,11 @@ class MainWP_Updates_Per_Item {
 				?>
 				<tr class="title">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $pluginsOutdateInfo[ $slug ]['uri'] ) ? rawurlencode( $pluginsOutdateInfo[ $slug ]['uri'] ) : '' ) . '&name=' . rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $pluginsOutdateInfo[ $slug ]['Name'] ); ?></a></td>
+					<td><a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $val['uri'] ) ? rawurlencode( $val['uri'] ) : '' ) . '&name=' . rawurlencode( $val['name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $val['name'] ); ?></a></td>
 					<td sort-value="<?php echo $cnt; ?>"><?php echo $cnt; ?> <?php echo _n( 'Website', 'Websites', $cnt, 'mainwp' ); ?></td>
 					<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
-							<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" class="ui mini green button" onClick="return updatesoverview_plugins_abandoned_ignore_all( '<?php echo $plugin_name; ?>', '<?php echo rawurlencode( $val['name'] ); ?>', this )"><?php esc_html_e( 'Ignore Globally', 'mainwp' ); ?></a>
 						<?php } ?>
 					</td>
 				</tr>
@@ -493,7 +494,7 @@ class MainWP_Updates_Per_Item {
 									<th class="no-sort"></th>
 								</tr>
 							</thead>
-							<tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo rawurlencode( $pluginsOutdateInfo[ $slug ]['Name'] ); ?>" dismissed="0">
+							<tbody class="abandoned-plugins-ignore-global" plugin_slug="<?php echo rawurlencode( $slug ); ?>" plugin_name="<?php echo rawurlencode( $val['name'] ); ?>" dismissed="0">
 							<?php
 							MainWP_DB::data_seek( $websites, 0 );
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {

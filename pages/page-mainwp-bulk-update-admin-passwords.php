@@ -45,22 +45,18 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	}
 
 	/**
-	 * Method render_footer()
+	 * Renders the Admin Passwords page footer.
 	 *
-	 * Close the HTML container.
-	 *
-	 * @param string $shownPage The page slug shown at this moment.
+	 * @param string $shownPage Current page.
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
 	}
 
 	/**
-	 * Method render()
-	 *
-	 * Render Admin Passwords Page.
+	 * Renders the Admin Passwords page.
 	 */
-	public static function render() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$show_form = true;
 		$errors    = array();
 
@@ -168,23 +164,18 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				}
 			}
 		}
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
 
 		MainWP_User::render_header( 'UpdateAdminPasswords' );
-
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'admin_nicename', 'admin_useremail' ) ) );
-		?>
-		<?php if ( ! $show_form ) : ?>
-			<?php self::render_modal( $dbwebsites, $output ); ?>
-		<?php endif; ?>
-		<?php self::render_bulk_form( $websites ); ?>
-		<?php
+		if ( ! $show_form ) {
+			self::render_modal( $dbwebsites, $output );
+		}
+		self::render_bulk_form( $websites );
 		MainWP_User::render_footer( 'UpdateAdminPasswords' );
 	}
 
 	/**
-	 * Method render_modal()
-	 *
-	 * Render update password results.
+	 * Renders update password results.
 	 *
 	 * @param object $dbwebsites The websites object.
 	 * @param object $output Result of update password.
@@ -194,6 +185,16 @@ class MainWP_Bulk_Update_Admin_Passwords {
 		<div class="ui modal" id="mainwp-reset-admin-passwords-modal">
 			<div class="header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
 			<div class="scrolling content">
+				<?php
+				/**
+				 * Action: mainwp_reset_admin_pass_modal_top
+				 *
+				 * Fires at the top of the Update Admin Passwords modal.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_reset_admin_pass_modal_top' );
+				?>
 				<div class="ui relaxed divided list">
 					<?php foreach ( $dbwebsites as $website ) : ?>
 						<div class="item">
@@ -204,6 +205,16 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php
+				/**
+				 * Action: mainwp_reset_admin_pass_modal_bottom
+				 *
+				 * Fires at the bottom of the Update Admin Passwords modal.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_reset_admin_pass_modal_bottom' );
+				?>
 			</div>
 			<div class="actions">
 				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
@@ -216,13 +227,20 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	}
 
 	/**
-	 * Method render_bulk_form()
+	 * Renders bulk update administrator password form.
 	 *
-	 * Render bulk update administrator password form.
-	 *
-	 * @param mixed $websites The websites object.
+	 * @param object $websites Object conaining child sites info.
 	 */
 	public static function render_bulk_form( $websites ) {
+
+		/**
+		 * Filter: mainwp_update_admin_password_complexity
+		 *
+		 * Filters the Password lenght for the Update Admin Password, Password field.
+		 *
+		 * Since 4.1
+		 */
+		$pass_complexity = apply_filters( 'mainwp_update_admin_password_complexity', '24' );
 		?>
 		<div class="ui alt segment" id="mainwp-bulk-update-admin-passwords">
 				<form action="" method="post" name="createuser" id="createuser">
@@ -230,7 +248,16 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
 					<div class="mainwp-main-content">
 						<div class="ui hidden divider"></div>
-						<h3 class="ui dividing header"><?php esc_html_e( 'Connected Admin Users', 'mainwp' ); ?></h3>
+						<?php
+						/**
+						 * Action: mainwp_admin_pass_before_users_table
+						 *
+						 * Fires before the Connected Admin Users mysql_list_tables
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_admin_pass_before_users_table' );
+						?>
 						<table  id="mainwp-admin-users-table" class="ui padded selectable compact single line table">
 							<thead>
 								<tr>
@@ -252,12 +279,40 @@ class MainWP_Bulk_Update_Admin_Passwords {
 								<?php MainWP_DB::free_result( $websites ); ?>
 							</tbody>
 						</table>
+						<?php
+						/**
+						 * Action: mainwp_admin_pass_before_users_table
+						 *
+						 * Fires before the Connected Admin Users mysql_list_tables
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_admin_pass_before_users_table' );
+
+						$table_features = array(
+							'searching'  => 'true',
+							'paging'     => 'true',
+							'info'       => 'true',
+							'colReorder' => 'true',
+							'stateSave'  => 'true',
+						);
+						/**
+						 * Filter: mainwp_admin_users_table_fatures
+						 *
+						 * Filters Admin Users table features.
+						 *
+						 * @since 4.1
+						 */
+						$table_features = apply_filters( 'mainwp_admin_users_table_fatures', $table_features );
+						?>
 						<script type="text/javascript">
 						jQuery( document ).ready( function () {
 							jQuery( '#mainwp-admin-users-table' ).DataTable( {
-								"colReorder" : true,
-								"stateSave":  true,
-								"pagingType": "full_numbers",
+								"searching" : <?php echo $table_features['searching']; ?>,
+								"paging" : <?php echo $table_features['paging']; ?>,
+								"info" : <?php echo $table_features['info']; ?>,
+								"colReorder" : <?php echo $table_features['colReorder']; ?>,
+								"stateSave":  <?php echo $table_features['stateSave']; ?>,
 								"order": [],
 								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 							} );
@@ -265,29 +320,109 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						</script>
 					</div>
 					<div class="mainwp-side-content mainwp-no-padding">
+						<?php
+						/**
+						 * Action: mainwp_admin_pass_sidebar_top
+						 *
+						 * Fires at the top of the sidebar on Admin Passwords page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_admin_pass_sidebar_top' );
+						?>
 						<div class="mainwp-select-sites">
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_before_select_sites
+							 *
+							 * Fires before the Select Sites section on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_before_select_sites' );
+							?>
 							<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 							<?php MainWP_UI::select_sites_box(); ?>
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_after_select_sites
+							 *
+							 * Fires after the Select Sites section on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_after_select_sites' );
+							?>
 						</div>
 						<div class="ui divider"></div>
 						<div class="mainwp-search-options">
 							<div class="ui header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_before_pass_form
+							 *
+							 * Fires before the New password form on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_before_pass_form' );
+							?>
 							<div class="ui mini form">
 								<div class="field">
 									<label><?php esc_html_e( 'New Password', 'mainwp' ); ?></label>
 									<div class="ui fluid input">
 										<input class="hidden" value=" "/>
-										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( 24 ) ); ?>">
+										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
 									</div>
 									<br />
 									<button class="ui basic green fluid button wp-generate-pw"><?php esc_html_e( 'Generate New Password', 'mainwp' ); ?></button>
 								</div>
 							</div>
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_after_pass_form
+							 *
+							 * Fires after the New password form on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_after_pass_form' );
+							?>
 						</div>
 						<div class="ui divider"></div>
 						<div class="mainwp-search-submit">
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_before_submit_button
+							 *
+							 * Fires before the Submit button on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_before_submit_button' );
+							?>
 							<input type="submit" name="bulk_updateadminpassword" id="bulk_updateadminpassword" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Password', 'mainwp' ); ?> "/>
+							<?php
+							/**
+							 * Action: mainwp_admin_pass_after_submit_button
+							 *
+							 * Fires after the Submit button on the Admin Passwords page.
+							 *
+							 * @since 4.1
+							 */
+							do_action( 'mainwp_admin_pass_after_submit_button' );
+							?>
 						</div>
+						<?php
+						/**
+						 * Action: mainwp_admin_pass_sidebar_bottom
+						 *
+						 * Fires at the bottom of the sidebar on Admin Passwords page.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'mainwp_admin_pass_sidebar_bottom' );
+						?>
 					</div>
 					<div style="clear:both"></div>
 				</form>

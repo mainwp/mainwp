@@ -43,14 +43,35 @@ class MainWP_Notes {
 		?>
 
 		<h3 class="ui header handle-drag">
-			<?php esc_html_e( 'Notes', 'mainwp' ); ?>
+			<?php
+			/**
+			 * Filter: mainwp_notes_widget_title
+			 *
+			 * Filters the Notes widget title text.
+			 *
+			 * @param object $website Object containing the child site info.
+			 *
+			 * @since 4.1
+			 */
+			echo esc_html( apply_filters( 'mainwp_notes_widget_title', __( 'Notes', 'mainwp' ), $website ) );
+			?>
 			<div class="sub header"><?php esc_html_e( 'Child site notes', 'mainwp' ); ?></div>
 		</h3>
 
 		<div class="ui section hidden divider"></div>
 
-		<div>
 			<?php
+			/**
+			 * Action: mainwp_notes_widget_top
+			 *
+			 * Fires at the top of the Notes widget on the Individual site overview page.
+			 *
+			 * @param object $website Object containing the child site info.
+			 *
+			 * @since 4.1
+			 */
+			do_action( 'mainwp_notes_widget_top', $website );
+
 			if ( '' == $website->note ) {
 				?>
 				<h2 class="ui icon header">
@@ -69,9 +90,19 @@ class MainWP_Notes {
 				<?php
 			}
 			?>
-		</div>
 		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo $esc_note; ?></span>
 		<?php
+		/**
+		 * Action: mainwp_notes_widget_bottom
+		 *
+		 * Fires at the bottom of the Notes widget on the Individual site overview page.
+		 *
+		 * @param object $website Object containing the child site info.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_notes_widget_bottom', $website );
+
 		MainWP_UI::render_modal_edit_notes();
 	}
 

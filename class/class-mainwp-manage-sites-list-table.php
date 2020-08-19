@@ -863,43 +863,43 @@ class MainWP_Manage_Sites_List_Table {
 				</tr>
 	</tfoot>
 	</table>
-	<?php
-	/**
-	 * Action: mainwp_after_manage_sites_table
-	 *
-	 * Fires after the Manage Sites table.
-	 *
-	 * @since 4.1
-	 */
-	do_action( 'mainwp_after_manage_sites_table' );
-	?>
+		<?php
+		/**
+		 * Action: mainwp_after_manage_sites_table
+		 *
+		 * Fires after the Manage Sites table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_manage_sites_table' );
+		?>
 	<div id="mainwp-loading-sites" style="display: none;">
 	<div class="ui active inverted dimmer">
 	<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading ...', 'mainwp' ); ?></div>
 	</div>
 	</div>
 
-	<?php
-	$table_features = array(
-		'searching'     => 'true',
-		'paging'        => 'true',
-		'pagingType'    => '"full_numbers"',
-		'info'          => 'true',
-		'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
-		'stateSave'     => 'true',
-		'stateDuration' => '0',
-		'order'         => '[]',
-	);
+		<?php
+		$table_features = array(
+			'searching'     => 'true',
+			'paging'        => 'true',
+			'pagingType'    => '"full_numbers"',
+			'info'          => 'true',
+			'colReorder'    => '{ fixedColumnsLeft: 1, fixedColumnsRight: 1 }',
+			'stateSave'     => 'true',
+			'stateDuration' => '0',
+			'order'         => '[]',
+		);
 
-	/**
-	 * Filter: mainwp_sites_table_features
-	 *
-	 * Filter the Monitoring table features.
-	 *
-	 * @since 4.1
-	 */
-	$table_features = apply_filters( 'mainwp_sites_table_features', $table_features );
-	?>
+		/**
+		 * Filter: mainwp_sites_table_features
+		 *
+		 * Filter the Monitoring table features.
+		 *
+		 * @since 4.1
+		 */
+		$table_features = apply_filters( 'mainwp_sites_table_features', $table_features );
+		?>
 
 	<script type="text/javascript">
 		mainwp_manage_sites_screen_options = function () {

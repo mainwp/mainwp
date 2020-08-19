@@ -1089,8 +1089,9 @@ class MainWP_Updates {
 	 * @param array  $all_groups                 Array of all groups.
 	 * @param array  $allTranslations            Array of all translations.
 	 * @param array  $translationsInfo           Array of all translations info.
+	 * @param bool   $mainwp_show_language_updates Either or not show language updates.
 	 * @param int    $site_offset_for_groups     Offset value.
-	 * @param string $site_view current          Site view.
+	 * @param string $site_view                  Current Site view.
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
 		if ( 1 === $mainwp_show_language_updates ) {

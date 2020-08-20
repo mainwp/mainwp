@@ -339,7 +339,7 @@ class MainWP_Widget_Plugins {
 			*
 			* @since 4.1
 			*/
-			do_action( 'mainwp_before_plugin_action', $pAction, $plugin, $website );
+			do_action( 'mainwp_before_plugin_action', $action, $plugin, $website );
 
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
@@ -357,7 +357,7 @@ class MainWP_Widget_Plugins {
 			*
 			* @since 4.1
 			*/
-			do_action( 'mainwp_after_plugin_action', $information, $pAction, $plugin, $website );
+			do_action( 'mainwp_after_plugin_action', $information, $action, $plugin, $website );
 
 		} catch ( MainWP_Exception $e ) {
 			die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );

@@ -638,7 +638,7 @@ class MainWP_Server_Information {
 		 *
 		 * @since 4.1
 		 */
-		do_action( 'mainwp_after_system_requirements_check' );
+		do_action( 'mainwp_before_system_requirements_check' );
 		?>
 		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
 			<thead>
@@ -980,7 +980,7 @@ class MainWP_Server_Information {
 		/**
 		 * Action: mainwp_after_error_log_table
 		 *
-		 * Fires before the Error Log table.
+		 * Fires after the Error Log table.
 		 *
 		 * @since 4.1
 		 */

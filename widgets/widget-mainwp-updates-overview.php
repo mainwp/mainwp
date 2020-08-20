@@ -509,7 +509,7 @@ class MainWP_Updates_Overview {
 			 *
 			 * @since 4.1
 			 */
-			do_action( 'mainwp_updates_overview_before_total_updates' );
+			do_action( 'mainwp_updates_overview_after_total_updates' );
 		?>
 		<?php
 	}

@@ -180,7 +180,7 @@ class MainWP_Widget_Themes {
 			 * Fires before the inactive themes list in the Themes widget on the Individual site overview page.
 			 *
 			 * @param object $website        Object containing the child site info.
-			 * @param array  $actived_themes Array containing all inactive themes data.
+			 * @param array  $inactive_themes Array containing all inactive themes data.
 			 *
 			 * @since 4.1
 			 */
@@ -220,7 +220,7 @@ class MainWP_Widget_Themes {
 			 * Fires after the inactive themes list in the Themes widget on the Individual site overview page.
 			 *
 			 * @param object $website        Object containing the child site info.
-			 * @param array  $actived_themes Array containing all inactive themes data.
+			 * @param array  $inactive_themes Array containing all inactive themes data.
 			 *
 			 * @since 4.1
 			 */
@@ -264,11 +264,11 @@ class MainWP_Widget_Themes {
 	/**
 	 * Method action()
 	 *
-	 * Initiate try catch for chosen Action
+	 * Initiate try catch for chosen Action.
 	 *
-	 * @param mixed $pAction Theme Action.
+	 * @param mixed $action Theme Action.
 	 */
-	public static function action( $pAction ) {
+	public static function action( $action ) {
 		$theme        = $_POST['theme'];
 		$websiteIdEnc = $_POST['websiteId'];
 
@@ -292,13 +292,13 @@ class MainWP_Widget_Themes {
 		*
 		* @since 4.1
 		*/
-		do_action( 'mainwp_before_theme_action', $pAction, $theme, $website );
+		do_action( 'mainwp_before_theme_action', $action, $theme, $website );
 		try {
 			$information = MainWP_Connect::fetch_url_authed(
 				$website,
 				'theme_action',
 				array(
-					'action' => $pAction,
+					'action' => $action,
 					'theme'  => $theme,
 				)
 			);
@@ -313,7 +313,7 @@ class MainWP_Widget_Themes {
 		*
 		* @since 4.1
 		*/
-		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
+		do_action( 'mainwp_after_theme_action', $information, $action, $theme, $website );
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );

@@ -281,13 +281,13 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						</table>
 						<?php
 						/**
-						 * Action: mainwp_admin_pass_before_users_table
+						 * Action: mainwp_admin_pass_after_users_table
 						 *
-						 * Fires before the Connected Admin Users mysql_list_tables
+						 * Fires after the Connected Admin Users mysql_list_tables
 						 *
 						 * @since 4.1
 						 */
-						do_action( 'mainwp_admin_pass_before_users_table' );
+						do_action( 'mainwp_admin_pass_after_users_table' );
 
 						$table_features = array(
 							'searching'  => 'true',

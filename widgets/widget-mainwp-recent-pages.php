@@ -188,7 +188,7 @@ class MainWP_Recent_Pages {
 			 *
 			 * @since 4.1
 			 */
-			do_action( 'mainwp_recent_posts_before_publised_list', $allPages, $recent_number );
+			do_action( 'mainwp_recent_pages_before_publised_list', $allPages, $recent_number );
 			if ( count( $recent_pages_published ) == 0 ) :
 				?>
 			<h2 class="ui icon header">

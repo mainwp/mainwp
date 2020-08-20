@@ -436,7 +436,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_before_select_sites
 					 *
-					 * Fires before the Select Sites elemnt on Manage themes.
+					 * Fires before the Select Sites element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -448,7 +448,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_after_select_sites
 					 *
-					 * Fires after the Select Sites elemnt on Manage themes.
+					 * Fires after the Select Sites element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -461,7 +461,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_before_search_options
 					 *
-					 * Fires before the Search Options elemnt on Manage themes.
+					 * Fires before the Search Options element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -484,7 +484,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_after_search_options
 					 *
-					 * Fires after the Search Options elemnt on Manage themes.
+					 * Fires after the Search Options element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -502,7 +502,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_before_submit_button
 					 *
-					 * Fires before the Submit Button elemnt on Manage themes.
+					 * Fires before the Submit Button element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -513,7 +513,7 @@ class MainWP_Themes {
 					/**
 					 * Action: mainwp_manage_themes_after_submit_button
 					 *
-					 * Fires after the Submit Button elemnt on Manage themes.
+					 * Fires after the Submit Button element on Manage themes.
 					 *
 					 * @since 4.1
 					 */
@@ -1691,7 +1691,7 @@ class MainWP_Themes {
 		 *
 		 * @since 4.1
 		 */
-		do_action( 'mainwp_themes_before_ignored_updates', $ignoredThemes, $websites );
+		do_action( 'mainwp_themes_after_ignored_updates', $ignoredThemes, $websites );
 		?>
 		</div>
 		<?php

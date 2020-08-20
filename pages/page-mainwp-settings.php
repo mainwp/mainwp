@@ -934,7 +934,7 @@ class MainWP_Settings {
 						/**
 						 * Action: mainwp_tools_form_top
 						 *
-						 * Fires at the top of mainwp tools form.
+						 * Fires at the top of MainWP tools form.
 						 *
 						 * @since 4.1
 						 */

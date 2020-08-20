@@ -1646,7 +1646,7 @@ class MainWP_Updates {
 		/**
 		 * Action: mainwp_updates_before_nav_tabs
 		 *
-		 * Fires before the navigation tabs on the Updtes page.
+		 * Fires before the navigation tabs on the Updates page.
 		 *
 		 * @since 4.1
 		 */
@@ -1668,7 +1668,7 @@ class MainWP_Updates {
 		/**
 		 * Action: mainwp_updates_after_nav_tabs
 		 *
-		 * Fires after the navigation tabs on the Updtes page.
+		 * Fires after the navigation tabs on the Updates page.
 		 *
 		 * @since 4.1
 		 */
@@ -1677,7 +1677,7 @@ class MainWP_Updates {
 		/**
 		 * Action: mainwp_updates_before_actions_bar
 		 *
-		 * Fires before the actions bar on the Updtes page.
+		 * Fires before the actions bar on the Updates page.
 		 *
 		 * @since 4.1
 		 */
@@ -1718,7 +1718,7 @@ class MainWP_Updates {
 		/**
 		 * Action: mainwp_updates_after_actions_bar
 		 *
-		 * Fires after the actions bar on the Updtes page.
+		 * Fires after the actions bar on the Updates page.
 		 *
 		 * @since 4.1
 		 */
@@ -1850,7 +1850,7 @@ class MainWP_Updates {
 			/**
 			 * Action: mainwp_updates_after_http_response_table
 			 *
-			 * Fires after the HTTP responses table on the Updates pages
+			 * Fires after the HTTP responses table on the Updates pages.
 			 *
 			 * @since 4.1
 			 */

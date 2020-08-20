@@ -1112,7 +1112,7 @@ class MainWP_UI {
 						/**
 						* Action: mainwp_widget_content_bottom
 						*
-						* Fires at the botton of widget content.
+						* Fires at the bottom of widget content.
 						*
 						* @since 4.1
 						*/

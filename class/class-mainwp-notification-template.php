@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * Manage notification templates.
+ * Class Manage notification templates.
  */
 class MainWP_Notification_Template {
 

@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Post Plugin Theme Handler
+ * Class MainWP Post Plugin Theme Handler
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 

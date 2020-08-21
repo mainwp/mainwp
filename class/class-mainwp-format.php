@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Format Utility
+ * Class MainWP Format Utility
  */
 class MainWP_Format {
 

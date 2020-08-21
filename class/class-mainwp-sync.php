@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Sync Handler
+ * Class MainWP Sync Handler
  */
 class MainWP_Sync {
 

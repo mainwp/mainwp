@@ -10,7 +10,7 @@ namespace MainWP\Dashboard;
 // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
 /**
- * MainWP System Utility
+ * Class MainWP System Utility
  */
 class MainWP_System_Utility {
 

@@ -17,7 +17,11 @@ if ( ! defined( 'WP_CLI' ) ) {
 }
 
 /**
+ * Class MainWP_WP_CLI_Command
+ *
  * Manage all child sites added to the MainWP Dashboard.
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 

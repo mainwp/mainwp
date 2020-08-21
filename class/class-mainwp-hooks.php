@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Hooks
+ * Class MainWP Hooks
  */
 class MainWP_Hooks {
 

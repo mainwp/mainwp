@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Table Helper.
+ * Class MainWP Updates Table Helper.
  */
 class MainWP_Updates_Table_Helper {
 

@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Class MainWP_Api_Manager_Password_Management
+ *
  * WooCommerce API Password Handler.
  *
  * @package MainWP/MainWP_API_Passwords_Manager

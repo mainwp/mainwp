@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Monitoring Sites Handler.
+ * Class MainWP_Monitoring_Handler
  *
  * This class handles the $_POST of Settings Options.
  */

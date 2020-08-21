@@ -16,7 +16,7 @@ const MAINWP_VIEW_PER_GROUP        = 2;
 // phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
 
 /**
- * MainWP System class.
+ * Class MainWP System class.
  */
 class MainWP_System {
 

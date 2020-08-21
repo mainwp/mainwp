@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP System View.
+ * Class MainWP System View.
  */
 class MainWP_System_View {
 

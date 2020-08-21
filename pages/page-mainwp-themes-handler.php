@@ -9,7 +9,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Themes Handler
+ * Class MainWP_Themes_Handler
  *
  * @uses MainWP_Install_Bulk
  */

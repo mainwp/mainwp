@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Pages Page
+ * Class MainWP_Page
+ *
+ * @package MainWP\Dashboard
  *
  * @uses MainWP_Bulk_Add
  */

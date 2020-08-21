@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- *  MainWP Plugins Handler
+ *  Class MainWP MainWP_Plugins_Handler
  *
  * @uses MainWP_Install_Bulk()
  */

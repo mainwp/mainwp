@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Page
+ * Class MainWP_Updates
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Updates {
 

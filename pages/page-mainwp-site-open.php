@@ -9,7 +9,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Site Open
+ * Class MainWP_Site_Open
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Site_Open {
 

@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Posts Handler
+ * Class MainWP_Post_Page_Handler
  *
  * @uses MainWP_Bulk_Add
  */

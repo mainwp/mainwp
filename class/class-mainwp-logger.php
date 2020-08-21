@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP Logger
+ * Class MainWP_Logger
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Logger {
 

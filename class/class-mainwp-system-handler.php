@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP System Handler.
+ * Class MainWP_System_Handler
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_System_Handler {
 

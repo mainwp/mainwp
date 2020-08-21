@@ -13,7 +13,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP API Manager
+ * Class MainWP_Api_Manager
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Api_Manager {
 

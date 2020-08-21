@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Live_Report_Responder_Activator
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Live_Report_Responder_Activator {
 

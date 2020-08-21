@@ -13,9 +13,9 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
 }
 
 /**
- * Class Plugin Installer List Table class.
+ * Class MainWP_Plugins_Install_List_Table
  *
- * @package WordPress
+ * @package MainWP\Dashboard
  * @subpackage List_Table
  * @since 3.1.0
  * @access private

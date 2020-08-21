@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP Manage Sites Backup View
+ * Class MainWP_Manage_Sites_Backup_View
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Manage_Sites_Backup_View {
 

@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP UI
+ * Class MainWP_UI
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_UI {
 

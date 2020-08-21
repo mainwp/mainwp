@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Overview
+ * Class MainWP_Updates_Overview
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Updates_Overview {
 

@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Bulk Update Admin Passwords
+ * Class MainWP_Bulk_Update_Admin_Passwords
  *
  * @uses MainWP_Bulk_Add
  */

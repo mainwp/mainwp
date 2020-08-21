@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites Handler Page.
+ * Class MainWP_Manage_Sites_Handler
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Manage_Sites_Handler {
 

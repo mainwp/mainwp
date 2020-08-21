@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP User Page
+ * Class MainWP_User
  *
  * @uses page-mainwp-bulk-add::MainWP_Bulk_Add()
  */

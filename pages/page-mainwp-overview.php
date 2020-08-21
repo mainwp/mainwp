@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Overview Page.
+ * Class MainWP_Overview
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Overview {
 

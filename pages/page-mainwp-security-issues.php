@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Security Issues Page
+ * Class MainWP_Security_Issues
  *
  * Detect, display & fix known Security Issues.
  */

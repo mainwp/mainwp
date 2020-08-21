@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Server Information Handler
+ * Class MainWP Server_Information_Handler
  */
 class MainWP_Server_Information_Handler {
 

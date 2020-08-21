@@ -11,7 +11,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Settings Page
+ * Class MainWP_Settings
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Settings {
 

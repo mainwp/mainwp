@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Updates Per Site
+ * Class MainWP_Updates_Per_Site
  */
 class MainWP_Updates_Per_Site {
 

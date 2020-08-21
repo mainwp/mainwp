@@ -13,7 +13,7 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
 }
 
 /**
- * Plugin Installer List Table class.
+ * Class Plugin Installer List Table class.
  *
  * @package WordPress
  * @subpackage List_Table

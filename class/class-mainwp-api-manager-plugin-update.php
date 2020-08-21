@@ -15,7 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * MainWP API Manager Update Handler
+ * Class MainWP_Api_Manager_Plugin_Update
+ *
+ * MainWP API Manager Update Handler.
  *
  * @package   MainWP API Manager/Update Handler
  * @author    Todd Lahman LLC

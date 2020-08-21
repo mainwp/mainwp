@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Main Menu
+ * Class MainWP Main Menu
  */
 class MainWP_Menu {
 

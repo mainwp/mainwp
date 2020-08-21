@@ -15,9 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * MainWP Api Manager Key handler.
+ * Class MainWP_Api_Manager_Key
  *
- * This class handles user authentication with MainWP.com License Servers and providfes the ability to grab License Keys automatically.
+ * MainWP Api Manager Key handler
+ * This class handles user authentication with MainWP.com License Servers
+ * and provides the ability to grab License Keys automatically.
  *
  * @package MainWP API Manager/Key Handler
  * @author Todd Lahman LLC

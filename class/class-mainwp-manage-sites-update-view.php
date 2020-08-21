@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites Update View
+ * Class MainWP Manage Sites Update View
  */
 class MainWP_Manage_Sites_Update_View {
 

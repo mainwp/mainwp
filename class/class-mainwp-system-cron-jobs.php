@@ -6,6 +6,7 @@
  */
 
 namespace MainWP\Dashboard;
+
 //phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
 
 /**

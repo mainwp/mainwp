@@ -9,7 +9,11 @@
 
 namespace MainWP\Dashboard;
 
-/** Class MainWP_QQ2_File_Uploader. */
+/**
+ * Class MainWP_QQ2_File_Uploader
+ *
+ * @package MainWP\Dashboard
+ */
 class MainWP_QQ2_File_Uploader {
 
 	/**

@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Live_Reports_Responder_DB.
+ * Class MainWP_Live_Reports_Responder_DB
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Live_Reports_Responder_DB {
 	//  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated

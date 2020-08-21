@@ -11,7 +11,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP Twitter
+ * Class MainWP_Twitter
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Twitter {
 

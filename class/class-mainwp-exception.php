@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Exception
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Exception extends \Exception {
 

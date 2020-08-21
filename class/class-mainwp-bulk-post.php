@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP Bulk Post
+ * Class MainWP_Bulk_Post
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Bulk_Post {
 

@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP Connect
+ * Class MainWP_Connect
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Connect {
 

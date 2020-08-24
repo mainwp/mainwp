@@ -1,6 +1,6 @@
-=== MainWP WordPress Manager Dashboard ===
+=== MainWP Dashboard ===
 Contributors: mainwp
-Tags: MainWP, Manage WordPress, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard
+Tags: MainWP, WordPress Manager, Manage WP, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
@@ -11,11 +11,11 @@ Stable tag: 4.1-beta2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Manage WP sites from one central location! Much more than just updates, get nearly complete control of all your sites from your self-hosted Dashboard.
+The MainWP WordPress Manager Dashboard allows you to control unlimited WordPress sites from your own private self-hosted WordPress install. More then just updates, WordPress Management for Professionals.
 
 == Description ==
 
-[MainWP](https://mainwp.com) is a free, fully functional, open source, self-hosted WordPress management plugin, that allows you to securely control all your WordPress sites from one central location.
+The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control unlimited WordPress sites from your own private self-hosted WordPress install. MainWP is a free open source plugin designed for WordPress professionals who realize that WordPress management for yourself or your clients is more then just plugin and theme updates.
 
 And, just because it is free does not mean it’s been stripped down. The MainWP Dashboard allows you to control virtually all of your daily WordPress maintenance tasks at absolutely no cost.
 

@@ -1,4 +1,4 @@
-=== MainWP Dashboard ===
+=== MainWP WordPress Manager Dashboard ===
 Contributors: mainwp
 Tags: MainWP, Manage WordPress, Managed WordPress, WordPress Management, Manage Multiple Sites, WordPress manager , WordPress management, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp

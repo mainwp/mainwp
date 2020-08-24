@@ -11,7 +11,7 @@ Stable tag: 4.1-beta2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-The MainWP WordPress Manager Dashboard allows you to control unlimited WordPress sites from your own private self-hosted WordPress install. More then just updates, WordPress Management for Professionals.
+The MainWP WordPress Manager Dashboard allows control of unlimited WordPress sites from your own private self-hosted WordPress install. More than just updates! 
 
 == Description ==
 

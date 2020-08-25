@@ -82,6 +82,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_addgroup', array( MainWP_Extensions_Handler::get_class_name(), 'hook_add_group' ), 10, 3 );
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
+		add_filter( 'mainwp_escape_response_data', array( &$this, 'hook_escape_response' ), 10, 3 );
 	}
 
 	/**
@@ -628,6 +629,45 @@ class MainWP_Hooks {
 		}
 
 		return $input;
+	}
+
+	/**
+	 * Method hook_escape_response()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed  $response response data.
+	 * @param string $fields fields of response data - option.
+	 * @param string $more_allowed input allowed tags - option.
+	 *
+	 * @return mixed $response valid response data.
+	 */
+	public function hook_escape_response( $response, $fields = false, $more_allowed = array() ) {
+
+		if ( false === $fields || is_string( $response ) ) {
+			return MainWP_Utility::esc_content( $response );
+		}
+
+		if ( ! is_array( $fields ) ) {
+			return $response;
+		}
+
+		if ( ! in_array( 'error', $fields ) ) {
+			$fields[] = 'error'; // to sure to valid 'error' field, if that existed.
+		}
+
+		if ( ! in_array( 'message', $fields ) ) {
+			$fields[] = 'message'; // to sure to valid 'message' field, if that existed.
+		}
+
+		$depth = 10;
+
+		foreach ( $fields as $field ) {
+			if ( isset( $response[ $field ] ) ) {
+				$response[ $field ] = MainWP_Utility::esc_mixed_content( $response[ $field ], $depth, $more_allowed );
+			}
+		}
+		return $response;
 	}
 
 	/**

@@ -542,7 +542,10 @@ class MainWP_Extensions_Handler {
 
 			return MainWP_Connect::fetch_url_authed( $website, $what, $params, $checkConstraints = false, $pForceFetch = false, $pRetryFailed = true, $rawResponse );
 		} catch ( MainWP_Exception $e ) {
-			return array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
+			return array(
+				'error'     => MainWP_Error_Helper::get_error_message( $e ),
+				'errorCode' => 'excep_fetch_url_authed',
+			);
 		}
 	}
 

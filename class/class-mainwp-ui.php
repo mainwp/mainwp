@@ -123,7 +123,7 @@ class MainWP_UI {
 
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
 		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
-		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites );
+		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id );
 		self::render_select_sites_group( $groups, $tab_id, $selected_groups );
 		?>
 		<script type="text/javascript">
@@ -295,10 +295,11 @@ class MainWP_UI {
 	 * @param boolean $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
 	 * @param mixed   $tab_id Datatab ID.
 	 * @param mixed   $selected_websites Selected Child Sites.
+	 * @param mixed   $edit_site_id Child Site ID to edit.
 	 *
 	 * @return void Render selected staging sites html.
 	 */
-	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites ) {
+	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id ) {
 		if ( $staging_enabled ) :
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>

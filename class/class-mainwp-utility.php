@@ -467,14 +467,15 @@ class MainWP_Utility {
 	 * Method esc_content()
 	 *
 	 * Escape content,
-	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2).
+	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2 ... ).
 	 *
 	 * @param mixed  $content Content to escape.
 	 * @param string $type Type of content. Default = note.
+	 * @param mixed  $more_allowed input allowed tags - options.
 	 *
 	 * @return string Filtered content containing only the allowed HTML.
 	 */
-	public static function esc_content( $content, $type = 'note' ) {
+	public static function esc_content( $content, $type = 'note', $more_allowed = array() ) {
 		if ( 'note' === $type ) {
 
 			$allowed_html = array(
@@ -496,11 +497,162 @@ class MainWP_Utility {
 
 			$content = wp_kses( $content, $allowed_html );
 
+		} elseif ( 'mixed' == $type ) {
+
+			$allowed_html = array(
+				'a'      => array(
+					'href'    => array(),
+					'title'   => array(),
+					'class'   => array(),
+					'onclick' => array(),
+				),
+				'br'     => array(),
+				'em'     => array(),
+				'strong' => array(),
+				'p'      => array(),
+				'hr'     => array(),
+				'ul'     => array(
+					'style' => array(),
+				),
+				'ol'     => array(),
+				'li'     => array(),
+				'h1'     => array(),
+				'h2'     => array(),
+				'head'   => array(),
+				'html'   => array(
+					'lang' => array(),
+				),
+				'meta'   => array(
+					'name'       => array(),
+					'http-equiv' => array(),
+					'content'    => array(),
+					'charset'    => array(),
+				),
+				'title'  => array(),
+				'body'   => array(
+					'style' => array(),
+				),
+				'span'   => array(
+					'id'    => array(),
+					'style' => array(),
+					'class' => array(),
+				),
+				'form'   => array(
+					'id'       => array(),
+					'method'   => array(),
+					'action'   => array(),
+					'onsubmit' => array(),
+				),
+				'table'  => array(
+					'class' => array(),
+				),
+				'thead'  => array(
+					'class' => array(),
+				),
+				'tbody'  => array(
+					'class' => array(),
+				),
+				'tr'     => array(
+					'id' => array(),
+				),
+				'td'     => array(
+					'class' => array(),
+				),
+				'div'    => array(
+					'id'    => array(),
+					'style' => array(),
+					'class' => array(),
+				),
+				'input'  => array(
+					'type'    => array(),
+					'name'    => array(),
+					'class'   => array(),
+					'value'   => array(),
+					'onclick' => array(),
+				),
+				'button' => array(
+					'type'    => array(),
+					'name'    => array(),
+					'value'   => array(),
+					'class'   => array(),
+					'title'   => array(),
+					'onclick' => array(),
+				),
+			);
+
+			if ( is_array( $more_allowed ) && ! empty( $more_allowed ) ) {
+				$allowed_html = array_merge( $allowed_html, $more_allowed );
+			}
+
+			$content = wp_kses( $content, $allowed_html );
 		} else {
 			$content = wp_kses_post( $content );
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Method esc_mixed_content()
+	 *
+	 * Escape mixed content,
+	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2 ... ).
+	 *
+	 * @param mixed  $content Content to escape.
+	 * @param string $depth Maximum depth to walk through $data. Must be greater than 0.
+	 * @param mixed  $more_allowed input allowed tags - options.
+	 *
+	 * @return string Filtered content containing only the allowed HTML.
+	 */
+	public static function esc_mixed_content( $data, $depth, $more_allowed = array() ) {
+		if ( $depth < 0 ) {
+			throw new Exception( 'Reached depth limit' );
+		}
+
+		if ( is_array( $data ) ) {
+			$output = array();
+			foreach ( $data as $id => $el ) {
+				// Don't forget to sanitize the ID!
+				if ( is_string( $id ) ) {
+					$clean_id = self::esc_content( $id, 'mixed', $more_allowed );
+				} else {
+					$clean_id = $id;
+				}
+
+				// Check the element type, so that we're only recursing if we really have to.
+				if ( is_array( $el ) || is_object( $el ) ) {
+					$output[ $clean_id ] = self::esc_mixed_content( $el, $depth - 1 );
+				} elseif ( is_string( $el ) ) {
+					$output[ $clean_id ] = self::esc_content( $el, 'mixed', $more_allowed );
+				} else {
+					$output[ $clean_id ] = $el;
+				}
+			}
+		} elseif ( is_object( $data ) ) {
+			$output = new stdClass();
+			foreach ( $data as $id => $el ) {
+				if ( is_string( $id ) ) {
+					$clean_id = self::esc_content( $id, 'mixed', $more_allowed );
+				} else {
+					$clean_id = $id;
+				}
+
+				if ( is_array( $el ) || is_object( $el ) ) {
+					$output->$clean_id = self::esc_mixed_content( $el, $depth - 1, $more_allowed );
+				} elseif ( is_string( $el ) ) {
+					$output->$clean_id = self::esc_content( $el, 'mixed', $more_allowed );
+				} else {
+					$output->$clean_id = $el;
+				}
+			}
+		} elseif ( is_string( $data ) ) {
+			return self::esc_content( $data, 'mixed', $more_allowed );
+		} else {
+			return $data;
+		}
+
+		return $output;
+
 	}
 
 	/**

@@ -2084,7 +2084,7 @@ jQuery( document ).ready( function () {
         return false;
     } );
 
-jQuery( document ).on( 'click', '#mainwp-notes-edit', function () {
+    jQuery( document ).on( 'click', '#mainwp-notes-edit', function () {
         //var value = jQuery( '#mainwp-notes-html').html();
         jQuery( '#mainwp-notes-html' ).hide();
         jQuery( '#mainwp-notes-editor' ).show();

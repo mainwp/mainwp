@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.5
 Requires PHP: 5.6
-Stable tag: 4.1-beta2
+Stable tag: 4.0.7.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -163,6 +163,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.0.7.3 - 8-6-20 =
+* Fixed: WordPress 5.5 compatibility
 
 = 4.0.7.2 - 2-3-20 =
 * Fixed: An issue with loading Manage Sites table with AJAX

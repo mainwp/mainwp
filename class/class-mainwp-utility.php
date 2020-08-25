@@ -654,7 +654,6 @@ class MainWP_Utility {
 		}
 
 		return $output;
-
 	}
 
 	/**

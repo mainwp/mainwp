@@ -105,11 +105,13 @@ Building on WordPress's core principles, the MainWP plugin allows third-party de
 
 [MainWP Codex](https://mainwp.com/codex/)
 
+[MainWP Code Reference](https://code-reference.mainwp.com/)
+
 [MainWP on Github](https://mainwp.com/github/)
 
 == Installation ==
 
-= Note: MainWP is not tested on or designed for multisite installs.  MainWP should be used as an alternative to WordPress multisite. =
+= Note: MainWP is not tested on or designed for multisite installs. =
 
 However, we have reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install. 
 
@@ -145,7 +147,7 @@ Please post in the [MainWP Community](https://meta.mainwp.com)
 Yes, you can [see them on YouTube](http://www.youtube.com/user/MyMainWP).
 
 = I have an idea for MainWP; how do I let you know? =
-Please follow the steps outlined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so we can add your idea to Trello to be voted on.
+Please follow the steps outlined in the [MainWP Roadmaps](https://mainwp.com/mainwp-roadmaps/) so you can add your idea to the MainWP Community to be voted on.
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).

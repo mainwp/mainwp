@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP monotoring sites view
+ * Class MainWP_Monitoring_View
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Monitoring_View {
 

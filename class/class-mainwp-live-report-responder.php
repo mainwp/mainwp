@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Live_Report_Responder.
+ * Class MainWP_Live_Report_Responder
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Live_Report_Responder {
 

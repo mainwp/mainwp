@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Deprecated Hooks
+ * Class MainWP_Deprecated_Hooks
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Deprecated_Hooks {
 

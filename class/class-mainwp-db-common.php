@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_DB_Common
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_DB_Common extends MainWP_DB {
 

@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Groups
+ * Class MainWP_Manage_Groups
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Manage_Groups {
 

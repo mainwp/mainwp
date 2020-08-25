@@ -10,7 +10,11 @@
 
 namespace MainWP\Dashboard;
 
-/** Class MainWP_QQ2_Uploaded_File_Xhr. */
+/**
+ * Class MainWP_QQ2_Uploaded_File_Xhr
+ *
+ * @package MainWP\Dashboard
+ */
 class MainWP_QQ2_Uploaded_File_Xhr {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- use system functions

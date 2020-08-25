@@ -10,7 +10,11 @@
 
 namespace MainWP\Dashboard;
 
-/**  Class MainWP_QQ2_Uploaded_File_Form.  */
+/**
+ * Class MainWP_QQ2_Uploaded_File_Form
+ *
+ * @package MainWP\Dashboard
+ */
 class MainWP_QQ2_Uploaded_File_Form {
 	/**
 	 * Save the file to the specified path.

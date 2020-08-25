@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Themes Page
+ * Class MainWP_Themes_Page
  *
  * @uses MainWP_Install_Bulk
  */

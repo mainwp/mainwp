@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Extensions Page Handler
+ * Class MainWP_Extensions_Handler
  */
 class MainWP_Extensions_Handler {
 

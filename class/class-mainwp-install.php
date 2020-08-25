@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_DB
+ * Class MainWP_Install
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Install extends MainWP_DB_Base {
 

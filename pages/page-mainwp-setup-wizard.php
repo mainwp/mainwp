@@ -20,7 +20,9 @@ namespace MainWP\Dashboard;
  */
 
 /**
- * MainWP Setup Wizard
+ * Class MainWP_Setup_Wizard
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Setup_Wizard {
 

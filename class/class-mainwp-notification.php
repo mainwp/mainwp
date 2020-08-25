@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Notification
+ * Class MainWP_Notification
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Notification {
 

@@ -10,7 +10,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP User Page
+ * Class MainWP_User
  *
  * @uses page-mainwp-bulk-add::MainWP_Bulk_Add()
  */
@@ -594,7 +594,7 @@ class MainWP_User {
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="ui segment">
 					<div class="ui form">
-						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h2>
+						<h3><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Role', 'mainwp' ); ?></label>
 							<div class="ui six wide column">

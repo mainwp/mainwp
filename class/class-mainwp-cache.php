@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
 
 /**
  * Class MainWP_Cache
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Cache {
 

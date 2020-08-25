@@ -9,7 +9,7 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Install Bulk
+ * Class MainWP_Install_Bulk
  *
  * @used-by MainWP_Plugins::InstallPlugins
  * @used-by MainWP_Themes::InstallThemes

@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Manage Sites List Table.
+ * Class MainWP_Manage_Sites_List_Table
+ *
+ * @package MainWP\Dashboard
  *
  * @todo The only variables that seam to be used are $column_headers.
  */

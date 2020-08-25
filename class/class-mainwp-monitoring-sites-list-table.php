@@ -8,6 +8,10 @@
 namespace MainWP\Dashboard;
 
 /**
+ * Class MainWP_Monitoring_Sites_List_Table
+ *
+ * @package MainWP\Dashboard
+ *
  * MainWP sites monitoring list.
  *
  * @todo The only variables that seam to be used are $column_headers.

@@ -10,9 +10,9 @@ namespace MainWP\Dashboard;
 /**
  * Class MainWP_Post_Backup_Handler
  *
- * Handle Backup Post
+ * Handle Backup Post.
  *
- * @deprecated moved to external Extension.
+ * @package MainWP\Dashboard
  */
 class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 

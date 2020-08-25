@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Meta Boxes
+ * Class MainWP_Meta_Boxes
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Meta_Boxes {
 

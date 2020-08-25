@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Extensions View
+ * Class MainWP_Extensions_View
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Extensions_View {
 	/**

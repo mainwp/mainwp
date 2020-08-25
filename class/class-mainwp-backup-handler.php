@@ -8,7 +8,9 @@
 namespace MainWP\Dashboard;
 
 /**
- * MainWP Backup Handler class
+ * Class MainWP_Backup_Handler
+ *
+ * @package MainWP\Dashboard
  */
 class MainWP_Backup_Handler {
 

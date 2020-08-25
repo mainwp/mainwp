@@ -7,10 +7,12 @@
 
 namespace MainWP\Dashboard;
 
+//phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
+
 /**
- * Class MainWP_System_Cron_Jobs.
+ * Class MainWP_System_Cron_Jobs
  *
- * phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write file.
+ * @package MainWP\Dashboard
  */
 class MainWP_System_Cron_Jobs {
 

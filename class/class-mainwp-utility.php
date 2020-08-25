@@ -600,15 +600,17 @@ class MainWP_Utility {
 	 * Escape mixed content,
 	 * allowed content (a,href,title,br,em,strong,p,hr,ul,ol,li,h1,h2 ... ).
 	 *
-	 * @param mixed  $content Content to escape.
+	 * @param mixed  $data data to escape.
 	 * @param string $depth Maximum depth to walk through $data. Must be greater than 0.
 	 * @param mixed  $more_allowed input allowed tags - options.
+	 *
+	 * @throws \Exception Excetpion message.
 	 *
 	 * @return string Filtered content containing only the allowed HTML.
 	 */
 	public static function esc_mixed_content( $data, $depth, $more_allowed = array() ) {
 		if ( $depth < 0 ) {
-			throw new Exception( 'Reached depth limit' );
+			throw new \Exception( 'Reached depth limit' );
 		}
 
 		if ( is_array( $data ) ) {

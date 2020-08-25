@@ -71,8 +71,8 @@ class MainWP_Updates_Overview {
 			$url  = '';
 			$name = '';
 			if ( isset( $_REQUEST['url'] ) ) {
-				$url  = $_REQUEST['url'];
-				$name = $_REQUEST['name'];
+				$url  = wp_unslash( $_REQUEST['url'] );
+				$name = wp_unslash( $_REQUEST['name'] );
 			}
 
 			$res = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
@@ -109,7 +109,7 @@ class MainWP_Updates_Overview {
 	public static function sync_site() {
 		$website = null;
 		if ( isset( $_POST['wp_id'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['wp_id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( wp_unslash( $_POST['wp_id'] ) );
 		}
 
 		if ( null == $website ) {
@@ -376,7 +376,7 @@ class MainWP_Updates_Overview {
 		$continue_update   = '';
 		if ( $limit_updates_all > 0 ) {
 			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
-				$continue_update = $_GET['continue_update'];
+				$continue_update = wp_unslash( $_GET['continue_update'] );
 			}
 		}
 

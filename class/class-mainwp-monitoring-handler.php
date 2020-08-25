@@ -207,7 +207,7 @@ class MainWP_Monitoring_Handler {
 	public static function ajax_check_status_site() {
 		$website = null;
 		if ( isset( $_POST['wp_id'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['wp_id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['wp_id'] ) );
 		}
 
 		if ( null == $website ) {

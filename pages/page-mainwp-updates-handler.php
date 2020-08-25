@@ -163,7 +163,7 @@ class MainWP_Updates_Handler {
 	 * @return string success.
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
-		if ( isset( $id ) ) {
+		if ( ! empty( $id ) ) {
 
 			/**
 			* Action: mainwp_before_plugin_theme_unignore

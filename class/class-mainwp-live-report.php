@@ -400,10 +400,10 @@ class MainWP_Live_Reports {
 			$report               = array();
 			$current_attach_files = '';
 			if ( isset( $_REQUEST['id'] ) && ! empty( $_REQUEST['id'] ) ) {
-				$report               = MainWP_Live_Reports_Responder_DB::get_instance()->get_report_by( 'id', $_REQUEST['id'], null, null, ARRAY_A );
+				$report               = MainWP_Live_Reports_Responder_DB::get_instance()->get_report_by( 'id', wp_unslash( $_REQUEST['id'] ), null, null, ARRAY_A );
 				$current_attach_files = $report['attach_files'];
 			}
-			$title = isset( $_POST['mwp_creport_title'] ) ? trim( $_POST['mwp_creport_title'] ) : '';
+			$title = isset( $_POST['mwp_creport_title'] ) ? trim( wp_unslash( $_POST['mwp_creport_title'] ) ) : '';
 			if ( '' != $title ) {
 				$report['title'] = $title;
 			}
@@ -412,14 +412,14 @@ class MainWP_Live_Reports {
 			$end_time   = 0;
 
 			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
-				$start_date = trim( $_POST['mwp_creport_date_from'] );
+				$start_date = trim( wp_unslash( $_POST['mwp_creport_date_from'] ) );
 				if ( '' != $start_date ) {
 					$start_time = strtotime( $start_date );
 				}
 			}
 
 			if ( isset( $_POST['mwp_creport_date_to'] ) ) {
-				$end_date = trim( $_POST['mwp_creport_date_to'] );
+				$end_date = trim( wp_unslash( $_POST['mwp_creport_date_to'] ) );
 				if ( '' != $end_date ) {
 					$end_time = strtotime( $end_date );
 				}
@@ -440,24 +440,24 @@ class MainWP_Live_Reports {
 			$report['date_to']   = $end_time + 24 * 3600 - 1;
 
 			if ( isset( $_POST['mwp_creport_client'] ) ) {
-				$report['client'] = trim( $_POST['mwp_creport_client'] );
+				$report['client'] = trim( wp_unslash( $_POST['mwp_creport_client'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_client_id'] ) ) {
-				$report['client_id'] = intval( $_POST['mwp_creport_client_id'] );
+				$report['client_id'] = intval( wp_unslash( $_POST['mwp_creport_client_id'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_fname'] ) ) {
-				$report['fname'] = trim( $_POST['mwp_creport_fname'] );
+				$report['fname'] = trim( wp_unslash( $_POST['mwp_creport_fname'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_fcompany'] ) ) {
-				$report['fcompany'] = trim( $_POST['mwp_creport_fcompany'] );
+				$report['fcompany'] = trim( wp_unslash( $_POST['mwp_creport_fcompany'] ) );
 			}
 
 			$from_email = '';
 			if ( ! empty( $_POST['mwp_creport_femail'] ) ) {
-				$from_email = trim( $_POST['mwp_creport_femail'] );
+				$from_email = trim( wp_unslash( $_POST['mwp_creport_femail'] ) );
 				if ( ! preg_match( '/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $from_email ) ) {
 					$from_email = '';
 					$errors[]   = 'Incorrect Email Address in the Send From filed.';
@@ -466,17 +466,17 @@ class MainWP_Live_Reports {
 			$report['femail'] = $from_email;
 
 			if ( isset( $_POST['mwp_creport_name'] ) ) {
-				$report['name'] = trim( $_POST['mwp_creport_name'] );
+				$report['name'] = trim( wp_unslash( $_POST['mwp_creport_name'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_company'] ) ) {
-				$report['company'] = trim( $_POST['mwp_creport_company'] );
+				$report['company'] = trim( wp_unslash( $_POST['mwp_creport_company'] ) );
 			}
 
 			$to_email     = '';
 			$valid_emails = array();
 			if ( ! empty( $_POST['mwp_creport_email'] ) ) {
-				$to_emails = explode( ',', trim( $_POST['mwp_creport_email'] ) );
+				$to_emails = explode( ',', trim( wp_unslash( $_POST['mwp_creport_email'] ) ) );
 				if ( is_array( $to_emails ) ) {
 					foreach ( $to_emails as $_email ) {
 						if ( ! preg_match( '/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $_email ) && ! preg_match( '/^\[.+\]/is', $_email ) ) {
@@ -499,29 +499,29 @@ class MainWP_Live_Reports {
 			$report['email'] = $to_email;
 
 			if ( isset( $_POST['mwp_creport_email_subject'] ) ) {
-				$report['subject'] = trim( $_POST['mwp_creport_email_subject'] );
+				$report['subject'] = trim( wp_unslash( $_POST['mwp_creport_email_subject'] ) );
 			}
 			if ( isset( $_POST['mainwp_creport_recurring_schedule'] ) ) {
-				$report['recurring_schedule'] = trim( $_POST['mainwp_creport_recurring_schedule'] );
+				$report['recurring_schedule'] = trim( wp_unslash( $_POST['mainwp_creport_recurring_schedule'] ) );
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_date'] ) ) {
 				$rec_date                 = trim( $_POST['mainwp_creport_schedule_date'] );
 				$report['recurring_date'] = ! empty( $rec_date ) ? strtotime( $rec_date . ' ' . gmdate( 'H:i:s' ) ) : 0;
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_send_email'] ) ) {
-				$report['schedule_send_email'] = trim( $_POST['mainwp_creport_schedule_send_email'] );
+				$report['schedule_send_email'] = trim( wp_unslash( $_POST['mainwp_creport_schedule_send_email'] ) );
 			}
 			$report['schedule_bcc_me'] = isset( $_POST['mainwp_creport_schedule_bbc_me_email'] ) ? 1 : 0;
 			if ( isset( $_POST['mainwp_creport_report_header'] ) ) {
-				$report['header'] = trim( $_POST['mainwp_creport_report_header'] );
+				$report['header'] = trim( wp_unslash( $_POST['mainwp_creport_report_header'] ) );
 			}
 
 			if ( isset( $_POST['mainwp_creport_report_body'] ) ) {
-				$report['body'] = trim( $_POST['mainwp_creport_report_body'] );
+				$report['body'] = trim( wp_unslash( $_POST['mainwp_creport_report_body'] ) );
 			}
 
 			if ( isset( $_POST['mainwp_creport_report_footer'] ) ) {
-				$report['footer'] = trim( $_POST['mainwp_creport_report_footer'] );
+				$report['footer'] = trim( wp_unslash( $_POST['mainwp_creport_report_footer'] ) );
 			}
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -553,7 +553,7 @@ class MainWP_Live_Reports {
 					self::delete_attach_files( $current_attach_files, $creport_dir );
 				}
 
-				$output = self::handle_upload_files( $_FILES['mainwp_creport_attach_files'], $creport_dir );
+				$output = self::handle_upload_files( wp_unslash( $_FILES['mainwp_creport_attach_files'] ), $creport_dir );
 				if ( isset( $output['error'] ) ) {
 					$return['error'] = $output['error'];
 				}
@@ -1820,7 +1820,7 @@ class MainWP_Live_Reports {
 			foreach ( $tokens as $token ) {
 				$input_name = 'creport_token_' . str_replace( array( '.', ' ', '-' ), '_', $token->token_name );
 				if ( isset( $_POST[ $input_name ] ) ) {
-					$token_value = $_POST[ $input_name ];
+					$token_value = wp_unslash( $_POST[ $input_name ] );
 
 					$current = MainWP_Live_Reports_Responder_DB::get_instance()->get_tokens_by( 'id', $token->id, $website['url'] );
 					if ( $current ) {

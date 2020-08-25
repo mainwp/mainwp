@@ -392,8 +392,8 @@ class MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		$selected_status = isset( $_REQUEST['status'] ) ? $_REQUEST['status'] : '';
-		$selected_group  = isset( $_REQUEST['g'] ) ? trim( $_REQUEST['g'] ) : '';
+		$selected_status = isset( $_REQUEST['status'] ) ? wp_unslash( $_REQUEST['status'] ) : '';
+		$selected_group  = isset( $_REQUEST['g'] ) ? trim( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		if ( empty( $selected_status ) && empty( $selected_group ) ) {
@@ -522,7 +522,7 @@ class MainWP_Manage_Sites_List_Table {
 
 			if ( isset( $_REQUEST['order'] ) ) {
 				$columns = $_REQUEST['columns'];
-				$ord_col = $_REQUEST['order'][0]['column'];
+				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? $_REQUEST['order'][0]['column'] : '';
 				if ( isset( $columns[ $ord_col ] ) ) {
 					$req_orderby = $columns[ $ord_col ]['data'];
 					$req_order   = $_REQUEST['order'][0]['dir'];
@@ -580,7 +580,7 @@ class MainWP_Manage_Sites_List_Table {
 			$start = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 		}
 
-		$search = isset( $_REQUEST['search']['value'] ) ? trim( $_REQUEST['search']['value'] ) : '';
+		$search = isset( $_REQUEST['search']['value'] ) ? trim( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( empty( $_REQUEST['g'] ) ) ? true : false;
@@ -596,7 +596,7 @@ class MainWP_Manage_Sites_List_Table {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_status', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', $_REQUEST['status'] );
+			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', wp_unslash( $_REQUEST['status'] ) );
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_is_not', $is_not );
 			$site_status = $_REQUEST['status'];
 		}
@@ -610,8 +610,8 @@ class MainWP_Manage_Sites_List_Table {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', $_REQUEST['g'] );
-			$group_ids = $_REQUEST['g']; // may be multi groups.
+			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', wp_unslash( $_REQUEST['g'] ) );
+			$group_ids = wp_unslash( $_REQUEST['g'] ); // may be multi groups.
 		}
 
 		$where = null;
@@ -1091,7 +1091,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
 
-		$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
+		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST']: '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '' ) );
 		$current_url = remove_query_arg( 'paged', $current_url );
 
 		if ( ! empty( $columns['cb'] ) ) {

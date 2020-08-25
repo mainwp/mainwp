@@ -84,10 +84,9 @@ class MainWP_Themes_Handler {
 	 * @param mixed $theme Theme to perform action on.
 	 */
 	public static function action( $pAction, $theme ) {
-		$websiteIdEnc = $_POST['websiteId'];
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $websiteId ) ) {
 			die( 'FAIL' );
 		}
 
@@ -142,10 +141,9 @@ class MainWP_Themes_Handler {
 	 * Check to see if Theme is on the Ignore List.
 	 */
 	public static function ignore_updates() {
-		$websiteIdEnc = $_POST['websiteId'];
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $websiteId ) ) {
 			die( 'FAIL' );
 		}
 
@@ -202,8 +200,8 @@ class MainWP_Themes_Handler {
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
-		$action = $_POST['do'];
-		$slugs  = $_POST['slugs'];
+		$action = isset( $_POST['do'] ) ? $_POST['do'] : '';
+		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : false;
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}

@@ -314,14 +314,10 @@ class MainWP_Widget_Plugins {
 	 * @param mixed $action Plugin Action.
 	 */
 	public static function action( $action ) {
-		$plugin       = $_POST['plugin'];
-		$websiteIdEnc = $_POST['websiteId'];
+		$plugin    = isset( $_POST['plugin'] ) ? $_POST['plugin'] : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( empty( $plugin ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		}
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $plugin ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 

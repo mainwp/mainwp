@@ -62,7 +62,7 @@ abstract class MainWP_Post_Base_Handler {
 				die( wp_json_encode( array( 'error' => __( 'Double request!', 'mainwp' ) ) ) );
 			}
 
-			$ajaxPosts[ $action ] = $_POST['dts'];
+			$ajaxPosts[ $action ] = wp_unslash( $_POST['dts'] );
 			MainWP_Utility::update_option( 'mainwp_ajaxposts', $ajaxPosts );
 		}
 	}
@@ -84,7 +84,7 @@ abstract class MainWP_Post_Base_Handler {
 
 		$adminurl = strtolower( admin_url() );
 		$referer  = strtolower( wp_get_referer() );
-		$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( $_REQUEST[ $query_arg ], $action ) : false;
+		$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( wp_unslash( $_REQUEST[ $query_arg ] ), $action ) : false;
 		if ( ! $result && ! ( - 1 === $action && 0 === strpos( $referer, $adminurl ) ) ) {
 			return false;
 		}

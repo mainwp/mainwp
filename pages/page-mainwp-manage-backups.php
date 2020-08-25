@@ -298,12 +298,12 @@ class MainWP_Manage_Backups {
 	 */
 	public static function render_manager() {
 		$backupTask = null;
-		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
+		if ( isset( $_GET['id'] ) ) {
 			if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
 				mainwp_do_not_have_permissions( __( 'edit backup tasks', 'mainwp' ) );
 				return;
 			}
-			$backupTaskId = $_GET['id'];
+			$backupTaskId = intval( $_GET['id'] );
 
 			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {

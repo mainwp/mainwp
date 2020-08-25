@@ -170,17 +170,17 @@ class MainWP_Manage_Sites_View {
 
 		$site_id = 0;
 		if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
-			$site_id = $_GET['id'];
+			$site_id = intval( $_GET['id'] );
 		} elseif ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) {
-			$site_id = $_GET['backupid'];
+			$site_id = intval( $_GET['backupid'] );
 		} elseif ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) {
-			$site_id = $_GET['updateid'];
+			$site_id = intval( $_GET['updateid'] );
 		} elseif ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
-			$site_id = $_GET['dashboard'];
+			$site_id = intval( $_GET['dashboard'] );
 		} elseif ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
-			$site_id = $_GET['scanid'];
+			$site_id = intval( $_GET['scanid'] );
 		} elseif ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) {
-			$site_id = $_GET['emailsettingsid'];
+			$site_id = intval( $_GET['emailsettingsid'] );
 		}
 
 		$managesites_pages = array(
@@ -396,7 +396,7 @@ class MainWP_Manage_Sites_View {
 
 						$items = str_getcsv( $line, ',' );
 
-						if ( ( null == $header_line ) && $_POST['mainwp_managesites_chk_header_first'] ) {
+						if ( ( null == $header_line ) && ! empty( $_POST['mainwp_managesites_chk_header_first'] ) ) {
 							$header_line = $line . "\r\n";
 							continue;
 						}
@@ -623,7 +623,7 @@ class MainWP_Manage_Sites_View {
 			<h3 class="ui dividing header"><?php esc_html_e( 'Basic Security Check', 'mainwp' ); ?></h3>
 			<?php
 			// Render security check issues.
-			$websiteid = isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ? $_GET['scanid'] : null;
+			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null;
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( empty( $website ) ) {
 				return;
@@ -1335,17 +1335,17 @@ class MainWP_Manage_Sites_View {
 		$params['url']               = $_POST['managesites_add_wpurl'];
 		$params['name']              = $_POST['managesites_add_wpname'];
 		$params['wpadmin']           = $_POST['managesites_add_wpadmin'];
-		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? $_POST['managesites_add_uniqueId'] : '';
-		$params['ssl_verify']        = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : $_POST['verify_certificate'] );
-		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
-		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : $_POST['ssl_version'];
-		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? $_POST['managesites_add_http_user'] : '';
-		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? $_POST['managesites_add_http_pass'] : '';
-		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', $_POST['groupids'] ) : array();
-		$params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? $_POST['groupnames_import'] : '';
+		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? wp_unslash( $_POST['managesites_add_uniqueId'] ) : '';
+		$params['ssl_verify']        = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
+		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
+		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : wp_unslash( $_POST['ssl_version'] );
+		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? wp_unslash( $_POST['managesites_add_http_user'] ) : '';
+		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';
+		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', wp_unslash( $_POST['groupids'] ) ) : array();
+		$params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? wp_unslash( $_POST['groupnames_import'] ) : '';
 
 		if ( isset( $_POST['qsw_page'] ) ) {
-			$params['qsw_page'] = $_POST['qsw_page'];
+			$params['qsw_page'] = wp_unslash( $_POST['qsw_page'] );
 		}
 
 		return self::add_wp_site( $website, $params );

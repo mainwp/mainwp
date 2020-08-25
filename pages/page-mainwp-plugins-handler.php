@@ -90,8 +90,8 @@ class MainWP_Plugins_Handler {
 			die( wp_json_encode( array( 'error' => __( 'You are not allowed to edit this website.', 'mainwp' ) ) ) );
 		}
 
-		$plugins = $_POST['plugins'];
-		$names   = $_POST['names'];
+		$plugins = isset( $_POST['plugins'] ) ? $_POST['plugins'] : false;
+		$names   = isset( $_POST['names'] ) ? $_POST['names'] : array();
 
 		$decodedIgnoredPlugins = json_decode( $website->ignored_plugins, true );
 
@@ -203,8 +203,8 @@ class MainWP_Plugins_Handler {
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-		$action = $_POST['do'];
-		$slugs  = $_POST['slugs'];
+		$action = isset( $_POST['do'] ) ? $_POST['do'] : '';
+		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : '';
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}

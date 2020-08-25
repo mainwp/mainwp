@@ -269,14 +269,10 @@ class MainWP_Widget_Themes {
 	 * @param mixed $action Theme Action.
 	 */
 	public static function action( $action ) {
-		$theme        = $_POST['theme'];
-		$websiteIdEnc = $_POST['websiteId'];
+		$theme     = isset( $_POST['theme'] ) ? $_POST['theme'] : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( empty( $theme ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		}
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $theme ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 

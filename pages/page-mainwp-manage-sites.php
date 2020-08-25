@@ -227,7 +227,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function on_load_subpages() {
 		if ( isset( $_GET['id'] ) && $_GET['id'] ) {
-			MainWP_System_Utility::set_current_wpid( $_GET['id'] );
+			MainWP_System_Utility::set_current_wpid( intval( $_GET['id'] ) );
 		}
 	}
 
@@ -722,7 +722,7 @@ class MainWP_Manage_Sites {
 		wp_enqueue_script( 'dashboard' );
 		wp_enqueue_script( 'widgets' );
 
-		$dashboard_siteid = isset( $_GET['dashboard'] ) ? $_GET['dashboard'] : null;
+		$dashboard_siteid = isset( $_GET['dashboard'] ) ? intval( $_GET['dashboard'] ) : null;
 
 		/**
 		 * Get getmetaboxes
@@ -853,7 +853,7 @@ class MainWP_Manage_Sites {
 		MainWP_System_Utility::set_current_wpid( $website->id );
 
 		$edit       = false;
-		$email_type = isset( $_GET['edit-email'] ) ? $_GET['edit-email'] : false;
+		$email_type = isset( $_GET['edit-email'] ) ? wp_unslash( $_GET['edit-email'] ) : false;
 
 		if ( false !== $email_type ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
@@ -1038,8 +1038,8 @@ class MainWP_Manage_Sites {
 		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			if ( isset( $_GET['backupid'] ) && MainWP_Utility::ctype_digit( $_GET['backupid'] ) ) {
-				$websiteid = $_GET['backupid'];
+			if ( isset( $_GET['backupid'] ) && MainWP_Utility::ctype_digit( wp_unslash( $_GET['backupid'] ) ) ) {
+				$websiteid = wp_unslash( $_GET['backupid'] );
 
 				$backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 				if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) ) {
@@ -1050,8 +1050,8 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( isset( $_GET['scanid'] ) && MainWP_Utility::ctype_digit( $_GET['scanid'] ) ) {
-			$websiteid = $_GET['scanid'];
+		if ( isset( $_GET['scanid'] ) ) {
+			$websiteid = intval( $_GET['scanid'] );
 
 			$scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) ) {
@@ -1061,8 +1061,8 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( isset( $_GET['dashboard'] ) && MainWP_Utility::ctype_digit( $_GET['dashboard'] ) ) {
-			$websiteid = $_GET['dashboard'];
+		if ( isset( $_GET['dashboard'] ) ) {
+			$websiteid = intval( $_GET['dashboard'] );
 
 			$dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
@@ -1072,8 +1072,8 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( isset( $_GET['updateid'] ) && MainWP_Utility::ctype_digit( $_GET['updateid'] ) ) {
-			$websiteid      = $_GET['updateid'];
+		if ( isset( $_GET['updateid'] ) ) {
+			$websiteid      = intval( $_GET['updateid'] );
 			$updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) ) {
 				self::render_updates( $updatesWebsite );
@@ -1093,8 +1093,8 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
-			$websiteid = $_GET['id'];
+		if ( isset( $_GET['id'] ) ) {
+			$websiteid = intval( $_GET['id'] );
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				// Edit website!
@@ -1131,8 +1131,8 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$edit_settingEmails  = $_POST['mainwp_managesites_edit_settingEmails'];
-			$type                = $_POST['mainwp_managesites_setting_emails_type'];
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? $_POST['mainwp_managesites_edit_settingEmails'] : '';
+			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? $_POST['mainwp_managesites_setting_emails_type'] : '';
 			if ( isset( $notification_emails[ $type ] ) ) {
 				$update_settings               = $edit_settingEmails[ $type ];
 				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
@@ -1184,7 +1184,7 @@ class MainWP_Manage_Sites {
 				$groupnames = array();
 				$tmpArr     = array();
 				if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
-					$groupids = explode( ',', $_POST['mainwp_managesites_edit_addgroups'] );
+					$groupids = explode( ',', wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) );
 				}
 
 				// to fix update staging site.
@@ -1201,9 +1201,9 @@ class MainWP_Manage_Sites {
 
 				$maximumFileDescriptorsOverride = isset( $_POST['mainwp_options_maximumFileDescriptorsOverride'] );
 				$maximumFileDescriptorsAuto     = isset( $_POST['mainwp_maximumFileDescriptorsAuto'] );
-				$maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['mainwp_options_maximumFileDescriptors'] ) ? $_POST['mainwp_options_maximumFileDescriptors'] : 150;
+				$maximumFileDescriptors         = isset( $_POST['mainwp_options_maximumFileDescriptors'] ) ? intval( $_POST['mainwp_options_maximumFileDescriptors'] ) : 150;
 
-				$archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : 'global';
+				$archiveFormat = isset( $_POST['mainwp_archiveFormat'] ) ? wp_unslash( $_POST['mainwp_archiveFormat'] ) : 'global';
 
 				$http_user = $_POST['mainwp_managesites_edit_http_user'];
 				$http_pass = $_POST['mainwp_managesites_edit_http_pass'];
@@ -1245,9 +1245,9 @@ class MainWP_Manage_Sites {
 				);
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
-					$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
-					$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ? 1 : 0;
-					$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ? 1 : 0;
+					$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && wp_unslash( $_POST['mainwp_is_ignoreCoreUpdates'] ) ) ? 1 : 0;
+					$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( wp_unslash( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ) ? 1 : 0;
+					$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( wp_unslash( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ) ? 1 : 0;
 				}
 
 				MainWP_DB::instance()->update_website_values( $website->id, $newValues );

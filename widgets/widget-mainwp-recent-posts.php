@@ -711,14 +711,10 @@ class MainWP_Recent_Posts {
 	 * @param string $type Post type.
 	 */
 	public static function action( $pAction, $type = 'post' ) {
-		$postId       = $_POST['postId'];
-		$websiteIdEnc = $_POST['websiteId'];
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
-		}
-		$websiteId = $websiteIdEnc;
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
@@ -771,16 +767,11 @@ class MainWP_Recent_Posts {
 	 * @param mixed $pAction Post Action.
 	 */
 	public static function action_update( $pAction ) {
-		$postId       = $_POST['postId'];
-		$websiteIdEnc = $_POST['websiteId'];
-		$post_data    = $_POST['post_data'];
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$post_data = isset( $_POST['post_data'] ) ? $_POST['post_data'] : array();
 
-		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( 'FAIL' );
-		}
-		$websiteId = $websiteIdEnc;
-
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( 'FAIL' );
 		}
 

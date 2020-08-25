@@ -318,10 +318,10 @@ class MainWP_Extensions {
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
-		$username = trim( $_POST['username'] );
-		$password = trim( $_POST['password'] );
+		$username = isset( $_POST['username'] ) ? trim( $_POST['username'] ) : '';
+		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
 
-		if ( ( '' === $username ) || ( '' === $password ) ) {
+		if ( ( '' == $username ) || ( '' == $password ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid login.', 'mainwp' ) ) ) );
 		}
 

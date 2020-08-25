@@ -151,9 +151,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
-		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? $_POST['post_type'] : 'post' );
+		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? wp_unslash( $_POST['post_type'] ) : 'post' );
 		if ( isset( $_POST['maximum'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_maximumPosts', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
+			MainWP_Utility::update_option( 'mainwp_maximumPosts', isset( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 		MainWP_Cache::init_session();
 		MainWP_Post::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['postId'], $_POST['userId'], $post_type, $_POST['search_on'] );
@@ -168,7 +168,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
 		if ( isset( $_POST['maximum'] ) ) {
-			MainWP_Utility::update_option( 'mainwp_maximumPages', MainWP_Utility::ctype_digit( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
+			MainWP_Utility::update_option( 'mainwp_maximumPages', intval( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 		MainWP_Cache::init_session();
 		MainWP_Page::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search_on'] );
@@ -424,7 +424,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 				unset( $values[ $_POST['status'] ] );
 			}
 		} else {
-			$values[ $_POST['status'] ] = $_POST['value'];
+			$values[ $_POST['status'] ] = wp_unslash( $_POST['value'] );
 		}
 
 		update_option( 'mainwp_status_saved_values', $values );
@@ -471,7 +471,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
 		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
 			$ids      = '';
-			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $_POST['group_id'], true ) );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( wp_unslash( $_POST['group_id'] ), true ) );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$ids .= $website->id . ',';
 			}
@@ -493,7 +493,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		global $current_user;
 		$user_id = $current_user->ID;
 		if ( $user_id && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
-			MainWP_Twitter::clear_twitter_info( $_POST['what'], $_POST['twitId'] );
+			MainWP_Twitter::clear_twitter_info( wp_unslash( $_POST['what'] ), wp_unslash( $_POST['twitId'] ) );
 		}
 		die( 1 );
 	}
@@ -536,13 +536,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		if ( isset( $_POST['showNotice'] ) && ! empty( $_POST['showNotice'] ) ) {
 			if ( MainWP_Twitter::enabled_twitter_messages() ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( $_POST['actionName'] );
+				$twitters = MainWP_Twitter::get_twitter_notice( wp_unslash( $_POST['actionName'] ) );
 				$html     = '';
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( $_POST['actionName'], $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $_POST['actionName'] ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$sendText = MainWP_Twitter::get_twit_to_send( wp_unslash( $_POST['actionName'] ), $timeid );
+							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( wp_unslash( $_POST['actionName'] ) ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -779,7 +779,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $opts ) ) {
 				$opts = array();
 			}
-			$opts[ $_POST['sec'] ] = $_POST['status'];
+			$opts[ $_POST['sec'] ] = wp_unslash( $_POST['status'] );
 			update_option( 'mainwp_opts_showhide_sections', $opts );
 			die( 'ok' );
 		}
@@ -792,7 +792,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * MainWP Saving Status.
 	 */
 	public function mainwp_saving_status() {
-		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( $_REQUEST['nonce'], 'mainwp_ajax' ) ) {
+		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
 		}
 		if ( isset( $_POST['saving_status'] ) ) {
@@ -802,7 +802,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			}
 
 			if ( ! empty( $_POST['saving_status'] ) ) {
-				$current_options[ $_POST['saving_status'] ] = $_POST['value'];
+				$current_options[ $_POST['saving_status'] ] = wp_unslash( $_POST['value'] );
 			}
 
 			update_option( 'mainwp_opts_saving_status', $current_options );
@@ -824,7 +824,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( -1 );
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
+		$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 		if ( empty( $website ) ) {
 			die( -1 );
 		}

@@ -478,7 +478,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server gateway interface.
 	 */
 	public static function get_server_gateway_interface() {
-		echo isset( $_SERVER['GATEWAY_INTERFACE'] ) ? $_SERVER['GATEWAY_INTERFACE'] : '';
+		echo isset( $_SERVER['GATEWAY_INTERFACE'] ) ? wp_unslash( $_SERVER['GATEWAY_INTERFACE'] ) : '';
 	}
 
 	/**
@@ -487,7 +487,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server IP address.
 	 */
 	public static function get_server_ip() {
-		echo $_SERVER['SERVER_ADDR'];
+		echo isset( $_SERVER['SERVER_ADDR'] ) ? wp_unslash( $_SERVER['SERVER_ADDR'] ) : '';
 	}
 
 	/**
@@ -501,9 +501,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_name( $return = false ) {
 		if ( $return ) {
-			return $_SERVER['SERVER_NAME'];
+			return wp_unslash( $_SERVER['SERVER_NAME'] );
 		} else {
-			echo $_SERVER['SERVER_NAME'];
+			echo wp_unslash( $_SERVER['SERVER_NAME'] );
 		}
 	}
 
@@ -518,9 +518,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_software( $return = false ) {
 		if ( $return ) {
-			return $_SERVER['SERVER_SOFTWARE'];
+			return wp_unslash( $_SERVER['SERVER_SOFTWARE'] );
 		} else {
-			echo $_SERVER['SERVER_SOFTWARE'];
+			echo wp_unslash( $_SERVER['SERVER_SOFTWARE'] );
 		}
 	}
 
@@ -542,14 +542,14 @@ class MainWP_Server_Information_Handler {
 	 * Gets server protocol.
 	 */
 	public static function get_server_protocol() {
-		echo $_SERVER['SERVER_PROTOCOL'];
+		echo isset( $_SERVER['SERVER_PROTOCOL'] ) ? wp_unslash( $_SERVER['SERVER_PROTOCOL'] ) : '';
 	}
 
 	/**
 	 * Gets server request time.
 	 */
 	public static function get_server_request_time() {
-		echo $_SERVER['REQUEST_TIME'];
+		echo wp_unslash( $_SERVER['REQUEST_TIME'] );
 	}
 
 
@@ -557,7 +557,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
-		echo $_SERVER['HTTP_ACCEPT'];
+		echo wp_unslash( $_SERVER['HTTP_ACCEPT'] );
 	}
 
 	/**
@@ -567,7 +567,7 @@ class MainWP_Server_Information_Handler {
 		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
-			echo $_SERVER['HTTP_ACCEPT_CHARSET'];
+			echo wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] );
 		}
 	}
 
@@ -575,21 +575,21 @@ class MainWP_Server_Information_Handler {
 	 * Gets HTTP host.
 	 */
 	public static function get_http_host() {
-		echo $_SERVER['HTTP_HOST'];
+		echo wp_unslash( $_SERVER['HTTP_HOST'] );
 	}
 
 	/**
 	 * Gets complete URL.
 	 */
 	public static function get_complete_url() {
-		echo isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
+		echo isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '';
 	}
 
 	/**
 	 * Gets user agent.
 	 */
 	public static function get_user_agent() {
-		echo $_SERVER['HTTP_USER_AGENT'];
+		echo wp_unslash( $_SERVER['HTTP_USER_AGENT'] );
 	}
 
 	/**
@@ -597,7 +597,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
-			esc_html_e( 'ON', 'mainwp' ) . ' - ' . $_SERVER['HTTPS'];
+			esc_html_e( 'ON', 'mainwp' ) . ' - ' . wp_unslash( $_SERVER['HTTPS'] );
 		} else {
 			esc_html_e( 'OFF', 'mainwp' );
 		}
@@ -650,7 +650,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote address.
 	 */
 	public static function get_remote_address() {
-		echo $_SERVER['REMOTE_ADDR'];
+		echo wp_unslash( $_SERVER['REMOTE_ADDR'] );
 	}
 
 	/**
@@ -660,7 +660,7 @@ class MainWP_Server_Information_Handler {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( '' === $_SERVER['REMOTE_HOST'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
-			echo $_SERVER['REMOTE_HOST'];
+			echo wp_unslash( $_SERVER['REMOTE_HOST'] );
 		}
 	}
 
@@ -668,14 +668,14 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote port.
 	 */
 	public static function get_remote_port() {
-		echo $_SERVER['REMOTE_PORT'];
+		echo wp_unslash( $_SERVER['REMOTE_PORT'] );
 	}
 
 	/**
 	 * Gets server script filename.
 	 */
 	public static function get_script_file_name() {
-		echo $_SERVER['SCRIPT_FILENAME'];
+		echo wp_unslash( $_SERVER['SCRIPT_FILENAME'] );
 	}
 
 	/**
@@ -684,7 +684,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server port.
 	 */
 	public static function get_server_port() {
-		echo $_SERVER['SERVER_PORT'];
+		echo wp_unslash( $_SERVER['SERVER_PORT'] );
 	}
 
 	/**
@@ -693,7 +693,7 @@ class MainWP_Server_Information_Handler {
 	 * Get current page URI.
 	 */
 	public static function get_current_page_uri() {
-		echo $_SERVER['REQUEST_URI'];
+		echo wp_unslash( $_SERVER['REQUEST_URI'] );
 	}
 
 	/**

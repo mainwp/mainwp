@@ -132,9 +132,9 @@ class MainWP_Manage_Backups_Handler {
 			die( wp_json_encode( array( 'error' => __( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
 		}
 
-		$schedule       = $_POST['schedule'];
-		$type           = $_POST['type'];
-		$excludedFolder = trim( $_POST['exclude'], "\n" );
+		$schedule       = isset( $_POST['schedule'] ) ? $_POST['schedule'] : '';
+		$type           = isset( $_POST['type'] ) ? $_POST['type'] : '';
+		$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
 		$excludedFolder = explode( "\n", $excludedFolder );
 		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
@@ -162,10 +162,10 @@ class MainWP_Manage_Backups_Handler {
 
 		do_action( 'mainwp_update_backuptask', $task->id );
 
-		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? $_POST['archiveFormat'] : 'site';
+		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? wp_unslash( $_POST['archiveFormat'] ) : 'site';
 		$maximumFileDescriptorsOverride = 1 == $_POST['maximumFileDescriptorsOverride'];
 		$maximumFileDescriptorsAuto     = 1 == $_POST['maximumFileDescriptorsAuto'];
-		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
+		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? wp_unslash( $_POST['maximumFileDescriptors'] ) : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
 		if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
@@ -185,9 +185,9 @@ class MainWP_Manage_Backups_Handler {
 			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
-		$schedule       = $_POST['schedule'];
-		$type           = $_POST['type'];
-		$excludedFolder = trim( $_POST['exclude'], "\n" );
+		$schedule       = isset( $_POST['schedule'] ) ? $_POST['schedule'] : '';
+		$type           = isset( $_POST['type'] ) ? $_POST['type'] : '';
+		$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
 		$excludedFolder = explode( "\n", $excludedFolder );
 		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
@@ -491,8 +491,8 @@ class MainWP_Manage_Backups_Handler {
 
 	/** Remove Backup. */
 	public static function remove_backup() {
-		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $_POST['id'] );
+		if ( isset( $_POST['id'] ) ) {
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( intval( $_POST['id'] ) );
 			if ( self::can_edit_backuptask( $task ) ) {
 				MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );

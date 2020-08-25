@@ -412,8 +412,8 @@ class MainWP_Manage_Groups {
 	 * Rename the selected group.
 	 */
 	public static function rename_group() {
-		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
+		if ( isset( $_POST['groupId'] ) ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
 			if ( ! empty( $group ) ) {
 				$name = $_POST['newName'];
 				if ( '' == $name ) {
@@ -496,7 +496,7 @@ class MainWP_Manage_Groups {
 	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( $_POST['newName'] ) );
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( wp_unslash( $_POST['newName'] ) ) );
 
 			/**
 			 * New Group Added

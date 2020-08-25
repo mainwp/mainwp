@@ -183,7 +183,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$sslVersion        = 0;
 
 		if ( isset( $_POST['url'] ) ) {
-			$url = $_POST['url'];
+			$url = wp_unslash( $_POST['url'] );
 
 			$temp_url = MainWP_Utility::remove_http_prefix( $url, true );
 
@@ -191,14 +191,14 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 				die( wp_json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
 			}
 
-			$verifyCertificate = $_POST['test_verify_cert'];
-			$forceUseIPv4      = $_POST['test_force_use_ipv4'];
-			$sslVersion        = $_POST['test_ssl_version'];
-			$http_user         = $_POST['http_user'];
-			$http_pass         = $_POST['http_pass'];
+			$verifyCertificate = wp_unslash( $_POST['test_verify_cert'] );
+			$forceUseIPv4      = wp_unslash( $_POST['test_force_use_ipv4'] );
+			$sslVersion        = wp_unslash( $_POST['test_ssl_version'] );
+			$http_user         = wp_unslash( $_POST['http_user'] );
+			$http_pass         = wp_unslash( $_POST['http_pass'] );
 
 		} elseif ( isset( $_POST['siteid'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['siteid'] );
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['siteid'] ) );
 			if ( $website ) {
 				$url               = $website->url;
 				$name              = $website->name;

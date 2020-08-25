@@ -51,7 +51,7 @@ class MainWP_Extensions_View {
 				'title' => __( 'Extensions', 'mainwp' ),
 			);
 		} else {
-			$extension_name_raw = $_GET['page'];
+			$extension_name_raw = wp_unslash( $_GET['page'] );
 			$extension_name     = str_replace( array( 'Extensions', '-', 'Mainwp', 'Extension' ), ' ', $extension_name_raw );
 			$params             = array(
 				'title' => $extension_name,

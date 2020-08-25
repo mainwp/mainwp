@@ -48,13 +48,13 @@ class MainWP_Site_Open {
 
 		$location = '';
 		if ( isset( $_GET['location'] ) ) {
-			$location = base64_decode( $_GET['location'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for HTTP compatible char.
+			$location = base64_decode( wp_unslash( $_GET['location'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_decode used for HTTP compatible char.
 		}
 
 		if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
 			self::open_site_location( $website, $location );
 		} else {
-			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? $_GET['newWindow'] : null ) );
+			self::open_site( $website, $location, ( isset( $_GET['newWindow'] ) ? wp_unslash( $_GET['newWindow'] ) : null ) );
 		}
 	}
 
@@ -95,7 +95,7 @@ class MainWP_Site_Open {
 
 		$file = '';
 		if ( isset( $_GET['f'] ) ) {
-			$file = base64_decode( esc_attr( esc_html( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$file = base64_decode( esc_attr( esc_html( wp_unslash( $_GET['f'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		self::open_site_restore( $website, $file, esc_attr( esc_html( $_GET['size'] ) ) );

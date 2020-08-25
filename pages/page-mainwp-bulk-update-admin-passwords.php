@@ -91,7 +91,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				$show_form = false;
 
 				$new_password = array(
-					'user_pass' => $_POST['password'],
+					'user_pass' => wp_unslash( $_POST['password'] ),
 				);
 
 				$dbwebsites = array();

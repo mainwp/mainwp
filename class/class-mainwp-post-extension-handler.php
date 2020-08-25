@@ -85,9 +85,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function activate_api_extension() {
 		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		$api       = dirname( $_POST['slug'] );
-		$api_key   = trim( $_POST['key'] );
-		$api_email = trim( $_POST['email'] );
+		$api       = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
+		$api_key   = isset( $_POST['key'] ) ? trim( $_POST['key'] ) : '';
+		$api_email = isset( $_POST['email'] ) ? trim( $_POST['email'] ) : '';
 		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
 		wp_send_json( $result );
 	}
@@ -104,8 +104,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Grab MainWP Extension API Key. */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
-		$username = trim( $_POST['username'] );
-		$password = trim( $_POST['password'] );
+		$username = isset( $_POST['username'] ) ? trim( $_POST['username'] ) : '';
+		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
 		$api      = dirname( $_POST['slug'] );
 		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
 		wp_send_json( $result );
@@ -134,9 +134,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$_SESSION['api_login_history'] = $new_api_login_history;
 		}
 
-		$username = trim( $_POST['username'] );
-		$password = trim( $_POST['password'] );
-		if ( ( '' === $username ) && ( '' === $password ) ) {
+		$username = isset( $_POST['username'] ) ? trim( $_POST['username'] ) : '';
+		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
+		if ( ( '' == $username ) && ( '' == $password ) ) {
 			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );
 			MainWP_Utility::update_option( 'mainwp_extensions_api_password', $password );
 			die( wp_json_encode( array( 'saved' => 1 ) ) );
@@ -243,7 +243,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** MainWP Extension Bulck Activation. */
 	public function bulk_activate() {
 		$this->check_security( 'mainwp_extension_bulk_activate' );
-		$plugins = $_POST['plugins'];
+		$plugins = isset( $_POST['plugins'] ) ? $_POST['plugins'] : false;
 		if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
 			if ( current_user_can( 'activate_plugins' ) ) {
 				activate_plugins( $plugins );

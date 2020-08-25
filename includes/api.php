@@ -128,7 +128,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			$report->subject            = 'Report for [client.site.name]';
 			$report->recurring_schedule = '';
 			$report->schedule_bcc_me    = 0;
-			$report->header             = $_POST['content'];
+			$report->header             = wp_unslash( $_POST['content'] );
 			$report->body               = '';
 			$report->footer             = '';
 			$report->type               = 0;
@@ -177,12 +177,12 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 			$checkifvalidclient = check_if_valid_client( $_POST['email'], $_POST['siteid'] );
-			$allAccess          = isset( $_POST['allAccess'] ) ? $_POST['allAccess'] : false;
+			$allAccess          = isset( $_POST['allAccess'] ) ? wp_unslash( $_POST['allAccess'] ) : false;
 			if ( ( isset( $checkifvalidclient['result'] ) && 'success' == $checkifvalidclient['result'] ) || $allAccess ) {
 				$report                     = new \stdClass();
 				$report->title              = 'Live Report';
-				$report->date_from          = $_POST['date_from'];
-				$report->date_to            = $_POST['date_to'];
+				$report->date_from          = isset( $_POST['date_from'] ) ? $_POST['date_from'] : '';
+				$report->date_to            = isset( $_POST['date_to'] ) ? $_POST['date_to'] : '';
 				$report->client             = '';
 				$report->client_id          = 0;
 				$report->fname              = '';
@@ -202,7 +202,8 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
-				$filtered_reports           = MainWP_Live_Reports::filter_report( $report, $_POST['allowed_tokens'] );
+				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) ? $_POST['allowed_tokens'] : '';
+				$filtered_reports           = MainWP_Live_Reports::filter_report( $report, $allowed_tokens );
 				echo wp_json_encode(
 					array(
 						'result' => 'success',
@@ -254,7 +255,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 
 			global $wpdb;
 			$result       = array();
-			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, $_POST['email'] ) );
+			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, wp_unslash( $_POST['email'] ) ) );
 
 			if ( $get_allsites ) {
 				foreach ( $get_allsites as $site ) {

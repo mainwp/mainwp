@@ -990,7 +990,7 @@ class MainWP_User {
 			array(
 				'count'   => $output->users,
 				'keyword' => $search,
-				'status'  => ( isset( $_POST['role'] ) ? $_POST['role'] : 'administrator' ),
+				'status'  => ( isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : 'administrator' ),
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
 			)
@@ -1174,18 +1174,12 @@ class MainWP_User {
 	 * @return mixed $information User update info that is returned.
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
-		$userId       = $_POST['userId'];
-		$userName     = $_POST['userName'];
-		$websiteIdEnc = $_POST['websiteId'];
-		$pass         = stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) );
+		$userId    = isset( $_POST['userId'] ) ? $_POST['userId'] : false;
+		$userName  = isset( $_POST['userName'] ) ? $_POST['userName'] : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? $_POST['websiteId'] : false;
+		$pass      = stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) );
 
-		if ( ! MainWP_Utility::ctype_digit( $userId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		}
-
-		$websiteId = $websiteIdEnc;
-
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $userId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
@@ -1323,7 +1317,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_attr( $_POST['user_login'] ) : ''; ?>">
+										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_attr( wp_unslash( $_POST['user_login'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1331,7 +1325,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_attr( $_POST['email'] ) : ''; ?>">
+										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1339,7 +1333,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? esc_attr( $_POST['first_name'] ) : ''; ?>">
+										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? esc_attr( wp_unslash( $_POST['first_name'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1347,7 +1341,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Last Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? esc_attr( $_POST['last_name'] ) : ''; ?>">
+										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? esc_attr( wp_unslash( $_POST['last_name'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1355,7 +1349,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? esc_attr( $_POST['url'] ) : ''; ?>">
+										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? esc_attr( wp_unslash( $_POST['url'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1653,13 +1647,13 @@ class MainWP_User {
 
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
-				'user_pass'  => $_POST['pass1'],
-				'user_login' => $_POST['user_login'],
-				'user_url'   => $_POST['url'],
-				'user_email' => $_POST['email'],
-				'first_name' => $_POST['first_name'],
-				'last_name'  => $_POST['last_name'],
-				'role'       => $_POST['role'],
+				'user_pass'  => wp_unslash( $_POST['pass1'] ),
+				'user_login' => wp_unslash( $_POST['user_login'] ),
+				'user_url'   => wp_unslash( $_POST['url'] ),
+				'user_email' => wp_unslash( $_POST['email'] ),
+				'first_name' => wp_unslash( $_POST['first_name'] ),
+				'last_name'  => wp_unslash( $_POST['last_name'] ),
+				'role'       => wp_unslash( $_POST['role'] ),
 			);
 
 			$dbwebsites = array();
@@ -1715,7 +1709,7 @@ class MainWP_User {
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
 					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-					'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
+					'send_password' => ( isset( $_POST['send_password'] ) ? wp_unslash( $_POST['send_password'] ) : '' ),
 				);
 				$output         = new \stdClass();
 				$output->ok     = array();
@@ -1977,13 +1971,13 @@ class MainWP_User {
 			}
 		}
 		$user_to_add = array(
-			'user_pass'  => $_POST['pass1'],
-			'user_login' => $_POST['user_login'],
-			'user_url'   => $_POST['url'],
-			'user_email' => $_POST['email'],
-			'first_name' => $_POST['first_name'],
-			'last_name'  => $_POST['last_name'],
-			'role'       => $_POST['role'],
+			'user_pass'  => isset( $_POST['pass1'] ) ? $_POST['pass1'] : '',
+			'user_login' => isset( $_POST['user_login'] ) ? $_POST['user_login'] : '',
+			'user_url'   => isset( $_POST['url'] ) ? $_POST['url'] : '',
+			'user_email' => isset( $_POST['email'] ) ? $_POST['email'] : '',
+			'first_name' => isset( $_POST['first_name'] ) ? $_POST['first_name'] : '',
+			'last_name'  => isset( $_POST['last_name'] ) ? $_POST['last_name'] : '',
+			'role'       => isset( $_POST['role'] ) ? $_POST['role'] : '',
 		);
 
 		$ret         = array();

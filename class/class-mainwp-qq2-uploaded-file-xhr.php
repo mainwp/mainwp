@@ -85,7 +85,7 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 
 	/** Get the File Name. */
 	public function get_name() {
-		return $_GET['qqfile'];
+		return isset( $_GET['qqfile'] ) ? wp_unslash( $_GET['qqfile'] ) : '';
 	}
 
 	/**

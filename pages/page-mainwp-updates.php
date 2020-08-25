@@ -576,10 +576,10 @@ class MainWP_Updates {
 
 		if ( 0 < $limit_updates_all ) {
 			if ( isset( $_GET['continue_update'] ) && '' !== $_GET['continue_update'] ) {
-				self::$continue_update = $_GET['continue_update'];
+				self::$continue_update = wp_unslash( $_GET['continue_update'] );
 				if ( 'plugins_upgrade_all' === self::$continue_update || 'themes_upgrade_all' === self::$continue_update || 'translations_upgrade_all' === self::$continue_update ) {
 					if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-						self::$continue_update_slug = $_GET['slug'];
+						self::$continue_update_slug = wp_unslash( $_GET['slug'] );
 					}
 				}
 			}
@@ -588,7 +588,7 @@ class MainWP_Updates {
 		$current_tab = '';
 
 		if ( isset( $_GET['tab'] ) ) {
-			$current_tab = $_GET['tab'];
+			$current_tab = wp_unslash( $_GET['tab'] );
 			if ( ! in_array( $current_tab, array( 'wordpress-updates', 'plugins-updates', 'themes-updates', 'translations-updates', 'abandoned-plugins', 'abandoned-themes', true ) ) ) {
 				$current_tab = 'plugins-updates';
 			}

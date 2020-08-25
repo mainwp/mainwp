@@ -1135,16 +1135,16 @@ class MainWP_Server_Information {
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
 			if ( MainWP_Logger::DISABLED != $_REQUEST['actionlogs_status'] ) {
-				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->set_log_priority( wp_unslash( $_REQUEST['actionlogs_status'] ) );
 			}
 
-			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $_REQUEST['actionlogs_status'] ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( wp_unslash( $_REQUEST['actionlogs_status'] ) ), MainWP_Logger::LOG );
 
 			if ( MainWP_Logger::DISABLED == $_REQUEST['actionlogs_status'] ) {
-				MainWP_Logger::instance()->set_log_priority( $_REQUEST['actionlogs_status'] );
+				MainWP_Logger::instance()->set_log_priority( wp_unslash( $_REQUEST['actionlogs_status'] ) );
 			}
 
-			MainWP_Utility::update_option( 'mainwp_actionlogs', $_REQUEST['actionlogs_status'] );
+			MainWP_Utility::update_option( 'mainwp_actionlogs', wp_unslash( $_REQUEST['actionlogs_status'] ) );
 		}
 
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {

@@ -86,19 +86,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_run_site' );
 
 		try {
-			if ( ! isset( $_POST['site_id'] ) || ! MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
+			if ( ! isset( $_POST['site_id'] ) || ! MainWP_Utility::ctype_digit( intval( $_POST['site_id'] ) ) ) {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			$ret = array( 'result' => MainWP_Backup_Handler::backup( $_POST['site_id'], 'full', '', '', 1, 1, 1, 1 ) );
+			$ret = array( 'result' => MainWP_Backup_Handler::backup( intval( $_POST['site_id'] ), 'full', '', '', 1, 1, 1, 1 ) );
 			wp_send_json( $ret );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -121,7 +121,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
 
-			$excludedFolder = trim( $_POST['exclude'], "\n" );
+			$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
 			$excludedFolder = explode( "\n", $excludedFolder );
 			$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
@@ -134,8 +134,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -157,15 +157,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			if ( ! isset( $_POST['site_id'] ) || ! MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
 				throw new MainWP_Exception( 'Invalid request' );
 			}
-
 			wp_send_json( MainWP_Backup_Handler::backup_check_pid( $_POST['site_id'], $_POST['pid'], $_POST['type'], ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'] ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -194,8 +193,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -218,14 +217,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( __( 'Invalid request!', 'mainwp' ) );
 			}
 
-			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $_POST['site_id'], $_POST['file'] ) ) ) );
+			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( intval( $_POST['site_id'] ), wp_unslash( $_POST['file'] ) ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -263,9 +262,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				$website,
 				'createBackupPoll',
 				array(
-					'fileName'       => $fileName,
-					'fileNameUID'    => $fileNameUID,
-					'type'           => $type,
+					'fileName'    => $fileName,
+					'fileNameUID' => $fileNameUID,
+					'type'        => $type,
 				)
 			);
 
@@ -302,8 +301,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -369,8 +368,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -403,8 +402,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)
@@ -479,7 +478,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_get_sites() {
 		$this->secure_request( 'mainwp_backuptask_get_sites' );
 
-		$taskID = $_POST['task_id'];
+		$taskID = wp_unslash( $_POST['task_id'] );
 
 		wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
 	}
@@ -505,8 +504,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				wp_json_encode(
 					array(
 						'error' => array(
-							'message'    => $e->getMessage(),
-							'extra'      => $e->get_message_extra(),
+							'message' => $e->getMessage(),
+							'extra'   => $e->get_message_extra(),
 						),
 					)
 				)

@@ -36,7 +36,7 @@ class MainWP_Security_Issues {
 			if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
 				return;
 			}
-			$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_REQUEST['id'] ) );
 		}
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {

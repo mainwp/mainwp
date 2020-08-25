@@ -249,7 +249,7 @@ class MainWP_System_Handler {
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
 			MainWP_Utility::update_option( 'mainwp_show_usersnap', ( ! isset( $_POST['mainwp_show_usersnap'] ) ? 0 : time() ) );
-			MainWP_Utility::update_option( 'mainwp_number_overview_columns', intval( $_POST['number_overview_columns'] ) );
+			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
 		}
 	}
 
@@ -275,7 +275,7 @@ class MainWP_System_Handler {
 		}
 
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
-			if ( wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+			if ( wp_verify_nonce( wp_unslash( $_POST['wp_nonce'] ), 'Settings' ) ) {
 				$updated  = MainWP_Settings::handle_settings_post();
 				$updated |= MainWP_Backup_Handler::handle_settings_post();
 				$updated |= MainWP_Monitoring_Handler::handle_settings_post();
@@ -351,7 +351,7 @@ class MainWP_System_Handler {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
-				$plugin_slug = $_POST['plugin'];
+				$plugin_slug = wp_unslash( $_POST['plugin'] );
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
 					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 						return $transient;

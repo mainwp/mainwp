@@ -39,7 +39,7 @@ class MainWP_Bulk_Post {
 			$post_id = (int) $_POST['post_ID'];
 		}
 
-		if ( $post_id && isset( $_POST['select_sites_nonce'] ) && wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
+		if ( $post_id && isset( $_POST['select_sites_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			check_admin_referer( 'update-post_' . $post_id );
 			edit_post();
 
@@ -118,7 +118,7 @@ class MainWP_Bulk_Post {
 			return;
 		}
 
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['_wpnonce'] ), 'update-post_' . $post_id ) ) {
 			return;
 		}
 

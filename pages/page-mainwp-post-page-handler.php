@@ -38,7 +38,7 @@ class MainWP_Post_Page_Handler {
 
 		$metakeyselect = isset( $_POST['metakeyselect'] ) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
 		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? wp_unslash( trim( $_POST['metakeyinput'] ) ) : '';
-		$metavalue     = isset( $_POST['metavalue'] ) ? $_POST['metavalue'] : '';
+		$metavalue     = isset( $_POST['metavalue'] ) ? wp_unslash( $_POST['metavalue'] ) : '';
 		if ( is_string( $metavalue ) ) {
 			$metavalue = trim( $metavalue );
 		}
@@ -158,7 +158,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( $_REQUEST['sites'] ) );
+			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) );
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -170,7 +170,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', urldecode( $_REQUEST['groups'] ) );
+			$groupIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['groups'] ) ) );
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
 				$groupId = $groupId;
@@ -188,7 +188,7 @@ class MainWP_Post_Page_Handler {
 		$selectedCategories2 = array();
 
 		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
-			$selectedCategories = explode( ',', urldecode( $_REQUEST['selected_categories'] ) );
+			$selectedCategories = explode( ',', urldecode( wp_unslash( $_REQUEST['selected_categories'] ) ) );
 		}
 
 		if ( ! is_array( $selectedCategories ) ) {
@@ -223,7 +223,7 @@ class MainWP_Post_Page_Handler {
 	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
-			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );
+			$edit_id = get_post_meta( intval( $_GET['id'] ), '_mainwp_edit_post_id', true );
 			if ( $edit_id ) {
 				$succes_message = __( 'Post has been updated successfully', 'mainwp' );
 			} else {
@@ -251,7 +251,7 @@ class MainWP_Post_Page_Handler {
 				if ( isset( $_GET['id'] ) ) {
 					if ( 'yes' === get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
 						$skip_post = true;
-						wp_delete_post( $_GET['id'], true );
+						wp_delete_post( intval( $_GET['id'] ), true );
 					}
 				}
 
@@ -329,10 +329,10 @@ class MainWP_Post_Page_Handler {
 								$post_featured_image = $img[0];
 								$attachment          = get_post( $featured_image_id );
 								$featured_image_data = array(
-									'alt'            => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-									'caption'        => $attachment->post_excerpt,
-									'description'    => $attachment->post_content,
-									'title'          => $attachment->post_title,
+									'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
+									'caption'     => $attachment->post_excerpt,
+									'description' => $attachment->post_content,
+									'title'       => $attachment->post_title,
 								);
 							}
 
@@ -554,14 +554,11 @@ class MainWP_Post_Page_Handler {
 	 * Get post from child site to edit.
 	 */
 	public static function get_post() {
-		$postId    = $_POST['postId'];
-		$postType  = $_POST['postType'];
-		$websiteId = $_POST['websiteId'];
+		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
+		$postType  = isset( $_POST['postType'] ) ? $_POST['postType'] : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( ! MainWP_Utility::ctype_digit( $postId ) ) {
-			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
-		}
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
 		}
 
@@ -575,9 +572,9 @@ class MainWP_Post_Page_Handler {
 				$website,
 				'post_action',
 				array(
-					'action'     => 'get_edit',
-					'id'         => $postId,
-					'post_type'  => $postType,
+					'action'    => 'get_edit',
+					'id'        => $postId,
+					'post_type' => $postType,
 				)
 			);
 		} catch ( MainWP_Exception $e ) {
@@ -863,13 +860,13 @@ class MainWP_Post_Page_Handler {
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
-			update_post_meta( $post_id, '_sticky', base64_encode( $_POST['sticky'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			update_post_meta( $post_id, '_sticky', base64_encode( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
-			return base64_encode( $_POST['sticky'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			return base64_encode( wp_unslash( $_POST['sticky'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
-			update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
+			update_post_meta( $post_id, '_edit_post_status', wp_unslash( $_POST['mainwp_edit_post_status'] ) );
 		}
 
 		return $post_id;

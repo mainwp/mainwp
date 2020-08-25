@@ -152,7 +152,7 @@ class MainWP_Install_Bulk {
 			}
 			$url = $api->download_link;
 		} else {
-			$url = $_POST['url'];
+			$url = wp_unslash( $_POST['url'] );
 
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpUrl = $mwpDir[1];
@@ -166,7 +166,7 @@ class MainWP_Install_Bulk {
 		$output['url']   = $url;
 		$output['sites'] = array();
 
-		if ( 'site' == $_POST['selected_by'] ) {
+		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
 			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;
@@ -325,7 +325,7 @@ class MainWP_Install_Bulk {
 
 		$output          = array();
 		$output['sites'] = array();
-		if ( 'site' == $_POST['selected_by'] ) {
+		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
 			// Get sites.
 			foreach ( $_POST['selected_sites'] as $enc_id ) {
 				$websiteid = $enc_id;

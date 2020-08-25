@@ -312,7 +312,7 @@ class MainWP_Page {
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpage' == $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
-			update_post_meta( $post_id, '_edit_post_status', $_POST['mainwp_edit_post_status'] );
+			update_post_meta( $post_id, '_edit_post_status', wp_unslash( $_POST['mainwp_edit_post_status'] ) );
 		}
 		return $post_id;
 	}
@@ -1197,7 +1197,7 @@ class MainWP_Page {
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
 		if ( isset( $_GET['id'] ) ) {
-			$edit_id = get_post_meta( $_GET['id'], '_mainwp_edit_post_id', true );
+			$edit_id = get_post_meta( intval( $_GET['id'] ), '_mainwp_edit_post_id', true );
 			if ( $edit_id ) {
 				$succes_message = __( 'Page has been updated successfully', 'mainwp' );
 			} else {
@@ -1225,7 +1225,7 @@ class MainWP_Page {
 			if ( isset( $_GET['id'] ) ) {
 				if ( 'yes' == get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
 					$skip_post = true;
-					wp_delete_post( $_GET['id'], true );
+					wp_delete_post( intval( $_GET['id'] ), true );
 				}
 			}
 

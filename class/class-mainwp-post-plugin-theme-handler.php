@@ -458,7 +458,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$slugs         = '';
 
 		if ( isset( $_POST['websiteId'] ) ) {
-			$websiteId = $_POST['websiteId'];
+			$websiteId = intval( $_POST['websiteId'] );
 
 			if ( $chunk_support ) {
 				/**
@@ -477,14 +477,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			}
 			if ( $chunk_support ) {
 				if ( isset( $_POST['chunk_slugs'] ) ) {
-					$slugs = $_POST['chunk_slugs'];  // chunk slugs send so use this.
+					$slugs = wp_unslash( $_POST['chunk_slugs'] );  // chunk slugs send so use this.
 				} else {
-					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, $_POST['type'] );
+					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
 				}
 			} elseif ( isset( $_POST['slug'] ) ) {
 				$slugs = $_POST['slug'];
 			} else {
-				$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, $_POST['type'] );
+				$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
 			}
 		}
 
@@ -509,7 +509,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		try {
-			$info = array( 'result' => MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, $_POST['type'], $slugs ) );
+			$info = array( 'result' => MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, wp_unslash( $_POST['type'] ), $slugs ) );
 
 			if ( $chunk_support && ( 0 < count( $chunk_slugs ) ) ) {
 				$info['chunk_slugs'] = implode( ',', $chunk_slugs );
@@ -618,7 +618,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) );
+		$type = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : '';
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
 	}
 
 	/**
@@ -636,7 +639,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
+
+		$type = isset( $_POST['type'] ) ? $_POST['type'] : '';
+		$slug = isset( $_POST['slug'] ) ? $_POST['slug'] : '';
+		$name = isset( $_POST['name'] ) ? $_POST['name'] : '';
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name ) ) ) );
 	}
 
 	/**
@@ -650,7 +657,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
+		$type = isset( $_POST['type'] ) ? $_POST['type'] : '';
+		$slug = isset( $_POST['slug'] ) ? $_POST['slug'] : '';
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug ) ) ) );
 	}
 
 	/**

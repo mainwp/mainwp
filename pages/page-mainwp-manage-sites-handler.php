@@ -37,10 +37,10 @@ class MainWP_Manage_Sites_Handler {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : $_POST['verify_certificate'] );
-				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : $_POST['force_use_ipv4'] );
-				$http_user      = ( isset( $_POST['http_user'] ) ? $_POST['http_user'] : '' );
-				$http_pass      = ( isset( $_POST['http_pass'] ) ? $_POST['http_pass'] : '' );
+				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
+				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
+				$http_user      = ( isset( $_POST['http_user'] ) ? wp_unslash( $_POST['http_user'] ) : '' );
+				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
 				$information    = MainWP_Connect::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
@@ -96,7 +96,7 @@ class MainWP_Manage_Sites_Handler {
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB.
-			$website                           = MainWP_DB::instance()->get_websites_by_url( $_POST['managesites_add_wpurl'] );
+			$website                           = MainWP_DB::instance()->get_websites_by_url( wp_unslash( $_POST['managesites_add_wpurl'] ) );
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
 		}
 
@@ -121,8 +121,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Apply plugin settings.
 	 */
 	public static function apply_plugin_settings() {
-		$site_id      = $_POST['siteId'];
-		$ext_dir_slug = $_POST['ext_dir_slug'];
+		$site_id      = isset( $_POST['siteId'] ) ? $_POST['siteId'] : false;
+		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? $_POST['ext_dir_slug'] : '';
 		if ( empty( $site_id ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
 		}
@@ -146,8 +146,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Save Child Site Note.
 	 */
 	public static function save_note() {
-		if ( isset( $_POST['websiteid'] ) && MainWP_Utility::ctype_digit( $_POST['websiteid'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['websiteid'] );
+		if ( isset( $_POST['websiteid'] ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$note     = stripslashes( $_POST['note'] );
 				$esc_note = MainWP_Utility::esc_content( $note );
@@ -167,8 +167,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Try to remove Child Site.
 	 */
 	public static function remove_site() {
-		if ( isset( $_POST['id'] ) && MainWP_Utility::ctype_digit( $_POST['id'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['id'] );
+		if ( isset( $_POST['id'] ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['id'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';
 
@@ -239,11 +239,11 @@ class MainWP_Manage_Sites_Handler {
 	 * Update Child Site ID.
 	 */
 	public static function update_child_site_value() {
-		if ( isset( $_POST['site_id'] ) && MainWP_Utility::ctype_digit( $_POST['site_id'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $_POST['site_id'] );
+		if ( isset( $_POST['site_id'] ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['site_id'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error    = '';
-				$uniqueId = isset( $_POST['unique_id'] ) ? $_POST['unique_id'] : '';
+				$uniqueId = isset( $_POST['unique_id'] ) ? wp_unslash( $_POST['unique_id'] ) : '';
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 				} catch ( MainWP_Exception $e ) {

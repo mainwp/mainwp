@@ -31,7 +31,7 @@ class MainWP_Meta_Boxes {
 		}
 
 		if ( isset( $_REQUEST['select'] ) ) {
-			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( $_REQUEST['select'] ) );
+			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( wp_unslash( $_REQUEST['select'] ) ) );
 		}
 
 		$val             = get_post_meta( $post->ID, '_selected_groups', true );
@@ -62,7 +62,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( $_POST['select_sites_nonce'], 'select_sites_' . $post_id ) ) {
+		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
 
@@ -100,10 +100,10 @@ class MainWP_Meta_Boxes {
 				}
 			}
 			update_post_meta( $post_id, '_selected_groups', $selected_group );
-			update_post_meta( $post_id, '_selected_by', $_POST['select_by'] );
+			update_post_meta( $post_id, '_selected_by', wp_unslash( $_POST['select_by'] ) );
 
 			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_group ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {
-				return $_POST['select_by'];
+				return wp_unslash( $_POST['select_by'] );
 			}
 		}
 
@@ -200,7 +200,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( $_POST['post_category_nonce'], 'post_category_' . $post_id ) ) {
+		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
 			return;
 		}
 
@@ -224,11 +224,11 @@ class MainWP_Meta_Boxes {
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type ) {
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
-				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', $_POST['post_category'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-				do_action( 'mainwp_bulkpost_categories_handle', $post_id, $_POST['post_category'] );
+				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', wp_unslash( $_POST['post_category'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				do_action( 'mainwp_bulkpost_categories_handle', $post_id, wp_unslash( $_POST['post_category'] ) );
 			}
 
-			$post_existing = ( isset( $_POST['post_only_existing'] ) && $_POST['post_only_existing'] ) ? 1 : 0;
+			$post_existing = ( isset( $_POST['post_only_existing'] ) && wp_unslash( $_POST['post_only_existing'] ) ) ? 1 : 0;
 			update_post_meta( $post_id, '_post_to_only_existing_categories', $post_existing );
 
 			return;
@@ -257,7 +257,7 @@ class MainWP_Meta_Boxes {
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
 		if ( isset( $_POST['add_tags'] ) ) {
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, $_POST['add_tags'] );
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) );
 		}
 	}
 
@@ -320,7 +320,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( $_POST[ $prefix . '_nonce' ], $prefix . '_' . $post_id ) ) {
+		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( wp_unslash( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
 
@@ -343,9 +343,9 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
-			update_post_meta( $post_id, $saveto, base64_encode( $_POST[ $prefix ] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			update_post_meta( $post_id, $saveto, base64_encode( wp_unslash( $_POST[ $prefix ] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
-			return base64_encode( $_POST[ $prefix ] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			return base64_encode( wp_unslash( $_POST[ $prefix ] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		return $post_id;

@@ -103,9 +103,7 @@ Building on WordPress's core principles, the MainWP plugin allows third-party de
 
 [MainWP Extensions](https://mainwp.com/mainwp-extensions/)
 
-[MainWP Codex](https://mainwp.com/codex/)
-
-[MainWP Code Reference](https://code-reference.mainwp.com/)
+[Develop MainWP Extensions](https://mainwp.com/develop-mainwp/)
 
 [MainWP on Github](https://mainwp.com/github/)
 

@@ -138,6 +138,11 @@ class MainWP_Live_Reports {
 			return;
 		}
 
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+         *
+         * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
 
 		$backup_type = ( 'full' === $type ) ? 'Full' : ( 'db' === $type ? 'Database' : '' );
@@ -257,6 +262,11 @@ class MainWP_Live_Reports {
 			$backup_type = 'Database';
 		}
 
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+		 *
+		 * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
 
 		$post_data = array(
@@ -525,6 +535,12 @@ class MainWP_Live_Reports {
 			}
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+			/**
+			 * WordPress files system object.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 			$creport_dir = apply_filters( 'mainwp_getspecificdir', 'client_report/' );
@@ -800,7 +816,14 @@ class MainWP_Live_Reports {
 	 * @return array $filtered_reports Array of filtered reports.
 	 */
 	public static function filter_report( $report, $allowed_tokens ) {
+
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+		 *
+		 * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
+
 		$websites = array();
 
 		$sel_sites  = MainWP_System_Utility::maybe_unserialyze( $report->sites );
@@ -1176,7 +1199,14 @@ class MainWP_Live_Reports {
 			'result'      => base64_encode( serialize( $scan_result ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility. Required to achieve desired results, pull request solutions appreciated.
 			'scan_status' => $scan_status,
 		);
+
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+		 *
+		 * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
+
 		apply_filters( 'mainwp_fetchurlauthed', $mainwpLiveReportResponderActivator->get_child_file(), $mainwpLiveReportResponderActivator->get_child_key(), $website_id, 'client_report', $post_data );
 	}
 
@@ -1714,7 +1744,14 @@ class MainWP_Live_Reports {
 	 * @return array $information or error.
 	 */
 	public static function fetch_stream_data( $website, $report, $sections, $tokens ) {
+
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+		 *
+		 * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
+
 		$post_data = array(
 			'mwp_action'   => 'get_stream',
 			'sections'     => base64_encode( serialize( $sections ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatibility.
@@ -1746,6 +1783,11 @@ class MainWP_Live_Reports {
 	 */
 	public static function manage_site_token( $site ) {
 
+		/**
+		 * MainWP Live Reporter Responder Activator instance.
+		 *
+		 * @global object
+		 */
 		global $mainwpLiveReportResponderActivator;
 
 		$websiteid = $site->id;
@@ -1805,7 +1847,16 @@ class MainWP_Live_Reports {
 	 * @param int $websiteId Child site ID.
 	 */
 	public function update_site_update_tokens( $websiteId ) {
+
+		/**
+		 * MainWP Live Reporter Responder Activator instance &
+         * WordPress Database instance.
+		 *
+		 * @global object
+         * @global object
+		 */
 		global $wpdb, $mainwpLiveReportResponderActivator;
+
 		if ( isset( $_POST['submit'] ) ) {
 			$website = apply_filters( 'mainwp_getsites', $mainwpLiveReportResponderActivator->get_child_file(), $mainwpLiveReportResponderActivator->get_child_key(), $websiteId );
 			if ( $website && is_array( $website ) ) {

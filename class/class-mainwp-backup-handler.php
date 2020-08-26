@@ -310,6 +310,12 @@ class MainWP_Backup_Handler {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+			/**
+			 * WordPress files system object.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
@@ -512,6 +518,12 @@ class MainWP_Backup_Handler {
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$dir = dirname( $pFile ) . '/';

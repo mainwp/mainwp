@@ -379,6 +379,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( 'ok' );
 		}
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 		$user_id = $current_user->ID;
 		if ( $user_id ) {
@@ -490,7 +495,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		$user_id = $current_user->ID;
 		if ( $user_id && isset( $_POST['twitId'] ) && ! empty( $_POST['twitId'] ) && isset( $_POST['what'] ) && ! empty( $_POST['what'] ) ) {
 			MainWP_Twitter::clear_twitter_info( wp_unslash( $_POST['what'] ), wp_unslash( $_POST['twitId'] ) );
@@ -506,7 +517,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function dismiss_activate_notice() {
 		$this->secure_request( 'mainwp_dismiss_activate_notice' );
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		$user_id = $current_user->ID;
 		if ( $user_id && isset( $_POST['slug'] ) && ! empty( $_POST['slug'] ) ) {
 			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
@@ -906,7 +923,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 					'action' => 'force_destroy_sessions',
 				)
 			);
+
+			/**
+			 * MainWP information array.
+			 *
+			 * @global object $mainWP
+			 */
 			global $mainWP;
+
 			if ( ( '2.0.22' === $mainWP->get_version() ) || ( '2.0.23' === $mainWP->get_version() ) ) {
 				if ( 1 != get_option( 'mainwp_fixed_security_2022' ) ) {
 					update_option( 'mainwp_fixed_security_2022', 1 );

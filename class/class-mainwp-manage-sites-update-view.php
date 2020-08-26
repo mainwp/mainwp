@@ -41,6 +41,12 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $id Child Site ID.
 	 */
 	public static function render_individual_updates( $id ) {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );

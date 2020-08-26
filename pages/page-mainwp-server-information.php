@@ -204,7 +204,13 @@ class MainWP_Server_Information {
 			1
 		);
 
+		/**
+		 * MainWP active menu slugs array.
+         *
+         * @global object
+		 */
 		global $_mainwp_menu_active_slugs;
+
 		$_mainwp_menu_active_slugs['ActionLogs'] = 'ServerInformation';
 
 		$init_sub_subleftmenu = array(
@@ -818,6 +824,11 @@ class MainWP_Server_Information {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

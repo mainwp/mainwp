@@ -128,7 +128,14 @@ class MainWP_Manage_Sites {
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
 
 		if ( isset( $_REQUEST['dashboard'] ) ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_managesites' );
 			add_filter( 'screen_layout_columns', array( self::get_class_name(), 'on_screen_layout_columns' ), 10, 2 );
 
@@ -1025,7 +1032,13 @@ class MainWP_Manage_Sites {
 	 * Render Manage Sites Page.
 	 */
 	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		global $current_user;
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
+	    global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
 			if ( 'new' === $_REQUEST['do'] ) {
@@ -1175,7 +1188,14 @@ class MainWP_Manage_Sites {
 	 * @return bool $updated Updated.
 	 */
 	private static function update_site_handle( $website ) {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		$updated = false;
 		if ( isset( $_POST['submit'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'UpdateWebsite' . $_GET['id'] ) ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {

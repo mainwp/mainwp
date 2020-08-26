@@ -494,7 +494,14 @@ class MainWP_Manage_Groups {
 	 * Add Group.
 	 */
 	public static function add_group() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		if ( isset( $_POST['newName'] ) ) {
 			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( wp_unslash( $_POST['newName'] ) ) );
 

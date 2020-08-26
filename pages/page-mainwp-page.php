@@ -131,7 +131,14 @@ class MainWP_Page {
 	public static function on_load_add_edit() {
 
 		if ( isset( $_GET['page'] ) && 'PageBulkAdd' == $_GET['page'] ) {
+
+			/**
+			 * MainWP default post to edit.
+             *
+             * @global string
+			 */
 			global $_mainwp_default_post_to_edit;
+
 			$post_type                    = 'bulkpage';
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
@@ -274,7 +281,14 @@ class MainWP_Page {
 	 * Add current screen ID to html header.
 	 */
 	public static function admin_head() {
+
+		/**
+		 * Current screen.
+         *
+         * @global string
+		 */
 		global $current_screen;
+
 		?>
 		<script type="text/javascript"> pagenow = '<?php echo strtolower( $current_screen->id ); ?>';</script>
 		<?php
@@ -1148,7 +1162,14 @@ class MainWP_Page {
 			mainwp_do_not_have_permissions( __( 'manage pages', 'mainwp' ) );
 			return;
 		}
+
+		/**
+		 * MainWP default post to edit.
+		 *
+		 * @global string
+		 */
 		global $_mainwp_default_post_to_edit;
+
 		$post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		self::render_addedit( $post_id, 'BulkAdd' );
 	}

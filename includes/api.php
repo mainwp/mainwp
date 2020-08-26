@@ -93,6 +93,12 @@ function check_if_valid_client( $email, $siteid ) {
 	$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 	$result          = array();
 	if ( $checkPermission ) {
+
+		/**
+		 * WordPress database instance.
+		 *
+		 * @global object
+		 */
 		global $wpdb;
 
 		$get_site_url = $wpdb->get_row( $wpdb->prepare( "SELECT `url` FROM {$wpdb->prefix}mainwp_wp WHERE id=%d", $siteid ) );
@@ -253,7 +259,13 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 
+			/**
+			 * WordPress database instance.
+			 *
+			 * @global object
+			 */
 			global $wpdb;
+
 			$result       = array();
 			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, wp_unslash( $_POST['email'] ) ) );
 
@@ -305,7 +317,13 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
 		if ( $checkPermission ) {
 
+			/**
+			 * WordPress database instance.
+			 *
+			 * @global object
+			 */
 			global $wpdb;
+
 			$result       = array();
 			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d ORDER BY `id` DESC", 12 ) );
 

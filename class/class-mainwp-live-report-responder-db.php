@@ -39,7 +39,10 @@ class MainWP_Live_Reports_Responder_DB {
 	 * Initialize default tokens upon creation of the object.
 	 */
 	public function __construct() {
+
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
+		
 		$this->table_prefix      = $wpdb->prefix . 'mainwp_';
 		$this->default_tokens    = array(
 			'client.site.name'           => 'Displays the Site Name',
@@ -372,7 +375,7 @@ class MainWP_Live_Reports_Responder_DB {
 			return false;
 		}
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		return ( $wpdb->dbh instanceof \mysqli );
@@ -387,7 +390,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function install() {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$currentVersion = get_site_option( 'mainwp_wpcreport_db_version' );
@@ -555,7 +558,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function add_token( $token ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( ! empty( $token['token_name'] ) && ! empty( $token['token_description'] ) ) {
@@ -582,7 +585,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function update_token( $id, $token ) {
 		
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$id = intval( $id );
@@ -607,7 +610,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_tokens_by( $by = 'id', $value = null, $site_url = '' ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $by ) || empty( $value ) ) {
@@ -659,7 +662,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_tokens() {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_token' ) . ' WHERE 1 = 1 ORDER BY type DESC, token_name ASC' );
@@ -678,7 +681,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_site_token_values( $id ) {
 		
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $id ) ) {
@@ -699,7 +702,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_site_tokens( $site_url, $index = 'id' ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$site_url = trim( $site_url );
@@ -798,7 +801,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function add_token_site( $token_id, $token_value, $site_url ) {
 		
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $token_id ) ) {
@@ -838,7 +841,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function update_token_site( $token_id, $token_value, $site_url ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $token_id ) ) {
@@ -878,7 +881,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function delete_site_tokens( $token_id = null, $site_url = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( ! empty( $token_id ) ) {
@@ -901,7 +904,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function delete_token_by( $by = 'id', $value = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( 'id' === $by ) {
@@ -924,7 +927,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function update_report( $report ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$id            = isset( $report['id'] ) ? $report['id'] : 0;
@@ -1052,7 +1055,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_report_by( $by = 'id', $value = null, $orderby = null, $order = null, $output = OBJECT ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $by ) || ( 'all' !== $by && empty( $value ) ) ) {
@@ -1119,7 +1122,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_avail_archive_reports() {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$sql = 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
@@ -1142,7 +1145,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_schedule_reports() {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$sql = 'SELECT rp.*, c.* FROM ' . $this->table_name( 'client_report' ) . ' rp '
@@ -1165,7 +1168,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function delete_report_by( $by = 'id', $value = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( 'id' === $by ) {
@@ -1186,7 +1189,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_clients() {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		return $wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'client_report_client' ) . ' WHERE 1 = 1 ORDER BY client ASC' );
@@ -1204,7 +1207,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_client_by( $by = 'clientid', $value = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $value ) ) {
@@ -1247,7 +1250,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function update_client( $client ) {
 		
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$id = isset( $client['clientid'] ) ? $client['clientid'] : 0;
@@ -1275,7 +1278,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_formats( $type = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		return $wpdb->prepare(
@@ -1297,7 +1300,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function get_format_by( $by, $value, $type = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( empty( $value ) ) {
@@ -1333,7 +1336,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function update_format( $format ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$id = isset( $format['id'] ) ? $format['id'] : 0;
@@ -1362,7 +1365,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	public function delete_format_by( $by = 'id', $value = null ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		if ( 'id' === $by ) {
@@ -1386,7 +1389,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 */
 	protected function escape( $data ) {
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 		if ( function_exists( 'esc_sql' ) ) {
 			return esc_sql( $data );
@@ -1410,7 +1413,7 @@ class MainWP_Live_Reports_Responder_DB {
 			return false;
 		}
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		$result = self::m_query( $sql, $wpdb->dbh );
@@ -1554,7 +1557,7 @@ class MainWP_Live_Reports_Responder_DB {
 			return null;
 		}
 
-		/** @var $wpdb WordPress Database Access Abstraction Object */
+		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
 		return $wpdb->get_results( $sql, OBJECT_K );

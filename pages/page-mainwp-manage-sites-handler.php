@@ -192,6 +192,11 @@ class MainWP_Manage_Sites_Handler {
 
 					$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+					/**
+					 * WordPress files system object.
+					 *
+					 * @global object
+					 */
 					global $wp_filesystem;
 
 					$dirs = MainWP_System_Utility::get_icons_dir();

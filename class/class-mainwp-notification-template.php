@@ -308,6 +308,12 @@ class MainWP_Notification_Template {
 		$updated_templ = false;
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$type = isset( $_GET['edit-email'] ) ? wp_unslash( $_GET['edit-email'] ) : '';

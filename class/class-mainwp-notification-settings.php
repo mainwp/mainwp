@@ -69,8 +69,8 @@ class MainWP_Notification_Settings {
 				unset( $emails_settings['daily_digets'] );
 			}
 
-			$type                       = isset( $_POST['mainwp_setting_emails_type'] ) ? $_POST['mainwp_setting_emails_type'] : '';
-			$update_settings            = isset( $_POST['mainwp_settingEmails'][ $type ] ) ? $_POST['mainwp_settingEmails'][ $type ] : '';
+			$type                       = isset( $_POST['mainwp_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_setting_emails_type'] ) ) : '';
+			$update_settings            = isset( $_POST['mainwp_settingEmails'][ $type ] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_settingEmails'][ $type ] ) ) : '';
 			$update_settings['disable'] = ( isset( $_POST['mainwp_settingEmails'][ $type ] ) && isset( $_POST['mainwp_settingEmails'][ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
 			$emails_settings[ $type ]   = $update_settings;
 

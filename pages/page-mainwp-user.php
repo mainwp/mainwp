@@ -1177,7 +1177,7 @@ class MainWP_User {
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
 		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
-		$pass      = isset( $_POST['update_password'] ) ? stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) ) : '';
+		$pass      = isset( $_POST['update_password'] ) ? utf8_decode( urldecode( wp_unslash( $_POST['update_password'] ) ) ) : '';
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );

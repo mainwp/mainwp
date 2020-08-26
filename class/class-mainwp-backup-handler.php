@@ -1066,7 +1066,7 @@ class MainWP_Backup_Handler {
 				if ( ! empty( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', ( isset( $_POST['mainwp_options_backupOnExternalSources'] ) ? intval( $_POST['mainwp_options_backupOnExternalSources'] ) : 1 ) );
 				}
-				MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? $_POST['mainwp_archiveFormat'] : '' ) );
+				MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
 
 				$old_primaryBackup          = get_option( 'mainwp_primaryBackup' );
 				$old_enableLegacyBackup     = get_option( 'mainwp_enableLegacyBackupFeature' );

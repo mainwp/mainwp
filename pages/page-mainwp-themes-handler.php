@@ -230,7 +230,7 @@ class MainWP_Themes_Handler {
 
 	/** This Method Saves a Trusted theme note. */
 	public static function save_trusted_theme_note() {
-		$slug               = isset( $_POST['slug'] ) ? urldecode( $_POST['slug'] ) : '';
+		$slug               = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
 		$note               = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
 		$esc_note           = MainWP_Utility::esc_content( $note );
 		$userExtension      = MainWP_DB_Common::instance()->get_user_extension();

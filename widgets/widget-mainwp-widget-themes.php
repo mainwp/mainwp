@@ -269,7 +269,7 @@ class MainWP_Widget_Themes {
 	 * @param mixed $action Theme Action.
 	 */
 	public static function action( $action ) {
-		$theme     = isset( $_POST['theme'] ) ? $_POST['theme'] : '';
+		$theme     = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {

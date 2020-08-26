@@ -24,22 +24,23 @@ namespace MainWP\Dashboard;
  * @param $siteurl Child Site URL.
  */
 function check_live_reporting_access( $siteurl ) {
-	$access = get_option( 'live-report-responder-provideaccess' );
+	$siteurl = isset( $_POST['livereportingurl'] ) ? wp_unslash( $_POST['livereportingurl'] ) : '';
+	$access  = get_option( 'live-report-responder-provideaccess' );
 	return ( ( 'yes' == $access ) && ( get_option( 'live-report-responder-siteurl' ) == $siteurl ) );
 }
 
 /**
  * Live Reports secure connection.
- *
- * @param $siteurl Child Site URL.
- * @param $securitykey Security Key.
- * @param $signature Security Signature.
- * @param $action Action to perform.
- * @param $timestamp Timestamp of action.
- * @param $pubkey Public Key.
  */
-function live_reports_responder_secure_connection( $siteurl = null, $securitykey = null, $signature = null, $action = null,
-											$timestamp = null, $pubkey = null ) {
+function live_reports_responder_secure_connection() {
+
+	$siteurl     = isset( $_POST['livereportingurl'] ) ? wp_unslash( $_POST['livereportingurl'] ) : '';
+	$securitykey = isset( $_POST['securitykey'] ) ? wp_unslash( $_POST['securitykey'] ) : '';
+	$signature   = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : '';
+	$action      = isset( $_POST['action'] ) ? wp_unslash( $_POST['action'] ) : '';
+	$timestamp   = isset( $_POST['timestamp'] ) ? wp_unslash( $_POST['timestamp'] ) : '';
+	$pubkey      = isset( $_POST['pubkey'] ) ? wp_unslash( $_POST['pubkey'] ) : null;
+
 	if ( ( null == $siteurl ) || ( null == $signature ) || ( null == $action ) || ( null == $timestamp ) ) {
 		return array( 'error' => 'Invalid request.' );
 	}
@@ -85,12 +86,13 @@ function live_reports_responder_secure_connection( $siteurl = null, $securitykey
 
 /**
  * Check database to see if client exists.
- *
- * @param $email Client Email Address.
- * @param $siteid Child Site ID.
  */
 function check_if_valid_client( $email, $siteid ) {
-	$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+
+	$email  = isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '';
+	$siteid = isset( $_POST['siteid'] ) ? wp_unslash( $_POST['siteid'] ) : false;
+
+	$checkPermission = check_live_reporting_access();
 	$result          = array();
 	if ( $checkPermission ) {
 		global $wpdb;
@@ -107,11 +109,11 @@ function check_if_valid_client( $email, $siteid ) {
 
 	return $result;
 }
-
+$sites = isset( $_POST['siteid'] ) ? base64_encode( serialize( array( $_POST['siteid'] ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displaycontent' == $_POST['action'] ) ) {
-	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {
-		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
 			$report                     = new \stdClass();
 			$report->title              = 'Live Reports';
@@ -132,17 +134,19 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 			$report->body               = '';
 			$report->footer             = '';
 			$report->type               = 0;
-			$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			$report->sites              = $sites;
 			$report->groups             = '';
 			$report->schedule_nextsend  = 0;
 			$filtered_reports           = MainWP_Live_Reports::filter_report( $report, '' );
-			echo wp_json_encode(
-				array(
-					'result' => 'success',
-					'data'   => html_entity_decode( stripslashes( $filtered_reports[ $_POST['siteid'] ]->filtered_header ) ),
-				)
-			);
+			$site_id                    = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
+			if ( ! empty( $site_id ) ) {
+				echo wp_json_encode(
+					array(
+						'result' => 'success',
+						'data'   => html_entity_decode( stripslashes( $filtered_reports[ $site_id ]->filtered_header ) ),
+					)
+				);
+			}
 			exit;
 		} else {
 			echo wp_json_encode(
@@ -172,11 +176,11 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 	}
 }
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' == $_POST['action'] ) ) {
-	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {
-		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
-			$checkifvalidclient = check_if_valid_client( $_POST['email'], $_POST['siteid'] );
+			$checkifvalidclient = check_if_valid_client();
 			$allAccess          = isset( $_POST['allAccess'] ) ? wp_unslash( $_POST['allAccess'] ) : false;
 			if ( ( isset( $checkifvalidclient['result'] ) && 'success' == $checkifvalidclient['result'] ) || $allAccess ) {
 				$report                     = new \stdClass();
@@ -198,11 +202,10 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->body               = '';
 				$report->footer             = '';
 				$report->type               = 0;
-				$sites                      = base64_encode( serialize( array( $_POST['siteid'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
-				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) ? $_POST['allowed_tokens'] : '';
+				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) && is_array( $_POST['allowed_tokens'] ) ? $_POST['allowed_tokens'] : '';
 				$filtered_reports           = MainWP_Live_Reports::filter_report( $report, $allowed_tokens );
 				echo wp_json_encode(
 					array(
@@ -248,9 +251,9 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 	}
 }
 if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyemail' == $_POST['action'] ) && ! empty( $_POST['email'] ) ) {
-	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = live_reports_responder_secure_connection();
 	if ( $secureconnection ) {
-		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
 
 			global $wpdb;
@@ -300,9 +303,9 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 	}
 }
 if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
-	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null );
+	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {
-		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
 
 			global $wpdb;
@@ -352,9 +355,9 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 	}
 }
 if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $_POST['action'] ) ) {
-	$secureconnection = live_reports_responder_secure_connection( $_POST['livereportingurl'], ( isset( $_POST['securitykey'] ) ) ? $_POST['securitykey'] : '', isset( $_POST['signature'] ) ? $_POST['signature'] : null, isset( $_POST['action'] ) ? $_POST['action'] : null, isset( $_POST['timestamp'] ) ? $_POST['timestamp'] : null, isset( $_POST['pubkey'] ) ? $_POST['pubkey'] : null );
+	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {
-		$checkPermission = check_live_reporting_access( $_POST['livereportingurl'] );
+		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
 			echo wp_json_encode(
 				array(

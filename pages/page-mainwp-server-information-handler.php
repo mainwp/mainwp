@@ -501,9 +501,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_name( $return = false ) {
 		if ( $return ) {
-			return wp_unslash( $_SERVER['SERVER_NAME'] );
+			return isset( $_SERVER['SERVER_NAME'] ) ? wp_unslash( $_SERVER['SERVER_NAME'] ) : '';
 		} else {
-			echo wp_unslash( $_SERVER['SERVER_NAME'] );
+			echo isset( $_SERVER['SERVER_NAME'] ) ? wp_unslash( $_SERVER['SERVER_NAME'] ) : '';
 		}
 	}
 
@@ -518,9 +518,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_software( $return = false ) {
 		if ( $return ) {
-			return wp_unslash( $_SERVER['SERVER_SOFTWARE'] );
+			return isset( $_SERVER['SERVER_SOFTWARE'] ) ? wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) : '';
 		} else {
-			echo wp_unslash( $_SERVER['SERVER_SOFTWARE'] );
+			echo isset( $_SERVER['SERVER_SOFTWARE'] ) ? wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) : '';
 		}
 	}
 
@@ -549,7 +549,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server request time.
 	 */
 	public static function get_server_request_time() {
-		echo wp_unslash( $_SERVER['REQUEST_TIME'] );
+		echo isset( $_SERVER['REQUEST_TIME'] ) ? esc_html( $_SERVER['REQUEST_TIME'] ) : '';
 	}
 
 
@@ -557,7 +557,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
-		echo wp_unslash( $_SERVER['HTTP_ACCEPT'] );
+		echo esc_html( $_SERVER['HTTP_ACCEPT'] );
 	}
 
 	/**
@@ -567,7 +567,7 @@ class MainWP_Server_Information_Handler {
 		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
-			echo wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] );
+			echo esc_html( $_SERVER['HTTP_ACCEPT_CHARSET'] );
 		}
 	}
 
@@ -575,21 +575,21 @@ class MainWP_Server_Information_Handler {
 	 * Gets HTTP host.
 	 */
 	public static function get_http_host() {
-		echo wp_unslash( $_SERVER['HTTP_HOST'] );
+		echo isset( $_SERVER['HTTP_HOST'] ) ? esc_html( $_SERVER['HTTP_HOST'] ) : '';
 	}
 
 	/**
 	 * Gets complete URL.
 	 */
 	public static function get_complete_url() {
-		echo isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '';
+		echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_html( $_SERVER['HTTP_REFERER'] ) : '';
 	}
 
 	/**
 	 * Gets user agent.
 	 */
 	public static function get_user_agent() {
-		echo wp_unslash( $_SERVER['HTTP_USER_AGENT'] );
+		echo isset( $_SERVER['HTTP_USER_AGENT'] ) ? esc_html( $_SERVER['HTTP_USER_AGENT'] ) : '';
 	}
 
 	/**
@@ -597,7 +597,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
-			esc_html_e( 'ON', 'mainwp' ) . ' - ' . wp_unslash( $_SERVER['HTTPS'] );
+			esc_html_e( 'ON', 'mainwp' ) . ' - ' . esc_html( $_SERVER['HTTPS'] );
 		} else {
 			esc_html_e( 'OFF', 'mainwp' );
 		}
@@ -650,7 +650,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote address.
 	 */
 	public static function get_remote_address() {
-		echo wp_unslash( $_SERVER['REMOTE_ADDR'] );
+		echo isset( $_SERVER['REMOTE_ADDR'] ) ? wp_unslash( $_SERVER['REMOTE_ADDR'] ) : '';
 	}
 
 	/**
@@ -668,14 +668,14 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote port.
 	 */
 	public static function get_remote_port() {
-		echo wp_unslash( $_SERVER['REMOTE_PORT'] );
+		echo isset( $_SERVER['REMOTE_PORT'] ) ? esc_html( $_SERVER['REMOTE_PORT'] ) : '';
 	}
 
 	/**
 	 * Gets server script filename.
 	 */
 	public static function get_script_file_name() {
-		echo wp_unslash( $_SERVER['SCRIPT_FILENAME'] );
+		echo isset( $_SERVER['SCRIPT_FILENAME'] ) ? wp_unslash( $_SERVER['SCRIPT_FILENAME'] ) : '';
 	}
 
 	/**
@@ -684,7 +684,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server port.
 	 */
 	public static function get_server_port() {
-		echo wp_unslash( $_SERVER['SERVER_PORT'] );
+		echo isset( $_SERVER['SERVER_PORT'] ) ? esc_html( $_SERVER['SERVER_PORT'] ) : '';
 	}
 
 	/**
@@ -693,7 +693,7 @@ class MainWP_Server_Information_Handler {
 	 * Get current page URI.
 	 */
 	public static function get_current_page_uri() {
-		echo wp_unslash( $_SERVER['REQUEST_URI'] );
+		echo isset( $_SERVER['REQUEST_URI'] ) ? esc_html( $_SERVER['REQUEST_URI'] ) : '';
 	}
 
 	/**

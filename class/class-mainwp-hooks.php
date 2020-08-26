@@ -786,21 +786,10 @@ class MainWP_Hooks {
 	 */
 	public function upgrade_plugin_theme() {
 		try {
-			$websiteId = null;
-			$type      = null;
-			$slugs     = array();
-			if ( isset( $_POST['websiteId'] ) ) {
-				$websiteId = $_POST['websiteId'];
-			}
-			if ( isset( $_POST['slugs'] ) ) {
-				$slugs = $_POST['slugs'];
-			}
-
-			if ( isset( $_POST['type'] ) ) {
-				$type = $_POST['type'];
-			}
-
-			$error = '';
+			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
+			$type      = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : null;
+			$slugs     = isset( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
+			$error     = '';
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );
 			} elseif ( 'theme' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_themes' ) ) {

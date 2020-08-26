@@ -479,9 +479,10 @@ class MainWP_System {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
-			$file   = trailingslashit( $mwpDir ) . rawurldecode( $_REQUEST['mwpdl'] );
+			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+			$file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
 
-			if ( stristr( rawurldecode( $_REQUEST['mwpdl'] ), '..' ) ) {
+			if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
 				return;
 			}
 
@@ -660,7 +661,7 @@ class MainWP_System {
 		}
 
 		$_pos = strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' );
-		if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
+		if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
 				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 				die();

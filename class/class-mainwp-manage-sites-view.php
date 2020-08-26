@@ -358,9 +358,9 @@ class MainWP_Manage_Sites_View {
 		</div>
 		<?php
 		$errors = array();
-		if ( UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-			if ( is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
-				$tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
+		if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
+			if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
+				$tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) : '';
 				MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
@@ -1332,9 +1332,9 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function add_site( $website ) {
 
-		$params['url']               = $_POST['managesites_add_wpurl'];
-		$params['name']              = $_POST['managesites_add_wpname'];
-		$params['wpadmin']           = $_POST['managesites_add_wpadmin'];
+		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? wp_unslash( $_POST['managesites_add_wpurl'] ) : '';
+		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? wp_unslash( $_POST['managesites_add_wpname'] ) : '';
+		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? wp_unslash( $_POST['managesites_add_wpadmin'] ) : '';
 		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? wp_unslash( $_POST['managesites_add_uniqueId'] ) : '';
 		$params['ssl_verify']        = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
 		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );

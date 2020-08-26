@@ -370,7 +370,7 @@ class MainWP_Settings {
 	 * @return boolean True|False Posts On True.
 	 */
 	public static function handle_settings_post() {
-		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
 			$userExtension            = MainWP_DB_Common::instance()->get_user_extension();
 			$userExtension->pluginDir = '';
 
@@ -406,8 +406,8 @@ class MainWP_Settings {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( wp_unslash( $_POST['mainwp_maximumComments'] ) ) : 50 );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', $_POST['mainwp_timeDailyUpdate'] );
-				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', intval( $_POST['mainwp_frequencyDailyUpdate'] ) );
+				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) : '' );
+				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 ) );
 
 				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 				$user = wp_get_current_user();
@@ -751,7 +751,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) {
 
 			/**
 			* Action: mainwp_before_save_advanced_settings
@@ -762,17 +762,17 @@ class MainWP_Settings {
 			*/
 			do_action( 'mainwp_before_save_advanced_settings', $_POST );
 
-			MainWP_Utility::update_option( 'mainwp_maximumRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumRequests'] ) ? intval( $_POST['mainwp_maximumRequests'] ) : 4 );
-			MainWP_Utility::update_option( 'mainwp_minimumDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
-			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
-			MainWP_Utility::update_option( 'mainwp_minimumIPDelay', MainWP_Utility::ctype_digit( $_POST['mainwp_minimumIPDelay'] ) ? intval( $_POST['mainwp_minimumIPDelay'] ) : 1000 );
-			MainWP_Utility::update_option( 'mainwp_maximumSyncRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumSyncRequests'] ) ? intval( $_POST['mainwp_maximumSyncRequests'] ) : 8 );
-			MainWP_Utility::update_option( 'mainwp_maximumInstallUpdateRequests', MainWP_Utility::ctype_digit( $_POST['mainwp_maximumInstallUpdateRequests'] ) ? intval( $_POST['mainwp_maximumInstallUpdateRequests'] ) : 3 );
+			MainWP_Utility::update_option( 'mainwp_maximumRequests', ! empty( $_POST['mainwp_maximumRequests'] ) ? intval( $_POST['mainwp_maximumRequests'] ) : 4 );
+			MainWP_Utility::update_option( 'mainwp_minimumDelay', ! empty( $_POST['mainwp_minimumDelay'] ) ? intval( $_POST['mainwp_minimumDelay'] ) : 200 );
+			MainWP_Utility::update_option( 'mainwp_maximumIPRequests', ! empty( $_POST['mainwp_maximumIPRequests'] ) ? intval( $_POST['mainwp_maximumIPRequests'] ) : 1 );
+			MainWP_Utility::update_option( 'mainwp_minimumIPDelay', ! empty( $_POST['mainwp_minimumIPDelay'] ) ? intval( $_POST['mainwp_minimumIPDelay'] ) : 1000 );
+			MainWP_Utility::update_option( 'mainwp_maximumSyncRequests', ! empty( $_POST['mainwp_maximumSyncRequests'] ) ? intval( $_POST['mainwp_maximumSyncRequests'] ) : 8 );
+			MainWP_Utility::update_option( 'mainwp_maximumInstallUpdateRequests', ! empty( $_POST['mainwp_maximumInstallUpdateRequests'] ) ? intval( $_POST['mainwp_maximumInstallUpdateRequests'] ) : 3 );
 			MainWP_Utility::update_option( 'mainwp_sslVerifyCertificate', isset( $_POST['mainwp_sslVerifyCertificate'] ) ? 1 : 0 );
 			MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
-				$openssl_loc = trim( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) );
+				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? trim( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
 				if ( self::is_local_window_config() ) {
 					MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ) );
 				} else {
@@ -793,7 +793,7 @@ class MainWP_Settings {
 		?>
 
 		<div id="mainwp-advanced-settings" class="ui segment">
-			<?php if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) : ?>
+			<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) : ?>
 				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
@@ -924,7 +924,7 @@ class MainWP_Settings {
 
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
-				<?php if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) : ?>
+				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
@@ -1085,14 +1085,14 @@ class MainWP_Settings {
 		<div id="mainwp-mcrwc-settings" class="ui segment">
 				<?php
 				if ( isset( $_POST['save_changes'] ) || isset( $_POST['reset_connection'] ) ) {
-					$nonce = $_REQUEST['_wpnonce'];
+					$nonce = isset( $_REQUEST['_wpnonce'] ) ? wp_unslash( $_REQUEST['_wpnonce'] ) : '';
 					if ( ! wp_verify_nonce( $nonce, 'general_settings' ) ) {
 						echo '<div class="ui red message"><i class="close icon"></i>' . __( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . '</div>';
 					} else {
 						if ( isset( $_POST['reset_connection'] ) ) {
 							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
 						} else {
-							$siteurl = stripslashes( $_POST['live_reponder_site_url'] );
+							$siteurl = isset( $_POST['live_reponder_site_url'] ) ? wp_unslash( $_POST['live_reponder_site_url'] ) : '';
 							if ( ! empty( $siteurl ) && '/' != substr( $siteurl, - 1 ) ) {
 								$siteurl = $siteurl . '/';
 							}

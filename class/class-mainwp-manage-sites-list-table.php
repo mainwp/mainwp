@@ -521,11 +521,11 @@ class MainWP_Manage_Sites_List_Table {
 		if ( $optimize ) {
 
 			if ( isset( $_REQUEST['order'] ) ) {
-				$columns = $_REQUEST['columns'];
+				$columns = isset( $_REQUEST['columns'] ) ? $_REQUEST['columns'] : array();
 				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? $_REQUEST['order'][0]['column'] : '';
 				if ( isset( $columns[ $ord_col ] ) ) {
-					$req_orderby = $columns[ $ord_col ]['data'];
-					$req_order   = $_REQUEST['order'][0]['dir'];
+					$req_orderby = isset( $columns[ $ord_col ]['data'] ) ? $columns[ $ord_col ]['data'] : '';
+					$req_order   = isset( $_REQUEST['order'][0]['dir'] ) ? $_REQUEST['order'][0]['dir'] : '';
 				}
 			}
 			if ( isset( $req_orderby ) ) {
@@ -573,7 +573,7 @@ class MainWP_Manage_Sites_List_Table {
 			$perPage = 9999;
 			$start   = 0;
 		} else {
-			$perPage = $_REQUEST['length'];
+			$perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : 25;
 			if ( -1 == $perPage ) {
 				$perPage = 9999;
 			}

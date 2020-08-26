@@ -31,8 +31,10 @@ class MainWP_Manage_Sites_Handler {
 	 * @return mixed send json encode data
 	 */
 	public static function check_site() {
-		$website = MainWP_DB::instance()->get_websites_by_url( $_POST['url'] );
+		$url     = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
+		$website = MainWP_DB::instance()->get_websites_by_url( $url );
 		$ret     = array();
+
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
@@ -41,7 +43,9 @@ class MainWP_Manage_Sites_Handler {
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
 				$http_user      = ( isset( $_POST['http_user'] ) ? wp_unslash( $_POST['http_user'] ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
-				$information    = MainWP_Connect::fetch_url_not_authed( $_POST['url'], $_POST['admin'], 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
+				$admin          = ( isset( $_POST['admin'] ) ? wp_unslash( $_POST['admin'] ) : '' );
+
+				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';
@@ -66,7 +70,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @throws \Exception Error message.
 	 */
 	public static function reconnect_site() {
-		$siteId = $_POST['siteid'];
+		$siteId = isset( $_POST['siteid'] ) ? $_POST['siteid'] : false;
 
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -149,7 +153,7 @@ class MainWP_Manage_Sites_Handler {
 		if ( isset( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$note     = stripslashes( $_POST['note'] );
+				$note     = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 

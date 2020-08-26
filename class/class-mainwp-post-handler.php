@@ -139,7 +139,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
 		MainWP_Cache::init_session();
-		MainWP_User::render_table( false, $_POST['role'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search'] );
+
+		$role   = isset( $_POST['role'] ) ? esc_html( $_POST['role'] ) : '';
+		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
+		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+		$search = isset( $_POST['search'] ) ? esc_html( $_POST['search'] ) : '';
+
+		MainWP_User::render_table( false, $role, $groups, $sites, $search );
 		die();
 	}
 
@@ -155,8 +161,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', isset( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
+
+		$keyword   = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
+		$dtsstart  = isset( $_POST['dtsstart'] ) ? esc_html( $_POST['dtsstart'] ) : '';
+		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( $_POST['dtsstop'] ) : '';
+		$status    = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
+		$groups    = isset( $_POST['groups'] )  && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
+		$sites     = isset( $_POST['sites'] )  && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+		$postId    = isset( $_POST['postId'] ) ? esc_html( $_POST['postId'] ) : '';
+		$userId    = isset( $_POST['userId'] ) ? esc_html( $_POST['userId'] ) : '';
+		$search_on = isset( $_POST['search_on'] ) ? esc_html( $_POST['search_on'] ) : '';
+
 		MainWP_Cache::init_session();
-		MainWP_Post::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['postId'], $_POST['userId'], $post_type, $_POST['search_on'] );
+		MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
 		die();
 	}
 	/**
@@ -170,8 +187,17 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', intval( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
+
+		$keyword   = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
+		$dtsstart  = isset( $_POST['dtsstart'] ) ? esc_html( $_POST['dtsstart'] ) : '';
+		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( $_POST['dtsstop'] ) : '';
+		$status    = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
+		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+		$search_on = isset( $_POST['search_on'] ) ? esc_html( $_POST['search_on'] ) : '';
+
 		MainWP_Cache::init_session();
-		MainWP_Page::render_table( false, $_POST['keyword'], $_POST['dtsstart'], $_POST['dtsstop'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ), $_POST['search_on'] );
+		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );
 		die();
 	}
 
@@ -374,7 +400,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
-		if ( 'mail_failed' === $_POST['notice_id'] ) {
+		$no_id = isset( $_POST['notice_id'] ) ? wp_unslash( $_POST['notice_id'] ) : false;
+		if ( 'mail_failed' === $no_id ) {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
 			die( 'ok' );
 		}
@@ -386,8 +413,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $status ) ) {
 				$status = array();
 			}
-			$status[ $_POST['notice_id'] ] = 1;
-			update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
+			if ( ! empty( $no_id ) ) {
+				$status[ $no_id ] = 1;
+				update_user_option( $user_id, 'mainwp_notice_saved_status', $status );
+			}
 		}
 		die( 1 );
 	}
@@ -419,15 +448,20 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( 'ok' );
 		}
 
-		if ( ! isset( $_POST['value'] ) || empty( $_POST['value'] ) ) {
-			if ( isset( $values[ $_POST['status'] ] ) ) {
-				unset( $values[ $_POST['status'] ] );
+		$status = isset( $_POST['status'] ) ? wp_unslash( $_POST['status'] ) : '';
+		$value  = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+
+		if ( ! empty( $status ) ) {
+			if ( empty( $value ) ) {
+				if ( isset( $values[ $status ] ) ) {
+					unset( $values[ $status ] );
+				}
+			} else {
+					$values[ $status ] = $value;
 			}
-		} else {
-			$values[ $_POST['status'] ] = wp_unslash( $_POST['value'] );
+			update_option( 'mainwp_status_saved_values', $values );
 		}
 
-		update_option( 'mainwp_status_saved_values', $values );
 		die( 'ok' );
 	}
 
@@ -440,8 +474,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$this->secure_request( 'mainwp_widgets_order' );
 		$user = wp_get_current_user();
-		if ( $user ) {
-			update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $_POST['page'], ( isset( $_POST['order'] ) ? $_POST['order'] : '' ), true );
+		if ( $user && ! empty( $_POST['page'] ) ) {
+			$page  = isset( $_POST['page'] ) ? wp_unslash( $_POST['page'] ) : '';
+			$order = isset( $_POST['order'] ) ? wp_unslash( $_POST['order'] ) : '';
+			update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $order, true );
 			die( 'ok' );
 		}
 		die( -1 );
@@ -454,11 +490,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
-		$option_name = 'mainwp_' . $_POST['name'];
-		$val         = $_POST['value'];
-
-		MainWP_Utility::update_option( $option_name, $val );
-
+		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
+		if ( ! empty( $name ) ) {
+			$option_name = 'mainwp_' . $name;
+			$val         = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+			MainWP_Utility::update_option( $option_name, $val );
+		}
 		die( 'ok' );
 	}
 
@@ -529,20 +566,26 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_twitter_dashboard_action() {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
 
-		$success = false;
-		if ( isset( $_POST['actionName'] ) && isset( $_POST['countSites'] ) && ! empty( $_POST['countSites'] ) ) {
-			$success = MainWP_Twitter::update_twitter_info( $_POST['actionName'], $_POST['countSites'], (int) $_POST['countSeconds'], ( isset( $_POST['countRealItems'] ) ? $_POST['countRealItems'] : 0 ), time(), ( isset( $_POST['countItems'] ) ? $_POST['countItems'] : 0 ) );
+		$success        = false;
+		$actionName     = isset( $_POST['actionName'] ) ? wp_unslash( $_POST['actionName'] ) : '';
+		$countSites     = isset( $_POST['countSites'] ) ? intval( $_POST['countSites'] ) : 0;
+		$countRealItems = isset( $_POST['countRealItems'] ) ? intval( $_POST['countRealItems'] ) : 0;
+		$countItems     = isset( $_POST['countItems'] ) ? intval( $_POST['countItems'] ) : 0;
+		$countSeconds   = isset( $_POST['countSeconds'] ) ? intval( $_POST['countSeconds'] ) : 0;
+
+		if ( ! empty( $actionName ) && ! empty( $countSites ) ) {
+			$success = MainWP_Twitter::update_twitter_info( $actionName, $countSites, $countSeconds, $countRealItems, time(), $countItems );
 		}
 
-		if ( isset( $_POST['showNotice'] ) && ! empty( $_POST['showNotice'] ) ) {
+		if ( ! empty( $_POST['showNotice'] ) ) {
 			if ( MainWP_Twitter::enabled_twitter_messages() ) {
-				$twitters = MainWP_Twitter::get_twitter_notice( wp_unslash( $_POST['actionName'] ) );
+				$twitters = MainWP_Twitter::get_twitter_notice( $actionName );
 				$html     = '';
 				if ( is_array( $twitters ) ) {
 					foreach ( $twitters as $timeid => $twit_mess ) {
 						if ( ! empty( $twit_mess ) ) {
-							$sendText = MainWP_Twitter::get_twit_to_send( wp_unslash( $_POST['actionName'] ), $timeid );
-							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( wp_unslash( $_POST['actionName'] ) ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
+							$sendText = MainWP_Twitter::get_twit_to_send( $actionName, $timeid );
+							$html    .= '<div class="mainwp-tips mainwp-notice mainwp-notice-blue twitter"><span class="mainwp-tip" twit-what="' . esc_attr( $actionName ) . '" twit-id="' . $timeid . '">' . $twit_mess . '</span>&nbsp;' . MainWP_Twitter::gen_twitter_button( $sendText, false ) . '<span><a href="#" class="mainwp-dismiss-twit mainwp-right" ><i class="fa fa-times-circle"></i> ' . __( 'Dismiss', 'mainwp' ) . '</a></span></div>';
 						}
 					}
 				}
@@ -638,7 +681,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function ajax_disconnect_site() {
 		$this->secure_request( 'mainwp_disconnect_site' );
 
-		$siteid = $_POST['wp_id'];
+		$siteid = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : 0;
 
 		if ( empty( $siteid ) ) {
 			die( wp_json_encode( array( 'error' => 'Error: site id empty' ) ) );

@@ -74,7 +74,7 @@ class MainWP_Post_Page_Handler {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_addmeta' );
 
 		$c   = 0;
-		$pid = (int) $_POST['post_id'];
+		$pid = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
 
 		if ( isset( $_POST['metakeyselect'] ) || isset( $_POST['metakeyinput'] ) ) {
 			if ( ! current_user_can( 'edit_post', $pid ) ) {
@@ -114,9 +114,9 @@ class MainWP_Post_Page_Handler {
 			wp_die( 0 );
 
 		} else {
-			$mid   = (int) key( $_POST['meta'] );
-			$key   = wp_unslash( $_POST['meta'][ $mid ]['key'] );
-			$value = wp_unslash( $_POST['meta'][ $mid ]['value'] );
+			$mid   = isset( $_POST['meta'] ) ? (int) key( $_POST['meta'] ) : 0;
+			$key   = isset( $_POST['meta'][ $mid ]['key'] ) ? wp_unslash( $_POST['meta'][ $mid ]['key'] ) : '';
+			$value = isset( $_POST['meta'][ $mid ]['value'] ) ? wp_unslash( $_POST['meta'][ $mid ]['value'] ) : '';
 			if ( '' == trim( $key ) ) {
 				wp_send_json( array( 'error' => __( 'Please provide a custom field name.', 'mainwp' ) ) );
 			}

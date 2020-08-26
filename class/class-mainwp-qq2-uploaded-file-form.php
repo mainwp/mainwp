@@ -25,11 +25,18 @@ class MainWP_QQ2_Uploaded_File_Form {
 	public function save( $path ) {
 		$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
-		if ( false != $wpFileSystem ) {
-			$path  = str_replace( MainWP_System_Utility::get_base_dir(), '', $path );
-			$moved = $wpFileSystem->put_contents( $path, $wp_filesystem->get_contents( $_FILES['qqfile']['tmp_name'] ) );
-		} else {
-			$moved = move_uploaded_file( $_FILES['qqfile']['tmp_name'], $path );
+
+		$moved = false;
+
+		$tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? wp_unslash( $_FILES['qqfile']['tmp_name'] ) : '';
+
+		if ( ! empty( $tmp_name ) ) {
+			if ( false != $wpFileSystem ) {
+				$path  = str_replace( MainWP_System_Utility::get_base_dir(), '', $path );
+				$moved = $wpFileSystem->put_contents( $path, $wp_filesystem->get_contents( $tmp_name ) );
+			} else {
+				$moved = move_uploaded_file( $tmp_name, $path );
+			}
 		}
 
 		if ( ! $moved ) {
@@ -41,11 +48,11 @@ class MainWP_QQ2_Uploaded_File_Form {
 
 	/** Get the File Name. */
 	public function get_name() {
-		return $_FILES['qqfile']['name'];
+		return isset( $_FILES['qqfile']['name'] ) ? $_FILES['qqfile']['name'] : '';
 	}
 
 	/** Get the File Size. */
 	public function get_size() {
-		return $_FILES['qqfile']['size'];
+		return isset( $_FILES['qqfile']['size'] ) ? $_FILES['qqfile']['size'] : '';
 	}
 }

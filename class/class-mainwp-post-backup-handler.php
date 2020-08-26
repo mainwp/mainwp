@@ -217,7 +217,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 				throw new MainWP_Exception( __( 'Invalid request!', 'mainwp' ) );
 			}
 
-			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( intval( $_POST['site_id'] ), wp_unslash( $_POST['file'] ) ) ) ) );
+			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
+			$file    = isset( $_POST['file'] ) ? wp_unslash( $_POST['file'] ) : '';
+
+			die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $site_id, $file ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -246,10 +249,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			if ( ! isset( $_POST['siteId'] ) ) {
 				throw new \Exception( __( 'No site selected!', 'mainwp' ) );
 			}
-			$siteId      = $_POST['siteId'];
-			$fileName    = $_POST['fileName'];
-			$fileNameUID = $_POST['fileNameUID'];
-			$type        = $_POST['type'];
+			$siteId      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : '';
+			$fileName    = isset( $_POST['fileName'] ) ? wp_unslash( $_POST['fileName'] ) : '';
+			$fileNameUID = isset( $_POST['fileNameUID'] ) ? wp_unslash( $_POST['fileNameUID'] ) : '';
+			$type        = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '';
 
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( ! $website ) {
@@ -295,7 +298,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
 
 		try {
-			die( wp_json_encode( array( 'result' => MainWP_Manage_Sites::backupGetFilesize( $_POST['local'] ) ) ) );
+			$local = isset( $_POST['local'] ) ? wp_unslash( $_POST['local'] ) : '';
+			die( wp_json_encode( array( 'result' => MainWP_Manage_Sites::backup_get_file_size( $local ) ) ) );
 		} catch ( MainWP_Exception $e ) {
 			die(
 				wp_json_encode(
@@ -322,7 +326,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 		try {
 			$array = get_option( 'mainwp_upload_progress' );
-			$info  = apply_filters( 'mainwp_remote_destination_info', array(), $_POST['remote_destination'] );
+			$info  = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? wp_unslash( $_POST['remote_destination'] ) : '' ) );
 
 			if ( ! is_array( $array ) || ! isset( $array[ $_POST['unique'] ] ) || ! isset( $array[ $_POST['unique'] ]['dts'] ) ) {
 				die(
@@ -478,7 +482,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_backuptask_get_sites() {
 		$this->secure_request( 'mainwp_backuptask_get_sites' );
 
-		$taskID = wp_unslash( $_POST['task_id'] );
+		$taskID = isset( $_POST['task_id'] ) ? wp_unslash( $_POST['task_id'] ) : 0;
 
 		wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
 	}

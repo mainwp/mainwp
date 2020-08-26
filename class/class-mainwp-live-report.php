@@ -399,8 +399,10 @@ class MainWP_Live_Reports {
 			$errors               = array();
 			$report               = array();
 			$current_attach_files = '';
-			if ( isset( $_REQUEST['id'] ) && ! empty( $_REQUEST['id'] ) ) {
-				$report               = MainWP_Live_Reports_Responder_DB::get_instance()->get_report_by( 'id', wp_unslash( $_REQUEST['id'] ), null, null, ARRAY_A );
+			$id = ! empty( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+			
+			if ( $id ) {
+				$report               = MainWP_Live_Reports_Responder_DB::get_instance()->get_report_by( 'id', $id, null, null, ARRAY_A );
 				$current_attach_files = $report['attach_files'];
 			}
 			$title = isset( $_POST['mwp_creport_title'] ) ? trim( wp_unslash( $_POST['mwp_creport_title'] ) ) : '';
@@ -570,32 +572,20 @@ class MainWP_Live_Reports {
 			$selected_groups = array();
 
 			if ( isset( $_POST['select_by'] ) ) {
-				if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
-					foreach ( $_POST['selected_sites'] as $selected ) {
-						$selected_sites[] = intval( $selected );
-					}
-				}
-
-				if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
-					foreach ( $_POST['selected_groups'] as $selected ) {
-						$selected_groups[] = intval( $selected );
-					}
-				}
+				$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();	
+				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();						
 			}
 
 			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
 			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+			$action           = isset( $_POST['mwp_creport_report_submit_action'] ) ? sanitize_text_field( $_POST['mwp_creport_report_submit_action'] ) : '';
 
-			if ( 'schedule' === $_POST['mwp_creport_report_submit_action'] ) {
+			if ( 'schedule' === $action ) {
 				$report['scheduled'] = 1;
 			}
 			$report['schedule_nextsend'] = self::cal_schedule_nextsend( $report['recurring_schedule'], $report['recurring_date'] );
 
-			if ( 'save' === $_POST['mwp_creport_report_submit_action'] ||
-			'send' === $_POST['mwp_creport_report_submit_action'] ||
-			'save_pdf' === $_POST['mwp_creport_report_submit_action'] ||
-			'schedule' === $_POST['mwp_creport_report_submit_action'] ||
-			'archive_report' === $_POST['mwp_creport_report_submit_action'] ) {
+			if ( 'save' === $action || 'send' === $action || 'save_pdf' === $action || 'schedule' === $action || 'archive_report' === $action ) {
 				$result = MainWP_Live_Reports_Responder_DB::get_instance()->update_report( $report );
 				if ( $result ) {
 					$return['id'] = $result->id;
@@ -604,9 +594,7 @@ class MainWP_Live_Reports {
 					$messages[] = 'Report has not been changed - Report Saved.';
 				}
 				$return['saved'] = true;
-			} elseif ( 'preview' === (string) $_POST['mwp_creport_report_submit_action'] ||
-			'send_test_email' === (string) $_POST['mwp_creport_report_submit_action']
-			) {
+			} elseif ( 'preview' === $action || 'send_test_email' === $action ) {
 				$submit_report           = json_decode( wp_json_encode( $report ) );
 				$return['submit_report'] = $submit_report;
 			}
@@ -855,8 +843,8 @@ class MainWP_Live_Reports {
 		$get_pagespeed_tokens   = ( ( false !== strpos( $report->header, '[pagespeed.' ) ) || ( false !== strpos( $report->body, '[pagespeed.' ) ) || ( false !== strpos( $report->footer, '[pagespeed.' ) ) ) ? true : false;
 		$get_brokenlinks_tokens = ( ( false !== strpos( $report->header, '[brokenlinks.' ) ) || ( false !== strpos( $report->body, '[brokenlinks.' ) ) || ( false !== strpos( $report->footer, '[brokenlinks.' ) ) ) ? true : false;
 		if ( null !== $website ) {
-			$tokens                = MainWP_Live_Reports_Responder_DB::get_instance()->get_tokens();
-			$site_tokens           = MainWP_Live_Reports_Responder_DB::get_instance()->get_site_tokens( $website['url'] );
+			$tokens             = MainWP_Live_Reports_Responder_DB::get_instance()->get_tokens();
+			$site_tokens        = MainWP_Live_Reports_Responder_DB::get_instance()->get_site_tokens( $website['url'] );
 			$repl_tokens_values = array();
 			foreach ( $tokens as $token ) {
 				$repl_tokens_values[ '[' . $token->token_name . ']' ] = isset( $site_tokens[ $token->id ] ) ? $site_tokens[ $token->id ]->token_value : '';

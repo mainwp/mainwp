@@ -729,14 +729,15 @@ class MainWP_Manage_Backups {
 	/** Render Scheduled Backup. */
 	public static function render_schedule_backup() {
 		$backupTask = null;
-		if ( isset( $_GET['id'] ) && MainWP_Utility::ctype_digit( $_GET['id'] ) ) {
+		$backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
+		
+		if ( ! empty( $backupTaskId ) ) {
 			if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_backup_tasks' ) ) {
 				mainwp_do_not_have_permissions( __( 'edit backup tasks', 'mainwp' ) );
 
 				return;
 			}
-			$backupTaskId = $_GET['id'];
-
+			
 			$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
 			if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {
 				$backupTask = null;

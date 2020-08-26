@@ -119,13 +119,13 @@ class MainWP_Manage_Backups_Handler {
 	public static function update_backup() {
 		global $current_user;
 
-		$name = $_POST['name'];
+		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
 
 		if ( '' == $name ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
 		}
 
-		$backupId = $_POST['id'];
+		$backupId = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
 		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupId );
 
 		if ( ! self::can_edit_backuptask( $task ) ) {
@@ -163,8 +163,8 @@ class MainWP_Manage_Backups_Handler {
 		do_action( 'mainwp_update_backuptask', $task->id );
 
 		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? wp_unslash( $_POST['archiveFormat'] ) : 'site';
-		$maximumFileDescriptorsOverride = 1 == $_POST['maximumFileDescriptorsOverride'];
-		$maximumFileDescriptorsAuto     = 1 == $_POST['maximumFileDescriptorsAuto'];
+		$maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 == $_POST['maximumFileDescriptorsOverride'];
+		$maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 == $_POST['maximumFileDescriptorsAuto'];
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? wp_unslash( $_POST['maximumFileDescriptors'] ) : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
@@ -179,7 +179,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function add_backup() {
 		global $current_user;
 
-		$name = $_POST['name'];
+		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
 
 		if ( '' == $name ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
@@ -215,8 +215,8 @@ class MainWP_Manage_Backups_Handler {
 		}
 
 		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? $_POST['archiveFormat'] : 'site';
-		$maximumFileDescriptorsOverride = 1 == $_POST['maximumFileDescriptorsOverride'];
-		$maximumFileDescriptorsAuto     = 1 == $_POST['maximumFileDescriptorsAuto'];
+		$maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 == $_POST['maximumFileDescriptorsOverride'];
+		$maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 == $_POST['maximumFileDescriptorsAuto'];
 		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? $_POST['maximumFileDescriptors'] : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 

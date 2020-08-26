@@ -194,7 +194,7 @@ class MainWP_System_Handler {
 	 * Handle manage sites screen settings
 	 */
 	public function handle_manage_sites_screen_settings() {
-		if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
 			$hide_cols = array();
 			foreach ( $_POST as $key => $val ) {
 				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
@@ -205,7 +205,7 @@ class MainWP_System_Handler {
 			$user = wp_get_current_user();
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
-				update_option( 'mainwp_default_sites_per_page', intval( $_POST['mainwp_default_sites_per_page'] ) );
+				update_option( 'mainwp_default_sites_per_page', ( isset( $_POST['mainwp_default_sites_per_page'] ) ? intval( $_POST['mainwp_default_sites_per_page'] ) : 25 ) );
 			}
 		}
 	}
@@ -217,8 +217,8 @@ class MainWP_System_Handler {
 	 */
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
-		if ( 'MainWPTools' === $_GET['page'] ) {
-			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
 				$update_screen_options = true;
 				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
@@ -229,8 +229,8 @@ class MainWP_System_Handler {
 					MainWP_Twitter::clear_all_twitter_messages();
 				}
 			}
-		} elseif ( 'mainwp_tab' === $_GET['page'] || isset( $_GET['dashboard'] ) ) {
-			if ( isset( $_POST['submit'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
+		} elseif ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
 				$update_screen_options = true;
 			}
 		}

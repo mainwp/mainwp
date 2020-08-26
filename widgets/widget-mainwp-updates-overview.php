@@ -68,14 +68,9 @@ class MainWP_Updates_Overview {
 		$request = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $request ) ) {
-			$url  = '';
-			$name = '';
-			if ( isset( $_REQUEST['url'] ) ) {
-				$url  = wp_unslash( $_REQUEST['url'] );
-				$name = wp_unslash( $_REQUEST['name'] );
-			}
-
-			$res = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
+			$url  = isset( $_REQUEST['url'] ) ? wp_unslash( $_REQUEST['url'] ) : '';
+			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : '';
+			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
 		}
@@ -1078,7 +1073,7 @@ class MainWP_Updates_Overview {
 	 * @return mixed $output
 	 */
 	public static function check_backups() {
-		if ( ! is_array( $_POST['sites'] ) ) {
+		if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) {
 			return true;
 		}
 
@@ -1091,39 +1086,41 @@ class MainWP_Updates_Overview {
 		}
 
 		$output = array();
-		foreach ( $_POST['sites'] as $siteId ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
-			if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
-				continue;
-			}
-
-			if ( ! empty( $primaryBackup ) ) {
-				$lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
-
-				if ( -1 != $lastBackup ) { // installed backup plugin.
-					$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
+		if ( isset( $_POST['sites'] ) ) {
+			foreach ( $_POST['sites'] as $siteId ) {
+				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
+				if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
+					continue;
 				}
-				$output['primary_backup'] = $primaryBackup;
-			} else {
-				$dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
-				// Check if backup ok.
-				$lastBackup = - 1;
-				if ( file_exists( $dir ) ) {
-					$dh = opendir( $dir );
-					if ( $dh ) {
-						while ( false !== ( $file = readdir( $dh ) ) ) {
-							if ( '.' != $file && '..' != $file ) {
-								$theFile = $dir . $file;
-								if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-									$lastBackup = filemtime( $theFile );
+
+				if ( ! empty( $primaryBackup ) ) {
+					$lastBackup = MainWP_DB::instance()->get_website_option( $website, 'primary_lasttime_backup' );
+
+					if ( -1 != $lastBackup ) { // installed backup plugin.
+						$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
+					}
+					$output['primary_backup'] = $primaryBackup;
+				} else {
+					$dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
+					// Check if backup ok.
+					$lastBackup = - 1;
+					if ( file_exists( $dir ) ) {
+						$dh = opendir( $dir );
+						if ( $dh ) {
+							while ( false !== ( $file = readdir( $dh ) ) ) {
+								if ( '.' != $file && '..' != $file ) {
+									$theFile = $dir . $file;
+									if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+										$lastBackup = filemtime( $theFile );
+									}
 								}
 							}
+							closedir( $dh );
 						}
-						closedir( $dh );
 					}
-				}
 
-				$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
+					$output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
+				}
 			}
 		}
 

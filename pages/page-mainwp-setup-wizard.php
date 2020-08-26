@@ -371,7 +371,7 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_installation_save() {
 		check_admin_referer( 'mwp-setup' );
 
-		$hosting_type = intval( $_POST['mwp_setup_installation_hosting_type'] );
+		$hosting_type = isset( $_POST['mwp_setup_installation_hosting_type'] ) ? intval( $_POST['mwp_setup_installation_hosting_type'] ) : 0;
 		$system_type  = isset( $_POST['mwp_setup_installation_system_type'] ) ? intval( $_POST['mwp_setup_installation_system_type'] ) : 0;
 
 		MainWP_Utility::update_option( 'mwp_setup_installationHostingType', $hosting_type );
@@ -596,8 +596,8 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_hosting_save() {
 		check_admin_referer( 'mwp-setup' );
-		$type_hosting              = $_POST['mwp_setup_type_hosting'];
-		$manage_planning           = $_POST['mwp_setup_manage_planning'];
+		$type_hosting              = isset( $_POST['mwp_setup_type_hosting'] ) ? intval( $_POST['mwp_setup_type_hosting'] ) : 0;
+		$manage_planning           = isset( $_POST['mwp_setup_manage_planning'] ) ? intval( $_POST['mwp_setup_manage_planning'] ) : 0;
 		$installation_hosting_type = get_option( 'mwp_setup_installationHostingType' );
 		if ( 2 == $installation_hosting_type ) {
 			$type_hosting = 0;
@@ -765,10 +765,10 @@ class MainWP_Setup_Wizard {
 	public function mwp_setup_monitoring_save() {
 		check_admin_referer( 'mwp-setup' );
 		MainWP_Utility::update_option( 'mainwp_disableSitesChecking', ( ! isset( $_POST['mainwp_setup_disableSitesChecking'] ) ? 1 : 0 ) );
-		$val = intval( $_POST['mainwp_setup_frequency_sitesChecking'] );
+		$val = isset( $_POST['mainwp_setup_frequency_sitesChecking'] ) ? intval( $_POST['mainwp_setup_frequency_sitesChecking'] ) : 1440;
 		MainWP_Utility::update_option( 'mainwp_frequencySitesChecking', $val );
 		MainWP_Utility::update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_setup_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
-		$val = intval( $_POST['mainwp_setup_site_healthThreshold'] );
+		$val = isset( $_POST['mainwp_setup_site_healthThreshold'] ) ? intval( $_POST['mainwp_setup_site_healthThreshold'] ) : 80;
 		MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
@@ -858,7 +858,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_noti );
 		$userExtension             = MainWP_DB_Common::instance()->get_user_extension();
-		$user_emails               = wp_unslash( $_POST['mainwp_options_email'] );
+		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? wp_unslash( $_POST['mainwp_options_email'] ) : '';
 		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -1087,7 +1087,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public static function ajax_get_backup_extension() {
 
-		$product_id = trim( $_POST['productId'] );
+		$product_id = isset( $_POST['productId'] ) ? trim( $_POST['productId'] ) : 0;
 
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );

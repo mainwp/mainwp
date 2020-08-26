@@ -78,9 +78,9 @@ class MainWP_Plugins_Handler {
 
 	/** Ignore Plugin. */
 	public static function ignore_updates() {
-		$websiteId = $_POST['websiteId'];
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
@@ -142,9 +142,9 @@ class MainWP_Plugins_Handler {
 	 * @return mixed error|true
 	 */
 	public static function action( $pAction ) {
-		$websiteId = $_POST['websiteId'];
+		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
-		if ( ! MainWP_Utility::ctype_digit( $websiteId ) ) {
+		if ( empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
 		}
 
@@ -155,8 +155,9 @@ class MainWP_Plugins_Handler {
 		}
 
 		try {
-			$plugin = implode( '||', $_POST['plugins'] );
-			$plugin = urldecode( $plugin );
+			$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : '';
+			$plugin  = implode( '||', $plugins );
+			$plugin  = urldecode( $plugin );
 
 			/**
 			* Action: mainwp_before_plugin_action
@@ -272,8 +273,8 @@ class MainWP_Plugins_Handler {
 	 * Save the trusted plugin note.
 	 */
 	public static function save_trusted_plugin_note() {
-		$slug                = urldecode( $_POST['slug'] );
-		$note                = stripslashes( $_POST['note'] );
+		$slug                = isset( $_POST['slug'] ) ? urldecode( $_POST['slug'] ) : '';
+		$note                = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );

@@ -316,7 +316,7 @@ class MainWP_User {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
 		$selected_sites          = array();
-				$selected_groups = array();
+		$selected_groups = array();
 
 		if ( null != $cachedSearch ) {
 			if ( is_array( $cachedSearch['sites'] ) ) {
@@ -1174,10 +1174,10 @@ class MainWP_User {
 	 * @return mixed $information User update info that is returned.
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
-		$userId    = isset( $_POST['userId'] ) ? $_POST['userId'] : false;
-		$userName  = isset( $_POST['userName'] ) ? $_POST['userName'] : '';
-		$websiteId = isset( $_POST['websiteId'] ) ? $_POST['websiteId'] : false;
-		$pass      = stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) );
+		$userId    = isset( $_POST['userId'] ) ? wp_unslash( $_POST['userId'] ) : false;
+		$userName  = isset( $_POST['userName'] ) ? wp_unslash( $_POST['userName'] ) : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? wp_unslash( $_POST['websiteId'] ) : false;
+		$pass      = isset( $_POST['update_password'] ) ? stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) ) : '';
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
@@ -1193,7 +1193,7 @@ class MainWP_User {
 		}
 
 		if ( 'update_user' === $pAction ) {
-			$user_data = $_POST['user_data'];
+			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : '';
 			parse_str( $user_data, $extra );
 			if ( $website->adminname == $userName ) {
 
@@ -1508,7 +1508,7 @@ class MainWP_User {
 	 * @return void
 	 */
 	public static function render_bulk_import_users() {
-		if ( isset( $_FILES['import_user_file_bulkupload'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
+		if ( isset( $_FILES['import_user_file_bulkupload'] ) && isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			self::render_bulk_upload();
 			return;
 		}
@@ -1601,21 +1601,9 @@ class MainWP_User {
 		$errorFields = array();
 
 		if ( isset( $_POST['select_by'] ) ) {
-			$selected_sites = array();
-			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
-				foreach ( $_POST['selected_sites'] as $selected ) {
-					$selected_sites[] = $selected;
-				}
-			}
-
-			$selected_groups = array();
-
-			if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
-				foreach ( $_POST['selected_groups'] as $selected ) {
-					$selected_groups[] = $selected;
-				}
-			}
-
+			$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();			
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();			
+			
 			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
 				$errors[] = __( 'Please select at least one website or group.', 'mainwp' );
 			}
@@ -1647,18 +1635,18 @@ class MainWP_User {
 
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
-				'user_pass'  => wp_unslash( $_POST['pass1'] ),
-				'user_login' => wp_unslash( $_POST['user_login'] ),
-				'user_url'   => wp_unslash( $_POST['url'] ),
-				'user_email' => wp_unslash( $_POST['email'] ),
-				'first_name' => wp_unslash( $_POST['first_name'] ),
-				'last_name'  => wp_unslash( $_POST['last_name'] ),
-				'role'       => wp_unslash( $_POST['role'] ),
+				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
+				'user_login' => isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '',
+				'user_url'   => isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '',
+				'user_email' => isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '',
+				'first_name' => isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '',
+				'last_name'  => isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '',
+				'role'       => isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '',
 			);
 
 			$dbwebsites = array();
 
-			if ( 'site' === $_POST['select_by'] ) {
+			if ( isset( $_POST['select_by'] ) && 'site' === $_POST['select_by'] ) {
 				foreach ( $selected_sites as $k ) {
 					if ( MainWP_Utility::ctype_digit( $k ) ) {
 						$website                    = MainWP_DB::instance()->get_website_by_id( $k );
@@ -1821,9 +1809,9 @@ class MainWP_User {
 		self::render_header( 'Import' );
 
 		$errors = array();
-		if ( UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
-			if ( is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
-				$tmp_path     = $_FILES['import_user_file_bulkupload']['tmp_name'];
+		if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
+			if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
+				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? $_FILES['import_user_file_bulkupload']['tmp_name'] : '';
 				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
@@ -1832,7 +1820,7 @@ class MainWP_User {
 
 				if ( is_array( $lines ) && 0 < count( $lines ) ) {
 					$i = 0;
-					if ( $_POST['import_user_chk_header_first'] ) {
+					if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
 						$header_line = trim( $lines[0] ) . "\n";
 						unset( $lines[0] );
 					}
@@ -1955,29 +1943,18 @@ class MainWP_User {
 	 * User Import $_POST handler.
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
-		if ( isset( $_POST['select_by'] ) ) {
-			$selected_sites = array();
-			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
-				foreach ( $_POST['selected_sites'] as $selected ) {
-					$selected_sites[] = $selected;
-				}
-			}
-
-			$selected_groups = array();
-			if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
-				foreach ( $_POST['selected_groups'] as $selected ) {
-					$selected_groups[] = $selected;
-				}
-			}
-		}
+		
+		$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();			
+		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+		
 		$user_to_add = array(
-			'user_pass'  => isset( $_POST['pass1'] ) ? $_POST['pass1'] : '',
-			'user_login' => isset( $_POST['user_login'] ) ? $_POST['user_login'] : '',
-			'user_url'   => isset( $_POST['url'] ) ? $_POST['url'] : '',
-			'user_email' => isset( $_POST['email'] ) ? $_POST['email'] : '',
-			'first_name' => isset( $_POST['first_name'] ) ? $_POST['first_name'] : '',
-			'last_name'  => isset( $_POST['last_name'] ) ? $_POST['last_name'] : '',
-			'role'       => isset( $_POST['role'] ) ? $_POST['role'] : '',
+			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
+			'user_login' => isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '',
+			'user_url'   => isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '',
+			'user_email' => isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '',
+			'first_name' => isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '',
+			'last_name'  => isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '',
+			'role'       => isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '',
 		);
 
 		$ret         = array();
@@ -2100,11 +2077,21 @@ class MainWP_User {
 
 		$ret['failed_logging'] = '';
 		if ( ! empty( $error_sites ) ) {
-			$error_sites           = rtrim( $error_sites, ';' );
-			$ret['failed_logging'] = esc_html( $_POST['user_login'] . ',' . $_POST['email'] . ',' . $_POST['first_name'] . ',' . $_POST['last_name'] . ',' . $_POST['url'] . ',' . $_POST['pass1'] . ',' . intval( $_POST['send_password'] ) . ',' . $_POST['role'] . ',' . $error_sites . ',' );
+			$error_sites = rtrim( $error_sites, ';' );
+
+			$user_login    = isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '';
+			$email         = isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '';
+			$first_name    = isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '';
+			$last_name     = isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '';
+			$url           = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
+			$pass1         = isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '';
+			$send_password = isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : 0;
+			$role          = isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '';
+
+			$ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
 		}
 
-		$ret['line_number'] = intval( $_POST['line_number'] );
+		$ret['line_number'] = isset( $_POST['line_number'] ) ? intval( $_POST['line_number'] ) : 0;
 		die( wp_json_encode( $ret ) );
 	}
 

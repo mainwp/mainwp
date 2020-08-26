@@ -113,8 +113,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
+
+		$keyword = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
+		$status  = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
+		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : array();
+		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : array();
+
 		MainWP_Cache::init_session();
-		$result = MainWP_Themes::render_table( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
+		$result = MainWP_Themes::render_table( $keyword, $status, $groups, $sites );
 		wp_send_json( $result );
 	}
 
@@ -186,8 +192,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
+
+		$keyword = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
+		$status  = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
+		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
+		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+
 		MainWP_Cache::init_session();
-		$result = MainWP_Plugins::render_table( $_POST['keyword'], $_POST['status'], ( isset( $_POST['groups'] ) ? $_POST['groups'] : '' ), ( isset( $_POST['sites'] ) ? $_POST['sites'] : '' ) );
+		$result = MainWP_Plugins::render_table( $keyword, $status, $groups, $sites );
 		wp_send_json( $result );
 	}
 
@@ -482,7 +494,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
 				}
 			} elseif ( isset( $_POST['slug'] ) ) {
-				$slugs = $_POST['slug'];
+				$slugs = wp_unslash( $_POST['slug'] );
 			} else {
 				$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
 			}
@@ -544,7 +556,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) );
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $id ) ) );
 	}
 
 	/**
@@ -558,7 +573,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['id'] ) ) ) ); // ok.
+
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $type, $slug, $id ) ) ) ); // ok.
 	}
 
 	/**
@@ -572,7 +591,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $_POST['type'], $_POST['slug'] ) ) ) );
+
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugins_themes( $type, $slug ) ) ) );
 	}
 
 	/**
@@ -586,7 +608,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $_POST['type'], $_POST['slug'], $_POST['name'], $_POST['id'] ) ) ) );
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		$name = isset( $_POST['name'] ) ? esc_html( $_POST['name'] ) : '';
+		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugin_theme( $type, $slug, $name, $id ) ) ) );
 	}
 
 	/**
@@ -604,7 +630,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $_POST['type'], $_POST['slug'], $_POST['name'] ) ) ) );
+
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		$name = isset( $_POST['name'] ) ? esc_html( $_POST['name'] ) : '';
+
+		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::dismiss_plugins_themes( $type, $slug, $name ) ) ) );
 	}
 
 	/**
@@ -640,9 +671,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 
-		$type = isset( $_POST['type'] ) ? $_POST['type'] : '';
-		$slug = isset( $_POST['slug'] ) ? $_POST['slug'] : '';
-		$name = isset( $_POST['name'] ) ? $_POST['name'] : '';
+		$type = isset( $_POST['type'] ) ? esc_html( $_POST['type'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? esc_html( $_POST['slug'] ) : '';
+		$name = isset( $_POST['name'] ) ? esc_html( $_POST['name'] ) : '';
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::ignore_plugins_themes( $type, $slug, $name ) ) ) );
 	}
 

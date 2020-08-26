@@ -77,7 +77,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Ajax add extension menu. */
 	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
-		MainWP_Extensions_Handler::add_extension_menu( $_POST['slug'] );
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
 
@@ -183,7 +184,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Save whenther or not to verify MainWP API SSL certificate. */
 	public function save_api_ssl_verify() {
 		$this->check_security( 'mainwp_extension_apisslverifycertificate' );
-		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', intval( $_POST['api_sslverify'] ) );
+		MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', isset( $_POST['api_sslverify'] ) ? intval( $_POST['api_sslverify'] ) : 0 );
 		die( wp_json_encode( array( 'saved' => 1 ) ) );
 	}
 
@@ -234,8 +235,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
 		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
+		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
 
-		$return = MainWP_Extensions_Handler::install_plugin( $_POST['download_link'] );
+		$return = MainWP_Extensions_Handler::install_plugin( $download_link );
 
 		die( '<mainwp>' . wp_json_encode( $return ) . '</mainwp>' );
 	}
@@ -268,8 +270,11 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
-		do_action( 'mainwp_removed_extension_menu', $_POST['slug'] );
-		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+		if ( isset( $_POST['slug'] ) ) {
+			do_action( 'mainwp_removed_extension_menu', wp_unslash( $_POST['slug'] ) );
+			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+		}
+		die( - 1 );
 	}
 
 

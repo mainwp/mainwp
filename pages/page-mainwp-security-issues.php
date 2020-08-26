@@ -323,7 +323,8 @@ class MainWP_Security_Issues {
 		 */
 		$skip_features = apply_filters( 'mainwp_security_post_data', false, $skip_features, $website );
 
-		$post_data = array( 'feature' => $_REQUEST['feature'] );
+		$feature   = isset( $_REQUEST['feature'] ) ? esc_html( $_REQUEST['feature'] ) : '';
+		$post_data = array( 'feature' => $feature );
 		if ( ! empty( $skip_features ) && is_array( $skip_features ) ) {
 			$post_data['skip_features'] = $skip_features;
 		}
@@ -352,7 +353,9 @@ class MainWP_Security_Issues {
 			return '';
 		}
 
-		$information = MainWP_Connect::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $_REQUEST['feature'] ) );
+		$feature = isset( $_REQUEST['feature'] ) ? esc_html( $_REQUEST['feature'] ) : '';
+
+		$information = MainWP_Connect::fetch_url_authed( $website, 'securityUnFix', array( 'feature' => $feature ) );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::sync_information_array( $website, $information['sync'] );
 			unset( $information['sync'] );

@@ -65,7 +65,8 @@ class MainWP_Themes_Handler {
 	 * Activate the selected theme.
 	 */
 	public static function activate_theme() {
-		self::action( 'activate', $_POST['theme'] );
+		$theme = isset( $_POST['theme'] ) ? esc_htmL( $_POST['theme'] ) : '';
+		self::action( 'activate', $theme );
 		die( 'SUCCESS' );
 	}
 
@@ -73,7 +74,8 @@ class MainWP_Themes_Handler {
 	 * Delete the selected theme.
 	 */
 	public static function delete_themes() {
-		self::action( 'delete', implode( '||', $_POST['themes'] ) );
+		$themes = isset( $_POST['themes'] ) ? esc_htmL( $_POST['themes'] ) : '';
+		self::action( 'delete', implode( '||', $themes ) );
 		die( 'SUCCESS' );
 	}
 
@@ -152,8 +154,8 @@ class MainWP_Themes_Handler {
 			die( 'FAIL' );
 		}
 
-		$themes = $_POST['themes'];
-		$names  = $_POST['names'];
+		$themes = isset( $_POST['themes'] ) ? $_POST['themes'] : array();
+		$names  = isset( $_POST['names'] ) ? $_POST['names'] : array();
 
 		$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 		if ( ! is_array( $decodedIgnoredThemes ) ) {
@@ -228,8 +230,8 @@ class MainWP_Themes_Handler {
 
 	/** This Method Saves a Trusted theme note. */
 	public static function save_trusted_theme_note() {
-		$slug               = urldecode( $_POST['slug'] );
-		$note               = stripslashes( $_POST['note'] );
+		$slug               = isset( $_POST['slug'] ) ? urldecode( $_POST['slug'] ) : '';
+		$note               = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
 		$esc_note           = MainWP_Utility::esc_content( $note );
 		$userExtension      = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

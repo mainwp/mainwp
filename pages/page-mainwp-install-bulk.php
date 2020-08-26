@@ -133,11 +133,11 @@ class MainWP_Install_Bulk {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		if ( ! isset( $_POST['url'] ) ) {
-			if ( 'plugin' == $_POST['type'] ) {
+			if ( isset( $_POST['type'] ) && 'plugin' == $_POST['type'] ) {
 				$api = plugins_api(
 					'plugin_information',
 					array(
-						'slug'   => $_POST['slug'],
+						'slug'   => isset( $_POST['slug'] ) ? $_POST['slug'] : '',
 						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
@@ -145,7 +145,7 @@ class MainWP_Install_Bulk {
 				$api = themes_api(
 					'theme_information',
 					array(
-						'slug'   => $_POST['slug'],
+						'slug'   => isset( $_POST['slug'] ) ? $_POST['slug'] : '',
 						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
@@ -167,8 +167,9 @@ class MainWP_Install_Bulk {
 		$output['sites'] = array();
 
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
+			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? $_POST['selected_sites'] : array();
 			// Get sites.
-			foreach ( $_POST['selected_sites'] as $enc_id ) {
+			foreach ( $selected_sites as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -183,8 +184,9 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
 			// Get sites from group.
-			foreach ( $_POST['selected_groups'] as $enc_id ) {
+			foreach ( $selected_groups as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
@@ -244,12 +246,12 @@ class MainWP_Install_Bulk {
 
 		// Fetch info.
 		$post_data = array(
-			'type' => $_POST['type'],
+			'type' => isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '',
 		);
-		if ( 'true' == $_POST['activatePlugin'] ) {
+		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( 'true' == $_POST['overwrite'] ) {
+		if ( isset( $_POST['overwrite'] ) && 'true' == $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -273,13 +275,13 @@ class MainWP_Install_Bulk {
 		 */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$post_data['url'] = wp_json_encode( $_POST['url'] );
-
-		$output          = new \stdClass();
-		$output->ok      = array();
-		$output->errors  = array();
-		$output->results = array();
-		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+		$post_data['url'] = isset( $_POST['url'] ) ? wp_json_encode( $_POST['url'] ) : '';
+		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
+		$output           = new \stdClass();
+		$output->ok       = array();
+		$output->errors   = array();
+		$output->results  = array();
+		$websites         = array( MainWP_DB::instance()->get_website_by_id( $site_id ) );
 
 		/**
 		* Action: mainwp_before_plugin_theme_install
@@ -326,8 +328,9 @@ class MainWP_Install_Bulk {
 		$output          = array();
 		$output['sites'] = array();
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
+			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? $_POST['selected_sites'] : array();
 			// Get sites.
-			foreach ( $_POST['selected_sites'] as $enc_id ) {
+			foreach ( $selected_sites as $enc_id ) {
 				$websiteid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
 					$website                         = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -342,8 +345,9 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
 			// Get sites from group.
-			foreach ( $_POST['selected_groups'] as $enc_id ) {
+			foreach ( $selected_groups as $enc_id ) {
 				$groupid = $enc_id;
 				if ( MainWP_Utility::ctype_digit( $groupid ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $groupid ) );
@@ -366,8 +370,8 @@ class MainWP_Install_Bulk {
 		}
 
 		$output['urls'] = array();
-
-		foreach ( $_POST['files'] as $file ) {
+		$files          = isset( $_POST['files'] ) ? $_POST['files'] : array();
+		foreach ( $files as $file ) {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
 		$output['urls'] = implode( '||', $output['urls'] );
@@ -391,15 +395,15 @@ class MainWP_Install_Bulk {
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
-
+		$type = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '';
 		// Fetch info.
 		$post_data = array(
-			'type' => $_POST['type'],
+			'type' => $type,
 		);
-		if ( 'true' == $_POST['activatePlugin'] ) {
+		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
 		}
-		if ( 'true' == $_POST['overwrite'] ) {
+		if ( isset( $_POST['overwrite'] ) && 'true' == $_POST['overwrite'] ) {
 			$post_data['overwrite'] = true;
 		}
 
@@ -409,13 +413,15 @@ class MainWP_Install_Bulk {
 		/** This filter is documented in pages/page-mainwp-install-bulk.php */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$post_data['url'] = wp_json_encode( explode( '||', $_POST['urls'] ) );
+		$urls             = isset( $_POST['urls'] ) ? esc_html( $_POST['urls'] ) : '';
+		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
+		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 
 		$output          = new \stdClass();
 		$output->ok      = array();
 		$output->errors  = array();
 		$output->results = array();
-		$websites        = array( MainWP_DB::instance()->get_website_by_id( $_POST['siteId'] ) );
+		$websites        = array( MainWP_DB::instance()->get_website_by_id( $site_id ) );
 
 		/**
 		* Action: mainwp_before_plugin_theme_install

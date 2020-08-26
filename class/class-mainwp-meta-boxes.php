@@ -85,24 +85,14 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
-			$selected_wp = array();
-			if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
-				foreach ( $_POST['selected_sites'] as $selected ) {
-					$selected_wp[] = $selected;
-				}
-			}
+			$selected_wp = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
 			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 
-			$selected_group = array();
-			if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
-				foreach ( $_POST['selected_groups'] as $selected ) {
-					$selected_group[] = $selected;
-				}
-			}
-			update_post_meta( $post_id, '_selected_groups', $selected_group );
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+			update_post_meta( $post_id, '_selected_groups', $selected_groups );
 			update_post_meta( $post_id, '_selected_by', wp_unslash( $_POST['select_by'] ) );
 
-			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_group ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {
+			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {
 				return wp_unslash( $_POST['select_by'] );
 			}
 		}

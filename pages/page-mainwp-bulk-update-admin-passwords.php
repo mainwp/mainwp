@@ -64,18 +64,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 			check_admin_referer( 'mainwp_updateadminpassword', 'security' );
 
 			if ( isset( $_POST['select_by'] ) ) {
-				$selected_sites = array();
-				if ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) {
-					foreach ( $_POST['selected_sites'] as $selected ) {
-						$selected_sites[] = $selected;
-					}
-				}
-				$selected_groups = array();
-				if ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) {
-					foreach ( $_POST['selected_groups'] as $selected ) {
-						$selected_groups[] = $selected;
-					}
-				}
+				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
+				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
 				if ( ( 'group' == $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' == $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
 					$errors[] = __( 'Please select the sites or groups where you want to change the administrator password.', 'mainwp' );
 				}

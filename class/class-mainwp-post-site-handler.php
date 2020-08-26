@@ -191,11 +191,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 				die( wp_json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
 			}
 
-			$verifyCertificate = wp_unslash( $_POST['test_verify_cert'] );
-			$forceUseIPv4      = wp_unslash( $_POST['test_force_use_ipv4'] );
-			$sslVersion        = wp_unslash( $_POST['test_ssl_version'] );
-			$http_user         = wp_unslash( $_POST['http_user'] );
-			$http_pass         = wp_unslash( $_POST['http_pass'] );
+			$verifyCertificate = isset( $_POST['test_verify_cert'] ) ? wp_unslash( $_POST['test_verify_cert'] ) : false;
+			$forceUseIPv4      = isset( $_POST['test_force_use_ipv4'] ) ? wp_unslash( $_POST['test_force_use_ipv4'] ) : false;
+			$sslVersion        = isset( $_POST['test_ssl_version'] ) ? wp_unslash( $_POST['test_ssl_version'] ) : false;
+			$http_user         = isset( $_POST['http_user'] ) ? wp_unslash( $_POST['http_user'] ) : '';
+			$http_pass         = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';
 
 		} elseif ( isset( $_POST['siteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['siteid'] ) );

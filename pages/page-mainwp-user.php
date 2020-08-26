@@ -315,7 +315,7 @@ class MainWP_User {
 
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
 
-		$selected_sites          = array();
+		$selected_sites  = array();
 		$selected_groups = array();
 
 		if ( null != $cachedSearch ) {
@@ -1601,9 +1601,9 @@ class MainWP_User {
 		$errorFields = array();
 
 		if ( isset( $_POST['select_by'] ) ) {
-			$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();			
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();			
-			
+			$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+
 			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
 				$errors[] = __( 'Please select at least one website or group.', 'mainwp' );
 			}
@@ -1943,10 +1943,10 @@ class MainWP_User {
 	 * User Import $_POST handler.
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
-		
-		$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();			
+
+		$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
 		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
-		
+
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 			'user_login' => isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '',

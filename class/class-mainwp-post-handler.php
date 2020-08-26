@@ -166,8 +166,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$dtsstart  = isset( $_POST['dtsstart'] ) ? esc_html( $_POST['dtsstart'] ) : '';
 		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( $_POST['dtsstop'] ) : '';
 		$status    = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
-		$groups    = isset( $_POST['groups'] )  && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
-		$sites     = isset( $_POST['sites'] )  && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
 		$postId    = isset( $_POST['postId'] ) ? esc_html( $_POST['postId'] ) : '';
 		$userId    = isset( $_POST['userId'] ) ? esc_html( $_POST['userId'] ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? esc_html( $_POST['search_on'] ) : '';

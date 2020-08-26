@@ -62,7 +62,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
+		if ( ! isset( $_POST['select_sites_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['select_sites_nonce'] ), 'select_sites_' . $post_id ) ) {
 			return $post_id;
 		}
 
@@ -90,10 +90,10 @@ class MainWP_Meta_Boxes {
 
 			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
 			update_post_meta( $post_id, '_selected_groups', $selected_groups );
-			update_post_meta( $post_id, '_selected_by', wp_unslash( $_POST['select_by'] ) );
+			update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );
 
 			if ( ( 'group' === $_POST['select_by'] && 0 < count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 < count( $selected_wp ) ) ) {
-				return wp_unslash( $_POST['select_by'] );
+				return sanitize_text_field( wp_unslash( $_POST['select_by'] ) );
 			}
 		}
 
@@ -190,7 +190,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
+		if ( ! isset( $_POST['post_category_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['post_category_nonce'] ), 'post_category_' . $post_id ) ) {
 			return;
 		}
 
@@ -310,7 +310,7 @@ class MainWP_Meta_Boxes {
 		/**
 		 * Verify this came from the our screen and with proper authorization.
 		 */
-		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( wp_unslash( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
+		if ( ! isset( $_POST[ $prefix . '_nonce' ] ) || ! wp_verify_nonce( sanitize_key( $_POST[ $prefix . '_nonce' ] ), $prefix . '_' . $post_id ) ) {
 			return $post_id;
 		}
 

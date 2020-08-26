@@ -360,7 +360,7 @@ class MainWP_Manage_Sites_View {
 		$errors = array();
 		if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
 			if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
-				$tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) : '';
+				$tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
 				MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
@@ -1332,20 +1332,20 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function add_site( $website ) {
 
-		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? wp_unslash( $_POST['managesites_add_wpurl'] ) : '';
-		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? wp_unslash( $_POST['managesites_add_wpname'] ) : '';
-		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? wp_unslash( $_POST['managesites_add_wpadmin'] ) : '';
-		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? wp_unslash( $_POST['managesites_add_uniqueId'] ) : '';
-		$params['ssl_verify']        = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
-		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
-		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : wp_unslash( $_POST['ssl_version'] );
-		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? wp_unslash( $_POST['managesites_add_http_user'] ) : '';
+		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
+		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
+		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
+		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
+		$params['ssl_verify']        = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : intval( $_POST['verify_certificate'] ) );
+		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : intval( $_POST['force_use_ipv4'] ) );
+		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : intval( $_POST['ssl_version'] );
+		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
 		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';
-		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', wp_unslash( $_POST['groupids'] ) ) : array();
-		$params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? wp_unslash( $_POST['groupnames_import'] ) : '';
+		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $_POST['groupids'] ) ) ) : array();
+		$params['groupnames_import'] = isset( $_POST['groupnames_import'] ) ? sanitize_text_field( wp_unslash( $_POST['groupnames_import'] ) ) : '';
 
 		if ( isset( $_POST['qsw_page'] ) ) {
-			$params['qsw_page'] = wp_unslash( $_POST['qsw_page'] );
+			$params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
 		}
 
 		return self::add_wp_site( $website, $params );

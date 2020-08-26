@@ -1135,7 +1135,7 @@ class MainWP_Plugins {
 		$selected_groups = array();
 
 		if ( isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
-			$selected_sites = explode( '-', wp_unslash( $_GET['selected_sites'] ) );
+			$selected_sites = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) );
 			$selected_sites = array_map( 'intval', $selected_sites );
 			$selected_sites = array_filter( $selected_sites );
 		}
@@ -1337,9 +1337,9 @@ class MainWP_Plugins {
 		$search_status = 'all';
 
 		if ( null == $output ) {
-			$keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? trim( wp_unslash( $_POST['keyword'] ) ) : null;
-			$search_status        = isset( $_POST['status'] ) ? wp_unslash( $_POST['status'] ) : 'all';
-			$search_plugin_status = isset( $_POST['plugin_status'] ) ? wp_unslash( $_POST['plugin_status'] ) : 'all';
+			$keyword              = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
+			$search_status        = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : 'all';
+			$search_plugin_status = isset( $_POST['plugin_status'] ) ? sanitize_text_field( wp_unslash( $_POST['plugin_status'] ) ) : 'all';
 
 			$output          = new \stdClass();
 			$output->errors  = array();

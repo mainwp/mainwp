@@ -31,7 +31,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @return mixed send json encode data
 	 */
 	public static function check_site() {
-		$url     = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
+		$url     = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
 		$website = MainWP_DB::instance()->get_websites_by_url( $url );
 		$ret     = array();
 
@@ -41,9 +41,9 @@ class MainWP_Manage_Sites_Handler {
 			try {
 				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
-				$http_user      = ( isset( $_POST['http_user'] ) ? wp_unslash( $_POST['http_user'] ) : '' );
+				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
-				$admin          = ( isset( $_POST['admin'] ) ? wp_unslash( $_POST['admin'] ) : '' );
+				$admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
 
 				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
 
@@ -247,7 +247,7 @@ class MainWP_Manage_Sites_Handler {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['site_id'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error    = '';
-				$uniqueId = isset( $_POST['unique_id'] ) ? wp_unslash( $_POST['unique_id'] ) : '';
+				$uniqueId = isset( $_POST['unique_id'] ) ? sanitize_text_field( wp_unslash( $_POST['unique_id'] ) ) : '';
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
 				} catch ( MainWP_Exception $e ) {

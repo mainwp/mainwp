@@ -381,7 +381,7 @@ class MainWP_Setup_Wizard {
 		}
 
 		MainWP_Utility::update_option( 'mwp_setup_installationSystemType', $system_type );
-		MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) : '' );
+		MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' );
 
 		wp_safe_redirect( $this->get_next_step_link( 'system_check' ) );
 
@@ -858,7 +858,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_noti );
 		$userExtension             = MainWP_DB_Common::instance()->get_user_extension();
-		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? wp_unslash( $_POST['mainwp_options_email'] ) : '';
+		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? array_map( 'wp_unslash', (array) $_POST['mainwp_options_email'] ) : '';
 		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -979,7 +979,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_backup_save() {
 		$planning_backup = ( ! isset( $_POST['mwp_setup_planning_backup'] ) ? 0 : 1 );
-		$backup_method   = isset( $_POST['mwp_setup_backup_method'] ) ? wp_unslash( $_POST['mwp_setup_backup_method'] ) : '';
+		$backup_method   = isset( $_POST['mwp_setup_backup_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_backup_method'] ) ) : '';
 		$backup_method   = ! empty( $backup_method ) && isset( $this->backup_extensions[ $backup_method ] ) ? $backup_method : '';
 
 		update_option( 'mwp_setup_planningBackup', $planning_backup );
@@ -1024,8 +1024,8 @@ class MainWP_Setup_Wizard {
 
 		check_admin_referer( 'mwp-setup' );
 
-		$username = ! empty( $_POST['mwp_setup_purchase_username'] ) ? trim( wp_unslash( $_POST['mwp_setup_purchase_username'] ) ) : '';
-		$password = ! empty( $_POST['mwp_setup_purchase_passwd'] ) ? trim( wp_unslash( $_POST['mwp_setup_purchase_passwd'] ) ) : '';
+		$username = ! empty( $_POST['mwp_setup_purchase_username'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_purchase_username'] ) ) : '';
+		$password = ! empty( $_POST['mwp_setup_purchase_passwd'] ) ? wp_unslash( $_POST['mwp_setup_purchase_passwd'] ) : '';
 
 		if ( ( '' == $username ) && ( '' == $password ) ) {
 			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );
@@ -1087,7 +1087,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public static function ajax_get_backup_extension() {
 
-		$product_id = isset( $_POST['productId'] ) ? trim( $_POST['productId'] ) : 0;
+		$product_id = isset( $_POST['productId'] ) ? sanitize_text_field( wp_unslash( $_POST['productId'] ) ) : 0;
 
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
@@ -1163,7 +1163,7 @@ class MainWP_Setup_Wizard {
 	 */
 	public static function ajax_activate_plugin() {
 
-		if ( ! isset( $_POST['action'] ) || ! isset( $_POST['security'] ) || ! wp_verify_nonce( wp_unslash( $_POST['security'] ), 'MainWPSetup' ) ) {
+		if ( ! isset( $_POST['action'] ) || ! isset( $_POST['security'] ) || ! wp_verify_nonce( sanitize_key( $_POST['security'] ), 'MainWPSetup' ) ) {
 			die( 0 );
 		}
 

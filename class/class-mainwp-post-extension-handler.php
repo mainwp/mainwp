@@ -77,7 +77,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Ajax add extension menu. */
 	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
-		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
@@ -235,7 +235,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
 		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
-		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
+		$download_link = isset( $_POST['download_link'] ) ? sanitize_text_field( wp_unslash( $_POST['download_link'] ) ) : '';
 
 		$return = MainWP_Extensions_Handler::install_plugin( $download_link );
 

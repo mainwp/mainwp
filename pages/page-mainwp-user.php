@@ -990,7 +990,7 @@ class MainWP_User {
 			array(
 				'count'   => $output->users,
 				'keyword' => $search,
-				'status'  => ( isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : 'administrator' ),
+				'status'  => ( isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'administrator' ),
 				'sites'   => '' !== $sites ? $sites : '',
 				'groups'  => '' !== $groups ? $groups : '',
 			)
@@ -1174,9 +1174,9 @@ class MainWP_User {
 	 * @return mixed $information User update info that is returned.
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
-		$userId    = isset( $_POST['userId'] ) ? wp_unslash( $_POST['userId'] ) : false;
-		$userName  = isset( $_POST['userName'] ) ? wp_unslash( $_POST['userName'] ) : '';
-		$websiteId = isset( $_POST['websiteId'] ) ? wp_unslash( $_POST['websiteId'] ) : false;
+		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
+		$userName  = isset( $_POST['userName'] ) ? sanitize_text_field( wp_unslash( $_POST['userName'] ) ) : '';
+		$websiteId = isset( $_POST['websiteId'] ) ? sanitize_text_field( wp_unslash( $_POST['websiteId'] ) ) : false;
 		$pass      = isset( $_POST['update_password'] ) ? stripslashes( utf8_decode( urldecode( $_POST['update_password'] ) ) ) : '';
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
@@ -1193,7 +1193,7 @@ class MainWP_User {
 		}
 
 		if ( 'update_user' === $pAction ) {
-			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : '';
+			$user_data = isset( $_POST['user_data'] ) ? sanitize_text_field( wp_unslash( $_POST['user_data'] ) ) : '';
 			parse_str( $user_data, $extra );
 			if ( $website->adminname == $userName ) {
 
@@ -1636,12 +1636,12 @@ class MainWP_User {
 		if ( ( 0 == count( $errors ) ) && ( 0 == count( $errorFields ) ) ) {
 			$user_to_add = array(
 				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
-				'user_login' => isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '',
-				'user_url'   => isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '',
-				'user_email' => isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '',
-				'first_name' => isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '',
-				'last_name'  => isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '',
-				'role'       => isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '',
+				'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
+				'user_url'   => isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '',
+				'user_email' => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
+				'first_name' => isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '',
+				'last_name'  => isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '',
+				'role'       => isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '',
 			);
 
 			$dbwebsites = array();
@@ -1697,7 +1697,7 @@ class MainWP_User {
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
 					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-					'send_password' => ( isset( $_POST['send_password'] ) ? wp_unslash( $_POST['send_password'] ) : '' ),
+					'send_password' => ( isset( $_POST['send_password'] ) ? sanitize_text_field( wp_unslash( $_POST['send_password'] ) ) : '' ),
 				);
 				$output         = new \stdClass();
 				$output->ok     = array();
@@ -1811,7 +1811,7 @@ class MainWP_User {
 		$errors = array();
 		if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK == $_FILES['import_user_file_bulkupload']['error'] ) {
 			if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
-				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? $_FILES['import_user_file_bulkupload']['tmp_name'] : '';
+				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
 				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
 				global $wp_filesystem;
 
@@ -1949,12 +1949,12 @@ class MainWP_User {
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
-			'user_login' => isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '',
-			'user_url'   => isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '',
-			'user_email' => isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '',
-			'first_name' => isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '',
-			'last_name'  => isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '',
-			'role'       => isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '',
+			'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
+			'user_url'   => isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '',
+			'user_email' => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
+			'first_name' => isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '',
+			'last_name'  => isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '',
+			'role'       => isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '',
 		);
 
 		$ret         = array();
@@ -2079,14 +2079,14 @@ class MainWP_User {
 		if ( ! empty( $error_sites ) ) {
 			$error_sites = rtrim( $error_sites, ';' );
 
-			$user_login    = isset( $_POST['user_login'] ) ? wp_unslash( $_POST['user_login'] ) : '';
-			$email         = isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '';
-			$first_name    = isset( $_POST['first_name'] ) ? wp_unslash( $_POST['first_name'] ) : '';
-			$last_name     = isset( $_POST['last_name'] ) ? wp_unslash( $_POST['last_name'] ) : '';
-			$url           = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
+			$user_login    = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '';
+			$email         = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
+			$first_name    = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+			$last_name     = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+			$url           = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
 			$pass1         = isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '';
 			$send_password = isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : 0;
-			$role          = isset( $_POST['role'] ) ? wp_unslash( $_POST['role'] ) : '';
+			$role          = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
 
 			$ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
 		}

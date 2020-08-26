@@ -157,7 +157,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
-		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? wp_unslash( $_POST['post_type'] ) : 'post' );
+		$post_type = ( isset( $_POST['post_type'] ) && 0 < strlen( trim( $_POST['post_type'] ) ) ? sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) : 'post' );
 		if ( isset( $_POST['maximum'] ) ) {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', isset( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
@@ -400,7 +400,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
 
-		$no_id = isset( $_POST['notice_id'] ) ? wp_unslash( $_POST['notice_id'] ) : false;
+		$no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
 		if ( 'mail_failed' === $no_id ) {
 			MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
 			die( 'ok' );
@@ -448,8 +448,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			die( 'ok' );
 		}
 
-		$status = isset( $_POST['status'] ) ? wp_unslash( $_POST['status'] ) : '';
-		$value  = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+		$status = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
+		$value  = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
 
 		if ( ! empty( $status ) ) {
 			if ( empty( $value ) ) {
@@ -475,8 +475,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_widgets_order' );
 		$user = wp_get_current_user();
 		if ( $user && ! empty( $_POST['page'] ) ) {
-			$page  = isset( $_POST['page'] ) ? wp_unslash( $_POST['page'] ) : '';
-			$order = isset( $_POST['order'] ) ? wp_unslash( $_POST['order'] ) : '';
+			$page  = isset( $_POST['page'] ) ? sanitize_text_field( wp_unslash( $_POST['page'] ) ) : '';
+			$order = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : '';
 			update_user_option( $user->ID, 'mainwp_widgets_sorted_' . $page, $order, true );
 			die( 'ok' );
 		}
@@ -490,10 +490,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
-		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
+		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 		if ( ! empty( $name ) ) {
 			$option_name = 'mainwp_' . $name;
-			$val         = isset( $_POST['value'] ) ? wp_unslash( $_POST['value'] ) : '';
+			$val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';
 			MainWP_Utility::update_option( $option_name, $val );
 		}
 		die( 'ok' );
@@ -567,7 +567,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
 
 		$success        = false;
-		$actionName     = isset( $_POST['actionName'] ) ? wp_unslash( $_POST['actionName'] ) : '';
+		$actionName     = isset( $_POST['actionName'] ) ? sanitize_text_field( wp_unslash( $_POST['actionName'] ) ) : '';
 		$countSites     = isset( $_POST['countSites'] ) ? intval( $_POST['countSites'] ) : 0;
 		$countRealItems = isset( $_POST['countRealItems'] ) ? intval( $_POST['countRealItems'] ) : 0;
 		$countItems     = isset( $_POST['countItems'] ) ? intval( $_POST['countItems'] ) : 0;
@@ -835,7 +835,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * MainWP Saving Status.
 	 */
 	public function mainwp_saving_status() {
-		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
+		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
 		}
 		if ( isset( $_POST['saving_status'] ) ) {

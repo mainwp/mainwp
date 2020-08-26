@@ -194,7 +194,7 @@ class MainWP_System_Handler {
 	 * Handle manage sites screen settings
 	 */
 	public function handle_manage_sites_screen_settings() {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'ManageSitesScrOptions' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
 			$hide_cols = array();
 			foreach ( $_POST as $key => $val ) {
 				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
@@ -218,7 +218,7 @@ class MainWP_System_Handler {
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
 		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
-			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 				$update_screen_options = true;
 				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
@@ -230,7 +230,7 @@ class MainWP_System_Handler {
 				}
 			}
 		} elseif ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) ) {
-			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPScrOptions' ) ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPScrOptions' ) ) {
 				$update_screen_options = true;
 			}
 		}
@@ -275,7 +275,7 @@ class MainWP_System_Handler {
 		}
 
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
-			if ( wp_verify_nonce( wp_unslash( $_POST['wp_nonce'] ), 'Settings' ) ) {
+			if ( wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
 				$updated  = MainWP_Settings::handle_settings_post();
 				$updated |= MainWP_Backup_Handler::handle_settings_post();
 				$updated |= MainWP_Monitoring_Handler::handle_settings_post();

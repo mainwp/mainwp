@@ -24,7 +24,7 @@ namespace MainWP\Dashboard;
  * @param $siteurl Child Site URL.
  */
 function check_live_reporting_access( $siteurl ) {
-	$siteurl = isset( $_POST['livereportingurl'] ) ? wp_unslash( $_POST['livereportingurl'] ) : '';
+	$siteurl = isset( $_POST['livereportingurl'] ) ? sanitize_text_field( wp_unslash( $_POST['livereportingurl'] ) ) : '';
 	$access  = get_option( 'live-report-responder-provideaccess' );
 	return ( ( 'yes' == $access ) && ( get_option( 'live-report-responder-siteurl' ) == $siteurl ) );
 }
@@ -34,12 +34,12 @@ function check_live_reporting_access( $siteurl ) {
  */
 function live_reports_responder_secure_connection() {
 
-	$siteurl     = isset( $_POST['livereportingurl'] ) ? wp_unslash( $_POST['livereportingurl'] ) : '';
-	$securitykey = isset( $_POST['securitykey'] ) ? wp_unslash( $_POST['securitykey'] ) : '';
-	$signature   = isset( $_POST['signature'] ) ? wp_unslash( $_POST['signature'] ) : '';
-	$action      = isset( $_POST['action'] ) ? wp_unslash( $_POST['action'] ) : '';
-	$timestamp   = isset( $_POST['timestamp'] ) ? wp_unslash( $_POST['timestamp'] ) : '';
-	$pubkey      = isset( $_POST['pubkey'] ) ? wp_unslash( $_POST['pubkey'] ) : null;
+	$siteurl     = isset( $_POST['livereportingurl'] ) ? sanitize_text_field( wp_unslash( $_POST['livereportingurl'] ) ) : '';
+	$securitykey = isset( $_POST['securitykey'] ) ? sanitize_text_field( wp_unslash( $_POST['securitykey'] ) ) : '';
+	$signature   = isset( $_POST['signature'] ) ? sanitize_text_field( wp_unslash( $_POST['signature'] ) ) : '';
+	$action      = isset( $_POST['action'] ) ? sanitize_text_field( wp_unslash( $_POST['action'] ) ) : '';
+	$timestamp   = isset( $_POST['timestamp'] ) ? sanitize_text_field( wp_unslash( $_POST['timestamp'] ) ) : '';
+	$pubkey      = isset( $_POST['pubkey'] ) ? sanitize_text_field( wp_unslash( $_POST['pubkey'] ) ) : null;
 
 	if ( ( null == $siteurl ) || ( null == $signature ) || ( null == $action ) || ( null == $timestamp ) ) {
 		return array( 'error' => 'Invalid request.' );
@@ -90,7 +90,7 @@ function live_reports_responder_secure_connection() {
 function check_if_valid_client( $email, $siteid ) {
 
 	$email  = isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '';
-	$siteid = isset( $_POST['siteid'] ) ? wp_unslash( $_POST['siteid'] ) : false;
+	$siteid = isset( $_POST['siteid'] ) ? sanitize_text_field( wp_unslash( $_POST['siteid'] ) ) : false;
 
 	$checkPermission = check_live_reporting_access();
 	$result          = array();
@@ -181,12 +181,12 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 		$checkPermission = check_live_reporting_access();
 		if ( $checkPermission ) {
 			$checkifvalidclient = check_if_valid_client();
-			$allAccess          = isset( $_POST['allAccess'] ) ? wp_unslash( $_POST['allAccess'] ) : false;
+			$allAccess          = isset( $_POST['allAccess'] ) ? sanitize_text_field( wp_unslash( $_POST['allAccess'] ) ) : false;
 			if ( ( isset( $checkifvalidclient['result'] ) && 'success' == $checkifvalidclient['result'] ) || $allAccess ) {
 				$report                     = new \stdClass();
 				$report->title              = 'Live Report';
-				$report->date_from          = isset( $_POST['date_from'] ) ? $_POST['date_from'] : '';
-				$report->date_to            = isset( $_POST['date_to'] ) ? $_POST['date_to'] : '';
+				$report->date_from          = isset( $_POST['date_from'] ) ? sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) : '';
+				$report->date_to            = isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '';
 				$report->client             = '';
 				$report->client_id          = 0;
 				$report->fname              = '';

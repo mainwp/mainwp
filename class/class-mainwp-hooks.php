@@ -787,8 +787,8 @@ class MainWP_Hooks {
 	public function upgrade_plugin_theme() {
 		try {
 			$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : null;
-			$type      = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : null;
-			$slugs     = isset( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : array();
+			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : null;
+			$slugs     = isset( $_POST['slugs'] ) ? $_POST['slugs'] : array();
 			$error     = '';
 			if ( 'plugin' === $type && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
 				$error = mainwp_do_not_have_permissions( __( 'update plugins', 'mainwp' ), false );

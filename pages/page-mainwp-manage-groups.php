@@ -415,7 +415,7 @@ class MainWP_Manage_Groups {
 		if ( isset( $_POST['groupId'] ) ) {
 			$group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
 			if ( ! empty( $group ) ) {
-				$name = isset( $_POST['newName'] ) ? wp_unslash( $_POST['newName'] ) : '';
+				$name = isset( $_POST['newName'] ) ? sanitize_text_field( wp_unslash( $_POST['newName'] ) ) : '';
 				if ( '' == $name ) {
 					$name = $group->name;
 				}

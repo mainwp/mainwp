@@ -28,7 +28,7 @@ class MainWP_QQ2_Uploaded_File_Form {
 
 		$moved = false;
 
-		$tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? wp_unslash( $_FILES['qqfile']['tmp_name'] ) : '';
+		$tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : '';
 
 		if ( ! empty( $tmp_name ) ) {
 			if ( false != $wpFileSystem ) {
@@ -48,11 +48,11 @@ class MainWP_QQ2_Uploaded_File_Form {
 
 	/** Get the File Name. */
 	public function get_name() {
-		return isset( $_FILES['qqfile']['name'] ) ? $_FILES['qqfile']['name'] : '';
+		return isset( $_FILES['qqfile']['name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['name'] ) ) : '';
 	}
 
 	/** Get the File Size. */
 	public function get_size() {
-		return isset( $_FILES['qqfile']['size'] ) ? $_FILES['qqfile']['size'] : '';
+		return isset( $_FILES['qqfile']['size'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['size'] ) ) : '';
 	}
 }

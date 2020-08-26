@@ -36,9 +36,9 @@ class MainWP_Post_Page_Handler {
 	public static function add_meta( $post_ID ) {
 		$post_ID = (int) $post_ID;
 
-		$metakeyselect = isset( $_POST['metakeyselect'] ) ? wp_unslash( trim( $_POST['metakeyselect'] ) ) : '';
-		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? wp_unslash( trim( $_POST['metakeyinput'] ) ) : '';
-		$metavalue     = isset( $_POST['metavalue'] ) ? wp_unslash( $_POST['metavalue'] ) : '';
+		$metakeyselect = isset( $_POST['metakeyselect'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyselect'] ) ) : '';
+		$metakeyinput  = isset( $_POST['metakeyinput'] ) ? sanitize_text_field( wp_unslash( $_POST['metakeyinput'] ) ) : '';
+		$metavalue     = isset( $_POST['metavalue'] ) ? sanitize_text_field( wp_unslash( $_POST['metavalue'] ) ) : '';
 		if ( is_string( $metavalue ) ) {
 			$metavalue = trim( $metavalue );
 		}
@@ -115,8 +115,8 @@ class MainWP_Post_Page_Handler {
 
 		} else {
 			$mid   = isset( $_POST['meta'] ) ? (int) key( $_POST['meta'] ) : 0;
-			$key   = isset( $_POST['meta'][ $mid ]['key'] ) ? wp_unslash( $_POST['meta'][ $mid ]['key'] ) : '';
-			$value = isset( $_POST['meta'][ $mid ]['value'] ) ? wp_unslash( $_POST['meta'][ $mid ]['value'] ) : '';
+			$key   = isset( $_POST['meta'][ $mid ]['key'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['key'] ) ) : '';
+			$value = isset( $_POST['meta'][ $mid ]['value'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'][ $mid ]['value'] ) ) : '';
 			if ( '' == trim( $key ) ) {
 				wp_send_json( array( 'error' => __( 'Please provide a custom field name.', 'mainwp' ) ) );
 			}

@@ -155,7 +155,7 @@ class MainWP_Plugins_Handler {
 		}
 
 		try {
-			$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : '';
+			$plugins = isset( $_POST['plugins'] ) ? sanitize_text_field( wp_unslash( $_POST['plugins'] ) ) : '';
 			$plugin  = implode( '||', $plugins );
 			$plugin  = urldecode( $plugin );
 

@@ -246,7 +246,7 @@ class MainWP_Install_Bulk {
 
 		// Fetch info.
 		$post_data = array(
-			'type' => isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '',
+			'type' => isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '',
 		);
 		if ( isset( $_POST['activatePlugin'] ) && 'true' == $_POST['activatePlugin'] ) {
 			$post_data['activatePlugin'] = 'yes';
@@ -395,7 +395,7 @@ class MainWP_Install_Bulk {
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
-		$type = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '';
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		// Fetch info.
 		$post_data = array(
 			'type' => $type,

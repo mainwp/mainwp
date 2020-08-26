@@ -394,18 +394,18 @@ class MainWP_Live_Reports {
 	 * @return array|null $return Response array on success or null on failer.
 	 */
 	public static function save_report() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
-		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( $_REQUEST['nonce'], 'mwp_creport_nonce' ) ) {
+		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mwp_creport_nonce' ) ) {
 			$messages             = array();
 			$errors               = array();
 			$report               = array();
 			$current_attach_files = '';
-			$id = ! empty( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
-			
+			$id                   = ! empty( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+
 			if ( $id ) {
 				$report               = MainWP_Live_Reports_Responder_DB::get_instance()->get_report_by( 'id', $id, null, null, ARRAY_A );
 				$current_attach_files = $report['attach_files'];
 			}
-			$title = isset( $_POST['mwp_creport_title'] ) ? trim( wp_unslash( $_POST['mwp_creport_title'] ) ) : '';
+			$title = isset( $_POST['mwp_creport_title'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_creport_title'] ) ) : '';
 			if ( '' != $title ) {
 				$report['title'] = $title;
 			}
@@ -414,14 +414,14 @@ class MainWP_Live_Reports {
 			$end_time   = 0;
 
 			if ( isset( $_POST['mwp_creport_date_from'] ) ) {
-				$start_date = trim( wp_unslash( $_POST['mwp_creport_date_from'] ) );
+				$start_date = sanitize_text_field( wp_unslash( $_POST['mwp_creport_date_from'] ) );
 				if ( '' != $start_date ) {
 					$start_time = strtotime( $start_date );
 				}
 			}
 
 			if ( isset( $_POST['mwp_creport_date_to'] ) ) {
-				$end_date = trim( wp_unslash( $_POST['mwp_creport_date_to'] ) );
+				$end_date = sanitize_text_field( wp_unslash( $_POST['mwp_creport_date_to'] ) );
 				if ( '' != $end_date ) {
 					$end_time = strtotime( $end_date );
 				}
@@ -442,24 +442,24 @@ class MainWP_Live_Reports {
 			$report['date_to']   = $end_time + 24 * 3600 - 1;
 
 			if ( isset( $_POST['mwp_creport_client'] ) ) {
-				$report['client'] = trim( wp_unslash( $_POST['mwp_creport_client'] ) );
+				$report['client'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_client'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_client_id'] ) ) {
-				$report['client_id'] = intval( wp_unslash( $_POST['mwp_creport_client_id'] ) );
+				$report['client_id'] = intval( $_POST['mwp_creport_client_id'] );
 			}
 
 			if ( isset( $_POST['mwp_creport_fname'] ) ) {
-				$report['fname'] = trim( wp_unslash( $_POST['mwp_creport_fname'] ) );
+				$report['fname'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_fname'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_fcompany'] ) ) {
-				$report['fcompany'] = trim( wp_unslash( $_POST['mwp_creport_fcompany'] ) );
+				$report['fcompany'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_fcompany'] ) );
 			}
 
 			$from_email = '';
 			if ( ! empty( $_POST['mwp_creport_femail'] ) ) {
-				$from_email = trim( wp_unslash( $_POST['mwp_creport_femail'] ) );
+				$from_email = sanitize_text_field( wp_unslash( $_POST['mwp_creport_femail'] ) );
 				if ( ! preg_match( '/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $from_email ) ) {
 					$from_email = '';
 					$errors[]   = 'Incorrect Email Address in the Send From filed.';
@@ -468,17 +468,17 @@ class MainWP_Live_Reports {
 			$report['femail'] = $from_email;
 
 			if ( isset( $_POST['mwp_creport_name'] ) ) {
-				$report['name'] = trim( wp_unslash( $_POST['mwp_creport_name'] ) );
+				$report['name'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_name'] ) );
 			}
 
 			if ( isset( $_POST['mwp_creport_company'] ) ) {
-				$report['company'] = trim( wp_unslash( $_POST['mwp_creport_company'] ) );
+				$report['company'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_company'] ) );
 			}
 
 			$to_email     = '';
 			$valid_emails = array();
 			if ( ! empty( $_POST['mwp_creport_email'] ) ) {
-				$to_emails = explode( ',', trim( wp_unslash( $_POST['mwp_creport_email'] ) ) );
+				$to_emails = explode( ',', sanitize_text_field( wp_unslash( $_POST['mwp_creport_email'] ) ) );
 				if ( is_array( $to_emails ) ) {
 					foreach ( $to_emails as $_email ) {
 						if ( ! preg_match( '/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/is', $_email ) && ! preg_match( '/^\[.+\]/is', $_email ) ) {
@@ -501,29 +501,29 @@ class MainWP_Live_Reports {
 			$report['email'] = $to_email;
 
 			if ( isset( $_POST['mwp_creport_email_subject'] ) ) {
-				$report['subject'] = trim( wp_unslash( $_POST['mwp_creport_email_subject'] ) );
+				$report['subject'] = sanitize_text_field( wp_unslash( $_POST['mwp_creport_email_subject'] ) );
 			}
 			if ( isset( $_POST['mainwp_creport_recurring_schedule'] ) ) {
-				$report['recurring_schedule'] = trim( wp_unslash( $_POST['mainwp_creport_recurring_schedule'] ) );
+				$report['recurring_schedule'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_recurring_schedule'] ) );
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_date'] ) ) {
 				$rec_date                 = trim( $_POST['mainwp_creport_schedule_date'] );
 				$report['recurring_date'] = ! empty( $rec_date ) ? strtotime( $rec_date . ' ' . gmdate( 'H:i:s' ) ) : 0;
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_send_email'] ) ) {
-				$report['schedule_send_email'] = trim( wp_unslash( $_POST['mainwp_creport_schedule_send_email'] ) );
+				$report['schedule_send_email'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_schedule_send_email'] ) );
 			}
 			$report['schedule_bcc_me'] = isset( $_POST['mainwp_creport_schedule_bbc_me_email'] ) ? 1 : 0;
 			if ( isset( $_POST['mainwp_creport_report_header'] ) ) {
-				$report['header'] = trim( wp_unslash( $_POST['mainwp_creport_report_header'] ) );
+				$report['header'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_report_header'] ) );
 			}
 
 			if ( isset( $_POST['mainwp_creport_report_body'] ) ) {
-				$report['body'] = trim( wp_unslash( $_POST['mainwp_creport_report_body'] ) );
+				$report['body'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_report_body'] ) );
 			}
 
 			if ( isset( $_POST['mainwp_creport_report_footer'] ) ) {
-				$report['footer'] = trim( wp_unslash( $_POST['mainwp_creport_report_footer'] ) );
+				$report['footer'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_report_footer'] ) );
 			}
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -572,8 +572,8 @@ class MainWP_Live_Reports {
 			$selected_groups = array();
 
 			if ( isset( $_POST['select_by'] ) ) {
-				$selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();	
-				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();						
+				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
+				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
 			}
 
 			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
@@ -1808,7 +1808,7 @@ class MainWP_Live_Reports {
 			foreach ( $tokens as $token ) {
 				$input_name = 'creport_token_' . str_replace( array( '.', ' ', '-' ), '_', $token->token_name );
 				if ( isset( $_POST[ $input_name ] ) ) {
-					$token_value = wp_unslash( $_POST[ $input_name ] );
+					$token_value = ! empty( $_POST[ $input_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input_name ] ) ) : '';
 
 					$current = MainWP_Live_Reports_Responder_DB::get_instance()->get_tokens_by( 'id', $token->id, $website['url'] );
 					if ( $current ) {

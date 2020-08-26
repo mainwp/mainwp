@@ -370,7 +370,7 @@ class MainWP_Settings {
 	 * @return boolean True|False Posts On True.
 	 */
 	public static function handle_settings_post() {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
 			$userExtension            = MainWP_DB_Common::instance()->get_user_extension();
 			$userExtension->pluginDir = '';
 
@@ -387,26 +387,26 @@ class MainWP_Settings {
 				do_action( 'mainwp_before_save_general_settings', $_POST );
 
 				MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
-				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : wp_unslash( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) );
+				$val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) );
 				MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
-				$val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : wp_unslash( $_POST['mainwp_themeAutomaticDailyUpdate'] ) );
+				$val = ( ! isset( $_POST['mainwp_themeAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_themeAutomaticDailyUpdate'] ) );
 				MainWP_Utility::update_option( 'mainwp_themeAutomaticDailyUpdate', $val );
-				$val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : wp_unslash( $_POST['mainwp_automaticDailyUpdate'] ) );
+				$val = ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_automaticDailyUpdate'] ) );
 				MainWP_Utility::update_option( 'mainwp_automaticDailyUpdate', $val );
 				$val = ( ! isset( $_POST['mainwp_show_language_updates'] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
-				$val = ( ! isset( $_POST['mainwp_disable_update_confirmations'] ) ? 0 : intval( wp_unslash( $_POST['mainwp_disable_update_confirmations'] ) ) );
+				$val = ( ! isset( $_POST['mainwp_disable_update_confirmations'] ) ? 0 : intval( $_POST['mainwp_disable_update_confirmations'] ) );
 				MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );
 				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
-				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : wp_unslash( $_POST['mainwp_backup_before_upgrade_days'] ) );
+				$val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : intval( $_POST['mainwp_backup_before_upgrade_days'] ) );
 				MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
 
 				if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
-					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( wp_unslash( $_POST['mainwp_maximumComments'] ) ) : 50 );
+					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
 				}
 				MainWP_Utility::update_option( 'mainwp_wp_cron', ( ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) : '' );
+				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) ) : '' );
 				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 ) );
 
 				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
@@ -415,8 +415,8 @@ class MainWP_Settings {
 					update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
 				}
 
-				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', MainWP_Utility::ctype_digit( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
-				$ignore_http = isset( $_POST['mainwp_ignore_http_response_status'] ) ? wp_unslash( $_POST['mainwp_ignore_http_response_status'] ) : '';
+				MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
+				$ignore_http = isset( $_POST['mainwp_ignore_http_response_status'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_ignore_http_response_status'] ) ) : '';
 				MainWP_Utility::update_option( 'mainwp_ignore_HTTP_response_status', $ignore_http );
 
 				$check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
@@ -751,7 +751,7 @@ class MainWP_Settings {
 			return;
 		}
 
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) {
 
 			/**
 			* Action: mainwp_before_save_advanced_settings
@@ -772,7 +772,7 @@ class MainWP_Settings {
 			MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
-				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? trim( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
+				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
 				if ( self::is_local_window_config() ) {
 					MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ) );
 				} else {
@@ -793,7 +793,7 @@ class MainWP_Settings {
 		?>
 
 		<div id="mainwp-advanced-settings" class="ui segment">
-			<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'SettingsAdvanced' ) ) : ?>
+			<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
 				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
@@ -924,7 +924,7 @@ class MainWP_Settings {
 
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
-				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( $_POST['wp_nonce'], 'MainWPTools' ) ) : ?>
+				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<div class="ui form">
@@ -1004,7 +1004,7 @@ class MainWP_Settings {
 
 	/** Export Child Sites and save as .csv file. */
 	public static function export_sites() {
-		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), 'export_sites' ) ) {
+		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'export_sites' ) ) {
 
 			$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( true );
 			$websites = MainWP_DB::instance()->query( $sql );
@@ -1085,21 +1085,21 @@ class MainWP_Settings {
 		<div id="mainwp-mcrwc-settings" class="ui segment">
 				<?php
 				if ( isset( $_POST['save_changes'] ) || isset( $_POST['reset_connection'] ) ) {
-					$nonce = isset( $_REQUEST['_wpnonce'] ) ? wp_unslash( $_REQUEST['_wpnonce'] ) : '';
+					$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
 					if ( ! wp_verify_nonce( $nonce, 'general_settings' ) ) {
 						echo '<div class="ui red message"><i class="close icon"></i>' . __( 'Unable to save settings, please refresh and try again.', 'mainwp' ) . '</div>';
 					} else {
 						if ( isset( $_POST['reset_connection'] ) ) {
 							MainWP_Utility::update_option( 'live-report-responder-pubkey', '' );
 						} else {
-							$siteurl = isset( $_POST['live_reponder_site_url'] ) ? wp_unslash( $_POST['live_reponder_site_url'] ) : '';
+							$siteurl = isset( $_POST['live_reponder_site_url'] ) ? sanitize_text_field( wp_unslash( $_POST['live_reponder_site_url'] ) ) : '';
 							if ( ! empty( $siteurl ) && '/' != substr( $siteurl, - 1 ) ) {
 								$siteurl = $siteurl . '/';
 							}
 							update_option( 'live-report-responder-siteurl', $siteurl );
-							update_option( 'live-report-responder-provideaccess', ( isset( $_POST['live_reponder_provideaccess'] ) ) ? wp_unslash( $_POST['live_reponder_provideaccess'] ) : '' );
+							update_option( 'live-report-responder-provideaccess', ( isset( $_POST['live_reponder_provideaccess'] ) ) ? sanitize_text_field( wp_unslash( $_POST['live_reponder_provideaccess'] ) ) : '' );
 							$security_token = self::generate_random_string();
-							update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? wp_unslash( $_POST['requireUniqueSecurityId'] ) : '' );
+							update_option( 'live-reports-responder-security-id', ( isset( $_POST['requireUniqueSecurityId'] ) ) ? sanitize_text_field( wp_unslash( $_POST['requireUniqueSecurityId'] ) ) : '' );
 							update_option( 'live-reports-responder-security-code', stripslashes( $security_token ) );
 							echo '<div class="ui green message"><i class="close icon"></i>' . __( 'Settings have been saved successfully!', 'mainwp' ) . '</div>';
 						}

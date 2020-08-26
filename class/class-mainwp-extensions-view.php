@@ -51,7 +51,7 @@ class MainWP_Extensions_View {
 				'title' => __( 'Extensions', 'mainwp' ),
 			);
 		} else {
-			$extension_name_raw = wp_unslash( $_GET['page'] );
+			$extension_name_raw = sanitize_text_field( wp_unslash( $_GET['page'] ) );
 			$extension_name     = str_replace( array( 'Extensions', '-', 'Mainwp', 'Extension' ), ' ', $extension_name_raw );
 			$params             = array(
 				'title' => $extension_name,
@@ -419,13 +419,13 @@ class MainWP_Extensions_View {
 	 */
 	public static function get_extension_groups() {
 		$groups = array(
-			'backup'         => __( 'Backups', 'mainwp' ),
-			'content'        => __( 'Content', 'mainwp' ),
-			'security'       => __( 'Security', 'mainwp' ),
-			'hosting'        => __( 'Hosting', 'mainwp' ),
-			'admin'          => __( 'Administrative', 'mainwp' ),
-			'performance'    => __( 'Performance', 'mainwp' ),
-			'visitor'        => __( 'Visitor Data', 'mainwp' ),
+			'backup'      => __( 'Backups', 'mainwp' ),
+			'content'     => __( 'Content', 'mainwp' ),
+			'security'    => __( 'Security', 'mainwp' ),
+			'hosting'     => __( 'Hosting', 'mainwp' ),
+			'admin'       => __( 'Administrative', 'mainwp' ),
+			'performance' => __( 'Performance', 'mainwp' ),
+			'visitor'     => __( 'Visitor Data', 'mainwp' ),
 		);
 		return $groups;
 	}
@@ -585,7 +585,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1551',
 				'group'      => array( 'admin' ),
 			),
-			'mainwp-custom-dashboard-extension' =>
+			'mainwp-custom-dashboard-extension'      =>
 			array(
 				'slug'       => 'mainwp-custom-dashboard-extension',
 				'title'      => 'MainWP Custom Dashboard Extension',
@@ -852,7 +852,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '12458',
 				'group'      => array( 'security' ),
 			),
-			'mainwp-time-capsule-extension' =>
+			'mainwp-time-capsule-extension'          =>
 			array(
 				'slug'       => 'mainwp-time-capsule-extension',
 				'title'      => 'MainWP Time Capsule Extension',
@@ -863,7 +863,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1049003',
 				'group'      => array( 'backup' ),
 			),
-			'mainwp-wp-compress-extension' =>
+			'mainwp-wp-compress-extension'           =>
 			array(
 				'slug'       => 'mainwp-wp-compress-extension',
 				'title'      => 'MainWP WP Compress Extension',
@@ -874,7 +874,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1053988',
 				'group'      => array( 'security' ),
 			),
-			'mainwp-pro-reports-extension' =>
+			'mainwp-pro-reports-extension'           =>
 			array(
 				'slug'       => 'mainwp-pro-reports-extension',
 				'title'      => 'MainWP Pro Reports Extension',

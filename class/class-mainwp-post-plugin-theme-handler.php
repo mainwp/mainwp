@@ -649,8 +649,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['id'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		$type = isset( $_POST['type'] ) ? wp_unslash( $_POST['type'] ) : '';
-		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : '';
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
 	}

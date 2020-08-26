@@ -310,9 +310,9 @@ class MainWP_Notification_Template {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 		global $wp_filesystem;
 
-		$type = isset( $_GET['edit-email'] ) ? wp_unslash( $_GET['edit-email'] ) : '';
+		$type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
 
-		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
+		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
 				$dir     = $this->template_custom_path;
 				$templ   = self::get_template_name_by_notification_type( $type );
@@ -323,7 +323,7 @@ class MainWP_Notification_Template {
 			}
 		}
 
-		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'copy-email-template' ) ) {
+		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
 				$source_dir = $this->template_path;
 				$dest_dir   = $this->template_custom_path;
@@ -335,9 +335,9 @@ class MainWP_Notification_Template {
 			}
 		}
 
-		if ( ! empty( $type ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
+		if ( ! empty( $type ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
 			$template_name = self::get_template_name_by_notification_type( $type );
-			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : '';
+			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) ) : '';
 			$updated       = $this->save_template( $template_code, $template_name );
 			if ( $updated ) {
 				$updated_templ = 3;

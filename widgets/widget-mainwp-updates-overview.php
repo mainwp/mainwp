@@ -68,8 +68,8 @@ class MainWP_Updates_Overview {
 		$request = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $request ) ) {
-			$url  = isset( $_REQUEST['url'] ) ? wp_unslash( $_REQUEST['url'] ) : '';
-			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : '';
+			$url  = isset( $_REQUEST['url'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['url'] ) ) : '';
+			$name = isset( $_REQUEST['name'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['name'] ) ) : '';
 			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
@@ -371,7 +371,7 @@ class MainWP_Updates_Overview {
 		$continue_update   = '';
 		if ( $limit_updates_all > 0 ) {
 			if ( isset( $_GET['continue_update'] ) && '' != $_GET['continue_update'] ) {
-				$continue_update = wp_unslash( $_GET['continue_update'] );
+				$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
 			}
 		}
 

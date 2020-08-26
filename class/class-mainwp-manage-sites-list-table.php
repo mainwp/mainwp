@@ -392,8 +392,8 @@ class MainWP_Manage_Sites_List_Table {
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
 
-		$selected_status = isset( $_REQUEST['status'] ) ? wp_unslash( $_REQUEST['status'] ) : '';
-		$selected_group  = isset( $_REQUEST['g'] ) ? trim( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$selected_status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+		$selected_group  = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		if ( empty( $selected_status ) && empty( $selected_group ) ) {
@@ -580,7 +580,7 @@ class MainWP_Manage_Sites_List_Table {
 			$start = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 		}
 
-		$search = isset( $_REQUEST['search']['value'] ) ? trim( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
+		$search = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
 
 		$get_saved_state = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] );
 		$get_all         = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && ( empty( $_REQUEST['g'] ) ) ? true : false;

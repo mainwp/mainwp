@@ -119,7 +119,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function update_backup() {
 		global $current_user;
 
-		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
+		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
 		if ( '' == $name ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
@@ -162,10 +162,10 @@ class MainWP_Manage_Backups_Handler {
 
 		do_action( 'mainwp_update_backuptask', $task->id );
 
-		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? wp_unslash( $_POST['archiveFormat'] ) : 'site';
+		$archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : 'site';
 		$maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 == $_POST['maximumFileDescriptorsOverride'];
 		$maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 == $_POST['maximumFileDescriptorsAuto'];
-		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? wp_unslash( $_POST['maximumFileDescriptors'] ) : 150;
+		$maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) && MainWP_Utility::ctype_digit( $_POST['maximumFileDescriptors'] ) ? intval( $_POST['maximumFileDescriptors'] ) : 150;
 		$loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
 
 		if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, ( isset( $_POST['subfolder'] ) ? $_POST['subfolder'] : '' ), $_POST['filename'], $_POST['excludebackup'], $_POST['excludecache'], $_POST['excludenonwp'], $_POST['excludezip'], $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
@@ -179,7 +179,7 @@ class MainWP_Manage_Backups_Handler {
 	public static function add_backup() {
 		global $current_user;
 
-		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
+		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 
 		if ( '' == $name ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );

@@ -84,7 +84,7 @@ abstract class MainWP_Post_Base_Handler {
 
 		$adminurl = strtolower( admin_url() );
 		$referer  = strtolower( wp_get_referer() );
-		$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( wp_unslash( $_REQUEST[ $query_arg ] ), $action ) : false;
+		$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false;
 		if ( ! $result && ! ( - 1 === $action && 0 === strpos( $referer, $adminurl ) ) ) {
 			return false;
 		}

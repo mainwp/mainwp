@@ -57,7 +57,7 @@ class MainWP_Notification_Settings {
 	 * @return bool True if saved successfully, false if not.
 	 */
 	public static function emails_general_settings_handle() {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['wp_nonce'] ), 'SettingsEmail' ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsEmail' ) ) {
 			$emails_settings = get_option( 'mainwp_settings_notification_emails' );
 			if ( ! is_array( $emails_settings ) ) {
 				$emails_settings = array();

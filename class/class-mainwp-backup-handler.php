@@ -1055,7 +1055,7 @@ class MainWP_Backup_Handler {
 	 */
 	public static function handle_settings_post() {
 		if ( MainWP_System_Utility::is_admin() ) {
-			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) &&  wp_verify_nonce( $_POST['wp_nonce'], 'Settings' ) ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
 				if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
 					MainWP_Utility::update_option( 'mainwp_backupsOnServer', ( isset( $_POST['mainwp_options_backupOnServer'] ) ? intval( $_POST['mainwp_options_backupOnServer'] ) : 1 ) );
 				}
@@ -1082,7 +1082,7 @@ class MainWP_Backup_Handler {
 							$updated_enableLegacyBackup = true;
 						}
 					}
-					MainWP_Utility::update_option( 'mainwp_primaryBackup', wp_unslash( $_POST['mainwp_primaryBackup'] ) );
+					MainWP_Utility::update_option( 'mainwp_primaryBackup', sanitize_text_field( wp_unslash( $_POST['mainwp_primaryBackup'] ) ) );
 				}
 
 				if ( ! isset( $_POST['mainwp_primaryBackup'] ) || empty( $_POST['mainwp_primaryBackup'] ) ) {

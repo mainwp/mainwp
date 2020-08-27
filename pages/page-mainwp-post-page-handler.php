@@ -222,8 +222,9 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';
-		if ( isset( $_GET['id'] ) ) {
-			$edit_id = get_post_meta( intval( $_GET['id'] ), '_mainwp_edit_post_id', true );
+		$p_id           = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
+		if ( $p_id ) {
+			$edit_id = get_post_meta( $p_id, '_mainwp_edit_post_id', true );
 			if ( $edit_id ) {
 				$succes_message = __( 'Post has been updated successfully', 'mainwp' );
 			} else {
@@ -241,23 +242,23 @@ class MainWP_Post_Page_Handler {
 				 *
 				 * Fires right before posting the 'bulkpost' to child sites.
 				 *
-				 * @param int $_GET['id'] Page ID.
+				 * @param int $p_id Page ID.
 				 *
 				 * @since Unknown
 				 */
-				do_action( 'mainwp_bulkpost_before_post', $_GET['id'] );
+				do_action( 'mainwp_bulkpost_before_post', $p_id );
 
 				$skip_post = false;
-				if ( isset( $_GET['id'] ) ) {
-					if ( 'yes' === get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
+				if ( $p_id ) {
+					if ( 'yes' === get_post_meta( $p_id, '_mainwp_skip_posting', true ) ) {
 						$skip_post = true;
-						wp_delete_post( intval( $_GET['id'] ), true );
+						wp_delete_post( $p_id, true );
 					}
 				}
 
 				if ( ! $skip_post ) {
-					if ( isset( $_GET['id'] ) ) {
-						$id    = intval( $_GET['id'] );
+					if ( $p_id ) {
+						$id    = $p_id;
 						$_post = get_post( $id );
 						if ( $_post ) {
 							$selected_by     = get_post_meta( $id, '_selected_by', true );

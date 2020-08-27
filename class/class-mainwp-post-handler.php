@@ -142,7 +142,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		$role   = isset( $_POST['role'] ) ? esc_html( $_POST['role'] ) : '';
 		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
+		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
 		$search = isset( $_POST['search'] ) ? esc_html( $_POST['search'] ) : '';
 
 		MainWP_User::render_table( false, $role, $groups, $sites, $search );
@@ -167,7 +167,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( $_POST['dtsstop'] ) : '';
 		$status    = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
 		$postId    = isset( $_POST['postId'] ) ? esc_html( $_POST['postId'] ) : '';
 		$userId    = isset( $_POST['userId'] ) ? esc_html( $_POST['userId'] ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? esc_html( $_POST['search_on'] ) : '';
@@ -193,7 +193,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( $_POST['dtsstop'] ) : '';
 		$status    = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? esc_html( $_POST['search_on'] ) : '';
 
 		MainWP_Cache::init_session();

@@ -768,7 +768,7 @@ class MainWP_Themes {
 				$theme['version']    = esc_html( $theme['version'] );
 				$theme['title']      = esc_html( $theme['title'] );
 				$theme['slug']       = esc_html( $theme['slug'] );
-				$theme['websiteurl'] = esc_html( $theme['websiteurl'] );
+				$theme['websiteurl'] = esc_url_raw( $theme['websiteurl'] );
 
 				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
 				$themes[ $theme['name'] . '_' . $theme['version'] ]            = $theme['name'];

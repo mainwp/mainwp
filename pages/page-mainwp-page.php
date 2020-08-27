@@ -1219,7 +1219,7 @@ class MainWP_Page {
 			 *
 			 * @since Unknown
 			 */
-			do_action( 'mainwp_bulkpage_before_post', $_GET['id'] );
+			do_action( 'mainwp_bulkpage_before_post', intval( $_GET['id'] ) );
 
 			$skip_post = false;
 			if ( isset( $_GET['id'] ) ) {

@@ -245,7 +245,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** MainWP Extension Bulck Activation. */
 	public function bulk_activate() {
 		$this->check_security( 'mainwp_extension_bulk_activate' );
-		$plugins = isset( $_POST['plugins'] ) ? array_map( 'sanitize_text_field', (array) $_POST['plugins'] ) : false;
+		$plugins = isset( $_POST['plugins'] ) ? $_POST['plugins'] : false; // do not sanitize slugs.
 		if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
 			if ( current_user_can( 'activate_plugins' ) ) {
 				activate_plugins( $plugins );

@@ -218,7 +218,7 @@ class MainWP_Meta_Boxes {
 				do_action( 'mainwp_bulkpost_categories_handle', $post_id, sanitize_text_field( wp_unslash( $_POST['post_category'] ) ) );
 			}
 
-			$post_existing = ( isset( $_POST['post_only_existing'] ) && wp_unslash( $_POST['post_only_existing'] ) ) ? 1 : 0;
+			$post_existing = ! empty( $_POST['post_only_existing'] ) ? 1 : 0;
 			update_post_meta( $post_id, '_post_to_only_existing_categories', $post_existing );
 
 			return;

@@ -1349,7 +1349,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : ''; ?>">
+										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1637,7 +1637,7 @@ class MainWP_User {
 			$user_to_add = array(
 				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 				'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
-				'user_url'   => isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '',
+				'user_url'   => isset( $_POST['url'] ) ? esc_url_raw( $_POST['url'] ) : '',
 				'user_email' => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
 				'first_name' => isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '',
 				'last_name'  => isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '',
@@ -1950,7 +1950,7 @@ class MainWP_User {
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 			'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
-			'user_url'   => isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '',
+			'user_url'   => isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '',
 			'user_email' => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
 			'first_name' => isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '',
 			'last_name'  => isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '',

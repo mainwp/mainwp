@@ -145,14 +145,14 @@ class MainWP_Install_Bulk {
 				$api = themes_api(
 					'theme_information',
 					array(
-						'slug'   => isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '',
+						'slug'   => isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '', // do not sanitize slug.
 						'fields' => array( 'sections' => false ),
 					)
 				); // Save on a bit of bandwidth.
 			}
 			$url = $api->download_link;
 		} else {
-			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
+			$url = wp_unslash( $_POST['url'] ); // do not sanitize slug.
 
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpUrl = $mwpDir[1];
@@ -370,7 +370,7 @@ class MainWP_Install_Bulk {
 		}
 
 		$output['urls'] = array();
-		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? array_map( 'sanitize_text_field', (array) $_POST['files'] ) : array();
+		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? $_POST['files'] : array(); // do not sanitize slugs.
 		foreach ( $files as $file ) {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
@@ -413,7 +413,7 @@ class MainWP_Install_Bulk {
 		/** This filter is documented in pages/page-mainwp-install-bulk.php */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$urls             = isset( $_POST['urls'] ) ? wp_unslash( $_POST['urls'] ) : ''; // do not sanitize text this.
+		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( $_POST['urls'] ) : '';
 		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 

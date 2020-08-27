@@ -205,7 +205,7 @@ class MainWP_Plugins_Handler {
 			$trustedPlugins = array();
 		}
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? array_map( 'sanitize_text_field', (array) $_POST['slugs'] ) : '';
+		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : ''; // do not sanitize slugs.
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}

@@ -70,7 +70,7 @@ class MainWP_Notification_Settings {
 			}
 
 			$type                       = isset( $_POST['mainwp_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_setting_emails_type'] ) ) : '';
-			$update_settings            = isset( $_POST['mainwp_settingEmails'][ $type ] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_settingEmails'][ $type ] ) ) : '';
+			$update_settings            = isset( $_POST['mainwp_settingEmails'][ $type ] ) ? array_map( 'wp_unslash', (array) $_POST['mainwp_settingEmails'][ $type ] ) : '';
 			$update_settings['disable'] = ( isset( $_POST['mainwp_settingEmails'][ $type ] ) && isset( $_POST['mainwp_settingEmails'][ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
 			$emails_settings[ $type ]   = $update_settings;
 

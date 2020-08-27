@@ -275,7 +275,7 @@ class MainWP_Install_Bulk {
 		 */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$post_data['url'] = isset( $_POST['url'] ) ? wp_json_encode( $_POST['url'] ) : '';
+		$post_data['url'] = isset( $_POST['url'] ) ? wp_json_encode( wp_unslash( $_POST['url'] ) ) : '';
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 		$output           = new \stdClass();
 		$output->ok       = array();

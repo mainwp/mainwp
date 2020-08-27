@@ -39,7 +39,7 @@ class MainWP_Manage_Sites_Handler {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
+				$verify_cert    = empty( $_POST['verify_certificate'] ) ? null : intval( $_POST['verify_certificate'] );
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : sanitize_text_field( wp_unslash( $_POST['force_use_ipv4'] ) ) );
 				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );

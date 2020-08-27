@@ -33,10 +33,11 @@ class MainWP_Security_Issues {
 	public static function render( $website = null ) {
 
 		if ( empty( $website ) ) {
-			if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
+			$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+			if ( ! $id ) {
 				return;
 			}
-			$website = MainWP_DB::instance()->get_website_by_id( intval( $_REQUEST['id'] ) );
+			$website = MainWP_DB::instance()->get_website_by_id( $id );
 		}
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -252,10 +253,11 @@ class MainWP_Security_Issues {
 	 * Fetch stored known Child Site Security Issues from DB that were found during Sync.
 	 */
 	public static function fetch_security_issues() {
-		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		if ( ! $id ) {
 			return '';
 		}
-		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';
@@ -288,10 +290,11 @@ class MainWP_Security_Issues {
 	 * Fix the selected security issue.
 	 */
 	public static function fix_security_issue() {
-		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		if ( ! $id ) {
 			return '';
 		}
-		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';
@@ -344,10 +347,11 @@ class MainWP_Security_Issues {
 	 * Un-Fix the selected security issue.
 	 */
 	public static function unfix_security_issue() {
-		if ( ! isset( $_REQUEST['id'] ) || ! MainWP_Utility::ctype_digit( $_REQUEST['id'] ) ) {
+		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
+		if ( ! $id ) {
 			return '';
 		}
-		$website = MainWP_DB::instance()->get_website_by_id( $_REQUEST['id'] );
+		$website = MainWP_DB::instance()->get_website_by_id( $id );
 
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return '';

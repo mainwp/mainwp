@@ -77,7 +77,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Ajax add extension menu. */
 	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
-		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
 		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
@@ -245,7 +245,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** MainWP Extension Bulck Activation. */
 	public function bulk_activate() {
 		$this->check_security( 'mainwp_extension_bulk_activate' );
-		$plugins = isset( $_POST['plugins'] ) ? $_POST['plugins'] : false;
+		$plugins = isset( $_POST['plugins'] ) ? array_map( 'sanitize_text_field', (array) $_POST['plugins'] ) : false;
 		if ( is_array( $plugins ) && 0 < count( $plugins ) ) {
 			if ( current_user_can( 'activate_plugins' ) ) {
 				activate_plugins( $plugins );
@@ -271,7 +271,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
 		if ( isset( $_POST['slug'] ) ) {
-			do_action( 'mainwp_removed_extension_menu', wp_unslash( $_POST['slug'] ) );
+			do_action( 'mainwp_removed_extension_menu', sanitize_text_field( wp_unslash( $_POST['slug'] ) ) );
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 		die( - 1 );

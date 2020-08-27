@@ -258,7 +258,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 
 			global $wpdb;
 			$result       = array();
-			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, wp_unslash( $_POST['email'] ) ) );
+			$get_allsites = $wpdb->get_results( $wpdb->prepare( "SELECT `site_url` FROM `{$wpdb->prefix}mainwp_client_report_site_token` WHERE token_id= %d AND token_value=%s ORDER BY `id` DESC", 12, sanitize_email( $_POST['email'] ) ) );
 
 			if ( $get_allsites ) {
 				foreach ( $get_allsites as $site ) {

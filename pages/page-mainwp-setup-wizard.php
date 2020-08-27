@@ -1191,7 +1191,7 @@ class MainWP_Setup_Wizard {
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
 		$username   = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
 		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
-		$api        = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
+		$api        = isset( $_POST['slug'] ) ? dirname( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
 		$result     = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
 		wp_send_json( $result );
 	}

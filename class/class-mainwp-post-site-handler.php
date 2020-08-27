@@ -183,7 +183,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$sslVersion        = 0;
 
 		if ( isset( $_POST['url'] ) ) {
-			$url = wp_unslash( $_POST['url'] );
+			$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
 
 			$temp_url = MainWP_Utility::remove_http_prefix( $url, true );
 

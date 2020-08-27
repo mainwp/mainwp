@@ -437,8 +437,9 @@ class MainWP_Manage_Groups {
 	 * Delete the selected group.
 	 */
 	public static function delete_group() {
-		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		if ( $groupid ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
 				// Remove from DB.
 				$nr = MainWP_DB_Common::instance()->remove_group( $group->id );
@@ -496,7 +497,7 @@ class MainWP_Manage_Groups {
 	public static function add_group() {
 		global $current_user;
 		if ( isset( $_POST['newName'] ) ) {
-			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( wp_unslash( $_POST['newName'] ) ) );
+			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, self::check_group_name( sanitize_text_field( wp_unslash( $_POST['newName'] ) ) ) );
 
 			/**
 			 * New Group Added
@@ -521,8 +522,9 @@ class MainWP_Manage_Groups {
 	 * @return mixed $websiteIds|ERROR Child Site ID or Error is returned.
 	 */
 	public static function get_sites() {
-		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		if ( $groupid ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
 				$websites   = MainWP_DB::instance()->get_websites_by_group_id( $group->id );
 				$websiteIds = array();
@@ -544,8 +546,9 @@ class MainWP_Manage_Groups {
 	 * Update groups Sites.
 	 */
 	public static function update_group() {
-		if ( isset( $_POST['groupId'] ) && MainWP_Utility::ctype_digit( $_POST['groupId'] ) ) {
-			$group = MainWP_DB_Common::instance()->get_group_by_id( $_POST['groupId'] );
+		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+		if ( $groupid ) {
+			$group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
 			if ( ! empty( $group ) ) {
 				MainWP_DB_Common::instance()->clear_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {

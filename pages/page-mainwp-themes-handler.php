@@ -202,7 +202,7 @@ class MainWP_Themes_Handler {
 		if ( ! is_array( $trustedThemes ) ) {
 			$trustedThemes = array();
 		}
-		$action = isset( $_POST['do'] ) ? $_POST['do'] : '';
+		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
 		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : false;
 		if ( ! is_array( $slugs ) ) {
 			return;
@@ -230,8 +230,8 @@ class MainWP_Themes_Handler {
 
 	/** This Method Saves a Trusted theme note. */
 	public static function save_trusted_theme_note() {
-		$slug               = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
-		$note               = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
+		$slug               = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
+		$note               = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 		$esc_note           = MainWP_Utility::esc_content( $note );
 		$userExtension      = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemesNotes = json_decode( $userExtension->trusted_themes_notes, true );

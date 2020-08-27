@@ -1131,8 +1131,8 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? $_POST['mainwp_managesites_edit_settingEmails'] : '';
-			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? $_POST['mainwp_managesites_setting_emails_type'] : '';
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? array_map( 'sanitize_text_field', (array) $_POST['mainwp_managesites_edit_settingEmails'] ) : '';
+			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';
 			if ( isset( $notification_emails[ $type ] ) ) {
 				$update_settings               = $edit_settingEmails[ $type ];
 				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
@@ -1184,7 +1184,7 @@ class MainWP_Manage_Sites {
 				$groupnames = array();
 				$tmpArr     = array();
 				if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
-					$groupids = explode( ',', wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) );
+					$groupids = explode( ',', sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) ) );
 				}
 
 				// to fix update staging site.

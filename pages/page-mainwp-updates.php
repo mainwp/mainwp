@@ -579,7 +579,7 @@ class MainWP_Updates {
 				self::$continue_update = sanitize_text_field( wp_unslash( $_GET['continue_update'] ) );
 				if ( 'plugins_upgrade_all' === self::$continue_update || 'themes_upgrade_all' === self::$continue_update || 'translations_upgrade_all' === self::$continue_update ) {
 					if ( isset( $_GET['slug'] ) && '' !== $_GET['slug'] ) {
-						self::$continue_update_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
+						self::$continue_update_slug = wp_unslash( $_GET['slug'] ); // do not sanitize slug.
 					}
 				}
 			}

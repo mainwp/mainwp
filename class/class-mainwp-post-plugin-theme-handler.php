@@ -116,8 +116,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 		$keyword = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
 		$status  = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
-		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : array();
-		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : array();
+		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : array();
+		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : array();
 
 		MainWP_Cache::init_session();
 		$result = MainWP_Themes::render_table( $keyword, $status, $groups, $sites );
@@ -195,8 +195,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 		$keyword = isset( $_POST['keyword'] ) ? esc_html( $_POST['keyword'] ) : '';
 		$status  = isset( $_POST['status'] ) ? esc_html( $_POST['status'] ) : '';
-		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? $_POST['groups'] : '';
-		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? $_POST['sites'] : '';
+		$groups  = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
+		$sites   = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
 
 		MainWP_Cache::init_session();
 		$result = MainWP_Plugins::render_table( $keyword, $status, $groups, $sites );
@@ -489,14 +489,14 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			}
 			if ( $chunk_support ) {
 				if ( isset( $_POST['chunk_slugs'] ) ) {
-					$slugs = wp_unslash( $_POST['chunk_slugs'] );  // chunk slugs send so use this.
+					$slugs = wp_unslash( $_POST['chunk_slugs'] ) ;  // chunk slugs send so use this, do not sanitize text this.
 				} else {
-					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
+					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
 				}
 			} elseif ( isset( $_POST['slug'] ) ) {
-				$slugs = wp_unslash( $_POST['slug'] );
+				$slugs = wp_unslash( $_POST['slug'] ); // do not sanitize text this.
 			} else {
-				$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, wp_unslash( $_POST['type'] ) );
+				$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
 			}
 		}
 
@@ -521,7 +521,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 		try {
-			$info = array( 'result' => MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, wp_unslash( $_POST['type'] ), $slugs ) );
+			$info = array( 'result' => MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ), $slugs ) );
 
 			if ( $chunk_support && ( 0 < count( $chunk_slugs ) ) ) {
 				$info['chunk_slugs'] = implode( ',', $chunk_slugs );
@@ -650,7 +650,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // do not sanitize slug.
 		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : '';
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
 	}
@@ -688,8 +688,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_POST['slug'] ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
 		}
-		$type = isset( $_POST['type'] ) ? $_POST['type'] : '';
-		$slug = isset( $_POST['slug'] ) ? $_POST['slug'] : '';
+		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // do not sanitize slug.
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugins_themes( $type, $slug ) ) ) );
 	}
 

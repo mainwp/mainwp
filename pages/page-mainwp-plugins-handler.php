@@ -204,8 +204,8 @@ class MainWP_Plugins_Handler {
 		if ( ! is_array( $trustedPlugins ) ) {
 			$trustedPlugins = array();
 		}
-		$action = isset( $_POST['do'] ) ? $_POST['do'] : '';
-		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : '';
+		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
+		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? array_map( 'sanitize_text_field', (array) $_POST['slugs'] ) : '';
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}
@@ -273,8 +273,8 @@ class MainWP_Plugins_Handler {
 	 * Save the trusted plugin note.
 	 */
 	public static function save_trusted_plugin_note() {
-		$slug                = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';
-		$note                = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
+		$slug                = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
+		$note                = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedPluginsNotes = json_decode( $userExtension->trusted_plugins_notes, true );

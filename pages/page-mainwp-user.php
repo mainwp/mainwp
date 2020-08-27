@@ -1317,7 +1317,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_attr( wp_unslash( $_POST['user_login'] ) ) : ''; ?>">
+										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1325,7 +1325,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>">
+										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1333,7 +1333,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? esc_attr( wp_unslash( $_POST['first_name'] ) ) : ''; ?>">
+										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1341,7 +1341,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Last Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? esc_attr( wp_unslash( $_POST['last_name'] ) ) : ''; ?>">
+										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1349,7 +1349,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Website', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? esc_attr( wp_unslash( $_POST['url'] ) ) : ''; ?>">
+										<input type="text" id="url" name="url" value="<?php echo ( isset( $_POST['url'] ) ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1601,8 +1601,8 @@ class MainWP_User {
 		$errorFields = array();
 
 		if ( isset( $_POST['select_by'] ) ) {
-			$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+			$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
 
 			if ( ( 'group' === $_POST['select_by'] && 0 == count( $selected_groups ) ) || ( 'site' === $_POST['select_by'] && 0 == count( $selected_sites ) ) ) {
 				$errors[] = __( 'Please select at least one website or group.', 'mainwp' );
@@ -1697,7 +1697,7 @@ class MainWP_User {
 			if ( 0 < count( $dbwebsites ) ) {
 				$post_data      = array(
 					'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-					'send_password' => ( isset( $_POST['send_password'] ) ? sanitize_text_field( wp_unslash( $_POST['send_password'] ) ) : '' ),
+					'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
 				);
 				$output         = new \stdClass();
 				$output->ok     = array();
@@ -1944,8 +1944,8 @@ class MainWP_User {
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
-		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+		$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
@@ -2024,7 +2024,7 @@ class MainWP_User {
 		if ( 0 < count( $dbwebsites ) ) {
 			$post_data      = array(
 				'new_user'      => base64_encode( serialize( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-				'send_password' => ( isset( $_POST['send_password'] ) ? $_POST['send_password'] : '' ),
+				'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
 			);
 			$output         = new \stdClass();
 			$output->ok     = array();

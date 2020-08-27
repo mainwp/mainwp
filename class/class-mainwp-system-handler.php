@@ -351,7 +351,7 @@ class MainWP_System_Handler {
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
 			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
-				$plugin_slug = wp_unslash( $_POST['plugin'] );
+				$plugin_slug = sanitize_text_field( wp_unslash( $_POST['plugin'] ) );
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
 					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 						return $transient;

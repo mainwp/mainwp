@@ -158,7 +158,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) );
+			$siteIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) ) );
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -170,7 +170,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['groups'] ) ) );
+			$groupIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['groups'] ) ) ) );
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
 				$groupId = $groupId;
@@ -188,7 +188,7 @@ class MainWP_Post_Page_Handler {
 		$selectedCategories2 = array();
 
 		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
-			$selectedCategories = explode( ',', urldecode( wp_unslash( $_REQUEST['selected_categories'] ) ) );
+			$selectedCategories = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['selected_categories'] ) ) ) );
 		}
 
 		if ( ! is_array( $selectedCategories ) ) {
@@ -555,7 +555,7 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function get_post() {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
-		$postType  = isset( $_POST['postType'] ) ? $_POST['postType'] : '';
+		$postType  = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
@@ -860,13 +860,13 @@ class MainWP_Post_Page_Handler {
 	public static function add_sticky_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['sticky'] ) ) {
-			update_post_meta( $post_id, '_sticky', base64_encode( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			update_post_meta( $post_id, '_sticky', base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
-			return base64_encode( wp_unslash( $_POST['sticky'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			return base64_encode( sanitize_text_field( wp_unslash( $_POST['sticky'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
 		if ( 'bulkpost' === $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
-			update_post_meta( $post_id, '_edit_post_status', wp_unslash( $_POST['mainwp_edit_post_status'] ) );
+			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
 		}
 
 		return $post_id;

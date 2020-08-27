@@ -522,10 +522,10 @@ class MainWP_Manage_Sites_List_Table {
 
 			if ( isset( $_REQUEST['order'] ) ) {
 				$columns = isset( $_REQUEST['columns'] ) ? $_REQUEST['columns'] : array();
-				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? $_REQUEST['order'][0]['column'] : '';
+				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
 				if ( isset( $columns[ $ord_col ] ) ) {
-					$req_orderby = isset( $columns[ $ord_col ]['data'] ) ? $columns[ $ord_col ]['data'] : '';
-					$req_order   = isset( $_REQUEST['order'][0]['dir'] ) ? $_REQUEST['order'][0]['dir'] : '';
+					$req_orderby = isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash(  $columns[ $ord_col ]['data'] ) ) : '';
+					$req_order   = isset( $_REQUEST['order'][0]['dir'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['dir'] ) ) : '';
 				}
 			}
 			if ( isset( $req_orderby ) ) {
@@ -596,7 +596,7 @@ class MainWP_Manage_Sites_List_Table {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_status', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', wp_unslash( $_REQUEST['status'] ) );
+			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) );
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_is_not', $is_not );
 			$site_status = $_REQUEST['status'];
 		}
@@ -610,8 +610,8 @@ class MainWP_Manage_Sites_List_Table {
 				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', wp_unslash( $_REQUEST['g'] ) );
-			$group_ids = wp_unslash( $_REQUEST['g'] ); // may be multi groups.
+			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
+			$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
 		}
 
 		$where = null;
@@ -1091,7 +1091,7 @@ class MainWP_Manage_Sites_List_Table {
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();
 
-		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? $_SERVER['HTTP_HOST'] : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '' ) );
+		$current_url = set_url_scheme( 'http://' . ( isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) );
 		$current_url = remove_query_arg( 'paged', $current_url );
 
 		if ( ! empty( $columns['cb'] ) ) {

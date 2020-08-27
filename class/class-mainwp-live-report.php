@@ -555,7 +555,7 @@ class MainWP_Live_Reports {
 					self::delete_attach_files( $current_attach_files, $creport_dir );
 				}
 
-				$output = self::handle_upload_files( wp_unslash( $_FILES['mainwp_creport_attach_files'] ), $creport_dir );
+				$output = self::handle_upload_files( $_FILES['mainwp_creport_attach_files'], $creport_dir );
 				if ( isset( $output['error'] ) ) {
 					$return['error'] = $output['error'];
 				}
@@ -572,8 +572,8 @@ class MainWP_Live_Reports {
 			$selected_groups = array();
 
 			if ( isset( $_POST['select_by'] ) ) {
-				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
-				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
 			}
 
 			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.

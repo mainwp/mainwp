@@ -1134,17 +1134,18 @@ class MainWP_Server_Information {
 		self::render_header( 'Action logs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
-			if ( MainWP_Logger::DISABLED != $_REQUEST['actionlogs_status'] ) {
-				MainWP_Logger::instance()->set_log_priority( wp_unslash( $_REQUEST['actionlogs_status'] ) );
+			$act_log = isset( $_REQUEST['actionlogs_status'] ) ? intval( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED;
+			if ( MainWP_Logger::DISABLED != $act_log ) {
+				MainWP_Logger::instance()->set_log_priority( $act_log );
 			}
 
-			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( wp_unslash( $_REQUEST['actionlogs_status'] ) ), MainWP_Logger::LOG );
+			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), MainWP_Logger::LOG );
 
-			if ( MainWP_Logger::DISABLED == $_REQUEST['actionlogs_status'] ) {
-				MainWP_Logger::instance()->set_log_priority( wp_unslash( $_REQUEST['actionlogs_status'] ) );
+			if ( MainWP_Logger::DISABLED == $act_log ) {
+				MainWP_Logger::instance()->set_log_priority( $act_log );
 			}
 
-			MainWP_Utility::update_option( 'mainwp_actionlogs', wp_unslash( $_REQUEST['actionlogs_status'] ) );
+			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
 		}
 
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {

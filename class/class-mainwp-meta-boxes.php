@@ -85,10 +85,10 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
-			$selected_wp = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? $_POST['selected_sites'] : array();
+			$selected_wp = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
 			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? $_POST['selected_groups'] : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
 			update_post_meta( $post_id, '_selected_groups', $selected_groups );
 			update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );
 
@@ -214,8 +214,8 @@ class MainWP_Meta_Boxes {
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type ) {
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
-				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', wp_unslash( $_POST['post_category'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-				do_action( 'mainwp_bulkpost_categories_handle', $post_id, wp_unslash( $_POST['post_category'] ) );
+				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', sanitize_text_field( wp_unslash( $_POST['post_category'] ) ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				do_action( 'mainwp_bulkpost_categories_handle', $post_id, sanitize_text_field( wp_unslash( $_POST['post_category'] ) ) );
 			}
 
 			$post_existing = ( isset( $_POST['post_only_existing'] ) && wp_unslash( $_POST['post_only_existing'] ) ) ? 1 : 0;
@@ -247,7 +247,7 @@ class MainWP_Meta_Boxes {
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
 		if ( isset( $_POST['add_tags'] ) ) {
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) );
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, sanitize_text_field( wp_unslash( $_POST['add_tags'] ) ) );
 		}
 	}
 
@@ -333,9 +333,9 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
-			update_post_meta( $post_id, $saveto, base64_encode( wp_unslash( $_POST[ $prefix ] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-
-			return base64_encode( wp_unslash( $_POST[ $prefix ] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$value = isset( $_POST[ $prefix ] ) ? base64_encode( sanitize_text_field( wp_unslash( $_POST[ $prefix ] ) ) ) : '';
+			update_post_meta( $post_id, $saveto, $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			return $value;
 		}
 
 		return $post_id;

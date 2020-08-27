@@ -62,7 +62,7 @@ abstract class MainWP_Post_Base_Handler {
 				die( wp_json_encode( array( 'error' => __( 'Double request!', 'mainwp' ) ) ) );
 			}
 
-			$ajaxPosts[ $action ] = wp_unslash( $_POST['dts'] );
+			$ajaxPosts[ $action ] = sanitize_text_field( wp_unslash( $_POST['dts'] ) );
 			MainWP_Utility::update_option( 'mainwp_ajaxposts', $ajaxPosts );
 		}
 	}

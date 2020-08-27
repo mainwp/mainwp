@@ -312,7 +312,7 @@ class MainWP_Page {
 	public static function add_status_handle( $post_id ) {
 		$_post = get_post( $post_id );
 		if ( 'bulkpage' == $_post->post_type && isset( $_POST['mainwp_edit_post_status'] ) ) {
-			update_post_meta( $post_id, '_edit_post_status', wp_unslash( $_POST['mainwp_edit_post_status'] ) );
+			update_post_meta( $post_id, '_edit_post_status', sanitize_text_field( wp_unslash( $_POST['mainwp_edit_post_status'] ) ) );
 		}
 		return $post_id;
 	}

@@ -70,7 +70,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @throws \Exception Error message.
 	 */
 	public static function reconnect_site() {
-		$siteId = isset( $_POST['siteid'] ) ? $_POST['siteid'] : false;
+		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false;
 
 		try {
 			if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -125,8 +125,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Apply plugin settings.
 	 */
 	public static function apply_plugin_settings() {
-		$site_id      = isset( $_POST['siteId'] ) ? $_POST['siteId'] : false;
-		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? $_POST['ext_dir_slug'] : '';
+		$site_id      = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : false;
+		$ext_dir_slug = isset( $_POST['ext_dir_slug'] ) ? sanitize_text_field( wp_unslash( $_POST['ext_dir_slug'] ) ) : '';
 		if ( empty( $site_id ) ) {
 			die( wp_json_encode( array( 'error' => __( 'Invalid site ID. Please try again.', 'mainwp' ) ) ) );
 		}
@@ -153,7 +153,7 @@ class MainWP_Manage_Sites_Handler {
 		if ( isset( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$note     = isset( $_POST['note'] ) ? stripslashes( $_POST['note'] ) : '';
+				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 

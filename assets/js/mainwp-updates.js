@@ -997,7 +997,7 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                 {
                     return function ( response )
                     {
-                        var slugParts = pSlug.split( ',' );
+                        var slugParts = pSlug.split( ',' );                        
                         var done = false;
                         for ( var i = 0; i < slugParts.length; i++ )
                         {
@@ -1016,7 +1016,6 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                             } else
                             {
                                 var res = response.result;
-
                                 if ( res[slugParts[i]] )
                                 {
                                     if ( !done && pBulkMode )

@@ -103,7 +103,7 @@ class MainWP_Updates_Overview {
 	 */
 	public static function sync_site() {
 		$website = null;
-		$wp_id = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false; 
+		$wp_id   = isset( $_POST['wp_id'] ) ? intval( $_POST['wp_id'] ) : false;
 		if ( $wp_id ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $wp_id );
 		}

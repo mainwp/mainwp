@@ -545,13 +545,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 		global $current_user;
 		$user_id = $current_user->ID;
-		$slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$slug    = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		if ( $user_id && ! empty( $slug ) ) {
 			$activate_notices = get_user_option( 'mainwp_hide_activate_notices' );
 			if ( ! is_array( $activate_notices ) ) {
 				$activate_notices = array();
 			}
-			
+
 			$activate_notices[ $slug ] = time();
 			update_user_option( $user_id, 'mainwp_hide_activate_notices', $activate_notices );
 		}

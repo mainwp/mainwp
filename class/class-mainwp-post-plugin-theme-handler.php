@@ -489,7 +489,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 			}
 			if ( $chunk_support ) {
 				if ( isset( $_POST['chunk_slugs'] ) ) {
-					$slugs = wp_unslash( $_POST['chunk_slugs'] ) ;  // chunk slugs send so use this, do not sanitize text this.
+					$slugs = wp_unslash( $_POST['chunk_slugs'] );  // chunk slugs send so use this, do not sanitize text this.
 				} else {
 					$slugs = MainWP_Updates_Handler::get_plugin_theme_slugs( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
 				}

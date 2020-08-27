@@ -140,10 +140,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_users_search' );
 		MainWP_Cache::init_session();
 
-		$role   = isset( $_POST['role'] ) ? esc_html( wp_unslash( $_POST['role'] ) ) : '';
+		$role   = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
 		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
 		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
-		$search = isset( $_POST['search'] ) ? esc_html( wp_unslash( $_POST['search'] ) ) : '';
+		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
 		MainWP_User::render_table( false, $role, $groups, $sites, $search );
 		die();
@@ -162,15 +162,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			MainWP_Utility::update_option( 'mainwp_maximumPosts', isset( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 
-		$keyword   = isset( $_POST['keyword'] ) ? esc_html( wp_unslash( $_POST['keyword'] ) ) : '';
-		$dtsstart  = isset( $_POST['dtsstart'] ) ? esc_html( wp_unslash( $_POST['dtsstart'] ) ) : '';
-		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( wp_unslash( $_POST['dtsstop'] ) ) : '';
-		$status    = isset( $_POST['status'] ) ? esc_html( wp_unslash( $_POST['status'] ) ) : '';
+		$keyword   = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) ) : '';
+		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) ) : '';
+		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
-		$postId    = isset( $_POST['postId'] ) ? esc_html( wp_unslash( $_POST['postId'] ) ) : '';
-		$userId    = isset( $_POST['userId'] ) ? esc_html( wp_unslash( $_POST['userId'] ) ) : '';
-		$search_on = isset( $_POST['search_on'] ) ? esc_html( wp_unslash( $_POST['search_on'] ) ) : '';
+		$postId    = isset( $_POST['postId'] ) ? sanitize_text_field( wp_unslash( $_POST['postId'] ) ) : '';
+		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : '';
+		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 
 		MainWP_Cache::init_session();
 		MainWP_Post::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
@@ -188,13 +188,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			MainWP_Utility::update_option( 'mainwp_maximumPages', intval( $_POST['maximum'] ) ? intval( $_POST['maximum'] ) : 50 );
 		}
 
-		$keyword   = isset( $_POST['keyword'] ) ? esc_html( wp_unslash( $_POST['keyword'] ) ) : '';
-		$dtsstart  = isset( $_POST['dtsstart'] ) ? esc_html( wp_unslash( $_POST['dtsstart'] ) ) : '';
-		$dtsstop   = isset( $_POST['dtsstop'] ) ? esc_html( wp_unslash( $_POST['dtsstop'] ) ) : '';
-		$status    = isset( $_POST['status'] ) ? esc_html( wp_unslash( $_POST['status'] ) ) : '';
+		$keyword   = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) ) : '';
+		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) ) : '';
+		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
-		$search_on = isset( $_POST['search_on'] ) ? esc_html( wp_unslash( $_POST['search_on'] ) ) : '';
+		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 
 		MainWP_Cache::init_session();
 		MainWP_Page::render_table( false, $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on );

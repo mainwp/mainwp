@@ -1038,7 +1038,7 @@ class MainWP_Manage_Sites {
 		}
 
 		if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-			if ( isset( $_GET['backupid'] ) && $_GET['backupid'] ) {
+			if ( ! empty( $_GET['backupid'] ) ) {
 				$websiteid = ! empty( $_GET['backupid'] ) ? intval( $_GET['backupid'] ) : false;
 
 				$backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -1177,7 +1177,7 @@ class MainWP_Manage_Sites {
 	private static function update_site_handle( $website ) {
 		global $current_user;
 		$updated = false;
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . $_GET['id'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
 				// update site.
 				$groupids   = array();
@@ -1292,7 +1292,7 @@ class MainWP_Manage_Sites {
 	 * @param object $website The website object.
 	 */
 	public static function on_edit_site( $website ) {
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . $_GET['id'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['wp_nonce'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) ) {
 			if ( isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ) {
 				?>
 				<script type="text/javascript">

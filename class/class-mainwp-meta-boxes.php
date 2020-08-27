@@ -333,8 +333,8 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
-			$value = isset( $_POST[ $prefix ] ) ? base64_encode( sanitize_text_field( wp_unslash( $_POST[ $prefix ] ) ) ) : '';
-			update_post_meta( $post_id, $saveto, $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$value = isset( $_POST[ $prefix ] ) ? base64_encode( sanitize_text_field( wp_unslash( $_POST[ $prefix ] ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			update_post_meta( $post_id, $saveto, $value );
 			return $value;
 		}
 

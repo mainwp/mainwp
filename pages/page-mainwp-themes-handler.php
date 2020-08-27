@@ -65,7 +65,7 @@ class MainWP_Themes_Handler {
 	 * Activate the selected theme.
 	 */
 	public static function activate_theme() {
-		$theme = isset( $_POST['theme'] ) ? esc_htmL( $_POST['theme'] ) : '';
+		$theme = isset( $_POST['theme'] ) ? esc_html( wp_unslash( $_POST['theme'] ) ) : '';
 		self::action( 'activate', $theme );
 		die( 'SUCCESS' );
 	}
@@ -74,7 +74,7 @@ class MainWP_Themes_Handler {
 	 * Delete the selected theme.
 	 */
 	public static function delete_themes() {
-		$themes = isset( $_POST['themes'] ) ? esc_htmL( $_POST['themes'] ) : '';
+		$themes = isset( $_POST['themes'] ) ? esc_html( wp_unslash( $_POST['themes'] ) ) : '';
 		self::action( 'delete', implode( '||', $themes ) );
 		die( 'SUCCESS' );
 	}

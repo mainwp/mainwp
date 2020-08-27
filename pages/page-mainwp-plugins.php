@@ -1064,7 +1064,7 @@ class MainWP_Plugins {
 						<div class="column">
 							<div id="mainwp-search-plugins-form" class="ui fluid search focus">
 								<div class="ui icon fluid input">
-									<input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( $_GET['s'] ) : ''; ?>">
+									<input id="mainwp-search-plugins-form-field" class="fluid prompt" type="text" placeholder="<?php esc_attr_e( 'Search plugins...', 'mainwp' ); ?>" value="<?php echo isset( $_GET['s'] ) ? esc_html( wp_unslash( $_GET['s'] ) ) : ''; ?>">
 									<i class="search icon"></i>
 								</div>
 								<div class="results"></div>

@@ -1081,7 +1081,7 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		if ( isset( $_GET['emailsettingsid'] ) && $_GET['emailsettingsid'] ) {
+		if ( ! empty( $_GET['emailsettingsid'] ) ) {
 			$websiteid = intval( $_GET['emailsettingsid'] );
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'settings_notification_emails' ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1215,8 +1215,8 @@ class MainWP_Manage_Sites {
 				$healthThreshold       = isset( $_POST['mainwp_managesites_edit_healthThreshold'] ) ? intval( $_POST['mainwp_managesites_edit_healthThreshold'] ) : 80;
 
 				$site_name         = isset( $_POST['mainwp_managesites_edit_sitename'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_sitename'] ) ) : '';
-				$site_admin        = isset( $_POST['mainwp_managesites_edit_siteadmin'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_siteadmin'] ) : '';
-				$verifycertificate = isset( $_POST['mainwp_managesites_edit_verifycertificate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_verifycertificate'] ) ) : '';
+				$site_admin        = isset( $_POST['mainwp_managesites_edit_siteadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteadmin'] ) ) : '';
+				$verifycertificate = isset( $_POST['mainwp_managesites_edit_verifycertificate'] ) ? intval( $_POST['mainwp_managesites_edit_verifycertificate'] ) : '';
 				$uniqueId          = isset( $_POST['mainwp_managesites_edit_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_uniqueId'] ) ) : '';
 				$ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
@@ -1251,9 +1251,9 @@ class MainWP_Manage_Sites {
 				);
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
-					$newValues['is_ignoreCoreUpdates']   = ( isset( $_POST['mainwp_is_ignoreCoreUpdates'] ) && wp_unslash( $_POST['mainwp_is_ignoreCoreUpdates'] ) ) ? 1 : 0;
-					$newValues['is_ignorePluginUpdates'] = ( isset( $_POST['mainwp_is_ignorePluginUpdates'] ) && ( wp_unslash( $_POST['mainwp_is_ignorePluginUpdates'] ) ) ) ? 1 : 0;
-					$newValues['is_ignoreThemeUpdates']  = ( isset( $_POST['mainwp_is_ignoreThemeUpdates'] ) && ( wp_unslash( $_POST['mainwp_is_ignoreThemeUpdates'] ) ) ) ? 1 : 0;
+					$newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;
+					$newValues['is_ignorePluginUpdates'] = ! empty( $_POST['mainwp_is_ignorePluginUpdates'] ) ? 1 : 0;
+					$newValues['is_ignoreThemeUpdates']  = ! empty( $_POST['mainwp_is_ignoreThemeUpdates'] ) ? 1 : 0;
 				}
 
 				MainWP_DB::instance()->update_website_values( $website->id, $newValues );

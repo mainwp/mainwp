@@ -598,7 +598,7 @@ class MainWP_Manage_Sites_List_Table {
 		} else {
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) );
 			MainWP_Utility::update_option( 'mainwp_managesites_filter_is_not', $is_not );
-			$site_status = $_REQUEST['status'];
+			$site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
 		}
 
 		if ( $get_all ) {

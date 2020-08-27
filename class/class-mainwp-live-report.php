@@ -507,7 +507,7 @@ class MainWP_Live_Reports {
 				$report['recurring_schedule'] = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_recurring_schedule'] ) );
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_date'] ) ) {
-				$rec_date                 = trim( $_POST['mainwp_creport_schedule_date'] );
+				$rec_date                 = sanitize_text_field( wp_unslash( $_POST['mainwp_creport_schedule_date'] ) );
 				$report['recurring_date'] = ! empty( $rec_date ) ? strtotime( $rec_date . ' ' . gmdate( 'H:i:s' ) ) : 0;
 			}
 			if ( isset( $_POST['mainwp_creport_schedule_send_email'] ) ) {
@@ -578,7 +578,7 @@ class MainWP_Live_Reports {
 
 			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
 			$report['groups'] = base64_encode( serialize( $selected_groups ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
-			$action           = isset( $_POST['mwp_creport_report_submit_action'] ) ? sanitize_text_field( $_POST['mwp_creport_report_submit_action'] ) : '';
+			$action           = isset( $_POST['mwp_creport_report_submit_action'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_creport_report_submit_action'] ) ) : '';
 
 			if ( 'schedule' === $action ) {
 				$report['scheduled'] = 1;

@@ -369,7 +369,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 					)
 				);
 			} else {
-				if ( $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
+				if ( isset( $array[ $_POST['unique'] ]['dts'] ) && $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
 					die(
 						wp_json_encode(
 							array(

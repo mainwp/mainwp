@@ -549,7 +549,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server request time.
 	 */
 	public static function get_server_request_time() {
-		echo isset( $_SERVER['REQUEST_TIME'] ) ? esc_html( $_SERVER['REQUEST_TIME'] ) : '';
+		echo isset( $_SERVER['REQUEST_TIME'] ) ? esc_html( wp_unslash( $_SERVER['REQUEST_TIME'] ) ) : '';
 	}
 
 
@@ -557,39 +557,35 @@ class MainWP_Server_Information_Handler {
 	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
-		echo esc_html( $_SERVER['HTTP_ACCEPT'] );
+		echo isset( $_SERVER['HTTP_ACCEPT'] ) ? esc_html( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) : '';
 	}
 
 	/**
 	 * Gets server accepted character set.
 	 */
 	public static function get_server_accept_charset() {
-		if ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) {
-			esc_html_e( 'N/A', 'mainwp' );
-		} else {
-			echo esc_html( $_SERVER['HTTP_ACCEPT_CHARSET'] );
-		}
+		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html_e( 'N/A', 'mainwp' ) : esc_html( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) );
 	}
 
 	/**
 	 * Gets HTTP host.
 	 */
 	public static function get_http_host() {
-		echo isset( $_SERVER['HTTP_HOST'] ) ? esc_html( $_SERVER['HTTP_HOST'] ) : '';
+		echo isset( $_SERVER['HTTP_HOST'] ) ? esc_html( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
 	}
 
 	/**
 	 * Gets complete URL.
 	 */
 	public static function get_complete_url() {
-		echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_html( $_SERVER['HTTP_REFERER'] ) : '';
+		echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_html( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
 	}
 
 	/**
 	 * Gets user agent.
 	 */
 	public static function get_user_agent() {
-		echo isset( $_SERVER['HTTP_USER_AGENT'] ) ? esc_html( $_SERVER['HTTP_USER_AGENT'] ) : '';
+		echo isset( $_SERVER['HTTP_USER_AGENT'] ) ? esc_html( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 	}
 
 	/**
@@ -597,7 +593,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
-			esc_html_e( 'ON', 'mainwp' ) . ' - ' . esc_html( $_SERVER['HTTPS'] );
+			esc_html_e( 'ON', 'mainwp' ) . ' - ' . esc_html( wp_unslash( $_SERVER['HTTPS'] ) );
 		} else {
 			esc_html_e( 'OFF', 'mainwp' );
 		}
@@ -668,7 +664,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote port.
 	 */
 	public static function get_remote_port() {
-		echo isset( $_SERVER['REMOTE_PORT'] ) ? esc_html( $_SERVER['REMOTE_PORT'] ) : '';
+		echo isset( $_SERVER['REMOTE_PORT'] ) ? esc_html( wp_unslash( $_SERVER['REMOTE_PORT'] ) ) : '';
 	}
 
 	/**
@@ -684,7 +680,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server port.
 	 */
 	public static function get_server_port() {
-		echo isset( $_SERVER['SERVER_PORT'] ) ? esc_html( $_SERVER['SERVER_PORT'] ) : '';
+		echo isset( $_SERVER['SERVER_PORT'] ) ? esc_html( wp_unslash( $_SERVER['SERVER_PORT'] ) ) : '';
 	}
 
 	/**
@@ -693,7 +689,7 @@ class MainWP_Server_Information_Handler {
 	 * Get current page URI.
 	 */
 	public static function get_current_page_uri() {
-		echo isset( $_SERVER['REQUEST_URI'] ) ? esc_html( $_SERVER['REQUEST_URI'] ) : '';
+		echo isset( $_SERVER['REQUEST_URI'] ) ? esc_html( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 	}
 
 	/**

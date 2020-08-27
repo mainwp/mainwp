@@ -98,7 +98,7 @@ class MainWP_Site_Open {
 			$file = base64_decode( esc_html( wp_unslash( $_GET['f'] ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		}
 
-		$site = isset( $_GET['size'] ) ? esc_html( $_GET['size'] ) : '';
+		$site = isset( $_GET['size'] ) ? esc_html( wp_unslash( $_GET['size'] ) ) : '';
 
 		self::open_site_restore( $website, $file, $site );
 	}

@@ -77,7 +77,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Ajax add extension menu. */
 	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
-		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
+		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // do not sanitize slug.
 		MainWP_Extensions_Handler::add_extension_menu( $slug );
 		die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 	}
@@ -87,8 +87,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api       = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
-		$api_key   = isset( $_POST['key'] ) ? trim( $_POST['key'] ) : '';
-		$api_email = isset( $_POST['email'] ) ? trim( $_POST['email'] ) : '';
+		$api_key   = isset( $_POST['key'] ) ? trim( wp_unslash( $_POST['key'] ) ) : '';
+		$api_email = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
 		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
 		wp_send_json( $result );
 	}
@@ -105,7 +105,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	/** Grab MainWP Extension API Key. */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
-		$username = isset( $_POST['username'] ) ? trim( $_POST['username'] ) : '';
+		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
 		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
 		$api      = dirname( $_POST['slug'] );
 		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
@@ -135,7 +135,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$_SESSION['api_login_history'] = $new_api_login_history;
 		}
 
-		$username = isset( $_POST['username'] ) ? trim( $_POST['username'] ) : '';
+		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
 		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
 		if ( ( '' == $username ) && ( '' == $password ) ) {
 			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );

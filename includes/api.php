@@ -89,7 +89,7 @@ function live_reports_responder_secure_connection() {
  */
 function check_if_valid_client( $email, $siteid ) {
 
-	$email  = isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '';
+	$email  = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
 	$siteid = isset( $_POST['siteid'] ) ? sanitize_text_field( wp_unslash( $_POST['siteid'] ) ) : false;
 
 	$checkPermission = check_live_reporting_access();
@@ -109,7 +109,7 @@ function check_if_valid_client( $email, $siteid ) {
 
 	return $result;
 }
-$sites = isset( $_POST['siteid'] ) ? base64_encode( serialize( array( $_POST['siteid'] ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+$sites = ! empty( $siteid ) ? base64_encode( serialize( array( $siteid ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displaycontent' == $_POST['action'] ) ) {
 	$secureconnection = live_reports_responder_secure_connection();
 	if ( true === $secureconnection ) {

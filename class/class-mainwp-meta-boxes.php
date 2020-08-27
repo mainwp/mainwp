@@ -31,7 +31,7 @@ class MainWP_Meta_Boxes {
 		}
 
 		if ( isset( $_REQUEST['select'] ) ) {
-			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( wp_unslash( $_REQUEST['select'] ) ) );
+			$selected_sites = ( 'all' === $_REQUEST['select'] ? 'all' : array( sanitize_text_field( wp_unslash( $_REQUEST['select'] ) ) ) );
 		}
 
 		$val             = get_post_meta( $post->ID, '_selected_groups', true );

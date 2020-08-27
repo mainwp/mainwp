@@ -1384,7 +1384,7 @@ class MainWP_Themes {
 		$search_status = 'all';
 
 		if ( null == $output ) {
-			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? trim( $_POST['keyword'] ) : null;
+			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
 			$search_status       = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
 			$search_theme_status = isset( $_POST['theme_status'] ) ? $_POST['theme_status'] : 'all';
 

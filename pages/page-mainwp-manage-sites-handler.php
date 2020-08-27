@@ -40,7 +40,7 @@ class MainWP_Manage_Sites_Handler {
 		} else {
 			try {
 				$verify_cert    = ( ! isset( $_POST['verify_certificate'] ) || ( empty( $_POST['verify_certificate'] ) && ( '0' !== $_POST['verify_certificate'] ) ) ? null : wp_unslash( $_POST['verify_certificate'] ) );
-				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : wp_unslash( $_POST['force_use_ipv4'] ) );
+				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : sanitize_text_field( wp_unslash( $_POST['force_use_ipv4'] ) ) );
 				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
 				$admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
@@ -153,7 +153,7 @@ class MainWP_Manage_Sites_Handler {
 		if ( isset( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
+				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // do not sanitize.
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 

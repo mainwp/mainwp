@@ -413,7 +413,7 @@ class MainWP_Install_Bulk {
 		/** This filter is documented in pages/page-mainwp-install-bulk.php */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( $_POST['urls'] ) : '';
+		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( wp_unslash( $_POST['urls'] ) ) : '';
 		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 

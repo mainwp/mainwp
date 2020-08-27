@@ -1637,7 +1637,7 @@ class MainWP_User {
 			$user_to_add = array(
 				'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',
 				'user_login' => isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '',
-				'user_url'   => isset( $_POST['url'] ) ? esc_url_raw( $_POST['url'] ) : '',
+				'user_url'   => isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '',
 				'user_email' => isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '',
 				'first_name' => isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '',
 				'last_name'  => isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '',

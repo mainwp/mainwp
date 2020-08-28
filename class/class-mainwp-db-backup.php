@@ -199,6 +199,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 			return $this->get_backup_tasks( null, $orderBy );
 		}
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		return $this->get_backup_tasks( $current_user->ID, $orderBy );

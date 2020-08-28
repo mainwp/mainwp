@@ -152,7 +152,14 @@ class MainWP_Post {
 	 */
 	public static function on_load_add_edit() {
 		if ( isset( $_GET['page'] ) && 'PostBulkAdd' === $_GET['page'] ) {
+
+			/**
+			 * MainWP default post to edit.
+			 *
+			 * @global string
+			 */
 			global $_mainwp_default_post_to_edit;
+
 			$post_type                    = 'bulkpost';
 			$_mainwp_default_post_to_edit = get_default_post_to_edit( $post_type, true );
 			$post_id                      = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
@@ -244,7 +251,14 @@ class MainWP_Post {
 	 * @return void Render the Post pagenow header tag.
 	 */
 	public static function admin_head() {
+
+		/**
+		 * Current screen.
+         *
+         * @global string
+		 */
 		global $current_screen;
+
 		?>
 		<script type="text/javascript"> pagenow = '<?php echo esc_html( strtolower( $current_screen->id ) ); ?>';</script>
 		<?php
@@ -1582,6 +1596,12 @@ class MainWP_Post {
 	 * @return string Hidden time stamps html.
 	 */
 	public static function touch_time( $post, $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
+
+		/**
+		 * WordPress Locale.
+         *
+         * @global string
+		 */
 		global $wp_locale;
 
 		$_post = get_post( $post );
@@ -1666,6 +1686,11 @@ class MainWP_Post {
 	 */
 	public static function do_meta_boxes( $screen, $context, $object ) { // phpcs:ignore -- current complexity required to achieve desired results. Purll Request solutions appreciated.
 
+		/**
+		 * WordPress Meta Boxes array.
+         *
+         * @global object
+		 */
 		global $wp_meta_boxes;
 		static $already_sorted = false;
 
@@ -1801,7 +1826,13 @@ class MainWP_Post {
 
 		$post_ID = $post->ID;
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		$user_ID = $current_user->ID;
 
 		$_content_editor_dfw = false;
@@ -2224,7 +2255,13 @@ class MainWP_Post {
 			return;
 		}
 
+		/**
+		 * MainWP default post to edit.
+		 *
+		 * @global string
+		 */
 		global $_mainwp_default_post_to_edit;
+
 		$post_id = $_mainwp_default_post_to_edit ? $_mainwp_default_post_to_edit->ID : 0;
 		self::render_addedit( $post_id, 'BulkAdd' );
 	}

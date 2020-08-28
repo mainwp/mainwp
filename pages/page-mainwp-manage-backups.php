@@ -968,6 +968,11 @@ class MainWP_Manage_Backups {
 			$primaryBackupMethods = array();
 		}
 
+		/**
+		 * MainWP use external primary backup method.
+         *
+         * @global string
+		 */
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
 		$hiddenCls = '';

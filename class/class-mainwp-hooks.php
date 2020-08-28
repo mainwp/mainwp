@@ -185,6 +185,11 @@ class MainWP_Hooks {
 		}
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem ) {

@@ -316,7 +316,7 @@ class MainWP_Backup_Handler {
 			/**
 			 * WordPress filesystem instance.
 			 *
-			 * @gobal object
+			 * @global object
 			 */
 			global $wp_filesystem;
 
@@ -524,7 +524,7 @@ class MainWP_Backup_Handler {
 		/**
 		 * WordPress filesystem instance.
 		 *
-		 * @gobal object
+		 * @global object
 		 */
 		global $wp_filesystem;
 

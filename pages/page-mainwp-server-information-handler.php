@@ -175,6 +175,12 @@ class MainWP_Server_Information_Handler {
 	 * @return mixed $wp_version Current installed WordPress version
 	 */
 	public static function get_wordpress_version() {
+
+		/**
+		 * WordPress version.
+         *
+         * @global string
+		 */
 		global $wp_version;
 
 		return $wp_version;
@@ -407,7 +413,14 @@ class MainWP_Server_Information_Handler {
 	 * Get SQL Mode.
 	 */
 	public static function get_sql_mode() {
+
+		/**
+		 * WordPress database instance.
+         *
+         * @global object
+		 */
 		global $wpdb;
+
 		$mysqlinfo = $wpdb->get_results( "SHOW VARIABLES LIKE 'sql_mode'" );
 		if ( is_array( $mysqlinfo ) ) {
 			$sql_mode = $mysqlinfo[0]->Value;

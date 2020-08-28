@@ -314,6 +314,11 @@ class MainWP_Connect {
 				$data['recent_number'] = $recent_number;
 			}
 
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
 
 			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
@@ -376,7 +381,13 @@ class MainWP_Connect {
 				$paramName        => rawurlencode( $paramValue ),
 			);
 
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			if ( ( ! defined( 'DOING_CRON' ) || false === DOING_CRON ) && ( ! defined( 'WP_CLI' ) || false === WP_CLI ) ) {
 				if ( $current_user && $current_user->ID ) {
 					/** This filter is documented in ../class/class-mainwp-connect.php */
@@ -1662,6 +1673,12 @@ class MainWP_Connect {
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( $wp_filesystem->exists( $file ) && ( ( false == $size ) || ( $wp_filesystem->size( $file ) > $size ) ) ) {
@@ -1729,6 +1746,12 @@ class MainWP_Connect {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+
+			/**
+			 * WordPress files system object.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

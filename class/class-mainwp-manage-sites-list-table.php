@@ -103,6 +103,11 @@ class MainWP_Manage_Sites_List_Table {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( $hasWPFileSystem && $wp_filesystem->exists( $dir ) ) {

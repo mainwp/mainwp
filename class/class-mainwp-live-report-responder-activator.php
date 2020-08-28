@@ -103,5 +103,11 @@ class MainWP_Live_Report_Responder_Activator {
 
 }
 
+/**
+ * MainWP Live Reporter Responder Activator instance.
+ *
+ * @global object
+ */
 global $mainwpLiveReportResponderActivator;
+
 $mainwpLiveReportResponderActivator = new MainWP_Live_Report_Responder_Activator();

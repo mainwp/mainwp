@@ -203,6 +203,12 @@ class MainWP_System {
 	 * @return array $alloptions Array of all options.
 	 */
 	public function load_all_options() {
+
+		/**
+		 * WordPress Database instance.
+		 *
+		 * @global object $wpdb
+		 */
 		global $wpdb;
 
 		if ( ! defined( 'WP_INSTALLING' ) || ! is_multisite() ) {
@@ -421,6 +427,11 @@ class MainWP_System {
 	 */
 	public function init() {
 
+		/**
+		 * MainWP disabled menu items array.
+		 *
+		 * @global object $_mainwp_disable_menus_items
+		 */
 		global $_mainwp_disable_menus_items;
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_disablemenuitems', $_mainwp_disable_menus_items );
@@ -447,6 +458,12 @@ class MainWP_System {
 			 * @return bool true|false
 			 */
 			function mainwp_current_user_have_right( $cap_type = '', $cap ) {
+
+				/**
+				 * Current user global.
+				 *
+				 * @global string
+				 */
 				global $current_user;
 
 				if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
@@ -488,6 +505,11 @@ class MainWP_System {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+			/**
+			 * WordPress files system object.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 			if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && md5( filesize( $file ) ) == $_GET['sig'] ) {
@@ -511,6 +533,12 @@ class MainWP_System {
 	 * Login redirect.
 	 */
 	public function login_form_redirect() {
+
+		/**
+		 * Redirect to global.
+		 *
+		 * @global string $redirect_to
+		 */
 		global $redirect_to;
 		if ( ! isset( $_GET['redirect_to'] ) ) {
 			$redirect_to = get_admin_url() . 'index.php';
@@ -542,6 +570,11 @@ class MainWP_System {
 		add_action( 'mainwp_activate_extension', array( MainWP_System_Handler::instance(), 'activate_extension' ), 10, 2 );
 		add_action( 'mainwp_deactivate_extension', array( MainWP_System_Handler::instance(), 'deactivate_extension' ), 10, 1 );
 
+		/**
+		 * MainWP use external primary backup method.
+		 *
+		 * @global string
+		 */
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
 		if ( null === $mainwpUseExternalPrimaryBackupsMethod ) {
@@ -703,6 +736,11 @@ class MainWP_System {
 
 		$load_cust_scripts = false;
 
+		/**
+		 * Current pagenow.
+		 *
+		 * @global string
+		 */
 		global $pagenow;
 
 		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( 'post-new.php' === $pagenow || 'post.php' === $pagenow ) ) {
@@ -729,7 +767,13 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
 		}
 
+		/**
+		 * WordPress version.
+		 *
+		 * @global string
+		 */
 		global $wp_version;
+
 		if ( version_compare( $wp_version, '5.5', '>=' ) ) {
 			wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version, true );
 		}
@@ -754,7 +798,14 @@ class MainWP_System {
 	 * @param mixed $hook Enqueue hook.
 	 */
 	public function admin_enqueue_styles( $hook ) {
+
+		/**
+		 * WordPress version.
+		 *
+		 * @global string
+		 */
 		global $wp_version;
+
 		wp_enqueue_style( 'mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp.css', array(), $this->current_version );
 		wp_enqueue_style( 'mainwp-responsive-layouts', MAINWP_PLUGIN_URL . 'assets/css/mainwp-responsive-layouts.css', array(), $this->current_version );
 
@@ -762,6 +813,11 @@ class MainWP_System {
 			remove_action( 'admin_footer', 'wp_admin_bar_render', 1000 );
 		}
 
+		/**
+		 * Current pagenow.
+		 *
+		 * @global string
+		 */
 		global $pagenow;
 
 		$load_cust_scripts = false;
@@ -791,7 +847,14 @@ class MainWP_System {
 	 * Add Bulk Post/Pages menue.
 	 */
 	public function admin_menu() {
+
+		/**
+		 * Admin menu array.
+		 *
+		 * @global object
+		 */
 		global $menu;
+
 		foreach ( $menu as $k => $item ) {
 			if ( 'edit.php?post_type=bulkpost' === $item[2] ) {
 				unset( $menu[ $k ] );
@@ -859,6 +922,12 @@ class MainWP_System {
 
 		MainWP_System_View::admin_footer();
 		MainWP_Menu::init_subpages_menu();
+
+		/**
+		 * MainWP disabled menu items array.
+		 *
+		 * @global object
+		 */
 		global $_mainwp_disable_menus_items;
 
 		$_mainwp_disable_menus_items = apply_filters( 'mainwp_all_disablemenuitems', $_mainwp_disable_menus_items );

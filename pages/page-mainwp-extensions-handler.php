@@ -302,6 +302,11 @@ class MainWP_Extensions_Handler {
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( file_exists( ABSPATH . '/wp-admin/includes/screen.php' ) ) {
@@ -874,6 +879,12 @@ class MainWP_Extensions_Handler {
 				return $ret;
 			}
 			$clone_name = $website->name . ' - ' . $cloneID;
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
 
 			$id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1 );
@@ -948,6 +959,11 @@ class MainWP_Extensions_Handler {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+			/**
+			 * WordPress files system object.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 			$favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
@@ -983,7 +999,13 @@ class MainWP_Extensions_Handler {
 			return false;
 		}
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		if ( ! empty( $newName ) ) {
 			$groupId = MainWP_DB_Common::instance()->add_group( $current_user->ID, MainWP_Manage_Groups::check_group_name( $newName ) );
 

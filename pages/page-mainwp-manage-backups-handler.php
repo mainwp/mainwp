@@ -110,6 +110,11 @@ class MainWP_Manage_Backups_Handler {
 			return true;
 		}
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		return ( $task->userid == $current_user->ID );
@@ -117,6 +122,12 @@ class MainWP_Manage_Backups_Handler {
 
 	/** Update backup task. */
 	public static function update_backup() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
@@ -184,6 +195,12 @@ class MainWP_Manage_Backups_Handler {
 
 	/** Add backup task. */
 	public static function add_backup() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';

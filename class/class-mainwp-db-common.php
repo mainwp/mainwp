@@ -103,7 +103,14 @@ class MainWP_DB_Common extends MainWP_DB {
 	 */
 	public function get_group_by_name( $name, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 		$where  = ( null != $userid ) ? ' AND userid=' . $userid : '';
@@ -139,7 +146,14 @@ class MainWP_DB_Common extends MainWP_DB {
 	public function get_groups_for_manage_sites() {
 		$where = ' 1 ';
 		if ( MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
 		$with_staging    = 'yes';
@@ -164,7 +178,14 @@ class MainWP_DB_Common extends MainWP_DB {
 	public function get_groups_for_current_user() {
 		$where = ' 1 ';
 		if ( MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$where = ' userid = ' . $current_user->ID . ' ';
 		}
 		$where .= $this->get_sql_where_allow_groups();
@@ -207,7 +228,14 @@ class MainWP_DB_Common extends MainWP_DB {
 	 */
 	public function get_groups_and_count( $userid = null, $for_manager = false ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 
@@ -236,7 +264,14 @@ class MainWP_DB_Common extends MainWP_DB {
 	 */
 	public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 
@@ -475,6 +510,12 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @return boolean|int false|get_user_extension_by_user_id()
 	 */
 	public function get_user_extension() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		if ( empty( $current_user ) ) {
@@ -561,7 +602,14 @@ class MainWP_DB_Common extends MainWP_DB {
 			if ( MainWP_System::instance()->is_single_user() ) {
 				$userid = '0';
 			} else {
+
+				/**
+				 * Current user global.
+				 *
+				 * @global string
+				 */
 				global $current_user;
+
 				$userid = $current_user->ID;
 			}
 		}

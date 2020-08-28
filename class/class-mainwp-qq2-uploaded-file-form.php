@@ -24,6 +24,12 @@ class MainWP_QQ2_Uploaded_File_Form {
 	 */
 	public function save( $path ) {
 		$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$moved = false;

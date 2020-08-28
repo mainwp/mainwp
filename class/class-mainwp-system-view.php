@@ -456,6 +456,12 @@ class MainWP_System_View {
 
 	/** Render Send Mail Function may have failed error. */
 	public static function wp_admin_notices() {
+
+		/**
+		 * Current pagenow.
+         *
+         * @global string
+		 */
 		global $pagenow;
 
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );

@@ -464,6 +464,12 @@ class MainWP_Install_Bulk {
 	 */
 	public static function clean_upload() {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$path = MainWP_System_Utility::get_mainwp_specific_dir( 'bulk' );

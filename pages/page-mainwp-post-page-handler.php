@@ -635,7 +635,13 @@ class MainWP_Post_Page_Handler {
 	 * @return array result
 	 */
 	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		global $current_user;
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
+	    global $current_user;
 
 		if ( ! isset( $new_post['edit_id'] ) ) {
 			return array( 'error' => 'Empty post id' );
@@ -840,6 +846,12 @@ class MainWP_Post_Page_Handler {
 		}
 
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( $wp_filesystem->exists( $temporary_file ) ) {

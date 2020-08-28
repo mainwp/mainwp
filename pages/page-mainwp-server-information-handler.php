@@ -178,8 +178,8 @@ class MainWP_Server_Information_Handler {
 
 		/**
 		 * WordPress version.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $wp_version;
 
@@ -416,8 +416,8 @@ class MainWP_Server_Information_Handler {
 
 		/**
 		 * WordPress database instance.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $wpdb;
 

@@ -641,7 +641,7 @@ class MainWP_Post_Page_Handler {
 		 *
 		 * @global string
 		 */
-	    global $current_user;
+		global $current_user;
 
 		if ( ! isset( $new_post['edit_id'] ) ) {
 			return array( 'error' => 'Empty post id' );

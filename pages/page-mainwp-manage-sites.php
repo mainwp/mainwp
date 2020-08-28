@@ -1038,7 +1038,7 @@ class MainWP_Manage_Sites {
 		 *
 		 * @global string
 		 */
-	    global $current_user;
+		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
 			if ( 'new' === $_REQUEST['do'] ) {

@@ -134,8 +134,8 @@ class MainWP_Page {
 
 			/**
 			 * MainWP default post to edit.
-             *
-             * @global string
+			 *
+			 * @global string
 			 */
 			global $_mainwp_default_post_to_edit;
 
@@ -284,8 +284,8 @@ class MainWP_Page {
 
 		/**
 		 * Current screen.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $current_screen;
 

@@ -87,7 +87,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		$api       = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
-		$api_key   = isset( $_POST['key'] ) ? trim( wp_unslash( $_POST['key'] ) ) : '';
+		$api_key   = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
 		$api_email = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
 		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
 		wp_send_json( $result );
@@ -97,7 +97,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		$api    = dirname( $_POST['slug'] );
+		$api    = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
 		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
 		wp_send_json( $result );
 	}
@@ -106,8 +106,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
 		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
-		$api      = dirname( $_POST['slug'] );
+		$password = isset( $_POST['password'] ) ? trim( wp_unslash( $_POST['password'] ) ) : '';
+		$api      = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
 		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
 		wp_send_json( $result );
 	}

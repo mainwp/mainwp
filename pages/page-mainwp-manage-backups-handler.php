@@ -134,7 +134,7 @@ class MainWP_Manage_Backups_Handler {
 
 		$schedule       = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
 		$type           = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
+		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; // do not sanitize.
 		$excludedFolder = explode( "\n", $excludedFolder );
 		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
@@ -194,7 +194,7 @@ class MainWP_Manage_Backups_Handler {
 
 		$schedule       = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
 		$type           = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
+		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; // do not sanitize.
 		$excludedFolder = explode( "\n", $excludedFolder );
 		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );

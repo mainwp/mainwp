@@ -855,9 +855,9 @@ class MainWP_Manage_Sites {
 		$edit       = false;
 		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
 
-		if ( false !== $email_type ) {
+		if ( ! empty( $email_type ) ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			if ( isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
+			if ( isset( $notification_emails[ $email_type ] ) ) {
 				$edit = true;
 			}
 		}

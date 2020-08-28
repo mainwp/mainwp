@@ -238,9 +238,7 @@ class MainWP_System_Handler {
 		if ( $update_screen_options ) {
 			$hide_wids = array();
 			if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
-				foreach ( $_POST['mainwp_hide_widgets'] as $value ) {
-					$hide_wids[] = $value;
-				}
+				$hide_wids = array_map( 'sanitize_text_field', $_POST['mainwp_hide_widgets'] );
 			}
 			$user = wp_get_current_user();
 			if ( $user ) {

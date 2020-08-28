@@ -155,7 +155,7 @@ class MainWP_Plugins_Handler {
 		}
 
 		try {
-			$plugins = isset( $_POST['plugins'] ) ? sanitize_text_field( wp_unslash( $_POST['plugins'] ) ) : '';
+			$plugins = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : ''; // do not sanitize.
 			$plugin  = implode( '||', $plugins );
 			$plugin  = urldecode( $plugin );
 
@@ -205,7 +205,7 @@ class MainWP_Plugins_Handler {
 			$trustedPlugins = array();
 		}
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : ''; // do not sanitize slugs.
+		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? array_map( 'wp_unslash', $_POST['slugs'] ) : ''; // do not sanitize slugs.
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}
@@ -273,7 +273,7 @@ class MainWP_Plugins_Handler {
 	 * Save the trusted plugin note.
 	 */
 	public static function save_trusted_plugin_note() {
-		$slug                = isset( $_POST['slug'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
+		$slug                = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : ''; // do not sanitize.
 		$note                = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 		$esc_note            = MainWP_Utility::esc_content( $note );
 		$userExtension       = MainWP_DB_Common::instance()->get_user_extension();

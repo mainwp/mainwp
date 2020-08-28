@@ -1193,7 +1193,7 @@ class MainWP_User {
 		}
 
 		if ( 'update_user' === $pAction ) {
-			$user_data = isset( $_POST['user_data'] ) ? sanitize_text_field( wp_unslash( $_POST['user_data'] ) ) : '';
+			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : ''; // do not sanitize.
 			parse_str( $user_data, $extra );
 			if ( $website->adminname == $userName ) {
 

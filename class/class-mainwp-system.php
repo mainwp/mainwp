@@ -577,9 +577,12 @@ class MainWP_System {
 		wp_enqueue_script( 'jquery-ui-dialog' );
 		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 
-		$en_params = array( 'jquery-ui-dialog', 'jquery-migrate' );
+		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
+		}
+		if ( self::is_mainwp_pages() ) {
+			$en_params[] = 'jquery-migrate';
 		}
 		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
 
@@ -660,8 +663,9 @@ class MainWP_System {
 			return;
 		}
 
-		$_pos = isset( $_SERVER['REQUEST_URI'] ) ? strlen( $_SERVER['REQUEST_URI'] ) - strlen( '/wp-admin/' ) : 0;
-		if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false && strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) == $_pos ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // do not sanitize.
+		$_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
+		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) == $_pos ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
 				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
 				die();
@@ -703,7 +707,7 @@ class MainWP_System {
 
 		$load_cust_scripts = false;
 
-		global $pagenow;
+		global $pagenow, $wp_version;
 
 		if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) && ( 'post-new.php' === $pagenow || 'post.php' === $pagenow ) ) {
 			$load_cust_scripts = true;
@@ -727,11 +731,9 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
-		}
-
-		global $wp_version;
-		if ( version_compare( $wp_version, '5.5', '>=' ) ) {
-			wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version, true );
+			if ( version_compare( $wp_version, '5.5', '>=' ) ) {
+				wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version, true );
+			}
 		}
 
 		if ( $load_cust_scripts ) {

@@ -1056,7 +1056,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_sync' ) . ' WHERE wpid=%d', $websiteid ) );
 			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid=%d', $websiteid ) );
-			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'sites_status' ) . ' WHERE wpid=%d', $websiteid ) );
+			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_status' ) . ' WHERE wpid=%d', $websiteid ) );
 
 			return $nr;
 		}

@@ -1223,7 +1223,7 @@ class MainWP_Page {
 
 			$skip_post = false;
 			if ( isset( $_GET['id'] ) ) {
-				if ( 'yes' == get_post_meta( $_GET['id'], '_mainwp_skip_posting', true ) ) {
+				if ( 'yes' == get_post_meta( intval( $_GET['id'] ), '_mainwp_skip_posting', true ) ) {
 					$skip_post = true;
 					wp_delete_post( intval( $_GET['id'] ), true );
 				}

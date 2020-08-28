@@ -100,7 +100,7 @@ class MainWP_Manage_Sites_Handler {
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB.
-			$website                           = MainWP_DB::instance()->get_websites_by_url( wp_unslash( $_POST['managesites_add_wpurl'] ) );
+			$website                           = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
 			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
 		}
 

@@ -824,7 +824,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $opts ) ) {
 				$opts = array();
 			}
-			$opts[ $_POST['sec'] ] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
+			$opts[ sanitize_text_field( wp_unslash( $_POST['sec'] ) ) ] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 			update_option( 'mainwp_opts_showhide_sections', $opts );
 			die( 'ok' );
 		}
@@ -840,15 +840,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
 		}
-		if ( isset( $_POST['saving_status'] ) ) {
+		$saving_status = isset( $_POST['saving_status'] ) ? sanitize_text_field( wp_unslash( $_POST['saving_status'] ) ) : false;
+		if ( ! empty( $saving_status ) ) {
 			$current_options = get_option( 'mainwp_opts_saving_status' );
 			if ( ! is_array( $current_options ) ) {
 				$current_options = array();
 			}
-
-			if ( ! empty( $_POST['saving_status'] ) ) {
-				$current_options[ $_POST['saving_status'] ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
-			}
+			$current_options[ $saving_status ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
 
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}

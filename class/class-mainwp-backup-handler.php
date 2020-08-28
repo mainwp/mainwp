@@ -1125,7 +1125,9 @@ class MainWP_Backup_Handler {
 	 *
 	 * Get file size.
 	 *
-	 * @return int file size.
+	 * @param mixed $pFile Backup file.
+	 *
+	 * @return false|int
 	 */
 	public static function backup_get_file_size( $pFile ) {
 		$dir = MainWP_System_Utility::get_mainwp_specific_dir();

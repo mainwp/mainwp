@@ -264,8 +264,8 @@ class MainWP_Overview {
 
 		/**
 		 * Screen layout columns array.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $screen_layout_columns;
 

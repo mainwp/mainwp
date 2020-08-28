@@ -1051,8 +1051,8 @@ class MainWP_Plugins {
 
 		/**
 		 * Tab array.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $tab;
 

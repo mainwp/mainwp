@@ -511,9 +511,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
-		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
+
+		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false;
+
+		if ( ! empty( $gid ) ) {
 			$ids      = '';
-			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( wp_unslash( $_POST['group_id'] ), true ) );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $gid, true ) );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$ids .= $website->id . ',';
 			}

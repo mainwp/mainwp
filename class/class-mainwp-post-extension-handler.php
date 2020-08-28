@@ -263,17 +263,15 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$snMenuExtensions = array();
 		}
 
-		$key = array_search( $_POST['slug'], $snMenuExtensions );
+		$key = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 
-		if ( false !== $key ) {
+		if ( ! empty( $key ) && isset( $snMenuExtensions[ $key ] ) ) {
 			unset( $snMenuExtensions[ $key ] );
-		}
-
-		MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
-		if ( isset( $_POST['slug'] ) ) {
-			do_action( 'mainwp_removed_extension_menu', sanitize_text_field( wp_unslash( $_POST['slug'] ) ) );
+			MainWP_Utility::update_option( 'mainwp_extmenu', $snMenuExtensions );
+			do_action( 'mainwp_removed_extension_menu', $key );
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
+
 		die( - 1 );
 	}
 

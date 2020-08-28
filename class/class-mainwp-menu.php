@@ -34,10 +34,15 @@ class MainWP_Menu {
 	 */
 	public function __construct() {
 
-		// Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
+		/**
+		 * MainWP Disable Menus items array.
+         *
+         * @global object
+		 */
 		global $_mainwp_disable_menus_items;
 
 		// Init disable menu items, default is false.
+        // Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
 		if ( null === $_mainwp_disable_menus_items ) {
 			$_mainwp_disable_menus_items = array(
 				// Compatible with old hooks.
@@ -229,7 +234,11 @@ class MainWP_Menu {
 	 */
 	public static function is_disable_menu_item( $level, $item ) {
 
-		// Grab disable menus array.
+		/**
+		 * MainWP Disable Menus items array.
+		 *
+		 * @global object
+		 */
 		global $_mainwp_disable_menus_items;
 
 		$_level = 'level_' . $level;
@@ -281,6 +290,13 @@ class MainWP_Menu {
 		$right = isset( $params['right'] ) ? $params['right'] : '';
 		$id    = isset( $params['id'] ) ? $params['id'] : '';
 
+		/**
+		 * MainWP Left Menu, Sub Menu & Active menu slugs.
+		 *
+		 * @global object $mainwp_leftmenu
+         * @global object $mainwp_sub_leftmenu
+         * @global object $_mainwp_menu_active_slugs
+		 */
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 
 		$title = esc_html( $title );
@@ -305,6 +321,13 @@ class MainWP_Menu {
 	 */
 	public static function render_left_menu() {
 
+		/**
+		 * MainWP Left Menu, Sub Menu & Active menu slugs.
+		 *
+		 * @global object $mainwp_leftmenu
+		 * @global object $mainwp_sub_leftmenu
+		 * @global object $_mainwp_menu_active_slugs
+		 */
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs, $plugin_page;
 
 		/**
@@ -518,7 +541,14 @@ class MainWP_Menu {
 		if ( empty( $parent_key ) ) {
 			return;
 		}
+
+		/**
+		 * MainWP Left Menu.
+         *
+		 * @global object $mainwp_sub_leftmenu
+		 */
 		global $mainwp_sub_leftmenu;
+
 		$submenu_items = $mainwp_sub_leftmenu[ $parent_key ];
 
 		if ( ! is_array( $submenu_items ) || count( $submenu_items ) == 0 ) {

@@ -35,6 +35,12 @@ class MainWP_System_Utility {
 	 * @return boolean True|False.
 	 */
 	public static function is_admin() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 		if ( 0 === $current_user->ID ) {
 			return false;
@@ -73,7 +79,14 @@ class MainWP_System_Utility {
 	 */
 	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$user = $current_user;
 		}
 
@@ -116,6 +129,12 @@ class MainWP_System_Utility {
 	 */
 	public static function get_icons_dir() {
 		$hasWPFileSystem = self::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$dirs = self::get_mainwp_dir();
@@ -143,6 +162,12 @@ class MainWP_System_Utility {
 	 */
 	public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
 		$hasWPFileSystem = self::get_wp_file_system();
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$upload_dir = wp_upload_dir();
@@ -230,7 +255,14 @@ class MainWP_System_Utility {
 		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 
@@ -280,7 +312,14 @@ class MainWP_System_Utility {
 		if ( MainWP_System::instance()->is_single_user() ) {
 			$userid = 0;
 		} else {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 		$dirs = self::get_mainwp_dir();
@@ -296,6 +335,12 @@ class MainWP_System_Utility {
 	 * @return boolean $init True.
 	 */
 	public static function get_wp_file_system() {
+
+		/**
+		 * WordPress files system object.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		if ( empty( $wp_filesystem ) ) {
@@ -338,6 +383,11 @@ class MainWP_System_Utility {
 			return true;
 		}
 
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		return ( $website->userid == $current_user->ID );
@@ -351,6 +401,12 @@ class MainWP_System_Utility {
 	 * @return string $current_user->current_site_id Current Child Site ID.
 	 */
 	public static function get_current_wpid() {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
 
 		return $current_user->current_site_id;
@@ -364,7 +420,14 @@ class MainWP_System_Utility {
 	 * @param mixed $wpid Child Site ID.
 	 */
 	public static function set_current_wpid( $wpid ) {
+
+		/**
+		 * Current user global.
+		 *
+		 * @global string
+		 */
 		global $current_user;
+
 		$current_user->current_site_id = $wpid;
 	}
 

@@ -841,6 +841,11 @@ class MainWP_System_Cron_Jobs {
 
 				$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
+				/**
+				 * WordPress files system object.
+				 *
+				 * @global object
+				 */
 				global $wp_filesystem;
 
 				if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

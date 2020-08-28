@@ -128,7 +128,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_websites_count( $userId = null, $all_access = false ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userId = $current_user->ID;
 		}
 		$where = ( null == $userId ? '' : ' wp.userid = ' . $userId );
@@ -383,7 +390,14 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
 		}
 
@@ -488,7 +502,14 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		$where = '';
 		if ( MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$where .= ' AND wp.userid = ' . $current_user->ID . ' ';
 		}
 
@@ -750,7 +771,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_websites_by_ids( $ids, $userId = null ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userId = $current_user->ID;
 		}
 		$where = $this->get_sql_where_allow_access_sites();
@@ -771,7 +799,14 @@ class MainWP_DB extends MainWP_DB_Base {
 			return array();
 		}
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userId = $current_user->ID;
 		}
 
@@ -880,7 +915,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	 */
 	public function get_sql_websites_by_group_name( $groupname, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			$userid = $current_user->ID;
 		}
 
@@ -1360,7 +1402,6 @@ class MainWP_DB extends MainWP_DB_Base {
 			OBJECT
 		);
 	}
-
 
 	/**
 	 * Get websites offline status.

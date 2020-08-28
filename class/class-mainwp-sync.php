@@ -470,6 +470,12 @@ class MainWP_Sync {
 					if ( ! empty( $content ) ) {
 
 						$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+						/**
+						 * WordPress files system object.
+						 *
+						 * @global object
+						 */
 						global $wp_filesystem;
 
 						$dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );

@@ -1048,6 +1048,12 @@ class MainWP_Plugins {
 
 	/** Render Install plugins Table. */
 	public static function render_plugins_table() {
+
+		/**
+		 * Tab array.
+         *
+         * @global object
+		 */
 		global $tab;
 
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_plugins' ) ) {

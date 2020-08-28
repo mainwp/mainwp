@@ -34,6 +34,8 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pTask Task to perform.
 	 * @param mixed $subfolder Subfolder to place backup.
 	 *
+	 * @gobal object $wp_filesystem WordPress filesystem instance.
+	 *
 	 * @throws MainWP_Exception
 	 *
 	 * @return mixed $backup_result
@@ -310,6 +312,12 @@ class MainWP_Backup_Handler {
 			throw new MainWP_Exception( 'Full backup failed.' );
 		} elseif ( isset( $information['db'] ) ) {
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+			/**
+			 * WordPress filesystem instance.
+			 *
+			 * @global object
+			 */
 			global $wp_filesystem;
 
 			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
@@ -512,6 +520,12 @@ class MainWP_Backup_Handler {
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+		/**
+		 * WordPress filesystem instance.
+		 *
+		 * @global object
+		 */
 		global $wp_filesystem;
 
 		$dir = dirname( $pFile ) . '/';

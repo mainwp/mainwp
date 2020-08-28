@@ -961,7 +961,12 @@ class MainWP_UI {
 	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
 	 */
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		global $mainwp_widget_boxes;
+		/**
+        * MainWP widget boxes array.
+        *
+        * @global object
+        */
+	    global $mainwp_widget_boxes;
 
 		$page = MainWP_System_Utility::get_page_id( $screen );
 

@@ -84,7 +84,14 @@ class MainWP_Overview {
 	/** Add MainWP Overview top level menu. */
 	public function on_admin_menu() {
 		if ( MainWP_System_Utility::is_admin() ) {
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
 			global $current_user;
+
 			delete_user_option( $current_user->ID, 'screen_layout_toplevel_page_mainwp_tab' );
 			$this->dashBoard = add_menu_page(
 				'MainWP',
@@ -255,6 +262,11 @@ class MainWP_Overview {
 			return;
 		}
 
+		/**
+		 * Screen layout columns array.
+         *
+         * @global object
+		 */
 		global $screen_layout_columns;
 
 		$params = array(

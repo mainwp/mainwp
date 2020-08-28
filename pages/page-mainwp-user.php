@@ -1813,6 +1813,12 @@ class MainWP_User {
 			if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path     = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
 				$wpFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+				/**
+				 * WordPress files system object.
+				 *
+				 * @global object
+				 */
 				global $wp_filesystem;
 
 				$content = $wp_filesystem->get_contents( $tmp_path );

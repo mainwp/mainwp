@@ -267,6 +267,11 @@ class MainWP_Logger {
 				$time   = gmdate( $this->logDateFormat );
 				$prefix = '[' . $this->get_log_text( $priority ) . ']';
 
+				/**
+				 * Current user global.
+				 *
+				 * @global string
+				 */
 				global $current_user;
 
 				if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {

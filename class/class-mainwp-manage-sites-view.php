@@ -244,7 +244,13 @@ class MainWP_Manage_Sites_View {
 			),
 		);
 
+		/**
+		 * MainWP Use External Primary backup Method global.
+         *
+         * @global string
+		 */
 		global $mainwpUseExternalPrimaryBackupsMethod;
+
 		if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
 			unset( $site_pages['ManageSitesBackups'] );
 		} elseif ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -362,6 +368,12 @@ class MainWP_Manage_Sites_View {
 			if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
 				$tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : '';
 				MainWP_System_Utility::get_wp_file_system();
+
+				/**
+				 * WordPress files system object.
+				 *
+				 * @global object
+				 */
 				global $wp_filesystem;
 
 				$content = $wp_filesystem->get_contents( $tmp_path );
@@ -558,7 +570,14 @@ class MainWP_Manage_Sites_View {
 			if ( -1 == $website->mainwpdir ) {
 				echo '<div class="ui yellow message"><span class="mainwp_conflict" siteid="' . intval( $website->id ) . '"><strong>Configuration issue detected</strong>: MainWP has no write privileges to the uploads directory. Because of this some of the functionality might not work.</span></div>';
 			}
+
+			/**
+			 * Screen layout columns global.
+             *
+             * @global string
+			 */
 			global $screen_layout_columns;
+
 			MainWP_Overview::render_dashboard_body( array( $website ), $page, $screen_layout_columns );
 			?>
 		</div>
@@ -1462,7 +1481,14 @@ class MainWP_Manage_Sites_View {
 
 						$http_user = isset( $params['http_user'] ) ? $params['http_user'] : '';
 						$http_pass = isset( $params['http_pass'] ) ? $params['http_pass'] : '';
+
+						/**
+						 * Current user global.
+						 *
+						 * @global string
+						 */
 						global $current_user;
+
 						$id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $information['nossl'], ( isset( $information['nosslkey'] ) ? $information['nosslkey'] : null ), $groupids, $groupnames, $verifyCertificate, $addUniqueId, $http_user, $http_pass, $sslVersion ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 
 						if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {

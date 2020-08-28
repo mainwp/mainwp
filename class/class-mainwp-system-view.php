@@ -459,8 +459,8 @@ class MainWP_System_View {
 
 		/**
 		 * Current pagenow.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $pagenow;
 

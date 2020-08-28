@@ -254,8 +254,8 @@ class MainWP_Post {
 
 		/**
 		 * Current screen.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $current_screen;
 
@@ -1599,8 +1599,8 @@ class MainWP_Post {
 
 		/**
 		 * WordPress Locale.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $wp_locale;
 
@@ -1688,8 +1688,8 @@ class MainWP_Post {
 
 		/**
 		 * WordPress Meta Boxes array.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $wp_meta_boxes;
 		static $already_sorted = false;

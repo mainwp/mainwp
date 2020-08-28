@@ -246,8 +246,8 @@ class MainWP_Manage_Sites_View {
 
 		/**
 		 * MainWP Use External Primary backup Method global.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $mainwpUseExternalPrimaryBackupsMethod;
 
@@ -573,8 +573,8 @@ class MainWP_Manage_Sites_View {
 
 			/**
 			 * Screen layout columns global.
-             *
-             * @global string
+			 *
+			 * @global string
 			 */
 			global $screen_layout_columns;
 

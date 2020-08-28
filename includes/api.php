@@ -86,6 +86,11 @@ function live_reports_responder_secure_connection() {
 
 /**
  * Check database to see if client exists.
+ *
+ * @param string $email  Email address to check for.
+ * @param string $siteid Child Site ID.
+ *
+ * @return array
  */
 function check_if_valid_client( $email, $siteid ) {
 

@@ -385,7 +385,7 @@ class MainWP_Manage_Sites {
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
 					onUnchecked   : function() {
-						var $chk = jQuery( this );						
+						var $chk = jQuery( this );
 						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
 							allowMultiple: true,
 							width: 100,
@@ -1131,7 +1131,7 @@ class MainWP_Manage_Sites {
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
-		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . $_GET['emailsettingsid'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . wp_unslash( $_GET['emailsettingsid'] ) ) ) {
 			$settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
 			$settings_emails = json_decode( $settings_emails, true );
 			if ( ! is_array( $settings_emails ) ) {

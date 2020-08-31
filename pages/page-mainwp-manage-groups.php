@@ -559,7 +559,7 @@ class MainWP_Manage_Groups {
 			if ( ! empty( $group ) ) {
 				MainWP_DB_Common::instance()->clear_group( $group->id );
 				if ( isset( $_POST['websiteIds'] ) ) {
-					foreach ( $_POST['websiteIds'] as $websiteId ) {
+					foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['websiteIds'] ) ) as $websiteId ) {
 						$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
 						if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 							MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );

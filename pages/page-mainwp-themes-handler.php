@@ -203,7 +203,7 @@ class MainWP_Themes_Handler {
 			$trustedThemes = array();
 		}
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? array_map( 'wp_unslash', $_POST['slugs'] ) : false;
+		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : false;
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}

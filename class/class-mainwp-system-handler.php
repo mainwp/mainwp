@@ -196,7 +196,7 @@ class MainWP_System_Handler {
 	public function handle_manage_sites_screen_settings() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
 			$hide_cols = array();
-			foreach ( $_POST as $key => $val ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
 				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
 					$col         = str_replace( 'mainwp_hide_column_', '', $key );
 					$hide_cols[] = $col;
@@ -238,7 +238,7 @@ class MainWP_System_Handler {
 		if ( $update_screen_options ) {
 			$hide_wids = array();
 			if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
-				$hide_wids = array_map( 'sanitize_text_field', $_POST['mainwp_hide_widgets'] );
+				$hide_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_hide_widgets'] ) );
 			}
 			$user = wp_get_current_user();
 			if ( $user ) {
@@ -366,7 +366,7 @@ class MainWP_System_Handler {
 				}
 			} elseif ( 'update-selected' === $_POST['action'] && isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ) {
 				$updated = false;
-				foreach ( $_POST['checked'] as $plugin_slug ) {
+				foreach ( wp_unslash( $_POST['checked'] ) as $plugin_slug ) {
 					if ( isset( $extensions[ $plugin_slug ] ) ) {
 						if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 							continue;

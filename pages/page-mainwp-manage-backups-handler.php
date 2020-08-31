@@ -154,7 +154,7 @@ class MainWP_Manage_Backups_Handler {
 		$groups         = '';
 
 		if ( isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ) {
-			foreach ( $_POST['sites'] as $site ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $site ) {
 				if ( '' != $sites ) {
 					$sites .= ',';
 				}
@@ -163,7 +163,7 @@ class MainWP_Manage_Backups_Handler {
 		}
 
 		if ( isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ) {
-			foreach ( $_POST['groups'] as $group ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) as $group ) {
 				if ( '' != $groups ) {
 					$groups .= ',';
 				}
@@ -221,7 +221,7 @@ class MainWP_Manage_Backups_Handler {
 		$groups = '';
 
 		if ( isset( $_POST['sites'] ) ) {
-			foreach ( $_POST['sites'] as $site ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $site ) {
 				if ( '' != $sites ) {
 					$sites .= ',';
 				}
@@ -230,7 +230,7 @@ class MainWP_Manage_Backups_Handler {
 		}
 
 		if ( isset( $_POST['groups'] ) ) {
-			foreach ( $_POST['groups'] as $group ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) as $group ) {
 				if ( '' != $groups ) {
 					$groups .= ',';
 				}

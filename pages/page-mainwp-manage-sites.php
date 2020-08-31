@@ -1144,7 +1144,7 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? array_map( 'wp_unslash', (array) $_POST['mainwp_managesites_edit_settingEmails'] ) : '';
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'] ) : '';
 			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';
 			if ( isset( $notification_emails[ $type ] ) ) {
 				$update_settings               = $edit_settingEmails[ $type ];

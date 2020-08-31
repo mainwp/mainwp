@@ -588,8 +588,8 @@ class MainWP_Live_Reports {
 			$selected_groups = array();
 
 			if ( isset( $_POST['select_by'] ) ) {
-				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
-				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
+				$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
+				$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			}
 
 			$report['sites']  = base64_encode( serialize( $selected_sites ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.

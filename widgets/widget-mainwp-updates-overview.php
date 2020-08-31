@@ -1095,7 +1095,7 @@ class MainWP_Updates_Overview {
 
 		$output = array();
 		if ( isset( $_POST['sites'] ) ) {
-			foreach ( $_POST['sites'] as $siteId ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
 					continue;

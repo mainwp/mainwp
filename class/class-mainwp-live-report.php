@@ -571,7 +571,7 @@ class MainWP_Live_Reports {
 					self::delete_attach_files( $current_attach_files, $creport_dir );
 				}
 
-				$output = self::handle_upload_files( $_FILES['mainwp_creport_attach_files'], $creport_dir );
+				$output = self::handle_upload_files( wp_unslash( $_FILES['mainwp_creport_attach_files'] ), $creport_dir );
 				if ( isset( $output['error'] ) ) {
 					$return['error'] = $output['error'];
 				}

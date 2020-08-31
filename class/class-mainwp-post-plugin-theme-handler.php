@@ -461,7 +461,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
 
 		// support chunk update for manage sites page only.
-		$chunk_support = !empty( $_POST['chunk_support'] ) ? true : false;
+		$chunk_support = ! empty( $_POST['chunk_support'] ) ? true : false;
 		$max_update    = 0;
 		$websiteId     = null;
 		$slugs         = '';
@@ -573,7 +573,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : ''; // do not sanitize.
-		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		$id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : 0; // string|int.
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_abandoned_plugin_theme( $type, $slug, $id ) ) ) ); // ok.
 	}
 
@@ -648,7 +648,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // do not sanitize slug.
-		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : '';
+		$id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
 		die( wp_json_encode( array( 'result' => MainWP_Updates_Handler::unignore_plugin_theme( $type, $slug, $id ) ) ) );
 	}
 

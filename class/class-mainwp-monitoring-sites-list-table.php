@@ -317,7 +317,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		if ( $optimize ) {
 
 			if ( isset( $_REQUEST['order'] ) ) {
-				$columns = isset( $_REQUEST['columns'] ) ? $_REQUEST['columns'] : array();
+				$columns = isset( $_REQUEST['columns'] ) ? wp_unslash( $_REQUEST['columns'] ) : array();
 				$ord_col = isset( $_REQUEST['order'][0]['column'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['order'][0]['column'] ) ) : '';
 				if ( isset( $columns[ $ord_col ] ) ) {
 					$req_orderby = isset( $columns[ $ord_col ]['data'] ) ? sanitize_text_field( wp_unslash( $columns[ $ord_col ]['data'] ) ) : '';

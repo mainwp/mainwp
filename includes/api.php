@@ -216,7 +216,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
-				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) && is_array( $_POST['allowed_tokens'] ) ? wp_unslash( $_POST['allowed_tokens'] ) : '';
+				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) && is_array( $_POST['allowed_tokens'] ) ? sanitize_text_field( wp_unslash( $_POST['allowed_tokens'] ) ) : '';
 				$filtered_reports           = MainWP_Live_Reports::filter_report( $report, $allowed_tokens );
 				echo wp_json_encode(
 					array(

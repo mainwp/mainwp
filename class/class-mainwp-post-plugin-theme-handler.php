@@ -461,7 +461,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_upgradeplugintheme' );
 
 		// support chunk update for manage sites page only.
-		$chunk_support = isset( $_POST['chunk_support'] ) && $_POST['chunk_support'] ? true : false;
+		$chunk_support = !empty( $_POST['chunk_support'] ) ? true : false;
 		$max_update    = 0;
 		$websiteId     = null;
 		$slugs         = '';

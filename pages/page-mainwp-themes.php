@@ -1385,8 +1385,8 @@ class MainWP_Themes {
 
 		if ( null == $output ) {
 			$keyword             = isset( $_POST['keyword'] ) && ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : null;
-			$search_status       = isset( $_POST['status'] ) ? $_POST['status'] : 'all';
-			$search_theme_status = isset( $_POST['theme_status'] ) ? $_POST['theme_status'] : 'all';
+			$search_status       = isset( $_POST['status'] ) ? wp_unslash( $_POST['status'] ) : 'all';
+			$search_theme_status = isset( $_POST['theme_status'] ) ? wp_unslash( $_POST['theme_status'] ) : 'all';
 
 			$output         = new \stdClass();
 			$output->errors = array();

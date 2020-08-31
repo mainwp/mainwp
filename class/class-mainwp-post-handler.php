@@ -866,8 +866,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $current_options ) ) {
 				$current_options = array();
 			}
-			$current_options[ $saving_status ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
-
+			if ( isset( $_POST['value'] ) ) {
+				$current_options[ $saving_status ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
+			}
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}
 		die( 'ok' );

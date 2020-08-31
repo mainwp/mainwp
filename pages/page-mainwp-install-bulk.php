@@ -370,7 +370,7 @@ class MainWP_Install_Bulk {
 		}
 
 		$output['urls'] = array();
-		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? $_POST['files'] : array(); // do not sanitize slugs.
+		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? wp_unslash( $_POST['files'] ) : array(); // do not sanitize slugs.
 		foreach ( $files as $file ) {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}

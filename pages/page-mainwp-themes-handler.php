@@ -154,8 +154,8 @@ class MainWP_Themes_Handler {
 			die( 'FAIL' );
 		}
 
-		$themes = isset( $_POST['themes'] ) ? $_POST['themes'] : array();
-		$names  = isset( $_POST['names'] ) ? $_POST['names'] : array();
+		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : array();
+		$names  = isset( $_POST['names'] ) ? wp_unslash( $_POST['names'] ) : array();
 
 		$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 		if ( ! is_array( $decodedIgnoredThemes ) ) {

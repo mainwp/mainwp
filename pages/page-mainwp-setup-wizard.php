@@ -858,7 +858,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_noti );
 		$userExtension             = MainWP_DB_Common::instance()->get_user_extension();
-		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? wp_unslash( $_POST['mainwp_options_email'] ) : '';
+		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_options_email'] ) ) : '';
 		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -1167,7 +1167,7 @@ class MainWP_Setup_Wizard {
 			die( 0 );
 		}
 
-		$slug = isset( $_POST['plugins'] ) ? $_POST['plugins'] : '';
+		$slug = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : '';
 		if ( is_array( $slug ) ) {
 			$slug = current( $slug );
 		}

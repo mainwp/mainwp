@@ -356,7 +356,6 @@ class MainWP_System_Utility {
 			ob_end_clean();
 			if ( empty( $creds ) ) {
 
-
 				/**
 				 * Define WordPress File system.
 				 *

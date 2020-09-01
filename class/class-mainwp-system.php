@@ -496,7 +496,7 @@ class MainWP_System {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
-			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? $_REQUEST['mwpdl'] : '';
+			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
 
 			if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {

@@ -152,7 +152,7 @@ class MainWP_Install_Bulk {
 			}
 			$url = $api->download_link;
 		} else {
-			$url = wp_unslash( $_POST['url'] );
+			$url = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : '';
 
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpUrl = $mwpDir[1];

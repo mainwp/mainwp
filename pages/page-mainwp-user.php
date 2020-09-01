@@ -1967,7 +1967,7 @@ class MainWP_User {
 		$dbwebsites  = array();
 		$not_valid   = array();
 		$error_sites = '';
-		if ( 'site' === $_POST['select_by'] ) {
+		if ( isset( $_POST['select_by'] ) && 'site' === $_POST['select_by'] ) {
 			foreach ( $selected_sites as $url ) {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );

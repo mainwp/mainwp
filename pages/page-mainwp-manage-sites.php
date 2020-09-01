@@ -385,7 +385,7 @@ class MainWP_Manage_Sites {
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
 					onUnchecked   : function() {
-						var $chk = jQuery( this );						
+						var $chk = jQuery( this );
 						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
 							allowMultiple: true,
 							width: 100,

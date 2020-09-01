@@ -355,6 +355,14 @@ class MainWP_System_Utility {
 			$creds = request_filesystem_credentials( 'test' );
 			ob_end_clean();
 			if ( empty( $creds ) ) {
+
+
+				/**
+				 * Define WordPress File system.
+				 *
+				 * @const ( bool ) Default: true
+				 * @source https://code-reference.mainwp.com/classes/MainWP.Dashboard.MainWP_System_Utility.html
+				 */
 				define( 'FS_METHOD', 'direct' );
 			}
 			$init = \WP_Filesystem( $creds );

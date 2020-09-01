@@ -85,10 +85,10 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST['select_by'] ) ) {
-			$selected_wp = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+			$selected_wp = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			update_post_meta( $post_id, '_selected_groups', $selected_groups );
 			update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );
 

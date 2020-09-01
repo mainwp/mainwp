@@ -347,10 +347,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
 
 		try {
-			$array = get_option( 'mainwp_upload_progress' );
-			$info  = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) );
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false;
+			$array  = get_option( 'mainwp_upload_progress' );
+			$info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) );
 
-			if ( ! is_array( $array ) || ! isset( $_POST['unique'] ) || ! isset( $array[ $_POST['unique'] ] ) || ! isset( $_POST['unique']['dts'] ) || ! isset( $array[ $_POST['unique'] ]['dts'] ) ) {
+			if ( ! is_array( $array ) || empty( $unique ) || empty( $array[ $unique ] ) || empty( $array[ $unique ]['dts'] ) ) {
 				die(
 					wp_json_encode(
 						array(
@@ -359,7 +360,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 						)
 					)
 				);
-			} elseif ( isset( $array[ $_POST['unique'] ]['finished'] ) ) {
+			} elseif ( isset( $array[ $unique ]['finished'] ) ) {
 				die(
 					wp_json_encode(
 						array(
@@ -369,7 +370,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 					)
 				);
 			} else {
-				if ( isset( $array[ $_POST['unique'] ]['dts'] ) && $array[ $_POST['unique'] ]['dts'] < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
+
+				if ( isset( $array[ $unique ]['dts'] ) && intval( $array[ $unique ]['dts'] ) < ( time() - ( 2 * 60 ) ) ) { // 2minutes.
 					die(
 						wp_json_encode(
 							array(
@@ -414,14 +416,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_backup_upload_getprogress' );
 
 		try {
-			$array = get_option( 'mainwp_upload_progress' );
+			$array  = get_option( 'mainwp_upload_progress' );
+			$unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false;
 
-			if ( ! is_array( $array ) || ! isset( $array[ $_POST['unique'] ] ) ) {
+			if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
 				die( wp_json_encode( array( 'result' => 0 ) ) );
-			} elseif ( isset( $array[ $_POST['unique'] ]['finished'] ) ) {
+			} elseif ( isset( $array[ $unique ]['finished'] ) ) {
 				throw new MainWP_Exception( __( 'finished...', 'maiwnp' ) );
 			} else {
-				wp_send_json( array( 'result' => ( isset( $array[ $_POST['unique'] ]['offset'] ) ? $array[ $_POST['unique'] ]['offset'] : $array[ $_POST['unique'] ] ) ) );
+				wp_send_json( array( 'result' => ( isset( $array[ $unique ]['offset'] ) ? $array[ $unique ]['offset'] : $array[ $unique ] ) ) );
 			}
 		} catch ( MainWP_Exception $e ) {
 			die(

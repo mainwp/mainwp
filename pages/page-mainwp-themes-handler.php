@@ -65,7 +65,7 @@ class MainWP_Themes_Handler {
 	 * Activate the selected theme.
 	 */
 	public static function activate_theme() {
-		$theme = isset( $_POST['theme'] ) ? esc_html( wp_unslash( $_POST['theme'] ) ) : '';
+		$theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : '';
 		self::action( 'activate', $theme );
 		die( 'SUCCESS' );
 	}
@@ -154,8 +154,8 @@ class MainWP_Themes_Handler {
 			die( 'FAIL' );
 		}
 
-		$themes = isset( $_POST['themes'] ) ? $_POST['themes'] : array();
-		$names  = isset( $_POST['names'] ) ? $_POST['names'] : array();
+		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : array();
+		$names  = isset( $_POST['names'] ) ? wp_unslash( $_POST['names'] ) : array();
 
 		$decodedIgnoredThemes = json_decode( $website->ignored_themes, true );
 		if ( ! is_array( $decodedIgnoredThemes ) ) {
@@ -203,7 +203,7 @@ class MainWP_Themes_Handler {
 			$trustedThemes = array();
 		}
 		$action = isset( $_POST['do'] ) ? sanitize_text_field( wp_unslash( $_POST['do'] ) ) : '';
-		$slugs  = isset( $_POST['slugs'] ) ? $_POST['slugs'] : false;
+		$slugs  = isset( $_POST['slugs'] ) && is_array( $_POST['slugs'] ) ? wp_unslash( $_POST['slugs'] ) : false;
 		if ( ! is_array( $slugs ) ) {
 			return;
 		}

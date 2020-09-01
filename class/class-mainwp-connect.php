@@ -1746,7 +1746,6 @@ class MainWP_Connect {
 
 			$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-
 			/**
 			 * WordPress files system object.
 			 *

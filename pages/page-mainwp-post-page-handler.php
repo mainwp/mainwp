@@ -158,7 +158,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) ) );
+			$siteIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) ) ); // sanitize ok.
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -170,7 +170,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['groups'] ) ) ) );
+			$groupIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
 				$groupId = $groupId;
@@ -641,7 +641,7 @@ class MainWP_Post_Page_Handler {
 		 *
 		 * @global string
 		 */
-	    global $current_user;
+		global $current_user;
 
 		if ( ! isset( $new_post['edit_id'] ) ) {
 			return array( 'error' => 'Empty post id' );

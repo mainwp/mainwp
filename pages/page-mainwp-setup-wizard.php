@@ -858,7 +858,7 @@ class MainWP_Setup_Wizard {
 
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_noti );
 		$userExtension             = MainWP_DB_Common::instance()->get_user_extension();
-		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? array_map( 'wp_unslash', (array) $_POST['mainwp_options_email'] ) : '';
+		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_options_email'] ) ) : '';
 		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
 		$userExtension->user_email = $save_emails;
 		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
@@ -1167,7 +1167,7 @@ class MainWP_Setup_Wizard {
 			die( 0 );
 		}
 
-		$slug = isset( $_POST['plugins'] ) ? $_POST['plugins'] : '';
+		$slug = isset( $_POST['plugins'] ) ? wp_unslash( $_POST['plugins'] ) : '';
 		if ( is_array( $slug ) ) {
 			$slug = current( $slug );
 		}
@@ -1191,7 +1191,7 @@ class MainWP_Setup_Wizard {
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
 		$username   = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
 		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
-		$api        = isset( $_POST['slug'] ) ? dirname( sanitize_text_field( wp_unslash( $_POST['slug'] ) ) ) : '';
+		$api        = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // do not sanitize.
 		$result     = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
 		wp_send_json( $result );
 	}

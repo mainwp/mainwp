@@ -233,7 +233,7 @@ class MainWP_Manage_Sites {
 	 * Run on subpage load.
 	 */
 	public static function on_load_subpages() {
-		if ( isset( $_GET['id'] ) && $_GET['id'] ) {
+		if ( ! empty( $_GET['id'] ) ) {
 			MainWP_System_Utility::set_current_wpid( intval( $_GET['id'] ) );
 		}
 	}
@@ -385,7 +385,7 @@ class MainWP_Manage_Sites {
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
 					onUnchecked   : function() {
-						var $chk = jQuery( this );						
+						var $chk = jQuery( this );
 						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
 							allowMultiple: true,
 							width: 100,
@@ -862,9 +862,9 @@ class MainWP_Manage_Sites {
 		$edit       = false;
 		$email_type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : false;
 
-		if ( false !== $email_type ) {
+		if ( ! empty( $email_type ) ) {
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			if ( isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
+			if ( isset( $notification_emails[ $email_type ] ) ) {
 				$edit = true;
 			}
 		}
@@ -1038,7 +1038,7 @@ class MainWP_Manage_Sites {
 		 *
 		 * @global string
 		 */
-	    global $current_user;
+		global $current_user;
 
 		if ( isset( $_REQUEST['do'] ) ) {
 			if ( 'new' === $_REQUEST['do'] ) {
@@ -1131,7 +1131,7 @@ class MainWP_Manage_Sites {
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
-		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . $_GET['emailsettingsid'] ) ) {
+		if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . wp_unslash( $_GET['emailsettingsid'] ) ) ) {
 			$settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
 			$settings_emails = json_decode( $settings_emails, true );
 			if ( ! is_array( $settings_emails ) ) {
@@ -1144,7 +1144,7 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? array_map( 'wp_unslash', (array) $_POST['mainwp_managesites_edit_settingEmails'] ) : '';
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'] ) ) : '';
 			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';
 			if ( isset( $notification_emails[ $type ] ) ) {
 				$update_settings               = $edit_settingEmails[ $type ];

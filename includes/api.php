@@ -209,14 +209,14 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 				$report->subject            = 'Report for [client.site.name]';
 				$report->recurring_schedule = '';
 				$report->schedule_bcc_me    = 0;
-				$report->header             = $_POST['content'];
+				$report->header             = wp_unslash( $_POST['content'] );
 				$report->body               = '';
 				$report->footer             = '';
 				$report->type               = 0;
 				$report->sites              = $sites;
 				$report->groups             = '';
 				$report->schedule_nextsend  = 0;
-				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) && is_array( $_POST['allowed_tokens'] ) ? $_POST['allowed_tokens'] : '';
+				$allowed_tokens             = isset( $_POST['allowed_tokens'] ) && is_array( $_POST['allowed_tokens'] ) ? sanitize_text_field( wp_unslash( $_POST['allowed_tokens'] ) ) : '';
 				$filtered_reports           = MainWP_Live_Reports::filter_report( $report, $allowed_tokens );
 				echo wp_json_encode(
 					array(

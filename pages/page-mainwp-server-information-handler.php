@@ -178,8 +178,8 @@ class MainWP_Server_Information_Handler {
 
 		/**
 		 * WordPress version.
-         *
-         * @global string
+		 *
+		 * @global string
 		 */
 		global $wp_version;
 
@@ -416,8 +416,8 @@ class MainWP_Server_Information_Handler {
 
 		/**
 		 * WordPress database instance.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $wpdb;
 
@@ -570,7 +570,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
-		echo isset( $_SERVER['HTTP_ACCEPT'] ) ? esc_html( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) : '';
+		echo isset( $_SERVER['HTTP_ACCEPT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) : '';
 	}
 
 	/**

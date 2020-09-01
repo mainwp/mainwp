@@ -769,7 +769,7 @@ class MainWP_Recent_Posts {
 	public static function action_update( $pAction ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
-		$post_data = isset( $_POST['post_data'] ) ? $_POST['post_data'] : array();
+		$post_data = isset( $_POST['post_data'] ) ? wp_unslash( $_POST['post_data'] ) : array();
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( 'FAIL' );

@@ -206,8 +206,8 @@ class MainWP_Server_Information {
 
 		/**
 		 * MainWP active menu slugs array.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $_mainwp_menu_active_slugs;
 

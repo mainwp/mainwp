@@ -36,13 +36,13 @@ class MainWP_Menu {
 
 		/**
 		 * MainWP Disable Menus items array.
-         *
-         * @global object
+		 *
+		 * @global object
 		 */
 		global $_mainwp_disable_menus_items;
 
 		// Init disable menu items, default is false.
-        // Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
+		// Use the MainWP Hook 'mainwp_main_menu_disable_menu_items' to disable menu items.
 		if ( null === $_mainwp_disable_menus_items ) {
 			$_mainwp_disable_menus_items = array(
 				// Compatible with old hooks.
@@ -294,8 +294,8 @@ class MainWP_Menu {
 		 * MainWP Left Menu, Sub Menu & Active menu slugs.
 		 *
 		 * @global object $mainwp_leftmenu
-         * @global object $mainwp_sub_leftmenu
-         * @global object $_mainwp_menu_active_slugs
+		 * @global object $mainwp_sub_leftmenu
+		 * @global object $_mainwp_menu_active_slugs
 		 */
 		global $mainwp_leftmenu, $mainwp_sub_leftmenu, $_mainwp_menu_active_slugs;
 
@@ -544,7 +544,7 @@ class MainWP_Menu {
 
 		/**
 		 * MainWP Left Menu.
-         *
+		 *
 		 * @global object $mainwp_sub_leftmenu
 		 */
 		global $mainwp_sub_leftmenu;

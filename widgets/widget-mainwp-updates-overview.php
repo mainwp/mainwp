@@ -68,7 +68,7 @@ class MainWP_Updates_Overview {
 		$request = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $request ) ) {
-			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : ''; // do not sanitize slug.
+			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : ''; // do not sanitize url slug.
 			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : ''; // do not sanitize slug.
 			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
 
@@ -1095,7 +1095,7 @@ class MainWP_Updates_Overview {
 
 		$output = array();
 		if ( isset( $_POST['sites'] ) ) {
-			foreach ( $_POST['sites'] as $siteId ) {
+			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				if ( ( 0 == $website->backup_before_upgrade ) || ( ( 2 == $website->backup_before_upgrade ) && ( 0 == $global_backup_before_upgrade ) ) ) {
 					continue;

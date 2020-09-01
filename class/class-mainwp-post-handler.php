@@ -141,8 +141,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		MainWP_Cache::init_session();
 
 		$role   = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
-		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
+		$groups = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$sites  = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
 		MainWP_User::render_table( false, $role, $groups, $sites, $search );
@@ -166,8 +166,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) ) : '';
 		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) ) : '';
 		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
-		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
+		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$postId    = isset( $_POST['postId'] ) ? sanitize_text_field( wp_unslash( $_POST['postId'] ) ) : '';
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
@@ -192,8 +192,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) ) : '';
 		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) ) : '';
 		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
-		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', (array) $_POST['groups'] ) : '';
-		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['sites'] ) : '';
+		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';
 		$search_on = isset( $_POST['search_on'] ) ? sanitize_text_field( wp_unslash( $_POST['search_on'] ) ) : '';
 
 		MainWP_Cache::init_session();
@@ -511,9 +511,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
-		if ( isset( $_POST['group_id'] ) && ! empty( $_POST['group_id'] ) ) {
+
+		$gid = isset( $_POST['group_id'] ) ? intval( $_POST['group_id'] ) : false;
+
+		if ( ! empty( $gid ) ) {
 			$ids      = '';
-			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( wp_unslash( $_POST['group_id'] ), true ) );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $gid, true ) );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$ids .= $website->id . ',';
 			}
@@ -841,7 +844,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			if ( ! is_array( $opts ) ) {
 				$opts = array();
 			}
-			$opts[ $_POST['sec'] ] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
+			$opts[ sanitize_text_field( wp_unslash( $_POST['sec'] ) ) ] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 			update_option( 'mainwp_opts_showhide_sections', $opts );
 			die( 'ok' );
 		}
@@ -857,16 +860,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
 			die( 'Invalid request.' );
 		}
-		if ( isset( $_POST['saving_status'] ) ) {
+		$saving_status = isset( $_POST['saving_status'] ) ? sanitize_text_field( wp_unslash( $_POST['saving_status'] ) ) : false;
+		if ( ! empty( $saving_status ) ) {
 			$current_options = get_option( 'mainwp_opts_saving_status' );
 			if ( ! is_array( $current_options ) ) {
 				$current_options = array();
 			}
-
-			if ( ! empty( $_POST['saving_status'] ) ) {
-				$current_options[ $_POST['saving_status'] ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
+			if ( isset( $_POST['value'] ) ) {
+				$current_options[ $saving_status ] = sanitize_text_field( wp_unslash( $_POST['value'] ) );
 			}
-
 			update_option( 'mainwp_opts_saving_status', $current_options );
 		}
 		die( 'ok' );

@@ -167,7 +167,7 @@ class MainWP_Install_Bulk {
 		$output['sites'] = array();
 
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
-			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
 			foreach ( $selected_sites as $enc_id ) {
 				$websiteid = $enc_id;
@@ -184,7 +184,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			// Get sites from group.
 			foreach ( $selected_groups as $enc_id ) {
 				$groupid = $enc_id;
@@ -328,7 +328,7 @@ class MainWP_Install_Bulk {
 		$output          = array();
 		$output['sites'] = array();
 		if ( isset( $_POST['selected_by'] ) && 'site' == $_POST['selected_by'] ) {
-			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_sites'] ) : array();
+			$selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 			// Get sites.
 			foreach ( $selected_sites as $enc_id ) {
 				$websiteid = $enc_id;
@@ -345,7 +345,7 @@ class MainWP_Install_Bulk {
 				}
 			}
 		} else {
-			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', (array) $_POST['selected_groups'] ) : array();
+			$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 			// Get sites from group.
 			foreach ( $selected_groups as $enc_id ) {
 				$groupid = $enc_id;
@@ -370,7 +370,7 @@ class MainWP_Install_Bulk {
 		}
 
 		$output['urls'] = array();
-		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? $_POST['files'] : array(); // do not sanitize slugs.
+		$files          = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? wp_unslash( $_POST['files'] ) : array(); // do not sanitize slugs.
 		foreach ( $files as $file ) {
 			$output['urls'][] = MainWP_System_Utility::get_download_url( 'bulk', $file );
 		}
@@ -413,7 +413,7 @@ class MainWP_Install_Bulk {
 		/** This filter is documented in pages/page-mainwp-install-bulk.php */
 		$post_data = apply_filters( 'mainwp_perform_install_data', $post_data );
 
-		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( wp_unslash( $_POST['urls'] ) ) : '';
+		$urls             = isset( $_POST['urls'] ) ? esc_url_raw( wp_unslash( $_POST['urls'] ) ) : ''; // do not sanitize.
 		$post_data['url'] = wp_json_encode( explode( '||', $urls ) );
 		$site_id          = isset( $_POST['siteId'] ) ? intval( $_POST['siteId'] ) : 0;
 

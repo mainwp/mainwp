@@ -1037,9 +1037,10 @@ class MainWP_Settings {
 	public static function render_email_settings() {
 		$notification_emails = MainWP_Notification_Settings::get_notification_types();
 		self::render_header( 'Emails' );
-		if ( isset( $_GET['edit-email'] ) && isset( $notification_emails[ $_GET['edit-email'] ] ) ) {
+		$edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
+		if ( ! empty( $edit_email ) && isset( $notification_emails[ $edit_email ] ) ) {
 			$updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
-			MainWP_Notification_Settings::instance()->render_edit_settings( $_GET['edit-email'], $updated_templ );
+			MainWP_Notification_Settings::instance()->render_edit_settings( $edit_email, $updated_templ );
 		} else {
 			$updated = MainWP_Notification_Settings::emails_general_settings_handle();
 			MainWP_Notification_Settings::instance()->render_all_settings( $updated );

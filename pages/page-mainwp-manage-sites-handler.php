@@ -153,7 +153,7 @@ class MainWP_Manage_Sites_Handler {
 		if ( isset( $_POST['websiteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['websiteid'] ) );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // do not sanitize.
+				$note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : '';
 				$esc_note = MainWP_Utility::esc_content( $note );
 				MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
 

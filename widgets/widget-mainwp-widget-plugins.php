@@ -314,7 +314,7 @@ class MainWP_Widget_Plugins {
 	 * @param mixed $action Plugin Action.
 	 */
 	public static function action( $action ) {
-		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : ''; // do not sanitize slug.
+		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : '';
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $plugin ) || empty( $websiteId ) ) {

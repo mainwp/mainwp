@@ -195,7 +195,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			$forceUseIPv4      = isset( $_POST['test_force_use_ipv4'] ) ? sanitize_text_field( wp_unslash( $_POST['test_force_use_ipv4'] ) ) : false;
 			$sslVersion        = isset( $_POST['test_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['test_ssl_version'] ) ) : false;
 			$http_user         = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '';
-			$http_pass         = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : ''; // do not sanitize psw.
+			$http_pass         = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';
 
 		} elseif ( isset( $_POST['siteid'] ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['siteid'] ) );

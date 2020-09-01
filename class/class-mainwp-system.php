@@ -496,7 +496,7 @@ class MainWP_System {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
-			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? $_REQUEST['mwpdl'] : ''; // do not sanitize slug.
+			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? $_REQUEST['mwpdl'] : '';
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
 
 			if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
@@ -696,7 +696,7 @@ class MainWP_System {
 			return;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // do not sanitize.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		$_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
 		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) == $_pos ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {

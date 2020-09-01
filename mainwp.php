@@ -14,14 +14,33 @@
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {
+
+	/**
+	 * Define MainWP Dashboard Plugin absolute full path and filename of this file.
+	 *
+	 * @const ( string ) Defined MainWP dashboard file path.
+	 * @source https://github.com/mainwp/mainwp/blob/master/mainwp.php
+	 */
 	define( 'MAINWP_PLUGIN_FILE', __FILE__ );
 }
 
 if ( ! defined( 'MAINWP_PLUGIN_DIR' ) ) {
+	/**
+	 * Define MainWP Dashboard Plugin Directory.
+	 *
+	 * @const ( string ) Defined MainWP Dashboard Plugin Directory.
+	 * @source https://github.com/mainwp/mainwp/blob/master/mainwp.php
+	 */
 	define( 'MAINWP_PLUGIN_DIR', plugin_dir_path( MAINWP_PLUGIN_FILE ) );
 }
 
 if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
+	/**
+	 * Define MainWP Child Dashboard URL.
+	 *
+	 * @const ( string ) Defined MainWP Dashboard Plugin URL.
+	 * @source https://github.com/mainwp/mainwp/blob/master/mainwp.php
+	 */
 	define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
 }
 

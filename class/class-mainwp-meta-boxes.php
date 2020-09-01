@@ -214,8 +214,8 @@ class MainWP_Meta_Boxes {
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type ) {
 			if ( isset( $_POST['post_category'] ) && is_array( $_POST['post_category'] ) ) {
-				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', sanitize_text_field( wp_unslash( $_POST['post_category'] ) ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-				do_action( 'mainwp_bulkpost_categories_handle', $post_id, sanitize_text_field( wp_unslash( $_POST['post_category'] ) ) );
+				update_post_meta( $post_id, '_categories', base64_encode( implode( ',', wp_unslash( $_POST['post_category'] ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				do_action( 'mainwp_bulkpost_categories_handle', $post_id, wp_unslash( $_POST['post_category'] ) );
 			}
 
 			$post_existing = ! empty( $_POST['post_only_existing'] ) ? 1 : 0;
@@ -247,7 +247,7 @@ class MainWP_Meta_Boxes {
 	public function add_tags_handle( $post_id, $post_type ) {
 		$this->add_extra_handle( 'Tags', '_tags', 'add_tags', $post_id, $post_type );
 		if ( isset( $_POST['add_tags'] ) ) {
-			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, sanitize_text_field( wp_unslash( $_POST['add_tags'] ) ) );
+			do_action( 'mainwp_bulkpost_tags_handle', $post_id, $post_type, wp_unslash( $_POST['add_tags'] ) );
 		}
 	}
 
@@ -333,7 +333,7 @@ class MainWP_Meta_Boxes {
 		 */
 		$_post = get_post( $post_id );
 		if ( $_post->post_type == $post_type && isset( $_POST[ $prefix ] ) ) {
-			$value = isset( $_POST[ $prefix ] ) ? base64_encode( sanitize_text_field( wp_unslash( $_POST[ $prefix ] ) ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+			$value = isset( $_POST[ $prefix ] ) ? base64_encode( wp_unslash( $_POST[ $prefix ] ) ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 			update_post_meta( $post_id, $saveto, $value );
 			return $value;
 		}

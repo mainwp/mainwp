@@ -1096,7 +1096,7 @@ class MainWP_Updates {
 	 * @param string $site_view                  Current Site view.
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
-		if ( 1 === $mainwp_show_language_updates ) {
+		if ( 1 == $mainwp_show_language_updates ) {
 			?>
 		<div class="ui active tab" data-tab="translations-updates">
 			<?php

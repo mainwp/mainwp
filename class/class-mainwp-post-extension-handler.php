@@ -267,7 +267,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );
 		// phpcs:ignore -- custom setting to install plugin.
 		ini_set( 'zlib.output_compression', 'Off' );
-		$download_link = isset( $_POST['download_link'] ) ? sanitize_text_field( wp_unslash( $_POST['download_link'] ) ) : '';
+		$download_link = isset( $_POST['download_link'] ) ? wp_unslash( $_POST['download_link'] ) : '';
 
 		$return = MainWP_Extensions_Handler::install_plugin( $download_link );
 

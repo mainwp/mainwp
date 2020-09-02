@@ -20,6 +20,7 @@ class MainWP_Install_Bulk {
 	 * Get Class Name
 	 *
 	 * @return string __CLASS__
+     *
 	 * @uses self::init()
 	 */
 	public static function get_class_name() {

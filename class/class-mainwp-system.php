@@ -7,6 +7,12 @@
 
 namespace MainWP\Dashboard;
 
+/**
+ * Defines MainWP Twitter Max Seconds.
+ *
+ * @const ( string ) 60 * 5
+ * @source https://github.com/mainwp/mainwp/blob/master/cron/bootstrap.php
+ */
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 );
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -96,6 +102,13 @@ class MainWP_System {
 		}
 
 		if ( ! defined( 'MAINWP_VERSION' ) ) {
+
+			/**
+			 * Defines MainWP Version.
+			 *
+			 * @const ( string )
+			 * @source https://code-reference.mainwp.com/classes/MainWP.Dashboard.MainWP_System.html
+			 */
 			define( 'MAINWP_VERSION', $this->current_version );
 		}
 

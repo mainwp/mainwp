@@ -74,7 +74,7 @@ class MainWP_Themes_Handler {
 	 * Delete the selected theme.
 	 */
 	public static function delete_themes() {
-		$themes = isset( $_POST['themes'] ) ? esc_html( wp_unslash( $_POST['themes'] ) ) : '';
+		$themes = isset( $_POST['themes'] ) ? wp_unslash( $_POST['themes'] ) : '';
 		self::action( 'delete', implode( '||', $themes ) );
 		die( 'SUCCESS' );
 	}

@@ -669,7 +669,7 @@ class MainWP_Server_Information_Handler {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( '' === $_SERVER['REMOTE_HOST'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
-			echo wp_unslash( $_SERVER['REMOTE_HOST'] );
+			echo isset( $_SERVER['REMOTE_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_HOST'] ) ) : '';
 		}
 	}
 

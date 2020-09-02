@@ -7,6 +7,12 @@
 
 namespace MainWP\Dashboard;
 
+/**
+ * Defines MainWP Twitter Max Seconds.
+ *
+ * @const ( string ) 60 * 5
+ * @source https://github.com/mainwp/mainwp/blob/master/cron/bootstrap.php
+ */
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 );
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -27,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1-beta2';
+	public static $version = '4.1-beta3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -96,6 +102,13 @@ class MainWP_System {
 		}
 
 		if ( ! defined( 'MAINWP_VERSION' ) ) {
+
+			/**
+			 * Defines MainWP Version.
+			 *
+			 * @const ( string )
+			 * @source https://code-reference.mainwp.com/classes/MainWP.Dashboard.MainWP_System.html
+			 */
 			define( 'MAINWP_VERSION', $this->current_version );
 		}
 
@@ -496,7 +509,7 @@ class MainWP_System {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
 			$mwpDir = MainWP_System_Utility::get_mainwp_dir();
 			$mwpDir = $mwpDir[0];
-			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? $_REQUEST['mwpdl'] : ''; // do not sanitize slug.
+			$mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
 			$file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
 
 			if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
@@ -696,7 +709,7 @@ class MainWP_System {
 			return;
 		}
 
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : ''; // do not sanitize.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		$_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
 		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) == $_pos ) {
 			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {

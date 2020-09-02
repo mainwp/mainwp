@@ -1193,7 +1193,7 @@ class MainWP_User {
 		}
 
 		if ( 'update_user' === $pAction ) {
-			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : ''; // do not sanitize.
+			$user_data = isset( $_POST['user_data'] ) ? wp_unslash( $_POST['user_data'] ) : '';
 			parse_str( $user_data, $extra );
 			if ( $website->adminname == $userName ) {
 
@@ -1967,7 +1967,7 @@ class MainWP_User {
 		$dbwebsites  = array();
 		$not_valid   = array();
 		$error_sites = '';
-		if ( 'site' === $_POST['select_by'] ) {
+		if ( isset( $_POST['select_by'] ) && 'site' === $_POST['select_by'] ) {
 			foreach ( $selected_sites as $url ) {
 				if ( ! empty( $url ) ) {
 					$website = MainWP_DB::instance()->get_websites_by_url( $url );

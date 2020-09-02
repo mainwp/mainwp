@@ -60,7 +60,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 *
 	 * @param mixed $website Child Site info.
 	 *
-	 * @return html Backup Site html.
+	 * @return string Backup Site html.
 	 */
 	public static function render_backup_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'execute_backups' ) ) {
@@ -114,7 +114,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 *
 	 * @param mixed $websiteid Child Site ID.
 	 *
-	 * @return html Backup Details.
+	 * @return string Backup Details.
 	 */
 	public static function render_backup_details( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -129,7 +129,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 *
 	 * @param mixed $websiteid Child Site ID.
 	 *
-	 * @return html Backup Options.
+	 * @return string Backup Options.
 	 */
 	public static function render_backup_options( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );

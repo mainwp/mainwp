@@ -611,7 +611,7 @@ class MainWP_Plugins {
 	 * @uses MainWP_Cache::add_context()
 	 * @uses MainWP_Cache::add_result()
 	 *
-	 * @return html Plugin Table.
+	 * @return string Plugin Table.
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
@@ -838,7 +838,7 @@ class MainWP_Plugins {
 	 *
 	 * @param mixed $status active|inactive|all.
 	 *
-	 * @return html Plugin Bulk Actions Menu.
+	 * @return string Plugin Bulk Actions Menu.
 	 */
 	public static function render_bulk_actions( $status ) {
 		ob_start();

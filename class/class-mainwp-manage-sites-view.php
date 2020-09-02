@@ -557,7 +557,7 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $website Child Site.
 	 * @param mixed $page Page to render.
 	 *
-	 * @return html Sites Overview Page.
+	 * @return string Sites Overview Page.
 	 */
 	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
@@ -722,7 +722,7 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $websiteid Child Site ID.
 	 * @param mixed $updated Site settings updated check.
 	 *
-	 * @return html Edit Child Site sub page.
+	 * @return string Edit Child Site sub page.
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {

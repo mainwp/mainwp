@@ -1192,7 +1192,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * Optimize for shared hosting or big networks.
 	 *
-	 * @return html Rows html.
+	 * @return string Rows html.
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();

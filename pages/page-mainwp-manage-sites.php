@@ -418,7 +418,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render add new site page.
 	 *
-	 * @return html Add new site html.
+	 * @return string Add new site html.
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );

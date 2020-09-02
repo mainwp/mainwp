@@ -126,7 +126,7 @@ class MainWP_Manage_Groups {
 	 *
 	 * Render MainWP Groups Table.
 	 *
-	 * @return html MainWP Groups Table.
+	 * @return string MainWP Groups Table.
 	 */
 	public static function render_all_groups() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_groups' ) ) {

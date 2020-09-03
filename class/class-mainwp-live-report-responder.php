@@ -52,7 +52,9 @@ class MainWP_Live_Report_Responder {
 	}
 
 	/**
-	 * Construct method.
+	 * MainWP_Live_Report_Responder constructor.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 

@@ -37,7 +37,9 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
-	 * Method __construct()
+	 * MainWP_System_Cron_Jobs constructor.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 	}

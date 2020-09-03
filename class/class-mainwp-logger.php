@@ -95,9 +95,9 @@ class MainWP_Logger {
 	}
 
 	/**
-	 * Method __construct()
+	 * MainWP_Logger constructor.
 	 *
-	 * Constructor.
+	 * Run each time the class is called.
 	 */
 	private function __construct() {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();

@@ -76,11 +76,18 @@ class MainWP_System {
 	}
 
 	/**
-	 * Method __construct()
+	 * MainWP_System constructor.
 	 *
-	 * Run any time MainWP_System is called.
+	 * Run any time class is called.
 	 *
 	 * @param mixed $mainwp_plugin_file Plugin Slug.
+	 */
+	/**
+	 * MainWP_System constructor.
+	 *
+	 * Run any time class is called.
+	 *
+	 * @param $mainwp_plugin_file
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;

@@ -87,9 +87,9 @@ class MainWP_Deprecated_Hooks {
 	}
 
 	/**
-	 * __construct
+	 * MainWP_Deprecated_Hooks constructor.
 	 *
-	 * Construct.
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 	}

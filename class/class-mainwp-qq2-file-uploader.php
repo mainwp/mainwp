@@ -38,7 +38,9 @@ class MainWP_QQ2_File_Uploader {
 	private $file;
 
 	/**
-	 * Method __construct
+	 * MainWP_QQ2_File_Uploader constructor.
+	 *
+	 * Run each time the class is called.
 	 *
 	 * @param array $allowedExtensions Array of allowed Extensions.
 	 * @param int   $sizeLimit Maximum allowed file size.

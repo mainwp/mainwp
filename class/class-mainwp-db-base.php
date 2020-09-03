@@ -41,9 +41,9 @@ class MainWP_DB_Base {
 	protected $wpdb;
 
 	/**
-	 * Method __construct()
+	 * MainWP_DB_Base constructor.
 	 *
-	 * Contructor.
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 

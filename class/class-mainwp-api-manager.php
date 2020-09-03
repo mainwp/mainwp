@@ -78,6 +78,10 @@ class MainWP_Api_Manager {
 	}
 
 	/**
+	 * MainWP_Api_Manager constructor.
+	 *
+	 * Run each time the class is called.
+	 *
 	 * Replace HTTP procol to HTTPS.
 	 */
 	public function __construct() {

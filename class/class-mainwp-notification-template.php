@@ -62,7 +62,9 @@ class MainWP_Notification_Template {
 	}
 
 	/**
-	 * Class constructor.
+	 * MainWP_Notification_Template constructor.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 		$this->template_path        = MAINWP_PLUGIN_DIR . 'templates/';

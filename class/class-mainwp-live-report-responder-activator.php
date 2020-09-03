@@ -40,7 +40,9 @@ class MainWP_Live_Report_Responder_Activator {
 	protected $software_version = '1.1';
 
 	/**
-	 * Instanciate Plugin.
+	 * MainWP_Live_Report_Responder_Activator constructor.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 

@@ -26,7 +26,7 @@ class MainWP_Exception extends \Exception {
 
 
 	/**
-	 * Method __construct()
+	 * MainWP_Exception constructor.
 	 *
 	 * Grab Exception Message upon creation of the object.
 	 *

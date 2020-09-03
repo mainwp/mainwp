@@ -15,9 +15,9 @@ namespace MainWP\Dashboard;
 class MainWP_Bulk_Post {
 
 	/**
-	 * Method __construct()
+	 * MainWP_Bulk_Post constructor.
 	 *
-	 * Constructor.
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 		add_action( 'admin_post_mainwp_editpost', array( &$this, 'handle_edit_bulkpost' ) );

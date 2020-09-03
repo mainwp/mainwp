@@ -45,9 +45,10 @@ class MainWP_Manage_Sites_List_Table {
 	protected $column_headers;
 
 	/**
-	 * Method __construct()
-	 *
-	 * Add action to generate tabletop.
+	 * MainWP_Manage_Sites_List_Table constructor.
+     *
+     * Run each time the class is called.
+     * Add action to generate tabletop.
 	 */
 	public function __construct() {
 		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );

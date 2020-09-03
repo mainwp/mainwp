@@ -41,9 +41,9 @@ class MainWP_Setup_Wizard {
 	private $steps = array();
 
 	/**
-	 * Method __construct()
+	 * MainWP_Setup_Wizard constructor.
 	 *
-	 * Initiate menus.
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'admin_menus' ) );

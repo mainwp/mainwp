@@ -57,6 +57,9 @@ class MainWP_Api_Manager_Key {
 	}
 
 	/**
+	 * MainWP_Api_Manager_Key constructor.
+	 *
+	 * Run any time class is called.
 	 * Validate SSL certificate.
 	 */
 	public function __construct() {

@@ -48,6 +48,8 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
+	 * MainWP_Api_Manager_Plugin_Update constructor.
+	 *
 	 * Run each time the class is called.
 	 */
 	public function __construct() {

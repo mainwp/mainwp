@@ -36,7 +36,9 @@ class MainWP_Updates_Table_Helper {
 	public $view_per;
 
 	/**
-	 * Method __construct()
+	 * MainWP_Updates_Table_Helper constructor.
+	 *
+	 * Run each time the class is called.
 	 *
 	 * @param string $view_per View per value.
 	 * @param string $type Type of plugin or theme, option, default: 'plugin'.

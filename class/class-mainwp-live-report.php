@@ -85,7 +85,9 @@ class MainWP_Live_Reports {
 	private static $count_sec_footer = 0;
 
 	/**
-	 * A magic method defined, __construct() will be called automatically anytime someone instantiates (creates) an object of this class.
+     * MainWP_Live_Reports constructor.
+	 *
+     * Run each time the class is called.
 	 */
 	public function __construct() {
 	}

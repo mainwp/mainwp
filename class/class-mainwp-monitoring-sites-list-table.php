@@ -26,8 +26,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	protected $column_headers;
 
 	/**
-	 * Method __construct()
-	 *
+	 * MainWP_Monitoring_Sites_List_Table constructor.
+     *
+     * Run each time the class is called.
 	 * Add action to generate tabletop.
 	 */
 	public function __construct() {

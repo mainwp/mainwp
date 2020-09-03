@@ -15,11 +15,11 @@ namespace MainWP\Dashboard;
 class MainWP_Hooks {
 
 	/**
-	 * Method __contruct()
+	 * MainWP_Hooks constructor.
 	 *
 	 * Initialize MainWP_Hooks actions/filters upon creation of the object.
 	 *
-	 * @deprecated 4.0.7. Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
+	 * @deprecated 4.0.7. Hook deprecation - Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
 	 */
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );

@@ -24,3 +24,4 @@ jobs:
           privateKey: ${{ secrets.PRIVATE_KEY }}
           command: |
             rm -rf ~/Source/mainwp/
+            git clone https://github.com/mainwp/mainwp.git ~/Source/mainwp

@@ -810,7 +810,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 * @param mixed $website     Object containing the site info.
 	 * @param bool  $good_health Good site health info.
 	 */
-	protected function single_row_columns( $website, $good_health ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$statusUndefined = ( '' == $website['http_response_code'] );
 		$statusOnline    = ( 1 == $website['offline_check_result'] );

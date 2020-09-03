@@ -25,3 +25,4 @@ jobs:
           command: |
             rm -rf ~/Source/mainwp/
             git clone https://github.com/mainwp/mainwp.git ~/Source/mainwp
+            sh ~/scripts/docproc.sh

@@ -60,8 +60,8 @@ class MainWP_Overview {
 
 	/**
 	 * MainWP_Overview constructor.
-     *
-     * Run each time the class is called.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 		add_filter( 'screen_layout_columns', array( &$this, 'on_screen_layout_columns' ), 10, 2 );

@@ -47,8 +47,8 @@ class MainWP_Notification_Settings {
 
 	/**
 	 * MainWP_Notification_Settings constructor.
-     *
-     * Run each time the class is called.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 	}

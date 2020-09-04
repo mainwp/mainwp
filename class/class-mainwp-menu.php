@@ -29,8 +29,8 @@ class MainWP_Menu {
 
 	/**
 	 * MainWP_Menu constructor.
-     *
-     * Run each time the class is called.
+	 *
+	 * Run each time the class is called.
 	 * Define MainWP Main Menu Items.
 	 */
 	public function __construct() {

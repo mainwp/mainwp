@@ -88,20 +88,19 @@ class MainWP_Meta_Boxes {
 			$selected_wp = array();
 			if ( isset( $_POST['selected_sites'] ) ) {
 				if ( is_array( $_POST['selected_sites'] ) ) {
-					$selected_wp = ! empty( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();			
+					$selected_wp = ! empty( $_POST['selected_sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
 				} else { // radio selection.
 					$selected_wp = ! empty( $_POST['selected_sites'] ) ? array( sanitize_text_field( wp_unslash( $_POST['selected_sites'] ) ) ) : array();
 				}
-			}			
+			}
 			update_post_meta( $post_id, '_selected_sites', $selected_wp );
 			$selected_groups = array();
 			if ( isset( $_POST['selected_groups'] ) ) {
 				if ( is_array( $_POST['selected_groups'] ) ) {
-					$selected_groups = ! empty( $_POST['selected_groups'] )? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();			
+					$selected_groups = ! empty( $_POST['selected_groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
 				} else { // radio selection.
 					$selected_wp = ! empty( $_POST['selected_groups'] ) ? array( sanitize_text_field( wp_unslash( $_POST['selected_groups'] ) ) ) : array();
 				}
-
 			}
 			update_post_meta( $post_id, '_selected_groups', $selected_groups );
 			update_post_meta( $post_id, '_selected_by', sanitize_text_field( wp_unslash( $_POST['select_by'] ) ) );

@@ -82,6 +82,13 @@ class MainWP_System {
 	 *
 	 * @param string $mainwp_plugin_file Plugn slug.
 	 */
+	/**
+	 * MainWP_System constructor.
+	 *
+	 * Run any time class is called.
+	 *
+	 * @param $mainwp_plugin_file
+	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
 		$this->load_all_options();

@@ -294,7 +294,7 @@ class MainWP_Manage_Backups {
 	/**
 	 * Render Legacy Backups page.
 	 *
-	 * @return html Legacy Backups html.
+	 * @return string Legacy Backups html.
 	 */
 	public static function render_manager() {
 		$backupTask = null;
@@ -382,7 +382,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $backup_items List Item.
 	 *
-	 * @return html Table Content.
+	 * @return string Table Content.
 	 */
 	public function display( $backup_items ) {
 		$can_trigger = true;
@@ -473,7 +473,7 @@ class MainWP_Manage_Backups {
 	 * @param mixed $item Item to go in column.
 	 * @param mixed $columns Columns Array.
 	 *
-	 * @return html Row Content.
+	 * @return string Row Content.
 	 */
 	public function single_row( $item, $columns ) {
 		?>
@@ -498,7 +498,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_actions( $item ) {
 
@@ -544,7 +544,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_task_name( $item ) {
 		return stripslashes( $item->name );
@@ -555,7 +555,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_type( $item ) {
 		return ( 'db' == $item->type ? __( 'DATABASE BACKUP', 'mainwp' ) : __( 'FULL BACKUP', 'mainwp' ) );
@@ -566,7 +566,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_schedule( $item ) {
 		return strtoupper( $item->schedule );
@@ -577,7 +577,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_destination( $item ) {
 		$extraOutput = apply_filters( 'mainwp_backuptask_column_destination', '', $item->id );
@@ -593,7 +593,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_websites( $item ) {
 		if ( 0 == count( $item->the_sites ) ) {
@@ -608,7 +608,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_details( $item ) {
 		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
@@ -635,7 +635,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $item Item to go in column.
 	 *
-	 * @return html Action content.
+	 * @return string Action content.
 	 */
 	public function column_trigger( $item ) {
 		return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . __( 'Run now', 'mainwp' ) . '</a>';
@@ -646,7 +646,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $task Task to edit.
 	 *
-	 * @return html Edit task form.
+	 * @return string Edit task form.
 	 */
 	public static function render_edit( $task ) {
 		self::render_header( 'ManageBackupsEdit' );
@@ -689,7 +689,7 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param mixed $task Task to edit.
 	 *
-	 * @return html Form.
+	 * @return string Form.
 	 */
 	public static function render_new_edit( $task ) {
 		$selected_websites = array();
@@ -792,7 +792,7 @@ class MainWP_Manage_Backups {
 	 * @param mixed $useGlobal Use Global.
 	 * @param mixed $useSite Use Site.
 	 *
-	 * @return html Task details.
+	 * @return string Task details.
 	 */
 	public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ) {
 		?>

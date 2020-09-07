@@ -49,7 +49,9 @@ class MainWP_System_Handler {
 	}
 
 	/**
-	 * Constructor
+	 * MainWP_System_Handler constructor.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_extension_enabled_check' instead.

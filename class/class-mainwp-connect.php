@@ -295,6 +295,12 @@ class MainWP_Connect {
 			$data['user']     = $website->adminname;
 			$data['function'] = $what;
 			$data['nonce']    = wp_rand( 0, 9999 );
+
+			$params_filter = apply_filters('mainwp_pre_fetch_authed_data', false, $params, $what, $website );
+			if ( is_array( $params_filter ) && ! empty( $params_filter ) ) {
+				$data = array_merge( $data, $params_filter );
+			}
+
 			if ( null != $params ) {
 				$data = array_merge( $data, $params );
 			}

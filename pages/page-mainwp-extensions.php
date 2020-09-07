@@ -32,7 +32,8 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::render_header
 		 */
-		add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_extensions' instead.
+		add_action( 'mainwp_pageheader_extensions', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Extensions page footer via the 'mainwp-pagefooter-extensions' action.
@@ -41,7 +42,8 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_extensions' instead.
+		add_action( 'mainwp_pagefooter_extensions', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 
@@ -503,6 +505,7 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Extensions_View::render_header( $shownPage );
 	}
 
@@ -514,6 +517,7 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Extensions_View::render_footer( $shownPage );
 	}
 

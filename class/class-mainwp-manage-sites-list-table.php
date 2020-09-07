@@ -45,8 +45,9 @@ class MainWP_Manage_Sites_List_Table {
 	protected $column_headers;
 
 	/**
-	 * Method __construct()
+	 * MainWP_Manage_Sites_List_Table constructor.
 	 *
+	 * Run each time the class is called.
 	 * Add action to generate tabletop.
 	 */
 	public function __construct() {
@@ -896,6 +897,7 @@ class MainWP_Manage_Sites_List_Table {
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
+			'scrollX'       => 'true',
 		);
 
 		/**
@@ -936,6 +938,7 @@ class MainWP_Manage_Sites_List_Table {
 						"paging" : <?php echo $table_features['paging']; ?>,
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
 						"info" : <?php echo $table_features['info']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
@@ -996,6 +999,7 @@ class MainWP_Manage_Sites_List_Table {
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
 						"info" : <?php echo $table_features['info']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 						"order" : <?php echo $table_features['order']; ?>,
@@ -1192,7 +1196,7 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * Optimize for shared hosting or big networks.
 	 *
-	 * @return html Rows html.
+	 * @return string Rows html.
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();

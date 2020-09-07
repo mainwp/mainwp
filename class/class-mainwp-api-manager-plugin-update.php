@@ -48,6 +48,8 @@ class MainWP_Api_Manager_Plugin_Update {
 	}
 
 	/**
+	 * MainWP_Api_Manager_Plugin_Update constructor.
+	 *
 	 * Run each time the class is called.
 	 */
 	public function __construct() {
@@ -90,16 +92,16 @@ class MainWP_Api_Manager_Plugin_Update {
 	public function update_check( $plugin ) {
 
 		$args = array(
-			'request'            => 'pluginupdatecheck',
-			'plugin_name'        => $plugin['plugin_name'],
-			'version'            => $plugin['software_version'],
-			'product_id'         => $plugin['product_id'],
-			'api_key'            => $plugin['api_key'],
-			'activation_email'   => $plugin['activation_email'],
-			'instance'           => $plugin['instance'],
-			'domain'             => $plugin['domain'],
-			'software_version'   => $plugin['software_version'],
-			'extra'              => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
+			'request'          => 'pluginupdatecheck',
+			'plugin_name'      => $plugin['plugin_name'],
+			'version'          => $plugin['software_version'],
+			'product_id'       => $plugin['product_id'],
+			'api_key'          => $plugin['api_key'],
+			'activation_email' => $plugin['activation_email'],
+			'instance'         => $plugin['instance'],
+			'domain'           => $plugin['domain'],
+			'software_version' => $plugin['software_version'],
+			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
 		);
 
 		// Check for a plugin update.

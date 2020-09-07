@@ -231,7 +231,7 @@ class MainWP_System_View {
 	 * @param mixed $plugin_data Plugin Data.
 	 * @param mixed $status Status of plugin activation.
 	 *
-	 * @return html Activation warning message.
+	 * @return string Activation warning message.
 	 */
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
 		$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();

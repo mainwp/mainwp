@@ -418,7 +418,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render add new site page.
 	 *
-	 * @return html Add new site html.
+	 * @return string Add new site html.
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1144,12 +1144,13 @@ class MainWP_Manage_Sites {
 			}
 
 			$notification_emails = MainWP_Notification_Settings::get_notification_types();
-			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'] ) ) : '';
 			$type                = isset( $_POST['mainwp_managesites_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_setting_emails_type'] ) ) : '';
-			if ( isset( $notification_emails[ $type ] ) ) {
-				$update_settings               = $edit_settingEmails[ $type ];
-				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails[ $type ]['recipients'] );
-				$update_settings['disable']    = ( isset( $edit_settingEmails[ $type ] ) && isset( $edit_settingEmails[ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
+			$edit_settingEmails  = isset( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_managesites_edit_settingEmails'][ $type ] ) ) : array();
+
+			if ( isset( $notification_emails[ $type ] ) && ! empty( $edit_settingEmails ) ) {
+				$update_settings               = $edit_settingEmails;
+				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails['recipients'] );
+				$update_settings['disable']    = isset( $edit_settingEmails['disable'] ) ? 0 : 1; // to set 'disable' values.
 
 				/**
 				* Action: mainwp_before_save_email_settings

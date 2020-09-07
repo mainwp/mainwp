@@ -34,8 +34,9 @@ class MainWP_Live_Reports_Responder_DB {
 	private static $instance = null;
 
 	/**
-	 * Method __contruct()
+	 * MainWP_Live_Reports_Responder_DB constructor.
 	 *
+	 * Run each time the class is called.
 	 * Initialize default tokens upon creation of the object.
 	 */
 	public function __construct() {

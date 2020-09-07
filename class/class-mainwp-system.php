@@ -7,6 +7,12 @@
 
 namespace MainWP\Dashboard;
 
+/**
+ * Defines MainWP Twitter Max Seconds.
+ *
+ * @const ( string ) 60 * 5
+ * @source https://github.com/mainwp/mainwp/blob/master/cron/bootstrap.php
+ */
 define( 'MAINWP_TWITTER_MAX_SECONDS', 60 * 5 );
 
 const MAINWP_VIEW_PER_SITE         = 1;
@@ -70,11 +76,11 @@ class MainWP_System {
 	}
 
 	/**
-	 * Method __construct()
+	 * MainWP_System constructor.
 	 *
-	 * Run any time MainWP_System is called.
+	 * Runs any time class is called.
 	 *
-	 * @param mixed $mainwp_plugin_file Plugin Slug.
+	 * @param string $mainwp_plugin_file Plugn slug.
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -96,6 +102,13 @@ class MainWP_System {
 		}
 
 		if ( ! defined( 'MAINWP_VERSION' ) ) {
+
+			/**
+			 * Defines MainWP Version.
+			 *
+			 * @const ( string )
+			 * @source https://code-reference.mainwp.com/classes/MainWP.Dashboard.MainWP_System.html
+			 */
 			define( 'MAINWP_VERSION', $this->current_version );
 		}
 
@@ -644,6 +657,13 @@ class MainWP_System {
 		wp_localize_script( 'mainwp', 'mainwpTranslations', $mainwpTranslations );
 
 		$security_nonces = MainWP_Post_Handler::instance()->get_security_nonces();
+
+		$nonces_filter = apply_filters( 'mainwp_security_nonces', array() );
+
+		if ( is_array( $nonces_filter ) && ! empty( $nonces_filter ) ) {
+			$security_nonces = array_merge( $security_nonces, $nonces_filter );
+		}
+
 		wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
 		wp_enqueue_script( 'thickbox' );

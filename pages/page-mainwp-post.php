@@ -1890,7 +1890,7 @@ class MainWP_Post {
 						<?php
 					}
 					?>
-					<h3 class="header"><?php echo esc_html( $note_title ); ?></h3>
+					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 					<div class="field">
 						<label><?php esc_html_e( 'Title', 'mainwp' ); ?></label>
 						<input type="text" name="post_title" id="title"  value="<?php echo ( 'Auto Draft' !== $post->post_title ) ? esc_attr( $post->post_title ) : ''; ?>" value="" autocomplete="off" spellcheck="true">

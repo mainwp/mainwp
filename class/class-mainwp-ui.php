@@ -582,7 +582,7 @@ class MainWP_UI {
 			do_action( 'mainwp_help_sidebar_content' );
 			?>
 			<div class="ui hidden divider"></div>
-			<a href="https://mainwp.com/help/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
+			<a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
 			<div class="ui hidden divider"></div>
 			<div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
 				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>

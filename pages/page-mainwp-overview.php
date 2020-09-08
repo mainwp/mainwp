@@ -536,12 +536,12 @@ class MainWP_Overview {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/screen-options/" target="_blank">Screen Options</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/mainwp-tables/" target="_blank">MainWP Tables</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/understanding-mainwp-dashboard-user-interface/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/screen-options/" target="_blank">Screen Options</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-tables/" target="_blank">MainWP Tables</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
 				<?php
 				/**
 				 * Action: mainwp_overview_help_item

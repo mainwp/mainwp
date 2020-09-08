@@ -547,13 +547,13 @@ class MainWP_Extensions {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div>
 			</div>
 			<?php
 		}

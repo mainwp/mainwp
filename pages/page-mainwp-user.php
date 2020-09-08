@@ -2109,11 +2109,11 @@ class MainWP_User {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/" target="_blank">Manage Users</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/create-a-new-user/" target="_blank">Create a New User</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-users/delete-users/" target="_blank">Delete User(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/create-a-new-user/" target="_blank">Create a New User</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/delete-users/" target="_blank">Delete User(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_users_help_item

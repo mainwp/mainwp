@@ -2362,12 +2362,12 @@ class MainWP_Post {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/" target="_blank">Manage Posts</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/create-a-new-post/" target="_blank">Create a New Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/create-a-new-post/" target="_blank">Create a New Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_posts_help_item

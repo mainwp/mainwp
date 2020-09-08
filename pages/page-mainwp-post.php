@@ -2032,6 +2032,7 @@ class MainWP_Post {
 				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
+					<?php do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); ?>
 					<div class="mainwp-select-sites">
 						<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<?php MainWP_UI::select_sites_box( $sites_settings['type'], $sites_settings['show_group'], $sites_settings['show_select_all'], $sites_settings['class'], $sites_settings['style'], $sel_sites, $sel_groups, false, $post_ID ); ?>

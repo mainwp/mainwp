@@ -171,15 +171,15 @@ class MainWP_UI {
 		?>
 		<div id="mainwp-select-sites-filters">
 			<div class="ui grid">
-				<div class="four wide column">
-				<?php if ( $show_select_all ) { ?>
+			<?php if ( $show_select_all ) { ?>
+				<div class="four wide column">				
 					<div class="ui basic icon mini buttons">					
 						<a class="ui button" onClick="return mainwp_ss_select( this, true )" data-tooltip="<?php esc_attr_e( 'Select all websites.', 'mainwp' ); ?>" data-inverted=""><i class="check square outline icon"></i></a>
 						<a class="ui button" onClick="return mainwp_ss_select( this, false )" data-tooltip="<?php esc_attr_e( 'Deselect all websites.', 'mainwp' ); ?>" data-inverted=""><i class="square outline icon"></i></a>
-					</div>
-				<?php } ?>
+					</div>				
 				</div>
-				<div class="twelve wide column">
+				<?php } ?>
+				<div class="<?php echo $show_select_all ? 'twelve' : 'sixteen'; ?> wide column">
 					<div class="ui mini fluid icon input">
 						<input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
 						<i class="filter icon"></i>

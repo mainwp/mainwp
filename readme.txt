@@ -1,4 +1,4 @@
-=== MainWP Dashboard - WordPress Manager for Professionals ===
+=== MainWP Dashboard - The WordPress Manager for Professionals ===
 Contributors: mainwp
 Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multiple Sites, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp
@@ -146,7 +146,10 @@ Essentially MainWP and ManageWP provide the same type of service but with differ
 
 ManageWP is a Service as a Solution (SaaS) property owned by Godaddy.  The SaaS system makes ManageWP a type of "Walled Garden" with limited customization options.
 
-MainWP follows the tradition of WordPress and is open source, private, and fully extendable.   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit. 
+MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit. 
+
+= How do I customize MainWP for my needs? =
+If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about Extension creation at [MainWP.dev](https://mainwp.dev)
 
 = I have an idea for MainWP; how do I let you know? =
 Please follow the steps outlined in the [MainWP Feature Requests](https://meta.mainwp.com/c/feature/16) so you can add your idea to the MainWP Community to be voted on.

@@ -1467,7 +1467,7 @@ class MainWP_System_Cron_Jobs {
 		// individual uptime notification.
 		foreach ( $offlineSites as $site ) {
 			$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $site );
-			if ( ! $email_settings['disable'] ) {
+			if ( $email_settings['disable'] ) {
 				continue; // disabled send notification for this site.
 			}
 			$individual_admin_uptimeSites[] = $site;
@@ -1537,7 +1537,7 @@ class MainWP_System_Cron_Jobs {
 		// individual uptime notification.
 		foreach ( $healthSites as $site ) {
 			$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'site_health', $site );
-			if ( ! $email_settings['disable'] ) {
+			if ( $email_settings['disable'] ) {
 				continue; // disabled notification for this site.
 			}
 			$to_admin_siteHealthWebsites[] = $site;

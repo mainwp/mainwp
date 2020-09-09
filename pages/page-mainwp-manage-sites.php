@@ -1150,7 +1150,7 @@ class MainWP_Manage_Sites {
 			if ( isset( $notification_emails[ $type ] ) && ! empty( $edit_settingEmails ) ) {
 				$update_settings               = $edit_settingEmails;
 				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails['recipients'] );
-				$update_settings['disable']    = isset( $edit_settingEmails['disable'] ) ? 0 : 1; // to set 'disable' values.
+				$update_settings['disable']    = isset( $edit_settingEmails['disable'] ) ? 0 : 1; // isset 'on' means enable (0), not isset mean disabled (1).
 
 				/**
 				* Action: mainwp_before_save_email_settings

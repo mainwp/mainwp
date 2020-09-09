@@ -623,6 +623,10 @@ class MainWP_UI {
 			</div>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
+
+				jQuery('#mainwp-sites-menu-sidebar').prependTo('body');
+				jQuery('body > div#wpwrap').addClass('pusher');
+
 				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.help.sidebar' ).sidebar( {

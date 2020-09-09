@@ -962,8 +962,8 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render manage sites content.
 	 *
-	 * @param boolean $showDelete true|false Show delete option.
-	 * @param boolean $showAddNew true|false Show add new option.
+	 * @param bool $showDelete true|false Show delete option.
+	 * @param bool $showAddNew true|false Show add new option.
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 

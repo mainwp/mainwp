@@ -359,7 +359,7 @@ class MainWP_System_View {
 	/**
 	 * Render MainWP Review Request.
 	 *
-	 * @param boolean $current_options false|true Weather or not to display request.
+	 * @param bool $current_options false|true Weather or not to display request.
 	 */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;

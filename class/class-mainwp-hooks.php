@@ -168,7 +168,7 @@ class MainWP_Hooks {
 	 *
 	 * Hook to delete Child Site.
 	 *
-	 * @param boolean $site_id Child site ID.
+	 * @param bool $site_id Child site ID.
 	 *
 	 * @return boolean|array Return false if empty and return array error - Site not found | result - SUCCESS.
 	 */
@@ -222,7 +222,7 @@ class MainWP_Hooks {
 	 * @param mixed   $websiteid Child site ID.
 	 * @param mixed   $cloneid Clone site ID.
 	 * @param mixed   $clone_url Clone site URL.
-	 * @param boolean $force_update Force the update, true|false, Default: false.
+	 * @param bool $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
 	 */
@@ -238,7 +238,7 @@ class MainWP_Hooks {
 	 * @param mixed   $pluginFile Plugin file.
 	 * @param mixed   $key Key.
 	 * @param string  $clone_url Clone site URL.
-	 * @param boolean $clone_site_id Clone site ID.
+	 * @param bool $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
 	 */
@@ -451,8 +451,8 @@ class MainWP_Hooks {
 	 *
 	 * @param string  $title Input title.
 	 * @param string  $type Input type, radio.
-	 * @param boolean $show_group Whether or not to show group, Default: true.
-	 * @param boolean $show_select_all Whether to show select all.
+	 * @param bool $show_group Whether or not to show group, Default: true.
+	 * @param bool $show_select_all Whether to show select all.
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
@@ -696,9 +696,9 @@ class MainWP_Hooks {
 	 *
 	 * Hook to get MainWP Directory.
 	 *
-	 * @param boolean $false False.
+	 * @param bool $false False.
 	 * @param null    $dir WP files system diectories.
-	 * @param boolean $direct_access Return true if Direct access file system. Default: false.
+	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $newdir, $url.
 	 */

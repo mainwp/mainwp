@@ -1094,8 +1094,8 @@ class MainWP_Manage_Sites_List_Table {
 	/**
 	 * Echo the column headers.
 	 *
-	 * @param boolean $optimize true|false Whether or not to optimise.
-	 * @param boolean $top true|false.
+	 * @param bool $optimize true|false Whether or not to optimise.
+	 * @param bool $top true|false.
 	 */
 	public function print_column_headers( $optimize, $top = true ) {
 		list( $columns, $sortable, $primary ) = $this->get_column_info();

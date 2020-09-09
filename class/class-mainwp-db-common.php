@@ -222,7 +222,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Get groups and count.
 	 *
 	 * @param null    $userid Current user ID.
-	 * @param boolean $for_manager Default: false.
+	 * @param bool $for_manager Default: false.
 	 *
 	 * @return (object|null) Database query result for groups and count or null on failure.
 	 */
@@ -258,7 +258,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Get non-empty groups.
 	 *
 	 * @param null    $userid Current user ID.
-	 * @param boolean $enableOfflineSites Include offline sites? Default: true.
+	 * @param bool $enableOfflineSites Include offline sites? Default: true.
 	 *
 	 * @return (object|null) Database query result for non-empty groups or null on failure.
 	 */

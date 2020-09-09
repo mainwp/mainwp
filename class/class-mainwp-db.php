@@ -121,7 +121,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get child site count.
 	 *
-	 * @param null    $userId Current user ID.
+	 * @param null $userId Current user ID.
 	 * @param bool $all_access Check if user has access to all sites.
 	 *
 	 * @return int Child site count.

@@ -31,13 +31,13 @@ class MainWP_UI {
 	 * Select sites box.
 	 *
 	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
+	 * @param bool    $show_group Whether or not to show group, Default: true.
+	 * @param bool    $show_select_all Whether to show select all.
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
 	 * @param array   $selected_groups Selected Groups.
-	 * @param bool $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param bool    $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
@@ -309,11 +309,11 @@ class MainWP_UI {
 	 *
 	 * Render selected staging sites.
 	 *
-	 * @param bool $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
-	 * @param mixed   $tab_id Datatab ID.
-	 * @param mixed   $selected_websites Selected Child Sites.
-	 * @param mixed   $edit_site_id Child Site ID to edit.
-	 * @param string  $type Selector type.
+	 * @param bool   $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param mixed  $tab_id Datatab ID.
+	 * @param mixed  $selected_websites Selected Child Sites.
+	 * @param mixed  $edit_site_id Child Site ID to edit.
+	 * @param string $type Selector type.
 	 *
 	 * @return void Render selected staging sites html.
 	 */

@@ -1243,7 +1243,7 @@ class MainWP_Connect {
 	 * @param string  $admin Admin name.
 	 * @param string  $what Function to perform.
 	 * @param null    $params Function paramerters.
-	 * @param bool $pForceFetch true|false Whether or not to force the fetch.
+	 * @param bool    $pForceFetch true|false Whether or not to force the fetch.
 	 * @param null    $verifyCertificate Verify the SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
@@ -1287,9 +1287,9 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
-	 * @param bool $pRetryFailed ture|false Whether or not the Retry has failed.
+	 * @param bool    $pRetryFailed ture|false Whether or not the Retry has failed.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
 	 * @param integer $sslVersion SSL version.
@@ -1345,7 +1345,7 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
@@ -1668,11 +1668,11 @@ class MainWP_Connect {
 	 *
 	 * Download to file.
 	 *
-	 * @param mixed   $url Download URL.
-	 * @param mixed   $file File to download to.
-	 * @param bool $size Size of file.
-	 * @param null    $http_user htaccess username.
-	 * @param null    $http_pass htaccess password.
+	 * @param mixed $url Download URL.
+	 * @param mixed $file File to download to.
+	 * @param bool  $size Size of file.
+	 * @param null  $http_user htaccess username.
+	 * @param null  $http_pass htaccess password.
 	 *
 	 * @throws MainWP_Exception Exception message.
 	 */

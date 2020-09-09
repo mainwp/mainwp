@@ -196,8 +196,8 @@ class MainWP_Extensions_Handler {
 	 * Generate API Password.
 	 *
 	 * @param integer $length Lenght of password.
-	 * @param boolean $special_chars true|false, allow special characters.
-	 * @param boolean $extra_special_chars true|false, allow extra special characters.
+	 * @param bool $special_chars true|false, allow special characters.
+	 * @param bool $extra_special_chars true|false, allow extra special characters.
 	 *
 	 * @return MainWP_Api_Manager_Password_Management::generate_password()
 	 */
@@ -241,7 +241,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * HTTP Request Reject Unsafe Urls.
 	 *
-	 * @param boolean $r Results.
+	 * @param bool $r Results.
 	 * @param mixed   $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
@@ -255,7 +255,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * No SSL Filter Function.
 	 *
-	 * @param boolean $r Results.
+	 * @param bool $r Results.
 	 * @param mixed   $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
@@ -269,7 +269,7 @@ class MainWP_Extensions_Handler {
 	/**
 	 * No SSL Filter Extention Upgrade.
 	 *
-	 * @param boolean $r Results.
+	 * @param bool $r Results.
 	 * @param mixed   $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
@@ -294,7 +294,7 @@ class MainWP_Extensions_Handler {
 	 * Install MainWP Extension.
 	 *
 	 * @param mixed   $url MainWP Extension update URL.
-	 * @param boolean $activatePlugin true|false Whether or not to activate extension.
+	 * @param bool $activatePlugin true|false Whether or not to activate extension.
 	 *
 	 * @return mixed $return
 	 */
@@ -561,7 +561,7 @@ class MainWP_Extensions_Handler {
 	 * @param mixed   $key The child-key.
 	 * @param mixed   $sites Child Sites.
 	 * @param string  $groups Groups.
-	 * @param boolean $options Options.
+	 * @param bool $options Options.
 	 *
 	 * @return array $dbwebsites.
 	 */
@@ -613,7 +613,7 @@ class MainWP_Extensions_Handler {
 	 * @param string  $pluginFile Extension plugin file to verify.
 	 * @param string  $key The child-key.
 	 * @param int     $websiteid The id of the child site you wish to retrieve.
-	 * @param boolean $for_manager Check Team Control.
+	 * @param bool $for_manager Check Team Control.
 	 * @param array   $others Array of others.
 	 *
 	 * @return array $output Array of content to output.
@@ -745,7 +745,7 @@ class MainWP_Extensions_Handler {
 	 * @param string  $pluginFile Extension plugin file to verify.
 	 * @param string  $key The child-key.
 	 * @param int     $groupid The id of the group you wish to retrieve.
-	 * @param boolean $for_manager Check Team Control.
+	 * @param bool $for_manager Check Team Control.
 	 *
 	 * @return array|bool $output|false An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
 	 */
@@ -820,7 +820,7 @@ class MainWP_Extensions_Handler {
 	 * @param mixed   $websiteid Child Site ID.
 	 * @param mixed   $cloneID Clone ID.
 	 * @param mixed   $clone_url URL to CLone to.
-	 * @param boolean $force_update true|false, force an update.
+	 * @param bool $force_update true|false, force an update.
 	 *
 	 * @return mixed false|$ret
 	 */
@@ -919,7 +919,7 @@ class MainWP_Extensions_Handler {
 	 * @param mixed   $pluginFile Extension plugin file to verify.
 	 * @param mixed   $key The child-key.
 	 * @param mixed   $clone_url URL to Clone to.
-	 * @param boolean $clone_site_id Cloned Site ID.
+	 * @param bool $clone_site_id Cloned Site ID.
 	 *
 	 * @return mixed false|array Array => "Success".
 	 */

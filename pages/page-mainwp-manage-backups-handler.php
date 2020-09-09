@@ -267,7 +267,7 @@ class MainWP_Manage_Backups_Handler {
 	 *
 	 * @param mixed   $task Task to perform
 	 * @param integer $nrOfSites Number of Child Sites to perform the task on.
-	 * @param boolean $updateRun ture|false
+	 * @param bool $updateRun ture|false
 	 *
 	 * @return mixed $errorOutput
 	 */

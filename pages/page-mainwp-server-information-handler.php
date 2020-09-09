@@ -339,7 +339,7 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get Host OS.
 	 *
-	 * @param boolean $return = false.
+	 * @param bool $return = false.
 	 *
 	 * @return mixed PHP_OS.
 	 */
@@ -508,7 +508,7 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get server name.
 	 *
-	 * @param boolean $return = false.
+	 * @param bool $return = false.
 	 *
 	 * @return string $_SERVER['SERVER_NAME'].
 	 */
@@ -525,7 +525,7 @@ class MainWP_Server_Information_Handler {
 	 *
 	 * Get server software.
 	 *
-	 * @param boolean $return = false.
+	 * @param bool $return = false.
 	 *
 	 * @return string $_SERVER['SERVER_SOFTWARE'].
 	 */

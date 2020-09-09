@@ -19,9 +19,9 @@ class MainWP_Sync {
 	/**
 	 * Method sync_site()
 	 *
-	 * @param mixed   $pWebsite Null|userid.
-	 * @param bool $pForceFetch Check if a fourced Sync.
-	 * @param bool $pAllowDisconnect Check if allowed to disconect.
+	 * @param mixed $pWebsite Null|userid.
+	 * @param bool  $pForceFetch Check if a fourced Sync.
+	 * @param bool  $pAllowDisconnect Check if allowed to disconect.
 	 *
 	 * @return array sync_information_array
 	 */

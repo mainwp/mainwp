@@ -217,12 +217,12 @@ class MainWP_Hooks {
 	 * Hook to clone site.
 	 *
 	 * @since 3.4.4
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param mixed   $websiteid Child site ID.
-	 * @param mixed   $cloneid Clone site ID.
-	 * @param mixed   $clone_url Clone site URL.
-	 * @param bool $force_update Force the update, true|false, Default: false.
+	 * @param mixed $pluginFile Plugin file.
+	 * @param mixed $key Key.
+	 * @param mixed $websiteid Child site ID.
+	 * @param mixed $cloneid Clone site ID.
+	 * @param mixed $clone_url Clone site URL.
+	 * @param bool  $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
 	 */
@@ -235,10 +235,10 @@ class MainWP_Hooks {
 	 *
 	 * Hook to delete cloaned Child Site.
 	 *
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param string  $clone_url Clone site URL.
-	 * @param bool $clone_site_id Clone site ID.
+	 * @param mixed  $pluginFile Plugin file.
+	 * @param mixed  $key Key.
+	 * @param string $clone_url Clone site URL.
+	 * @param bool   $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
 	 */
@@ -449,14 +449,14 @@ class MainWP_Hooks {
 	 *
 	 * Hook to select sites box.
 	 *
-	 * @param string  $title Input title.
-	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
-	 * @param string  $class Default = ''.
-	 * @param string  $style Default = ''.
-	 * @param array   $selected_websites Selected Child Sites.
-	 * @param array   $selected_groups Selected Groups.
+	 * @param string $title Input title.
+	 * @param string $type Input type, radio.
+	 * @param bool   $show_group Whether or not to show group, Default: true.
+	 * @param bool   $show_select_all Whether to show select all.
+	 * @param string $class Default = ''.
+	 * @param string $style Default = ''.
+	 * @param array  $selected_websites Selected Child Sites.
+	 * @param array  $selected_groups Selected Groups.
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
@@ -697,7 +697,7 @@ class MainWP_Hooks {
 	 * Hook to get MainWP Directory.
 	 *
 	 * @param bool $false False.
-	 * @param null    $dir WP files system diectories.
+	 * @param null $dir WP files system diectories.
 	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $newdir, $url.

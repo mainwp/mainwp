@@ -176,8 +176,8 @@ class MainWP_Twitter {
 	 *
 	 * Build Twitter Brag button.
 	 *
-	 * @param mixed   $content Twit content.
-	 * @param bool $echo Echo or return content.
+	 * @param mixed $content Twit content.
+	 * @param bool  $echo Echo or return content.
 	 *
 	 * @return mixed $return Button HTML
 	 */

@@ -156,7 +156,7 @@ class MainWP_System_Utility {
 	 * if it doesn't exist create it.
 	 *
 	 * @param string|null $subdir mainwp sub diectories.
-	 * @param bool     $direct_access Return true if Direct access file system. Default: false.
+	 * @param bool        $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $dir, $url
 	 */
@@ -213,7 +213,7 @@ class MainWP_System_Utility {
 	 * if it doesn't exist create it.
 	 *
 	 * @param string|null $subdir mainwp sub diectories.
-	 * @param bool     $direct_access Return true if Direct access file system. Default: false.
+	 * @param bool        $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return string $dir mainwp sub-directory.
 	 */

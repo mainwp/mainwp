@@ -27,8 +27,9 @@ class MainWP_Monitoring_View {
 		?>
 		<h3 class="ui dividing header">
 			<?php esc_html_e( 'Basic Uptime Monitoring', 'mainwp' ); ?>
-			<div class="sub header"><?php echo __( 'For additional help with setting up the Basic Uptime monitoring, please see <a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">this help document</a>.', 'mainwp' ); ?></div>
+			<div class="sub header"><?php echo sprintf( __( 'For additional help with setting up the Basic Uptime monitoring, please see %1$sthis help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?></div>
 		</h3>
+		<div class="ui info message"><?php echo sprintf( __( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">

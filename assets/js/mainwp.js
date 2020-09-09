@@ -2227,6 +2227,9 @@ mainwp_secure_data = function ( data, includeDts )
     if ( data['action'] == undefined )
         return data;
 
+    if ( security_nonces[data['action']] == undefined )
+        return data;
+
     data['security'] = security_nonces[data['action']];
     if ( includeDts )
         data['dts'] = Math.round( new Date().getTime() / 1000 );

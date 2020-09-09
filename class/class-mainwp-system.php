@@ -78,16 +78,9 @@ class MainWP_System {
 	/**
 	 * MainWP_System constructor.
 	 *
-	 * Run any time class is called.
+	 * Runs any time class is called.
 	 *
-	 * @param mixed $mainwp_plugin_file Plugin Slug.
-	 */
-	/**
-	 * MainWP_System constructor.
-	 *
-	 * Run any time class is called.
-	 *
-	 * @param $mainwp_plugin_file
+	 * @param string $mainwp_plugin_file Plugn slug.
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -664,6 +657,13 @@ class MainWP_System {
 		wp_localize_script( 'mainwp', 'mainwpTranslations', $mainwpTranslations );
 
 		$security_nonces = MainWP_Post_Handler::instance()->get_security_nonces();
+
+		$nonces_filter = apply_filters( 'mainwp_security_nonces', array() );
+
+		if ( is_array( $nonces_filter ) && ! empty( $nonces_filter ) ) {
+			$security_nonces = array_merge( $security_nonces, $nonces_filter );
+		}
+
 		wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
 		wp_enqueue_script( 'thickbox' );

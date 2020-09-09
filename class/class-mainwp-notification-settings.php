@@ -47,8 +47,8 @@ class MainWP_Notification_Settings {
 
 	/**
 	 * MainWP_Notification_Settings constructor.
-     *
-     * Run each time the class is called.
+	 *
+	 * Run each time the class is called.
 	 */
 	public function __construct() {
 	}
@@ -140,7 +140,7 @@ class MainWP_Notification_Settings {
 			<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 			<?php endif; ?>
 			<div class="ui info message">
-				<?php _e( 'Email notifications sent from MainWP Dashboard are listed below. Click on an email to configure it. For additional help, please see <a href="https://mainwp.com/help/docs/email-settings/">this help document</a>.', 'mainwp' ); ?>
+				<?php _e( 'Email notifications sent from MainWP Dashboard are listed below. Click on an email to configure it. For additional help, please see <a href="https://kb.mainwp.com/docs/email-settings/">this help document</a>.', 'mainwp' ); ?>
 			</div>
 			<table class="ui single line table" id="mainwp-emails-settings-table">
 				<thead>

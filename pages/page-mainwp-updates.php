@@ -1992,15 +1992,15 @@ class MainWP_Updates {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing updates, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/update-wordpress-core/" target="_blank">Update WordPress Core</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/auto-update-wordpress-core/" target="_blank">Auto Update WordPress Core</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/ignore-wordpress-core-update/" target="_blank">Ignore WordPress Core Update</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">Update WordPress Core</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/auto-update-wordpress-core/" target="_blank">Auto Update WordPress Core</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">Ignore WordPress Core Update</a></div>
 				<?php
 				/**
 				 * Action: mainwp_updates_help_item

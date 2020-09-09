@@ -186,9 +186,9 @@ class MainWP_Format {
 										$body . "\r\n\r\n";
 				$mail_send['footer'] = 'MainWP: https://mainwp.com' . "\r\n" .
 										'Extensions: https://mainwp.com/mainwp-extensions/' . "\r\n" .
-										'Documentation: https://mainwp.com/help/' . "\r\n" .
+										'Documentation: https://kb.mainwp.com/' . "\r\n" .
 										'Blog: https://mainwp.com/mainwp-blog/' . "\r\n" .
-										'Codex: https://mainwp.com/codex/' . "\r\n" .
+										'Codex: https://mainwp.dev/' . "\r\n" .
 										'Support: https://mainwp.com/support/' . "\r\n\r\n" .
 										'Follow us on Twitter: https://twitter.com/mymainwp' . "\r\n" .
 										'Friend us on Facebook: https://www.facebook.com/mainwp' . "\r\n\r\n" .
@@ -498,7 +498,7 @@ EOT;
                                                                         }
                                                                     </style>
                                                                     <div class="tpl-content-highlight" id="mainwp-links" style="color: #b8b8b8;font-family: Arial;font-size: 12px;line-height: 125%;text-align: center;">
-                                                                    <a href="https://mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">MainWP</a> | <a href="https://mainwp.com/mainwp-extensions/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Extensions</a> | <a href="https://mainwp.com/help/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration:none;text-transform: uppercase;">Documentation</a> | <a href="https://mainwp.com/mainwp-blog/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Blog</a> | <a href="http://codex.mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Codex</a> | <a href="https://mainwp.com/support/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Support</a></div>
+                                                                    <a href="https://mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">MainWP</a> | <a href="https://mainwp.com/mainwp-extensions/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Extensions</a> | <a href="https://kb.mainwp.com/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration:none;text-transform: uppercase;">Documentation</a> | <a href="https://mainwp.com/mainwp-blog/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Blog</a> | <a href="http://codex.mainwp.com" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Codex</a> | <a href="https://mainwp.com/support/" target="_self" style="color: #7fb100;font-weight: normal;text-decoration: none;text-transform: uppercase;">Support</a></div>
 
                                                                     <hr><br>
                                                                     <a href="https://twitter.com/mymainwp" target="_blank" style="color: #336699;font-weight: normal;text-decoration: underline;">Follow us on Twitter</a> | <a href="https://www.facebook.com/mainwp" style="color:#336699;font-weight: normal;text-decoration: underline;">Friend us on Facebook</a>

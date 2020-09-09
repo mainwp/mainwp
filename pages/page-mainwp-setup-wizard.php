@@ -349,7 +349,7 @@ class MainWP_Setup_Wizard {
 						<input type="text" name="mwp_setup_openssl_lib_location" value="<?php echo esc_attr( $openssl_loc ); ?>">
 					</div>
 					<div><em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered above please enter your exact path.', 'mainwp' ); ?></em></div>
-					<div><em><?php echo sprintf( __( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
+					<div><em><?php echo sprintf( __( '%1$sClick here%2$s to see how to find the OpenSSL.cnf file.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em></div>
 				</div>
 			</div>
 			<div class="ui hidden divider"></div>
@@ -425,7 +425,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui info message">
 				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
 				<?php esc_html_e( 'If you have it installed, click the "MainWP Child Plugin Installed" button to connect the site, if not, follow these instructions to install it.', 'mainwp' ); ?><br /><br />
-				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
+				<?php printf( __( 'If you need additional help with installing the MainWP Child, please see this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">', '</a>' ); ?>
 			</div>
 			<ol>
 				<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>

@@ -85,6 +85,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 		add_filter( 'mainwp_escape_response_data', array( &$this, 'hook_escape_response' ), 10, 3 );
+
+		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
 	}
 
 	/**
@@ -675,6 +677,18 @@ class MainWP_Hooks {
 			}
 		}
 		return $response;
+	}
+
+	/**
+	 * Method hook_secure_request()
+	 *
+	 * Security check to request parameter
+	 *
+	 * @param string $action Action to perform.
+	 * @param string $query_arg Query argument.
+	 */
+	public function hook_secure_request( $action = '', $query_arg = 'security' ) {
+		MainWP_Post_Handler::instance()->secure_request( $action, $query_arg );
 	}
 
 	/**

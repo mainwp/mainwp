@@ -2011,14 +2011,14 @@ class MainWP_Themes {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/install-themes/" target="_blank">Install Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/activate-themes/" target="_blank">Activate Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/delete-themes/" target="_blank">Delete Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/abandoned-themes/" target="_blank">Abandoned Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/install-themes/" target="_blank">Install Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/activate-themes/" target="_blank">Activate Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/delete-themes/" target="_blank">Delete Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/abandoned-themes/" target="_blank">Abandoned Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
 				<?php
 				/**
 				 * Action: mainwp_themes_help_item

@@ -91,7 +91,7 @@ class MainWP_Connection_Status {
 
 				$output_md5 = '';
 				if ( $md5Connection ) {
-					$output_md5 = '<div>' . __( 'MD5 Connection' ) . '<br /><a href="http://mainwp.com/help/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __( 'Read More', 'mainwp' ) . '</a></div>';
+					$output_md5 = '<div>' . __( 'MD5 Connection' ) . '<br /><a href="https://kb.mainwp.com/docs/md5-connection-issue/" class="ui button mini green basic" target="_blank" data-tooltip="MD5 Connection" data-inverted="">' . __( 'Read More', 'mainwp' ) . '</a></div>';
 				}
 
 				$lastSyncTime = ! empty( $website->dtsSync ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website->dtsSync ) ) : '';

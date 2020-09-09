@@ -2001,14 +2001,14 @@ class MainWP_Plugins {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/install-plugins/" target="_blank">Install Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/activate-plugins/" target="_blank">Activate Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/delete-plugins/" target="_blank">Delete Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/abandoned-plugins/" target="_blank">Abandoned Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/install-plugins/" target="_blank">Install Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/activate-plugins/" target="_blank">Activate Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/delete-plugins/" target="_blank">Delete Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/abandoned-plugins/" target="_blank">Abandoned Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
 				<?php
 				/**
 				 * Action: mainwp_plugins_help_item

@@ -37,12 +37,9 @@ class MainWP_Settings {
 	/** Instantiate Hooks for the Settings Page. */
 	public static function init() {
 		/**
-		 * This hook allows you to render the Settings page header via the 'mainwp-pageheader-settings' action.
+		 * This hook allows you to render the Settings page header via the 'mainwp_pageheader_settings' action.
 		 *
-		 * @link https://mainwp.com/codex/#mainwp-pageheader-settings
-		 *
-		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
-		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
+		 * This hook is normally used in the same context of 'mainwp_getsubpages_settings'
 		 *
 		 * @see \MainWP_Settings::render_header
 		 */
@@ -51,10 +48,7 @@ class MainWP_Settings {
 		/**
 		 * This hook allows you to render the Settings page footer via the 'mainwp-pagefooter-settings' action.
 		 *
-		 * @link https://mainwp.com/codex/#mainwp-pagefooter-settings
-		 *
 		 * This hook is normally used in the same context of 'mainwp-getsubpages-settings'
-		 * @link https://mainwp.com/codex/#mainwp-getsubpages-settings
 		 *
 		 * @see \MainWP_Settings::render_footer
 		 */
@@ -832,7 +826,7 @@ class MainWP_Settings {
 								</div>
 							</div>
 							<div class="ui attached info message">
-								<p><?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></p>
+								<p><?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></p>
 							</div>
 							<?php
 						}
@@ -1199,7 +1193,7 @@ class MainWP_Settings {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
 			</div>
 			<?php
 		}

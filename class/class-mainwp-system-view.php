@@ -274,7 +274,7 @@ class MainWP_System_View {
 			?>
 			<div class="ui icon message yellow" style="margin-bottom: 0; border-radius: 0;">
 				<i class="exclamation circle icon"></i>
-				<strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( __( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
+				<strong><?php echo esc_html__( 'Important Notice: ', 'mainwp' ); ?></strong>&nbsp;<?php printf( __( 'MainWP Version 4 is a major upgrade from MainWP Version 3. Please, read this&nbsp; %1$supdating FAQ%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/faq-on-upgrading-from-mainwp-version-3-to-mainwp-version-4/" target="_blank">', '</a>' ); ?>
 				<i class="close icon mainwp-notice-dismiss" notice-id="upgrade_4"></i>
 			</div>
 			<?php

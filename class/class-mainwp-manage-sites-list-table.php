@@ -46,9 +46,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * MainWP_Manage_Sites_List_Table constructor.
-     *
-     * Run each time the class is called.
-     * Add action to generate tabletop.
+	 *
+	 * Run each time the class is called.
+	 * Add action to generate tabletop.
 	 */
 	public function __construct() {
 		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
@@ -490,7 +490,7 @@ class MainWP_Manage_Sites_List_Table {
 			</div>
 			<a href="<?php echo admin_url( 'admin.php?page=managesites&do=new' ); ?>" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Sites', 'mainwp' ); ?></a>
 			<div class="ui sub header">
-				<?php printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://mainwp.com/help/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>' ); ?>
+				<?php printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php else : ?>
 			<?php esc_html_e( 'No websites found.', 'mainwp' ); ?>
@@ -897,6 +897,7 @@ class MainWP_Manage_Sites_List_Table {
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
+			'scrollX'       => 'true',
 		);
 
 		/**
@@ -937,6 +938,7 @@ class MainWP_Manage_Sites_List_Table {
 						"paging" : <?php echo $table_features['paging']; ?>,
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
 						"info" : <?php echo $table_features['info']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
@@ -997,6 +999,7 @@ class MainWP_Manage_Sites_List_Table {
 						"pagingType" : <?php echo $table_features['pagingType']; ?>,
 						"info" : <?php echo $table_features['info']; ?>,
 						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"stateSave" : <?php echo $table_features['stateSave']; ?>,
 						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 						"order" : <?php echo $table_features['order']; ?>,

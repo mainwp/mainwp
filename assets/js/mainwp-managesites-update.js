@@ -176,7 +176,7 @@ managesites_update_pluginsthemes_done = function ( pType )
                 mainwpPopup( '#mainwp-sync-sites-modal' ).close(true);
             } else
             {
-                var message = websitesError + ' Site' + ( websitesError > 1 ? 's' : '' ) + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="http://mainwp.com/help/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>';
+                var message = websitesError + ' Site' + ( websitesError > 1 ? 's' : '' ) + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="https://kb.mainwp.com/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>';
                 mainwpPopup( '#mainwp-sync-sites-modal' ).getContentEl().prepend( '<span class="mainwp-red"><strong>' + message + '</strong></span><br /><br />' );
             }
         }, 2000 );

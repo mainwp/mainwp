@@ -149,7 +149,7 @@ ManageWP is a Service as a Solution (SaaS) property owned by Godaddy.  The SaaS 
 MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit. 
 
 = How do I know my sites are secure using MainWP? = 
-We take security very seriously at MainWP. We welcome any peer review of our [100% open source](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.  
+We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.  
 
 We also participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward. 
 

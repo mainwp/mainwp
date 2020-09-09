@@ -24,6 +24,6 @@ jobs:
           privateKey: ${{ secrets.PRIVATE_KEY }}
           command: |
             rm -rf ~/Source/mainwp/
-            git clone https://github.com/mainwp/mainwp-child.git ~/Source/mainwp/
+            git clone https://github.com/mainwp/mainwp.git ~/Source/mainwp/
             sleep 3
             sh ~/scripts/docproc.sh

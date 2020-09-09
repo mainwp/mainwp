@@ -97,7 +97,7 @@ class MainWP_QQ2_File_Uploader {
 	 * Handle the file upload.
 	 *
 	 * @param mixed   $uploadDirectory File Upload directory.
-	 * @param boolean $replaceOldFile True|False Weather or not to replace the orignal file or not.
+	 * @param bool $replaceOldFile True|False Weather or not to replace the orignal file or not.
 	 *
 	 * @return array success'=>true|error'=>'error message'
 	 */
@@ -154,7 +154,7 @@ class MainWP_QQ2_File_Uploader {
 	 * Wrap of the method handle_upload() for compatible.
 	 *
 	 * @param mixed   $uploadDirectory File Upload directory.
-	 * @param boolean $replaceOldFile True|False Weather or not to replace the orignal file or not.
+	 * @param bool $replaceOldFile True|False Weather or not to replace the orignal file or not.
 	 *
 	 * @return array success'=>true|error'=>'error message'
 	 */

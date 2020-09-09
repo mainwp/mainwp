@@ -299,6 +299,8 @@ class MainWP_System_Handler {
 	 * @param mixed $arg Action arguments. Should be the plugin slug.
 	 *
 	 * @return mixed $info|$false
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_plugin_information()
 	 */
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
@@ -346,6 +348,8 @@ class MainWP_System_Handler {
 	 * @param object $transient Transient information.
 	 *
 	 * @return object $transient Transient information.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_upgrade_information()
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
@@ -439,6 +443,8 @@ class MainWP_System_Handler {
 	 * Method check_upgrade()
 	 *
 	 * Check if Extension has an update.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_API_Handler::check_exts_upgrade()
 	 */
 	private function check_upgrade() {
 		$result = MainWP_API_Handler::check_exts_upgrade();

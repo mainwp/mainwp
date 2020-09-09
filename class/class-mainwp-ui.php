@@ -31,13 +31,13 @@ class MainWP_UI {
 	 * Select sites box.
 	 *
 	 * @param string  $type Input type, radio.
-	 * @param boolean $show_group Whether or not to show group, Default: true.
-	 * @param boolean $show_select_all Whether to show select all.
+	 * @param bool $show_group Whether or not to show group, Default: true.
+	 * @param bool $show_select_all Whether to show select all.
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
 	 * @param array   $selected_groups Selected Groups.
-	 * @param boolean $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param bool $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
@@ -58,6 +58,13 @@ class MainWP_UI {
 				$selected_groups = array();
 			}
 		}
+
+		if ( empty( $selected_websites ) && isset( $_GET['selected_sites'] ) && ! empty( $_GET['selected_sites'] ) ) {
+			$selected_sites    = explode( '-', sanitize_text_field( wp_unslash( $_GET['selected_sites'] ) ) ); // sanitize ok.
+			$selected_sites    = array_map( 'intval', $selected_sites );
+			$selected_websites = array_filter( $selected_sites );
+		}
+
 		/**
 		 * Action: mainwp_before_seclect_sites
 		 *
@@ -123,10 +130,12 @@ class MainWP_UI {
 		// to fix layout with multi sites selector.
 		$tab_id = wp_rand();
 
-		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups );
+		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups, $show_group, $show_select_all );
 		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
-		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id );
-		self::render_select_sites_group( $groups, $tab_id, $selected_groups );
+		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id, $type );
+		if ( $show_group ) {
+			self::render_select_sites_group( $groups, $tab_id, $selected_groups, $type );
+		}
 		?>
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
@@ -144,10 +153,12 @@ class MainWP_UI {
 	 * @param int   $tab_id          Datatab ID.
 	 * @param bool  $staging_enabled True, if in the active plugins list. False, not in the list.
 	 * @param array $selected_groups Selected groups.
+	 * @param bool  $show_group         Whether or not to show group, Default: true.
+	 * @param bool  $show_select_all    Whether or not to show select all, Default: true.
 	 *
 	 * @todo Move to view folder.
 	 */
-	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups ) {
+	public static function render_select_sites_header( $tab_id, $staging_enabled, $selected_groups, $show_group = true, $show_select_all = true ) {
 
 		/**
 		 * Action: mainwp_before_select_sites_filters
@@ -160,13 +171,15 @@ class MainWP_UI {
 		?>
 		<div id="mainwp-select-sites-filters">
 			<div class="ui grid">
-				<div class="four wide column">
-					<div class="ui basic icon mini buttons">
+			<?php if ( $show_select_all ) { ?>
+				<div class="four wide column">				
+					<div class="ui basic icon mini buttons">					
 						<a class="ui button" onClick="return mainwp_ss_select( this, true )" data-tooltip="<?php esc_attr_e( 'Select all websites.', 'mainwp' ); ?>" data-inverted=""><i class="check square outline icon"></i></a>
 						<a class="ui button" onClick="return mainwp_ss_select( this, false )" data-tooltip="<?php esc_attr_e( 'Deselect all websites.', 'mainwp' ); ?>" data-inverted=""><i class="square outline icon"></i></a>
-					</div>
+					</div>				
 				</div>
-				<div class="twelve wide column">
+				<?php } ?>
+				<div class="<?php echo $show_select_all ? 'twelve' : 'sixteen'; ?> wide column">
 					<div class="ui mini fluid icon input">
 						<input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
 						<i class="filter icon"></i>
@@ -189,7 +202,9 @@ class MainWP_UI {
 		<div id="mainwp-select-sites-header">
 			<div class="ui pointing green secondary menu">
 				<a class="item active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>"><?php esc_html_e( 'Sites', 'mainwp' ); ?></a>
+				<?php if ( $show_group ) : ?>
 				<a class="item" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>"><?php esc_html_e( 'Groups', 'mainwp' ); ?></a>
+				<?php endif; ?>
 				<?php if ( $staging_enabled ) : ?>
 					<a class="item" data-tab="mainwp-select-staging-sites-<?php echo $tab_id; ?>"><?php esc_html_e( 'Staging', 'mainwp' ); ?></a>
 				<?php endif; ?>
@@ -250,8 +265,8 @@ class MainWP_UI {
 										}
 									}
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-										<input <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_site' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+										<input <?php echo $disabled; ?> type="<?php echo $type; ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>
@@ -259,8 +274,8 @@ class MainWP_UI {
 									<?php
 								} else {
 									?>
-								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-									<input type="checkbox" disabled="disabled"/>
+								<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+									<input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
 									<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 										<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 									</label>
@@ -294,14 +309,15 @@ class MainWP_UI {
 	 *
 	 * Render selected staging sites.
 	 *
-	 * @param boolean $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param bool $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
 	 * @param mixed   $tab_id Datatab ID.
 	 * @param mixed   $selected_websites Selected Child Sites.
 	 * @param mixed   $edit_site_id Child Site ID to edit.
+	 * @param string  $type Selector type.
 	 *
 	 * @return void Render selected staging sites html.
 	 */
-	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id ) {
+	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id, $type = 'checkbox' ) {
 		if ( $staging_enabled ) :
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), $is_staging = 'yes' ) );
 			?>
@@ -326,8 +342,8 @@ class MainWP_UI {
 										}
 									}
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui checkbox item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-										<input <?php echo $disabled; ?> type="checkbox" name="selected_sites[]" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item ui <?php echo esc_html( $type ); ?> item <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+										<input <?php echo $disabled; ?> type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_sites' : 'selected_sites[]' ); ?>" siteid="<?php echo intval( $website->id ); ?>" value="<?php echo intval( $website->id ); ?>" id="selected_sites_<?php echo intval( $website->id ); ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>
@@ -335,8 +351,8 @@ class MainWP_UI {
 									<?php
 								} else {
 									?>
-									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui checkbox <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-										<input <?php echo $disabled; ?> type="checkbox" disabled="disabled"/>
+									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
+										<input <?php echo $disabled; ?> type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>
@@ -359,13 +375,14 @@ class MainWP_UI {
 	 *
 	 * Render selected sites group.
 	 *
-	 * @param array $groups Array of groups.
-	 * @param mixed $tab_id Datatab ID.
-	 * @param mixed $selected_groups Selected groups.
+	 * @param array  $groups Array of groups.
+	 * @param mixed  $tab_id Datatab ID.
+	 * @param mixed  $selected_groups Selected groups.
+	 * @param string $type Selector type.
 	 *
 	 * @return void Render selected sites group html.
 	 */
-	public static function render_select_sites_group( $groups, $tab_id, $selected_groups ) {
+	public static function render_select_sites_group( $groups, $tab_id, $selected_groups, $type = 'checkbox' ) {
 		?>
 		<div class="ui tab" data-tab="mainwp-select-groups-<?php echo $tab_id; ?>" id="mainwp-select-groups" select-by="group">
 			<?php
@@ -396,8 +413,8 @@ class MainWP_UI {
 					foreach ( $groups as $group ) {
 						$selected = in_array( $group->id, $selected_groups );
 						?>
-						<div class="mainwp_selected_groups_item ui item checkbox <?php echo ( $selected ? 'selected_groups_item_checked' : '' ); ?>">
-							<input type="checkbox" name="selected_groups[]" value="<?php echo $group->id; ?>" id="selected_groups_<?php echo $group->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
+						<div class="mainwp_selected_groups_item ui item <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_groups_item_checked' : '' ); ?>">
+							<input type="<?php echo esc_html( $type ); ?>" name="<?php echo ( 'radio' === $type ? 'selected_groups' : 'selected_groups[]' ); ?>" value="<?php echo $group->id; ?>" id="selected_groups_<?php echo $group->id; ?>" <?php echo ( $selected ? 'checked="true"' : '' ); ?> />
 							<label for="selected_groups_<?php echo $group->id; ?>">
 								<?php echo stripslashes( $group->name ); ?>
 							</label>
@@ -565,7 +582,7 @@ class MainWP_UI {
 			do_action( 'mainwp_help_sidebar_content' );
 			?>
 			<div class="ui hidden divider"></div>
-			<a href="https://mainwp.com/help/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
+			<a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
 			<div class="ui hidden divider"></div>
 			<div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
 				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
@@ -1344,7 +1361,7 @@ class MainWP_UI {
 	 *
 	 * Render modal window for Screen Options.
 	 *
-	 * @param boolean $setting_page Default: True. Widgets that you want to hide in the MainWP Overview page.
+	 * @param bool $setting_page Default: True. Widgets that you want to hide in the MainWP Overview page.
 	 *
 	 * @return void  Render modal window for Screen Options html.
 	 */

@@ -74,7 +74,7 @@ class MainWP_Utility {
 	 * Grab url.
 	 *
 	 * @param string  $pUrl Website URL.
-	 * @param boolean $showHttp Show HTTP.
+	 * @param bool $showHttp Show HTTP.
 	 *
 	 * @return string $url.
 	 */
@@ -140,8 +140,8 @@ class MainWP_Utility {
 	 * @param mixed   $array Array to sort.
 	 * @param mixed   $index Index of array.
 	 * @param mixed   $order Acending or Decending order.
-	 * @param boolean $natsort Sort an array using a "natural order" algorithm. Default: false.
-	 * @param boolean $case_sensitive If case sensitive return true else return false. Default: false.
+	 * @param bool $natsort Sort an array using a "natural order" algorithm. Default: false.
+	 * @param bool $case_sensitive If case sensitive return true else return false. Default: false.
 	 *
 	 * @return array $sorted Return the sorted array.
 	 */
@@ -404,7 +404,7 @@ class MainWP_Utility {
 	 * Remove http prefixes from given url.
 	 *
 	 * @param mixed   $pUrl Given URL.
-	 * @param boolean $pTrimSlashes Whether or not to trim slashes. Default is false.
+	 * @param bool $pTrimSlashes Whether or not to trim slashes. Default is false.
 	 *
 	 * @return string Trimmed URL.
 	 */

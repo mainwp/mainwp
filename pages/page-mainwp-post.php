@@ -1847,10 +1847,13 @@ class MainWP_Post {
 		$referer = wp_get_referer();
 
 		if ( 'auto-draft' === $post->post_status ) {
-			$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Bulkpost', 'mainwp ' ) : __( 'Create New Bulkpage', 'mainwp' );
+			$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Bulkpost', 'mainwp' ) : __( 'Create New Bulkpage', 'mainwp' );
 		} else {
 			$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Bulkpost', 'mainwp' ) : __( 'Edit Bulkpage', 'mainwp' );
 		}
+
+		$note_title = apply_filters( 'mainwp_bulkpost_edit_title', $note_title, $post );
+
 		$message = '';
 		if ( isset( $_GET['message'] ) && 1 == $_GET['message'] ) {
 			if ( 'bulkpost' === $post_type ) {
@@ -1878,6 +1881,7 @@ class MainWP_Post {
 				echo $form_extra;
 				?>
 				<div class="mainwp-main-content">
+					<?php do_action( 'mainwp_top_bulkpost_edit_content', $post ); ?>
 					<div class="ui red message" id="mainwp-message-zone" style="display:none"></div>
 					<?php
 					if ( $message ) {
@@ -1886,39 +1890,50 @@ class MainWP_Post {
 						<?php
 					}
 					?>
-					<h3 class="header"><?php echo esc_html( $note_title ); ?></h3>
+					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
 					<div class="field">
 						<label><?php esc_html_e( 'Title', 'mainwp' ); ?></label>
 						<input type="text" name="post_title" id="title"  value="<?php echo ( 'Auto Draft' !== $post->post_title ) ? esc_attr( $post->post_title ) : ''; ?>" value="" autocomplete="off" spellcheck="true">
 					</div>
 					<div class="field">
+					<?php do_action( 'mainwp_before_bulkpost_editor', $post ); ?>
 						<div id="postdivrich" class="postarea
 						<?php
 						if ( $_wp_editor_expand ) {
 							echo ' wp-editor-expand'; }
 						?>
 						">
-							<?php
+						<?php
+							$default_settings = array(
+								'_content_editor_dfw' => $_content_editor_dfw,
+								'drag_drop_upload'    => true,
+								'tabfocus_elements'   => 'content-html,save-post',
+								'editor_height'       => 300,
+								'quicktags'           => true,
+								'media_buttons'       => true,
+								'tinymce'             => array(
+									'resize'             => false,
+									'wp_autoresize_on'   => $_wp_editor_expand,
+									'add_unload_trigger' => false,
+									'wp_keep_scroll_position' => ! $is_IE,
+								),
+							);
+
+							$ed_settings = apply_filters( 'mainwp_bulkpost_editor_settings', false, $post );
+							if ( is_array( $ed_settings ) && ! empty( $ed_settings ) ) {
+								$ed_settings = array_merge( $default_settings, $ed_settings );
+							} else {
+								$ed_settings = $default_settings;
+							}
+
 							remove_editor_styles();
 							wp_editor(
 								$post->post_content,
 								'content',
-								array(
-									'_content_editor_dfw' => $_content_editor_dfw,
-									'drag_drop_upload'    => true,
-									'tabfocus_elements'   => 'content-html,save-post',
-									'editor_height'       => 300,
-									'tinymce'             => array(
-										'resize'           => false,
-										'wp_autoresize_on' => $_wp_editor_expand,
-										'add_unload_trigger' => false,
-										'wp_keep_scroll_position' => ! $is_IE,
-									),
-								)
+								$ed_settings
 							);
 
-							?>
-
+						?>
 							<table id="post-status-info"><tbody><tr>
 								<td id="wp-word-count" class="hide-if-no-js"><?php printf( __( 'Word count: %s', 'mainwp' ), '<span class="word-count">0</span>' ); ?></td>
 								<td class="autosave-info">
@@ -1995,13 +2010,32 @@ class MainWP_Post {
 				</div>
 			</div>
 				<?php
+
+				$sites_default = array(
+					'type'            => 'checkbox',
+					'show_group'      => true,
+					'show_select_all' => true,
+					'class'           => '',
+					'style'           => '',
+
+				);
+				$sites_settings = array();
+				$sites_settings = apply_filters( 'mainwp_bulkpost_select_sites_settings', $sites_settings, $post );
+
+				if ( is_array( $sites_settings ) && ! empty( $sites_settings ) ) {
+					$sites_settings = array_merge( $sites_default, $sites_settings );
+				} else {
+					$sites_settings = $sites_default;
+				}
+
 				$sel_sites  = array();
 				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
+					<?php do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); ?>
 					<div class="mainwp-select-sites">
 						<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-						<?php MainWP_UI::select_sites_box( 'checkbox', true, true, '', '', $sel_sites, $sel_groups, false, $post_ID ); ?>
+						<?php MainWP_UI::select_sites_box( $sites_settings['type'], $sites_settings['show_group'], $sites_settings['show_select_all'], $sites_settings['class'], $sites_settings['style'], $sel_sites, $sel_groups, false, $post_ID ); ?>
 						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
 					</div>
 					<div class="ui divider"></div>
@@ -2019,9 +2053,12 @@ class MainWP_Post {
 					 *
 					 * Fires right before the Submit button.
 					 *
+					 * @param object $post      Object containing the Post data.
+					 * @param string $post_type Post type.
+					 *
 					 * @since 4.0
 					 */
-					do_action( 'mainwp_edit_posts_before_submit_button' );
+					do_action( 'mainwp_edit_posts_before_submit_button', $post, $post_type );
 					?>
 					<div class="mainwp-search-submit" id="bulkpost-publishing-action">
 						<input type="submit" name="publish" id="publish" class="ui big green fluid button" value="<?php esc_attr_e( 'Publish', 'mainwp' ); ?>">
@@ -2326,12 +2363,12 @@ class MainWP_Post {
 			?>
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/" target="_blank">Manage Posts</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/create-a-new-post/" target="_blank">Create a New Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/create-a-new-post/" target="_blank">Create a New Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_posts_help_item

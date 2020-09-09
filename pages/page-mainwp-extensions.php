@@ -32,7 +32,8 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::render_header
 		 */
-		add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp-pageheader-extensions', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_extensions' instead.
+		add_action( 'mainwp_pageheader_extensions', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Extensions page footer via the 'mainwp-pagefooter-extensions' action.
@@ -41,7 +42,8 @@ class MainWP_Extensions {
 		 *
 		 * @see \MainWP_Extensions::render_footer
 		 */
-		add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp-pagefooter-extensions', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_extensions' instead.
+		add_action( 'mainwp_pagefooter_extensions', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 
@@ -503,6 +505,7 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_header( $shownPage = '' ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Extensions_View::render_header( $shownPage );
 	}
 
@@ -514,6 +517,7 @@ class MainWP_Extensions {
 	 * @param string $shownPage The page slug shown at this moment.
 	 */
 	public static function render_footer( $shownPage ) {
+		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
 		MainWP_Extensions_View::render_footer( $shownPage );
 	}
 
@@ -543,13 +547,13 @@ class MainWP_Extensions {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Extensions, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div>
-				<div class="item"><a href="https://mainwp.com/help/docs/what-are-mainwp-extensions/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/" target="_blank"><i class="fa fa-book"></i> What are the MainWP Extensions</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/order-extensions/" target="_blank"><i class="fa fa-book"></i> Order Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/my-downloads-and-api-keys/" target="_blank"><i class="fa fa-book"></i> My Downloads and API Keys</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/install-extensions/" target="_blank"><i class="fa fa-book"></i> Install Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/activate-extensions-api/" target="_blank"><i class="fa fa-book"></i> Activate Extension(s) API</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/updating-extensions/" target="_blank"><i class="fa fa-book"></i> Updating Extension(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/what-are-mainwp-extensions/remove-extensions/" target="_blank"><i class="fa fa-book"></i> Remove Extension(s)</a></div>
 			</div>
 			<?php
 		}

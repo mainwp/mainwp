@@ -180,7 +180,7 @@ class MainWP_Manage_Backups {
 	 * Instantiate Legacy Backups Menu.
 	 *
 	 * @param array   $subPages Legacy Backup Subpages.
-	 * @param boolean $enableLegacyBackup ture|false, whether or not to enable menu.
+	 * @param bool $enableLegacyBackup ture|false, whether or not to enable menu.
 	 */
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {

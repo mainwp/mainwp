@@ -171,6 +171,30 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1 - 9-9-20 =
+* Fixed: Problem with running automated sites checks
+* Fixed: Multiple cosmetic and usability problems
+* Fixed: Multiple PHP Warnings
+* Added: Over 500 hooks
+* Added: Basic uptime monitoring feature
+* Added: Email settings feature
+* Added: Quick sites shortcuts sidebar
+* Added: phpDocs blocks for code documentation
+* Added: Child site preview feature
+* Added: The Update Everything action to the Bulk Actions menu on Manage Sites page
+* Updated: Refactored the code to meet WordPress coding standards
+* Updated: Multiple usability and cosmetic updates
+* Updated: Multiple performance improvements
+* Updated: WordPress 5.5 compatibility
+* Updated: Multiple text notifications
+* Updated: Default order of items in Manage Plugins and Manage Themes tables
+* Updated: Sites filters options on the Manage Sites page
+* Updated: Plugin installation process indicator
+* Updated: The Updates table to show plugin and theme status
+* Preventative: Multiple security improvements
+* Removed: Unused files
+* Removed: Unused code
+
 = 4.0.7.3 - 8-6-20 =
 * Fixed: WordPress 5.5 compatibility
 

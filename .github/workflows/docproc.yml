@@ -20,9 +20,9 @@ jobs:
      - name: SSH Execute Commands
        uses: JimCronqvist/action-ssh@0.1.1
        with:
-          hosts: 'root@code-reference.mainwp.com'
+          hosts: 'root@code-reference.mainwp.dev'
           privateKey: ${{ secrets.PRIVATE_KEY }}
-         command: |
+          command: |
             rm -rf ~/Source/mainwp/
             git clone https://github.com/mainwp/mainwp-child.git ~/Source/mainwp/
             sleep 3

@@ -535,11 +535,11 @@ class MainWP_UI {
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
+								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
 									<i class="sign-in icon"></i>
 									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo esc_url( $website['url'] ); ?>">
+								<a class="item" target="_blank" href="<?php echo esc_url( $website['url'] ); ?>">
 									<i class="globe icon"></i>
 									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
 								</a>

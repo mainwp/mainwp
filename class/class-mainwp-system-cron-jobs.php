@@ -91,7 +91,7 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_cronupdatescheck_action' => 'minutely',
 		);
 
-		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+		$disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
 		if ( ! $disableChecking ) {
 			$jobs['mainwp_croncheckstatus_action'] = 'minutely';
 		} else {
@@ -102,7 +102,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
 		if ( ! $disableHealthChecking ) {
 			$jobs['mainwp_cronsitehealthcheck_action'] = 'hourly';
 		} else {
@@ -1389,7 +1389,7 @@ class MainWP_System_Cron_Jobs {
 	 */
 	public function cron_check_websites_status() {
 
-		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+		$disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
 		// to disable if run custom cron.
 		if ( $disableChecking ) {
 			return;
@@ -1493,7 +1493,7 @@ class MainWP_System_Cron_Jobs {
 	public function cron_check_websites_health() {
 
 		// to disable if run custom cron.
-		$disableChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
 		if ( $disableChecking ) {
 			return;
 		}

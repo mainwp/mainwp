@@ -19,10 +19,10 @@ class MainWP_Monitoring_View {
 	 */
 	public static function render_settings() {
 
-		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
+		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
 
-		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
 		$sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 		?>
 		<h3 class="ui dividing header">

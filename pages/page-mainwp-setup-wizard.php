@@ -694,10 +694,10 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_monitoring() {
 
-		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
+		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
 
-		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
 		$sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 
 		?>

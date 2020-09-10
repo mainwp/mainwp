@@ -709,12 +709,12 @@ class MainWP_Server_Information {
 			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
 		);
 
-		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
+		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		if ( ! $disableSitesMonitoring ) {
 			$cron_jobs['Child site uptime monitoring'] = array( 'mainwp_cron_checksites_last_timestamp', 'mainwp_croncheckstatus_action', __( 'Once every minute', 'mainwp' ) );
 		}
 
-		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
 		if ( ! $disableHealthChecking ) {
 			$cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', __( 'Once hourly', 'mainwp' ) );
 		}

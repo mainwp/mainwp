@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.5.1
 Requires PHP: 5.6
-Stable tag: 4.1
+Stable tag: 4.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.1 - 9-11-20 =
+* Fixed: An issue with WP CLI commands
+* Fixed: An issue with sending multiple notification emails 
+* Fixed: An error with displaying site groups in the Site Infor widget
+* Fixed: Semantic UI error
+* Fixed: Usability error caused by JavaScript error
+* Added: target="_blank" attribute to multiple links
+* Updated: Default values for the Monitoring feature
 
 = 4.1 - 9-9-20 =
 * Fixed: Problem with running automated sites checks

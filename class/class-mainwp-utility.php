@@ -839,7 +839,7 @@ class MainWP_Utility {
 			505 => 'HTTP Version Not Supported',
 		);
 
-		if ( empty( $code ) ) {
+		if ( false === $code ) {
 			return $http_codes;
 		}
 

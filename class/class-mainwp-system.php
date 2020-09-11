@@ -621,14 +621,13 @@ class MainWP_System {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
-
 		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
 		}
 		if ( self::is_mainwp_pages() ) {
 			$en_params[] = 'jquery-migrate';
+			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 		}
 		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
 

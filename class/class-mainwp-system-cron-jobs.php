@@ -1166,7 +1166,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$gen_settings = MainWP_Notification_Settings::get_general_email_settings( 'http_check' );
-		// general http check notificaion.
+		// general http check notificaion, to administrator.
 		if ( ! $gen_settings['disable'] ) {
 			MainWP_Notification::send_http_check_notification( $gen_settings, $sitesHttpCheck, $plain_text );
 			usleep( 100000 );
@@ -1421,6 +1421,7 @@ class MainWP_System_Cron_Jobs {
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );
 
+		// start notice.
 		if ( empty( $websites ) ) {
 			$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 			$this->start_notification_uptime_status( $plain_text );
@@ -1457,7 +1458,7 @@ class MainWP_System_Cron_Jobs {
 
 		$admin_email = MainWP_DB_Common::instance()->get_user_notification_email();
 
-		// general uptime notification.
+		// general uptime notification, to administrator.
 		$email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
 		if ( ! $email_settings['disable'] ) {
 			MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $offlineSites, $admin_email, $email_settings, $plain_text );

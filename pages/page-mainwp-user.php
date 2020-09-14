@@ -1317,7 +1317,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : ''; ?>">
+										<input type="text" id="user_login" name="user_login" value="<?php echo ( isset( $_POST['user_login'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1325,7 +1325,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'E-mail', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : ''; ?>">
+										<input type="text" id="email" name="email" value="<?php echo ( isset( $_POST['email'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['email'] ) ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1333,7 +1333,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'First Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : ''; ?>">
+										<input type="text" id="first_name" name="first_name" value="<?php echo ( isset( $_POST['first_name'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>
@@ -1341,7 +1341,7 @@ class MainWP_User {
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Last Name', 'mainwp' ); ?></label>
 								<div class="ui six wide column">
 									<div class="ui left labeled input">
-										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : ''; ?>">
+										<input type="text" id="last_name" name="last_name" value="<?php echo ( isset( $_POST['last_name'] ) ) ? esc_html( sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) ) : ''; ?>">
 									</div>
 								</div>
 							</div>

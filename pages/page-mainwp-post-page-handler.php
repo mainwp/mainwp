@@ -158,7 +158,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) ) ); // sanitize ok.
+			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -209,7 +209,7 @@ class MainWP_Post_Page_Handler {
 		if ( 0 < count( $allCategories ) ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
-				echo '<option value="' . $category . '" class="sitecategory">' . $category . '</option>';
+				echo '<option value="' . esc_attr( $category ) . '" class="sitecategory">' . esc_html( $category ) . '</option>';
 			}
 		}
 		die();

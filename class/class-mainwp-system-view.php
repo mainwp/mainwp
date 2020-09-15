@@ -283,11 +283,7 @@ class MainWP_System_View {
 
 	/** Render Administration Notice. */
 	public static function admin_notices() {
-		if ( get_option( 'mainwp_refresh' ) ) {
-			echo '<meta http-equiv="refresh" content="0">';
-			delete_option( 'mainwp_refresh' );
-		}
-
+		
 		$current_options = get_option( 'mainwp_showhide_events_notice' );
 		if ( ! is_array( $current_options ) ) {
 			$current_options = array();

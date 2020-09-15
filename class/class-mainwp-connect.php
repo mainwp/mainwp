@@ -1692,7 +1692,7 @@ class MainWP_Connect {
 		}
 
 		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
-			$wp_filesystem->mkdir( dirname( $file ), 0777, true );
+			$wp_filesystem->mkdir( dirname( $file ), 0777 );
 		}
 
 		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
@@ -1762,7 +1762,7 @@ class MainWP_Connect {
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
 			if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
-				$wp_filesystem->mkdir( $cookieDir, 0777, true );
+				$wp_filesystem->mkdir( $cookieDir, 0777 );
 			}
 
 			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {

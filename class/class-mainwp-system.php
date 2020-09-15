@@ -252,7 +252,6 @@ class MainWP_System {
 				'mainwp_maximumInstallUpdateRequests',
 				'mainwp_maximumSyncRequests',
 				'mainwp_primaryBackup',
-				'mainwp_refresh',
 				'mainwp_security',
 				'mainwp_use_favicon',
 				'mainwp_wp_cron',
@@ -276,6 +275,12 @@ class MainWP_System {
 				'mainwp_ignore_HTTP_response_status',
 				'mainwp_check_http_response',
 				'mainwp_setup_important_notification',
+				'mainwp_extmenu',
+				'mainwp_opensslLibLocation',
+				'mainwp_notice_wp_mail_failed',
+				'mainwp_show_language_updates',
+				'mwp_setup_installationHostingType',
+				'mwp_setup_installationSystemType',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";

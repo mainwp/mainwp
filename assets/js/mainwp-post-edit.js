@@ -83,15 +83,6 @@ mainwp_post_newmeta_submit = function( action, me ) {
     }, 'json' );
 };
 
-// Cancel editing the publish time
-mainwp_post_cancel_timestamp = function() {
-    $('#mm').val($('#hidden_mm').val());
-    $('#jj').val($('#hidden_jj').val());
-    $('#aa').val($('#hidden_aa').val());
-    $('#hh').val($('#hidden_hh').val());
-    $('#mn').val($('#hidden_mn').val());
-};
-
 /**
  * All post and postbox controls and functionality.
  */
@@ -127,7 +118,12 @@ jQuery(document).ready( function($) {
         jQuery( '#post_timestamp_value-field' ).show();
       } else {
         jQuery( '#post_timestamp_value-field' ).hide();
-        mainwp_post_cancel_timestamp();
+		// cancel edit date time.
+		$('#mm').val($('#hidden_mm').val());
+		$('#jj').val($('#hidden_jj').val());
+		$('#aa').val($('#hidden_aa').val());
+		$('#hh').val($('#hidden_hh').val());
+		$('#mn').val($('#hidden_mn').val());
       }
     } );
 
@@ -176,15 +172,16 @@ jQuery(document).ready( function($) {
                 return aa + '-' + mm + '-' + jj;
               }
             },
-            onChange: function (attemptedDate) {
-                var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
+            onChange: function ( attemptedDate, textDate ) {
+				console.log( textDate );
+				var aa = attemptedDate.getFullYear(), mm = attemptedDate.getMonth() + 1, jj = attemptedDate.getDate(), mn = attemptedDate.getMinutes(), hh = attemptedDate.getHours();
                 mm =  ('0' + mm).slice(-2); // to format 01,02,03, ... 11,12
                 $('#aa').val(aa);
                 $('#mm').val(mm).change(); // selector element
                 $('#jj').val(jj);
                 $('#hh').val(hh);
-                $('#mn').val(mn);
-                return updateText(); // not set if invalid date
+				$('#mn').val(mn);
+				return updateText(); // not set if invalid date
             }
     });
 

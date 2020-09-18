@@ -254,7 +254,10 @@ class MainWP_Utility {
 	 *
 	 * @return string Time stamp in general mountain time offset.
 	 */
-	public static function get_timestamp( $timestamp ) {
+	public static function get_timestamp( $timestamp = false ) {
+		if ( false === $timestamp ) {
+			$timestamp = time();
+		}
 		$gmtOffset = get_option( 'gmt_offset' );
 
 		return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
@@ -271,7 +274,7 @@ class MainWP_Utility {
 	 */
 	public static function date( $format ) {
 		// phpcs:ignore -- use local date function.
-		return date( $format, self::get_timestamp( time() ) );
+		return date( $format, self::get_timestamp() );
 	}
 
 	/**

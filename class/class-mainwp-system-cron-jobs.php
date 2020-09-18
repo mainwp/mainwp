@@ -248,25 +248,23 @@ class MainWP_System_Cron_Jobs {
 			}
 		);
 
-		$dtsnow          = time();
-		$local_timestamp = MainWP_Utility::get_timestamp( $dtsnow );
-
-		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
-		$run_timestamp   = 0;
-		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
+		$timeDailyUpdate     = get_option( 'mainwp_timeDailyUpdate' );
+		$run_timestamp       = 0;
+		if ( ! empty( $timeDailyUpdate ) && ! $updatecheck_running ) {
+			$local_timestamp = MainWP_Utility::get_timestamp();
+			$run_timestamp   = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( $local_timestamp < $run_timestamp ) { // not run this time.
 				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 				return;
 			}
 		}
 
-		$updatecheck_running          = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 
 		if ( false === $lasttimeStartAutomaticUpdate ) {
-			$lasttimeStartAutomaticUpdate = $lasttimeAutomaticUpdate;
+			$lasttimeStartAutomaticUpdate = $lasttimeAutomaticUpdate ? $lasttimeAutomaticUpdate : time();
 			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // for compatible.
 		}
 
@@ -322,8 +320,10 @@ class MainWP_System_Cron_Jobs {
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			$websites = array(); // ok, go check.
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
-			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
-			return;
+			if ( ! $updatecheck_running ) {
+				MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
+				return;
+			}
 		}
 
 		if ( $lasttimeStartAutomaticUpdate <= $lasttimeAutomaticUpdate ) {
@@ -399,7 +399,7 @@ class MainWP_System_Cron_Jobs {
 
 			if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
-				return false;
+				return false; // return to check time to send mail.
 			}
 
 			if ( $updatecheck_running ) {
@@ -409,10 +409,11 @@ class MainWP_System_Cron_Jobs {
 			update_option( 'mainwp_last_synced_all_sites', time() );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_today_count );
 
-			$diff_day = false;
-			if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) { //phpcs:ignore -- local time.
+			$diff_day  = false;
+			$today_m_y = date( 'd/m/Y' ); //phpcs:ignore -- local time.
+			if ( $today_m_y !== $mainwpLastAutomaticUpdate ) {
 				$diff_day = true;
-				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
+				MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );

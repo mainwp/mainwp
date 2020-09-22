@@ -328,7 +328,7 @@ class MainWP_System_Cron_Jobs {
 
 		if ( $lasttimeStartAutomaticUpdate <= $lasttimeAutomaticUpdate ) {
 			$lasttimeStartAutomaticUpdate = time();
-			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // starting new updates check.
+			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // to save last of starting time to check updates.
 		}
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
@@ -391,9 +391,9 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 0 == count( $checkupdate_websites ) ) {
-			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
+			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomaticUpdate );
 			if ( 0 != $busyCounter ) {
-				MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
+				MainWP_Logger::instance()->debug( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
 				return;
 			}
 

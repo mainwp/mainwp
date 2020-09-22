@@ -1571,7 +1571,7 @@ class MainWP_User {
 					 *
 					 * @since 4.1
 					 */
-					echo apply_filter( 'mainwp_import_users_download_CSV_url', 'https://mainwp.com/csv/sample_users.csv' );
+					echo apply_filters( 'mainwp_import_users_download_CSV_url', 'https://mainwp.com/csv/sample_users.csv' );
 					?>
 					" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 						<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green right floated button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>"/>

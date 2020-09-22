@@ -388,7 +388,7 @@ class MainWP_Logger {
 	 */
 	public static function clear_log() {
 		$logFile = self::instance()->get_log_file();
-		if ( ! unlink( $logFile, 'r' ) ) {
+		if ( ! unlink( $logFile ) ) {
 			$fh = fopen( $logFile, 'w' );
 			if ( false === $fh ) {
 				return;

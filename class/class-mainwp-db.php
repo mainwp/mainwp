@@ -476,7 +476,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 		self::free_result( $websites );
 		return $dbwebsites;
-
 	}
 
 	/**

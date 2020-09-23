@@ -1526,7 +1526,7 @@ class MainWP_Manage_Sites_View {
 
 		return array( $message, $error, $id );
 	}
-	
+
 	/**
 	 * Method update_wp_site()
 	 *

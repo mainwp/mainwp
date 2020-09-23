@@ -82,9 +82,10 @@ class MainWP_Notes {
 					</div>
 				</h2>
 				<?php
-			} else { ?>
+			} else {
+				?>
 				<div class="content">
-				<?php 
+				<?php
 				echo $esc_note;
 				?>
 				</div>

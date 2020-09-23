@@ -146,7 +146,7 @@ class MainWP_Hooks {
 
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
 				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
@@ -260,7 +260,7 @@ class MainWP_Hooks {
 		$ret = array();
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			}
 		}
@@ -286,76 +286,6 @@ class MainWP_Hooks {
 			'href'       => $href,
 		);
 		MainWP_Menu::add_left_menu( $item, $level );
-	}
-
-	/**
-	 * Method update_wp_site()
-	 *
-	 * Update Child Site.
-	 *
-	 * @param mixed $params Udate parameters.
-	 *
-	 * @return int Child Site ID on success and return 0 on failer.
-	 */
-	public static function update_wp_site( $params ) {
-		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-			return 0;
-		}
-
-		if ( isset( $params['is_staging'] ) ) {
-			unset( $params['is_staging'] );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $params['websiteid'] );
-		if ( null == $website ) {
-			return 0;
-		}
-
-		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			return 0;
-		}
-
-		$data     = array();
-		$uniqueId = null;
-
-		if ( isset( $params['name'] ) && ! empty( $params['name'] ) ) {
-			$data['name'] = htmlentities( $params['name'] );
-		}
-
-		if ( isset( $params['wpadmin'] ) && ! empty( $params['wpadmin'] ) ) {
-			$data['adminname'] = $params['wpadmin'];
-		}
-
-		if ( isset( $params['unique_id'] ) ) {
-			$data['uniqueId'] = $params['unique_id'];
-			$uniqueId         = $params['unique_id'];
-		}
-
-		if ( empty( $data ) ) {
-			return 0;
-		}
-
-		MainWP_DB::instance()->update_website_values( $website->id, $data );
-		if ( null !== $uniqueId ) {
-			try {
-				$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
-			} catch ( MainWP_Exception $e ) {
-				$error = $e->getMessage();
-			}
-		}
-
-		/**
-		 * Action: mainwp_updated_site
-		 *
-		 * Fires after updatig the child site options.
-		 *
-		 * @param int   $website->id Child site ID.
-		 * @param array $data        Child site data.
-		 *
-		 * @since 3.5.1
-		 */
-		do_action( 'mainwp_updated_site', $website->id, $data );
-		return $website->id;
 	}
 
 	/**

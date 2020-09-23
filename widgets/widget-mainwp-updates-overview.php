@@ -112,12 +112,7 @@ class MainWP_Updates_Overview {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
 		}
 
-		MainWP_Utility::end_session();
-
-		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
-		MainWP_Utility::end_session();
-
-		if ( MainWP_Sync::sync_site( $website ) ) {
+		if ( MainWP_Sync::sync_website( $website ) ) {
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 

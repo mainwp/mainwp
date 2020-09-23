@@ -2111,6 +2111,7 @@ mainwp_notes_hide = function () {
 mainwp_notes_site_save = function () {
     var normalid = jQuery( '#mainwp-notes-websiteid' ).val();
     var newnote = jQuery( '#mainwp-notes-note' ).val();
+    newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
     var data = mainwp_secure_data( {
         action: 'mainwp_notes_save',
         websiteid: normalid,

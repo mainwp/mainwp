@@ -2085,14 +2085,11 @@ jQuery( document ).ready( function () {
     } );
 
     jQuery( document ).on( 'click', '#mainwp-notes-edit', function () {
-        //var value = jQuery( '#mainwp-notes-html').html();
         jQuery( '#mainwp-notes-html' ).hide();
         jQuery( '#mainwp-notes-editor' ).show();
-        //jQuery( '#mainwp-notes-note').val( value );
         jQuery( this ).hide();
         jQuery( '#mainwp-notes-save' ).show();
         jQuery( '#mainwp-notes-status' ).html('');
-        // jQuery( '#mainwp-notes' ).addClass( 'edit-mode' );
         return false;
     } );
     jQuery( '#redirectForm' ).submit();

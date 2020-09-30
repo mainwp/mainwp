@@ -305,6 +305,8 @@ class MainWP_User {
 	 * Renders manage users dashboard.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
@@ -534,6 +536,8 @@ class MainWP_User {
 	 * Method render_search_options()
 	 *
 	 * Render User page search.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
@@ -710,6 +714,8 @@ class MainWP_User {
 	 * @param string $groups Current user groups.
 	 * @param string $sites Current Child Sites the user is on.
 	 * @param null   $search Search field.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
 
@@ -812,6 +818,15 @@ class MainWP_User {
 	 * @param string $groups Usr Group.
 	 * @param string $sites Users Sites.
 	 * @param null   $search Search field.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		MainWP_Cache::init_cache( 'Users' );
@@ -1006,6 +1021,8 @@ class MainWP_User {
 
 	/**
 	 * Renders when cache is not found.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	public static function render_cache_not_found() {
 		ob_start();
@@ -1049,6 +1066,8 @@ class MainWP_User {
 	 * @param object $website Object containing the child site info.
 	 *
 	 * @return mixed Search results table.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
@@ -1120,6 +1139,9 @@ class MainWP_User {
 	 * @param mixed $data Search data.
 	 * @param mixed $website Child Site.
 	 * @param mixed $output Output to pass to self::users_search_handler_renderer().
+     *
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1172,6 +1194,12 @@ class MainWP_User {
 	 * @param string $extra Additional Roles to add if any.
 	 *
 	 * @return mixed $information User update info that is returned.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
@@ -1595,6 +1623,12 @@ class MainWP_User {
 	 * Method do_bulk_add()
 	 *
 	 * Bulk User addition $_POST Handler.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 		$errors      = array();
@@ -1947,6 +1981,14 @@ class MainWP_User {
 
 	/**
 	 * User Import $_POST handler.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::free_result()
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 

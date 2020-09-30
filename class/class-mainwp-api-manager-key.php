@@ -74,6 +74,8 @@ class MainWP_Api_Manager_Key {
 	 * @param array $args Extension arguments.
 	 *
 	 * @return array Request response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function activate( $args ) {
 
@@ -114,6 +116,8 @@ class MainWP_Api_Manager_Key {
 	 * @param array $args Extension arguments.
 	 *
 	 * @return array Request response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function deactivate( $args ) {
 
@@ -153,6 +157,8 @@ class MainWP_Api_Manager_Key {
 	 * @param array $args Extension arguments.
 	 *
 	 * @return array Request response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function grab_api_key( $args ) {
 
@@ -191,9 +197,11 @@ class MainWP_Api_Manager_Key {
 	 *
 	 * @param aray $args Login arguments.
 	 *
+	 * @return array Request response.
+	 *
 	 * @throws \Exception Request error codes.
 	 *
-	 * @return array Request response.
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function test_login_api( $args ) {
 
@@ -249,6 +257,8 @@ class MainWP_Api_Manager_Key {
 	 * @param array $args Software Arguments.
 	 *
 	 * @return array Request response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function get_purchased_software( $args ) {
 
@@ -286,6 +296,8 @@ class MainWP_Api_Manager_Key {
 	 * @param array $args Software arguments.
 	 *
 	 * @return array Request response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
 	 */
 	public function purchase_software( $args ) {
 		$defaults = array(

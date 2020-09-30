@@ -81,6 +81,8 @@ class MainWP_System {
 	 * Runs any time class is called.
 	 *
 	 * @param string $mainwp_plugin_file Plugn slug.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Bulk_Post
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -729,7 +731,9 @@ class MainWP_System {
 	/**
 	 * Method init_session()
 	 *
-	 * Chck witch page & initiate a session.
+	 * Check current page & initiate a session.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function init_session() {
 		if ( isset( $_GET['page'] ) && in_array(
@@ -888,6 +892,11 @@ class MainWP_System {
 	 * Method admin_footer()
 	 *
 	 * Create MainWP admin footer.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
@@ -946,6 +955,8 @@ class MainWP_System {
 	 * Method activated_check()
 	 *
 	 * Activated check.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public function activated_check() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();

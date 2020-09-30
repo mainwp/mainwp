@@ -55,6 +55,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public function sites( $args, $assoc_args ) {
 		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
@@ -110,6 +116,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -176,6 +188,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
@@ -258,6 +276,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
@@ -521,6 +545,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();

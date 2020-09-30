@@ -568,7 +568,11 @@ class MainWP_System_View {
 	}
 
 
-	/** MainWP Productions Site warning. */
+	/**
+	 * MainWP Productions Site warning.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
+	 */
 	public static function mainwp_warning_notice() {
 
 		if ( get_option( 'mainwp_installation_warning_hide_the_notice' ) == 'yes' ) {
@@ -623,6 +627,9 @@ class MainWP_System_View {
 	 * Render footer content.
 	 *
 	 * @param mixed $websites The websites object.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_footer_content( $websites ) {
 

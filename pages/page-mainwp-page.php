@@ -408,6 +408,8 @@ class MainWP_Page {
 	 * Renders Bulk Page Manager.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -608,6 +610,8 @@ class MainWP_Page {
 	 * Render search options box.
 	 *
 	 * @return void Output the page search options box
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Page' );
@@ -706,6 +710,8 @@ class MainWP_Page {
 	 * @param string $search_on Site on all sites. Default = all.
 	 *
 	 * @return void Page table html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all' ) {
 		?>
@@ -838,6 +844,15 @@ class MainWP_Page {
 	 * @param string $search_on Site on all sites. Default = all.
 	 *
 	 * @return void Output table body.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
@@ -952,6 +967,10 @@ class MainWP_Page {
 	 * @param mixed $output Search output.
 	 *
 	 * @return void Search box html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -1214,6 +1233,12 @@ class MainWP_Page {
 	 * Render Posting page modal window.
 	 *
 	 * @return void Posting page modal window html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';

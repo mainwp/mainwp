@@ -91,7 +91,7 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_cronupdatescheck_action' => 'minutely',
 		);
 
-		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+		$disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
 		if ( ! $disableChecking ) {
 			$jobs['mainwp_croncheckstatus_action'] = 'minutely';
 		} else {
@@ -102,7 +102,7 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
-		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 ); // disabled by default.
 		if ( ! $disableHealthChecking ) {
 			$jobs['mainwp_cronsitehealthcheck_action'] = 'hourly';
 		} else {
@@ -261,25 +261,23 @@ class MainWP_System_Cron_Jobs {
 			}
 		);
 
-		$dtsnow          = time();
-		$local_timestamp = MainWP_Utility::get_timestamp( $dtsnow );
-
-		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
-		$run_timestamp   = 0;
-		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
+		$timeDailyUpdate     = get_option( 'mainwp_timeDailyUpdate' );
+		$run_timestamp       = 0;
+		if ( ! empty( $timeDailyUpdate ) && ! $updatecheck_running ) {
+			$local_timestamp = MainWP_Utility::get_timestamp();
+			$run_timestamp   = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( $local_timestamp < $run_timestamp ) { // not run this time.
 				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 				return;
 			}
 		}
 
-		$updatecheck_running          = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 
 		if ( false === $lasttimeStartAutomaticUpdate ) {
-			$lasttimeStartAutomaticUpdate = $lasttimeAutomaticUpdate;
+			$lasttimeStartAutomaticUpdate = $lasttimeAutomaticUpdate ? $lasttimeAutomaticUpdate : time();
 			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // for compatible.
 		}
 
@@ -335,13 +333,15 @@ class MainWP_System_Cron_Jobs {
 		} elseif ( $enableFrequencyAutomaticUpdate ) {
 			$websites = array(); // ok, go check.
 		} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
-			MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
-			return;
+			if ( ! $updatecheck_running ) {
+				MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
+				return;
+			}
 		}
 
 		if ( $lasttimeStartAutomaticUpdate <= $lasttimeAutomaticUpdate ) {
 			$lasttimeStartAutomaticUpdate = time();
-			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // starting new updates check.
+			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // to save last of starting time to check updates.
 		}
 
 		if ( 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
@@ -404,15 +404,15 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( 0 == count( $checkupdate_websites ) ) {
-			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start();
+			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomaticUpdate );
 			if ( 0 != $busyCounter ) {
-				MainWP_Logger::instance()->info_update( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
+				MainWP_Logger::instance()->debug( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
 				return;
 			}
 
 			if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
-				return false;
+				return false; // return to check time to send mail.
 			}
 
 			if ( $updatecheck_running ) {
@@ -422,10 +422,11 @@ class MainWP_System_Cron_Jobs {
 			update_option( 'mainwp_last_synced_all_sites', time() );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_today_count );
 
-			$diff_day = false;
-			if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) { //phpcs:ignore -- local time.
+			$diff_day  = false;
+			$today_m_y = date( 'd/m/Y' ); //phpcs:ignore -- local time.
+			if ( $today_m_y !== $mainwpLastAutomaticUpdate ) {
 				$diff_day = true;
-				MainWP_Utility::update_option( 'mainwp_updatescheck_last', date( 'd/m/Y' ) ); // phpcs:ignore -- update check at local server time
+				MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', time() );
@@ -1184,7 +1185,7 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$gen_settings = MainWP_Notification_Settings::get_general_email_settings( 'http_check' );
-		// general http check notificaion.
+		// general http check notificaion, to administrator.
 		if ( ! $gen_settings['disable'] ) {
 			MainWP_Notification::send_http_check_notification( $gen_settings, $sitesHttpCheck, $plain_text );
 			usleep( 100000 );
@@ -1431,7 +1432,7 @@ class MainWP_System_Cron_Jobs {
 	 */
 	public function cron_check_websites_status() {
 
-		$disableChecking = get_option( 'mainwp_disableSitesChecking' );
+		$disableChecking = get_option( 'mainwp_disableSitesChecking', 1 );
 		// to disable if run custom cron.
 		if ( $disableChecking ) {
 			return;
@@ -1463,6 +1464,7 @@ class MainWP_System_Cron_Jobs {
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );
 
+		// start notice.
 		if ( empty( $websites ) ) {
 			$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 			$this->start_notification_uptime_status( $plain_text );
@@ -1499,7 +1501,7 @@ class MainWP_System_Cron_Jobs {
 
 		$admin_email = MainWP_DB_Common::instance()->get_user_notification_email();
 
-		// general uptime notification.
+		// general uptime notification, to administrator.
 		$email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
 		if ( ! $email_settings['disable'] ) {
 			MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( $offlineSites, $admin_email, $email_settings, $plain_text );
@@ -1509,7 +1511,7 @@ class MainWP_System_Cron_Jobs {
 		// individual uptime notification.
 		foreach ( $offlineSites as $site ) {
 			$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $site );
-			if ( ! $email_settings['disable'] ) {
+			if ( $email_settings['disable'] ) {
 				continue; // disabled send notification for this site.
 			}
 			$individual_admin_uptimeSites[] = $site;
@@ -1535,7 +1537,7 @@ class MainWP_System_Cron_Jobs {
 	public function cron_check_websites_health() {
 
 		// to disable if run custom cron.
-		$disableChecking = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
 		if ( $disableChecking ) {
 			return;
 		}
@@ -1581,7 +1583,7 @@ class MainWP_System_Cron_Jobs {
 		// individual uptime notification.
 		foreach ( $healthSites as $site ) {
 			$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'site_health', $site );
-			if ( ! $email_settings['disable'] ) {
+			if ( $email_settings['disable'] ) {
 				continue; // disabled notification for this site.
 			}
 			$to_admin_siteHealthWebsites[] = $site;

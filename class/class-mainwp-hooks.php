@@ -140,15 +140,13 @@ class MainWP_Hooks {
 	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site.
 	 *
 	 * @return array $ret data fields: response, siteid.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
 	 */
 	public function mainwp_add_site( $params ) {
 		$ret = array();
 
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
 				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
@@ -173,12 +171,6 @@ class MainWP_Hooks {
 	 * @param bool $site_id Child site ID.
 	 *
 	 * @return boolean|array Return false if empty and return array error - Site not found | result - SUCCESS.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-	 * @uses \MainWP\Dashboard\MainWP_DB::remove_website()
 	 */
 	public function hook_delete_site( $site_id = false ) {
 
@@ -225,12 +217,12 @@ class MainWP_Hooks {
 	 * Hook to clone site.
 	 *
 	 * @since 3.4.4
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param mixed   $websiteid Child site ID.
-	 * @param mixed   $cloneid Clone site ID.
-	 * @param mixed   $clone_url Clone site URL.
-	 * @param bool $force_update Force the update, true|false, Default: false.
+	 * @param mixed $pluginFile Plugin file.
+	 * @param mixed $key Key.
+	 * @param mixed $websiteid Child site ID.
+	 * @param mixed $cloneid Clone site ID.
+	 * @param mixed $clone_url Clone site URL.
+	 * @param bool  $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
 	 */
@@ -243,10 +235,10 @@ class MainWP_Hooks {
 	 *
 	 * Hook to delete cloaned Child Site.
 	 *
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param string  $clone_url Clone site URL.
-	 * @param bool $clone_site_id Clone site ID.
+	 * @param mixed  $pluginFile Plugin file.
+	 * @param mixed  $key Key.
+	 * @param string $clone_url Clone site URL.
+	 * @param bool   $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
 	 */
@@ -268,7 +260,7 @@ class MainWP_Hooks {
 		$ret = array();
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			}
 		}
@@ -294,81 +286,6 @@ class MainWP_Hooks {
 			'href'       => $href,
 		);
 		MainWP_Menu::add_left_menu( $item, $level );
-	}
-
-	/**
-	 * Method update_wp_site()
-	 *
-	 * Update Child Site.
-	 *
-	 * @param mixed $params Udate parameters.
-	 *
-	 * @return int Child Site ID on success and return 0 on failure
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
-	 */
-	public static function update_wp_site( $params ) {
-		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-			return 0;
-		}
-
-		if ( isset( $params['is_staging'] ) ) {
-			unset( $params['is_staging'] );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $params['websiteid'] );
-		if ( null == $website ) {
-			return 0;
-		}
-
-		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			return 0;
-		}
-
-		$data     = array();
-		$uniqueId = null;
-
-		if ( isset( $params['name'] ) && ! empty( $params['name'] ) ) {
-			$data['name'] = htmlentities( $params['name'] );
-		}
-
-		if ( isset( $params['wpadmin'] ) && ! empty( $params['wpadmin'] ) ) {
-			$data['adminname'] = $params['wpadmin'];
-		}
-
-		if ( isset( $params['unique_id'] ) ) {
-			$data['uniqueId'] = $params['unique_id'];
-			$uniqueId         = $params['unique_id'];
-		}
-
-		if ( empty( $data ) ) {
-			return 0;
-		}
-
-		MainWP_DB::instance()->update_website_values( $website->id, $data );
-		if ( null !== $uniqueId ) {
-			try {
-				$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
-			} catch ( MainWP_Exception $e ) {
-				$error = $e->getMessage();
-			}
-		}
-
-		/**
-		 * Action: mainwp_updated_site
-		 *
-		 * Fires after updatig the child site options.
-		 *
-		 * @param int   $website->id Child site ID.
-		 * @param array $data        Child site data.
-		 *
-		 * @since 3.5.1
-		 */
-		do_action( 'mainwp_updated_site', $website->id, $data );
-		return $website->id;
 	}
 
 	/**
@@ -406,8 +323,6 @@ class MainWP_Hooks {
 	 * @param string $page Current MainWP Page.
 	 *
 	 * @return array Cached Search Array.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public function cache_getcontext( $page ) {
 		return MainWP_Cache::get_cached_context( $page );
@@ -419,8 +334,6 @@ class MainWP_Hooks {
 	 * Echo Cached Search Body.
 	 *
 	 * @param string $page Current MainWP Page.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public function cache_echo_body( $page ) {
 		MainWP_Cache::echo_body( $page );
@@ -432,8 +345,6 @@ class MainWP_Hooks {
 	 * Initiate search session variables for the current page.
 	 *
 	 * @param string $page Current MainWP Page.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
 	 */
 	public function cache_init( $page ) {
 		MainWP_Cache::init_cache( $page );
@@ -446,8 +357,6 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $context Time of search.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
 	 */
 	public function cache_add_context( $page, $context ) {
 		MainWP_Cache::add_context( $page, $context );
@@ -460,8 +369,6 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $body Search body.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	public function cache_add_body( $page, $body ) {
 		MainWP_Cache::add_body( $page, $body );
@@ -472,14 +379,14 @@ class MainWP_Hooks {
 	 *
 	 * Hook to select sites box.
 	 *
-	 * @param string  $title Input title.
-	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
-	 * @param string  $class Default = ''.
-	 * @param string  $style Default = ''.
-	 * @param array   $selected_websites Selected Child Sites.
-	 * @param array   $selected_groups Selected Groups.
+	 * @param string $title Input title.
+	 * @param string $type Input type, radio.
+	 * @param bool   $show_group Whether or not to show group, Default: true.
+	 * @param bool   $show_select_all Whether to show select all.
+	 * @param string $class Default = ''.
+	 * @param string $style Default = ''.
+	 * @param array  $selected_websites Selected Child Sites.
+	 * @param array  $selected_groups Selected Groups.
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
@@ -507,9 +414,6 @@ class MainWP_Hooks {
 	 * @param object $extra HTTP error message.
 	 *
 	 * @return string Error message.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function get_error_message( $msg, $extra ) {
 		return MainWP_Error_Helper::get_error_message( new MainWP_Exception( $msg, $extra ) );
@@ -521,8 +425,6 @@ class MainWP_Hooks {
 	 * Hook to get user extension.
 	 *
 	 * @return object $row User extension.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
 	 */
 	public function get_user_extension() {
 		return MainWP_DB_Common::instance()->get_user_extension();
@@ -538,8 +440,6 @@ class MainWP_Hooks {
 	 * @param string $name Option table name.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public function hook_get_site_options( $boolean, $website, $name = '' ) {
 
@@ -567,8 +467,6 @@ class MainWP_Hooks {
 	 * @param string $value Option value.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
 	 */
 	public function hook_update_site_options( $boolean, $website, $option, $value ) {
 		return MainWP_DB::instance()->update_website_option( $website, $option, $value );
@@ -584,8 +482,6 @@ class MainWP_Hooks {
 	 * @param string $orderBy      Order list by. Default: URL.
 	 *
 	 * @return object|null Database query results or null on failure.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_user_id()
 	 */
 	public function hook_get_websites_by_user_id( $boolean, $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
 		return MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
@@ -599,8 +495,6 @@ class MainWP_Hooks {
 	 * @param string $url Child Site URL.
 	 *
 	 * @return array|object|null Database query results.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
 	 */
 	public function get_websites_by_url( $url ) {
 		return MainWP_DB::instance()->get_websites_by_url( $url );
@@ -615,9 +509,6 @@ class MainWP_Hooks {
 	 * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
 	 *
 	 * @return array $output All posts data array.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
@@ -736,7 +627,7 @@ class MainWP_Hooks {
 	 * Hook to get MainWP Directory.
 	 *
 	 * @param bool $false False.
-	 * @param null    $dir WP files system diectories.
+	 * @param null $dir WP files system diectories.
 	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $newdir, $url.
@@ -792,8 +683,6 @@ class MainWP_Hooks {
 	 * @param string $title Email title.
 	 *
 	 * @return string|bool Return error or true.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Format::format_email()
 	 */
 	public function get_formated_email( $body, $email, $title = '' ) {
 		return MainWP_Format::format_email( $email, $body, $title );
@@ -843,11 +732,6 @@ class MainWP_Hooks {
 	 * Method upgrade_plugin_theme()
 	 *
 	 * Hook to update theme.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function upgrade_plugin_theme() {
 		try {
@@ -917,9 +801,7 @@ class MainWP_Hooks {
 	 * @param mixed $ids Group IDs.
 	 * @param null  $userId Current user ID.
 	 *
-	 * @return object|null Database query result for get Child Sites by group ID or null on failure.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
+	 * @return (object|null) Database query result for get Child Sites by group ID or null on failure.
 	 */
 	public function hook_get_websites_by_group_ids( $ids, $userId = null ) {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );

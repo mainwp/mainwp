@@ -123,7 +123,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get child site count.
 	 *
-	 * @param null    $userId Current user ID.
+	 * @param null $userId Current user ID.
 	 * @param bool $all_access Check if user has access to all sites.
 	 *
 	 * @return int Child site count.
@@ -365,7 +365,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	}
 
 	/**
-	 * Get child sites for current user via SQL.
+	 * Get SQL to get child sites for current user.
 	 *
 	 * @param bool   $selectgroups Selected groups. Default: false.
 	 * @param null   $search_site  Site search field value. Default: null.
@@ -445,6 +445,39 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		return $qry;
+	}
+
+	/**
+	 * Get child sites for current user.
+	 *
+	 * @param array $params to get sites. Default: array().
+	 *
+	 * @return object|null Results or null on failer.
+	 */
+	public function get_websites_for_current_user( $params = array() ) {
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		$selectgroups = isset( $params['selectgroups'] ) ? $params['selectgroups'] : false;
+		$search_site  = isset( $params['search_site'] ) ? $params['search_site'] : null;
+		$orderBy      = isset( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
+		$offset       = isset( $params['offset'] ) ? $params['offset'] : false;
+		$rowcount     = isset( $params['rowcount'] ) ? $params['rowcount'] : false;
+		$extraWhere   = isset( $params['where'] ) ? $params['where'] : null;
+		$extra_view   = isset( $params['extra_view'] ) ? $params['extra_view'] : array( 'favi_icon' );
+		$is_staging   = isset( $params['is_staging'] ) ? $params['is_staging'] : 'no';
+		$for_manager  = false;
+
+		$data = array( 'id', 'url', 'name', 'adminname', 'nossl', 'privkey', 'nosslkey', 'verify_certificate', 'ssl_version', 'http_user', 'http_pass' );
+
+		$dbwebsites = array();
+		$websites   = self::instance()->query( self::instance()->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );
+		while ( $websites && ( $website = self::fetch_object( $websites ) ) ) {
+			$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
+		}
+		self::free_result( $websites );
+		return $dbwebsites;
 	}
 
 	/**
@@ -1264,12 +1297,14 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get child site count where date & time Session sync is smaller then start.
 	 *
+	 * @param int $lasttime_start Last time start automatic.
+	 *
 	 * @return int Returned child site count.
 	 */
-	public function get_websites_count_where_dts_automatic_sync_smaller_then_start() {
+	public function get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE ((wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart) OR (wp_sync.dtsAutomaticSyncStart = 0)) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (( wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart > ' . $lasttime_start . ') OR (wp_sync.dtsAutomaticSyncStart = 0)) ' . $where );
 	}
 
 	/**
@@ -1292,7 +1327,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_websites_check_updates( $limit, $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ') ' . $where . ' LIMIT 0,' . $limit, OBJECT );
+		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) ' . $where . ' LIMIT 0,' . $limit, OBJECT );
 	}
 
 	/**

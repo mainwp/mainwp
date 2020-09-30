@@ -336,7 +336,7 @@ class MainWP_Manage_Backups_Handler {
 		if ( $updateRun && ( 1 == get_option( 'mainwp_notificationOnBackupStart' ) ) && ( $lastStartNotification < $task->last_run ) ) {
 			$email = MainWP_DB_Common::instance()->get_user_notification_email( $task->userid );
 			if ( '' != $email ) {
-				$output = 'A scheduled backup has started with MainWP on ' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( time() ) ) . ' for the following ' . count( $sites ) . ' sites:<br />';
+				$output = 'A scheduled backup has started with MainWP on ' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp() ) . ' for the following ' . count( $sites ) . ' sites:<br />';
 
 				foreach ( $sites as $siteid ) {
 					$website = MainWP_DB::instance()->get_website_by_id( $siteid );

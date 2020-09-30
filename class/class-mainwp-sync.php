@@ -16,12 +16,30 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Sync {
 
+
+	/**
+	 * Method sync_website()
+	 *
+	 * Sync Child Site.
+	 *
+	 * @param object $website object.
+
+	 * @return bool sync result.
+	 */
+	public static function sync_website( $website ) {
+		if ( ! is_object( $website ) ) {
+			return false;
+		}
+		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
+		return self::sync_site( $website );
+	}
+
 	/**
 	 * Method sync_site()
 	 *
-	 * @param mixed   $pWebsite Null|userid.
-	 * @param bool $pForceFetch Check if a fourced Sync.
-	 * @param bool $pAllowDisconnect Check if allowed to disconect.
+	 * @param mixed $pWebsite Null|userid.
+	 * @param bool  $pForceFetch Check if a fourced Sync.
+	 * @param bool  $pAllowDisconnect Check if allowed to disconect.
 	 *
 	 * @return array sync_information_array
 	 *
@@ -278,7 +296,10 @@ class MainWP_Sync {
 		} elseif ( isset( $information['securityIssues'] ) && MainWP_Utility::ctype_digit( $information['securityIssues'] ) && $information['securityIssues'] >= 0 ) {
 			$websiteValues['securityIssues'] = $information['securityIssues'];
 			$done                            = true;
+			$securityStats                   = $emptyArray;
 		}
+
+		MainWP_DB::instance()->update_website_option( $pWebsite, 'security_stats', $securityStats );
 
 		if ( isset( $information['recent_comments'] ) ) {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_comments', wp_json_encode( $information['recent_comments'] ) );

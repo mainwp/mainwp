@@ -493,7 +493,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server gateway interface.
 	 */
 	public static function get_server_gateway_interface() {
-		echo isset( $_SERVER['GATEWAY_INTERFACE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['GATEWAY_INTERFACE'] ) ) : '';
+		echo isset( $_SERVER['GATEWAY_INTERFACE'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['GATEWAY_INTERFACE'] ) ) ) : '';
 	}
 
 	/**
@@ -502,7 +502,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server IP address.
 	 */
 	public static function get_server_ip() {
-		echo isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '';
+		echo isset( $_SERVER['SERVER_ADDR'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) ) : '';
 	}
 
 	/**
@@ -516,9 +516,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_name( $return = false ) {
 		if ( $return ) {
-			return isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
+			return isset( $_SERVER['SERVER_NAME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) ) : '';
 		} else {
-			echo isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
+			echo isset( $_SERVER['SERVER_NAME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) ) : '';
 		}
 	}
 
@@ -533,9 +533,9 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_server_software( $return = false ) {
 		if ( $return ) {
-			return isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '';
+			return isset( $_SERVER['SERVER_SOFTWARE'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
 		} else {
-			echo isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '';
+			echo isset( $_SERVER['SERVER_SOFTWARE'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
 		}
 	}
 
@@ -557,14 +557,14 @@ class MainWP_Server_Information_Handler {
 	 * Gets server protocol.
 	 */
 	public static function get_server_protocol() {
-		echo isset( $_SERVER['SERVER_PROTOCOL'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_PROTOCOL'] ) ) : '';
+		echo isset( $_SERVER['SERVER_PROTOCOL'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_PROTOCOL'] ) ) ) : '';
 	}
 
 	/**
 	 * Gets server request time.
 	 */
 	public static function get_server_request_time() {
-		echo isset( $_SERVER['REQUEST_TIME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_TIME'] ) ) : '';
+		echo isset( $_SERVER['REQUEST_TIME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_TIME'] ) ) ) : '';
 	}
 
 
@@ -572,35 +572,35 @@ class MainWP_Server_Information_Handler {
 	 * Gets server HTTP accept.
 	 */
 	public static function get_server_http_accept() {
-		echo isset( $_SERVER['HTTP_ACCEPT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) : '';
+		echo isset( $_SERVER['HTTP_ACCEPT'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT'] ) ) ) : '';
 	}
 
 	/**
 	 * Gets server accepted character set.
 	 */
 	public static function get_server_accept_charset() {
-		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' === $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html_e( 'N/A', 'mainwp' ) : sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) );
+		echo ( ! isset( $_SERVER['HTTP_ACCEPT_CHARSET'] ) || ( '' == $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) ? esc_html_e( 'N/A', 'mainwp' ) : esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ACCEPT_CHARSET'] ) ) );
 	}
 
 	/**
 	 * Gets HTTP host.
 	 */
 	public static function get_http_host() {
-		echo isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		echo isset( $_SERVER['HTTP_HOST'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) ) : '';
 	}
 
 	/**
 	 * Gets complete URL.
 	 */
 	public static function get_complete_url() {
-		echo isset( $_SERVER['HTTP_REFERER'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
+		echo isset( $_SERVER['HTTP_REFERER'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) ) : '';
 	}
 
 	/**
 	 * Gets user agent.
 	 */
 	public static function get_user_agent() {
-		echo isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		echo isset( $_SERVER['HTTP_USER_AGENT'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) ) : '';
 	}
 
 	/**
@@ -608,7 +608,7 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function get_https() {
 		if ( isset( $_SERVER['HTTPS'] ) && '' !== $_SERVER['HTTPS'] ) {
-			esc_html_e( 'ON', 'mainwp' ) . ' - ' . sanitize_text_field( wp_unslash( $_SERVER['HTTPS'] ) );
+			esc_html_e( 'ON', 'mainwp' ) . ' - ' . esc_html( sanitize_text_field( wp_unslash( $_SERVER['HTTPS'] ) ) );
 		} else {
 			esc_html_e( 'OFF', 'mainwp' );
 		}
@@ -661,7 +661,7 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote address.
 	 */
 	public static function get_remote_address() {
-		echo isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		echo isset( $_SERVER['REMOTE_ADDR'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
 	}
 
 	/**
@@ -671,7 +671,7 @@ class MainWP_Server_Information_Handler {
 		if ( ! isset( $_SERVER['REMOTE_HOST'] ) || ( '' === $_SERVER['REMOTE_HOST'] ) ) {
 			esc_html_e( 'N/A', 'mainwp' );
 		} else {
-			echo isset( $_SERVER['REMOTE_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_HOST'] ) ) : '';
+			echo isset( $_SERVER['REMOTE_HOST'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_HOST'] ) ) ) : '';
 		}
 	}
 
@@ -679,14 +679,14 @@ class MainWP_Server_Information_Handler {
 	 * Gets server remote port.
 	 */
 	public static function get_remote_port() {
-		echo isset( $_SERVER['REMOTE_PORT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_PORT'] ) ) : '';
+		echo isset( $_SERVER['REMOTE_PORT'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_PORT'] ) ) ) : '';
 	}
 
 	/**
 	 * Gets server script filename.
 	 */
 	public static function get_script_file_name() {
-		echo isset( $_SERVER['SCRIPT_FILENAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_FILENAME'] ) ) : '';
+		echo isset( $_SERVER['SCRIPT_FILENAME'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SCRIPT_FILENAME'] ) ) ) : '';
 	}
 
 	/**
@@ -695,7 +695,7 @@ class MainWP_Server_Information_Handler {
 	 * Get server port.
 	 */
 	public static function get_server_port() {
-		echo isset( $_SERVER['SERVER_PORT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_PORT'] ) ) : '';
+		echo isset( $_SERVER['SERVER_PORT'] ) ? esc_html( sanitize_text_field( wp_unslash( $_SERVER['SERVER_PORT'] ) ) ) : '';
 	}
 
 	/**

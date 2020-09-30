@@ -25,8 +25,8 @@ if ( ! function_exists( 'mainwp_do_not_have_permissions' ) ) {
 	/**
 	 * Detect permission level & display message to end user.
 	 *
-	 * @param string  $where User's location.
-	 * @param bool $echo Defines weather or not to echo error message.
+	 * @param string $where User's location.
+	 * @param bool   $echo Defines weather or not to echo error message.
 	 * @return string|bool $msg|false
 	 */
 	function mainwp_do_not_have_permissions( $where = '', $echo = true ) {

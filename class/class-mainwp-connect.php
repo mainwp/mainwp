@@ -1683,11 +1683,11 @@ class MainWP_Connect {
 	 *
 	 * Download to file.
 	 *
-	 * @param mixed   $url Download URL.
-	 * @param mixed   $file File to download to.
-	 * @param bool $size Size of file.
-	 * @param null    $http_user htaccess username.
-	 * @param null    $http_pass htaccess password.
+	 * @param mixed $url Download URL.
+	 * @param mixed $file File to download to.
+	 * @param bool  $size Size of file.
+	 * @param null  $http_user htaccess username.
+	 * @param null  $http_pass htaccess password.
 	 *
 	 * @throws MainWP_Exception Exception message.
 	 *
@@ -1709,7 +1709,7 @@ class MainWP_Connect {
 		}
 
 		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
-			$wp_filesystem->mkdir( dirname( $file ), 0777, true );
+			$wp_filesystem->mkdir( dirname( $file ), 0777 );
 		}
 
 		if ( ! $wp_filesystem->exists( dirname( $file ) ) ) {
@@ -1779,7 +1779,7 @@ class MainWP_Connect {
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
 			if ( ! $wp_filesystem->is_dir( $cookieDir ) ) {
-				$wp_filesystem->mkdir( $cookieDir, 0777, true );
+				$wp_filesystem->mkdir( $cookieDir, 0777 );
 			}
 
 			if ( ! file_exists( $cookieDir . '/.htaccess' ) ) {

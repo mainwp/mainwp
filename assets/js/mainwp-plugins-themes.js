@@ -251,11 +251,12 @@ jQuery( document ).ready( function () {
   mainwp_notes_plugin_save = function () {
     var slug = jQuery( '#mainwp-notes-slug' ).val();
     var newnote = jQuery( '#mainwp-notes-note' ).val();
-        var data = mainwp_secure_data( {
-            action: 'mainwp_trusted_plugin_notes_save',
-            slug: slug,
-            note: newnote
-        } );
+    newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    var data = mainwp_secure_data( {
+        action: 'mainwp_trusted_plugin_notes_save',
+        slug: slug,
+        note: newnote
+    } );
 
     jQuery( '#mainwp-notes-status' ).html( '<i class="notched circle loading icon"></i> ' + __( 'Saving note. Please wait...' ) );
 
@@ -298,6 +299,7 @@ jQuery( document ).ready( function () {
     mainwp_notes_theme_save = function () {
         var slug = jQuery( '#mainwp-notes-slug' ).val();
         var newnote = jQuery( '#mainwp-notes-note' ).val();
+        newnote = newnote.replace(/(?:\r\n|\r|\n)/g, '<br>');
         var data = mainwp_secure_data( {
             action: 'mainwp_trusted_theme_notes_save',
             slug: slug,

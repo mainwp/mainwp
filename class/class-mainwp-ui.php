@@ -31,13 +31,13 @@ class MainWP_UI {
 	 * Select sites box.
 	 *
 	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
+	 * @param bool    $show_group Whether or not to show group, Default: true.
+	 * @param bool    $show_select_all Whether to show select all.
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
 	 * @param array   $selected_groups Selected Groups.
-	 * @param bool $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param bool    $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
@@ -315,11 +315,11 @@ class MainWP_UI {
 	 *
 	 * Render selected staging sites.
 	 *
-	 * @param bool $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
-	 * @param mixed   $tab_id Datatab ID.
-	 * @param mixed   $selected_websites Selected Child Sites.
-	 * @param mixed   $edit_site_id Child Site ID to edit.
-	 * @param string  $type Selector type.
+	 * @param bool   $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param mixed  $tab_id Datatab ID.
+	 * @param mixed  $selected_websites Selected Child Sites.
+	 * @param mixed  $edit_site_id Child Site ID to edit.
+	 * @param string $type Selector type.
 	 *
 	 * @return void Render selected staging sites html.
      *
@@ -549,11 +549,11 @@ class MainWP_UI {
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
+								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
 									<i class="sign-in icon"></i>
 									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo esc_url( $website['url'] ); ?>">
+								<a class="item" target="_blank" href="<?php echo esc_url( $website['url'] ); ?>">
 									<i class="globe icon"></i>
 									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
 								</a>
@@ -637,6 +637,10 @@ class MainWP_UI {
 			</div>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
+
+				jQuery('#mainwp-sites-menu-sidebar').prependTo('body');
+				jQuery('body > div#wpwrap').addClass('pusher');
+
 				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.help.sidebar' ).sidebar( {

@@ -1238,8 +1238,8 @@ class MainWP_Post {
 							$seo_data          = $post['seo_data'];
 							$count_seo_links   = esc_html( $seo_data['count_seo_links'] );
 							$count_seo_linked  = esc_html( $seo_data['count_seo_linked'] );
-							$seo_score         = $seo_data['seo_score'];
-							$readability_score = $seo_data['readability_score'];
+							$seo_score         = MainWP_Utility::esc_content( $seo_data['seo_score'], 'mixed' );
+							$readability_score = MainWP_Utility::esc_content( $seo_data['readability_score'], 'mixed' );
 						}
 						?>
 						<td class="column-seo-links" ><abbr raw_value="<?php echo null !== $count_seo_links ? $count_seo_links : -1; ?>" title=""><?php echo null !== $count_seo_links ? $count_seo_links : ''; ?></abbr></td>

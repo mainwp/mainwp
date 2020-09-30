@@ -196,12 +196,10 @@ class MainWP_Extensions_Handler {
 	 * Generate API Password.
 	 *
 	 * @param integer $length Lenght of password.
-	 * @param bool $special_chars true|false, allow special characters.
-	 * @param bool $extra_special_chars true|false, allow extra special characters.
+	 * @param bool    $special_chars true|false, allow special characters.
+	 * @param bool    $extra_special_chars true|false, allow extra special characters.
 	 *
 	 * @return MainWP_Api_Manager_Password_Management::generate_password()
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function gen_api_password( $length = 12, $special_chars = true, $extra_special_chars = false ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -243,8 +241,8 @@ class MainWP_Extensions_Handler {
 	/**
 	 * HTTP Request Reject Unsafe Urls.
 	 *
-	 * @param bool $r Results.
-	 * @param mixed   $url Upgrade Extension URL.
+	 * @param bool  $r Results.
+	 * @param mixed $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
 	 */
@@ -257,8 +255,8 @@ class MainWP_Extensions_Handler {
 	/**
 	 * No SSL Filter Function.
 	 *
-	 * @param bool $r Results.
-	 * @param mixed   $url Upgrade Extension URL.
+	 * @param bool  $r Results.
+	 * @param mixed $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
 	 */
@@ -271,8 +269,8 @@ class MainWP_Extensions_Handler {
 	/**
 	 * No SSL Filter Extention Upgrade.
 	 *
-	 * @param bool $r Results.
-	 * @param mixed   $url Upgrade Extension URL.
+	 * @param bool  $r Results.
+	 * @param mixed $url Upgrade Extension URL.
 	 *
 	 * @return mixed false|$r.
 	 */
@@ -284,11 +282,7 @@ class MainWP_Extensions_Handler {
 		return $r;
 	}
 
-	/**
-	 * Activate MainWP Extension License.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::grab_license_key_by_id()
-	 */
+	/** Activate MainWP Extension License.  */
 	public static function activate_license() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activatelicense' );
 		$item_id  = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
@@ -299,8 +293,8 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Install MainWP Extension.
 	 *
-	 * @param mixed   $url MainWP Extension update URL.
-	 * @param bool $activatePlugin true|false Whether or not to activate extension.
+	 * @param mixed $url MainWP Extension update URL.
+	 * @param bool  $activatePlugin true|false Whether or not to activate extension.
 	 *
 	 * @return mixed $return
 	 */
@@ -412,8 +406,6 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $pAPI MainWP Extension API Key.
 	 *
 	 * @return boolean true|false.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function is_extension_available( $pAPI ) {
 
@@ -437,8 +429,6 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $pluginFile MainWP Extension to bo verified.
 	 *
 	 * @return array 'key' => md5( $pluginFile . '-SNNonceAdder').
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function is_extension_enabled( $pluginFile ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -491,10 +481,6 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $key PThe child-key.
 	 *
 	 * @return mixed null|sql query.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_for_current_users()
 	 */
 	public static function hook_get_dashboard_sites( $pluginFile, $key ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -526,8 +512,6 @@ class MainWP_Extensions_Handler {
 	 * @uses MainWP_Connect::fetch_urls_authed()
 	 *
 	 * @return mixed false|MainWP_Connect::fetch_urls_authed()
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 */
 	public static function hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -549,11 +533,6 @@ class MainWP_Extensions_Handler {
 	 * @param null  $rawResponse Raw responce.
 	 *
 	 * @return mixed false|throw|error
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -578,19 +557,13 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get DB Sites.
 	 *
-	 * @param mixed   $pluginFile Extension plugin file to verify.
-	 * @param mixed   $key The child-key.
-	 * @param mixed   $sites Child Sites.
-	 * @param string  $groups Groups.
-	 * @param bool $options Options.
+	 * @param mixed  $pluginFile Extension plugin file to verify.
+	 * @param mixed  $key The child-key.
+	 * @param mixed  $sites Child Sites.
+	 * @param string $groups Groups.
+	 * @param bool   $options Options.
 	 *
 	 * @return array $dbwebsites.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -637,21 +610,13 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Get Sites.
 	 *
-	 * @param string  $pluginFile Extension plugin file to verify.
-	 * @param string  $key The child-key.
-	 * @param int     $websiteid The id of the child site you wish to retrieve.
-	 * @param bool    $for_manager Check Team Control.
-	 * @param array   $others Array of others.
+	 * @param string $pluginFile Extension plugin file to verify.
+	 * @param string $key The child-key.
+	 * @param int    $websiteid The id of the child site you wish to retrieve.
+	 * @param bool   $for_manager Check Team Control.
+	 * @param array  $others Array of others.
 	 *
 	 * @return array $output Array of content to output.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
-	 * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -777,19 +742,12 @@ class MainWP_Extensions_Handler {
 	 *
 	 * Get Child Sites within groups & store them in an array.
 	 *
-	 * @param string  $pluginFile Extension plugin file to verify.
-	 * @param string  $key The child-key.
-	 * @param int     $groupid The id of the group you wish to retrieve.
-	 * @param bool $for_manager Check Team Control.
+	 * @param string $pluginFile Extension plugin file to verify.
+	 * @param string $key The child-key.
+	 * @param int    $groupid The id of the group you wish to retrieve.
+	 * @param bool   $for_manager Check Team Control.
 	 *
-	 * @return array|bool $output|false An array of arrays,
-	 * the inner-array contains the id/name/array of site ids for the
-	 * supplied groupid/all groups. False when something goes wrong.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_and_count()
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_id()
+	 * @return array|bool $output|false An array of arrays, the inner-array contains the id/name/array of site ids for the supplied groupid/all groups. False when something goes wrong.
 	 */
 	public static function hook_get_groups( $pluginFile, $key, $groupid, $for_manager = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -848,8 +806,6 @@ class MainWP_Extensions_Handler {
 	 * Get all loaded extensions.
 	 *
 	 * @return mainwp_extensions value.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function hook_get_all_extensions() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -859,23 +815,14 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Clone Site.
 	 *
-	 * @param mixed   $pluginFile Extension plugin file to verify.
-	 * @param mixed   $key The child-key.
-	 * @param mixed   $websiteid Child Site ID.
-	 * @param mixed   $cloneID Clone ID.
-	 * @param mixed   $clone_url URL to CLone to.
-	 * @param bool $force_update true|false, force an update.
+	 * @param mixed $pluginFile Extension plugin file to verify.
+	 * @param mixed $key The child-key.
+	 * @param mixed $websiteid Child Site ID.
+	 * @param mixed $cloneID Clone ID.
+	 * @param mixed $clone_url URL to CLone to.
+	 * @param bool  $force_update true|false, force an update.
 	 *
 	 * @return mixed false|$ret
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_group_site()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::add_website()
 	 */
 	public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -969,19 +916,12 @@ class MainWP_Extensions_Handler {
 	/**
 	 * Delete Clones Site.
 	 *
-	 * @param mixed   $pluginFile Extension plugin file to verify.
-	 * @param mixed   $key The child-key.
-	 * @param mixed   $clone_url URL to Clone to.
-	 * @param bool $clone_site_id Cloned Site ID.
+	 * @param mixed $pluginFile Extension plugin file to verify.
+	 * @param mixed $key The child-key.
+	 * @param mixed $clone_url URL to Clone to.
+	 * @param bool  $clone_site_id Cloned Site ID.
 	 *
 	 * @return mixed false|array Array => "Success".
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_url()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::remove_website()
 	 */
 	public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -1052,8 +992,6 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $newName Name that you want to give the group.
 	 *
 	 * @return mixed false|$groupId
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::add_group()
 	 */
 	public static function hook_add_group( $pluginFile, $key, $newName ) {
 

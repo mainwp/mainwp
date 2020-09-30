@@ -42,28 +42,9 @@ class MainWP_Updates_Handler {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			$information = self::upgrade_website( $website );
 
-				/**
-				* Action: mainwp_before_wp_update
-				*
-				* Fires before WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_before_wp_update', $website );
-
-				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
-
-				/**
-				* Action: mainwp_after_wp_update
-				*
-				* Fires after WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_after_wp_update', $information, $website );
-
+			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::instance()->update_website_option( $website, 'wp_upgrades', wp_json_encode( array() ) );
 					return '<i class="green check icon"></i>';
@@ -84,6 +65,42 @@ class MainWP_Updates_Handler {
 		}
 
 		throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Invalid request.', 'mainwp' ) );
+	}
+
+	/**
+	 * Method upgrade_website()
+	 *
+	 * Update WP for site.
+	 *
+	 * @param object $website Child site object.
+	 *
+	 * @return mixed|false update result or false.
+	 */
+	public static function upgrade_website( $website ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			/**
+				* Action: mainwp_before_wp_update
+				*
+				* Fires before WP update.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_before_wp_update', $website );
+
+				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+
+				/**
+				* Action: mainwp_after_wp_update
+				*
+				* Fires after WP update.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_after_wp_update', $information, $website );
+
+				return $information;
+		}
+		return false;
 	}
 
 	/**
@@ -607,35 +624,9 @@ class MainWP_Updates_Handler {
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $id );
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				/**
-				* Action: mainwp_before_plugin_theme_translation_update
-				*
-				* Fires before plugin/theme/translation update actions.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list, $website );
-
-				$information = MainWP_Connect::fetch_url_authed(
-					$website,
-					( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
-					array(
-						'type' => $type,
-						'list' => urldecode( $list ),
-					),
-					true
-				);
-				/**
-				* Action: mainwp_after_plugin_theme_translation_update
-				*
-				* Fires before plugin/theme/translation update actions.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list, $website );
-
+			$website     = MainWP_DB::instance()->get_website_by_id( $id );
+			$information = self::update_plugin_theme_translation( $website, $type, $list );
+			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrades'] ) ) {
 					$tmp = array();
 					if ( isset( $information['upgrades'] ) ) {
@@ -652,6 +643,51 @@ class MainWP_Updates_Handler {
 			}
 		}
 		throw new MainWP_Exception( 'ERROR', __( 'Invalid request!', 'mainwp' ) );
+	}
+
+	/**
+	 * Method update_plugin_theme_translation()
+	 *
+	 * Upgrade plugin or theme translations.
+	 *
+	 * @param int    $website Child site object.
+	 * @param string $type Plugin or theme.
+	 * @param array  $list List of theme or plugin names seperated by comma.
+	 *
+	 * @return array|false update result or false.
+	 */
+	public static function update_plugin_theme_translation( $website, $type, $list ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			/**
+			* Action: mainwp_before_plugin_theme_translation_update
+			*
+			* Fires before plugin/theme/translation update actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list, $website );
+
+			$information = MainWP_Connect::fetch_url_authed(
+				$website,
+				( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
+				array(
+					'type' => $type,
+					'list' => urldecode( $list ),
+				),
+				true
+			);
+			/**
+			* Action: mainwp_after_plugin_theme_translation_update
+			*
+			* Fires before plugin/theme/translation update actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list, $website );
+
+			return $information;
+		}
+		return false;
 	}
 
 	/**

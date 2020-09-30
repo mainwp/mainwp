@@ -331,7 +331,7 @@ class MainWP_Backup_Handler {
 
 			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
-			$wp_filesystem->mkdir( $dir, 0777, true );
+			$wp_filesystem->mkdir( $dir, 0777 );
 
 			if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 				$wp_filesystem->touch( $dir . 'index.php' );
@@ -542,7 +542,7 @@ class MainWP_Backup_Handler {
 		global $wp_filesystem;
 
 		$dir = dirname( $pFile ) . '/';
-		$wp_filesystem->mkdir( $dir, 0777, true );
+		$wp_filesystem->mkdir( $dir, 0777 );
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 			$wp_filesystem->touch( $dir . 'index.php' );
 		}

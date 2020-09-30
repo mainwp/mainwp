@@ -551,7 +551,7 @@ class MainWP_Live_Reports {
 
 			if ( $hasWPFileSystem ) {
 				if ( ! $wp_filesystem->exists( $creport_dir ) ) {
-					$wp_filesystem->mkdir( $creport_dir, 0777, true );
+					$wp_filesystem->mkdir( $creport_dir, 0777 );
 				}
 				if ( ! $wp_filesystem->exists( $creport_dir . '/index.php' ) ) {
 					$wp_filesystem->touch( $creport_dir . '/index.php' );

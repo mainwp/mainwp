@@ -218,10 +218,10 @@ class MainWP_Logger {
 	 *
 	 * Grab Website Warnings.
 	 *
-	 * @param object  $website Child site object.
-	 * @param string  $action Performed action.
-	 * @param string  $message Warning message.
-	 * @param bool $addStackTrace Add or Don't add stack trace.
+	 * @param object $website Child site object.
+	 * @param string $action Performed action.
+	 * @param string $message Warning message.
+	 * @param bool   $addStackTrace Add or Don't add stack trace.
 	 *
 	 * @return string Website warnings.
 	 */
@@ -388,7 +388,7 @@ class MainWP_Logger {
 	 */
 	public static function clear_log() {
 		$logFile = self::instance()->get_log_file();
-		if ( ! unlink( $logFile, 'r' ) ) {
+		if ( ! unlink( $logFile ) ) {
 			$fh = fopen( $logFile, 'w' );
 			if ( false === $fh ) {
 				return;

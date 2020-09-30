@@ -48,7 +48,7 @@ class MainWP_Site_Info {
 			return;
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
+		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
 		$website_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
 

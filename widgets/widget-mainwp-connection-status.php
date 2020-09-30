@@ -39,14 +39,14 @@ class MainWP_Connection_Status {
 	 *
 	 * Build the Connection Status Widget
 	 * Displays $SYNCERRORS|$UP|$ALL.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_search_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_search_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

@@ -40,9 +40,9 @@ class MainWP_Backup_Tasks {
 	 * Method render()
 	 *
 	 * Render MainWP Legacy Backups List.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_tasks_for_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_tasks_for_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
 	 */
 	public static function render() {
 

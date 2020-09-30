@@ -55,9 +55,9 @@ class MainWP_Extensions {
 	 * Method init_menu()
 	 *
 	 * Instantiate Extensions Menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_activation_info()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::init_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_activation_info()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::init_menu()
 	 */
 	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -320,11 +320,11 @@ class MainWP_Extensions {
 	 * Method get_purchased_exts()
 	 *
 	 * Get purchased MainWP Extensions.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_purchased_software()
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::check_response_for_intall_errors()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_purchased_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::check_response_for_intall_errors()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
@@ -511,9 +511,9 @@ class MainWP_Extensions {
 	 * Render page header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_header()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -526,9 +526,9 @@ class MainWP_Extensions {
 	 * Render page footer.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_footer()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_footer()
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -539,8 +539,8 @@ class MainWP_Extensions {
 	 * Method render()
 	 *
 	 * Render page content.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::render()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::render()
 	 */
 	public static function render() {
 

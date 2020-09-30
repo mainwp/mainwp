@@ -362,9 +362,9 @@ class MainWP_Settings {
 	 * @uses MainWP_Utility::update_option()
 	 *
 	 * @return boolean True|False Posts On True.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
@@ -683,9 +683,9 @@ class MainWP_Settings {
 	 * Get websites automatic update time.
 	 *
 	 * @return mixed array
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_last_automatic_sync()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count_where_dts_automatic_sync_smaller_then_start()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_last_automatic_sync()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count_where_dts_automatic_sync_smaller_then_start()
 	 */
 	public static function get_websites_automatic_update_time() {
 		$lastAutomaticUpdate    = MainWP_DB::instance()->get_websites_last_automatic_sync();
@@ -1004,11 +1004,11 @@ class MainWP_Settings {
 
 	/**
 	 * Export Child Sites and save as .csv file.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'export_sites' ) ) {

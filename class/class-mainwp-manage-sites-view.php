@@ -161,9 +161,9 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_header( $shownPage = '', $subPages = '' ) {
 
@@ -484,8 +484,8 @@ class MainWP_Manage_Sites_View {
 	 * Method render_sync_exts_settings()
 	 *
 	 * Render sync extension settings.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -636,8 +636,8 @@ class MainWP_Manage_Sites_View {
 	 * Render Security Scan sub page.
 	 *
 	 * @param mixed $website Child Site.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
@@ -730,10 +730,10 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $updated Site settings updated check.
 	 *
 	 * @return string Edit Child Site sub page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_by_website_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_by_website_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1275,10 +1275,10 @@ class MainWP_Manage_Sites_View {
 	 * @throws \Exception Exception on errors.
 	 *
 	 * @return boolean true|false.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
-     * @uses \MainWP\Dashboard\MainWP_Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function m_reconnect_site( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1394,12 +1394,12 @@ class MainWP_Manage_Sites_View {
 	 * @param array $params Array of new Child Site to add.
 	 *
 	 * @return array $message, $error, $id
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::add_website()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::add_website()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$error   = '';

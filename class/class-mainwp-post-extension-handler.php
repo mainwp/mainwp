@@ -91,7 +91,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::license_key_activation()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_activation()
 	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 *
 	 */
@@ -110,7 +110,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::license_key_deactivation()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_deactivation()
 	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public function deactivate_extension() {
@@ -126,7 +126,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::grab_license_key()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
 	 */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
@@ -142,7 +142,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
 	 */
 	public function save_extensions_api_login() {
@@ -229,7 +229,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public function test_extensions_api_login() {

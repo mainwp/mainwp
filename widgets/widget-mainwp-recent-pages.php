@@ -39,8 +39,8 @@ class MainWP_Recent_Pages {
 	 *
 	 * Build the resent pages list.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */

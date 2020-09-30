@@ -515,8 +515,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * MainWP left menu filter by group.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -718,7 +718,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Disconnect Child Site.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public function ajax_disconnect_site() {
 		$this->secure_request( 'mainwp_disconnect_site' );
@@ -900,7 +900,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Recheck Child Site http status code & message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public function ajax_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
@@ -934,8 +934,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Ignore Child Site https response.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 */
 	public function mainwp_ignore_http_response() {
 		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
@@ -976,7 +976,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Force destroy sessions.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );

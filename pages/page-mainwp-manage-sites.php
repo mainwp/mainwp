@@ -424,9 +424,9 @@ class MainWP_Manage_Sites {
 	 *
 	 * @return string Add new site html.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -862,7 +862,7 @@ class MainWP_Manage_Sites {
 	 * @param bool  $updated updated settings.
 	 * @param bool  $updated_templ updated template file.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_email_settings( $website, $updated, $updated_templ ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload.
@@ -1044,7 +1044,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render Manage Sites Page.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1144,7 +1144,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * @return bool $updated Updated.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
@@ -1205,9 +1205,9 @@ class MainWP_Manage_Sites {
 	 *
 	 * @return bool $updated Updated.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 */
 	private static function update_site_handle( $website ) {
 

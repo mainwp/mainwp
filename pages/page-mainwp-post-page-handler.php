@@ -155,8 +155,8 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * Get categories.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_ids()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_ids()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_ids()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
 	 */
 	public static function get_categories() {
 		$websites = array();
@@ -224,8 +224,8 @@ class MainWP_Post_Page_Handler {
 	 * Create bulk posts on sites.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -565,7 +565,7 @@ class MainWP_Post_Page_Handler {
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_id()
      * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function get_post() {

@@ -151,7 +151,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return array Activation info.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::activate()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::activate()
 	 */
 	public function license_key_activation( $api, $api_key, $api_email ) {
 
@@ -236,7 +236,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return bool True on success, false on failure.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::deactivate()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::deactivate()
 	 */
 	private function replace_license_key( $args ) {
 		$reset = MainWP_Api_Manager_Key::instance()->deactivate( $args ); // reset license key activation.
@@ -253,7 +253,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return array Deactivation info.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::deactivate()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::deactivate()
 	 */
 	public function license_key_deactivation( $api ) {
 
@@ -311,7 +311,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return mixed test_login_api() login test result.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::test_login_api()
 	 */
 	public function test_login_api( $username, $password ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -336,7 +336,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return mixed purchase_software() purchase extensions.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::purchase_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::purchase_software()
 	 */
 	public function purchase_software( $username, $password, $productId ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -362,7 +362,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return array Purchased extensions.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::get_purchased_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::get_purchased_software()
 	 */
 	public function get_purchased_software( $username, $password, $productId = '', $no_register = false ) {
 		if ( empty( $username ) || empty( $password ) ) {
@@ -388,7 +388,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return mixed Activation info.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::instance()::grab_api_key()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::grab_api_key()
 	 */
 	public function grab_license_key( $api, $username, $password ) {
 
@@ -542,7 +542,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return mixed update_check() plugin info.
 	 *
-	 * @uses MainWP_Api_Manager_Plugin_Update::instance()::update_check()
+	 * @uses MainWP_Api_Manager_Plugin_Update::update_check()
 	 */
 	public function update_check( $args ) {
 		$args['domain'] = $this->domain;
@@ -557,7 +557,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @return array Plugin info.
 	 *
-	 * @uses MainWP_Api_Manager_Plugin_Update::instance()::request()
+	 * @uses MainWP_Api_Manager_Plugin_Update::request()
 	 */
 	public function request_plugin_information( $args ) {
 		$args['domain'] = $this->domain;

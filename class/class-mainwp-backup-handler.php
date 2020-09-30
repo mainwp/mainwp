@@ -40,13 +40,13 @@ class MainWP_Backup_Handler {
 	 *
 	 * @return mixed $backup_result
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::download_to_file()
-	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::get_get_data_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_progress()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::add_backup_task_progress()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_progress()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::add_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
@@ -529,7 +529,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -618,7 +618,7 @@ class MainWP_Backup_Handler {
 	 * @return bool true
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -640,7 +640,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * @return array $status, $result.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -761,7 +761,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function backup(
 		$pSiteId,
@@ -1025,7 +1025,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * @return mixed $archiveFormat Format of Archive.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_website_backup_settings()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_website_backup_settings()
 	 */
 	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;

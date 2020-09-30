@@ -158,7 +158,7 @@ class MainWP_Api_Manager_Key {
 	 *
 	 * @return array Request response.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
 	 */
 	public function grab_api_key( $args ) {
 

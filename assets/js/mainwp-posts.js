@@ -7,9 +7,9 @@ jQuery( document ).ready( function () {
 // to fix issue not loaded calendar js library
 if (jQuery( '.ui.calendar' ).length > 0 ) {
             if (mainwpParams.use_wp_datepicker == 1) {
-                jQuery( '.ui.calendar input[type=text]' ).datepicker( { dateFormat: "yy-mm-dd" } );
+                jQuery( '#mainwp-manage-pages .ui.calendar input[type=text]' ).datepicker( { dateFormat: "yy-mm-dd" } );
             } else {
-                jQuery( '.ui.calendar' ).calendar({
+                jQuery( '#mainwp-manage-pages .ui.calendar' ).calendar({
                         type: 'date',
                         monthFirst: false,
                         formatter: {

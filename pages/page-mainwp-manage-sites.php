@@ -244,6 +244,8 @@ class MainWP_Manage_Sites {
 	 * Render page header.
 	 *
 	 * @param string $shownPage Current page slug.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -256,6 +258,8 @@ class MainWP_Manage_Sites {
 	 * Render page footer.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -419,6 +423,10 @@ class MainWP_Manage_Sites {
 	 * Render add new site page.
 	 *
 	 * @return string Add new site html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -853,6 +861,8 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site.
 	 * @param bool  $updated updated settings.
 	 * @param bool  $updated_templ updated template file.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_email_settings( $website, $updated, $updated_templ ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload.
@@ -926,6 +936,9 @@ class MainWP_Manage_Sites {
 	 * Render Backups.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_sql_file()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
 	 */
 	public static function show_backups( &$website ) {
 		$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
@@ -1030,6 +1043,8 @@ class MainWP_Manage_Sites {
 	 * Method render_manage_sites()
 	 *
 	 * Render Manage Sites Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1128,6 +1143,8 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site object.
 	 *
 	 * @return bool $updated Updated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
@@ -1150,7 +1167,7 @@ class MainWP_Manage_Sites {
 			if ( isset( $notification_emails[ $type ] ) && ! empty( $edit_settingEmails ) ) {
 				$update_settings               = $edit_settingEmails;
 				$update_settings['recipients'] = MainWP_Utility::valid_input_emails( $edit_settingEmails['recipients'] );
-				$update_settings['disable']    = isset( $edit_settingEmails['disable'] ) ? 0 : 1; // to set 'disable' values.
+				$update_settings['disable']    = isset( $edit_settingEmails['disable'] ) ? 0 : 1; // isset 'on' means enable (0), not isset mean disabled (1).
 
 				/**
 				* Action: mainwp_before_save_email_settings
@@ -1187,6 +1204,10 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site object.
 	 *
 	 * @return bool $updated Updated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
 	 */
 	private static function update_site_handle( $website ) {
 

@@ -38,6 +38,11 @@ class MainWP_Recent_Posts {
 	 * Method render_sites()
 	 *
 	 * Build the recent posts list.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites() {
 
@@ -709,6 +714,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param string $pAction Post Action.
 	 * @param string $type Post type.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function action( $pAction, $type = 'post' ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
@@ -765,6 +775,10 @@ class MainWP_Recent_Posts {
 	 * Update Post Action.
 	 *
 	 * @param mixed $pAction Post Action.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function action_update( $pAction ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;

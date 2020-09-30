@@ -73,8 +73,8 @@ class MainWP_Utility {
 	 *
 	 * Grab url.
 	 *
-	 * @param string  $pUrl Website URL.
-	 * @param bool $showHttp Show HTTP.
+	 * @param string $pUrl Website URL.
+	 * @param bool   $showHttp Show HTTP.
 	 *
 	 * @return string $url.
 	 */
@@ -137,11 +137,11 @@ class MainWP_Utility {
 	 *
 	 * Sort the given array, Acending, Decending or by Natural Order.
 	 *
-	 * @param mixed   $array Array to sort.
-	 * @param mixed   $index Index of array.
-	 * @param mixed   $order Acending or Decending order.
-	 * @param bool $natsort Sort an array using a "natural order" algorithm. Default: false.
-	 * @param bool $case_sensitive If case sensitive return true else return false. Default: false.
+	 * @param mixed $array Array to sort.
+	 * @param mixed $index Index of array.
+	 * @param mixed $order Acending or Decending order.
+	 * @param bool  $natsort Sort an array using a "natural order" algorithm. Default: false.
+	 * @param bool  $case_sensitive If case sensitive return true else return false. Default: false.
 	 *
 	 * @return array $sorted Return the sorted array.
 	 */
@@ -254,7 +254,10 @@ class MainWP_Utility {
 	 *
 	 * @return string Time stamp in general mountain time offset.
 	 */
-	public static function get_timestamp( $timestamp ) {
+	public static function get_timestamp( $timestamp = false ) {
+		if ( false === $timestamp ) {
+			$timestamp = time();
+		}
 		$gmtOffset = get_option( 'gmt_offset' );
 
 		return ( $gmtOffset ? ( $gmtOffset * HOUR_IN_SECONDS ) + $timestamp : $timestamp );
@@ -271,7 +274,7 @@ class MainWP_Utility {
 	 */
 	public static function date( $format ) {
 		// phpcs:ignore -- use local date function.
-		return date( $format, self::get_timestamp( time() ) );
+		return date( $format, self::get_timestamp() );
 	}
 
 	/**
@@ -403,8 +406,8 @@ class MainWP_Utility {
 	 *
 	 * Remove http prefixes from given url.
 	 *
-	 * @param mixed   $pUrl Given URL.
-	 * @param bool $pTrimSlashes Whether or not to trim slashes. Default is false.
+	 * @param mixed $pUrl Given URL.
+	 * @param bool  $pTrimSlashes Whether or not to trim slashes. Default is false.
 	 *
 	 * @return string Trimmed URL.
 	 */
@@ -839,7 +842,7 @@ class MainWP_Utility {
 			505 => 'HTTP Version Not Supported',
 		);
 
-		if ( empty( $code ) ) {
+		if ( false === $code ) {
 			return $http_codes;
 		}
 

@@ -1,13 +1,13 @@
-=== The WordPress Manager for Professional Website Maintenance ===
+=== MainWP Dashboard - The WordPress Manager for Professional Website Maintenance ===
 Contributors: mainwp
 Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multiple Sites, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.5
+Tested up to: 5.5.1
 Requires PHP: 5.6
-Stable tag: 4.0.7.3
+Stable tag: 4.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,6 +148,11 @@ ManageWP is a Service as a Solution (SaaS) property owned by Godaddy.  The SaaS 
 
 MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit. 
 
+= How do I know my sites are secure using MainWP? = 
+We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.  
+
+We also participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward. 
+
 = How do I customize MainWP for my needs? =
 If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about Extension creation at [MainWP.dev](https://mainwp.dev)
 
@@ -170,6 +175,39 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.1 - 9-11-20 =
+* Fixed: An issue with WP CLI commands
+* Fixed: An issue with sending multiple notification emails 
+* Fixed: An error with displaying site groups in the Site Infor widget
+* Fixed: Semantic UI error
+* Fixed: Usability error caused by JavaScript error
+* Added: target="_blank" attribute to multiple links
+* Updated: Default values for the Monitoring feature
+
+= 4.1 - 9-9-20 =
+* Fixed: Problem with running automated sites checks
+* Fixed: Multiple cosmetic and usability problems
+* Fixed: Multiple PHP Warnings
+* Added: Over 500 hooks
+* Added: Basic uptime monitoring feature
+* Added: Email settings feature
+* Added: Quick sites shortcuts sidebar
+* Added: phpDocs blocks for code documentation
+* Added: Child site preview feature
+* Added: The Update Everything action to the Bulk Actions menu on Manage Sites page
+* Updated: Refactored the code to meet WordPress coding standards
+* Updated: Multiple usability and cosmetic updates
+* Updated: Multiple performance improvements
+* Updated: WordPress 5.5 compatibility
+* Updated: Multiple text notifications
+* Updated: Default order of items in Manage Plugins and Manage Themes tables
+* Updated: Sites filters options on the Manage Sites page
+* Updated: Plugin installation process indicator
+* Updated: The Updates table to show plugin and theme status
+* Preventative: Multiple security improvements
+* Removed: Unused files
+* Removed: Unused code
 
 = 4.0.7.3 - 8-6-20 =
 * Fixed: WordPress 5.5 compatibility

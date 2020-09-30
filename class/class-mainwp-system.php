@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1-beta3';
+	public static $version = '4.1.1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -81,6 +81,8 @@ class MainWP_System {
 	 * Runs any time class is called.
 	 *
 	 * @param string $mainwp_plugin_file Plugn slug.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Bulk_Post
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -252,7 +254,6 @@ class MainWP_System {
 				'mainwp_maximumInstallUpdateRequests',
 				'mainwp_maximumSyncRequests',
 				'mainwp_primaryBackup',
-				'mainwp_refresh',
 				'mainwp_security',
 				'mainwp_use_favicon',
 				'mainwp_wp_cron',
@@ -276,6 +277,12 @@ class MainWP_System {
 				'mainwp_ignore_HTTP_response_status',
 				'mainwp_check_http_response',
 				'mainwp_setup_important_notification',
+				'mainwp_extmenu',
+				'mainwp_opensslLibLocation',
+				'mainwp_notice_wp_mail_failed',
+				'mainwp_show_language_updates',
+				'mwp_setup_installationHostingType',
+				'mwp_setup_installationSystemType',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -621,14 +628,9 @@ class MainWP_System {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 		}
 		wp_enqueue_script( 'jquery-ui-dialog' );
-		wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
-
 		$en_params = array( 'jquery-ui-dialog' );
 		if ( $use_wp_datepicker ) {
 			$en_params[] = 'jquery-ui-datepicker';
-		}
-		if ( self::is_mainwp_pages() ) {
-			$en_params[] = 'jquery-migrate';
 		}
 		wp_enqueue_script( 'mainwp', MAINWP_PLUGIN_URL . 'assets/js/mainwp.js', $en_params, $this->current_version, true );
 
@@ -729,7 +731,9 @@ class MainWP_System {
 	/**
 	 * Method init_session()
 	 *
-	 * Chck witch page & initiate a session.
+	 * Check current page & initiate a session.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function init_session() {
 		if ( isset( $_GET['page'] ) && in_array(
@@ -772,6 +776,7 @@ class MainWP_System {
 		}
 
 		if ( self::is_mainwp_pages() ) {
+			wp_enqueue_script( 'jquery-migrate' ); // to compatible.
 			wp_enqueue_script( 'mainwp-updates', MAINWP_PLUGIN_URL . 'assets/js/mainwp-updates.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-managesites-action', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-action.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-managesites-update', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-update.js', array(), $this->current_version, true );
@@ -789,17 +794,6 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
-
-			/**
-			 * WordPress version.
-			 *
-			 * @global string
-			 */
-			global $wp_version;
-
-			if ( version_compare( $wp_version, '5.5', '>=' ) ) {
-				wp_enqueue_script( 'jquery-migrate', MAINWP_PLUGIN_URL . 'assets/js/jquery-migrate.min.js', array(), $this->current_version, true );
-			}
 		}
 
 		if ( $load_cust_scripts ) {
@@ -851,6 +845,8 @@ class MainWP_System {
 			wp_enqueue_style( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.css', array(), $this->current_version );
 			wp_enqueue_style( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.css', array(), $this->current_version );
 			wp_enqueue_style( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.css', array(), $this->current_version );
+			// to fix conflict layout.
+			wp_enqueue_style( 'jquery-ui-style', MAINWP_PLUGIN_URL . 'assets/css/1.11.1/jquery-ui.min.css', array(), '1.11.1' );
 		}
 
 		if ( $load_cust_scripts ) {
@@ -896,6 +892,11 @@ class MainWP_System {
 	 * Method admin_footer()
 	 *
 	 * Create MainWP admin footer.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
@@ -954,6 +955,8 @@ class MainWP_System {
 	 * Method activated_check()
 	 *
 	 * Activated check.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public function activated_check() {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();

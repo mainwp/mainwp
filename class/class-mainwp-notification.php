@@ -34,6 +34,8 @@ class MainWP_Notification {
 	 * @param int    $userId User ID.
 	 * @param string $subject Email Subject.
 	 * @param string $content Email Content.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_notification_email()
 	 */
 	public static function send_notify_user( $userId, $subject, $content ) {
 		$content_type = 'content-type: text/html';

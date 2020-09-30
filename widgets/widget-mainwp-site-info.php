@@ -38,6 +38,9 @@ class MainWP_Site_Info {
 	 * Method render_site_info()
 	 *
 	 * Grab Child Site Info and render.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	public static function render_site_info() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -45,7 +48,7 @@ class MainWP_Site_Info {
 			return;
 		}
 
-		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
+		$website = MainWP_DB::instance()->get_website_by_id( $current_wpid, true );
 
 		$website_info = json_decode( MainWP_DB::instance()->get_website_option( $website, 'site_info' ), true );
 

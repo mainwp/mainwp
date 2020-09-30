@@ -31,34 +31,20 @@ class MainWP_Updates_Handler {
 	 * @param int $id Child site ID.
 	 *
 	 * @throws MainWP_Exception Error messages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
 
 			$website = MainWP_DB::instance()->get_website_by_id( $id );
 
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			$information = self::upgrade_website( $website );
 
-				/**
-				* Action: mainwp_before_wp_update
-				*
-				* Fires before WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_before_wp_update', $website );
-
-				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
-
-				/**
-				* Action: mainwp_after_wp_update
-				*
-				* Fires after WP update.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_after_wp_update', $information, $website );
-
+			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::instance()->update_website_option( $website, 'wp_upgrades', wp_json_encode( array() ) );
 					return '<i class="green check icon"></i>';
@@ -82,6 +68,42 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
+	 * Method upgrade_website()
+	 *
+	 * Update WP for site.
+	 *
+	 * @param object $website Child site object.
+	 *
+	 * @return mixed|false update result or false.
+	 */
+	public static function upgrade_website( $website ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			/**
+				* Action: mainwp_before_wp_update
+				*
+				* Fires before WP update.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_before_wp_update', $website );
+
+				$information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+
+				/**
+				* Action: mainwp_after_wp_update
+				*
+				* Fires after WP update.
+				*
+				* @since 4.1
+				*/
+				do_action( 'mainwp_after_wp_update', $information, $website );
+
+				return $information;
+		}
+		return false;
+	}
+
+	/**
 	 * Add a plugin or theme to the ignor list.
 	 *
 	 * @param mixed $type plugin|theme.
@@ -90,6 +112,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
 	 */
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -161,6 +186,13 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Plugin or Theme name.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
 		if ( ! empty( $id ) ) {
@@ -293,6 +325,9 @@ class MainWP_Updates_Handler {
 	 * @param string $name Plugin or theme name.
 	 *
 	 * @return string 'success'.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function ignore_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
@@ -333,6 +368,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $slug Plugin or Themes slug.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function unignore_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
@@ -387,6 +425,14 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
 		if ( isset( $id ) ) {
@@ -432,6 +478,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $slug Plugin or Themes slug.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function unignore_abandoned_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
@@ -486,6 +535,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -519,6 +571,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $name Plugin or Theme name.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function dismiss_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
@@ -562,38 +617,16 @@ class MainWP_Updates_Handler {
 	 * @param array  $list List of theme or plugin names seperated by comma.
 	 *
 	 * @throws MainWP_Exception Error messages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( $id );
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				/**
-				* Action: mainwp_before_plugin_theme_translation_update
-				*
-				* Fires before plugin/theme/translation update actions.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list, $website );
-
-				$information = MainWP_Connect::fetch_url_authed(
-					$website,
-					( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
-					array(
-						'type' => $type,
-						'list' => urldecode( $list ),
-					),
-					true
-				);
-				/**
-				* Action: mainwp_after_plugin_theme_translation_update
-				*
-				* Fires before plugin/theme/translation update actions.
-				*
-				* @since 4.1
-				*/
-				do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list, $website );
-
+			$website     = MainWP_DB::instance()->get_website_by_id( $id );
+			$information = self::update_plugin_theme_translation( $website, $type, $list );
+			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrades'] ) ) {
 					$tmp = array();
 					if ( isset( $information['upgrades'] ) ) {
@@ -613,12 +646,63 @@ class MainWP_Updates_Handler {
 	}
 
 	/**
+	 * Method update_plugin_theme_translation()
+	 *
+	 * Upgrade plugin or theme translations.
+	 *
+	 * @param int    $website Child site object.
+	 * @param string $type Plugin or theme.
+	 * @param array  $list List of theme or plugin names seperated by comma.
+	 *
+	 * @return array|false update result or false.
+	 */
+	public static function update_plugin_theme_translation( $website, $type, $list ) {
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			/**
+			* Action: mainwp_before_plugin_theme_translation_update
+			*
+			* Fires before plugin/theme/translation update actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_before_plugin_theme_translation_update', $type, $list, $website );
+
+			$information = MainWP_Connect::fetch_url_authed(
+				$website,
+				( 'translation' === $type ? 'upgradetranslation' : 'upgradeplugintheme' ),
+				array(
+					'type' => $type,
+					'list' => urldecode( $list ),
+				),
+				true
+			);
+			/**
+			* Action: mainwp_after_plugin_theme_translation_update
+			*
+			* Fires before plugin/theme/translation update actions.
+			*
+			* @since 4.1
+			*/
+			do_action( 'mainwp_after_plugin_theme_translation_update', $information, $type, $list, $website );
+
+			return $information;
+		}
+		return false;
+	}
+
+	/**
 	 * Get plugin or theme slugs.
 	 *
 	 * @param int    $id Child Site ID.
 	 * @param string $type plugin|theme.
 	 *
 	 * @return array List of plugins or themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 

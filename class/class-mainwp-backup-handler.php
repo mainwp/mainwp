@@ -39,6 +39,15 @@ class MainWP_Backup_Handler {
 	 * @throws MainWP_Exception
 	 *
 	 * @return mixed $backup_result
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::download_to_file()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::instance()::get_get_data_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::add_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_progress()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		// phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -322,7 +331,7 @@ class MainWP_Backup_Handler {
 
 			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
 
-			$wp_filesystem->mkdir( $dir, 0777, true );
+			$wp_filesystem->mkdir( $dir, 0777 );
 
 			if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 				$wp_filesystem->touch( $dir . 'index.php' );
@@ -517,6 +526,10 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFile Backup File.
 	 *
 	 * @return bool true|false
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -529,7 +542,7 @@ class MainWP_Backup_Handler {
 		global $wp_filesystem;
 
 		$dir = dirname( $pFile ) . '/';
-		$wp_filesystem->mkdir( $dir, 0777, true );
+		$wp_filesystem->mkdir( $dir, 0777 );
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 			$wp_filesystem->touch( $dir . 'index.php' );
 		}
@@ -603,6 +616,9 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFile File to delete.
 	 *
 	 * @return bool true
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function backup_delete_file( $pSiteId, $pFile ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -623,6 +639,8 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFilename Backups filename
 	 *
 	 * @return array $status, $result.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -740,6 +758,10 @@ class MainWP_Backup_Handler {
 	 * @throw MainWP_Exception
 	 *
 	 * @return mixed $backup_result
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function backup(
 		$pSiteId,
@@ -1002,6 +1024,8 @@ class MainWP_Backup_Handler {
 	 * @param bool|string $task true|false|global|site
 	 *
 	 * @return mixed $archiveFormat Format of Archive.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_website_backup_settings()
 	 */
 	public static function get_current_archive_extension( $website = false, $task = false ) {
 		$useSite = true;

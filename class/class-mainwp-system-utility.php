@@ -76,6 +76,8 @@ class MainWP_System_Utility {
 	 * @param null $user User Email Address.
 	 *
 	 * @return mixed null|User Email Address.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
 	 */
 	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
@@ -141,7 +143,7 @@ class MainWP_System_Utility {
 		$dir  = $dirs[0] . 'icons' . DIRECTORY_SEPARATOR;
 		$url  = $dirs[1] . 'icons/';
 		if ( ! $wp_filesystem->exists( $dir ) ) {
-			$wp_filesystem->mkdir( $dir, 0777, true );
+			$wp_filesystem->mkdir( $dir, 0777 );
 		}
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 			$wp_filesystem->touch( $dir . 'index.php' );
@@ -156,7 +158,7 @@ class MainWP_System_Utility {
 	 * if it doesn't exist create it.
 	 *
 	 * @param string|null $subdir mainwp sub diectories.
-	 * @param bool     $direct_access Return true if Direct access file system. Default: false.
+	 * @param bool        $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $dir, $url
 	 */
@@ -174,7 +176,7 @@ class MainWP_System_Utility {
 		$dir        = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
 		$url        = $upload_dir['baseurl'] . '/mainwp/';
 		if ( ! $wp_filesystem->exists( $dir ) ) {
-			$wp_filesystem->mkdir( $dir, 0777, true );
+			$wp_filesystem->mkdir( $dir, 0777 );
 		}
 		if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
 			$wp_filesystem->touch( $dir . 'index.php' );
@@ -185,7 +187,7 @@ class MainWP_System_Utility {
 			$url    = $url . $subdir . '/';
 
 			if ( ! $wp_filesystem->exists( $newdir ) ) {
-				$wp_filesystem->mkdir( $newdir, 0777, true );
+				$wp_filesystem->mkdir( $newdir, 0777 );
 			}
 
 			if ( $direct_access ) {
@@ -213,7 +215,7 @@ class MainWP_System_Utility {
 	 * if it doesn't exist create it.
 	 *
 	 * @param string|null $subdir mainwp sub diectories.
-	 * @param bool     $direct_access Return true if Direct access file system. Default: false.
+	 * @param bool        $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return string $dir mainwp sub-directory.
 	 */
@@ -276,7 +278,7 @@ class MainWP_System_Utility {
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 
 			if ( ! $wp_filesystem->is_dir( $newdir ) ) {
-				$wp_filesystem->mkdir( $newdir, 0777, true );
+				$wp_filesystem->mkdir( $newdir, 0777 );
 			}
 
 			if ( null != $dirs[0] . $userid && ! $wp_filesystem->exists( trailingslashit( $dirs[0] . $userid ) . '.htaccess' ) ) {
@@ -529,6 +531,8 @@ class MainWP_System_Utility {
 	 * @param object $site The website.
 	 *
 	 * @return array Array of tokens.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	public static function get_tokens_site_values( $site ) {
 

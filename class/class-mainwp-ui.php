@@ -31,13 +31,13 @@ class MainWP_UI {
 	 * Select sites box.
 	 *
 	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
+	 * @param bool    $show_group Whether or not to show group, Default: true.
+	 * @param bool    $show_select_all Whether to show select all.
 	 * @param string  $class Default = ''.
 	 * @param string  $style Default = ''.
 	 * @param array   $selected_websites Selected Child Sites.
 	 * @param array   $selected_groups Selected Groups.
-	 * @param bool $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
+	 * @param bool    $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
@@ -101,6 +101,9 @@ class MainWP_UI {
 	 * @param bool   $updateQty          Whether or not to update quantity, Default = false.
 	 * @param bool   $enableOfflineSites Whether or not to enable offline sites, Default: true.
 	 * @param int    $postId             Post ID.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
 	 */
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 
@@ -225,6 +228,9 @@ class MainWP_UI {
 	 * @param mixed  $edit_site_id Child Site ID to edit.
 	 *
 	 * @return void Render Select Sites html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
 		?>
@@ -309,13 +315,18 @@ class MainWP_UI {
 	 *
 	 * Render selected staging sites.
 	 *
-	 * @param bool $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
-	 * @param mixed   $tab_id Datatab ID.
-	 * @param mixed   $selected_websites Selected Child Sites.
-	 * @param mixed   $edit_site_id Child Site ID to edit.
-	 * @param string  $type Selector type.
+	 * @param bool   $staging_enabled (bool) True, if in the active plugins list. False, not in the list.
+	 * @param mixed  $tab_id Datatab ID.
+	 * @param mixed  $selected_websites Selected Child Sites.
+	 * @param mixed  $edit_site_id Child Site ID to edit.
+	 * @param string $type Selector type.
 	 *
 	 * @return void Render selected staging sites html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id, $type = 'checkbox' ) {
 		if ( $staging_enabled ) :
@@ -446,6 +457,9 @@ class MainWP_UI {
 	 * Render top header.
 	 *
 	 * @param array $params Page parameters.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
 	 */
 	public static function render_top_header( $params = array() ) {
 
@@ -535,11 +549,11 @@ class MainWP_UI {
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
+								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
 									<i class="sign-in icon"></i>
 									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo esc_url( $website['url'] ); ?>">
+								<a class="item" target="_blank" href="<?php echo esc_url( $website['url'] ); ?>">
 									<i class="globe icon"></i>
 									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
 								</a>
@@ -623,6 +637,10 @@ class MainWP_UI {
 			</div>
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
+
+				jQuery('#mainwp-sites-menu-sidebar').prependTo('body');
+				jQuery('body > div#wpwrap').addClass('pusher');
+
 				jQuery( '.ui.sticky' ).sticky();
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.help.sidebar' ).sidebar( {
@@ -721,13 +739,20 @@ class MainWP_UI {
 		do_action( 'mainwp_after_subheader' );
 	}
 
-	/**
-	 * Method gen_groups_sites_selection()
-	 *
-	 * Generate group sites selection box.
-	 *
-	 * @return void Render group sites selection box.
-	 */
+    /**
+     * Method gen_groups_sites_selection()
+     *
+     * Generate group sites selection box.
+     *
+     * @return void Render group sites selection box.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_not_empty_groups()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+    */
 	public static function gen_groups_sites_selection() {
 		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::instance()->query( $sql );
@@ -783,6 +808,8 @@ class MainWP_UI {
 	 * (Sync|Add|Options|Community|User|Updates).
 	 *
 	 * @return mixed $output Render header action buttons html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
 	 */
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();

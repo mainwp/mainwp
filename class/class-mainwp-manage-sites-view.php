@@ -161,6 +161,9 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_header( $shownPage = '', $subPages = '' ) {
 
@@ -481,6 +484,8 @@ class MainWP_Manage_Sites_View {
 	 * Method render_sync_exts_settings()
 	 *
 	 * Render sync extension settings.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -631,6 +636,8 @@ class MainWP_Manage_Sites_View {
 	 * Render Security Scan sub page.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
@@ -723,6 +730,10 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $updated Site settings updated check.
 	 *
 	 * @return string Edit Child Site sub page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_by_website_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1264,6 +1275,10 @@ class MainWP_Manage_Sites_View {
 	 * @throws \Exception Exception on errors.
 	 *
 	 * @return boolean true|false.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function m_reconnect_site( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1349,7 +1364,7 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @return self add_wp_site()
 	 */
-	public static function add_site( $website ) {
+	public static function add_site( $website = false ) {
 
 		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
@@ -1379,6 +1394,12 @@ class MainWP_Manage_Sites_View {
 	 * @param array $params Array of new Child Site to add.
 	 *
 	 * @return array $message, $error, $id
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::add_website()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$error   = '';
@@ -1525,6 +1546,76 @@ class MainWP_Manage_Sites_View {
 		}
 
 		return array( $message, $error, $id );
+	}
+
+	/**
+	 * Method update_wp_site()
+	 *
+	 * Update Child Site.
+	 *
+	 * @param mixed $params Udate parameters.
+	 *
+	 * @return int Child Site ID on success and return 0 on failer.
+	 */
+	public static function update_wp_site( $params ) {
+		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
+			return 0;
+		}
+
+		if ( isset( $params['is_staging'] ) ) {
+			unset( $params['is_staging'] );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $params['websiteid'] );
+		if ( null == $website ) {
+			return 0;
+		}
+
+		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+			return 0;
+		}
+
+		$data     = array();
+		$uniqueId = null;
+
+		if ( isset( $params['name'] ) && ! empty( $params['name'] ) ) {
+			$data['name'] = htmlentities( $params['name'] );
+		}
+
+		if ( isset( $params['wpadmin'] ) && ! empty( $params['wpadmin'] ) ) {
+			$data['adminname'] = $params['wpadmin'];
+		}
+
+		if ( isset( $params['unique_id'] ) ) {
+			$data['uniqueId'] = $params['unique_id'];
+			$uniqueId         = $params['unique_id'];
+		}
+
+		if ( empty( $data ) ) {
+			return 0;
+		}
+
+		MainWP_DB::instance()->update_website_values( $website->id, $data );
+		if ( null !== $uniqueId ) {
+			try {
+				$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
+			} catch ( MainWP_Exception $e ) {
+				$error = $e->getMessage();
+			}
+		}
+
+		/**
+		 * Action: mainwp_updated_site
+		 *
+		 * Fires after updatig the child site options.
+		 *
+		 * @param int   $website->id Child site ID.
+		 * @param array $data        Child site data.
+		 *
+		 * @since 3.5.1
+		 */
+		do_action( 'mainwp_updated_site', $website->id, $data );
+		return $website->id;
 	}
 
 }

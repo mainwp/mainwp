@@ -154,11 +154,14 @@ class MainWP_Post_Page_Handler {
 	 * Method get_categories()
 	 *
 	 * Get categories.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_ids()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_ids()
 	 */
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) ) ); // sanitize ok.
+			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -209,7 +212,7 @@ class MainWP_Post_Page_Handler {
 		if ( 0 < count( $allCategories ) ) {
 			natcasesort( $allCategories );
 			foreach ( $allCategories as $category ) {
-				echo '<option value="' . $category . '" class="sitecategory">' . $category . '</option>';
+				echo '<option value="' . esc_attr( $category ) . '" class="sitecategory">' . esc_html( $category ) . '</option>';
 			}
 		}
 		die();
@@ -219,6 +222,12 @@ class MainWP_Post_Page_Handler {
 	 * Method posting()
 	 *
 	 * Create bulk posts on sites.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';
@@ -553,6 +562,11 @@ class MainWP_Post_Page_Handler {
 	 * Method get_post()
 	 *
 	 * Get post from child site to edit.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function get_post() {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;

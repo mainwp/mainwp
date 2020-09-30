@@ -100,6 +100,9 @@ class MainWP_Updates_Overview {
 	 * Method sync_site()
 	 *
 	 * Sync Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_sync_values()
 	 */
 	public static function sync_site() {
 		$website = null;
@@ -112,12 +115,7 @@ class MainWP_Updates_Overview {
 			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
 		}
 
-		MainWP_Utility::end_session();
-
-		MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsSyncStart' => time() ) );
-		MainWP_Utility::end_session();
-
-		if ( MainWP_Sync::sync_site( $website ) ) {
+		if ( MainWP_Sync::sync_website( $website ) ) {
 			die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 		}
 
@@ -130,6 +128,14 @@ class MainWP_Updates_Overview {
 	 * Method render_sites()
 	 *
 	 * Grab available Child Sites updates a build Widget.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_last_sync_status()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::data_seek()
 	 */
 	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
@@ -1023,6 +1029,10 @@ class MainWP_Updates_Overview {
 	 *
 	 * @param object $websites   Object containing child sites info.
 	 * @param bool   $globalView Whether it's global or individual site view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_bottom( $websites, $globalView ) {
 
@@ -1079,6 +1089,10 @@ class MainWP_Updates_Overview {
 	 * Check if Child Site needs to be backed up before updates.
 	 *
 	 * @return mixed $output
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	public static function check_backups() {
 		if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) {

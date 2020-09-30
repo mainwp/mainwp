@@ -617,6 +617,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_optimization()
 	 *
 	 * Render Optimization step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
 	 */
 	public function mwp_setup_optimization() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -659,6 +661,9 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_optimization_save()
 	 *
 	 * Save Optimization form data.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public function mwp_setup_optimization_save() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -694,10 +699,10 @@ class MainWP_Setup_Wizard {
 	 */
 	public function mwp_setup_monitoring() {
 
-		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking' );
+		$disableSitesMonitoring = get_option( 'mainwp_disableSitesChecking', 1 );
 		$frequencySitesChecking = get_option( 'mainwp_frequencySitesChecking', 60 );
 
-		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring' );
+		$disableSitesHealthMonitoring = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );
 		$sitehealthThreshold          = get_option( 'mainwp_sitehealthThreshold', 80 ); // "Should be improved" threshold.
 
 		?>
@@ -707,6 +712,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="ui form">
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
+				<div class="ui info message"><?php echo sprintf( __( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
 					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>
@@ -850,6 +856,9 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification_save()
 	 *
 	 * Save Notifications form data.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public function mwp_setup_notification_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -870,6 +879,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_backup()
 	 *
 	 * Render Backups Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public function mwp_setup_backup() {
 
@@ -999,6 +1010,10 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_purchase_extension_save()
 	 *
 	 * MainWP Extensions login.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::purchase_software()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
+     * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mwp_setup_purchase_extension_save() {
 		MainWP_Cache::init_session();
@@ -1084,7 +1099,12 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_get_backup_extension()
 	 *
 	 * Ajax get backup extension.
-	 */
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_purchased_software()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::check_response_for_intall_errors()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+     */
 	public static function ajax_get_backup_extension() {
 
 		$product_id = isset( $_POST['productId'] ) ? sanitize_text_field( wp_unslash( $_POST['productId'] ) ) : 0;
@@ -1185,7 +1205,10 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_grab_api_key()
 	 *
 	 * Ajax grab api key.
-	 */
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::grab_license_key()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+     */
 	public static function ajax_grab_api_key() {
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );

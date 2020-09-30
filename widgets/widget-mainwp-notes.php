@@ -29,6 +29,8 @@ class MainWP_Notes {
 	 * Method render()
 	 *
 	 * Grab Child Site Notes & Render Widget.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function render() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -83,8 +85,12 @@ class MainWP_Notes {
 				</h2>
 				<?php
 			} else {
+				?>
+				<div class="content">
+				<?php
 				echo $esc_note;
 				?>
+				</div>
 				<div class="ui section hidden divider"></div>
 				<a href="javascript:void(0)" class="ui button green mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $website->id ); ?>"><?php esc_html_e( 'Edit Notes', 'mainwp' ); ?></a>
 				<?php

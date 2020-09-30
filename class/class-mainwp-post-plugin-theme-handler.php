@@ -110,6 +110,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_themes_search()
 	 *
 	 * Search handler for Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
@@ -165,6 +167,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Search ALL handler for,
 	 * Page: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
@@ -189,6 +193,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_plugins_search()
 	 *
 	 * Search handler for Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
@@ -208,6 +214,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Search all Active handler for,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
@@ -410,6 +418,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_upgradewp()
 	 *
 	 * Update a specific WP core.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
@@ -439,6 +449,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_upgrade_plugintheme()
 	 *
 	 * Update plugin or theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::backup_full_task_running()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -556,7 +570,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
 		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $id ) ) );
+		$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+		wp_send_json( array( 'result' => MainWP_Updates_Handler::ignore_plugin_theme( $type, $slug, $name, $id ) ) );
 	}
 
 	/**

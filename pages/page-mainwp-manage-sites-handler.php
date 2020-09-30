@@ -172,75 +172,97 @@ class MainWP_Manage_Sites_Handler {
 	 */
 	public static function remove_site() {
 		if ( isset( $_POST['id'] ) ) {
-			$website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['id'] ) );
-			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				$error = '';
 
-				/**
-				 * Deactive child plugin on live site only,
-				 * DO NOT deactive child on staging site, it will deactive child plugin of source site.
-				 */
-				if ( ! $website->is_staging ) {
-					try {
-						$information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
-					} catch ( MainWP_Exception $e ) {
-						$error = $e->getMessage();
-					}
-				} else {
-					$information['removed'] = true;
-				}
+			$result = self::remove_website( $_POST['id'] );
+			$error  = is_array( $result ) && isset( $result['error'] ) ? $result['error'] : '';
 
-				// Delete icon file.
-				$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
-				if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
+			if ( 'NOMAINWP' === $error ) {
+				$error = __( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+			}
 
-					$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
-
-					/**
-					 * WordPress files system object.
-					 *
-					 * @global object
-					 */
-					global $wp_filesystem;
-
-					$dirs = MainWP_System_Utility::get_icons_dir();
-					if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-						$wp_filesystem->delete( $dirs[0] . $favi );
-					}
-				}
-
-				// Remove from DB.
-				MainWP_DB::instance()->remove_website( $website->id );
-
-				/**
-				 * Delete Child Sites
-				 *
-				 * Fires after a child site has been removed from MainWP Dashboard
-				 *
-				 * @param object $website Object containing child site data.
-				 *
-				 * @since 3.4
-				 */
-				do_action( 'mainwp_delete_site', $website );
-
-				if ( 'NOMAINWP' === $error ) {
-					$error = __( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
-				}
-
-				if ( '' !== $error ) {
-					die( wp_json_encode( array( 'error' => $error ) ) );
-				} elseif ( isset( $information['deactivated'] ) ) {
-					die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-				} elseif ( isset( $information['removed'] ) ) {
-					die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
-				} else {
-					die( wp_json_encode( array( 'undefined_error' => true ) ) );
-				}
+			if ( '' !== $error ) {
+				die( wp_json_encode( array( 'error' => $error ) ) );
+			} elseif ( isset( $information['deactivated'] ) ) {
+				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+			} elseif ( isset( $information['removed'] ) ) {
+				die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
+			} else {
+				die( wp_json_encode( array( 'undefined_error' => true ) ) );
 			}
 		}
 		die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );
 	}
 
+	/**
+	 * Method handle remove_site()
+	 *
+	 * Try to remove Child Site.
+	 *
+	 * @param object|int $site object or Child site ID.
+
+	 * @return mixed|false result
+	 */
+	public static function remove_website( $site ) {
+
+		if ( is_numeric( $site ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( intval( $site ) );
+		} else {
+			$website = $site;
+		}
+
+		$information = false;
+
+		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+			/**
+			 * Deactive child plugin on live site only,
+			 * DO NOT deactive child on staging site, it will deactive child plugin of source site.
+			 */
+			if ( ! $website->is_staging ) {
+				try {
+					$information = MainWP_Connect::fetch_url_authed( $website, 'deactivate' );
+				} catch ( MainWP_Exception $e ) {
+					$information['error'] = $e->getMessage();
+				}
+			} else {
+				$information['removed'] = true;
+			}
+
+			// Delete icon file.
+			$favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
+			if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
+
+				$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+				/**
+				 * WordPress files system object.
+				 *
+				 * @global object
+				 */
+				global $wp_filesystem;
+
+				$dirs = MainWP_System_Utility::get_icons_dir();
+				if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
+					$wp_filesystem->delete( $dirs[0] . $favi );
+				}
+			}
+
+			// Remove from DB.
+			MainWP_DB::instance()->remove_website( $website->id );
+
+			/**
+			 * Delete Child Sites
+			 *
+			 * Fires after a child site has been removed from MainWP Dashboard
+			 *
+			 * @param object $website Object containing child site data.
+			 *
+			 * @since 3.4
+			 */
+			do_action( 'mainwp_delete_site', $website );
+		}
+
+		return $information;
+	}
 
 	/**
 	 * Method update_child_site_value()

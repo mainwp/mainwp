@@ -146,7 +146,7 @@ class MainWP_Hooks {
 
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			} elseif ( isset( $params['url'] ) && isset( $params['wpadmin'] ) ) {
 				$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
@@ -217,12 +217,12 @@ class MainWP_Hooks {
 	 * Hook to clone site.
 	 *
 	 * @since 3.4.4
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param mixed   $websiteid Child site ID.
-	 * @param mixed   $cloneid Clone site ID.
-	 * @param mixed   $clone_url Clone site URL.
-	 * @param bool $force_update Force the update, true|false, Default: false.
+	 * @param mixed $pluginFile Plugin file.
+	 * @param mixed $key Key.
+	 * @param mixed $websiteid Child site ID.
+	 * @param mixed $cloneid Clone site ID.
+	 * @param mixed $clone_url Clone site URL.
+	 * @param bool  $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
 	 */
@@ -235,10 +235,10 @@ class MainWP_Hooks {
 	 *
 	 * Hook to delete cloaned Child Site.
 	 *
-	 * @param mixed   $pluginFile Plugin file.
-	 * @param mixed   $key Key.
-	 * @param string  $clone_url Clone site URL.
-	 * @param bool $clone_site_id Clone site ID.
+	 * @param mixed  $pluginFile Plugin file.
+	 * @param mixed  $key Key.
+	 * @param string $clone_url Clone site URL.
+	 * @param bool   $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
 	 */
@@ -260,7 +260,7 @@ class MainWP_Hooks {
 		$ret = array();
 		if ( is_array( $params ) ) {
 			if ( isset( $params['websiteid'] ) && MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-				$ret['siteid'] = self::update_wp_site( $params );
+				$ret['siteid'] = MainWP_Manage_Sites_View::update_wp_site( $params );
 				return $ret;
 			}
 		}
@@ -286,76 +286,6 @@ class MainWP_Hooks {
 			'href'       => $href,
 		);
 		MainWP_Menu::add_left_menu( $item, $level );
-	}
-
-	/**
-	 * Method update_wp_site()
-	 *
-	 * Update Child Site.
-	 *
-	 * @param mixed $params Udate parameters.
-	 *
-	 * @return int Child Site ID on success and return 0 on failer.
-	 */
-	public static function update_wp_site( $params ) {
-		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
-			return 0;
-		}
-
-		if ( isset( $params['is_staging'] ) ) {
-			unset( $params['is_staging'] );
-		}
-
-		$website = MainWP_DB::instance()->get_website_by_id( $params['websiteid'] );
-		if ( null == $website ) {
-			return 0;
-		}
-
-		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-			return 0;
-		}
-
-		$data     = array();
-		$uniqueId = null;
-
-		if ( isset( $params['name'] ) && ! empty( $params['name'] ) ) {
-			$data['name'] = htmlentities( $params['name'] );
-		}
-
-		if ( isset( $params['wpadmin'] ) && ! empty( $params['wpadmin'] ) ) {
-			$data['adminname'] = $params['wpadmin'];
-		}
-
-		if ( isset( $params['unique_id'] ) ) {
-			$data['uniqueId'] = $params['unique_id'];
-			$uniqueId         = $params['unique_id'];
-		}
-
-		if ( empty( $data ) ) {
-			return 0;
-		}
-
-		MainWP_DB::instance()->update_website_values( $website->id, $data );
-		if ( null !== $uniqueId ) {
-			try {
-				$information = MainWP_Connect::fetch_url_authed( $website, 'update_values', array( 'uniqueId' => $uniqueId ) );
-			} catch ( MainWP_Exception $e ) {
-				$error = $e->getMessage();
-			}
-		}
-
-		/**
-		 * Action: mainwp_updated_site
-		 *
-		 * Fires after updatig the child site options.
-		 *
-		 * @param int   $website->id Child site ID.
-		 * @param array $data        Child site data.
-		 *
-		 * @since 3.5.1
-		 */
-		do_action( 'mainwp_updated_site', $website->id, $data );
-		return $website->id;
 	}
 
 	/**
@@ -449,14 +379,14 @@ class MainWP_Hooks {
 	 *
 	 * Hook to select sites box.
 	 *
-	 * @param string  $title Input title.
-	 * @param string  $type Input type, radio.
-	 * @param bool $show_group Whether or not to show group, Default: true.
-	 * @param bool $show_select_all Whether to show select all.
-	 * @param string  $class Default = ''.
-	 * @param string  $style Default = ''.
-	 * @param array   $selected_websites Selected Child Sites.
-	 * @param array   $selected_groups Selected Groups.
+	 * @param string $title Input title.
+	 * @param string $type Input type, radio.
+	 * @param bool   $show_group Whether or not to show group, Default: true.
+	 * @param bool   $show_select_all Whether to show select all.
+	 * @param string $class Default = ''.
+	 * @param string $style Default = ''.
+	 * @param array  $selected_websites Selected Child Sites.
+	 * @param array  $selected_groups Selected Groups.
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
@@ -697,7 +627,7 @@ class MainWP_Hooks {
 	 * Hook to get MainWP Directory.
 	 *
 	 * @param bool $false False.
-	 * @param null    $dir WP files system diectories.
+	 * @param null $dir WP files system diectories.
 	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $newdir, $url.

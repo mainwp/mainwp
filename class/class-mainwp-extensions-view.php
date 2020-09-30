@@ -98,6 +98,8 @@ class MainWP_Extensions_View {
 	 * Method render()
 	 *
 	 * Render the extensions page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public static function render() {
 
@@ -463,17 +465,6 @@ class MainWP_Extensions_View {
 				'catalog_id' => '15340',
 				'group'      => array( 'content' ),
 			),
-			'mainwp-backupwordpress-extension'       =>
-			array(
-				'slug'       => 'mainwp-backupwordpress-extension',
-				'title'      => 'MainWP BackUpWordPress Extension',
-				'desc'       => 'MainWP BackUpWordPress Extension combines the power of your MainWP Dashboard with the popular WordPress BackUpWordPress Plugin. It allows you to schedule backups on your child sites.',
-				'link'       => 'https://mainwp.com/extension/backupwordpress/',
-				'img'        => $folder_url . 'backupwordpress.png',
-				'product_id' => 'MainWP BackUpWordPress Extension',
-				'catalog_id' => '273535',
-				'group'      => array( 'backup' ),
-			),
 			'mainwp-backwpup-extension'              =>
 			array(
 				'slug'       => 'mainwp-backwpup-extension',
@@ -506,17 +497,6 @@ class MainWP_Extensions_View {
 				'product_id' => 'MainWP Branding Extension',
 				'catalog_id' => '10679',
 				'group'      => array( 'admin' ),
-			),
-			'mainwp-broken-links-checker-extension'  =>
-			array(
-				'slug'       => 'mainwp-broken-links-checker-extension',
-				'title'      => 'MainWP Broken Links Checker Extension',
-				'desc'       => 'MainWP Broken Links Checker Extension allows you to scan and fix broken links on your child sites. Requires the MainWP Dashboard Plugin.',
-				'link'       => 'https://mainwp.com/extension/broken-links-checker/',
-				'img'        => $folder_url . 'broken-links-checker.png',
-				'product_id' => 'MainWP Broken Links Checker Extension',
-				'catalog_id' => '12737',
-				'group'      => array( 'performance' ),
 			),
 			'mainwp-bulk-settings-manager'           =>
 			array(
@@ -672,17 +652,6 @@ class MainWP_Extensions_View {
 				'product_id' => 'MainWP Rocket Extension',
 				'catalog_id' => '335257',
 				'group'      => array( 'performance' ),
-			),
-			'mainwp-spinner'                         =>
-			array(
-				'slug'       => 'mainwp-spinner',
-				'title'      => 'MainWP Spinner',
-				'desc'       => 'MainWP Extension Plugin allows words to spun {|} when when adding articles and posts to your blogs. Requires the installation of MainWP Main Plugin.',
-				'link'       => 'https://mainwp.com/extension/spinner/',
-				'img'        => $folder_url . 'spinner.png',
-				'product_id' => 'MainWP Spinner',
-				'catalog_id' => '110',
-				'group'      => array( 'content' ),
 			),
 			'mainwp-sucuri-extension'                =>
 			array(

@@ -31,7 +31,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * Initiate the MainWP CLI after all Plugins have loaded.
 	 */
 	public static function init() {
-		add_action( 'plugins_loaded', array( 'MainWP_WP_CLI_Command', 'init_wpcli_commands' ), 99999 );
+		add_action( 'plugins_loaded', array( self::class, 'init_wpcli_commands' ), 99999 );
 	}
 
 	/**
@@ -40,7 +40,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * Adds the MainWP WP CLI Commands via WP_CLI::add_command
 	 */
 	public static function init_wpcli_commands() {
-		\WP_CLI::add_command( 'mainwp', 'MainWP_WP_CLI_Command' );
+		\WP_CLI::add_command( 'mainwp', self::class );
 	}
 
 	/**
@@ -55,6 +55,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public function sites( $args, $assoc_args ) {
 		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
@@ -78,15 +84,15 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		}
 		MainWP_DB::data_seek( $websites, 0 );
 
-		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
-		WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', 'id', 'name', 'url', 'version' ) );
-		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
+		\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
+		\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', 'id', 'name', 'url', 'version' ) );
+		\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', $website->id, $website->name, $website->url, $website->version ) );
+			\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $urlLength . 's | %-' . $versionLength . 's |', $website->id, $website->name, $website->url, $website->version ) );
 		}
 
-		WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
+		\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
 		MainWP_DB::free_result( $websites );
 	}
 
@@ -110,6 +116,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -117,7 +129,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error( 'Child site ids should be numeric.' );
+					\WP_CLI::error( 'Child site ids should be numeric.' );
 				}
 
 				$sites[] = trim( $arg );
@@ -125,11 +137,11 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		}
 
 		if ( ( count( $sites ) == 0 ) && ( ! isset( $assoc_args['all'] ) ) ) {
-			WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
+			\WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-		WP_CLI::line( 'Sync started' );
+		\WP_CLI::line( 'Sync started' );
 		$warnings = 0;
 		$errors   = 0;
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -137,26 +149,26 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				continue;
 			}
 
-			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
+			\WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
 				if ( MainWP_Sync::sync_site( $website ) ) {
-					WP_CLI::success( '  Sync succeeded' );
+					\WP_CLI::success( '  Sync succeeded' );
 				} else {
-					WP_CLI::warning( '  Sync failed' );
+					\WP_CLI::warning( '  Sync failed' );
 					$warnings++;
 				}
 			} catch ( \Exception $e ) {
-				WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+				\WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
 		MainWP_DB::free_result( $websites );
 		if ( $errors > 0 ) {
-			WP_CLI::error( 'Sync completed with errors' );
+			\WP_CLI::error( 'Sync completed with errors' );
 		} elseif ( $warnings > 0 ) {
-			WP_CLI::warning( 'Sync completed with warnings' );
+			\WP_CLI::warning( 'Sync completed with warnings' );
 		} else {
-			WP_CLI::success( 'Sync completed' );
+			\WP_CLI::success( 'Sync completed' );
 		}
 	}
 
@@ -176,6 +188,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();
@@ -183,7 +201,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error( 'Child site ids should be numeric.' );
+					\WP_CLI::error( 'Child site ids should be numeric.' );
 				}
 
 				$sites[] = trim( $arg );
@@ -191,37 +209,37 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		}
 
 		if ( count( $sites ) == 0 ) {
-			WP_CLI::error( 'Please specify one or more child sites.' );
+			\WP_CLI::error( 'Please specify one or more child sites.' );
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-		WP_CLI::line( 'Reconnect started' );
+		\WP_CLI::line( 'Reconnect started' );
 		$warnings = 0;
 		$errors   = 0;
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			if ( ( 0 < count( $sites ) ) && ( ! in_array( $website->id, $sites, true ) ) ) {
 				continue;
 			}
-			WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
+			\WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
 			try {
 				if ( MainWP_Manage_Sites_View::m_reconnect_site( $website ) ) {
-					WP_CLI::success( '  Reconnected successfully' );
+					\WP_CLI::success( '  Reconnected successfully' );
 				} else {
-					WP_CLI::warning( '  Reconnect failed' );
+					\WP_CLI::warning( '  Reconnect failed' );
 					$warnings++;
 				}
 			} catch ( \Exception $e ) {
-				WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+				\WP_CLI::error( '  Reconnect failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 				$errors++;
 			}
 		}
 		MainWP_DB::free_result( $websites );
 		if ( 0 < $errors ) {
-			WP_CLI::error( 'Reconnect completed with errors' );
+			\WP_CLI::error( 'Reconnect completed with errors' );
 		} elseif ( 0 < $warnings ) {
-			WP_CLI::warning( 'Reconnect completed with warnings' );
+			\WP_CLI::warning( 'Reconnect completed with warnings' );
 		} else {
-			WP_CLI::success( 'Reconnect completed' );
+			\WP_CLI::success( 'Reconnect completed' );
 		}
 	}
 
@@ -258,6 +276,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
@@ -265,7 +289,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error( 'Child site IDs should be numeric.' );
+					\WP_CLI::error( 'Child site IDs should be numeric.' );
 				}
 
 				$sites[] = trim( $arg );
@@ -336,9 +360,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
-			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', 'id', 'name', 'plugin', 'version', 'new version' ) );
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', 'id', 'name', 'plugin', 'version', 'new version' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 
 			foreach ( $websites_to_upgrade as $website_to_upgrade ) {
 				if ( $idLength < strlen( $website_to_upgrade['id'] ) ) {
@@ -351,15 +375,15 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				$i = 0;
 				foreach ( $website_to_upgrade['plugins'] as $plugin_to_upgrade ) {
 					if ( 0 == $i ) {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
 					} else {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $plugin_to_upgrade['name'], $plugin_to_upgrade['version'], $plugin_to_upgrade['new_version'] ) );
 					}
 					$i++;
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
 			$websites         = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension    = MainWP_DB_Common::instance()->get_user_extension();
@@ -408,9 +432,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
-			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', 'id', 'name', 'plugin', 'version' ) );
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', 'id', 'name', 'plugin', 'version' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
 
 			foreach ( $websites_to_list as $website_item ) {
 				if ( $idLength < strlen( $website_item['id'] ) ) {
@@ -423,15 +447,15 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				$i = 0;
 				foreach ( $website_item['plugins'] as $plugin_item ) {
 					if ( 0 == $i ) {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $plugin_item['name'], $plugin_item['version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $plugin_item['name'], $plugin_item['version'] ) );
 					} else {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', '', '', $plugin_item['name'], $plugin_item['version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $pluginLength . 's | %-' . $oldVersionLength . 's |', '', '', $plugin_item['name'], $plugin_item['version'] ) );
 					}
 					$i++;
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $pluginLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
 
 			$pluginSlugs = array();
@@ -469,20 +493,20 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 					}
 
 					if ( count( $tmp ) == 0 ) {
-						WP_CLI::line( 'No available plugin updates for ' . $website->name );
+						\WP_CLI::line( 'No available plugin updates for ' . $website->name );
 
 						continue;
 					}
 
-					WP_CLI::line( 'Updating ' . count( $tmp ) . ' plugins for ' . $website->name );
+					\WP_CLI::line( 'Updating ' . count( $tmp ) . ' plugins for ' . $website->name );
 
 					try {
 						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'plugin', implode( ',', $tmp ) );
-						WP_CLI::success( 'Updates completed' );
+						\WP_CLI::success( 'Updates completed' );
 					} catch ( \Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+						\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
+							\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}
@@ -521,6 +545,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_console_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
@@ -528,7 +558,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 			$args_exploded = explode( ',', $args[0] );
 			foreach ( $args_exploded as $arg ) {
 				if ( ! is_numeric( trim( $arg ) ) ) {
-					WP_CLI::error( 'Child site IDs should be numeric.' );
+					\WP_CLI::error( 'Child site IDs should be numeric.' );
 				}
 
 				$sites[] = trim( $arg );
@@ -599,9 +629,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
-			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', 'id', 'name', 'theme', 'version', 'new version' ) );
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', 'id', 'name', 'theme', 'version', 'new version' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 
 			foreach ( $websites_to_upgrade as $website_to_upgrade ) {
 				if ( $idLength < strlen( $website_to_upgrade['id'] ) ) {
@@ -614,15 +644,15 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				$i = 0;
 				foreach ( $website_to_upgrade['themes'] as $theme_to_upgrade ) {
 					if ( 0 == $i ) {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', $website_to_upgrade['id'], $website_to_upgrade['name'], $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
 					} else {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $oldVersionLength . 's | %-' . $newVersionLength . 's |', '', '', $theme_to_upgrade['name'], $theme_to_upgrade['version'], $theme_to_upgrade['new_version'] ) );
 					}
 					$i++;
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . "s+%'--" . ( $newVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['list-all'] ) ) {
 			$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 			$userExtension       = MainWP_DB_Common::instance()->get_user_extension();
@@ -672,9 +702,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
-			WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', 'id', 'name', 'theme', 'active', 'version' ) );
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', 'id', 'name', 'theme', 'active', 'version' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 
 			foreach ( $websites_to_upgrade as $website_item ) {
 				if ( $idLength < strlen( $website_item['id'] ) ) {
@@ -687,15 +717,15 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 				$i = 0;
 				foreach ( $website_item['themes'] as $theme_item ) {
 					if ( 0 == $i ) {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', $website_item['id'], $website_item['name'], $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
 					} else {
-						WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', '', '', $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
+						\WP_CLI::line( sprintf( '| %-' . $idLength . 's | %-' . $nameLength . 's | %-' . $themeLength . 's | %-' . $activeLength . 's | %-' . $oldVersionLength . 's |', '', '', $theme_item['name'], $theme_item['active'], $theme_item['version'] ) );
 					}
 					$i++;
 				}
 			}
 
-			WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
+			\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $themeLength + 2 ) . "s+%'--" . ( $activeLength + 2 ) . "s+%'--" . ( $oldVersionLength + 2 ) . 's+', '', '', '', '', '' ) );
 		} elseif ( isset( $assoc_args['upgrade'] ) || isset( $assoc_args['upgrade-all'] ) ) {
 
 			$themeSlugs = array();
@@ -733,20 +763,20 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 					}
 
 					if ( count( $tmp ) == 0 ) {
-						WP_CLI::line( 'No available theme updates for ' . $website->name );
+						\WP_CLI::line( 'No available theme updates for ' . $website->name );
 
 						continue;
 					}
 
-					WP_CLI::line( 'Updating ' . count( $tmp ) . ' themes for ' . $website->name );
+					\WP_CLI::line( 'Updating ' . count( $tmp ) . ' themes for ' . $website->name );
 
 					try {
 						MainWP_Updates_Handler::upgrade_plugin_theme_translation( $website->id, 'theme', implode( ',', $tmp ) );
-						WP_CLI::success( 'Updates completed' );
+						\WP_CLI::success( 'Updates completed' );
 					} catch ( \Exception $e ) {
-						WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+						\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
 						if ( $e->getMesage() == 'WPERROR' ) {
-							WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
+							\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
 						}
 					}
 				}

@@ -191,8 +191,7 @@ class MainWP_Notification_Template {
 			if ( isset( $child_site_tokens ) && ! empty( $child_site_tokens ) ) {
 
 				if ( ! isset( $timestamp_from_date ) || empty( $timestamp_from_date ) || ! isset( $timestamp_to_date ) || empty( $timestamp_to_date ) ) {
-					$now_timestamp       = time();
-					$now_timestamp       = MainWP_Utility::get_timestamp( $now_timestamp );
+					$now_timestamp       = MainWP_Utility::get_timestamp();
 					$timestamp_from_date = $now_timestamp - DAY_IN_SECONDS;
 					$timestamp_to_date   = $now_timestamp;
 				}

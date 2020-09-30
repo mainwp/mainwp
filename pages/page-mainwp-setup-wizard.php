@@ -618,7 +618,7 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Render Optimization step.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 */
 	public function mwp_setup_optimization() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -662,8 +662,8 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Save Optimization form data.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 */
 	public function mwp_setup_optimization_save() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -857,8 +857,8 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Save Notifications form data.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 */
 	public function mwp_setup_notification_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -1011,7 +1011,7 @@ class MainWP_Setup_Wizard {
 	 *
 	 * MainWP Extensions login.
      *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::purchase_software()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::purchase_software()
      * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
      * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
@@ -1100,8 +1100,8 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Ajax get backup extension.
      *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_purchased_software()
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::check_response_for_intall_errors()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_software()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
      */
@@ -1206,7 +1206,7 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Ajax grab api key.
      *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::grab_license_key()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
      */
 	public static function ajax_grab_api_key() {

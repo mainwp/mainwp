@@ -102,8 +102,8 @@ class MainWP_UI {
 	 * @param bool   $enableOfflineSites Whether or not to enable offline sites, Default: true.
 	 * @param int    $postId             Post ID.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 */
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 
@@ -323,8 +323,8 @@ class MainWP_UI {
 	 *
 	 * @return void Render selected staging sites html.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -458,8 +458,8 @@ class MainWP_UI {
 	 *
 	 * @param array $params Page parameters.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 */
 	public static function render_top_header( $params = array() ) {
 
@@ -746,10 +746,10 @@ class MainWP_UI {
      *
      * @return void Render group sites selection box.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_not_empty_groups()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_manage_sites()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_not_empty_groups()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
     */
@@ -809,7 +809,7 @@ class MainWP_UI {
 	 *
 	 * @return mixed $output Render header action buttons html.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();

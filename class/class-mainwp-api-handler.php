@@ -28,7 +28,7 @@ class MainWP_API_Handler {
 	 *
 	 * @return array $output List of results.
 	 *
-	 * @uses MainWP_Api_Manager_Plugin_Update::instance()::bulk_update_check()
+	 * @uses MainWP_Api_Manager_Plugin_Update::bulk_update_check()
 	 */
 	public static function check_exts_upgrade() {
 
@@ -95,7 +95,7 @@ class MainWP_API_Handler {
 	 *
 	 * @return array $rslt An array containing update information.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::update_check()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::update_check()
 	 */
 	public static function get_upgrade_information( $pSlug ) {
 
@@ -136,7 +136,7 @@ class MainWP_API_Handler {
 	 *
 	 * @return array $rslt An array containing extension information.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::request_plugin_information()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::request_plugin_information()
 	 */
 	public static function get_plugin_information( $pSlug ) {
 		$extensions = MainWP_Extensions_Handler::get_extensions();

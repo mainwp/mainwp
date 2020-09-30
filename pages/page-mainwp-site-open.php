@@ -31,7 +31,7 @@ class MainWP_Site_Open {
 	 * Child Site, then grabs the websiteid, location, openurl & passes it onto
 	 * either open_site_location or open_site methods.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
@@ -87,7 +87,7 @@ class MainWP_Site_Open {
 	/**
 	 * This renders the method open_site _restore()
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_restore() {
 		if ( ! isset( $_GET['websiteid'] ) ) {

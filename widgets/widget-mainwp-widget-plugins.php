@@ -64,6 +64,11 @@ class MainWP_Widget_Plugins {
 	 * Method render_widget()
 	 *
 	 * Build Plugins Widget
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::free_result()
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -312,6 +317,11 @@ class MainWP_Widget_Plugins {
 	 * Initiate try catch for chosen Action
 	 *
 	 * @param mixed $action Plugin Action.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function action( $action ) {
 		$plugin    = isset( $_POST['plugin'] ) ? wp_unslash( $_POST['plugin'] ) : '';

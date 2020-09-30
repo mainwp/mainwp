@@ -55,6 +55,15 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 	/**
 	 * Renders the Admin Passwords page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     *
 	 */
 	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$show_form = true;
@@ -220,6 +229,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * Renders bulk update administrator password form.
 	 *
 	 * @param object $websites Object conaining child sites info.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_bulk_form( $websites ) {
 

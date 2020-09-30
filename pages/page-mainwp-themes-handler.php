@@ -34,6 +34,9 @@ class MainWP_Themes_Handler {
 	 * @param object $output Search results object.
 	 *
 	 * @return mixed Exception|Theme
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -84,6 +87,10 @@ class MainWP_Themes_Handler {
 	 *
 	 * @param mixed $pAction Action to perform.
 	 * @param mixed $theme Theme to perform action on.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function action( $pAction, $theme ) {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
@@ -141,6 +148,9 @@ class MainWP_Themes_Handler {
 
 	/**
 	 * Check to see if Theme is on the Ignore List.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
 	 */
 	public static function ignore_updates() {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
@@ -195,7 +205,12 @@ class MainWP_Themes_Handler {
 		die( wp_json_encode( array( 'result' => true ) ) );
 	}
 
-	/** This is the Bulk Method to Trust A Theme. */
+	/**
+	 * This is the Bulk Method to Trust A Theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
+	 */
 	public static function trust_post() {
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );

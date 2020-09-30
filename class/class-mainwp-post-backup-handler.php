@@ -81,6 +81,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Run backup task of site
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_run_site() {
 		$this->secure_request( 'mainwp_backup_run_site' );
@@ -112,6 +115,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Run backup task
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup() {
 		$this->secure_request( 'mainwp_backup' );
@@ -165,6 +171,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Check backup task
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_check_pid()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_checkpid() {
 		$this->secure_request( 'mainwp_backup_checkpid' );
@@ -198,6 +207,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Download backup file
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_download_file() {
 		$this->secure_request( 'mainwp_backup_download_file' );
@@ -230,6 +242,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Delete backup file
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_delete_file()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_delete_file() {
 		$this->secure_request( 'mainwp_backup_delete_file' );
@@ -263,6 +278,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Get create backup file size.
 	 *
 	 * @throws \Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );
@@ -315,6 +333,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Get backup file size
 	 *
 	 * @throws MainWP_Exception on errors.
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_getfilesize() {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
@@ -342,6 +361,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Check upload status
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_upload_checkstatus() {
 		$this->secure_request( 'mainwp_backup_upload_checkstatus' );
@@ -411,6 +432,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Get progress status
 	 *
 	 * @throws MainWP_Exception on finished or errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backup_upload_getprogress() {
 		$this->secure_request( 'mainwp_backup_upload_getprogress' );
@@ -518,6 +541,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Run backup task of site.
 	 *
 	 * @throws MainWP_Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_backuptask_run_site() {
 		try {

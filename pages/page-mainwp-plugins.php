@@ -363,6 +363,9 @@ class MainWP_Plugins {
 
 	/**
 	 * Render MainWP Plugins Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
 	 */
 	public static function render() {
 		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
@@ -559,6 +562,8 @@ class MainWP_Plugins {
 
 	/**
 	 * Render MainWP plugins page search options.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
@@ -612,6 +617,17 @@ class MainWP_Plugins {
 	 * @uses MainWP_Cache::add_result()
 	 *
 	 * @return string Plugin Table.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
@@ -1337,6 +1353,13 @@ class MainWP_Plugins {
 	 * @param null $output function output.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1615,7 +1638,14 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	/** Render Ignore Subpage. */
+	/**
+	 * Render Ignore Subpage.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 */
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
@@ -1740,6 +1770,10 @@ class MainWP_Plugins {
 	 * @param mixed $websites Child Sites.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
@@ -1810,7 +1844,15 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	/** Render Ignored Abandoned Page. */
+	/**
+	 * Render Ignored Abandoned Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 */
 	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		$userExtension         = MainWP_DB_Common::instance()->get_user_extension();
@@ -1925,6 +1967,10 @@ class MainWP_Plugins {
 	 *
 	 * @param int    $cnt Plugins count.
 	 * @param object $websites The websites object.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>

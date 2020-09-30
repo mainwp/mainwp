@@ -31,6 +31,11 @@ class MainWP_Updates_Handler {
 	 * @param int $id Child site ID.
 	 *
 	 * @throws MainWP_Exception Error messages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -90,6 +95,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
 	 */
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -161,6 +169,13 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Plugin or Theme name.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
 		if ( ! empty( $id ) ) {
@@ -293,6 +308,9 @@ class MainWP_Updates_Handler {
 	 * @param string $name Plugin or theme name.
 	 *
 	 * @return string 'success'.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function ignore_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
@@ -333,6 +351,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $slug Plugin or Themes slug.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function unignore_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
@@ -387,6 +408,14 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
 		if ( isset( $id ) ) {
@@ -432,6 +461,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $slug Plugin or Themes slug.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function unignore_abandoned_plugins_themes( $type, $slug ) {
 		$slug          = urldecode( $slug );
@@ -486,6 +518,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $id Child Site ID.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 */
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -519,6 +554,9 @@ class MainWP_Updates_Handler {
 	 * @param mixed $name Plugin or Theme name.
 	 *
 	 * @return string success.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public static function dismiss_plugins_themes( $type, $slug, $name ) {
 		$slug          = urldecode( $slug );
@@ -562,6 +600,10 @@ class MainWP_Updates_Handler {
 	 * @param array  $list List of theme or plugin names seperated by comma.
 	 *
 	 * @throws MainWP_Exception Error messages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -619,6 +661,12 @@ class MainWP_Updates_Handler {
 	 * @param string $type plugin|theme.
 	 *
 	 * @return array List of plugins or themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function get_plugin_theme_slugs( $id, $type ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 

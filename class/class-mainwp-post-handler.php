@@ -135,6 +135,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Search Post handler,
 	 * Page: User.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
@@ -154,6 +156,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Search Post handler,
 	 * Page: Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
@@ -181,6 +185,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Search Post handler,
 	 * Page: Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
@@ -508,6 +514,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_leftmenu_filter_group()
 	 *
 	 * MainWP left menu filter by group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function mainwp_leftmenu_filter_group() {
 		$this->secure_request( 'mainwp_leftmenu_filter_group' );
@@ -625,6 +636,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Post hander for,
 	 * Page: SecurityIssues.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_security_issues_request() {
 		$this->secure_request( 'mainwp_security_issues_request' );
@@ -650,6 +663,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Post hander for 'fix issues',
 	 * Page: SecurityIssues.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_security_issues_fix() {
 		$this->secure_request( 'mainwp_security_issues_fix' );
@@ -675,6 +690,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Post hander for 'unfix issues',
 	 * Page: SecurityIssues.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function mainwp_security_issues_unfix() {
 		$this->secure_request( 'mainwp_security_issues_unfix' );
@@ -699,6 +716,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method ajax_disconnect_site()
 	 *
 	 * Disconnect Child Site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public function ajax_disconnect_site() {
 		$this->secure_request( 'mainwp_disconnect_site' );
@@ -878,6 +898,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method ajax_recheck_http()
 	 *
 	 * Recheck Child Site http status code & message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public function ajax_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
@@ -910,6 +933,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_ignore_http_response()
 	 *
 	 * Ignore Child Site https response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
 	 */
 	public function mainwp_ignore_http_response() {
 		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
@@ -948,6 +974,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_force_destroy_sessions()
 	 *
 	 * Force destroy sessions.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );

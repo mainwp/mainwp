@@ -13,6 +13,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Install
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_DB_Base
  */
 class MainWP_Install extends MainWP_DB_Base {
 

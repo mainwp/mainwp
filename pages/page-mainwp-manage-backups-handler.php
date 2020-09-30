@@ -49,6 +49,10 @@ class MainWP_Manage_Backups_Handler {
 	 * @param $pBackupTasks Backup tasks.
 	 *
 	 * @return bool true|false.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_with_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function validate_backup_tasks( $pBackupTasks ) {
 		if ( ! is_array( $pBackupTasks ) ) {
@@ -120,7 +124,13 @@ class MainWP_Manage_Backups_Handler {
 		return ( $task->userid == $current_user->ID );
 	}
 
-	/** Update backup task. */
+	/**
+	 * Update backup task.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::add_backup_task()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task()
+	 */
 	public static function update_backup() {
 
 		/**
@@ -270,6 +280,19 @@ class MainWP_Manage_Backups_Handler {
 	 * @param bool $updateRun ture|false
 	 *
 	 * @return mixed $errorOutput
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_site()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_run()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_with_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_completed_sites()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_errors()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_completed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_notification_email()
+	 * @uses \MainWP\Dashboard\MainWP_Format::format_email()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- not quite complex function.
 
@@ -443,6 +466,9 @@ class MainWP_Manage_Backups_Handler {
 	 * @param mixed $pFileNameUID Filename Eunique ID.
 	 *
 	 * @return self MainWP_Manage_Sites_Handler()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
 	 */
 	public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
 		$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $pTaskId );
@@ -479,6 +505,11 @@ class MainWP_Manage_Backups_Handler {
 	 *
 	 * @return array $allSites All Sites array.
 	 * @return array $remoteDestinations Remote destinations array.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_run_manually()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_group_id()
 	 */
 	public static function get_backup_task_sites( $pTaskId ) {
 		$sites      = array();
@@ -520,7 +551,12 @@ class MainWP_Manage_Backups_Handler {
 		);
 	}
 
-	/** Remove Backup. */
+	/**
+	 * Remove Backup.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::remove_backup_task()
+	 */
 	public static function remove_backup() {
 		if ( isset( $_POST['id'] ) ) {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( intval( $_POST['id'] ) );
@@ -532,7 +568,12 @@ class MainWP_Manage_Backups_Handler {
 		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
-	/** Resume Backup. */
+	/**
+	 * Resume Backup.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_with_values()
+	 */
 	public static function resume_backup() {
 		$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false;
 		if ( $id ) {
@@ -545,7 +586,12 @@ class MainWP_Manage_Backups_Handler {
 		die( wp_json_encode( array( 'notask' => true ) ) );
 	}
 
-	/** Pause Backup. */
+	/**
+	 * Pause Backup.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::instance()::update_backup_task_with_values()
+	 */
 	public static function pause_backup() {
 		$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false;
 		if ( $id ) {

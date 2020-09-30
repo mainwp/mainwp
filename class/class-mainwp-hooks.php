@@ -140,6 +140,8 @@ class MainWP_Hooks {
 	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site.
 	 *
 	 * @return array $ret data fields: response, siteid.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
 	 */
 	public function mainwp_add_site( $params ) {
 		$ret = array();
@@ -171,6 +173,12 @@ class MainWP_Hooks {
 	 * @param bool $site_id Child site ID.
 	 *
 	 * @return boolean|array Return false if empty and return array error - Site not found | result - SUCCESS.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::remove_website()
 	 */
 	public function hook_delete_site( $site_id = false ) {
 
@@ -295,7 +303,12 @@ class MainWP_Hooks {
 	 *
 	 * @param mixed $params Udate parameters.
 	 *
-	 * @return int Child Site ID on success and return 0 on failer.
+	 * @return int Child Site ID on success and return 0 on failure
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function update_wp_site( $params ) {
 		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {
@@ -393,6 +406,8 @@ class MainWP_Hooks {
 	 * @param string $page Current MainWP Page.
 	 *
 	 * @return array Cached Search Array.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public function cache_getcontext( $page ) {
 		return MainWP_Cache::get_cached_context( $page );
@@ -404,6 +419,8 @@ class MainWP_Hooks {
 	 * Echo Cached Search Body.
 	 *
 	 * @param string $page Current MainWP Page.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public function cache_echo_body( $page ) {
 		MainWP_Cache::echo_body( $page );
@@ -415,6 +432,8 @@ class MainWP_Hooks {
 	 * Initiate search session variables for the current page.
 	 *
 	 * @param string $page Current MainWP Page.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
 	 */
 	public function cache_init( $page ) {
 		MainWP_Cache::init_cache( $page );
@@ -427,6 +446,8 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $context Time of search.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
 	 */
 	public function cache_add_context( $page, $context ) {
 		MainWP_Cache::add_context( $page, $context );
@@ -439,6 +460,8 @@ class MainWP_Hooks {
 	 *
 	 * @param string $page Current MainWP Page.
 	 * @param mixed  $body Search body.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	public function cache_add_body( $page, $body ) {
 		MainWP_Cache::add_body( $page, $body );
@@ -484,6 +507,9 @@ class MainWP_Hooks {
 	 * @param object $extra HTTP error message.
 	 *
 	 * @return string Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function get_error_message( $msg, $extra ) {
 		return MainWP_Error_Helper::get_error_message( new MainWP_Exception( $msg, $extra ) );
@@ -495,6 +521,8 @@ class MainWP_Hooks {
 	 * Hook to get user extension.
 	 *
 	 * @return object $row User extension.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
 	 */
 	public function get_user_extension() {
 		return MainWP_DB_Common::instance()->get_user_extension();
@@ -510,6 +538,8 @@ class MainWP_Hooks {
 	 * @param string $name Option table name.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public function hook_get_site_options( $boolean, $website, $name = '' ) {
 
@@ -537,6 +567,8 @@ class MainWP_Hooks {
 	 * @param string $value Option value.
 	 *
 	 * @return string|null Database query result (as string), or null on failure
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
 	 */
 	public function hook_update_site_options( $boolean, $website, $option, $value ) {
 		return MainWP_DB::instance()->update_website_option( $website, $option, $value );
@@ -552,6 +584,8 @@ class MainWP_Hooks {
 	 * @param string $orderBy      Order list by. Default: URL.
 	 *
 	 * @return object|null Database query results or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_user_id()
 	 */
 	public function hook_get_websites_by_user_id( $boolean, $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
 		return MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
@@ -565,6 +599,8 @@ class MainWP_Hooks {
 	 * @param string $url Child Site URL.
 	 *
 	 * @return array|object|null Database query results.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
 	 */
 	public function get_websites_by_url( $url ) {
 		return MainWP_DB::instance()->get_websites_by_url( $url );
@@ -579,6 +615,9 @@ class MainWP_Hooks {
 	 * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
 	 *
 	 * @return array $output All posts data array.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
@@ -753,6 +792,8 @@ class MainWP_Hooks {
 	 * @param string $title Email title.
 	 *
 	 * @return string|bool Return error or true.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Format::format_email()
 	 */
 	public function get_formated_email( $body, $email, $title = '' ) {
 		return MainWP_Format::format_email( $email, $body, $title );
@@ -802,6 +843,11 @@ class MainWP_Hooks {
 	 * Method upgrade_plugin_theme()
 	 *
 	 * Hook to update theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public function upgrade_plugin_theme() {
 		try {
@@ -871,7 +917,9 @@ class MainWP_Hooks {
 	 * @param mixed $ids Group IDs.
 	 * @param null  $userId Current user ID.
 	 *
-	 * @return (object|null) Database query result for get Child Sites by group ID or null on failure.
+	 * @return object|null Database query result for get Child Sites by group ID or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
 	 */
 	public function hook_get_websites_by_group_ids( $ids, $userId = null ) {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );

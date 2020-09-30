@@ -29,6 +29,10 @@ class MainWP_Manage_Sites_Handler {
 	 * Check to add site.
 	 *
 	 * @return mixed send json encode data
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_not_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_url()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function check_site() {
 		$url     = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
@@ -68,6 +72,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Try to recconnect to Child Site.
 	 *
 	 * @throws \Exception Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function reconnect_site() {
 		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false;
@@ -91,6 +97,9 @@ class MainWP_Manage_Sites_Handler {
 	 * Method add_site()
 	 *
 	 * Add new Child Site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_url()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
 	 */
 	public static function add_site() {
 		$ret     = array();
@@ -148,6 +157,9 @@ class MainWP_Manage_Sites_Handler {
 	 * Method save_note()
 	 *
 	 * Save Child Site Note.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_note()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 	 */
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) ) {
@@ -169,6 +181,12 @@ class MainWP_Manage_Sites_Handler {
 	 * Method remove_site()
 	 *
 	 * Try to remove Child Site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::remove_website()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function remove_site() {
 		if ( isset( $_POST['id'] ) ) {
@@ -177,8 +195,8 @@ class MainWP_Manage_Sites_Handler {
 				$error = '';
 
 				/**
-				 * Deactive child plugin on live site only,
-				 * DO NOT deactive child on staging site, it will deactive child plugin of source site.
+				 * Deactivate child plugin on live site only,
+				 * DO NOT deactivate child on staging site, it will deactivate child plugin of source site.
 				 */
 				if ( ! $website->is_staging ) {
 					try {
@@ -246,6 +264,10 @@ class MainWP_Manage_Sites_Handler {
 	 * Method update_child_site_value()
 	 *
 	 * Update Child Site ID.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) ) {

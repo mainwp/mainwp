@@ -271,6 +271,8 @@ class MainWP_Premium_Update {
 	 * @param mixed $where_url page to redirerct to.
 	 *
 	 * @return respose $reponse http response.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
 	public static function redirect_request_site( $website, $where_url ) {
 

@@ -257,6 +257,10 @@ class MainWP_System_Handler {
 	 * Method handle_settings_post()
 	 *
 	 * Handle saving settings page.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::handle_settings_post()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::update_user_extension()
 	 */
 	public function handle_settings_post() {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
@@ -301,6 +305,7 @@ class MainWP_System_Handler {
 	 * @return mixed $info|$false
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_plugin_information()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
@@ -566,6 +571,9 @@ class MainWP_System_Handler {
 	 *
 	 * @param mixed $ext_key Extension API Key.
 	 * @param array $info Extension Info.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::set_activation_info()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::generate_password()
 	 */
 	public function activate_extension( $ext_key, $info = array() ) {
 
@@ -588,6 +596,8 @@ class MainWP_System_Handler {
 	 * Deactivate MaiNWP Extension.
 	 *
 	 * @param mixed $ext_key Exnension API Key.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::set_activation_info()
 	 */
 	public function deactivate_extension( $ext_key ) {
 		MainWP_Api_Manager::instance()->set_activation_info( $ext_key, '' );

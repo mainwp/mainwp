@@ -66,7 +66,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * @return string Build URL.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_upgrade_url()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
 	 */
 	private function create_upgrade_api_url( $args, $bulk_check = true ) {
 		if ( $bulk_check ) {
@@ -118,7 +118,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	 *
 	 * @return array Plugin Information & bulkupdatecheck.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_domain()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_domain()
 	 */
 	public function bulk_update_check( $plugins ) {
 		$args = array(

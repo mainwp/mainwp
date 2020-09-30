@@ -242,13 +242,13 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::backup_full_task_running()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension_by_user_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_check_updates()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_sync_values()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count_where_dts_automatic_sync_smaller_then_start()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension_by_user_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_check_updates()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count_where_dts_automatic_sync_smaller_then_start()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 */
 	public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1064,7 +1064,7 @@ class MainWP_System_Cron_Jobs {
 	 * @return bool True|False
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Format::get_site_updates_items()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_disconnected_websites()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_disconnected_websites()
 	 */
 	public function start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
@@ -1154,7 +1154,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_offline_check_status()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_offline_check_status()
 	 */
 	public function start_notification_http_check( $plain_text ) {
 
@@ -1230,8 +1230,8 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Cron job to ping child sites.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -1384,9 +1384,9 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Grab MainWP Cron Job Statistics.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_stats_update_sql()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_stats()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_stats_update_sql()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_stats()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -1425,8 +1425,8 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * Cron job to check child sites status.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_to_check_status()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_to_check_status()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -1558,7 +1558,7 @@ class MainWP_System_Cron_Jobs {
 	 *
 	 * @return bool True|False
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_to_notice_health_threshold()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_to_notice_health_threshold()
 	 */
 	public function start_notification_sites_health( $plain_text ) {
 

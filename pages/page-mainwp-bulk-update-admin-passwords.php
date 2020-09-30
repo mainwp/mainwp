@@ -57,10 +57,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * Renders the Admin Passwords page.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      *

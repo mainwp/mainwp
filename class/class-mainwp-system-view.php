@@ -571,7 +571,7 @@ class MainWP_System_View {
 	/**
 	 * MainWP Productions Site warning.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function mainwp_warning_notice() {
 

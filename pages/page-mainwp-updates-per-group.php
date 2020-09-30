@@ -36,7 +36,7 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
      *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -164,7 +164,7 @@ class MainWP_Updates_Per_Group {
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $trustedPlugins all plugins trusted by user.
      *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -364,7 +364,7 @@ class MainWP_Updates_Per_Group {
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $trustedThemes all themes trusted by user.
      *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -705,7 +705,7 @@ class MainWP_Updates_Per_Group {
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -851,7 +851,7 @@ class MainWP_Updates_Per_Group {
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $decodedDismissedThemes all dismissed themes.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */

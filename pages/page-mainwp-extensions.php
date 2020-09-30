@@ -56,7 +56,7 @@ class MainWP_Extensions {
 	 *
 	 * Instantiate Extensions Menu.
      *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_activation_info()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_activation_info()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::init_menu()
 	 */
 	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -321,8 +321,8 @@ class MainWP_Extensions {
 	 *
 	 * Get purchased MainWP Extensions.
      *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::get_purchased_software()
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::instance()::check_response_for_intall_errors()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_software()
+     * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
 	 */

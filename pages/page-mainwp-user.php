@@ -822,9 +822,9 @@ class MainWP_User {
      * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
      * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -1196,8 +1196,8 @@ class MainWP_User {
 	 * @return mixed $information User update info that is returned.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
      * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
@@ -1625,8 +1625,8 @@ class MainWP_User {
 	 * Bulk User addition $_POST Handler.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -1983,12 +1983,12 @@ class MainWP_User {
 	 * User Import $_POST handler.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_url()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::free_result()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_url()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 

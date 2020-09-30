@@ -30,7 +30,7 @@ class MainWP_Notes {
 	 *
 	 * Grab Child Site Notes & Render Widget.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

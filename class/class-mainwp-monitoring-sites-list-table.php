@@ -223,7 +223,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	/**
 	 * Render manage sites table top.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_manage_sites()
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
@@ -310,8 +310,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 *
 	 * @param bool $optimize true|false Whether or not to optimize.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_search_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_search_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()

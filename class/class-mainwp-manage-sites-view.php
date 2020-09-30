@@ -163,7 +163,7 @@ class MainWP_Manage_Sites_View {
 	 * @param string $subPages Sites subpages.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_header( $shownPage = '', $subPages = '' ) {
 
@@ -637,7 +637,7 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param mixed $website Child Site.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
@@ -731,9 +731,9 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @return string Edit Child Site sub page.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_by_website_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_by_website_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1277,7 +1277,7 @@ class MainWP_Manage_Sites_View {
 	 * @return boolean true|false.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
      * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function m_reconnect_site( $website ) {
@@ -1396,9 +1396,9 @@ class MainWP_Manage_Sites_View {
 	 * @return array $message, $error, $id
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_group_by_name()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::add_website()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::add_website()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.

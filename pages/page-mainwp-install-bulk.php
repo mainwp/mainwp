@@ -130,9 +130,9 @@ class MainWP_Install_Bulk {
 	 *
 	 * Grab all the necessary data to make the upload and prepare json response.
      *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -251,7 +251,7 @@ class MainWP_Install_Bulk {
 	 * Perform Install.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function perform_install() {
 		MainWP_Utility::end_session();
@@ -334,8 +334,8 @@ class MainWP_Install_Bulk {
 	 *
 	 * Prepare the upload.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
@@ -411,7 +411,7 @@ class MainWP_Install_Bulk {
 	 * Perform the upload.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();

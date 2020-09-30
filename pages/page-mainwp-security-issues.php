@@ -30,7 +30,7 @@ class MainWP_Security_Issues {
 	 *
 	 * @param null $website Child Site ID.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render( $website = null ) {
 
@@ -255,7 +255,7 @@ class MainWP_Security_Issues {
 	 * Fetch stored known Child Site Security Issues from DB that were found during Sync.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function fetch_security_issues() {
 		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
@@ -295,7 +295,7 @@ class MainWP_Security_Issues {
 	 * Fix the selected security issue.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function fix_security_issue() {
 		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;
@@ -355,7 +355,7 @@ class MainWP_Security_Issues {
 	 * Un-Fix the selected security issue.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function unfix_security_issue() {
 		$id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : false;

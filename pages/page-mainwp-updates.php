@@ -233,10 +233,10 @@ class MainWP_Updates {
 	/**
 	 * Renders updates page.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -1620,9 +1620,9 @@ class MainWP_Updates {
 	 *
 	 * @return object Object containing websites info.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */

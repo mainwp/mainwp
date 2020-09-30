@@ -35,7 +35,7 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups_sites all groups of sites.
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -163,7 +163,7 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $trustedPlugins all plugins trusted by user.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -363,7 +363,7 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $trustedThemes all themes trusted by user.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -560,7 +560,7 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups_sites all groups of sites.
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -704,10 +704,10 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
@@ -850,8 +850,8 @@ class MainWP_Updates_Per_Group {
 	 * @param array  $all_groups all groups.
 	 * @param int    $site_offset_for_groups offset value.
 	 * @param array  $decodedDismissedThemes all dismissed themes.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */

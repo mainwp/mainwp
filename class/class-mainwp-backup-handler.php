@@ -305,7 +305,7 @@ class MainWP_Backup_Handler {
 		}
 
 		if ( isset( $information['error'] ) ) {
-			throw new MainWP_Exception( $information['error'] );
+			throw new MainWP_Exception( esc_html( $information['error'] ) );
 		} elseif ( 'db' === $type && ! $information['db'] ) {
 			throw new MainWP_Exception( 'Database backup failed.' );
 		} elseif ( 'full' === $type && ! $information['full'] ) {
@@ -882,7 +882,7 @@ class MainWP_Backup_Handler {
 		do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
 		if ( isset( $information['error'] ) ) {
-			throw new MainWP_Exception( $information['error'] );
+			throw new MainWP_Exception( esc_html( $information['error'] ) );
 		} elseif ( 'db' === $pType && ! $information['db'] ) {
 			throw new MainWP_Exception( 'Database backup failed.' );
 		} elseif ( 'full' === $pType && ! $information['full'] ) {

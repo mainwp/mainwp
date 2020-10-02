@@ -717,13 +717,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="
-								<?php
-								if ( null != $cachedSearch ) {
-									echo esc_attr( $cachedSearch['dtsstart'] );
-								}
-								?>
-								"/>
+								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -731,13 +725,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="
-								<?php
-								if ( null != $cachedSearch ) {
-									echo esc_attr( $cachedSearch['dtsstop'] );
-								}
-								?>
-								"/>
+								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>

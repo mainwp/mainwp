@@ -25,10 +25,10 @@ class MainWP_Logger {
 	const DEBUG       = 3;
 	const INFO_UPDATE = 10;
 
-	const LOG_COLOR     = 'black';
-	const DEBUG_COLOR   = 'gray';
-	const INFO_COLOR    = 'gray';
-	const WARNING_COLOR = 'red';
+	const LOG_COLOR     = '#999999';
+	const DEBUG_COLOR   = '#666666';
+	const INFO_COLOR    = '#276f86';
+	const WARNING_COLOR = '#9f3a38;';
 
 	/**
 	 * Private varibale to hold the log file prefix.
@@ -249,7 +249,7 @@ class MainWP_Logger {
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
 	 *
-	 * @return booleen True|False Default is False.
+	 * @return bool true|false Default is False.
 	 */
 	public function log( $text, $priority ) {
 
@@ -413,6 +413,8 @@ class MainWP_Logger {
 		$previousColor            = '';
 		$fontOpen                 = false;
 		$firstLinePassedProcessed = false;
+		echo '<div class="ui hidden divider"></div>';
+		echo '<div class="ui divided padded relaxed list">';
 		while ( false !== ( $line = fgets( $fh ) ) ) {
 			$currentColor = $previousColor;
 			if ( stristr( $line, '[DEBUG]' ) ) {
@@ -432,18 +434,17 @@ class MainWP_Logger {
 			}
 
 			if ( $firstLinePassedProcessed && ! $firstLinePassed ) {
-				echo ' <strong><span class="mainwp-green">[multiline, click to read full]</span></strong></div><div style="display: none;">';
-			} else {
-				echo '<br />';
+				echo ' <span class="ui mini label mainwp-action-log-show-more">Click to See Response</span></div><div class="mainwp-action-log-site-response" style="display: none;">';
 			}
+
 			$firstLinePassedProcessed = $firstLinePassed;
 
 			if ( $currentColor != $previousColor ) {
 				if ( $fontOpen ) {
-					echo '</div></font>';
+					echo '</div></div>';
 				}
 
-				echo '<font color="' . $currentColor . '"><div class="mainwpactionlogsline">';
+				echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
 				$fontOpen = true;
 			}
 
@@ -451,8 +452,20 @@ class MainWP_Logger {
 		}
 
 		if ( $fontOpen ) {
-			echo '</div></font>';
+			echo '</div></div>';
 		}
+
+		echo '</div>';
+
+		?>
+		<div class="ui fullscreen modal" id="mainwp-action-log-response-modal">
+			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
+			<div class="scrolling content"></div>
+			<div class="actions">
+				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<?php
 
 		fclose( $fh );
 	}

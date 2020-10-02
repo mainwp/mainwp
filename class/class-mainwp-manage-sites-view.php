@@ -1346,10 +1346,11 @@ class MainWP_Manage_Sites_View {
 	 * Add Child Site.
 	 *
 	 * @param mixed $website Child Site.
+	 * @param array $output Output values.
 	 *
 	 * @return self add_wp_site()
 	 */
-	public static function add_site( $website = false ) {
+	public static function add_site( $website = false, &$output = array() ) {
 
 		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
@@ -1367,7 +1368,7 @@ class MainWP_Manage_Sites_View {
 			$params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
 		}
 
-		return self::add_wp_site( $website, $params );
+		return self::add_wp_site( $website, $params, $output );
 	}
 
 	/**
@@ -1377,13 +1378,16 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param mixed $website Child Site.
 	 * @param array $params Array of new Child Site to add.
+	 * @param array $output Output values.
 	 *
 	 * @return array $message, $error, $id
 	 */
-	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		$error   = '';
-		$message = '';
-		$id      = 0;
+	public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$error      = '';
+		$message    = '';
+		$id         = 0;
+		$fetch_data = null;
+
 		if ( $website ) {
 			$error = __( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
 		} else {
@@ -1425,14 +1429,14 @@ class MainWP_Manage_Sites_View {
 					$http_user,
 					$http_pass,
 					$sslVersion,
-					array( 'force_use_ipv4' => $force_use_ipv4 )
+					array( 'force_use_ipv4' => $force_use_ipv4 ),
+					$output
 				);
 
+				$fetch_data = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
+
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-					$error = rawurlencode( urldecode( $information['error'] ) );
-					$error = str_replace( '%2F', '/', $error );
-					$error = str_replace( '%20', ' ', $error );
-					$err   = str_replace( '%26', '&', $error );
+					$error = MainWP_Utility::esc_content( $information['error'] );
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						$groupids   = array();
@@ -1521,10 +1525,11 @@ class MainWP_Manage_Sites_View {
 				} else {
 					$error = $e->getMessage();
 				}
+				$fetch_data = $e->get_data();
 			}
 		}
 
-		return array( $message, $error, $id );
+		return array( $message, $error, $id, $fetch_data );
 	}
 
 	/**

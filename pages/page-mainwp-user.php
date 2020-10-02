@@ -1245,7 +1245,7 @@ class MainWP_User {
 		do_action( 'mainwp_after_user_action', $information, $pAction, $userId, $extra, $pass, $optimize, $website );
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
-			wp_send_json( array( 'error' => $information['error'] ) );
+			wp_send_json( array( 'error' => esc_html( $information['error'] ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -1950,8 +1950,8 @@ class MainWP_User {
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
+		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
+		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',

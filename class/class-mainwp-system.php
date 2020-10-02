@@ -893,6 +893,18 @@ class MainWP_System {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
 		}
+
+		?>
+		<div class="ui fullscreen modal" id="mainwp-response-data-modal">
+			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
+			<div class="scrolling content"></div>
+			<div class="actions">
+				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<div id="mainwp-response-data-container" resp-data=""></div>
+		<?php
+
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}

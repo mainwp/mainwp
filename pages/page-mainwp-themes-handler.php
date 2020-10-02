@@ -129,6 +129,7 @@ class MainWP_Themes_Handler {
 		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
 
 		if ( isset( $information['error'] ) ) {
+			$information['error'] = esc_html( $information['error'] );
 			wp_send_json( $information );
 		}
 

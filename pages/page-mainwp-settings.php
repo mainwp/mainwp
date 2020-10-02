@@ -684,7 +684,11 @@ class MainWP_Settings {
 	public static function get_websites_automatic_update_time() {
 		$lastAutomaticUpdate    = MainWP_DB::instance()->get_websites_last_automatic_sync();
 		$lasttimeAutomatic      = get_option( 'mainwp_updatescheck_last_timestamp' );
-		$lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeAutomatic );
+		$lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+
+		if ( empty( $lasttimeStartAutomatic ) && !empty($lasttimeAutomatic)) {
+			$lasttimeStartAutomatic  = $lasttimeAutomatic;
+		}
 
 		if ( 0 == $lastAutomaticUpdate ) {
 			$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );

@@ -56,10 +56,10 @@ class MainWP_Exception extends \Exception {
 	/**
 	 * Method set_data()
 	 *
-	 * @return $data Addition data.
+	 * @param mixed $data Addition data.
 	 */
 	public function set_data( $data ) {
-		return $this->data = $data;
+		$this->data = $data;
 	}
 
 	/**

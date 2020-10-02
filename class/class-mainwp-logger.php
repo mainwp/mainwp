@@ -124,7 +124,7 @@ class MainWP_Logger {
 	 *
 	 * Get log status.
 	 *
-	 * @param mixed $enabled log status.
+	 * @return mixed $enabled log status.
 	 */
 	public function get_log_status() {
 		$enabled = get_option( 'mainwp_actionlogs' );

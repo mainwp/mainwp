@@ -2337,9 +2337,7 @@ serverinfo_prepare_download_info = function ( communi ) {
             if ( communi ) {
                 report = '```' +  "\n" + report +  "\n" + '```';
             }
-
-            //jQuery( "#download-server-information" ).slideDown();
-            jQuery( "#download-server-information textarea" ).val( report ).focus().select();
+            jQuery( "#download-server-information textarea" ).val( report ).select();
     } catch ( e ) {
         console.log('Error:');
     }
@@ -2823,7 +2821,7 @@ jQuery( document ).on( 'click', '.mainwp-action-log-show-more', function () {
         location.reload();
       }
     } ).modal( 'show' );
-    jQuery( '#mainwp-action-log-response-modal .content' ).text( content );
+    jQuery( '#mainwp-action-log-response-modal .content-response' ).text( content );
 } );
 
 // MainWP Show Response
@@ -2832,10 +2830,28 @@ jQuery( document ).on( 'click', '.mainwp-show-response', function () {
   jQuery( '#mainwp-response-data-modal' ).modal( {
     closable: false,
     onHide: function() {
-      jQuery( '#mainwp-response-data-modal .content' ).text('');
+      jQuery( '#mainwp-response-data-modal .content-response' ).text('');
     }
   } ).modal( 'show' );
-  jQuery( '#mainwp-response-data-modal .content' ).text( content );
+  jQuery( '#mainwp-response-data-modal .content-response' ).text( content );
+} );
+
+// Copy to clipboard for response modals.
+jQuery( document ).on( 'click', '.mainwp-response-copy-button', function () {
+      var modal = jQuery(this).closest('.ui.modal');  
+      var data = jQuery(modal).find( '.content.content-response' ).text();
+      var $temp_txtarea = jQuery( '<textarea style="opacity:0">' );
+      jQuery( 'body' ).append( $temp_txtarea );
+      $temp_txtarea.val( data ).select();
+      try {
+        var successful = document.execCommand( 'copy' );
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Copying text command was ' + msg);
+      } catch ( err ) {
+        console.log('Oops, unable to copy');
+      }
+      $temp_txtarea.remove();  
+      return false;
 } );
 
 jQuery( document ).ready( function () {

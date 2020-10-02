@@ -904,11 +904,16 @@ class MainWP_System {
 		}
 
 		?>
-		<div class="ui fullscreen modal" id="mainwp-response-data-modal">
+		<div class="ui large modal" id="mainwp-response-data-modal">
 			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
-			<div class="scrolling content"></div>
+			<div class="content">
+				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+				</div>
+			</div>
+			<div class="scrolling content content-response"></div>
 			<div class="actions">
-				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
 		<div id="mainwp-response-data-container" resp-data=""></div>

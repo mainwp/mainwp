@@ -631,7 +631,7 @@ class MainWP_Server_Information {
 					</tr>
 				</tfoot>
 			</table>
-			<div id="download-server-information" style="display: none">
+			<div id="download-server-information" style="opacity:0">
 				<textarea readonly="readonly" wrap="off"></textarea>
 			</div>
 		<?php

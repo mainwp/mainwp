@@ -352,8 +352,8 @@ class MainWP_Server_Information {
 	 * Renders Server Information page.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {

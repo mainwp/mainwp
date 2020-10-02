@@ -39,6 +39,9 @@ class MainWP_Bulk_Add {
 	 * @param object $output Function output object.
 	 *
 	 * @return mixed $output
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function posting_bulk_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {

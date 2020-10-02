@@ -25,9 +25,13 @@ class MainWP_Site_Open {
 	}
 
 	/**
-	 * This method chekcs to see if the current user is allow to acess the
+     * Child Site Dashboard Link redirect handler.
+     *
+	 * This method checks to see if the current user is allow to access the
 	 * Child Site, then grabs the websiteid, location, openurl & passes it onto
 	 * either open_site_location or open_site methods.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
@@ -64,6 +68,8 @@ class MainWP_Site_Open {
 	 * @param mixed $website Website ID.
 	 * @param mixed $location Website Location.
 	 * @param null  $pNewWindow Open in new window.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
 	public static function open_site( $website, $location, $pNewWindow = null ) {
 		?>
@@ -80,6 +86,8 @@ class MainWP_Site_Open {
 
 	/**
 	 * This renders the method open_site _restore()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_restore() {
 		if ( ! isset( $_GET['websiteid'] ) ) {
@@ -109,6 +117,8 @@ class MainWP_Site_Open {
 	 * @param mixed $website Website ID.
 	 * @param mixed $file Restore File.
 	 * @param mixed $size Post data size.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
 	public static function open_site_restore( $website, $file, $size ) {
 		?>
@@ -141,6 +151,8 @@ class MainWP_Site_Open {
 	 *
 	 * @param mixed $website Website ID.
 	 * @param mixed $open_location Website URL.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 */
 	public static function open_site_location( $website, $open_location ) {
 		?>

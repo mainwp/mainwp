@@ -222,6 +222,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 	/**
 	 * Render manage sites table top.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_manage_sites()
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
@@ -307,6 +309,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 * Prepair the items to be listed.
 	 *
 	 * @param bool $optimize true|false Whether or not to optimize.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_search_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -810,6 +819,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 *
 	 * @param mixed $website     Object containing the site info.
 	 * @param bool  $good_health Good site health info.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
 	 */
 	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -951,6 +962,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 * Optimize for shared hosting or big networks.
 	 *
 	 * @return array Table rows HTML.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();

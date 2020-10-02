@@ -27,6 +27,8 @@ class MainWP_API_Handler {
 	 * Check if extension has an update.
 	 *
 	 * @return array $output List of results.
+	 *
+	 * @uses MainWP_Api_Manager_Plugin_Update::bulk_update_check()
 	 */
 	public static function check_exts_upgrade() {
 
@@ -92,6 +94,8 @@ class MainWP_API_Handler {
 	 * @param string $pSlug Extension slug.
 	 *
 	 * @return array $rslt An array containing update information.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::update_check()
 	 */
 	public static function get_upgrade_information( $pSlug ) {
 
@@ -131,6 +135,8 @@ class MainWP_API_Handler {
 	 * @param string $pSlug Extension slug.
 	 *
 	 * @return array $rslt An array containing extension information.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::request_plugin_information()
 	 */
 	public static function get_plugin_information( $pSlug ) {
 		$extensions = MainWP_Extensions_Handler::get_extensions();

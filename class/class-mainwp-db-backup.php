@@ -339,7 +339,7 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $maximumFileDescriptors Maximum file descriptors.
 	 * @param mixed $loadFilesBeforeZip Load files before Zip.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
 	 */
 	public function update_backup_task( 
 		$userid, 

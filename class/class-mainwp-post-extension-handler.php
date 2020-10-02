@@ -90,6 +90,10 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Activate MainWP Extension.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_activation()
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+	 *
 	 */
 	public function activate_api_extension() {
 		$this->check_security( 'mainwp_extension_api_activate' );
@@ -105,6 +109,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Deactivate MainWP Extension.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_deactivation()
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
 	 */
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
@@ -118,6 +125,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Grab MainWP Extension API Key.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
 	 */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
@@ -132,6 +141,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Save MainWP Extensions API Login details for future logins.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
 	 */
 	public function save_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_saveextensionapilogin' );
@@ -216,6 +228,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Test Extension page MainWP.com login details.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public function test_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_testextensionapilogin' );

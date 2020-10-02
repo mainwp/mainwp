@@ -40,6 +40,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param array $selectGroups Select groups.
 		 *
 		 * @return object|null Database query results or null on failure.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_id()
 		 */
 		public function getWebsiteById( $id, $selectGroups = false ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $id, $selectGroups );
@@ -52,6 +54,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param int   $userId User ID.
 		 *
 		 * @return object|null Database uery result or null on failure.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_by_ids()
 		 */
 		public function getWebsitesByIds( $ids, $userId = null ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_ids( $ids, $userId );
@@ -64,6 +68,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param int   $userId User ID.
 		 *
 		 * @return object|null Database uery result or null on failure.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_group_ids()
 		 */
 		public function getWebsitesByGroupIds( $ids, $userId = null ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
@@ -78,6 +84,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param string $orderBy      Order list by. Default: URL.			
 		 *
 		 * @return object|null Database query results or null on failure.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_by_user_id()
 		 */
 		public function getWebsitesByUserId( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url' ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_user_id( $userid, $selectgroups, $search_site, $orderBy );
@@ -90,6 +98,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param mixed $option  Child Site wp_options table name.
 		 *
 		 * @return string|null Database query result (as string), or null on failure.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 		 */
 		public function getWebsiteOption( $website, $option ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $website, $option );
@@ -101,6 +111,8 @@ if ( ! class_exists( 'MainWP_DB' ) ) {
 		 * @param object $website Child site object.
 		 * @param mixed  $option  Option to update.
 		 * @param mixed  $value   Value to update with.
+		 *
+		 * @uses \MainWP\Dashboard\MainWP_DB::instance()::update_website_option()
 		 */
 		public function updateWebsiteOption( $website, $option, $value ) {
 			return MainWP\Dashboard\MainWP_DB::instance()->update_website_option( $website, $option, $value );
@@ -139,6 +151,8 @@ if ( ! class_exists( 'MainWP_Extensions_View' ) ) {
 
 	/**
 	 * MainWP Extensions View Compatible class.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	class MainWP_Extensions_View {
 

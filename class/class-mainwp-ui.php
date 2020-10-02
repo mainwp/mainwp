@@ -101,6 +101,9 @@ class MainWP_UI {
 	 * @param bool   $updateQty          Whether or not to update quantity, Default = false.
 	 * @param bool   $enableOfflineSites Whether or not to enable offline sites, Default: true.
 	 * @param int    $postId             Post ID.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 */
 	public static function select_sites_box_body( &$selected_websites = array(), &$selected_groups = array(), $type = 'checkbox', $show_group = true, $show_select_all = true, $updateQty = false, $enableOfflineSites = false, $postId = 0 ) {
 
@@ -225,6 +228,9 @@ class MainWP_UI {
 	 * @param mixed  $edit_site_id Child Site ID to edit.
 	 *
 	 * @return void Render Select Sites html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
 		?>
@@ -316,6 +322,11 @@ class MainWP_UI {
 	 * @param string $type Selector type.
 	 *
 	 * @return void Render selected staging sites html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id, $type = 'checkbox' ) {
 		if ( $staging_enabled ) :
@@ -446,6 +457,9 @@ class MainWP_UI {
 	 * Render top header.
 	 *
 	 * @param array $params Page parameters.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 */
 	public static function render_top_header( $params = array() ) {
 
@@ -725,13 +739,20 @@ class MainWP_UI {
 		do_action( 'mainwp_after_subheader' );
 	}
 
-	/**
-	 * Method gen_groups_sites_selection()
-	 *
-	 * Generate group sites selection box.
-	 *
-	 * @return void Render group sites selection box.
-	 */
+    /**
+     * Method gen_groups_sites_selection()
+     *
+     * Generate group sites selection box.
+     *
+     * @return void Render group sites selection box.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_manage_sites()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_not_empty_groups()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+    */
 	public static function gen_groups_sites_selection() {
 		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
 		$websites = MainWP_DB::instance()->query( $sql );
@@ -787,6 +808,8 @@ class MainWP_UI {
 	 * (Sync|Add|Options|Community|User|Updates).
 	 *
 	 * @return mixed $output Render header action buttons html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();

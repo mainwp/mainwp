@@ -736,6 +736,12 @@ class MainWP_Connect {
 	 * @param mixed  $whatPage Request URL. Default /admin-ajax.php.
 	 * @param bool   $json_format Use JSON format.
 	 * @param array  $others Request additional information.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_last_request_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::close_open_requests()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_nrof_open_requests()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::insert_or_update_request_log()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
 	 */
 	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1357,9 +1363,11 @@ class MainWP_Connect {
 	 * @param array   $others Other functions to perform.
 	 * @param array   $output Output values.
 	 *
+	 * @return mixed $data, $information.
 	 * @throws MainWP_Exception Exception message.
 	 *
-	 * @return mixed $data, $information.
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::insert_or_update_request_log()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
@@ -1579,6 +1587,9 @@ class MainWP_Connect {
 	 *
 	 * @param mixed $identifier Lock identifier.
 	 * @param mixed $website Object child site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::close_open_requests()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
 	 */
 	private static function check_constraints( &$identifier, $website ) {
 		$semLock      = '103218';
@@ -1649,6 +1660,8 @@ class MainWP_Connect {
 	 * @param mixed       $identifier connect identifier.
 	 * @param int         $minimumDelay minimum delay.
 	 * @param string|null $ip ip address.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_last_request_timestamp()
 	 */
 	private static function check_constraints_last_request( $identifier, $minimumDelay, $ip = null ) {
 		$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
@@ -1668,6 +1681,8 @@ class MainWP_Connect {
 	 * @param mixed       $identifier connect identifier.
 	 * @param int         $maximumRequests maximum requests.
 	 * @param string|null $ip ip address.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_nrof_open_requests()
 	 */
 	private static function check_constraints_open_requests( $identifier, $maximumRequests, $ip = null ) {
 		$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
@@ -1691,6 +1706,8 @@ class MainWP_Connect {
 	 * @param null  $http_pass htaccess password.
 	 *
 	 * @throws MainWP_Exception Exception message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 
@@ -1860,6 +1877,8 @@ class MainWP_Connect {
 	 * @param mixed $website Child Site info.
 	 *
 	 * @return mixed $faviurl Favicon URL.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public static function get_favico_url( $website ) {
 		$favi    = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );

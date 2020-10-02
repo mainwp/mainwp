@@ -30,6 +30,9 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_wp_upgrades number of available WordPress updates.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades ) {
 		?>
@@ -115,6 +118,10 @@ class MainWP_Updates_Per_Site {
 	 * @param int    $total_plugin_upgrades number of available plugins updates.
 	 * @param mixed  $userExtension user extension.
 	 * @param array  $trustedPlugins trusted plugins.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -263,6 +270,10 @@ class MainWP_Updates_Per_Site {
 	 * @param int    $total_theme_upgrades number of available themes updates.
 	 * @param mixed  $userExtension user extension.
 	 * @param array  $trustedThemes trusted themes.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -407,6 +418,9 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_translation_upgrades number of available translation updates.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades ) {
 		?>
@@ -516,6 +530,10 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_abandoned_plugins( $websites, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
@@ -621,6 +639,10 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param array  $decodedDismissedThemes all dismissed themes.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_abandoned_themes( $websites, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );

@@ -42,6 +42,8 @@ class MainWP_Monitoring_Handler {
 	 * Check to purge monitoring records.
 	 *
 	 * @return bool True for cleaning.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Monitoring::purge_monitoring_records()
 	 */
 	public static function check_to_purge_records() {
 		$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
@@ -60,6 +62,11 @@ class MainWP_Monitoring_Handler {
 	 * @param object $website Object containing the website info.
 	 *
 	 * @return array Check result.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::check_website_status()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Monitoring::insert_website_status()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 */
 	public static function handle_check_website( $website ) {
 
@@ -203,6 +210,8 @@ class MainWP_Monitoring_Handler {
 
 	/**
 	 * Check child site status via AJAX.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function ajax_check_status_site() {
 		$website = null;
@@ -235,6 +244,8 @@ class MainWP_Monitoring_Handler {
 	 * @param bool   $plain_text     Determines if the plain text format should be used.
 	 * @param bool   $general        Determines if it's a general notification.
 	 * @param bool   $to_admin Send to admin or not.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 */
 	public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $general = true, $to_admin = false ) {
 
@@ -298,6 +309,9 @@ class MainWP_Monitoring_Handler {
 	 * @param bool   $plain_text     Determines if the plain text format should be used.
 	 * @param bool   $general        Determines if it's a general notification.
 	 * @param bool   $to_admin Send to admin or not.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_notification_email()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
 	 */
 	public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) {
 

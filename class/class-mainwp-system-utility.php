@@ -76,6 +76,8 @@ class MainWP_System_Utility {
 	 * @param null $user User Email Address.
 	 *
 	 * @return mixed null|User Email Address.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 */
 	public static function get_notification_email( $user = null ) {
 		if ( null == $user ) {
@@ -529,6 +531,8 @@ class MainWP_System_Utility {
 	 * @param object $site The website.
 	 *
 	 * @return array Array of tokens.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public static function get_tokens_site_values( $site ) {
 

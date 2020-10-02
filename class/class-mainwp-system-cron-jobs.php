@@ -236,6 +236,19 @@ class MainWP_System_Cron_Jobs {
 	 * MainWP Cron Check Update
 	 *
 	 * This Cron Checks to see if Automatic Daily Updates need to be performed.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::backup_full_task_running()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension_by_user_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_check_updates()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count_where_dts_automatic_sync_smaller_then_start()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 */
 	public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1043,6 +1056,9 @@ class MainWP_System_Cron_Jobs {
 	 * @param object $email_site current report site.
 	 *
 	 * @return bool True|False
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Format::get_site_updates_items()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_disconnected_websites()
 	 */
 	public function start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
@@ -1131,6 +1147,8 @@ class MainWP_System_Cron_Jobs {
 	 * @param bool $plain_text Text format value.
 	 *
 	 * @return bool True|False
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_offline_check_status()
 	 */
 	public function start_notification_http_check( $plain_text ) {
 
@@ -1205,6 +1223,11 @@ class MainWP_System_Cron_Jobs {
 	 * Method cron_ping_childs()
 	 *
 	 * Cron job to ping child sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function cron_ping_childs() {
 		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
@@ -1235,6 +1258,9 @@ class MainWP_System_Cron_Jobs {
 	 * Method cron_backups_continue()
 	 *
 	 * Execute remaining backup tasks.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_to_complete()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
 	 */
 	public function cron_backups_continue() {
 
@@ -1280,6 +1306,11 @@ class MainWP_System_Cron_Jobs {
 	 * Method cron_backups()
 	 *
 	 * Execute Backup Tasks.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_daily()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_weekly()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_todo_monthly()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
 	 */
 	public function cron_backups() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -1346,6 +1377,12 @@ class MainWP_System_Cron_Jobs {
 	 * Method cron_stats()
 	 *
 	 * Grab MainWP Cron Job Statistics.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_stats_update_sql()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_stats()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function cron_stats() {
 		MainWP_Logger::instance()->info( 'CRON :: stats' );
@@ -1381,6 +1418,11 @@ class MainWP_System_Cron_Jobs {
 	 * Method cron_check_websites_status()
 	 *
 	 * Cron job to check child sites status.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_to_check_status()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function cron_check_websites_status() {
 
@@ -1509,6 +1551,8 @@ class MainWP_System_Cron_Jobs {
 	 * @param bool $plain_text Text format value.
 	 *
 	 * @return bool True|False
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_to_notice_health_threshold()
 	 */
 	public function start_notification_sites_health( $plain_text ) {
 

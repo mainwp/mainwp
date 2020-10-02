@@ -472,6 +472,8 @@ class MainWP_Post {
 	 * Render the page content.
 	 *
 	 * @return string Post page html content.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
@@ -681,6 +683,8 @@ class MainWP_Post {
 	 * Method render_search_options()
 	 *
 	 * Search form for Post page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -792,6 +796,8 @@ class MainWP_Post {
 	 * @param int    $userId Current user ID.
 	 * @param string $post_type Post type.
 	 * @param string $search_on Site on all sites. Default = all.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -940,6 +946,16 @@ class MainWP_Post {
 	 * @param string  $search_on Site on all sites. Default = all.
 	 *
 	 * @return string Post table body html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
@@ -1094,6 +1110,10 @@ class MainWP_Post {
 	 * @param mixed $output Html to output.
 	 *
 	 * @return string Returned search results html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
 	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {

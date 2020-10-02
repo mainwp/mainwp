@@ -29,6 +29,12 @@ class MainWP_Security_Issues_Widget {
 	 * Method render_widget()
 	 *
 	 * Fetch Child Site issues from db & build widget.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_search_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
@@ -61,6 +67,9 @@ class MainWP_Security_Issues_Widget {
 	 *
 	 * @param mixed $websites Array of websites.
 	 * @param mixed $total_securityIssues Total security Issues.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_issues( $websites, $total_securityIssues ) {
 		?>

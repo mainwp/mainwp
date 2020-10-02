@@ -295,6 +295,9 @@ class MainWP_Manage_Backups {
 	 * Render Legacy Backups page.
 	 *
 	 * @return string Legacy Backups html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_for_user()
 	 */
 	public static function render_manager() {
 		$backupTask = null;
@@ -383,6 +386,8 @@ class MainWP_Manage_Backups {
 	 * @param mixed $backup_items List Item.
 	 *
 	 * @return string Table Content.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
 	 */
 	public function display( $backup_items ) {
 		$can_trigger = true;
@@ -726,7 +731,11 @@ class MainWP_Manage_Backups {
 		<?php
 	}
 
-	/** Render Scheduled Backup. */
+	/**
+	 * Render Scheduled Backup.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+	 */
 	public static function render_schedule_backup() {
 		$backupTask = null;
 		$backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;

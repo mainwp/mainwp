@@ -103,10 +103,7 @@ class MainWP_Logger {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
 		$this->logDirectory = $this->logDirectory[0];
 
-		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( false === $enabled ) {
-			$enabled = self::DISABLED;
-		}
+		$enabled = $this->get_log_status();
 
 		$this->set_log_priority( $enabled );
 	}
@@ -120,6 +117,31 @@ class MainWP_Logger {
 	 */
 	public function set_log_priority( $logPriority ) {
 		$this->logPriority = $logPriority;
+	}
+
+	/**
+	 * Method get_log_status()
+	 *
+	 * Get log status.
+	 *
+	 * @param mixed $enabled log status.
+	 */
+	public function get_log_status() {
+		$enabled = get_option( 'mainwp_actionlogs' );
+
+		if ( false === $enabled ) {
+			$sites_count = MainWP_DB::instance()->get_websites_count();
+			if ( 0 == $sites_count ) {
+				$enabled = self::DEBUG;
+				set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );
+			} elseif ( get_transient( 'mainwp_transient_action_logs' ) ) {
+				$enabled = self::DEBUG;
+			} else {
+				$enabled = self::DISABLED;
+			}
+		}
+
+		return $enabled;
 	}
 
 	/**

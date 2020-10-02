@@ -1180,10 +1180,8 @@ class MainWP_Server_Information {
 			MainWP_Logger::clear_log();
 		}
 
-		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( false === $enabled ) {
-			$enabled = MainWP_Logger::DISABLED;
-		}
+		$enabled = MainWP_Logger::instance()->get_log_status();
+
 		?>
 		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">
 			<div class="ui mini form two column grid">

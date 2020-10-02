@@ -692,7 +692,7 @@ class MainWP_Settings {
 		$lasttimeAutomatic      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 
-		if ( empty( $lasttimeStartAutomatic ) && ! empty($lasttimeAutomatic) ) {
+		if ( empty( $lasttimeStartAutomatic ) && ! empty( $lasttimeAutomatic ) ) {
 			$lasttimeStartAutomatic = $lasttimeAutomatic;
 		}
 

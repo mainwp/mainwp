@@ -30,7 +30,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_wp_upgrades number of available WordPress updates.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
@@ -118,7 +118,7 @@ class MainWP_Updates_Per_Site {
 	 * @param int    $total_plugin_upgrades number of available plugins updates.
 	 * @param mixed  $userExtension user extension.
 	 * @param array  $trustedPlugins trusted plugins.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -270,7 +270,7 @@ class MainWP_Updates_Per_Site {
 	 * @param int    $total_theme_upgrades number of available themes updates.
 	 * @param mixed  $userExtension user extension.
 	 * @param array  $trustedThemes trusted themes.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -418,7 +418,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param int    $total_translation_upgrades number of available translation updates.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
@@ -530,7 +530,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -639,7 +639,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @param object $websites the websites.
 	 * @param array  $decodedDismissedThemes all dismissed themes.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

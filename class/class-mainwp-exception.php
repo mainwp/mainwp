@@ -24,6 +24,12 @@ class MainWP_Exception extends \Exception {
 	 */
 	protected $messageExtra;
 
+	/**
+	 * Protected variable to hold the extra data.
+	 *
+	 * @var array data.
+	 */
+	protected $data;
 
 	/**
 	 * MainWP_Exception constructor.
@@ -45,6 +51,24 @@ class MainWP_Exception extends \Exception {
 	 */
 	public function get_message_extra() {
 		return $this->messageExtra;
+	}
+
+	/**
+	 * Method set_data()
+	 *
+	 * @return $data Addition data.
+	 */
+	public function set_data( $data ) {
+		return $this->data = $data;
+	}
+
+	/**
+	 * Method get_data()
+	 *
+	 * @return $data Addition data.
+	 */
+	public function get_data() {
+		return $this->data;
 	}
 
 }

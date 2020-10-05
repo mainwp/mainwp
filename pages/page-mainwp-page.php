@@ -978,7 +978,7 @@ class MainWP_Page {
 			$pages  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $pages ) && isset( $pages['error'] ) ) {
-				$output->errors[ $website->id ] = $pages['error'];
+				$output->errors[ $website->id ] = esc_html( $pages['error'] );
 				return;
 			}
 

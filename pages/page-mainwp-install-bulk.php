@@ -532,7 +532,7 @@ class MainWP_Install_Bulk {
 				$output->ok[ $website->id ]      = array( $website->name );
 				$output->results[ $website->id ] = isset( $information['install_results'] ) ? $information['install_results'] : array();
 			} elseif ( isset( $information['error'] ) ) {
-				$error = $information['error'];
+				$error = esc_html( $information['error'] );
 				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
 					$error = __( 'Already installed', 'mainwp' );
 				}

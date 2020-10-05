@@ -1121,7 +1121,7 @@ class MainWP_Post {
 			$posts  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
-				$output->errors[ $website->id ] = $posts['error'];
+				$output->errors[ $website->id ] = esc_html( $posts['error'] );
 				return;
 			}
 
@@ -1196,9 +1196,9 @@ class MainWP_Post {
 
 					<td class="author column-author"><?php echo esc_html( $post['author'] ); ?></td>
 
-					<td class="categories column-categories"><?php echo esc_attr( $post['categories'] ); ?></td>
+					<td class="categories column-categories"><?php echo esc_html( $post['categories'] ); ?></td>
 
-					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : $post['tags'] ); ?></td>
+					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : esc_html( $post['tags'] ) ); ?></td>
 
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<td class="post-type column-post-type"><?php echo esc_html( $post['post_type'] ); ?></td>

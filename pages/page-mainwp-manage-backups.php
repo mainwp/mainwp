@@ -1012,7 +1012,7 @@ class MainWP_Manage_Backups {
 					<?php } ?>
 					<?php
 					foreach ( $primaryBackupMethods as $method ) {
-						echo '<option value="' . $method['value'] . '" ' . ( ( $primaryBackup == $method['value'] ) ? 'selected' : '' ) . '>' . $method['title'] . '</option>';
+						echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup == $method['value'] ) ? 'selected' : '' ) . '>' . $method['title'] . '</option>';
 					}
 					?>
 				</select>

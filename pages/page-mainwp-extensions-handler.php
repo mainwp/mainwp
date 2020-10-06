@@ -586,7 +586,10 @@ class MainWP_Extensions_Handler {
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
-					$website                    = MainWP_DB::instance()->get_website_by_id( $v );
+					$website = MainWP_DB::instance()->get_website_by_id( $v );
+					if ( empty( $website ) ) {
+						continue;
+					}
 					$dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
 				}
 			}

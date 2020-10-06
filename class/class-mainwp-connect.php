@@ -1561,7 +1561,7 @@ class MainWP_Connect {
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-
+			unset( $output['fetch_data'] ); // hide the data.
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 == $http_status && ! empty( $err ) ) {

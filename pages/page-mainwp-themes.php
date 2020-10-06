@@ -802,7 +802,7 @@ class MainWP_Themes {
 			uasort(
 				$themesVersion,
 				function( $a, $b ) {
-					$ret = strcasecmp( $a['name'], $b['name'] );
+					$ret = strcasecmp( $a['title'], $b['title'] );
 					if ( 0 != $ret ) {
 						return $ret;
 					}

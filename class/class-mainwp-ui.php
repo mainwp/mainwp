@@ -939,6 +939,10 @@ class MainWP_UI {
 				if ( is_array( $subitems ) ) {
 					foreach ( $subitems as $item ) {
 
+						if ( ! is_array( $item ) ) {
+							continue;
+						}
+
 						if ( isset( $item['access'] ) && ! $item['access'] ) {
 							continue;
 						}

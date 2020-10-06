@@ -1111,7 +1111,7 @@ class MainWP_Manage_Sites_View {
 
 		$custom_file   = $custom_dir . $template;
 		$default_file  = $default_dir . $template;
-		$template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $website );
+		$template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $siteid );
 
 		if ( $siteid ) {
 			$localion = 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type;

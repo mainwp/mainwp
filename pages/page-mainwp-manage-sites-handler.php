@@ -54,10 +54,9 @@ class MainWP_Manage_Sites_Handler {
 				} elseif ( isset( $information['error'] ) ) {
 					$ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
 				} else {
-					$ret['response'] = 'ERROR';
+					$ret['response']  = 'ERROR';
+					$ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
 				}
-				$ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
-
 			} catch ( MainWP_Exception $e ) {
 				$ret['response']  = $e->getMessage();
 				$ret['resp_data'] = $e->get_data();

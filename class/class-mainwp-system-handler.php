@@ -542,8 +542,10 @@ class MainWP_System_Handler {
 		while ( ! feof( $handle ) ) {
 			$buffer = fread( $handle, $chunksize );
 			echo $buffer;
-			ob_flush();
-			flush();
+			if ( ob_get_length() ) {
+				ob_flush();
+				flush();
+			}
 			$buffer = null;
 		}
 

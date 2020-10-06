@@ -1066,8 +1066,10 @@ mainwp_managesites_add = function () {
         var show_resp = __( 'Click %1here%2 to see response from the child site.', '<a href="javascript:void(0)" class="mainwp-show-response">', '</a>' );
 
         var resp_data = res_things.resp_data ? res_things.resp_data : '';
+        if ('0' == resp_data ) {
+          resp_data = '';
+        }
         jQuery( '#mainwp-response-data-container' ).attr( 'resp-data', resp_data );
-
 
         if ( response == 'HTTPERROR' ) {
           errors.push( __( 'This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, contact the MainWP Support.' ) );
@@ -1125,6 +1127,9 @@ mainwp_managesites_add = function () {
               managesites_init();
 
               resp_data = res_things.resp_data ? res_things.resp_data : '';
+              if ('0' == resp_data ) {
+                resp_data = '';
+              }
               jQuery( '#mainwp-response-data-container' ).attr( 'resp-data', resp_data );              
               
               if ( response.substr( 0, 5 ) == 'ERROR' ) {

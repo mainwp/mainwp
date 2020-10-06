@@ -176,7 +176,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.1.2 - 10-6-20 =
+= 4.1.2 - 10-7-20 =
 * Fixed: An issue with scheduled actions
 * Fixed: Problems with importing users
 * Fixed: Encoding problems it Notes screen

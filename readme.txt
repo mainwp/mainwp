@@ -176,6 +176,17 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.2 - 10-6-20 =
+* Fixed: An issue with scheduled actions
+* Fixed: Problems with importing users
+* Fixed: Encoding problems it Notes screen
+* Fixed: An issue with scheduling Posts and Pages
+* Fixed: An issue with loading categories in the Select Category section
+* Fixed: Multiple PHP Warnings and Notices
+* Added: Actions Log page to the Status section
+* Added: Feature to catch response from the child site if the connection fails
+* Preventative: Multiple security improvements
+
 = 4.1.1 - 9-11-20 =
 * Fixed: An issue with WP CLI commands
 * Fixed: An issue with sending multiple notification emails 

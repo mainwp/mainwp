@@ -180,10 +180,7 @@ class MainWP_System_Cron_Jobs {
 		header( 'X-Robots-Tag: noindex, nofollow', true );
 		header( 'X-MainWP-Version: ' . MainWP_System::$version, true );
 		nocache_headers();
-		if ( 'test' == $_GET['mainwp_run'] ) {
-			die( 'MainWP Test' );
-		}
-		die( '' );
+		wp_die( 'MainWP Test' );
 	}
 
 	/**

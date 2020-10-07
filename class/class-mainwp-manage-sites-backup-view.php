@@ -20,8 +20,8 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @param object $website Child Site info.
 	 * @param array  $fullBackups Full Backups Array.
 	 * @param array  $dbBackups DB Backups Array.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_System_Utility::get_mainwp_dir();
@@ -119,7 +119,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @return string Backup Details.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::show_backups()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::show_backups()
 	 */
 	public static function render_backup_details( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );

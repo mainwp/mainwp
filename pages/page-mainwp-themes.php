@@ -67,8 +67,8 @@ class MainWP_Themes {
 	 * Method init_menu()
 	 *
 	 * Initiate the MainWP Themes SubMenu page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 
@@ -153,8 +153,8 @@ class MainWP_Themes {
 	 * Method init_subpages_menu()
 	 *
 	 * Themes Subpage Menu HTML Content.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -203,10 +203,10 @@ class MainWP_Themes {
 	 * Build arrays for each SubPage Menu Block.
 	 *
 	 * @param array $subPages Array of SubPages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -274,10 +274,10 @@ class MainWP_Themes {
 	 * Render Themes SubPage Header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$params = array( 'title' => __( 'Themes', 'mainwp' ) );
@@ -354,11 +354,11 @@ class MainWP_Themes {
 	 * Method render()
 	 *
 	 * Render the Theme SubPage content.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		$cachedSearch    = MainWP_Cache::get_cached_context( 'Themes' );
@@ -614,7 +614,7 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
@@ -1069,10 +1069,10 @@ class MainWP_Themes {
 
 	/**
 	 * Render the Themes table for the Install Themes Tab.
-     *
-     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
-     * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
 	 */
 	public static function render_themes_table() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
@@ -1280,8 +1280,8 @@ class MainWP_Themes {
 
 	/**
 	 * Render the Themes Auto Update Tab.
-     *
-     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
 	public static function render_auto_update() {
 
@@ -1425,7 +1425,7 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
 	 */
 	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;

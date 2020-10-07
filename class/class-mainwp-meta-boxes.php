@@ -20,9 +20,9 @@ class MainWP_Meta_Boxes {
 	 * Select Sites.
 	 *
 	 * @param object $post Post object.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public function select_sites( $post ) {
 

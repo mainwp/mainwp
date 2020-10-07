@@ -33,7 +33,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades ) {
 		?>
@@ -125,8 +125,8 @@ class MainWP_Updates_Per_Site {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
-     * @uses \MainWP\Dashboard\MainWP_UI
-     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
+	 * @uses \MainWP\Dashboard\MainWP_UI
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -279,10 +279,10 @@ class MainWP_Updates_Per_Site {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 * @uses \MainWP\Dashboard\MainWP_UI
-     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -430,7 +430,7 @@ class MainWP_Updates_Per_Site {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades ) {
@@ -543,7 +543,7 @@ class MainWP_Updates_Per_Site {
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
 	 *
 	 * @throws \Exception
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()

@@ -34,7 +34,7 @@ class MainWP_Updates_Per_Item {
 	 * @param array  $allPlugins all plugins.
 	 * @param array  $pluginsInfo pugins information.
 	 * @param array  $trustedPlugins trusted plugins.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -200,7 +200,7 @@ class MainWP_Updates_Per_Item {
 	 * @param array  $allThemes all themes.
 	 * @param array  $themesInfo themes information.
 	 * @param array  $trustedThemes trusted themes.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
@@ -356,7 +356,7 @@ class MainWP_Updates_Per_Item {
 	 * @param mixed  $userExtension user extension.
 	 * @param array  $allTranslations all translations.
 	 * @param array  $translationsInfo translations information.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
@@ -595,7 +595,7 @@ class MainWP_Updates_Per_Item {
 	 * @param object $websites the websites.
 	 * @param array  $allThemesOutdate all abandoned themes.
 	 * @param array  $decodedDismissedThemes all dismissed abandoned themes.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

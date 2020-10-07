@@ -68,9 +68,9 @@ class MainWP_Security_Issues_Widget {
 	 *
 	 * @param mixed $websites Array of websites.
 	 * @param mixed $total_securityIssues Total security Issues.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_issues( $websites, $total_securityIssues ) {
 		?>

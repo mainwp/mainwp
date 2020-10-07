@@ -132,7 +132,7 @@ class MainWP_Install_Bulk {
 	 * Prepare for the installation.
 	 *
 	 * Grab all the necessary data to make the upload and prepare json response.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
@@ -253,9 +253,9 @@ class MainWP_Install_Bulk {
 
 	/**
 	 * Perform Install.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function perform_install() {
 		MainWP_Utility::end_session();
@@ -414,9 +414,9 @@ class MainWP_Install_Bulk {
 	 * Method perform_upload()
 	 *
 	 * Perform the upload.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();
@@ -542,7 +542,7 @@ class MainWP_Install_Bulk {
 				$output->ok[ $website->id ]      = array( $website->name );
 				$output->results[ $website->id ] = isset( $information['install_results'] ) ? $information['install_results'] : array();
 			} elseif ( isset( $information['error'] ) ) {
-				$error = $information['error'];
+				$error = esc_html( $information['error'] );
 				if ( isset( $information['error_code'] ) && 'folder_exists' == $information['error_code'] ) {
 					$error = __( 'Already installed', 'mainwp' );
 				}

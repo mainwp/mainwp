@@ -320,8 +320,8 @@ class MainWP_Server_Information_Handler {
 	 * Get MySql Version.
 	 *
 	 * @return string MySQL Version.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_my_sql_version()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_my_sql_version()
 	 */
 	public static function get_mysql_version() {
 		return MainWP_DB::instance()->get_my_sql_version();
@@ -785,9 +785,9 @@ class MainWP_Server_Information_Handler {
 	 * Gets MainWP Set Options.
 	 *
 	 * @return array $options_value MainWP Options array.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
 		$mainwp_options = array(

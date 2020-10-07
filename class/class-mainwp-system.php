@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.1';
+	public static $version = '4.1.2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -216,7 +216,7 @@ class MainWP_System {
 		}
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			if ( isset( $_GET['mainwp_run'] ) && ! empty( $_GET['mainwp_run'] ) ) {
-				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
+				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), 8 );
 			}
 		}
 		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
@@ -954,6 +954,23 @@ class MainWP_System {
 		if ( ! self::is_mainwp_pages() ) {
 			return;
 		}
+
+		?>
+		<div class="ui large modal" id="mainwp-response-data-modal">
+			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+				</div>
+			</div>
+			<div class="scrolling content content-response"></div>
+			<div class="actions">
+				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<div id="mainwp-response-data-container" resp-data=""></div>
+		<?php
+
 		if ( isset( $_GET['hideall'] ) && 1 === $_GET['hideall'] ) {
 			return;
 		}

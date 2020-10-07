@@ -549,8 +549,8 @@ class MainWP_User {
 	 * Method render_search_options()
 	 *
 	 * Render User page search.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Users' );
@@ -727,8 +727,8 @@ class MainWP_User {
 	 * @param string $groups Current user groups.
 	 * @param string $sites Current Child Sites the user is on.
 	 * @param null   $search Search field.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public static function render_table( $cached = true, $role = '', $groups = '', $sites = '', $search = null ) {
 
@@ -831,15 +831,15 @@ class MainWP_User {
 	 * @param string $groups Usr Group.
 	 * @param string $sites Users Sites.
 	 * @param null   $search Search field.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		MainWP_Cache::init_cache( 'Users' );
@@ -1034,8 +1034,8 @@ class MainWP_User {
 
 	/**
 	 * Renders when cache is not found.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	public static function render_cache_not_found() {
 		ob_start();
@@ -1079,8 +1079,8 @@ class MainWP_User {
 	 * @param object $website Object containing the child site info.
 	 *
 	 * @return mixed Search results table.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
 	 */
 	protected static function users_search_handler_renderer( $users, $website ) {
 		$return = 0;
@@ -1289,7 +1289,7 @@ class MainWP_User {
 		do_action( 'mainwp_after_user_action', $information, $pAction, $userId, $extra, $pass, $optimize, $website );
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
-			wp_send_json( array( 'error' => $information['error'] ) );
+			wp_send_json( array( 'error' => esc_html( $information['error'] ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -2020,8 +2020,8 @@ class MainWP_User {
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
-		$selected_sites  = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array();
-		$selected_groups = ( isset( $_POST['selected_groups'] ) && is_array( $_POST['selected_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_groups'] ) ) : array();
+		$selected_sites  = ( isset( $_POST['select_sites'] ) && is_array( $_POST['select_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_sites'] ) ) : array();
+		$selected_groups = ( isset( $_POST['select_groups'] ) && is_array( $_POST['select_groups'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['select_groups'] ) ) : array();
 
 		$user_to_add = array(
 			'user_pass'  => isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '',

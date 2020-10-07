@@ -46,8 +46,8 @@ class MainWP_Manage_Groups {
 	 * Method get_group_list_content()
 	 *
 	 * Get group list contents.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_and_count()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_and_count()
 	 */
 	public static function get_group_list_content() {
 
@@ -108,11 +108,11 @@ class MainWP_Manage_Groups {
 	 * Method get_website_list_content()
 	 *
 	 * Get the Child Site list content.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -417,9 +417,9 @@ class MainWP_Manage_Groups {
 	 * Method rename_group()
 	 *
 	 * Rename the selected group.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group()
 	 */
 	public static function rename_group() {
 		if ( isset( $_POST['groupId'] ) ) {
@@ -445,9 +445,9 @@ class MainWP_Manage_Groups {
 	 * Method delete_group()
 	 *
 	 * Delete the selected group.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::remove_group()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::remove_group()
 	 */
 	public static function delete_group() {
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
@@ -475,8 +475,8 @@ class MainWP_Manage_Groups {
 	 * @param null  $groupId Group ID.
 	 *
 	 * @return string $groupName Group name + count # if group has bn found.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
 	 */
 	public static function check_group_name( $groupName, $groupId = null ) {
 		if ( '' == $groupName ) {
@@ -508,9 +508,9 @@ class MainWP_Manage_Groups {
 	 * Method add_group()
 	 *
 	 * Add Group.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::add_group()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::add_group()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
 	 */
 	public static function add_group() {
 
@@ -545,9 +545,9 @@ class MainWP_Manage_Groups {
 	 * Get Child Sites by Group ID.
 	 *
 	 * @return mixed $websiteIds|ERROR Child Site ID or Error is returned.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
 	 */
 	public static function get_sites() {
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;

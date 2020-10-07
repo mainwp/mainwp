@@ -321,8 +321,16 @@ class MainWP_Utility {
 	 */
 	public static function map_site( &$website, $keys, $object_output = true ) {
 		$outputSite = array();
-		foreach ( $keys as $key ) {
-			$outputSite[ $key ] = $website->$key;
+		if ( ! empty( $website ) ) {
+			if ( is_object( $website ) ) {
+				foreach ( $keys as $key ) {
+					$outputSite[ $key ] = $website->$key;
+				}
+			} elseif ( is_array( $website ) ) {
+				foreach ( $keys as $key ) {
+					$outputSite[ $key ] = $website[ $key ];
+				}
+			}
 		}
 
 		if ( $object_output ) {

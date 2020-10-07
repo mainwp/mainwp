@@ -1269,6 +1269,7 @@ class MainWP_Connect {
 	 * @param null    $http_pass htaccess password.
 	 * @param integer $sslVersion SSL version to check for.
 	 * @param array   $others Other functions to perform.
+	 * @param array   $output Output values.
 	 *
 	 * @return mixed self::fetch_url() Fetch URL.
 	 */
@@ -1282,7 +1283,8 @@ class MainWP_Connect {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$others = array() ) {
+		$others = array(),
+		&$output = array() ) {
 
 		if ( empty( $params ) ) {
 			$params = array();
@@ -1296,7 +1298,7 @@ class MainWP_Connect {
 		$website  = null;
 
 		$others['function'] = $what;
-		return self::fetch_url( $website, $url, $postdata, false, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others );
+		return self::fetch_url( $website, $url, $postdata, false, $verifyCertificate, true, $http_user, $http_pass, $sslVersion, $others, $output );
 	}
 
 	/**
@@ -1314,10 +1316,11 @@ class MainWP_Connect {
 	 * @param null    $http_pass htaccess password.
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
+	 * @param array   $output Output values.
 	 *
 	 * @throws \Exception Excetpion message.
 	 *
-	 * @return mixed self::m_fetch_url()
+	 * @return mixed self::fetch_url_site()
 	 */
 	public static function fetch_url(
 		&$website,
@@ -1329,7 +1332,8 @@ class MainWP_Connect {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$others = array() ) {
+		$others = array(),
+		&$output = array() ) {
 
 		$start = time();
 
@@ -1343,14 +1347,14 @@ class MainWP_Connect {
 				$tmpUrl .= 'wp-admin/admin-ajax.php';
 			}
 
-			return self::m_fetch_url( $website, $tmpUrl, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+			return self::fetch_url_site( $website, $tmpUrl, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
 		} catch ( \Exception $e ) {
 			if ( ! $pRetryFailed || ( 30 < ( time() - $start ) ) ) {
 				throw $e;
 			}
 
 			try {
-				return self::m_fetch_url( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others );
+				return self::fetch_url_site( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
 			} catch ( \Exception $ex ) {
 				throw $e;
 			}
@@ -1358,7 +1362,7 @@ class MainWP_Connect {
 	}
 
 	/**
-	 * Method m_fetch_url()
+	 * Method fetch_url_site()
 	 *
 	 * M Fetch URL.
 	 *
@@ -1371,6 +1375,7 @@ class MainWP_Connect {
 	 * @param null    $http_pass htaccess password.
 	 * @param integer $sslVersion SSL version.
 	 * @param array   $others Other functions to perform.
+	 * @param array   $output Output values.
 	 *
 	 * @return mixed $data, $information.
 	 * @throws MainWP_Exception Exception message.
@@ -1382,7 +1387,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
-	public static function m_fetch_url( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
 		$url,
 		$postdata,
@@ -1391,11 +1396,12 @@ class MainWP_Connect {
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$others = array() ) {
+		$others = array(),
+		&$output = array() ) {
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 
 		$identifier = null;
 		if ( $checkConstraints ) {
@@ -1511,7 +1517,7 @@ class MainWP_Connect {
 
 		MainWP_Utility::end_session();
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Executing handlers' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Executing handlers' );
 
 		$disabled_functions = ini_get( 'disable_functions' );
 		if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
@@ -1554,31 +1560,41 @@ class MainWP_Connect {
 
 		$raw_response = isset( $others['raw_response'] ) && 'yes' == $others['raw_response'] ? true : false;
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		$output['fetch_data']  = $data;
+		$output['http_status'] = $http_status;
+
+		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
 		if ( '400' == $http_status ) {
-			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 		}
+
+		$thr_error = null;
 
 		if ( ( false === $data ) && ( 0 == $http_status ) ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
-			throw new MainWP_Exception( 'HTTPERROR', $err );
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( empty( $data ) && ! empty( $err ) ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
-			throw new MainWP_Exception( 'HTTPERROR', $err );
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
 			$result      = $results[1];
 			$information = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-
-			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'information: [OK]' );
+			unset( $output['fetch_data'] ); // hide the data.
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'information: [OK]' );
 			return $information;
 		} elseif ( 200 == $http_status && ! empty( $err ) ) {
-			throw new MainWP_Exception( 'HTTPERROR', $err );
+			$thr_error = new MainWP_Exception( 'HTTPERROR', $err );
 		} elseif ( $raw_response ) {
-			MainWP_Logger::instance()->debug_for_website( $website, 'm_fetch_url', 'Response: [RAW]' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
 			return $data;
 		} else {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
-			throw new MainWP_Exception( 'NOMAINWP', $url );
+			$thr_error = new MainWP_Exception( 'NOMAINWP', $url );
+		}
+
+		if ( null !== $thr_error ) {
+			$thr_error->set_data( $data );
+			throw $thr_error;
 		}
 	}
 

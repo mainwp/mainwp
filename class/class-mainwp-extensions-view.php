@@ -101,8 +101,8 @@ class MainWP_Extensions_View {
 	 * Method render()
 	 *
 	 * Render the extensions page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public static function render() {
 

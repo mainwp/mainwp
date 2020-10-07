@@ -696,8 +696,8 @@ class MainWP_Post {
 	 * Method render_search_options()
 	 *
 	 * Search form for Post page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
@@ -734,13 +734,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="
-								<?php
-								if ( null != $cachedSearch ) {
-									echo esc_attr( $cachedSearch['dtsstart'] );
-								}
-								?>
-								"/>
+								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstart" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstart'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -748,13 +742,7 @@ class MainWP_Post {
 						<div class="ui calendar mainwp_datepicker" >
 							<div class="ui input left icon">
 								<i class="calendar icon"></i>
-								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="
-								<?php
-								if ( null != $cachedSearch ) {
-									echo esc_attr( $cachedSearch['dtsstop'] );
-								}
-								?>
-								"/>
+								<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="mainwp_post_search_by_dtsstop" value="<?php echo null != $cachedSearch ? esc_attr( $cachedSearch['dtsstop'] ) : ''; ?>"/>
 							</div>
 						</div>
 					</div>
@@ -821,8 +809,8 @@ class MainWP_Post {
 	 * @param int    $userId Current user ID.
 	 * @param string $post_type Post type.
 	 * @param string $search_on Site on all sites. Default = all.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -971,16 +959,16 @@ class MainWP_Post {
 	 * @param string  $search_on Site on all sites. Default = all.
 	 *
 	 * @return string Post table body html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
@@ -1147,7 +1135,7 @@ class MainWP_Post {
 			$posts  = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 			if ( is_array( $posts ) && isset( $posts['error'] ) ) {
-				$output->errors[ $website->id ] = $posts['error'];
+				$output->errors[ $website->id ] = esc_html( $posts['error'] );
 				return;
 			}
 
@@ -1222,9 +1210,9 @@ class MainWP_Post {
 
 					<td class="author column-author"><?php echo esc_html( $post['author'] ); ?></td>
 
-					<td class="categories column-categories"><?php echo esc_attr( $post['categories'] ); ?></td>
+					<td class="categories column-categories"><?php echo esc_html( $post['categories'] ); ?></td>
 
-					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : $post['tags'] ); ?></td>
+					<td class="tags"><?php echo( '' === $post['tags'] ? 'No Tags' : esc_html( $post['tags'] ) ); ?></td>
 
 					<?php if ( is_plugin_active( 'mainwp-custom-post-types/mainwp-custom-post-types.php' ) ) : ?>
 						<td class="post-type column-post-type"><?php echo esc_html( $post['post_type'] ); ?></td>

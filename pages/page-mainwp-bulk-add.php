@@ -59,7 +59,7 @@ class MainWP_Bulk_Add {
 					$output->added_id[ $website->id ] = $information['added_id'];
 				}
 			} elseif ( isset( $information['error'] ) ) {
-				$output->errors[ $website->id ] = __( 'ERROR: ', 'mainwp' ) . $information['error'];
+				$output->errors[ $website->id ] = __( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 			} else {
 				$output->errors[ $website->id ] = __( 'Undefined error! Please reinstall the MainWP Child plugin on the child site', 'mainwp' );
 			}

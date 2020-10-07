@@ -1264,10 +1264,10 @@ class MainWP_Manage_Sites {
 	 * @param mixed $website Child Site object.
 	 *
 	 * @return bool $updated Updated.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::update_website()
-     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
-     * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 */
 	private static function update_site_handle( $website ) {
 

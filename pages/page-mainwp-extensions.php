@@ -516,9 +516,9 @@ class MainWP_Extensions {
 	 * Render page header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_header()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -531,9 +531,9 @@ class MainWP_Extensions {
 	 * Render page footer.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_footer()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::render_footer()
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();

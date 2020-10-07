@@ -95,7 +95,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::license_key_activation()
 	 * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
-	 *
 	 */
 	public function activate_api_extension() {
 		$this->check_security( 'mainwp_extension_api_activate' );

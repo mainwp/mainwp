@@ -153,7 +153,7 @@ class MainWP_Live_Reports {
 		$backup_status = 'success';
 		$backup_size   = 0;
 		if ( isset( $information['error'] ) ) {
-			$message       = $information['error'];
+			$message       = esc_html( $information['error'] );
 			$backup_status = 'failed';
 		} elseif ( 'db' === $type && ! $information['db'] ) {
 			$message       = 'Database backup failed.';
@@ -1765,7 +1765,7 @@ class MainWP_Live_Reports {
 			return $information;
 		} else {
 			if ( isset( $information['error'] ) ) {
-				$error = $information['error'];
+				$error = esc_html( $information['error'] );
 				if ( 'NO_STREAM' === $error ) {
 					$error = __( 'Error: No Stream or MainWP Client Reports plugin installed.' );
 				}

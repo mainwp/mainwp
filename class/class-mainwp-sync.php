@@ -295,14 +295,12 @@ class MainWP_Sync {
 				$securityStats = $emptyArray;
 			}
 			$websiteValues['securityIssues'] = $total_securityIssues;
-			$done                            = true;
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'security_stats', $securityStats );
+			$done = true;
 		} elseif ( isset( $information['securityIssues'] ) && MainWP_Utility::ctype_digit( $information['securityIssues'] ) && $information['securityIssues'] >= 0 ) {
 			$websiteValues['securityIssues'] = $information['securityIssues'];
 			$done                            = true;
-			$securityStats                   = $emptyArray;
 		}
-
-		MainWP_DB::instance()->update_website_option( $pWebsite, 'security_stats', $securityStats );
 
 		if ( isset( $information['recent_comments'] ) ) {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_comments', wp_json_encode( $information['recent_comments'] ) );
@@ -433,10 +431,10 @@ class MainWP_Sync {
 			if ( isset( $information['wpversion'] ) ) {
 				$done = true;
 			} elseif ( isset( $information['error'] ) ) {
-				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $information['error'] . ']' );
+				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . esc_html( $information['error'] ) . ']' );
 				$error                            = true;
 				$done                             = true;
-				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . $information['error'];
+				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 			} elseif ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
 
@@ -515,7 +513,7 @@ class MainWP_Sync {
 				if ( '' != $error ) {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
-					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
+					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . esc_html( $information['faviIconUrl'] ) );
 					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 

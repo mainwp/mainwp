@@ -47,17 +47,21 @@ class MainWP_Manage_Sites_Handler {
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
 				$admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
 
-				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ) ); // Fetch the stats with the given admin name.
+				$output = array();
+
+				$information = MainWP_Connect::fetch_url_not_authed( $url, $admin, 'stats', null, false, $verify_cert, $http_user, $http_pass, $sslVersion = 0, $others = array( 'force_use_ipv4' => $force_use_ipv4 ), $output ); // Fetch the stats with the given admin name.
 
 				if ( isset( $information['wpversion'] ) ) {
 					$ret['response'] = 'OK';
 				} elseif ( isset( $information['error'] ) ) {
-					$ret['response'] = 'ERROR ' . $information['error'];
+					$ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
 				} else {
-					$ret['response'] = 'ERROR';
+					$ret['response']  = 'ERROR';
+					$ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
 				}
 			} catch ( MainWP_Exception $e ) {
-				$ret['response'] = $e->getMessage();
+				$ret['response']  = $e->getMessage();
+				$ret['resp_data'] = $e->get_data();
 			}
 		}
 		$ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
@@ -100,24 +104,37 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::add_site()
 	 */
 	public static function add_site() {
-		$ret     = array();
-		$error   = '';
-		$message = '';
-		$site_id = 0;
+		$ret        = array();
+		$error      = '';
+		$message    = '';
+		$site_id    = 0;
+		$output     = array();
+		$fetch_data = null;
 
 		if ( isset( $_POST['managesites_add_wpurl'] ) && isset( $_POST['managesites_add_wpadmin'] ) ) {
 			// Check if already in DB.
-			$website                           = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
-			list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( $website );
+			$website                                        = MainWP_DB::instance()->get_websites_by_url( sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) );
+			list( $message, $error, $site_id, $fetch_data ) = MainWP_Manage_Sites_View::add_site( $website, $output );
 		}
 
 		$ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
 		if ( '' !== $error ) {
+
+			if ( '' != $fetch_data ) {
+				$ret['resp_data'] = $fetch_data;
+			}
+
 			$ret['response'] = 'ERROR ' . $error;
 			die( wp_json_encode( $ret ) );
 		}
 		$ret['response'] = $message;
 		$ret['siteid']   = $site_id;
+
+		if ( isset( $output['fetch_data'] ) ) {
+			$ret['resp_data'] = $output['fetch_data'];
+		} elseif ( '' != $fetch_data ) {
+			$ret['resp_data'] = $fetch_data;
+		}
 
 		if ( 1 === MainWP_DB::instance()->get_websites_count() ) {
 			$ret['redirectUrl'] = admin_url( 'admin.php?page=managesites' );

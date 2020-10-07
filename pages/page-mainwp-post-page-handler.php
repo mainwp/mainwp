@@ -156,9 +156,9 @@ class MainWP_Post_Page_Handler {
 	 * Method get_categories()
 	 *
 	 * Get categories.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_ids()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_ids()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
 	 */
 	public static function get_categories() {
 		$websites = array();
@@ -607,7 +607,7 @@ class MainWP_Post_Page_Handler {
 		}
 
 		if ( is_array( $information ) && isset( $information['error'] ) ) {
-			die( wp_json_encode( array( 'error' => $information['error'] ) ) );
+			die( wp_json_encode( array( 'error' => esc_html( $information['error'] ) ) ) );
 		}
 
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {

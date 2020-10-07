@@ -51,19 +51,19 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 			if ( ! is_dir( dirname( dirname( dirname( $path ) ) ) ) ) {
-				if ( ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ) ) ) {
+				if ( ! $wp_filesystem->mkdir( dirname( dirname( dirname( $path ) ) ), 0777 ) ) {
 					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}
 
 			if ( ! is_dir( dirname( dirname( $path ) ) ) ) {
-				if ( ! $wp_filesystem->mkdir( dirname( dirname( $path ) ) ) ) {
+				if ( ! $wp_filesystem->mkdir( dirname( dirname( $path ) ), 0777 ) ) {
 					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}
 
 			if ( ! is_dir( dirname( $path ) ) ) {
-				if ( ! $wp_filesystem->mkdir( dirname( $path ) ) ) {
+				if ( ! $wp_filesystem->mkdir( dirname( $path ), 0777 ) ) {
 					throw new \Exception( 'Unable to create the MainWP bulk upload directory, please check your system configuration.' );
 				}
 			}

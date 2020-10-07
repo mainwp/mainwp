@@ -578,8 +578,8 @@ class MainWP_System_View {
 
 	/**
 	 * MainWP Productions Site warning.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function mainwp_warning_notice() {
 
@@ -637,9 +637,9 @@ class MainWP_System_View {
 	 * Render footer content.
 	 *
 	 * @param mixed $websites The websites object.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_footer_content( $websites ) {
 

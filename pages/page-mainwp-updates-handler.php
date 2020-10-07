@@ -57,7 +57,7 @@ class MainWP_Updates_Handler {
 					}
 					throw new MainWP_Exception( 'WPERROR', $errorMsg );
 				} elseif ( isset( $information['error'] ) ) {
-					throw new MainWP_Exception( 'WPERROR', $information['error'] );
+					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
 					throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Invalid response from child site.', 'mainwp' ) );
 				}
@@ -643,7 +643,7 @@ class MainWP_Updates_Handler {
 					}
 					return $tmp;
 				} elseif ( isset( $information['error'] ) ) {
-					throw new MainWP_Exception( 'WPERROR', $information['error'] );
+					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
 					throw new MainWP_Exception( 'ERROR', 'Invalid response from site!' );
 				}

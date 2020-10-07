@@ -497,8 +497,8 @@ class MainWP_Manage_Sites_View {
 	 * Method render_sync_exts_settings()
 	 *
 	 * Render sync extension settings.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -649,8 +649,8 @@ class MainWP_Manage_Sites_View {
 	 * Render Security Scan sub page.
 	 *
 	 * @param mixed $website Child Site.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function render_scan_site( &$website ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_security_issues' ) ) {
@@ -1136,7 +1136,7 @@ class MainWP_Manage_Sites_View {
 
 		$custom_file   = $custom_dir . $template;
 		$default_file  = $default_dir . $template;
-		$template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $website );
+		$template_file = apply_filters( 'mainwp_default_template_locate', $default_file, $template, $default_dir, $type, $siteid );
 
 		if ( $siteid ) {
 			$localion = 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type;
@@ -1395,10 +1395,11 @@ class MainWP_Manage_Sites_View {
 	 * Add Child Site.
 	 *
 	 * @param mixed $website Child Site.
+	 * @param array $output Output values.
 	 *
 	 * @return self add_wp_site()
 	 */
-	public static function add_site( $website = false ) {
+	public static function add_site( $website = false, &$output = array() ) {
 
 		$params['url']               = isset( $_POST['managesites_add_wpurl'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpurl'] ) ) : '';
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
@@ -1416,7 +1417,7 @@ class MainWP_Manage_Sites_View {
 			$params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
 		}
 
-		return self::add_wp_site( $website, $params );
+		return self::add_wp_site( $website, $params, $output );
 	}
 
 	/**
@@ -1426,6 +1427,7 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param mixed $website Child Site.
 	 * @param array $params Array of new Child Site to add.
+	 * @param array $output Output values.
 	 *
 	 * @return array $message, $error, $id
      *
@@ -1437,10 +1439,12 @@ class MainWP_Manage_Sites_View {
      * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
 	 */
-	public static function add_wp_site( $website, $params = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		$error   = '';
-		$message = '';
-		$id      = 0;
+	public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$error      = '';
+		$message    = '';
+		$id         = 0;
+		$fetch_data = null;
+
 		if ( $website ) {
 			$error = __( 'The site is already connected to your MainWP Dashboard', 'mainwp' );
 		} else {
@@ -1482,14 +1486,14 @@ class MainWP_Manage_Sites_View {
 					$http_user,
 					$http_pass,
 					$sslVersion,
-					array( 'force_use_ipv4' => $force_use_ipv4 )
+					array( 'force_use_ipv4' => $force_use_ipv4 ),
+					$output
 				);
 
+				$fetch_data = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
+
 				if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-					$error = rawurlencode( urldecode( $information['error'] ) );
-					$error = str_replace( '%2F', '/', $error );
-					$error = str_replace( '%20', ' ', $error );
-					$err   = str_replace( '%26', '&', $error );
+					$error = MainWP_Utility::esc_content( $information['error'] );
 				} else {
 					if ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 						$groupids   = array();
@@ -1578,10 +1582,11 @@ class MainWP_Manage_Sites_View {
 				} else {
 					$error = $e->getMessage();
 				}
+				$fetch_data = $e->get_data();
 			}
 		}
 
-		return array( $message, $error, $id );
+		return array( $message, $error, $id, $fetch_data );
 	}
 
 	/**

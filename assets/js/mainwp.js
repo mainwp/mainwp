@@ -1063,6 +1063,14 @@ mainwp_managesites_add = function () {
 
         url = url.replace( /"/g, '&quot;' );
 
+        var show_resp = __( 'Click %1here%2 to see response from the child site.', '<a href="javascript:void(0)" class="mainwp-show-response">', '</a>' );
+
+        var resp_data = res_things.resp_data ? res_things.resp_data : '';
+        if ('0' == resp_data ) {
+          resp_data = '';
+        }
+        jQuery( '#mainwp-response-data-container' ).attr( 'resp-data', resp_data );
+
         if ( response == 'HTTPERROR' ) {
           errors.push( __( 'This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, contact the MainWP Support.' ) );
         } else if ( response == 'NOMAINWP' ) {
@@ -1074,93 +1082,102 @@ mainwp_managesites_add = function () {
             errors.push( __( 'Error detected: ' ) + response.substr( 6 ) );
           }
         } else if ( response == 'OK' ) {
-			jQuery( '#mainwp_managesites_add' ).attr( 'disabled', 'true' ); //Disable add button
+            jQuery( '#mainwp_managesites_add' ).attr( 'disabled', 'true' ); //Disable add button
 
-			var name = jQuery( '#mainwp_managesites_add_wpname' ).val();
-			name = name.replace( /"/g, '&quot;' );
-			var group_ids = jQuery( '#mainwp_managesites_add_addgroups' ).dropdown('get value');
-			var data = mainwp_secure_data( {
-			  action: 'mainwp_addwp',
-			  managesites_add_wpname: name,
-			  managesites_add_wpurl: url,
-			  managesites_add_wpadmin: jQuery( '#mainwp_managesites_add_wpadmin' ).val(),
-			  managesites_add_uniqueId: jQuery( '#mainwp_managesites_add_uniqueId' ).val(),
-			  groupids: group_ids,
-			  verify_certificate: jQuery( '#mainwp_managesites_verify_certificate' ).val(),
-			  force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
-			  ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
-			  managesites_add_http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
-			  managesites_add_http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val(),
-			} );
+            var name = jQuery( '#mainwp_managesites_add_wpname' ).val();
+            name = name.replace( /"/g, '&quot;' );
+            var group_ids = jQuery( '#mainwp_managesites_add_addgroups' ).dropdown('get value');
+            var data = mainwp_secure_data( {
+              action: 'mainwp_addwp',
+              managesites_add_wpname: name,
+              managesites_add_wpurl: url,
+              managesites_add_wpadmin: jQuery( '#mainwp_managesites_add_wpadmin' ).val(),
+              managesites_add_uniqueId: jQuery( '#mainwp_managesites_add_uniqueId' ).val(),
+              groupids: group_ids,
+              verify_certificate: jQuery( '#mainwp_managesites_verify_certificate' ).val(),
+              force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
+              ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
+              managesites_add_http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
+              managesites_add_http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val(),
+            } );
 
-			// to support add client reports tokens values
-			jQuery( "input[name^='creport_token_']" ).each( function(){
-			  var tname = jQuery( this ).attr( 'name' );
-			  var tvalue = jQuery( this ).val();
-			  data[tname] = tvalue;
-			} );
+            // to support add client reports tokens values
+            jQuery( "input[name^='creport_token_']" ).each( function(){
+              var tname = jQuery( this ).attr( 'name' );
+              var tvalue = jQuery( this ).val();
+              data[tname] = tvalue;
+            } );
 
-			// support hooks fields
-			jQuery( ".mainwp_addition_fields_addsite input" ).each( function() {
-				var tname = jQuery( this ).attr( 'name' );
-				var tvalue = jQuery( this ).val();
-				data[tname] = tvalue;
-			} );
+            // support hooks fields
+            jQuery( ".mainwp_addition_fields_addsite input" ).each( function() {
+              var tname = jQuery( this ).attr( 'name' );
+              var tvalue = jQuery( this ).val();
+              data[tname] = tvalue;
+            } );
 
-			jQuery.post( ajaxurl, data, function ( res_things ) {
-			  var site_id = 0;
-			  if ( res_things.error ) {
-				response = 'Error detected: ' + res_things.error;
-			  } else {
-				response = res_things.response;
-				site_id = res_things.siteid;
-			  }
-			  response = jQuery.trim( response );
-			  managesites_init();
+            jQuery.post( ajaxurl, data, function ( res_things ) {
+              var site_id = 0;
+              if ( res_things.error ) {
+              response = 'Error detected: ' + res_things.error;
+              } else {
+              response = res_things.response;
+              site_id = res_things.siteid;
+              }
+              response = jQuery.trim( response );
+              managesites_init();
 
-			  if ( response.substr( 0, 5 ) == 'ERROR' ) {
-				jQuery( '#mainwp-message-zone' ).removeClass( 'green' );
-				feedback( 'mainwp-message-zone', response.substr( 6 ), 'red' );
-			  } else {
-					  //Message the WP was added
-					  jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
-					  feedback( 'mainwp-message-zone', response, 'green' );
+              resp_data = res_things.resp_data ? res_things.resp_data : '';
+              if ('0' == resp_data ) {
+                resp_data = '';
+              }
+              jQuery( '#mainwp-response-data-container' ).attr( 'resp-data', resp_data );              
+              
+              if ( response.substr( 0, 5 ) == 'ERROR' ) {
+              jQuery( '#mainwp-message-zone' ).removeClass( 'green' );
+              feedback( 'mainwp-message-zone', response.substr( 6 ) + ( resp_data != '' ? '<br>' + show_resp : '' ) , 'red' );
+              } else {
+                  //Message the WP was added
+                  jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
+                  feedback( 'mainwp-message-zone', response, 'green' );
 
-					  if ( site_id > 0 ) {
-						jQuery( '.sync-ext-row' ).attr( 'status', 'queue' );
-						setTimeout( function () {
-						  mainwp_managesites_sync_extension_start_next( site_id );
-						}, 1000 );
-					  }
+                  if ( site_id > 0 ) {
+                  jQuery( '.sync-ext-row' ).attr( 'status', 'queue' );
+                  setTimeout( function () {
+                    mainwp_managesites_sync_extension_start_next( site_id );
+                  }, 1000 );
+                  }
 
-					  //Reset fields
-					  jQuery( '#mainwp_managesites_add_wpname' ).val( '' );
-					  jQuery( '#mainwp_managesites_add_wpurl' ).val( '' );
-					  jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val( 'https' );
-					  jQuery( '#mainwp_managesites_add_wpadmin' ).val( '' );
-					  jQuery( '#mainwp_managesites_add_uniqueId' ).val( '' );
-					  jQuery( '#mainwp_managesites_add_addgroups').dropdown('clear');
-					  jQuery( '#mainwp_managesites_verify_certificate' ).val( 1 );
-					  jQuery( '#mainwp_managesites_force_use_ipv4' ).val( 0 );
-					  jQuery( '#mainwp_managesites_ssl_version' ).val( 'auto' );
+                  //Reset fields
+                  jQuery( '#mainwp_managesites_add_wpname' ).val( '' );
+                  jQuery( '#mainwp_managesites_add_wpurl' ).val( '' );
+                  jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val( 'https' );
+                  jQuery( '#mainwp_managesites_add_wpadmin' ).val( '' );
+                  jQuery( '#mainwp_managesites_add_uniqueId' ).val( '' );
+                  jQuery( '#mainwp_managesites_add_addgroups').dropdown('clear');
+                  jQuery( '#mainwp_managesites_verify_certificate' ).val( 1 );
+                  jQuery( '#mainwp_managesites_force_use_ipv4' ).val( 0 );
+                  jQuery( '#mainwp_managesites_ssl_version' ).val( 'auto' );
 
-					  jQuery( "input[name^='creport_token_']" ).each(function(){
-						jQuery( this ).val( '' );
-					  } );
+                  jQuery( "input[name^='creport_token_']" ).each(function(){
+                  jQuery( this ).val( '' );
+                  } );
 
-					  // support hooks fields
-					  jQuery( ".mainwp_addition_fields_addsite input" ).each( function() {
-						jQuery( this ).val('');
-					  } );
-				}
+                  // support hooks fields
+                  jQuery( ".mainwp_addition_fields_addsite input" ).each( function() {
+                  jQuery( this ).val('');
+                  } );
+              }
 
-				jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button
-				}, 'json' );
+              jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button
+              }, 'json' );
             }
             if ( errors.length > 0 ) {
               jQuery( '#mainwp-message-zone' ).removeClass( 'green' );
               managesites_init();
-              jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button
+              jQuery( '#mainwp_managesites_add' ).removeAttr( 'disabled' ); //Enable add button   
+              if ( resp_data != '' ) {           
+                errors.push( show_resp );
+              }
               feedback( 'mainwp-message-zone', errors.join( '<br />' ), 'red' );
             }
         }, 'json' );
@@ -2325,9 +2342,7 @@ serverinfo_prepare_download_info = function ( communi ) {
             if ( communi ) {
                 report = '```' +  "\n" + report +  "\n" + '```';
             }
-
-            //jQuery( "#download-server-information" ).slideDown();
-            jQuery( "#download-server-information textarea" ).val( report ).focus().select();
+            jQuery( "#download-server-information textarea" ).val( report ).select();
     } catch ( e ) {
         console.log('Error:');
     }
@@ -2802,6 +2817,47 @@ jQuery( document ).ready( function () {
 
 } );
 
+// MainWP Action Logs
+jQuery( document ).on( 'click', '.mainwp-action-log-show-more', function () {
+    var content = jQuery( this ).closest( '.item' ).find( '.mainwp-action-log-site-response' ).text();    
+    jQuery( '#mainwp-action-log-response-modal' ).modal( {
+      closable: false,
+      onHide: function() {
+        location.reload();
+      }
+    } ).modal( 'show' );
+    jQuery( '#mainwp-action-log-response-modal .content-response' ).text( content );
+} );
+
+// MainWP Show Response
+jQuery( document ).on( 'click', '.mainwp-show-response', function () {
+  var content = jQuery( '#mainwp-response-data-container' ).attr('resp-data');    
+  jQuery( '#mainwp-response-data-modal' ).modal( {
+    closable: false,
+    onHide: function() {
+      jQuery( '#mainwp-response-data-modal .content-response' ).text('');
+    }
+  } ).modal( 'show' );
+  jQuery( '#mainwp-response-data-modal .content-response' ).text( content );
+} );
+
+// Copy to clipboard for response modals.
+jQuery( document ).on( 'click', '.mainwp-response-copy-button', function () {
+      var modal = jQuery(this).closest('.ui.modal');  
+      var data = jQuery(modal).find( '.content.content-response' ).text();
+      var $temp_txtarea = jQuery( '<textarea style="opacity:0">' );
+      jQuery( 'body' ).append( $temp_txtarea );
+      $temp_txtarea.val( data ).select();
+      try {
+        var successful = document.execCommand( 'copy' );
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Copying text command was ' + msg);
+      } catch ( err ) {
+        console.log('Oops, unable to copy');
+      }
+      $temp_txtarea.remove();  
+      return false;
+} );
 
 jQuery( document ).ready( function () {
     if ( typeof postboxes !== "undefined" && typeof mainwp_postbox_page !== "undefined" ) {

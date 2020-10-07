@@ -180,7 +180,6 @@ class MainWP_Recent_Pages {
 
 		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
 		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
-
 		?>
 	<div class="recent_posts_published ui tab active" data-tab="page-published">
 			<?php

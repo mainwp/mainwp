@@ -228,7 +228,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	/**
 	 * Renders bulk update administrator password form.
 	 *
-	 * @param object $websites Object conaining child sites info.
+	 * @param object $websites Object containing child sites info.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()

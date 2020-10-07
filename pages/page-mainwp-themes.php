@@ -556,8 +556,8 @@ class MainWP_Themes {
 
 	/**
 	 * Render the Search Options Meta Box.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Themes' );
@@ -604,16 +604,16 @@ class MainWP_Themes {
 	 * @param array  $sites Selected child sites.
 	 *
 	 * @return mixed $result Errors|HTML.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
@@ -816,7 +816,7 @@ class MainWP_Themes {
 			uasort(
 				$themesVersion,
 				function( $a, $b ) {
-					$ret = strcasecmp( $a['name'], $b['name'] );
+					$ret = strcasecmp( $a['title'], $b['title'] );
 					if ( 0 != $ret ) {
 						return $ret;
 					}
@@ -1416,13 +1416,13 @@ class MainWP_Themes {
 	 * @param null $output Function output.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1683,11 +1683,11 @@ class MainWP_Themes {
 
 	/**
 	 * Render the Themes Ignored Updates Tab.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function render_ignore() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1807,10 +1807,10 @@ class MainWP_Themes {
 	 *
 	 * @param int    $cnt Count of items.
 	 * @param object $websites The websits object.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
 		?>
@@ -1883,12 +1883,12 @@ class MainWP_Themes {
 
 	/**
 	 * Render the Themes Ignored/Abandoned Tab.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function render_ignored_abandoned() {
 		$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -2000,12 +2000,12 @@ class MainWP_Themes {
 	 *
 	 * @param int    $cnt Count of items.
 	 * @param object $websites The websits object.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {
 		?>

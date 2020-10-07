@@ -272,7 +272,7 @@ class MainWP_Monitoring_Handler {
 		}
 
 		$email = '';
-		
+
 		// for individual notification, one site loop.
 		foreach ( $websites as $site ) {
 			$addition_emails = $site->monitoring_notification_emails;

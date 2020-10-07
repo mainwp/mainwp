@@ -200,6 +200,8 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_footer()
 	 *
 	 * Render Setup Wizard's footer.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::usersnap_integration()
 	 */
 	public function setup_wizard_footer() {
 		?>
@@ -617,8 +619,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_optimization()
 	 *
 	 * Render Optimization step.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 */
 	public function mwp_setup_optimization() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -661,8 +663,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_optimization_save()
 	 *
 	 * Save Optimization form data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 */
 	public function mwp_setup_optimization_save() {
@@ -784,6 +786,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification()
 	 *
 	 * Render Notifications Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public function mwp_setup_notification() {
 
@@ -856,8 +860,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification_save()
 	 *
 	 * Save Notifications form data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 */
 	public function mwp_setup_notification_save() {
@@ -879,8 +883,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_backup()
 	 *
 	 * Render Backups Step.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public function mwp_setup_backup() {
 
@@ -1010,10 +1014,10 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_purchase_extension_save()
 	 *
 	 * MainWP Extensions login.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::purchase_software()
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
-     * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::purchase_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 */
 	public function mwp_setup_purchase_extension_save() {
 		MainWP_Cache::init_session();
@@ -1099,12 +1103,12 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_get_backup_extension()
 	 *
 	 * Ajax get backup extension.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_software()
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
-     */
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 */
 	public static function ajax_get_backup_extension() {
 
 		$product_id = isset( $_POST['productId'] ) ? sanitize_text_field( wp_unslash( $_POST['productId'] ) ) : 0;
@@ -1205,10 +1209,10 @@ class MainWP_Setup_Wizard {
 	 * Method ajax_grab_api_key()
 	 *
 	 * Ajax grab api key.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::grab_license_key()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
-     */
+	 */
 	public static function ajax_grab_api_key() {
 		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
 		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );

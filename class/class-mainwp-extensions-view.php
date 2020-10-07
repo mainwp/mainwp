@@ -44,6 +44,9 @@ class MainWP_Extensions_View {
 	 * Render page header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
@@ -98,8 +101,8 @@ class MainWP_Extensions_View {
 	 * Method render()
 	 *
 	 * Render the extensions page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 */
 	public static function render() {
 

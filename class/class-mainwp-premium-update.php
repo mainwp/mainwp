@@ -273,6 +273,8 @@ class MainWP_Premium_Update {
 	 * @return respose $reponse http response.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 */
 	public static function redirect_request_site( $website, $where_url ) {
 

@@ -106,6 +106,8 @@ class MainWP_Updates {
 
 	/**
 	 * Renders init updates menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -136,6 +138,8 @@ class MainWP_Updates {
 	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -232,13 +236,13 @@ class MainWP_Updates {
 
 	/**
 	 * Renders updates page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$websites      = self::get_sites();
@@ -650,8 +654,8 @@ class MainWP_Updates {
 	 * @param array  $all_groups             Array containing all groups.
 	 * @param int    $site_offset_for_groups Offset value.
 	 * @param string $site_view              Current view.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view ) {
 		?>
@@ -1622,9 +1626,10 @@ class MainWP_Updates {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function get_sites() {
 
@@ -1751,6 +1756,11 @@ class MainWP_Updates {
 
 	/**
 	 * Renders the twitter bragger message.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Twitter
+     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 */
 	public static function render_twitter_notice() {
 
@@ -1782,9 +1792,9 @@ class MainWP_Updates {
 	 * Renders the HTTP Check html content.
 	 *
 	 * @param object $websites Child Sites.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_http_checks( $websites ) {
 

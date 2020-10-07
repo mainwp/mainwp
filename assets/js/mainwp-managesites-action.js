@@ -145,10 +145,6 @@ jQuery( document ).on( 'click', '.managesites_checknow', function () {
   return false;
 } );
 
-jQuery( document ).on( 'click', '.mainwpactionlogsline', function () {
-    jQuery( this ).next().toggle();
-} );
-
 jQuery(document).on( 'change', '#mainwp-add-new-button', function(){
     var url = jQuery( '#mainwp-add-new-button :selected' ).attr('item-url');
     if ( typeof url !== 'undefined' && url != '')

@@ -153,7 +153,7 @@ class MainWP_Live_Reports {
 		$backup_status = 'success';
 		$backup_size   = 0;
 		if ( isset( $information['error'] ) ) {
-			$message       = $information['error'];
+			$message       = esc_html( $information['error'] );
 			$backup_status = 'failed';
 		} elseif ( 'db' === $type && ! $information['db'] ) {
 			$message       = 'Database backup failed.';
@@ -403,7 +403,11 @@ class MainWP_Live_Reports {
 	 *
 	 * @deprecated
 	 *
-	 * @return array|null $return Response array on success or null on failer.
+	 * @return array|null $return Response array on success or null on failure.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_report_by()
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::update_report()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function save_report() { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_REQUEST['action'] ) && 'editreport' == $_REQUEST['action'] && isset( $_REQUEST['nonce'] ) && wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mwp_creport_nonce' ) ) {
@@ -804,6 +808,8 @@ class MainWP_Live_Reports {
 	 * @param array $allowed_tokens Allowed report tokens.
 	 *
 	 * @return array $filtered_reports Array of filtered reports.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public static function filter_report( $report, $allowed_tokens ) {
 
@@ -851,6 +857,10 @@ class MainWP_Live_Reports {
 	 * @param array  $allowed_tokens Allowed report tokens.
 	 *
 	 * @return array $output Filtered child site report.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_tokens()
+	 * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_site_tokens()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		$output                  = new \stdClass();
@@ -1755,7 +1765,7 @@ class MainWP_Live_Reports {
 			return $information;
 		} else {
 			if ( isset( $information['error'] ) ) {
-				$error = $information['error'];
+				$error = esc_html( $information['error'] );
 				if ( 'NO_STREAM' === $error ) {
 					$error = __( 'Error: No Stream or MainWP Client Reports plugin installed.' );
 				}
@@ -1770,6 +1780,9 @@ class MainWP_Live_Reports {
 	 * Manage child site report data.
 	 *
 	 * @param object $site Object containing the website information.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_tokens()
+	 * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_site_tokens()
 	 */
 	public static function manage_site_token( $site ) {
 
@@ -1835,6 +1848,12 @@ class MainWP_Live_Reports {
 	 * Update child site report update data.
 	 *
 	 * @param int $websiteId Child site ID.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::delete_site_tokens()
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_tokens()
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_tokens_by()
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::update_token_site()
+     * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::add_token_site()
 	 */
 	public function update_site_update_tokens( $websiteId ) {
 
@@ -1878,6 +1897,8 @@ class MainWP_Live_Reports {
 	 * Delete child site delete tokens.
 	 *
 	 * @param object $website Object containing the website information.
+     *
+     * @uses MainWP_Live_Reports_Responder_DB::delete_site_tokens()
 	 */
 	public function delete_site_delete_tokens( $website ) {
 		if ( $website ) {

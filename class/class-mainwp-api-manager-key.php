@@ -202,6 +202,7 @@ class MainWP_Api_Manager_Key {
 	 * @throws \Exception Request error codes.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
 	public function test_login_api( $args ) {
 

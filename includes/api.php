@@ -91,6 +91,8 @@ function live_reports_responder_secure_connection() {
  * @param string $siteid Child Site ID.
  *
  * @return array
+ *
+ * @uses \MainWP\Dashboard\MainWP_Live_Reports::filter_report()
  */
 function check_if_valid_client( $email, $siteid ) {
 

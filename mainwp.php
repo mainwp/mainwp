@@ -8,9 +8,11 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.1.1
+ * Version:  4.1.2
  *
  * @package MainWP/Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_System
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {

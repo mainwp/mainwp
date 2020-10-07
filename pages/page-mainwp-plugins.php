@@ -68,7 +68,11 @@ class MainWP_Plugins {
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
 	}
 
-	/** Instantiate Main Plugins Menu. */
+	/**
+	 * Instantiate Main Plugins Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_menu() {
 		$_page = add_submenu_page(
 			'mainwp_tab',
@@ -153,6 +157,8 @@ class MainWP_Plugins {
 
 	/**
 	 * Load the Plugins Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Plugins_Install_List_Table
 	 */
 	public static function load_page() {
 		self::$pluginsTable = new MainWP_Plugins_Install_List_Table();
@@ -170,6 +176,8 @@ class MainWP_Plugins {
 
 	/**
 	 * Instantiate Subpage "tabs".
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -218,6 +226,7 @@ class MainWP_Plugins {
 	 * @uses MainWP_Menu::add_left_menu()
 	 * @uses MainWP_Menu::init_subpages_left_menu()
 	 * @uses MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -283,6 +292,10 @@ class MainWP_Plugins {
 	 * Render MainWP Plugins Page Header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -366,6 +379,8 @@ class MainWP_Plugins {
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_result()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_empty_bulk_actions()
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		$cachedSearch    = MainWP_Cache::get_cached_context( 'Plugins' );
@@ -562,8 +577,8 @@ class MainWP_Plugins {
 
 	/**
 	 * Render MainWP plugins page search options.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Plugins' );
@@ -617,17 +632,17 @@ class MainWP_Plugins {
 	 * @uses MainWP_Cache::add_result()
 	 *
 	 * @return string Plugin Table.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
@@ -1062,7 +1077,12 @@ class MainWP_Plugins {
 		self::render_footer( 'Install' );
 	}
 
-	/** Render Install plugins Table. */
+	/**
+	 * Render Install plugins Table.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 */
 	public static function render_plugins_table() {
 
 		/**
@@ -1218,7 +1238,11 @@ class MainWP_Plugins {
 		<?php
 	}
 
-	/** Render Autoupdate SubPage. */
+	/**
+	 * Render Autoupdate SubPage.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
+	 */
 	public static function render_auto_update() {
 		$cachedAUSearch = null;
 
@@ -1353,13 +1377,13 @@ class MainWP_Plugins {
 	 * @param null $output function output.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1640,11 +1664,11 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Ignore Subpage.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function render_ignore() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1770,9 +1794,9 @@ class MainWP_Plugins {
 	 * @param mixed $websites Child Sites.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored( $cnt, $websites ) {
@@ -1846,12 +1870,12 @@ class MainWP_Plugins {
 
 	/**
 	 * Render Ignored Abandoned Page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 */
 	public static function render_ignored_abandoned() {
 		$websites              = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -1967,9 +1991,9 @@ class MainWP_Plugins {
 	 *
 	 * @param int    $cnt Plugins count.
 	 * @param object $websites The websites object.
-     *
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_sites_ignored_abandoned( $cnt, $websites ) {

@@ -44,6 +44,7 @@ class MainWP_Manage_Sites_Update_View {
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::query()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_header_tabs()
 	 */
 	public static function render_individual_updates( $id ) {
 
@@ -122,8 +123,8 @@ class MainWP_Manage_Sites_Update_View {
 	 *
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public static function render_wpcore_updates( $website, $active_tab ) {
 		$user_can_update_wp = mainwp_current_user_have_right( 'dashboard', 'update_wordpress' );
@@ -186,6 +187,7 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $userExtension MainWP trusted plugin data.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
 
@@ -291,6 +293,7 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $userExtension MainWP trusted themes data.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
 
@@ -450,8 +453,8 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public static function render_abandoned_plugins( $website, $active_tab, $userExtension ) {
 
@@ -533,8 +536,8 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 */
 	public static function render_abandoned_themes( $website, $active_tab, $userExtension ) {
 

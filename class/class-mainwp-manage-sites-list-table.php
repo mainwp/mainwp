@@ -72,6 +72,8 @@ class MainWP_Manage_Sites_List_Table {
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
      * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public function column_backup( $item ) {
 
@@ -395,8 +397,8 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Render Manage Sites Table Top.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_groups_for_manage_sites()
 	 */
 	public function render_manage_sites_table_top() {
 		$items_bulk = $this->get_bulk_actions();
@@ -484,8 +486,8 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Html output if no Child Sites are connected.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_websites_count()
 	 */
 	public function no_items() {
 		?>
@@ -519,14 +521,14 @@ class MainWP_Manage_Sites_List_Table {
 	 * Prepare the items to be listed.
 	 *
 	 * @param bool $optimize true|false Whether or not to optimize.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_search_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::instance()::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_search_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -734,11 +736,11 @@ class MainWP_Manage_Sites_List_Table {
 	 * Get child site ids that have available updates.
 	 *
 	 * @return array $site_ids Array of Child Site ID's that have updates.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
 	 */
 	public function get_available_update_siteids() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$site_ids = array();
@@ -1204,9 +1206,9 @@ class MainWP_Manage_Sites_List_Table {
 
 	/**
 	 * Clear Items.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::is_result()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::is_result()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public function clear_items() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
@@ -1220,9 +1222,9 @@ class MainWP_Manage_Sites_List_Table {
 	 * Optimize for shared hosting or big networks.
 	 *
 	 * @return string Rows html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();
@@ -1516,9 +1518,9 @@ class MainWP_Manage_Sites_List_Table {
 	 * Fetch single row item.
 	 *
 	 * @return mixed Single Row Item.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::is_result()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_array()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::is_result()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_array()
 	 */
 	public function display_rows() {
 		if ( MainWP_DB::is_result( $this->items ) ) {
@@ -1567,9 +1569,9 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @param mixed $website Child Site.
 	 * @param bool  $good_health Good site health info.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
 	 */
 	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 

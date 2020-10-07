@@ -192,7 +192,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * 
 	 * @param string $orderBy Task order.
 	 * 
-	 * @return (object|null) Database query result for backup tasks for current user or null on failer.
+	 * @return object|null Database query result for backup tasks for current user or null on failer.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public function get_backup_tasks_for_user( $orderBy = 'name' ) {
 		if ( MainWP_System::instance()->is_single_user() ) {

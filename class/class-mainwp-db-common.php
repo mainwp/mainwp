@@ -99,7 +99,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $name Group name.
 	 * @param null  $userid user ID.
 	 *
-	 * @return (object|null) Database query result for chosen group name or null on failure
+	 * @return object|null Database query result for chosen group name or null on failure
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_group_by_name( $name, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
@@ -141,7 +143,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * Get groups for mananged sites.
 	 *
-	 * @return (object|null) Database query result for Managed Sites Groups or null on failure.
+	 * @return object|null Database query result for Managed Sites Groups or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_groups_for_manage_sites() {
 		$where = ' 1 ';
@@ -173,7 +177,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * Get groups for current user.
 	 *
-	 * @return (object|null) Database query result for Current User Groups or null on failure.
+	 * @return object|null Database query result for Current User Groups or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_groups_for_current_user() {
 		$where = ' 1 ';
@@ -200,7 +206,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @param mixed $websiteid Child Site ID.
 	 *
-	 * @return (object|null) Database query result for groups by website ID or null on failure.
+	 * @return object|null Database query result for groups by website ID or null on failure.
 	 */
 	public function get_groups_by_website_id( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -221,10 +227,12 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * Get groups and count.
 	 *
-	 * @param null $userid Current user ID.
+	 * @param null $userid      Current user ID.
 	 * @param bool $for_manager Default: false.
 	 *
-	 * @return (object|null) Database query result for groups and count or null on failure.
+	 * @return object|null Database query result for groups and count or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_groups_and_count( $userid = null, $for_manager = false ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
@@ -260,7 +268,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param null $userid Current user ID.
 	 * @param bool $enableOfflineSites Include offline sites? Default: true.
 	 *
-	 * @return (object|null) Database query result for non-empty groups or null on failure.
+	 * @return object|null Database query result for non-empty groups or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_not_empty_groups( $userid = null, $enableOfflineSites = true ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
@@ -487,6 +497,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $userid Current user ID.
 	 *
 	 * @return string $user_email User email address.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public function get_user_notification_email( $userid = 0 ) {
 		$theUserId = $userid;
@@ -508,6 +520,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Get user extension.
 	 *
 	 * @return boolean|int false|get_user_extension_by_user_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public function get_user_extension() {
 
@@ -539,6 +553,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $userid Current user ID.
 	 *
 	 * @return object $row User extension.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public function get_user_extension_by_user_id( $userid ) {
 		if ( MainWP_System::instance()->is_single_user() ) {
@@ -587,6 +603,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $userExtension User extention to update.
 	 *
 	 * @return object $row User extension.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public function update_user_extension( $userExtension ) {
 

@@ -281,7 +281,11 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render Administration Notice. */
+	/**
+	 * Render Administration Notice.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
+	 */
 	public static function admin_notices() {
 
 		$current_options = get_option( 'mainwp_showhide_events_notice' );
@@ -537,7 +541,11 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Admin print styles. */
+	/**
+	 * Admin print styles.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
+	 */
 	public static function admin_print_styles() {
 		?>
 		<style>
@@ -570,8 +578,8 @@ class MainWP_System_View {
 
 	/**
 	 * MainWP Productions Site warning.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function mainwp_warning_notice() {
 
@@ -612,6 +620,8 @@ class MainWP_System_View {
 	 * @param mixed $class_string MainWP CSS Class attributes.
 	 *
 	 * @return string $class_string The CSS attributes to add to the page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
 	 */
 	public static function admin_body_class( $class_string ) {
 		if ( MainWP_System::is_mainwp_pages() ) {
@@ -627,9 +637,9 @@ class MainWP_System_View {
 	 * Render footer content.
 	 *
 	 * @param mixed $websites The websites object.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public static function render_footer_content( $websites ) {
 

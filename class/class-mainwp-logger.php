@@ -25,10 +25,10 @@ class MainWP_Logger {
 	const DEBUG       = 3;
 	const INFO_UPDATE = 10;
 
-	const LOG_COLOR     = 'black';
-	const DEBUG_COLOR   = 'gray';
-	const INFO_COLOR    = 'gray';
-	const WARNING_COLOR = 'red';
+	const LOG_COLOR     = '#999999';
+	const DEBUG_COLOR   = '#666666';
+	const INFO_COLOR    = '#276f86';
+	const WARNING_COLOR = '#9f3a38;';
 
 	/**
 	 * Private varibale to hold the log file prefix.
@@ -85,6 +85,8 @@ class MainWP_Logger {
 	 * Returns new MainWP_Logger instance.
 	 *
 	 * @return self MainWP_Logger
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -98,15 +100,14 @@ class MainWP_Logger {
 	 * MainWP_Logger constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	private function __construct() {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
 		$this->logDirectory = $this->logDirectory[0];
 
-		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( false === $enabled ) {
-			$enabled = self::DISABLED;
-		}
+		$enabled = $this->get_log_status();
 
 		$this->set_log_priority( $enabled );
 	}
@@ -120,6 +121,31 @@ class MainWP_Logger {
 	 */
 	public function set_log_priority( $logPriority ) {
 		$this->logPriority = $logPriority;
+	}
+
+	/**
+	 * Method get_log_status()
+	 *
+	 * Get log status.
+	 *
+	 * @return mixed $enabled log status.
+	 */
+	public function get_log_status() {
+		$enabled = get_option( 'mainwp_actionlogs' );
+
+		if ( false === $enabled ) {
+			$sites_count = MainWP_DB::instance()->get_websites_count();
+			if ( 0 == $sites_count ) {
+				$enabled = self::DEBUG;
+				set_transient( 'mainwp_transient_action_logs', true, 2 * WEEK_IN_SECONDS );
+			} elseif ( get_transient( 'mainwp_transient_action_logs' ) ) {
+				$enabled = self::DEBUG;
+			} else {
+				$enabled = self::DISABLED;
+			}
+		}
+
+		return $enabled;
 	}
 
 	/**
@@ -249,7 +275,7 @@ class MainWP_Logger {
 	 * @param string $text Log record text.
 	 * @param int    $priority Set priority.
 	 *
-	 * @return booleen True|False Default is False.
+	 * @return bool true|false Default is False.
 	 */
 	public function log( $text, $priority ) {
 
@@ -413,6 +439,8 @@ class MainWP_Logger {
 		$previousColor            = '';
 		$fontOpen                 = false;
 		$firstLinePassedProcessed = false;
+		echo '<div class="ui hidden divider"></div>';
+		echo '<div class="ui divided padded relaxed list">';
 		while ( false !== ( $line = fgets( $fh ) ) ) {
 			$currentColor = $previousColor;
 			if ( stristr( $line, '[DEBUG]' ) ) {
@@ -432,18 +460,17 @@ class MainWP_Logger {
 			}
 
 			if ( $firstLinePassedProcessed && ! $firstLinePassed ) {
-				echo ' <strong><span class="mainwp-green">[multiline, click to read full]</span></strong></div><div style="display: none;">';
-			} else {
-				echo '<br />';
+				echo ' <span class="ui mini label mainwp-action-log-show-more">Click to See Response</span></div><div class="mainwp-action-log-site-response" style="display: none;">';
 			}
+
 			$firstLinePassedProcessed = $firstLinePassed;
 
 			if ( $currentColor != $previousColor ) {
 				if ( $fontOpen ) {
-					echo '</div></font>';
+					echo '</div></div>';
 				}
 
-				echo '<font color="' . $currentColor . '"><div class="mainwpactionlogsline">';
+				echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
 				$fontOpen = true;
 			}
 
@@ -451,8 +478,25 @@ class MainWP_Logger {
 		}
 
 		if ( $fontOpen ) {
-			echo '</div></font>';
+			echo '</div></div>';
 		}
+
+		echo '</div>';
+
+		?>
+		<div class="ui large modal" id="mainwp-action-log-response-modal">
+			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+				</div>
+			</div>
+			<div class="scrolling content content-response"></div>
+			<div class="actions">
+				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>				
+				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<?php
 
 		fclose( $fh );
 	}

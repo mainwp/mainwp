@@ -59,6 +59,9 @@ class MainWP_Notification {
 	 * @param bool  $general Either general or individual notification.
 	 *
 	 * @return bool False if failed.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
 	public static function send_http_check_notification( $email_settings, $sites_status, $plain_text, $general = true ) {
 
@@ -109,16 +112,21 @@ class MainWP_Notification {
 	 *
 	 * Sent available updates notification email.
 	 *
-	 * @param array  $email_settings Email settings.
-	 * @param bool   $available_updates Update avaiable.
-	 * @param mixed  $wp_updates WP updates.
-	 * @param mixed  $plugin_updates Plugins updates.
-	 * @param mixed  $theme_updates Themes updates.
-	 * @param mixed  $sites_disconnected Sites disconnected.
-	 * @param bool   $plain_text Text format.
-	 * @param array  $sites_ids Websites ids - default false (option).
-	 * @param bool   $to_admin Send to admin or not - default false (option).
-	 * @param object $email_site current report site.
+	 * @param array $email_settings     Email settings.
+	 * @param bool  $available_updates  Update avaiable.
+	 * @param mixed $wp_updates         WP updates.
+	 * @param mixed $plugin_updates     Plugins updates.
+	 * @param mixed $theme_updates      Themes updates.
+	 * @param mixed $sites_disconnected Sites disconnected.
+	 * @param bool  $plain_text         Text format.
+	 * @param bool  $sites_ids          Websites ids - default false (option).
+	 * @param bool  $to_admin           Send to admin or not - default false (option).
+	 * @param bool  $email_site         current report site.
+	 *
+	 * @return bool
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
 	public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
@@ -195,6 +203,8 @@ class MainWP_Notification {
 	 * @param string $subject email subject.
 	 * @param string $mail_content email content.
 	 * @param bool   $plain_text Text format.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
 	public static function send_websites_uptime_monitoring( $emails, $subject, $mail_content, $plain_text ) {
 
@@ -224,6 +234,8 @@ class MainWP_Notification {
 	 * @param string $subject subject.
 	 * @param string $mail_content email content.
 	 * @param bool   $plain_text Text format.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
 	public static function send_websites_health_status_notification( $email, $subject, $mail_content, $plain_text ) {
 

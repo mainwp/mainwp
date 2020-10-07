@@ -215,7 +215,9 @@ class MainWP_System_Handler {
 	/**
 	 * Method handle_mainwp_tools_settings()
 	 *
-	 * Handle mainwp tools settings
+	 * Handle mainwp tools settings.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_all_twitter_messages()
 	 */
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
@@ -261,6 +263,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::handle_settings_post()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_settings_post()
 	 */
 	public function handle_settings_post() {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
@@ -306,6 +309,7 @@ class MainWP_System_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_plugin_information()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 * @uses \MainWP\Dashboard\MainWP_System::get_plugin_slug()
 	 */
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
@@ -542,8 +546,10 @@ class MainWP_System_Handler {
 		while ( ! feof( $handle ) ) {
 			$buffer = fread( $handle, $chunksize );
 			echo $buffer;
-			ob_flush();
-			flush();
+			if ( ob_get_length() ) {
+				ob_flush();
+				flush();
+			}
 			$buffer = null;
 		}
 

@@ -151,14 +151,15 @@ class MainWP_Api_Manager_Plugin_Update {
 	/**
 	 * Sends and receives data to and from the server API.
 	 *
-	 * @access public
-	 *
-	 * @since       1.0.0
+	 * @access      public
 	 *
 	 * @param array $args       Request arguments.
 	 * @param bool  $bulk_check Check if updating in bulk true|false.
 	 *
-	 * @return object Plugin information.
+	 * @return array|false Plugin information.
+	 * @since       1.0.0
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );

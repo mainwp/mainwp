@@ -37,6 +37,7 @@ class MainWP_Themes_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function themes_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -86,11 +87,14 @@ class MainWP_Themes_Handler {
 	 * Checks to see if Theme exists, current user can edit settings, check for any errors.
 	 *
 	 * @param mixed $pAction Action to perform.
-	 * @param mixed $theme Theme to perform action on.
+	 * @param mixed $theme   Theme to perform action on.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @throws \Exception
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $theme ) {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
@@ -136,6 +140,7 @@ class MainWP_Themes_Handler {
 		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
 
 		if ( isset( $information['error'] ) ) {
+			$information['error'] = esc_html( $information['error'] );
 			wp_send_json( $information );
 		}
 
@@ -151,6 +156,7 @@ class MainWP_Themes_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function ignore_updates() {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;

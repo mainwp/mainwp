@@ -122,6 +122,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
 	 */
 	public function sync( $args, $assoc_args ) {
 		$sites = array();
@@ -194,6 +195,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
 	 */
 	public function reconnect( $args, $assoc_args ) {
 		$sites = array();

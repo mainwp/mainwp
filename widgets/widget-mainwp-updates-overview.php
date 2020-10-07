@@ -103,6 +103,7 @@ class MainWP_Updates_Overview {
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
+     * @uses \MainWP\Dashboard\MainWP_Sync::sync_website()
 	 */
 	public static function sync_site() {
 		$website = null;
@@ -128,14 +129,15 @@ class MainWP_Updates_Overview {
 	 * Method render_sites()
 	 *
 	 * Grab available Child Sites updates a build Widget.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_last_sync_status()
      * @uses \MainWP\Dashboard\MainWP_DB::query()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
@@ -1029,10 +1031,10 @@ class MainWP_Updates_Overview {
 	 *
 	 * @param object $websites   Object containing child sites info.
 	 * @param bool   $globalView Whether it's global or individual site view.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
 	public static function render_bottom( $websites, $globalView ) {
 
@@ -1089,10 +1091,12 @@ class MainWP_Updates_Overview {
 	 * Check if Child Site needs to be backed up before updates.
 	 *
 	 * @return mixed $output
-     *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function check_backups() {
 		if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) {

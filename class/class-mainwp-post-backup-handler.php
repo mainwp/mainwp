@@ -13,6 +13,8 @@ namespace MainWP\Dashboard;
  * Handle Backup Post.
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
@@ -575,6 +577,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Check backup status.
 	 *
 	 * @throws \Exception on errors.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::check_backups()
 	 */
 	public function mainwp_checkbackups() {
 		$this->secure_request( 'mainwp_checkbackups' );

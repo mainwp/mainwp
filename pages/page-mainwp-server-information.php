@@ -35,7 +35,9 @@ class MainWP_Server_Information {
 	/**
 	 * Method init_menu()
 	 *
-	 * Initiate Server Informaion subPage menu.
+	 * Initiate Server Information subPage menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -141,6 +143,8 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders Sub Pages Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -191,6 +195,10 @@ class MainWP_Server_Information {
 	 * Initiates Server Information left menu.
 	 *
 	 * @param array $subPages array of subpages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -236,6 +244,13 @@ class MainWP_Server_Information {
 				'right'      => '',
 			),
 			array(
+				'title'      => __( 'Action Logs', 'mainwp' ),
+				'parent_key' => 'ServerInformation',
+				'href'       => 'admin.php?page=ActionLogs',
+				'slug'       => 'ActionLogs',
+				'right'      => '',
+			),
+			array(
 				'title'      => __( 'WP-Config File', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=WPConfig',
@@ -252,8 +267,8 @@ class MainWP_Server_Information {
 		);
 
 		if ( ! MainWP_Server_Information_Handler::is_apache_server_software() ) {
-			if ( '.htaccess' === $init_sub_subleftmenu[4]['slug'] ) {
-				unset( $init_sub_subleftmenu[4] );
+			if ( '.htaccess' === $init_sub_subleftmenu[5]['slug'] ) {
+				unset( $init_sub_subleftmenu[5] );
 			}
 		}
 
@@ -270,6 +285,10 @@ class MainWP_Server_Information {
 	 * Renders Server Information header.
 	 *
 	 * @param string $shownPage Current page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
@@ -299,6 +318,14 @@ class MainWP_Server_Information {
 					'title'  => __( 'Error Log', 'mainwp' ),
 					'href'   => 'admin.php?page=ErrorLog',
 					'active' => ( 'ErrorLog' === $shownPage ) ? true : false,
+				);
+			}
+
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ActionLogs' ) ) {
+				$renderItems[] = array(
+					'title'  => __( 'Action Logs', 'mainwp' ),
+					'href'   => 'admin.php?page=ActionLogs',
+					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
 				);
 			}
 
@@ -337,8 +364,8 @@ class MainWP_Server_Information {
 	 * Renders Server Information page.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -616,7 +643,7 @@ class MainWP_Server_Information {
 					</tr>
 				</tfoot>
 			</table>
-			<div id="download-server-information" style="display: none">
+			<div id="download-server-information" style="opacity:0">
 				<textarea readonly="readonly" wrap="off"></textarea>
 			</div>
 		<?php
@@ -811,6 +838,9 @@ class MainWP_Server_Information {
 	 * Checks if the ../wp-content/uploads/mainwp/ directory is writable.
 	 *
 	 * @return bool True if writable, false if not.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function check_directory_mainwp_directory() {
 		$dirs = MainWP_System_Utility::get_mainwp_dir();
@@ -1142,9 +1172,12 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders action logs page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Logger
+     * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
 	 */
 	public static function render_action_logs() {
-		self::render_header( 'Action logs' );
+		self::render_header( 'ActionLogs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
 			$act_log = isset( $_REQUEST['actionlogs_status'] ) ? intval( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED;
@@ -1165,42 +1198,45 @@ class MainWP_Server_Information {
 			MainWP_Logger::clear_log();
 		}
 
-		$enabled = get_option( 'mainwp_actionlogs' );
-		if ( false === $enabled ) {
-			$enabled = MainWP_Logger::DISABLED;
-		}
-		?>
-		<div class="postbox">
-			<h3 class="hndle" style="padding: 8px 12px; font-size: 14px;"><span>Action logs</span></h3>
+		$enabled = MainWP_Logger::instance()->get_log_status();
 
-			<div style="padding: 1em;">
+		?>
+		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">
+			<div class="ui mini form two column grid">
+				<div class="column">
 				<form method="POST" action="">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					Status:
-					<select name="actionlogs_status">
+						<select name="actionlogs_status" class="ui dropdown">
 						<option value="<?php echo MainWP_Logger::DISABLED; ?>" <?php echo ( MainWP_Logger::DISABLED == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Disabled', 'mainwp' ); ?>
 						</option>
+							<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
+								<?php esc_html_e( 'Info', 'mainwp' ); ?>
+							</option>
+							<option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php echo ( MainWP_Logger::INFO_UPDATE == $enabled ? 'selected' : '' ); ?>>
+								<?php esc_html_e( 'Info update', 'mainwp' ); ?>
+							</option>
 						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Warning', 'mainwp' ); ?>
-						</option>
-						<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
-							<?php esc_html_e( 'Info', 'mainwp' ); ?>
 						</option>
 						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
-						<option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php echo ( MainWP_Logger::INFO_UPDATE == $enabled ? 'selected' : '' ); ?>>
-							<?php esc_html_e( 'Info Update', 'mainwp' ); ?>
-						</option>
 					</select>
-					<input type="submit" class="button button-primary" value="Save"/> <input type="submit" class="button button-primary" name="actionlogs_clear" value="Clear"/>
+						<input type="submit" class="ui green mini button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+						<input type="submit" class="ui mini button" name="actionlogs_clear" value="<?php esc_attr_e( 'Delete Log', 'mainwp' ); ?>" />
 				</form>
 			</div>
-			<div style="padding: 1em;"><?php MainWP_Logger::show_log(); ?></div>
+				<div class="column">
+
+				</div>
+			</div>
+		</div>
+		<div>
+			<?php MainWP_Logger::show_log(); ?>
 		</div>
 		<?php
-		self::render_footer( 'Action logs' );
+		self::render_footer( 'ActionLogs' );
 	}
 
 	/**

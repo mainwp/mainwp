@@ -50,6 +50,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
 	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
 		if ( null == $pWebsite ) {
@@ -168,6 +169,8 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::get_health_noticed_status_value()
 	 */
 	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$emptyArray        = wp_json_encode( array() );
@@ -292,14 +295,12 @@ class MainWP_Sync {
 				$securityStats = $emptyArray;
 			}
 			$websiteValues['securityIssues'] = $total_securityIssues;
-			$done                            = true;
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'security_stats', $securityStats );
+			$done = true;
 		} elseif ( isset( $information['securityIssues'] ) && MainWP_Utility::ctype_digit( $information['securityIssues'] ) && $information['securityIssues'] >= 0 ) {
 			$websiteValues['securityIssues'] = $information['securityIssues'];
 			$done                            = true;
-			$securityStats                   = $emptyArray;
 		}
-
-		MainWP_DB::instance()->update_website_option( $pWebsite, 'security_stats', $securityStats );
 
 		if ( isset( $information['recent_comments'] ) ) {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'recent_comments', wp_json_encode( $information['recent_comments'] ) );
@@ -430,10 +431,10 @@ class MainWP_Sync {
 			if ( isset( $information['wpversion'] ) ) {
 				$done = true;
 			} elseif ( isset( $information['error'] ) ) {
-				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $information['error'] . ']' );
+				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . esc_html( $information['error'] ) . ']' );
 				$error                            = true;
 				$done                             = true;
-				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . $information['error'];
+				$websiteSyncValues['sync_errors'] = __( 'ERROR: ', 'mainwp' ) . esc_html( $information['error'] );
 			} elseif ( ! empty( $sync_errors ) ) {
 				MainWP_Logger::instance()->warning_for_website( $pWebsite, 'SYNC ERROR', '[' . $sync_errors . ']' );
 
@@ -484,13 +485,19 @@ class MainWP_Sync {
 	 * Get site's icon.
 	 *
 	 * @param mixed $siteId site's id.
+	 *
 	 * @return array result error or success
+	 * @throws \Exception
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_file_content()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -506,7 +513,7 @@ class MainWP_Sync {
 				if ( '' != $error ) {
 					return array( 'error' => $error );
 				} elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
-					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . $information['faviIconUrl'] );
+					MainWP_Logger::instance()->debug( 'Downloading icon :: ' . esc_html( $information['faviIconUrl'] ) );
 					$content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
 					if ( ! empty( $content ) ) {
 

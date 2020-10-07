@@ -43,6 +43,7 @@ class MainWP_Recent_Posts {
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_sites() {
 
@@ -713,12 +714,15 @@ class MainWP_Recent_Posts {
 	 * Initiate try catch for chosen Action
 	 *
 	 * @param string $pAction Post Action.
-	 * @param string $type Post type.
+	 * @param string $type    Post type.
+	 *
+	 * @throws \Exception
      *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-     * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $type = 'post' ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
@@ -775,10 +779,13 @@ class MainWP_Recent_Posts {
 	 * Update Post Action.
 	 *
 	 * @param mixed $pAction Post Action.
+	 *
+	 * @throws \Exception
      *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action_update( $pAction ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;

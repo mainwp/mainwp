@@ -644,7 +644,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFilename Backups filename
 	 *
 	 * @return array $status, $result.
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()

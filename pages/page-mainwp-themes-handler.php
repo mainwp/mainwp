@@ -89,7 +89,7 @@ class MainWP_Themes_Handler {
 	 * @param mixed $pAction Action to perform.
 	 * @param mixed $theme   Theme to perform action on.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception

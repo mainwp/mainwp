@@ -1602,7 +1602,7 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $params Udate parameters.
 	 *
 	 * @return int Child Site ID on success and return 0 on failure.
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */

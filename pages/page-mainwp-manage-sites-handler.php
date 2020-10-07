@@ -227,7 +227,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @param object|int $site object or Child site ID.
 	 *
 	 * @return mixed|false result
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()

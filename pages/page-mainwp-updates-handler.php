@@ -75,7 +75,7 @@ class MainWP_Updates_Handler {
 	 * @param object $website Child site object.
 	 *
 	 * @return mixed|false update result or false.
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
@@ -662,7 +662,7 @@ class MainWP_Updates_Handler {
 	 * @param array  $list    List of theme or plugin names seperated by comma.
 	 *
 	 * @return array|false update result or false.
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()

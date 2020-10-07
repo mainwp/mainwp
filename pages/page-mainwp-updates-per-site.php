@@ -542,7 +542,7 @@ class MainWP_Updates_Per_Site {
 	 * @param object $websites                the websites.
 	 * @param array  $decodedDismissedPlugins all dismissed plugins.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()

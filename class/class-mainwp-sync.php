@@ -487,7 +487,7 @@ class MainWP_Sync {
 	 * @param mixed $siteId site's id.
 	 *
 	 * @return array result error or success
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_file_content()

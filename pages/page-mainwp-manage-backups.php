@@ -36,6 +36,8 @@ class MainWP_Manage_Backups {
 	 * Create instance.
 	 *
 	 * @return self $instance.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -314,6 +316,8 @@ class MainWP_Manage_Backups {
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_for_user()
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
 	 */
 	public static function render_manager() {
 		$backupTask = null;
@@ -753,6 +757,8 @@ class MainWP_Manage_Backups {
 	 * Render Scheduled Backup.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
 	 */
 	public static function render_schedule_backup() {
 		$backupTask = null;

@@ -21,6 +21,8 @@ class MainWP_Extensions_View {
 	 * Add MainWP > Extensions Submenu
 	 *
 	 * @return $page
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions::get_class_name()
 	 */
 	public static function init_menu() {
 		$page = add_submenu_page(
@@ -47,6 +49,7 @@ class MainWP_Extensions_View {
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		if ( isset( $_GET['page'] ) && 'Extensions' === $_GET['page'] ) {
@@ -103,6 +106,8 @@ class MainWP_Extensions_View {
 	 * Render the extensions page.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
 	 */
 	public static function render() {
 
@@ -262,6 +267,8 @@ class MainWP_Extensions_View {
 	 * @param mixed $extension Extention to render.
 	 * @param mixed $extension_update Extension update.
 	 * @param mixed $img_url Extension image.
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 */
 	public static function render_extension_card( $extension, $extension_update, $img_url ) {
 

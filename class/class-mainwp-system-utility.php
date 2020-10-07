@@ -515,6 +515,8 @@ class MainWP_System_Utility {
 	 * Method get_openssl_conf()
 	 *
 	 * Get dashboard openssl configuration.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Settings::is_local_window_config()
 	 */
 	public static function get_openssl_conf() {
 

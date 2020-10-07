@@ -456,6 +456,7 @@ class MainWP_Settings {
 	 * Render the MainWP Settings Page.
      *
      * @uses \MainWP\Dashboard\MainWP_Monitoring_View
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
@@ -742,6 +743,8 @@ class MainWP_Settings {
 	 * Returns false or the location of the OpenSSL Lib File.
 	 *
 	 * @return mixed false|opensslLibLocation
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_openssl_config_warning()
 	 */
 	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {

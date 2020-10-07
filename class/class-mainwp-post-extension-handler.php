@@ -40,6 +40,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Init extensions actions
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions::get_class_name()
 	 */
 	public function init() {
 
@@ -67,6 +69,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Apply plugin settings.
 	 *
 	 * @return mixed success|error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::apply_plugin_settings()
 	 */
 	public function mainwp_ext_applypluginsettings() {
 		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
@@ -80,6 +84,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Ajax add extension menu.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::add_extension_menu()
 	 */
 	public function add_extension_menu() {
 		$this->check_security( 'mainwp_extension_add_menu' );
@@ -278,6 +284,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Download & Install MainWP Extension.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::install_plugin()
 	 */
 	public function download_and_install() {
 		$this->check_security( 'mainwp_extension_downloadandinstall' );

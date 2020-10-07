@@ -23,6 +23,8 @@ class MainWP_Hooks {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_UI::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::get_class_name()
 	 */
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
@@ -242,6 +244,8 @@ class MainWP_Hooks {
 	 * @param bool  $force_update Force the update, true|false, Default: false.
 	 *
 	 * @return array Site array to clone.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_clone_site()
 	 */
 	public function filter_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update = false ) {
 		return MainWP_Extensions_Handler::hook_clone_site( $pluginFile, $key, $websiteid, $cloneid, $clone_url, $force_update );
@@ -258,6 +262,8 @@ class MainWP_Hooks {
 	 * @param bool   $clone_site_id Clone site ID.
 	 *
 	 * @return array Site array to delete.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_delete_clone_site()
 	 */
 	public function filter_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
 		return MainWP_Extensions_Handler::hook_delete_clone_site( $pluginFile, $key, $clone_url, $clone_site_id );
@@ -318,6 +324,8 @@ class MainWP_Hooks {
 	 * @param mixed $pluginFile MainWP Extension to check.
 	 *
 	 * @return string Activation notice.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
 	 */
 	public function get_activate_extension_notice( $pluginFile ) {
 		$active = MainWP_Extensions_Handler::is_extension_activated( $pluginFile );
@@ -531,11 +539,14 @@ class MainWP_Hooks {
 	 * Method hook_get_all_posts()
 	 * Hook to get posts from sites.
 	 *
-	 * @since 3.4.4
-	 * @param object $sites Child Sites object.
+	 * @param object $sites     Child Sites object.
 	 * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
 	 *
-	 * @return array $output All posts data array.
+	 * @return \stdClass $output All posts data array.
+	 *
+	 * @since 3.4.4
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
@@ -731,6 +742,8 @@ class MainWP_Hooks {
 	 * Method active_plugin()
 	 *
 	 * Hook to activate plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::activate_plugins()
 	 */
 	public function active_plugin() {
 		MainWP_Plugins_Handler::activate_plugins();
@@ -741,6 +754,8 @@ class MainWP_Hooks {
 	 * Method deactive_plugin()
 	 *
 	 * Hook to deactivate plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::deactivate_plugins()
 	 */
 	public function deactive_plugin() {
 		MainWP_Plugins_Handler::deactivate_plugins();
@@ -751,6 +766,8 @@ class MainWP_Hooks {
 	 * Method delete_plugin()
 	 *
 	 * Hook to delete plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::delete_plugins()
 	 */
 	public function delete_plugin() {
 		MainWP_Plugins_Handler::delete_plugins();
@@ -761,6 +778,8 @@ class MainWP_Hooks {
 	 * Method delete_theme()
 	 *
 	 * Hook to delete theme()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::delete_themes()
 	 */
 	public function delete_theme() {
 		MainWP_Themes_Handler::delete_themes();

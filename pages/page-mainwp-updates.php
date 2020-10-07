@@ -81,6 +81,9 @@ class MainWP_Updates {
 
 	/**
 	 * Instantiates MainWP Updates Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
+     *
 	 */
 	public static function init() {
 		/**

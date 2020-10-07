@@ -1013,6 +1013,8 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $newName Name that you want to give the group.
 	 *
 	 * @return mixed false|$groupId
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::check_group_name()
 	 */
 	public static function hook_add_group( $pluginFile, $key, $newName ) {
 

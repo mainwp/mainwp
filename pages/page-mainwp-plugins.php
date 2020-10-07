@@ -12,7 +12,7 @@ namespace MainWP\Dashboard;
  *
  * @package MainWP\Dashboard\
  *
- * @uses MainWP_Install_Bulk
+ * @uses \MainWP\Dashboard\MainWP_Install_Bulk
  */
 class MainWP_Plugins {
 
@@ -620,6 +620,8 @@ class MainWP_Plugins {
 	 * @param mixed $groups Selected Child Site Groups.
 	 * @param mixed $sites Selected individual Child Sites.
 	 *
+     * @return string Plugin Table.
+     *
 	 * @uses MainWP_Cache::init_cache()
 	 * @uses MainWP_Utility::ctype_digit()
 	 * @uses MainWP_DB::instance()
@@ -630,19 +632,16 @@ class MainWP_Plugins {
 	 * @uses MainWP_Utility::get_nice_url()
 	 * @uses MainWP_Cache::add_context()
 	 * @uses MainWP_Cache::add_result()
-	 *
-	 * @return string Plugin Table.
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_cache()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::add_context()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::add_result()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::get_class_name()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
@@ -1082,6 +1081,7 @@ class MainWP_Plugins {
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
      * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+     * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
 	 */
 	public static function render_plugins_table() {
 
@@ -1384,6 +1384,7 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::get_class_name()
 	 */
 	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;

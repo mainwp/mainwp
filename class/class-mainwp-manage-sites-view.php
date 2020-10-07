@@ -20,6 +20,8 @@ class MainWP_Manage_Sites_View {
 	 * Initiate Sites sub menu.
 	 *
 	 * @return add_submenu_page()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::get_class_name()
 	 */
 	public static function init_menu() {
 		return add_submenu_page(
@@ -499,6 +501,7 @@ class MainWP_Manage_Sites_View {
 	 * Render sync extension settings.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -576,6 +579,8 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $page Page to render.
 	 *
 	 * @return string Sites Overview Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Overview::render_dashboard_body()
 	 */
 	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {

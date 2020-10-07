@@ -70,6 +70,7 @@ class MainWP_Post_Page_Handler {
 	 * Ajax process to add post meta data.
      *
      * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
+     * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
 	 */
 	public static function ajax_add_meta() {
 

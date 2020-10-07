@@ -49,6 +49,8 @@ class MainWP_Overview {
 	 * if there isn't one create it.
 	 *
 	 *  @return self::singlton Overview Page Session.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Overview
 	 */
 	public static function get() {
 		if ( null == self::$instance ) {

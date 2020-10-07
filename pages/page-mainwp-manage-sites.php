@@ -69,6 +69,8 @@ class MainWP_Manage_Sites {
 	 * Method init()
 	 *
 	 * Initiate Manage Sites.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Security_Issues::get_class_name()
 	 */
 	public static function init() {
 		/**
@@ -128,6 +130,7 @@ class MainWP_Manage_Sites {
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_left_menu()
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Site_Open::get_class_name()
 	 */
 	public static function init_menu() {
 		self::$page = MainWP_Manage_Sites_View::init_menu();

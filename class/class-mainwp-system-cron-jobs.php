@@ -1277,6 +1277,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
 	 */
 	public function cron_backups_continue() {
 
@@ -1329,6 +1330,8 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::validate_backup_tasks()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
 	 */
 	public function cron_backups() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {

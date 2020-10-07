@@ -614,6 +614,7 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
@@ -1071,6 +1072,7 @@ class MainWP_Themes {
      *
      * @uses \MainWP\Dashboard\MainWP_UI::render_modal_install_plugin_theme()
      * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+     * @uses \MainWP\Dashboard\MainWP_Install_Bulk::render_upload()
 	 */
 	public static function render_themes_table() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'install_themes' ) ) {
@@ -1423,6 +1425,7 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
 	 */
 	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;

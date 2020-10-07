@@ -119,6 +119,7 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @return string Backup Details.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::show_backups()
 	 */
 	public static function render_backup_details( $websiteid ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );

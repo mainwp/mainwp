@@ -129,6 +129,8 @@ class MainWP_Page {
 	 * Add edit on load bulk posts.
 	 *
 	 * @return void Returns post to edit.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Post::on_load_bulkpost()
 	 */
 	public static function on_load_add_edit() {
 
@@ -1244,6 +1246,8 @@ class MainWP_Page {
 	 * @param mixed $what Current page.
 	 *
 	 * @return void Display page header, bulkpost body & footer.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Post::render_bulkpost()
 	 */
 	public static function render_addedit( $post_id, $what ) {
 		self::render_header( $what, $post_id );

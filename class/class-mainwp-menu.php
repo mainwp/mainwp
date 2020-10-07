@@ -149,7 +149,20 @@ class MainWP_Menu {
 	 * Method init_subpages_menu()
 	 *
 	 * Init subpages MainWP menus.
-	 */
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions::init_subpages_menu()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_subpages_menu()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init_subpages_menu()
+     * @uses \MainWP\Dashboard\MainWP_Page::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Post::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
+     * @uses \MainWP\Dashboard\MainWP_Themes::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Themes::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_User::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
+     */
+
 	public static function init_subpages_menu() {
 
 		if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {

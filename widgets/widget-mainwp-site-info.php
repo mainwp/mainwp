@@ -41,6 +41,7 @@ class MainWP_Site_Info {
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_site_info() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

@@ -58,6 +58,7 @@ class MainWP_Extensions {
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_activation_info()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::init_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -242,6 +243,9 @@ class MainWP_Extensions {
 	 * Initiate top level Extensions Menues.
 	 *
 	 * @param array $extPages List of extension pages.
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
 	 */
 	public static function init_left_menu( $extPages ) {
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -325,6 +329,7 @@ class MainWP_Extensions {
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
+     * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
@@ -541,6 +546,7 @@ class MainWP_Extensions {
 	 * Render page content.
      *
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::render()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 */
 	public static function render() {
 

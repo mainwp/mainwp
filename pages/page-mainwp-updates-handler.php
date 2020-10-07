@@ -75,6 +75,9 @@ class MainWP_Updates_Handler {
 	 * @param object $website Child site object.
 	 *
 	 * @return mixed|false update result or false.
+	 * @throws \Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function upgrade_website( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -115,6 +118,7 @@ class MainWP_Updates_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -193,6 +197,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
 		if ( ! empty( $id ) ) {
@@ -433,6 +438,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
 		if ( isset( $id ) ) {
@@ -538,6 +544,7 @@ class MainWP_Updates_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -651,10 +658,14 @@ class MainWP_Updates_Handler {
 	 * Upgrade plugin or theme translations.
 	 *
 	 * @param int    $website Child site object.
-	 * @param string $type Plugin or theme.
-	 * @param array  $list List of theme or plugin names seperated by comma.
+	 * @param string $type    Plugin or theme.
+	 * @param array  $list    List of theme or plugin names seperated by comma.
 	 *
 	 * @return array|false update result or false.
+	 * @throws \Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_plugin_theme_translation( $website, $type, $list ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {

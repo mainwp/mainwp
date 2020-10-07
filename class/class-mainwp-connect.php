@@ -43,6 +43,9 @@ class MainWP_Connect {
 	 * @param bool   $no_body           Option to set CURLOPT_NOBODY option. Default = false.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 */
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -462,6 +465,9 @@ class MainWP_Connect {
 	 * @param bool   $is_external_hook Check if external hook is used.
 	 *
 	 * @return bool true|false
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -742,6 +748,8 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_nrof_open_requests()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::insert_or_update_request_log()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1135,15 +1143,21 @@ class MainWP_Connect {
 	 *
 	 * Updates the child site via authenticated request.
 	 *
-	 * @param object $website Website information.
-	 * @param string $what Function to perform.
-	 * @param null   $params Function paramerters.
+	 * @param object $website          Website information.
+	 * @param string $what             Function to perform.
+	 * @param null   $params           Function paramerters.
 	 * @param bool   $checkConstraints Whether or not to check contraints.
 	 * @param bool   $pForceFetch      Whether or not to force the fetch.
 	 * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
-	 * @param null   $rawResponse Raw response.
+	 * @param null   $rawResponse      Raw response.
 	 *
 	 * @return mixed $information
+	 *
+	 * @throws \Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
+	 * @uses \MainWP\Dashboard\MainWP_Premium_Update::maybe_request_premium_updates()
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
 	 */
 	public static function fetch_url_authed(
 		&$website,
@@ -1363,6 +1377,10 @@ class MainWP_Connect {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::insert_or_update_request_log()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug_for_website()
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function m_fetch_url( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
@@ -1692,6 +1710,8 @@ class MainWP_Connect {
 	 * @throws MainWP_Exception Exception message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) {
 
@@ -1764,6 +1784,8 @@ class MainWP_Connect {
 	 * @param mixed $cookieDir Cookies directory.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function init_cookiesdir( $cookieDir ) {
 
@@ -1818,6 +1840,8 @@ class MainWP_Connect {
 	 * @param mixed $url File Location.
 	 *
 	 * @return mixed false|$data
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 */
 	public static function get_file_content( $url ) {
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1863,6 +1887,7 @@ class MainWP_Connect {
 	 * @return mixed $faviurl Favicon URL.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
 	 */
 	public static function get_favico_url( $website ) {
 		$favi    = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );

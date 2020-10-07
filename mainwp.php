@@ -11,6 +11,8 @@
  * Version:  4.1.1
  *
  * @package MainWP/Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_System
  */
 
 if ( ! defined( 'MAINWP_PLUGIN_FILE' ) ) {

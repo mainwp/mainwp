@@ -20,6 +20,8 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @param object $website Child Site info.
 	 * @param array  $fullBackups Full Backups Array.
 	 * @param array  $dbBackups DB Backups Array.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_System_Utility::get_mainwp_dir();

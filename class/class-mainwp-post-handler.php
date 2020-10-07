@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
@@ -278,6 +280,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Unpublish post from Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::unpublish()
 	 */
 	public function mainwp_post_unpublish() {
 		$this->secure_request( 'mainwp_post_unpublish' );
@@ -288,7 +292,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_post_publish()
 	 *
 	 * Publish post on Child Site,
-	 * Page: Recent Posts
+	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::publish()
 	 */
 	public function mainwp_post_publish() {
 		$this->secure_request( 'mainwp_post_publish' );
@@ -300,6 +306,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Approve post on Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::approve()
 	 */
 	public function mainwp_post_approve() {
 		$this->secure_request( 'mainwp_post_approve' );
@@ -310,7 +318,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_post_trash()
 	 *
 	 * Trash post on Child Site,
-	 * Page: Recent Posts
+	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::trash()
 	 */
 	public function mainwp_post_trash() {
 		$this->secure_request( 'mainwp_post_trash' );
@@ -323,6 +333,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete post on Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::delete()
 	 */
 	public function mainwp_post_delete() {
 		$this->secure_request( 'mainwp_post_delete' );
@@ -335,6 +347,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Restore post,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::restore()
 	 */
 	public function mainwp_post_restore() {
 		$this->secure_request( 'mainwp_post_restore' );
@@ -542,6 +556,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_dismiss_twit()
 	 *
 	 * Dismiss the twitter bragger.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_twitter_info()
 	 */
 	public function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
@@ -595,6 +611,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Post handler for twitter bragger.
 	 *
 	 * @return mixed $html|$success
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 */
 	public function mainwp_twitter_dashboard_action() {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
@@ -805,8 +827,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_syncerrors_dismiss()
 	 *
-	 * Dismis Syncerrors for,
+	 * Dismiss Sync errors for,
 	 * Widget: RightNow.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::dismiss_sync_errors()
 	 */
 	public function mainwp_syncerrors_dismiss() {
 
@@ -901,6 +925,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
 	 */
 	public function ajax_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
@@ -977,6 +1002,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );

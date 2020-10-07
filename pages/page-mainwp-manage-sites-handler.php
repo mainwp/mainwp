@@ -29,6 +29,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Check to add site.
 	 *
 	 * @return mixed send json encode data
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function check_site() {
 		$url     = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
@@ -68,6 +70,9 @@ class MainWP_Manage_Sites_Handler {
 	 * Try to recconnect to Child Site.
 	 *
 	 * @throws \Exception Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
 	 */
 	public static function reconnect_site() {
 		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false;
@@ -91,6 +96,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Method add_site()
 	 *
 	 * Add new Child Site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::add_site()
 	 */
 	public static function add_site() {
 		$ret     = array();
@@ -148,6 +155,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Method save_note()
 	 *
 	 * Save Child Site Note.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) ) {
@@ -199,8 +208,13 @@ class MainWP_Manage_Sites_Handler {
 	 * Try to remove Child Site.
 	 *
 	 * @param object|int $site object or Child site ID.
-
+	 *
 	 * @return mixed|false result
+	 * @throws \Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
 	 */
 	public static function remove_website( $site ) {
 
@@ -268,6 +282,8 @@ class MainWP_Manage_Sites_Handler {
 	 * Method update_child_site_value()
 	 *
 	 * Update Child Site ID.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_child_site_value() {
 		if ( isset( $_POST['site_id'] ) ) {

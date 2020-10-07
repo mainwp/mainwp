@@ -38,6 +38,10 @@ class MainWP_Updates_Per_Item {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_UI
+     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $allPlugins, $pluginsInfo, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		?>
@@ -200,6 +204,10 @@ class MainWP_Updates_Per_Item {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_UI
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $allThemes, $themesInfo, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
@@ -351,6 +359,8 @@ class MainWP_Updates_Per_Item {
      *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $userExtension, $allTranslations, $translationsInfo ) {
 		?>
@@ -460,13 +470,17 @@ class MainWP_Updates_Per_Item {
 	 *
 	 * Render abandoned plugins
 	 *
-	 * @param object $websites the websites.
-	 * @param array  $allPluginsOutdate all abandoned plugins.
+	 * @param object $websites                the websites.
+	 * @param array  $allPluginsOutdate       all abandoned plugins.
 	 * @param array  $decodedDismissedPlugins all dismissed abandoned plugins.
+	 *
+	 * @throws \Exception
      *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 */
 	public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
@@ -585,6 +599,8 @@ class MainWP_Updates_Per_Item {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 */
 	public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );

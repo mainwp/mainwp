@@ -252,6 +252,8 @@ class MainWP_System_Utility {
 	 * @param null $dir Current MainWP directory.
 	 *
 	 * @return string $newdir
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function get_mainwp_specific_dir( $dir = null ) {
 		if ( MainWP_System::instance()->is_single_user() ) {
@@ -309,6 +311,8 @@ class MainWP_System_Utility {
 	 * @param mixed $dir MainWP Directory.
 	 *
 	 * @return string MainWP URL.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function get_mainwp_specific_url( $dir ) {
 		if ( MainWP_System::instance()->is_single_user() ) {
@@ -382,6 +386,8 @@ class MainWP_System_Utility {
 	 * @param mixed $website Child Site.
 	 *
 	 * @return mixed true|false|userid
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function can_edit_website( &$website ) {
 		if ( null == $website ) {

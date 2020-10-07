@@ -35,7 +35,9 @@ class MainWP_Server_Information {
 	/**
 	 * Method init_menu()
 	 *
-	 * Initiate Server Informaion subPage menu.
+	 * Initiate Server Information subPage menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -141,6 +143,8 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders Sub Pages Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -191,6 +195,10 @@ class MainWP_Server_Information {
 	 * Initiates Server Information left menu.
 	 *
 	 * @param array $subPages array of subpages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -270,6 +278,10 @@ class MainWP_Server_Information {
 	 * Renders Server Information header.
 	 *
 	 * @param string $shownPage Current page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
@@ -811,6 +823,9 @@ class MainWP_Server_Information {
 	 * Checks if the ../wp-content/uploads/mainwp/ directory is writable.
 	 *
 	 * @return bool True if writable, false if not.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function check_directory_mainwp_directory() {
 		$dirs = MainWP_System_Utility::get_mainwp_dir();
@@ -1142,6 +1157,9 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders action logs page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Logger
+     * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
 	 */
 	public static function render_action_logs() {
 		self::render_header( 'Action logs' );

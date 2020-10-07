@@ -35,6 +35,7 @@ class MainWP_Security_Issues_Widget {
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_search_websites_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_widget() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

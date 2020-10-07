@@ -38,6 +38,8 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * @param string $action Action to perform.
 	 * @param string $query_arg Query argument.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 */
 	public function secure_request( $action = '', $query_arg = 'security' ) {
 		if ( ! MainWP_System_Utility::is_admin() ) {

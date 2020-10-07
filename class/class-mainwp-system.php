@@ -43,9 +43,9 @@ class MainWP_System {
 	private static $instance = null;
 
 	/**
-	 * Public variable to hold the Metaboxes array.
+	 * Public variable to hold the Metaboxes instance.
 	 *
-	 * @var array Metaboxes.
+	 * @var object Metaboxes.
 	 */
 	public $metaboxes;
 
@@ -83,6 +83,18 @@ class MainWP_System {
 	 * @param string $mainwp_plugin_file Plugn slug.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Post
+	 * @uses \MainWP\Dashboard\MainWP_Hooks
+	 * @uses \MainWP\Dashboard\MainWP_Menu::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Menu
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::init_cron_jobs()
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs
+	 * @uses \MainWP\Dashboard\MainWP_System_Handler
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_UI::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_WP_CLI_Command::init()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::init()
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -338,6 +350,8 @@ class MainWP_System {
 	 * Check if there has been a wp mail failer.
 	 *
 	 * @param string $error Array of error messages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -364,7 +378,9 @@ class MainWP_System {
 	/**
 	 * Method mainwp_cronpingchilds_action()
 	 *
-	 * Run cron ping childs action.
+	 * Run cron ping child's action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_ping_childs()
 	 */
 	public function mainwp_cronpingchilds_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_ping_childs();
@@ -374,6 +390,8 @@ class MainWP_System {
 	 * Method mainwp_cronbackups_continue_action()
 	 *
 	 * Run cron backups continue action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups_continue()
 	 */
 	public function mainwp_cronbackups_continue_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
@@ -383,6 +401,8 @@ class MainWP_System {
 	 * Method mainwp_cronbackups_action()
 	 *
 	 * Run cron backups action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups()
 	 */
 	public function mainwp_cronbackups_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_backups();
@@ -392,6 +412,8 @@ class MainWP_System {
 	 * Method mainwp_cronstats_action()
 	 *
 	 * Run cron stats action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_stats()
 	 */
 	public function mainwp_cronstats_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_stats();
@@ -401,6 +423,8 @@ class MainWP_System {
 	 * Method mainwp_cronupdatescheck_action()
 	 *
 	 * Run cron updates check action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_updates_check()
 	 */
 	public function mainwp_cronupdatescheck_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_updates_check();
@@ -410,6 +434,8 @@ class MainWP_System {
 	 * Method mainwp_croncheckstatus_action()
 	 *
 	 * Run cron check sites status action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_check_websites_status()
 	 */
 	public function mainwp_croncheckstatus_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_check_websites_status();
@@ -419,6 +445,8 @@ class MainWP_System {
 	 * Method mainwp_cronchecksitehealth_action()
 	 *
 	 * Run cron check sites health action.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_check_websites_health()
 	 */
 	public function mainwp_cronchecksitehealth_action() {
 		MainWP_System_Cron_Jobs::instance()->cron_check_websites_health();
@@ -476,6 +504,8 @@ class MainWP_System {
 			 * @param string $cap capabilities for current user.
 			 *
 			 * @return bool true|false
+			 *
+			 * @uses \MainWP\Dashboard\MainWP_System_Handler::handle_settings_post()
 			 */
 			function mainwp_current_user_have_right( $cap_type = '', $cap ) {
 
@@ -511,6 +541,11 @@ class MainWP_System {
 	 * Method parse_init()
 	 *
 	 * Initiate plugin installation & then run the Quick Setup Wizard.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Handler::upload_file()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 */
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
@@ -578,6 +613,19 @@ class MainWP_System {
 	 * Method admin_init()
 	 *
 	 * Do nothing if current user is not an Admin else display the page.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Backup_Handler::init()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Extension_Handler::init()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::init()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::get_security_nonces()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Plugin_Theme_Handler::init()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Site_Handler::init()
+	 * @uses \MainWP\Dashboard\MainWP_System_Handler::activate_extension()
+	 * @uses \MainWP\Dashboard\MainWP_System_Handler::deactivate_extension()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
 	 */
 	public function admin_init() {
 		if ( ! MainWP_System_Utility::is_admin() ) {
@@ -897,6 +945,10 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+	 * @uses \MainWP\Dashboard\MainWP_System_View::render_footer_content()
+	 * @uses \MainWP\Dashboard\MainWP_System_View::admin_footer()
 	 */
 	public function admin_footer() {
 		if ( ! self::is_mainwp_pages() ) {
@@ -967,6 +1019,8 @@ class MainWP_System {
 	 * Method activation()
 	 *
 	 * Activate MainWP.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install::install()
 	 */
 	public function activation() {
 		MainWP_Install::instance()->install();
@@ -986,6 +1040,8 @@ class MainWP_System {
 	 * Method update()
 	 *
 	 * Update MainWP.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install::install()
 	 */
 	public function update() {
 		MainWP_Install::instance()->install();

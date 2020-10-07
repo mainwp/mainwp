@@ -20,7 +20,10 @@ class MainWP_QQ2_Uploaded_File_Form {
 	 * Save the file to the specified path.
 	 *
 	 * @param string $path Path to save file to.
-	 * @return boolean TRUE on success|false on failer.
+	 * @return boolean TRUE on success|false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_base_dir()
 	 */
 	public function save( $path ) {
 		$wpFileSystem = MainWP_System_Utility::get_wp_file_system();

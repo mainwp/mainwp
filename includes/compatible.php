@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP compatible functions.
+ * MainWP compatible legacy functions.
  *
  * @package MainWP/Dashboard
  */

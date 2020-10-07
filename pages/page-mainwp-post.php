@@ -79,6 +79,8 @@ class MainWP_Post {
 	 * Initiate Page menu.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
@@ -290,6 +292,8 @@ class MainWP_Post {
 	 * Initiate subpages menu.
 	 *
 	 * @return void Render subpages menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -331,7 +335,11 @@ class MainWP_Post {
 	 * @param array $subPages Array of subPages to add to the Post left menu.
 	 *
 	 * @return void Menu arrays are assed on to MainWP_Menu::init_subpages_left_menu() & MainWP_Menu::init_left_menu().
-	 */
+	 *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     */
 	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu(
@@ -401,6 +409,10 @@ class MainWP_Post {
 	 *
 	 * @param string $shownPage Current page slug.
 	 * @param null   $post_id BulkEdit Post ID.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
@@ -474,6 +486,7 @@ class MainWP_Post {
 	 * @return string Post page html content.
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
@@ -1126,6 +1139,7 @@ class MainWP_Post {
      * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
      * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1322,7 +1336,10 @@ class MainWP_Post {
 	 *
 	 * @param array $entry Post array.
 	 * @param int   $count Counter variable.
+     *
 	 * @return string $r Custom Fields meta box HTML.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public static function list_meta_row( $entry, &$count ) {
 
@@ -1830,6 +1847,10 @@ class MainWP_Post {
 	 * @param mixed $input_type Post type.
 	 *
 	 * @return string Edit bulk post html.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_slug()
+     * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
+     * @uses \MainWP\Dashboard\MainWP_UI
 	 */
 	public static function render_bulkpost( $post_id, $input_type ) {
 		$post = get_post( $post_id );
@@ -2362,6 +2383,8 @@ class MainWP_Post {
 	 * @param mixed  $data search data.
 	 * @param object $website child site object.
 	 * @param mixed  $output output.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function hook_posts_search_handler( $data, $website, &$output ) {
 		$posts = array();

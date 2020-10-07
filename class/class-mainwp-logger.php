@@ -85,6 +85,8 @@ class MainWP_Logger {
 	 * Returns new MainWP_Logger instance.
 	 *
 	 * @return self MainWP_Logger
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -98,6 +100,8 @@ class MainWP_Logger {
 	 * MainWP_Logger constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	private function __construct() {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();

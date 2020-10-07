@@ -110,6 +110,10 @@ class MainWP_Bulk_Post {
 	 * @param int $post_id Post ID.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::select_sites_handle()
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_categories_handle()
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_slug_handle()
 	 */
 	public function save_bulkpost( $post_id ) {
 		$_post = get_post( $post_id );
@@ -177,6 +181,8 @@ class MainWP_Bulk_Post {
 	 * @param int $post_id Page ID.
 	 *
 	 * @return void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::$metaboxes
 	 */
 	public function save_bulkpage( $post_id ) {
 

@@ -50,6 +50,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
 	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
 		if ( null == $pWebsite ) {
@@ -168,6 +169,8 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::get_health_noticed_status_value()
 	 */
 	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$emptyArray        = wp_json_encode( array() );
@@ -484,13 +487,19 @@ class MainWP_Sync {
 	 * Get site's icon.
 	 *
 	 * @param mixed $siteId site's id.
+	 *
 	 * @return array result error or success
+	 * @throws \Exception
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_file_content()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {

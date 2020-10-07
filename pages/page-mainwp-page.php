@@ -82,6 +82,8 @@ class MainWP_Page {
 	 * Initiate Menu.
 	 *
 	 * @return void Initiated menus.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
@@ -157,6 +159,8 @@ class MainWP_Page {
 	 * Method init_subpages_menu()
 	 *
 	 * Initiate subpages menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -196,6 +200,10 @@ class MainWP_Page {
 	 * Initiate left menu.
 	 *
 	 * @param array $subPages Left menu sub pages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 
@@ -338,6 +346,10 @@ class MainWP_Page {
 	 *
 	 * @param string $shownPage Current page.
 	 * @param int    $post_id Post ID.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 
@@ -410,6 +422,7 @@ class MainWP_Page {
 	 * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -971,6 +984,7 @@ class MainWP_Page {
      * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
      * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
      * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -1122,6 +1136,8 @@ class MainWP_Page {
 	 * Method publish()
 	 *
 	 * Publish page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish', 'page' );
@@ -1132,6 +1148,8 @@ class MainWP_Page {
 	 * Method unpublish()
 	 *
 	 * Unpublish page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish', 'page' );
@@ -1142,6 +1160,8 @@ class MainWP_Page {
 	 * Method trash()
 	 *
 	 * Trash page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash', 'page' );
@@ -1152,6 +1172,8 @@ class MainWP_Page {
 	 * Method delete()
 	 *
 	 * Delete page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete', 'page' );
@@ -1162,6 +1184,8 @@ class MainWP_Page {
 	 * Method restore()
 	 *
 	 * Restore page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore', 'page' );
@@ -1239,6 +1263,9 @@ class MainWP_Page {
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
@@ -1528,6 +1555,11 @@ class MainWP_Page {
 	 * Render twitter notice.
 	 *
 	 * @return void Output twitter notice.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+     * @uses \MainWP\Dashboard\MainWP_Twitter
 	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {

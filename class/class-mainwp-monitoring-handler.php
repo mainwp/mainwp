@@ -22,6 +22,8 @@ class MainWP_Monitoring_Handler {
 	 * @uses MainWP_Utility::update_option()
 	 *
 	 * @return bool True on success, false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
@@ -246,6 +248,8 @@ class MainWP_Monitoring_Handler {
 	 * @param bool   $to_admin Send to admin or not.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+	 * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_uptime_monitoring()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
 	public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $general = true, $to_admin = false ) {
 
@@ -312,6 +316,8 @@ class MainWP_Monitoring_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_notification_email()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_sync_values()
+	 * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_health_status_notification()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
 	public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) {
 

@@ -577,6 +577,7 @@ class MainWP_Manage_Groups {
      * @uses \MainWP\Dashboard\MainWP_DB_Common::clear_group()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group_site()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_group() {
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;

@@ -127,6 +127,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param bool $all_access Check if user has access to all sites.
 	 *
 	 * @return int Child site count.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_websites_count( $userId = null, $all_access = false ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
@@ -377,7 +379,9 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param mixed  $extra_view   Extra view. Default favi_icon.
 	 * @param string $is_staging   yes|no Is child site a staging site.
 	 *
-	 * @return object|null Database query results or null on failer.
+	 * @return object|null Database query results or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_sql_websites_for_current_user(
 		$selectgroups = false,
@@ -485,7 +489,9 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param array $params Query parameters.
 	 *
-	 * @return boolean|null $qry Database query results or null on failer.
+	 * @return boolean|null $qry Database query results or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_sql_search_websites_for_current_user( $params ) {
 
@@ -803,6 +809,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int   $userId User ID.
 	 *
 	 * @return object|null Database query result or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_websites_by_ids( $ids, $userId = null ) {
 		if ( ( null == $userId ) && MainWP_System::instance()->is_multi_user() ) {
@@ -828,6 +836,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int   $userId User ID.
 	 *
 	 * @return object|null Database query result or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_websites_by_group_ids( $ids, $userId = null ) {
 		if ( empty( $ids ) ) {
@@ -947,6 +957,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int    $userid    Current user ID.
 	 *
 	 * @return object|null Database query result or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function get_sql_websites_by_group_name( $groupname, $userid = null ) {
 		if ( ( null == $userid ) && MainWP_System::instance()->is_multi_user() ) {
@@ -1200,6 +1212,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int    $wpe Is it WP Engine hosted site.
 	 *
 	 * @return boolean ture on success or false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public function update_website(
 		$websiteid,

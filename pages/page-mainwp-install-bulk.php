@@ -43,6 +43,9 @@ class MainWP_Install_Bulk {
 	 * Method admin_init()
 	 *
 	 * Handles the uploading of a file.
+     *
+     * @uses \MainWP\Dashboard\MainWP_QQ2_File_Uploader
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function admin_init() {
 		if ( isset( $_REQUEST['mainwp_do'] ) ) {
@@ -135,6 +138,7 @@ class MainWP_Install_Bulk {
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -338,6 +342,7 @@ class MainWP_Install_Bulk {
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
      * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_download_url()
 	 */
 	public static function prepare_upload() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -480,7 +485,10 @@ class MainWP_Install_Bulk {
 	/**
 	 * Clean the upload
 	 *
-	 * Do file structure mainenance and tmp file removals.
+	 * Do file structure maintenance and tmp file removals.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function clean_upload() {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -519,6 +527,8 @@ class MainWP_Install_Bulk {
 	 *  Already installed,
 	 *  Undefined error! Please reinstall the MainWP Child plugin on the child site,
 	 *  Error while installing.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function install_plugin_theme_handler( $data, $website, &$output ) {
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {

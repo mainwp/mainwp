@@ -12,6 +12,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Extension_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 

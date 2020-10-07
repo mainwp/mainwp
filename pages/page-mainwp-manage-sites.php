@@ -122,7 +122,13 @@ class MainWP_Manage_Sites {
 		return $columns;
 	}
 
-	/** Initiate menu. */
+	/**
+	 * Initiate menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_menu()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_menu() {
 		self::$page = MainWP_Manage_Sites_View::init_menu();
 		add_action( 'load-' . self::$page, array( self::get_class_name(), 'on_load_page' ) );
@@ -195,7 +201,11 @@ class MainWP_Manage_Sites {
 		MainWP_Manage_Sites_View::init_left_menu( self::$subPages );
 	}
 
-	/** Initiate sub page menu. */
+	/**
+	 * Initiate sub page menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_subpages_menu()
+	 */
 	public static function init_subpages_menu() {
 		MainWP_Manage_Sites_View::init_subpages_menu( self::$subPages );
 	}
@@ -204,6 +214,9 @@ class MainWP_Manage_Sites {
 	 * Method on_load_page()
 	 *
 	 * Run on page load.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
+     * @uses \MainWP\Dashboard\MainWP_System::enqueue_postbox_scripts()
 	 */
 	public static function on_load_page() {
 
@@ -231,6 +244,8 @@ class MainWP_Manage_Sites {
 	 * Method on_load_sunpages()
 	 *
 	 * Run on subpage load.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function on_load_subpages() {
 		if ( ! empty( $_GET['id'] ) ) {
@@ -246,6 +261,7 @@ class MainWP_Manage_Sites {
 	 * @param string $shownPage Current page slug.
      *
      * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -260,6 +276,7 @@ class MainWP_Manage_Sites {
 	 * @param string $shownPage The page slug shown at this moment.
      *
      * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_footer()
 	 */
 	public static function render_footer( $shownPage ) {
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
@@ -408,6 +425,8 @@ class MainWP_Manage_Sites {
 	 * Method ajax_optimize_display_rows()
 	 *
 	 * Display table rows, optimize for shared hosting or big networks.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
 	 */
 	public static function ajax_optimize_display_rows() {
 		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
@@ -427,6 +446,7 @@ class MainWP_Manage_Sites {
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
      * @uses \MainWP\Dashboard\MainWP_DB::query()
      * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_sync_exts_settings()
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -664,6 +684,8 @@ class MainWP_Manage_Sites {
 	 * Method render_bulk_new_site()
 	 *
 	 * Render Import Sites - bulk new site modal.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_import_sites()
 	 */
 	public static function render_bulk_new_site() {
 		$showpage = 'BulkAddNew';
@@ -729,6 +751,18 @@ class MainWP_Manage_Sites {
 	 * Method on_load_page_dashboard()
 	 *
 	 * Add individual meta boxes.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Handler::apply_filters()
+     * @uses \MainWP\Dashboard\MainWP_UI::add_widget_box()
+     * @uses \MainWP\Dashboard\MainWP_Connection_Status::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Notes::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Recent_Pages::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Site_Info::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Widget_Themes::get_class_name()
 	 */
 	public static function on_load_page_dashboard() { // phpcs:ignore -- current complexity is required to achieve desired results. Pull request solutions are welcome.
 		wp_enqueue_script( 'common' );
@@ -845,6 +879,9 @@ class MainWP_Manage_Sites {
 	 * Render updates.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Update_View::render_updates()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_updates( $website ) {
 		MainWP_System_Utility::set_current_wpid( $website->id );
@@ -863,6 +900,9 @@ class MainWP_Manage_Sites {
 	 * @param bool  $updated_templ updated template file.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_site_edit_email_settings()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_email_settings( $website, $updated, $updated_templ ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id, false, array( 'settings_notification_emails' ) ); // reload.
@@ -894,6 +934,9 @@ class MainWP_Manage_Sites {
 	 * Render Manage Sites Dashboard.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_dashboard()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_dashboard( $website ) {
 		MainWP_System_Utility::set_current_wpid( $website->id );
@@ -908,6 +951,9 @@ class MainWP_Manage_Sites {
 	 * Render Manage Sites Backups.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Backup_View::render_backup_site()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_backup_site( $website ) {
 		MainWP_System_Utility::set_current_wpid( $website->id );
@@ -922,6 +968,9 @@ class MainWP_Manage_Sites {
 	 * Render Security Scan.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_scan_site()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_scan_site( $website ) {
 		MainWP_System_Utility::set_current_wpid( $website->id );
@@ -939,6 +988,8 @@ class MainWP_Manage_Sites {
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_sql_file()
      * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Backup_View::show_backups()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function show_backups( &$website ) {
 		$dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
@@ -977,6 +1028,12 @@ class MainWP_Manage_Sites {
 	 *
 	 * @param bool $showDelete true|false Show delete option.
 	 * @param bool $showAddNew true|false Show add new option.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
@@ -1045,6 +1102,8 @@ class MainWP_Manage_Sites {
 	 * Render Manage Sites Page.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render_manage_sites() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1145,6 +1204,7 @@ class MainWP_Manage_Sites {
 	 * @return bool $updated Updated.
      *
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
@@ -1316,6 +1376,9 @@ class MainWP_Manage_Sites {
 	 *
 	 * @param mixed $websiteid Child Site ID.
 	 * @param mixed $updated Updated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_edit_site()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::set_current_wpid()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( $websiteid ) {

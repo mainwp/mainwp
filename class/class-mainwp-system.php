@@ -228,7 +228,7 @@ class MainWP_System {
 		}
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			if ( isset( $_GET['mainwp_run'] ) && ! empty( $_GET['mainwp_run'] ) ) {
-				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), 8 );
+				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
 			}
 		}
 		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );

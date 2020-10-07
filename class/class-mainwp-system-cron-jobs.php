@@ -178,10 +178,12 @@ class MainWP_System_Cron_Jobs {
 			return;
 		}
 		session_write_close();
-		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
-		header( 'X-Robots-Tag: noindex, nofollow', true );
-		header( 'X-MainWP-Version: ' . MainWP_System::$version, true );
-		nocache_headers();
+		if ( ! headers_sent() ) {
+			header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ), true );
+			header( 'X-Robots-Tag: noindex, nofollow', true );
+			header( 'X-MainWP-Version: ' . MainWP_System::$version, true );
+			nocache_headers();
+		}
 		wp_die( 'MainWP Test' );
 	}
 

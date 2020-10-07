@@ -171,8 +171,8 @@ class MainWP_Monitoring_Handler {
 	 */
 	private static function get_duration_for_status( $website, $time ) {
 
-		$use_indi_interval = ( 0 < $website->status_check_interval ) ? true : false;
-
+		$use_indi_interval  = ( 0 < $website->status_check_interval ) ? true : false;
+		$duration_site_last = 0;
 		if ( 0 != $website->offline_checks_last ) {
 			$duration_site_last = $time - $website->offline_checks_last; // duration equal now (time()) minus last time checked.
 		}
@@ -271,6 +271,8 @@ class MainWP_Monitoring_Handler {
 			return;
 		}
 
+		$email = '';
+		
 		// for individual notification, one site loop.
 		foreach ( $websites as $site ) {
 			$addition_emails = $site->monitoring_notification_emails;

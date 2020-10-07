@@ -514,7 +514,9 @@ class MainWP_UI {
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-
+		if ( ! is_array( $websites ) ) {
+			$websites = array();
+		}
 		?>
 		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
 			<div class="ui segment" style="margin-bottom:0px">

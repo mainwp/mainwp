@@ -162,7 +162,6 @@ class MainWP_Menu {
 	 * @uses \MainWP\Dashboard\MainWP_User::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
 	 */
-
 	public static function init_subpages_menu() {
 
 		if ( ! self::is_disable_menu_item( 2, 'PostBulkManage' ) ) {

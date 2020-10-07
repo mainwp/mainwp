@@ -64,7 +64,11 @@ class MainWP_Settings {
 		self::export_sites();
 	}
 
-	/** Instantiate the Settings Menu  */
+	/**
+	 * Instantiate the Settings Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
@@ -158,7 +162,11 @@ class MainWP_Settings {
 		self::init_left_menu( self::$subPages );
 	}
 
-	/** Instantiate Settings SubPages Menu */
+	/**
+	 * Instantiate Settings SubPages Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_subpages_menu() {
 		?>
 		<div id="menu-mainwp-Settings" class="mainwp-submenu-wrapper">
@@ -209,6 +217,10 @@ class MainWP_Settings {
 	 * Settings Page & SubPage link data.
 	 *
 	 * @param array $subPages SubPages Array.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -277,6 +289,10 @@ class MainWP_Settings {
 	 * Render Page Header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -362,9 +378,10 @@ class MainWP_Settings {
 	 * @uses MainWP_Utility::update_option()
 	 *
 	 * @return boolean True|False Posts On True.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
@@ -435,7 +452,12 @@ class MainWP_Settings {
 		return false;
 	}
 
-	/** Render the MainWP Settings Page. */
+	/**
+	 * Render the MainWP Settings Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Monitoring_View
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
+	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -721,6 +743,8 @@ class MainWP_Settings {
 	 * Returns false or the location of the OpenSSL Lib File.
 	 *
 	 * @return mixed false|opensslLibLocation
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_openssl_config_warning()
 	 */
 	public static function show_openssl_lib_config() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
@@ -916,7 +940,11 @@ class MainWP_Settings {
 		self::render_footer( 'Advanced' );
 	}
 
-	/** Render MainWP Tools SubPage */
+	/**
+	 * Render MainWP Tools SubPage.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
+	 */
 	public static function render_mainwp_tools() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
@@ -1044,7 +1072,15 @@ class MainWP_Settings {
 		}
 	}
 
-	/** Render MainWP Email Settings SubPage */
+	/**
+	 * Render MainWP Email Settings SubPage.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_edit_settings()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::emails_general_settings_handle()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_all_settings()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
+	 */
 	public static function render_email_settings() {
 		$notification_emails = MainWP_Notification_Settings::get_notification_types();
 		self::render_header( 'Emails' );

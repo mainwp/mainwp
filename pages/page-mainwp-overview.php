@@ -49,6 +49,8 @@ class MainWP_Overview {
 	 * if there isn't one create it.
 	 *
 	 *  @return self::singlton Overview Page Session.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Overview
 	 */
 	public static function get() {
 		if ( null == self::$instance ) {
@@ -85,7 +87,11 @@ class MainWP_Overview {
 		return $columns;
 	}
 
-	/** Add MainWP Overview top level menu. */
+	/**
+	 * Add MainWP Overview top level menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 */
 	public function on_admin_menu() {
 		if ( MainWP_System_Utility::is_admin() ) {
 
@@ -134,7 +140,11 @@ class MainWP_Overview {
 		}
 	}
 
-	/** Instantiate the MainWP Overview Menu item. */
+	/**
+	 * Instantiate the MainWP Overview Menu item.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 */
 	public static function init_left_menu() {
 		MainWP_Menu::add_left_menu(
 			array(
@@ -169,6 +179,15 @@ class MainWP_Overview {
 	 * Add MainWP Overview Page Widgets.
 	 *
 	 * @param array $page Current page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Handler::apply_filters()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+     * @uses \MainWP\Dashboard\MainWP_UI::add_widget_box()
+     * @uses \MainWP\Dashboard\MainWP_Connection_Status::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Recent_Pages::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Security_Issues_Widget::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
 	 */
 	public static function add_meta_boxes( $page ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -259,6 +278,9 @@ class MainWP_Overview {
 	 * Method on_show_page()
 	 *
 	 * When the page loads render the body content.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
 	 */
 	public function on_show_page() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
@@ -291,11 +313,19 @@ class MainWP_Overview {
 	/**
 	 * Method render_dashboard_body()
 	 *
-	 * Render the Dasboard Body content.
+	 * Render the Dashboard Body content.
 	 *
 	 * @param object $websites      Object containing child sites info.
 	 * @param mixed  $dashboard     Dashboard.
 	 * @param int    $screen_layout Screen Layout.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
+     * @uses \MainWP\Dashboard\MainWP_Twitter
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+     * @uses \MainWP\Dashboard\MainWP_UI::do_widget_boxes()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
 	 */
 	public static function render_dashboard_body( $websites, $dashboard, $screen_layout ) {
 

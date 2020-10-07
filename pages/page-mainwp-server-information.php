@@ -35,7 +35,10 @@ class MainWP_Server_Information {
 	/**
 	 * Method init_menu()
 	 *
-	 * Initiate Server Informaion subPage menu.
+	 * Initiate Server Information subPage menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -141,6 +144,9 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders Sub Pages Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -191,6 +197,11 @@ class MainWP_Server_Information {
 	 * Initiates Server Information left menu.
 	 *
 	 * @param array $subPages array of subpages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
@@ -277,6 +288,11 @@ class MainWP_Server_Information {
 	 * Renders Server Information header.
 	 *
 	 * @param string $shownPage Current page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
@@ -354,6 +370,39 @@ class MainWP_Server_Information {
 	 * @return void
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_mainwp_version()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_current_version()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_file_system_method()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_php_allow_url_fopen()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_php_exif()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_php_iptc()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_php_xml()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_loaded_php_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_sql_mode()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_wp_root()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_name()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_software()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_os()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_architecture()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_ip()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_protocol()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_http_host()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_https()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::server_self_connect()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_user_agent()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_port()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_gateway_interface()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::memory_usage()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_complete_url()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_request_time()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_http_accept()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_server_accept_charset()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_script_file_name()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_current_page_uri()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_remote_address()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_remote_host()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_remote_port()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -696,6 +745,8 @@ class MainWP_Server_Information {
 	 * Compares the detected MainWP Dashboard version agains the verion in WP.org.
 	 *
 	 * @return mixed Pass|self::get_warning_html().
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_mainwp_version()
 	 */
 	public static function get_mainwp_version_check() {
 		$current = get_option( 'mainwp_plugin_version' );
@@ -826,6 +877,9 @@ class MainWP_Server_Information {
 	 * Checks if the ../wp-content/uploads/mainwp/ directory is writable.
 	 *
 	 * @return bool True if writable, false if not.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function check_directory_mainwp_directory() {
 		$dirs = MainWP_System_Utility::get_mainwp_dir();
@@ -896,6 +950,10 @@ class MainWP_Server_Information {
 	 * @param null   $extraVersion extra version.
 	 * @param null   $whatType comparison type.
 	 * @param int    $errorType global variable self::WARNING = 1.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::filesize_compare()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::curlssl_compare()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
 	 */
 	public static function render_row( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
@@ -929,6 +987,10 @@ class MainWP_Server_Information {
 	 * @param null   $extraVersion extra version.
 	 * @param null   $whatType comparison type.
 	 * @param int    $errorType global variable self::WARNING = 1.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::filesize_compare()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::curlssl_compare()
 	 */
 	public static function render_row_with_description( $config, $compare, $version, $getter, $extraText = '', $extraCompare = null, $extraVersion = null, $whatType = null, $errorType = self::WARNING ) {
 		$currentVersion = call_user_func( array( MainWP_Server_Information_Handler::get_class_name(), $getter ) );
@@ -954,6 +1016,8 @@ class MainWP_Server_Information {
 	 * Checks if file system method is direct.
 	 *
 	 * @return mixed html|self::get_warning_html().
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_file_system_method()
 	 */
 	public static function get_file_system_method_check() {
 		$fsmethod = MainWP_Server_Information_Handler::get_file_system_method();
@@ -1021,6 +1085,9 @@ class MainWP_Server_Information {
 	 * Renders error log page.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::last_lines()
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::get_class_name()
 	 */
 	public static function render_error_log() {
 		$log_errors = ini_get( 'log_errors' );
@@ -1157,6 +1224,9 @@ class MainWP_Server_Information {
 
 	/**
 	 * Renders action logs page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Logger
+     * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
 	 */
 	public static function render_action_logs() {
 		self::render_header( 'ActionLogs' );
@@ -1289,6 +1359,8 @@ class MainWP_Server_Information {
 	 * Renders MainWP Settings 'Options'.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::mainwp_options()
 	 */
 	public static function display_mainwp_options() {
 		$options = MainWP_Server_Information_Handler::mainwp_options();

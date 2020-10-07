@@ -38,11 +38,12 @@ class MainWP_Recent_Pages {
 	 * Method render_sites()
 	 *
 	 * Build the resent pages list.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_sites() {
 
@@ -179,7 +180,6 @@ class MainWP_Recent_Pages {
 
 		$recent_pages_published = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'publish' );
 		$recent_pages_published = MainWP_Utility::sortmulti( $recent_pages_published, 'dts', 'desc' );
-
 		?>
 	<div class="recent_posts_published ui tab active" data-tab="page-published">
 			<?php

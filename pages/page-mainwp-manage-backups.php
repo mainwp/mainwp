@@ -36,6 +36,8 @@ class MainWP_Manage_Backups {
 	 * Create instance.
 	 *
 	 * @return self $instance.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups
 	 */
 	public static function instance() {
 		if ( null == self::$instance ) {
@@ -76,6 +78,9 @@ class MainWP_Manage_Backups {
 	 * Instantiate Legacy Backups Menu.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		$enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
@@ -138,7 +143,11 @@ class MainWP_Manage_Backups {
 		self::init_left_menu( self::$subPages, $enable_legacy_backup );
 	}
 
-	/** Instantiate legacy backups subpages. */
+	/**
+	 * Instantiate legacy backups subpages.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_subpages_menu() {
 		if ( self::$hideSubmenuBackups && ( empty( self::$subPages ) || ! is_array( self::$subPages ) ) ) {
 			return;
@@ -181,6 +190,10 @@ class MainWP_Manage_Backups {
 	 *
 	 * @param array   $subPages Legacy Backup Subpages.
 	 * @param bool $enableLegacyBackup ture|false, whether or not to enable menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ) {
 		if ( ! self::$hideSubmenuBackups && $enableLegacyBackup ) {
@@ -227,6 +240,10 @@ class MainWP_Manage_Backups {
 	 * Render MainWP Legacy Backups Page Header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -298,6 +315,9 @@ class MainWP_Manage_Backups {
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_for_user()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
 	 */
 	public static function render_manager() {
 		$backupTask = null;
@@ -695,6 +715,8 @@ class MainWP_Manage_Backups {
 	 * @param mixed $task Task to edit.
 	 *
 	 * @return string Form.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_new_edit( $task ) {
 		$selected_websites = array();
@@ -735,6 +757,8 @@ class MainWP_Manage_Backups {
 	 * Render Scheduled Backup.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
 	 */
 	public static function render_schedule_backup() {
 		$backupTask = null;

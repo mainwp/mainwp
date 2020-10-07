@@ -104,6 +104,8 @@ class MainWP_Manage_Backups_Handler {
 	 * @param $task Backup task.
 	 *
 	 * @return bool true|false.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 */
 	public static function can_edit_backuptask( &$task ) {
 		if ( null == $task ) {

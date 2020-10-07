@@ -200,6 +200,8 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_footer()
 	 *
 	 * Render Setup Wizard's footer.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::usersnap_integration()
 	 */
 	public function setup_wizard_footer() {
 		?>
@@ -391,7 +393,9 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method  mwp_setup_system_requirements()
 	 *
-	 * Render System Requirments Step.
+	 * Render System Requirements Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information::render_quick_setup_system_check()
 	 */
 	public function mwp_setup_system_requirements() {
 		$hosting_type = get_option( 'mwp_setup_installationHostingType' );
@@ -784,6 +788,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification()
 	 *
 	 * Render Notifications Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public function mwp_setup_notification() {
 
@@ -1223,6 +1229,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_install_extension()
 	 *
 	 * Setup & install extensions Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public function mwp_setup_install_extension() {
 		$backup_method  = get_option( 'mwp_setup_primaryBackup' );

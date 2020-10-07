@@ -27,6 +27,8 @@ class MainWP_QQ2_Uploaded_File_Xhr {
 	 * @throws \Exception Error messages.
 	 *
 	 * @return boolean true|false.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public function save( $path ) {
 		$input    = fopen( 'php://input', 'r' );

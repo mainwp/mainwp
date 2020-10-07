@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
@@ -40,6 +42,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 
 	/**
 	 * Initiate all actions.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
 	 */
 	public function init() {
 		// Page: ManageSites.
@@ -158,6 +162,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Page: Posts.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_Post::render_table()
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
@@ -187,6 +192,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Page: Pages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_Page::render_table()
 	 */
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
@@ -211,6 +217,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_get_categories()
 	 *
 	 * Get post/page categories.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_categories()
 	 */
 	public function mainwp_get_categories() {
 		$this->secure_request( 'mainwp_get_categories' );
@@ -222,6 +230,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_post_get_edit()
 	 *
 	 * Get post to edit.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
 	 */
 	public function mainwp_post_get_edit() {
 		$this->secure_request( 'mainwp_post_get_edit' );
@@ -278,6 +288,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Unpublish post from Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::unpublish()
 	 */
 	public function mainwp_post_unpublish() {
 		$this->secure_request( 'mainwp_post_unpublish' );
@@ -288,7 +300,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_post_publish()
 	 *
 	 * Publish post on Child Site,
-	 * Page: Recent Posts
+	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::publish()
 	 */
 	public function mainwp_post_publish() {
 		$this->secure_request( 'mainwp_post_publish' );
@@ -300,6 +314,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Approve post on Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::approve()
 	 */
 	public function mainwp_post_approve() {
 		$this->secure_request( 'mainwp_post_approve' );
@@ -310,7 +326,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_post_trash()
 	 *
 	 * Trash post on Child Site,
-	 * Page: Recent Posts
+	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::trash()
 	 */
 	public function mainwp_post_trash() {
 		$this->secure_request( 'mainwp_post_trash' );
@@ -323,6 +341,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete post on Child Site,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::delete()
 	 */
 	public function mainwp_post_delete() {
 		$this->secure_request( 'mainwp_post_delete' );
@@ -335,6 +355,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Restore post,
 	 * Page: Recent Posts.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::restore()
 	 */
 	public function mainwp_post_restore() {
 		$this->secure_request( 'mainwp_post_restore' );
@@ -347,6 +369,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Unpublish page,
 	 * Page: Recent Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Page::unpublish()
 	 */
 	public function mainwp_page_unpublish() {
 		$this->secure_request( 'mainwp_page_unpublish' );
@@ -358,6 +382,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Publish page,
 	 * Page: Recent Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Page::publish()
 	 */
 	public function mainwp_page_publish() {
 		$this->secure_request( 'mainwp_page_publish' );
@@ -369,6 +395,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Trash page,
 	 * Page: Recent Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Page::trash()
 	 */
 	public function mainwp_page_trash() {
 		$this->secure_request( 'mainwp_page_trash' );
@@ -380,6 +408,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete page,
 	 * Page: Recent Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Page::delete()
 	 */
 	public function mainwp_page_delete() {
 		$this->secure_request( 'mainwp_page_delete' );
@@ -391,6 +421,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Restore page,
 	 * Page: Recent Pages.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Page::restore()
 	 */
 	public function mainwp_page_restore() {
 		$this->secure_request( 'mainwp_page_restore' );
@@ -542,6 +574,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_dismiss_twit()
 	 *
 	 * Dismiss the twitter bragger.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_twitter_info()
 	 */
 	public function mainwp_dismiss_twit() {
 		$this->secure_request( 'mainwp_dismiss_twit' );
@@ -595,6 +629,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Post handler for twitter bragger.
 	 *
 	 * @return mixed $html|$success
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 */
 	public function mainwp_twitter_dashboard_action() {
 		$this->secure_request( 'mainwp_twitter_dashboard_action' );
@@ -634,10 +674,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_security_issues_request()
 	 *
-	 * Post hander for,
+	 * Post handler for,
 	 * Page: SecurityIssues.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Security_Issues::fetch_security_issues()
 	 */
 	public function mainwp_security_issues_request() {
 		$this->secure_request( 'mainwp_security_issues_request' );
@@ -661,10 +702,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method  mainwp_security_issues_fix()
 	 *
-	 * Post hander for 'fix issues',
+	 * Post handler for 'fix issues',
 	 * Page: SecurityIssues.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Security_Issues::fix_security_issue()
 	 */
 	public function mainwp_security_issues_fix() {
 		$this->secure_request( 'mainwp_security_issues_fix' );
@@ -688,10 +730,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method  mainwp_security_issues_unfix()
 	 *
-	 * Post hander for 'unfix issues',
+	 * Post handler for 'unfix issues',
 	 * Page: SecurityIssues.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Security_Issues::unfix_security_issue()
 	 */
 	public function mainwp_security_issues_unfix() {
 		$this->secure_request( 'mainwp_security_issues_unfix' );
@@ -749,6 +792,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Display rows via ajax,
 	 * Page: Manage Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::ajax_optimize_display_rows()
 	 */
 	public function ajax_sites_display_rows() {
 		$this->secure_request( 'mainwp_manage_sites_display_rows' );
@@ -760,6 +805,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Display rows via ajax,
 	 * Page: Monitoring Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring::ajax_optimize_display_rows()
 	 */
 	public function ajax_monitoring_display_rows() {
 		$this->secure_request( 'mainwp_monitoring_sites_display_rows' );
@@ -796,6 +843,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Post handler for save notes on,
 	 * Page: Manage Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
 	 */
 	public function mainwp_notes_save() {
 		$this->secure_request( 'mainwp_notes_save' );
@@ -805,8 +854,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_syncerrors_dismiss()
 	 *
-	 * Dismis Syncerrors for,
+	 * Dismiss Sync errors for,
 	 * Widget: RightNow.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::dismiss_sync_errors()
 	 */
 	public function mainwp_syncerrors_dismiss() {
 
@@ -901,6 +952,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::check_ignored_http_code()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
 	 */
 	public function ajax_recheck_http() {
 		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
@@ -960,6 +1012,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_autoupdate_and_trust_child()
 	 *
 	 * Set MainWP Child Plugin to Trusted & AutoUpdate.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::trust_plugin()
 	 */
 	public function mainwp_autoupdate_and_trust_child() {
 		$this->secure_request( 'mainwp_autoupdate_and_trust_child' );
@@ -977,6 +1031,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public function mainwp_force_destroy_sessions() {
 		$this->secure_request( 'mainwp_force_destroy_sessions' );

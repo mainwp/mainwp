@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Site_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
@@ -72,6 +74,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_rename()
 	 *
 	 * Rename Group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::rename_group()
 	 */
 	public function mainwp_group_rename() {
 		$this->secure_request( 'mainwp_group_rename' );
@@ -83,6 +87,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_delete()
 	 *
 	 * Delete Group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::delete_group()
 	 */
 	public function mainwp_group_delete() {
 		$this->secure_request( 'mainwp_group_delete' );
@@ -94,6 +100,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_add()
 	 *
 	 * Add Group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::add_group()
 	 */
 	public function mainwp_group_add() {
 		$this->secure_request( 'mainwp_group_add' );
@@ -105,6 +113,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_getsites()
 	 *
 	 * Get Child Sites in group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::get_sites()
 	 */
 	public function mainwp_group_getsites() {
 		$this->secure_request( 'mainwp_group_getsites' );
@@ -116,6 +126,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_group_updategroup()
 	 *
 	 * Update Group.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::update_group()
 	 */
 	public function mainwp_group_updategroup() {
 		$this->secure_request( 'mainwp_group_updategroup' );
@@ -127,6 +139,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_checkwp()
 	 *
 	 * Check if WP can be added.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::check_site()
 	 */
 	public function mainwp_checkwp() {
 		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
@@ -140,6 +154,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_addwp()
 	 *
 	 * Add WP to the database.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::add_site()
 	 */
 	public function mainwp_addwp() {
 		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
@@ -153,6 +169,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method get_site_icon()
 	 *
 	 * Get Child Site Favicon.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
 	 */
 	public function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
@@ -237,6 +255,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_removesite()
 	 *
 	 * Remove a website from MainWP.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_site()
 	 */
 	public function mainwp_removesite() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'delete_sites' ) ) {
@@ -252,6 +272,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_reconnectwp()
 	 *
 	 * Reconnect to Child Site.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::reconnect_site()
 	 */
 	public function mainwp_reconnectwp() {
 		$this->secure_request( 'mainwp_reconnectwp' );
@@ -263,6 +285,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_updatechildsite_value()
 	 *
 	 * Update Child Site value.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::update_child_site_value()
 	 */
 	public function mainwp_updatechildsite_value() {
 		$this->secure_request( 'mainwp_updatechildsite_value' );
@@ -274,6 +298,9 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_syncsites()
 	 *
 	 * Sync Child Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::dismiss_sync_errors()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::sync_site()
 	 */
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
@@ -285,6 +312,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_checksites()
 	 *
 	 * Check Child Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::ajax_check_status_site()
 	 */
 	public function mainwp_checksites() {
 		$this->secure_request( 'mainwp_checksites' );

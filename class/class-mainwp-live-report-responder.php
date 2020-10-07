@@ -55,6 +55,8 @@ class MainWP_Live_Report_Responder {
 	 * MainWP_Live_Report_Responder constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::install()
 	 */
 	public function __construct() {
 
@@ -71,6 +73,9 @@ class MainWP_Live_Report_Responder {
 
 	/**
 	 * Initialize Admin.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Live_Reports
+	 * @uses \MainWP\Dashboard\MainWP_Live_Reports::init()
 	 */
 	public function admin_init() {
 

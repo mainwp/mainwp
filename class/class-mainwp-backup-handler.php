@@ -36,9 +36,8 @@ class MainWP_Backup_Handler {
 	 *
 	 * @gobal object $wp_filesystem WordPress filesystem instance.
 	 *
-	 * @throws MainWP_Exception
-	 *
 	 * @return mixed $backup_result
+	 * @throws MainWP_Exception
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
@@ -48,6 +47,11 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_progress()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug_for_website()
+	 * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
+	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		// phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -521,15 +525,16 @@ class MainWP_Backup_Handler {
 	 * Download backup file.
 	 *
 	 * @param mixed $pSiteId Child Site ID.
-	 * @param mixed $pType full|db Type of backup.
-	 * @param mixed $pUrl Backup location.
-	 * @param mixed $pFile Backup File.
+	 * @param mixed $pType   full|db Type of backup.
+	 * @param mixed $pUrl    Backup location.
+	 * @param mixed $pFile   Backup File.
 	 *
 	 * @return bool true|false
+	 * @throws MainWP_Exception
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -632,14 +637,16 @@ class MainWP_Backup_Handler {
 	 *
 	 * Check backup pid.
 	 *
-	 * @param mixed $pSiteId Child Site id.
-	 * @param mixed $pid Backup pid.
-	 * @param mixed $type full|db Type of backup.
+	 * @param mixed $pSiteId   Child Site id.
+	 * @param mixed $pid       Backup pid.
+	 * @param mixed $type      full|db Type of backup.
 	 * @param mixed $subfolder Subfolder for backup.
 	 * @param mixed $pFilename Backups filename
 	 *
 	 * @return array $status, $result.
+	 * @throws \Exception
 	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
@@ -737,31 +744,33 @@ class MainWP_Backup_Handler {
 	 *
 	 * Backup Child Site.
 	 *
-	 * @param mixed  $pSiteId Child Site ID.
-	 * @param mixed  $pType full|db Typ of backup.
-	 * @param mixed  $pSubfolder Subfolder to store backup.
-	 * @param mixed  $pExclude Exclusion list.
-	 * @param mixed  $excludebackup Exclued backup files.
-	 * @param mixed  $excludecache Exclude cache files.
-	 * @param mixed  $excludenonwp Exclude no WP Files.
-	 * @param mixed  $excludezip Exclude Zip files
-	 * @param null   $pFilename Name of backup file.
-	 * @param string $pFileNameUID File name unique ID.
-	 * @param bool   $pArchiveFormat Achive format.
+	 * @param mixed  $pSiteId                         Child Site ID.
+	 * @param mixed  $pType                           full|db Typ of backup.
+	 * @param mixed  $pSubfolder                      Subfolder to store backup.
+	 * @param mixed  $pExclude                        Exclusion list.
+	 * @param mixed  $excludebackup                   Exclued backup files.
+	 * @param mixed  $excludecache                    Exclude cache files.
+	 * @param mixed  $excludenonwp                    Exclude no WP Files.
+	 * @param mixed  $excludezip                      Exclude Zip files
+	 * @param null   $pFilename                       Name of backup file.
+	 * @param string $pFileNameUID                    File name unique ID.
+	 * @param bool   $pArchiveFormat                  Achive format.
 	 * @param bool   $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
-	 * @param bool   $pMaximumFileDescriptorsAuto Auto maximum file descriptors.
-	 * @param bool   $pMaximumFileDescriptors Maximum file decriptors.
-	 * @param bool   $pLoadFilesBeforeZip Load files before zip.
-	 * @param bool   $pid Backup pid.
-	 * @param bool   $append Append to backup.
-	 *
-	 * @throw MainWP_Exception
+	 * @param bool   $pMaximumFileDescriptorsAuto     Auto maximum file descriptors.
+	 * @param bool   $pMaximumFileDescriptors         Maximum file decriptors.
+	 * @param bool   $pLoadFilesBeforeZip             Load files before zip.
+	 * @param bool   $pid                             Backup pid.
+	 * @param bool   $append                          Append to backup.
 	 *
 	 * @return mixed $backup_result
+	 * @throws MainWP_Exception
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses  \MainWP\Dashboard\MainWP_Exception
+	 * @uses  \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Logger::debug_for_website()
+	 * @uses  \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function backup(
 		$pSiteId,
@@ -1090,6 +1099,8 @@ class MainWP_Backup_Handler {
 	 * Update Child Site Settings.
 	 *
 	 * @return bool true|false
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 */
 	public static function handle_settings_post() {
 		if ( MainWP_System_Utility::is_admin() ) {
@@ -1152,6 +1163,8 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pFile Backup file.
 	 *
 	 * @return false|int
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 */
 	public static function backup_get_file_size( $pFile ) {
 		$dir = MainWP_System_Utility::get_mainwp_specific_dir();

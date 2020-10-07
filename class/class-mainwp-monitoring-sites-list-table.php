@@ -15,6 +15,8 @@ namespace MainWP\Dashboard;
  * MainWP sites monitoring list.
  *
  * @todo The only variables that seam to be used are $column_headers.
+ *
+ * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
  */
 class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table {
 

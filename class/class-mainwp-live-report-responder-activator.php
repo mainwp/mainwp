@@ -58,6 +58,8 @@ class MainWP_Live_Report_Responder_Activator {
 
 	/**
 	 * Activate Plugin.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Live_Report_Responder
 	 */
 	public function activate_this_plugin() {
 

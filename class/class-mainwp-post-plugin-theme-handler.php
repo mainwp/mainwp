@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Plugin_Theme_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
@@ -112,6 +114,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Search handler for Themes.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes::render_table()
 	 */
 	public function mainwp_themes_search() {
 		$this->secure_request( 'mainwp_themes_search' );
@@ -131,6 +135,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate Theme,
 	 * Page: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::activate_theme()
 	 */
 	public function mainwp_theme_activate() {
 		$this->secure_request( 'mainwp_theme_activate' );
@@ -143,6 +149,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete Theme,
 	 * Page: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::delete_themes()
 	 */
 	public function mainwp_theme_delete() {
 		$this->secure_request( 'mainwp_theme_delete' );
@@ -155,6 +163,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Ignore theme updates,
 	 * Page: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::ignore_updates()
 	 */
 	public function mainwp_theme_ignore_updates() {
 		$this->secure_request( 'mainwp_theme_ignore_updates' );
@@ -169,6 +179,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Page: Themes.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_Themes::render_all_themes_table()
 	 */
 	public function mainwp_themes_search_all() {
 		$this->secure_request( 'mainwp_themes_search_all' );
@@ -182,6 +193,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Save trusted theme notes,
 	 * Page: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::save_trusted_theme_note()
 	 */
 	public function mainwp_trusted_theme_notes_save() {
 		$this->secure_request( 'mainwp_trusted_theme_notes_save' );
@@ -195,6 +208,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Search handler for Plugins.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins::render_table()
 	 */
 	public function mainwp_plugins_search() {
 		$this->secure_request( 'mainwp_plugins_search' );
@@ -216,6 +230,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Page: Plugins.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins::render_all_active_table()
 	 */
 	public function mainwp_plugins_search_all_active() {
 		$this->secure_request( 'mainwp_plugins_search_all_active' );
@@ -229,6 +244,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate plugins,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::activate_plugins()
 	 */
 	public function mainwp_plugin_activate() {
 		$this->secure_request( 'mainwp_plugin_activate' );
@@ -241,6 +258,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Deactivate plugins,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::deactivate_plugins()
 	 */
 	public function mainwp_plugin_deactivate() {
 		$this->secure_request( 'mainwp_plugin_deactivate' );
@@ -253,6 +272,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete plugins,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::delete_plugins()
 	 */
 	public function mainwp_plugin_delete() {
 		$this->secure_request( 'mainwp_plugin_delete' );
@@ -265,6 +286,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Ignore plugins updates,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::ignore_updates()
 	 */
 	public function mainwp_plugin_ignore_updates() {
 		$this->secure_request( 'mainwp_plugin_ignore_updates' );
@@ -277,6 +300,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Save trusted plugin notes,
 	 * Page: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::save_trusted_plugin_note()
 	 */
 	public function mainwp_trusted_plugin_notes_save() {
 		$this->secure_request( 'mainwp_trusted_plugin_notes_save' );
@@ -289,6 +314,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::activate_plugin()
 	 */
 	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
@@ -300,6 +327,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Deactivate plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::deactivate_plugin()
 	 */
 	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
@@ -311,6 +340,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::delete_plugin()
 	 */
 	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
@@ -322,6 +353,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate theme,
 	 * Widget: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Themes::activate_theme()
 	 */
 	public function mainwp_widget_theme_activate() {
 		$this->secure_request( 'mainwp_widget_theme_activate' );
@@ -333,6 +366,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete theme,
 	 * Widget: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Themes::delete_theme()
 	 */
 	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );
@@ -344,6 +379,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Prepair bulk installation of plugins & themes,
 	 * Page: InstallPlugins/Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::prepare_install()
 	 */
 	public function mainwp_preparebulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkinstallplugintheme' );
@@ -355,6 +392,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Installation of plugins & themes,
 	 * Page: InstallPlugins/Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::perform_install()
 	 */
 	public function mainwp_installbulkinstallplugintheme() {
 		$this->secure_request( 'mainwp_installbulkinstallplugintheme' );
@@ -366,6 +405,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Prepair bulk upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::prepare_upload()
 	 */
 	public function mainwp_preparebulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_preparebulkuploadplugintheme' );
@@ -377,6 +418,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Bulk upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::perform_upload()
 	 */
 	public function mainwp_installbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_installbulkuploadplugintheme' );
@@ -388,6 +431,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Clean upload of plugins & themes,
 	 * Page: InstallPlugins/Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::clean_upload()
 	 */
 	public function mainwp_cleanbulkuploadplugintheme() {
 		$this->secure_request( 'mainwp_cleanbulkuploadplugintheme' );
@@ -709,6 +754,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_trust_plugin()
 	 *
 	 * Trust plugin.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::trust_post()
+	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::trust_post()
 	 */
 	public function mainwp_trust_plugin() {
 		$this->secure_request( 'mainwp_trust_plugin' );

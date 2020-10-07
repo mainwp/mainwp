@@ -20,6 +20,8 @@ class MainWP_Manage_Sites_View {
 	 * Initiate Sites sub menu.
 	 *
 	 * @return add_submenu_page()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::get_class_name()
 	 */
 	public static function init_menu() {
 		return add_submenu_page(
@@ -36,6 +38,8 @@ class MainWP_Manage_Sites_View {
 	 * Method init_subpages_menu()
 	 *
 	 * @param array $subPages Sub pages array.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu( &$subPages ) {
 		?>
@@ -84,6 +88,10 @@ class MainWP_Manage_Sites_View {
 	 * Initiate left Sites menu.
 	 *
 	 * @param array $subPages Sub pages array.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 
@@ -161,9 +169,11 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param string $shownPage Current Page.
 	 * @param string $subPages Sites subpages.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_second_top_header()
 	 */
 	public static function render_header( $shownPage = '', $subPages = '' ) {
 
@@ -310,6 +320,9 @@ class MainWP_Manage_Sites_View {
 	 * @param array  $subPages sub pages.
 	 * @param int    $site_id Site id.
 	 * @param string $shownPage Current Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
 
@@ -359,6 +372,8 @@ class MainWP_Manage_Sites_View {
 	 * Method render_import_sites()
 	 *
 	 * Render import sites dialog.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function render_import_sites() {
 		?>
@@ -486,6 +501,7 @@ class MainWP_Manage_Sites_View {
 	 * Render sync extension settings.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
 	 */
 	public static function render_sync_exts_settings() {
 		$sync_extensions_options = apply_filters_deprecated( 'mainwp-sync-extensions-options', array( array() ), '4.0.7.2', 'mainwp_sync_extensions_options' );  // @deprecated Use 'mainwp_sync_extensions_options' instead.
@@ -563,6 +579,8 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $page Page to render.
 	 *
 	 * @return string Sites Overview Page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Overview::render_dashboard_body()
 	 */
 	public static function render_dashboard( &$website, &$page ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ) ) {
@@ -730,10 +748,11 @@ class MainWP_Manage_Sites_View {
 	 * @param mixed $updated Site settings updated check.
 	 *
 	 * @return string Edit Child Site sub page.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_by_website_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_for_current_user()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_by_website_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -993,7 +1012,14 @@ class MainWP_Manage_Sites_View {
 	 * @param object $website       Object containng the website info.
 	 * @param string $type          Email type.
 	 * @param bool   $updated_templ True if page loaded after update, false if not.
-	 */
+     *
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_settings_desc()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_update_template_message()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_name_by_notification_type()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::is_overrided_template()
+     */
 	public static function render_site_edit_email_settings( $website, $type, $updated_templ ) {
 
 		$emails_settings = json_decode( $website->settings_notification_emails, true );
@@ -1101,7 +1127,11 @@ class MainWP_Manage_Sites_View {
 	 * License: GPLv3 or later.
 	 *
 	 * @param string $type   Email type.
-	 * @param int    $siteid Child site ID.
+	 * @param bool   $siteid Child site ID.
+     *
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_name_by_notification_type()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_default_templates_dir()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_custom_templates_dir()
 	 */
 	public static function render_edit_template( $type, $siteid = false ) {
 
@@ -1178,6 +1208,11 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param object $website Object containing the website info.
 	 * @param bool   $updated True if page loaded after update, false if not.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_settings_desc()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public static function render_edit_site_email_settings( $website, $updated ) {
 		$emails_settings = json_decode( $website->settings_notification_emails, true );
@@ -1272,13 +1307,17 @@ class MainWP_Manage_Sites_View {
 	 * Reconnect chid site.
 	 *
 	 * @param object $website The website object.
-	 * @throws \Exception Exception on errors.
 	 *
 	 * @return boolean true|false.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
+     * @throws \Exception Exception on errors.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
+     * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
+     * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function m_reconnect_site( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1396,12 +1435,14 @@ class MainWP_Manage_Sites_View {
 	 * @param array $output Output values.
 	 *
 	 * @return array $message, $error, $id
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
-	 * @uses \MainWP\Dashboard\MainWP_DB::add_website()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::add_website()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
 	 */
 	public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$error      = '';
@@ -1560,7 +1601,10 @@ class MainWP_Manage_Sites_View {
 	 *
 	 * @param mixed $params Udate parameters.
 	 *
-	 * @return int Child Site ID on success and return 0 on failer.
+	 * @return int Child Site ID on success and return 0 on failure.
+	 * @throws \Exception
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_wp_site( $params ) {
 		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {

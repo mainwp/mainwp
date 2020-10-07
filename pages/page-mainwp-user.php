@@ -1208,7 +1208,7 @@ class MainWP_User {
 	 * @param string $extra   Additional Roles to add if any.
 	 *
 	 * @return mixed $information User update info that is returned.
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()

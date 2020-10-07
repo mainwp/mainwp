@@ -319,7 +319,7 @@ class MainWP_Widget_Plugins {
 	 *
 	 * @param mixed $action Plugin Action.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()

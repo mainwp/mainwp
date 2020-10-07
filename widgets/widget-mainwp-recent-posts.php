@@ -716,7 +716,7 @@ class MainWP_Recent_Posts {
 	 * @param string $pAction Post Action.
 	 * @param string $type    Post type.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
@@ -780,7 +780,7 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $pAction Post Action.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception

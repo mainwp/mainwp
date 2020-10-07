@@ -114,6 +114,7 @@ class MainWP_Bulk_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::select_sites_handle()
 	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_categories_handle()
 	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_slug_handle()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::add_sticky_handle()
 	 */
 	public function save_bulkpost( $post_id ) {
 		$_post = get_post( $post_id );
@@ -183,6 +184,7 @@ class MainWP_Bulk_Post {
 	 * @return void
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System::$metaboxes
+	 * @uses \MainWP\Dashboard\MainWP_Page::add_status_handle()
 	 */
 	public function save_bulkpage( $post_id ) {
 

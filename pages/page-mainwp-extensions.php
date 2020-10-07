@@ -23,7 +23,11 @@ class MainWP_Extensions {
 		return __CLASS__;
 	}
 
-	/** Instantiate action hooks. */
+	/**
+	 * Instantiate action hooks.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
+	 */
 	public static function init() {
 		/**
 		 * This hook allows you to render the Extensions page header via the 'mainwp-pageheader-extensions' action.
@@ -59,6 +63,9 @@ class MainWP_Extensions {
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_activation_info()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -281,6 +288,10 @@ class MainWP_Extensions {
 	 * Method init_subpages_menu()
 	 *
 	 * Initiate Extensions Subpage Menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 */
 	public static function init_subpages_menu() {
 		$exts = MainWP_Extensions_Handler::get_extensions();
@@ -330,6 +341,7 @@ class MainWP_Extensions {
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
      * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
      * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );

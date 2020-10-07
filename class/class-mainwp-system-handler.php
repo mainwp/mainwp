@@ -52,6 +52,8 @@ class MainWP_System_Handler {
 	 * MainWP_System_Handler constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
 	 */
 	public function __construct() {
 		add_filter( 'mainwp-extension-enabled-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_enabled' ) ); // @deprecated Use 'mainwp_extension_enabled_check' instead.
@@ -130,6 +132,8 @@ class MainWP_System_Handler {
 	 * @param mixed  $output Function output.
 	 *
 	 * @return mixed MainWP_Extensions_Handler::hook_fetch_urls_authed() Hook fetch authorized URLs.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_fetch_urls_authed()
 	 */
 	public function filter_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output ) {
 		return MainWP_Extensions_Handler::hook_fetch_urls_authed( $pluginFile, $key, $dbwebsites, $what, $params, $handle, $output, $is_external_hook = true );
@@ -148,6 +152,8 @@ class MainWP_System_Handler {
 	 * @param null   $raw_response Raw response.
 	 *
 	 * @return mixed MainWP_Extensions_Handler::hook_fetch_url_authed() Hook fetch authorized URL.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_fetch_url_authed()
 	 */
 	public function filter_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response = null ) {
 		return MainWP_Extensions_Handler::hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $raw_response );
@@ -162,6 +168,8 @@ class MainWP_System_Handler {
 	 * @param array  $value Input value.
 	 *
 	 * @return array $output Output array.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::hook_verify()
 	 */
 	public function apply_filters( $filter, $value = array() ) {
 
@@ -264,6 +272,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_settings_post()
+	 * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
 	 */
 	public function handle_settings_post() {
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
@@ -310,6 +319,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_plugin_information()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_System::get_plugin_slug()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_slugs()
 	 */
 	public function plugins_api_info( $false, $action, $arg ) {
 		if ( 'plugin_information' !== $action ) {
@@ -359,6 +369,8 @@ class MainWP_System_Handler {
 	 * @return object $transient Transient information.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_upgrade_information()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extension_slug()
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
@@ -475,6 +487,9 @@ class MainWP_System_Handler {
 	 * @param object $transient Transient information.
 	 *
 	 * @return object $transient Transient information.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extension_slug()
 	 */
 	public function pre_check_update_custom( $transient ) {
 		if ( ! isset( $transient->checked ) ) {

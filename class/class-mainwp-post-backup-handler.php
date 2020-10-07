@@ -334,8 +334,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Get backup file size
 	 *
-	 * @throws MainWP_Exception on errors.
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::backup_get_file_size()
 	 */
 	public function mainwp_backup_getfilesize() {
 		$this->secure_request( 'mainwp_backup_getfilesize' );
@@ -473,6 +473,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_addbackup()
 	 *
 	 * Add task to the database.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::add_backup()
 	 */
 	public function mainwp_addbackup() {
 		$this->secure_request( 'mainwp_addbackup' );
@@ -484,6 +486,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_updatebackup()
 	 *
 	 * Update task.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::update_backup()
 	 */
 	public function mainwp_updatebackup() {
 		$this->secure_request( 'mainwp_updatebackup' );
@@ -495,6 +499,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_removebackup()
 	 *
 	 * Remove a task from MainWP.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::remove_backup()
 	 */
 	public function mainwp_removebackup() {
 		$this->secure_request( 'mainwp_removebackup' );
@@ -506,6 +512,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_resumebackup()
 	 *
 	 * Resume backup task.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resume_backup()
 	 */
 	public function mainwp_resumebackup() {
 		$this->secure_request( 'mainwp_resumebackup' );
@@ -517,6 +525,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_pausebackup()
 	 *
 	 * Pause backup task.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::pause_backup()
 	 */
 	public function mainwp_pausebackup() {
 		$this->secure_request( 'mainwp_pausebackup' );
@@ -528,6 +538,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_backuptask_get_sites()
 	 *
 	 * Get sites of backup task.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::get_backup_task_sites()
 	 */
 	public function mainwp_backuptask_get_sites() {
 		$this->secure_request( 'mainwp_backuptask_get_sites' );
@@ -545,6 +557,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 * @throws MainWP_Exception on errors.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::backup()
 	 */
 	public function mainwp_backuptask_run_site() {
 		try {

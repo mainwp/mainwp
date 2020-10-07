@@ -393,7 +393,9 @@ class MainWP_Setup_Wizard {
 	/**
 	 * Method  mwp_setup_system_requirements()
 	 *
-	 * Render System Requirments Step.
+	 * Render System Requirements Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Server_Information::render_quick_setup_system_check()
 	 */
 	public function mwp_setup_system_requirements() {
 		$hosting_type = get_option( 'mwp_setup_installationHostingType' );
@@ -1227,6 +1229,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_install_extension()
 	 *
 	 * Setup & install extensions Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public function mwp_setup_install_extension() {
 		$backup_method  = get_option( 'mwp_setup_primaryBackup' );

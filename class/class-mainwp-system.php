@@ -95,6 +95,18 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_UI::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_WP_CLI_Command::init()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::init()
+     * @uses \MainWP\Dashboard\MainWP_Extensions::init()
+     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Install_Bulk::init()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init()
+     * @uses \MainWP\Dashboard\MainWP_Overview::get()
+     * @uses \MainWP\Dashboard\MainWP_Page::init()
+     * @uses \MainWP\Dashboard\MainWP_Plugins::init()
+     * @uses \MainWP\Dashboard\MainWP_Post::init()
+     * @uses \MainWP\Dashboard\MainWP_Settings::init()
+     * @uses \MainWP\Dashboard\MainWP_Themes::init()
+     * @uses \MainWP\Dashboard\MainWP_Updates::init()
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -546,6 +558,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+     * @uses \MainWP\Dashboard\MainWP_Setup_Wizard()
 	 */
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {

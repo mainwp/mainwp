@@ -74,20 +74,20 @@ class MainWP_Menu {
 	 * Method init_mainwp_menus()
 	 *
 	 * Init MainWP menus.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
-     * @uses \MainWP\Dashboard\MainWP_Updates::init_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::init_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Post::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Page::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Themes::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Plugins::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_User::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Groups::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Monitoring::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Settings::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Extensions::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Page::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Themes::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_User::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Groups::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Settings::init_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions::init_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Update_Admin_Passwords::init_menu()
 	 */
 	public static function init_mainwp_menus() {
@@ -149,19 +149,19 @@ class MainWP_Menu {
 	 * Method init_subpages_menu()
 	 *
 	 * Init subpages MainWP menus.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions::init_subpages_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_subpages_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init_subpages_menu()
-     * @uses \MainWP\Dashboard\MainWP_Page::init_subpages_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Page::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Post::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
-     * @uses \MainWP\Dashboard\MainWP_Themes::init_subpages_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Themes::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Themes::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Plugins::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_User::init_subpages_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init_subpages_menu()
-     */
+	 */
 
 	public static function init_subpages_menu() {
 

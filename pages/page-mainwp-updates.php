@@ -81,9 +81,8 @@ class MainWP_Updates {
 
 	/**
 	 * Instantiates MainWP Updates Page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
-     *
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
 	 */
 	public static function init() {
 		/**
@@ -109,8 +108,8 @@ class MainWP_Updates {
 
 	/**
 	 * Renders init updates menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -141,8 +140,8 @@ class MainWP_Updates {
 	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -1632,7 +1631,7 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function get_sites() {
 
@@ -1759,11 +1758,11 @@ class MainWP_Updates {
 
 	/**
 	 * Renders the twitter bragger message.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Twitter
-     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 */
 	public static function render_twitter_notice() {
 

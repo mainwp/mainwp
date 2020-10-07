@@ -71,8 +71,8 @@ class MainWP_Monitoring {
 	 * Method on_load_page()
 	 *
 	 * Run on page load.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
 	 */
 	public static function on_load_page() {
 		self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
@@ -121,8 +121,8 @@ class MainWP_Monitoring {
 	 * Method ajax_optimize_display_rows()
 	 *
 	 * Display table rows, optimize for shared hosting or big networks.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
 	 */
 	public static function ajax_optimize_display_rows() {
 		self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();

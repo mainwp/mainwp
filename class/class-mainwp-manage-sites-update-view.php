@@ -39,12 +39,12 @@ class MainWP_Manage_Sites_Update_View {
 	 * Render Plugin updates Tab.
 	 *
 	 * @param mixed $id Child Site ID.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_header_tabs()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_header_tabs()
 	 */
 	public static function render_individual_updates( $id ) {
 
@@ -185,9 +185,9 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted plugin data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
 
@@ -291,9 +291,9 @@ class MainWP_Manage_Sites_Update_View {
 	 * @param mixed $website Child Site info.
 	 * @param mixed $active_tab Current active tab.
 	 * @param mixed $userExtension MainWP trusted themes data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
 	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
 

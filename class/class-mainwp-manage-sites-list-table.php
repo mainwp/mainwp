@@ -69,11 +69,11 @@ class MainWP_Manage_Sites_List_Table {
 	 * @param mixed $item List of backups.
 	 *
 	 * @return mixed $backupnow_lnk.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
-     * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public function column_backup( $item ) {
 

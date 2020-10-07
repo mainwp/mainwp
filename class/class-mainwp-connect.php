@@ -1153,8 +1153,6 @@ class MainWP_Connect {
 	 *
 	 * @return mixed $information
 	 *
-	 * @throws \Exception
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
 	 * @uses \MainWP\Dashboard\MainWP_Premium_Update::maybe_request_premium_updates()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()

@@ -65,6 +65,8 @@ class MainWP_Notification_Template {
 	 * MainWP_Notification_Template constructor.
 	 *
 	 * Run each time the class is called.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_sub_dir()
 	 */
 	public function __construct() {
 		$this->template_path        = MAINWP_PLUGIN_DIR . 'templates/';
@@ -124,6 +126,8 @@ class MainWP_Notification_Template {
 	 *
 	 * @param string $template_name Template name.
 	 * @param array  $args          Arguments. (default: array).
+	 *
+	 *  @uses \MainWP\Dashboard\MainWP_Notification_Settings::replace_tokens_for_content()
 	 */
 	public function get_template( $template_name, $args = array() ) {
 
@@ -304,6 +308,8 @@ class MainWP_Notification_Template {
 	 * Handle template file action.
 	 *
 	 * @return bool $done handle result.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public function handle_template_file_action() {
 		$updated_templ = false;

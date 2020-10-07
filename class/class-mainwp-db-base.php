@@ -64,6 +64,8 @@ class MainWP_DB_Base {
 	 * Method test_connection()
 	 *
 	 * Test db connection.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 */
 	protected function test_connection() {
 		if ( ! self::ping( $this->wpdb->dbh ) ) {

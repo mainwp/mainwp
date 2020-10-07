@@ -200,6 +200,8 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_footer()
 	 *
 	 * Render Setup Wizard's footer.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::usersnap_integration()
 	 */
 	public function setup_wizard_footer() {
 		?>
@@ -784,6 +786,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification()
 	 *
 	 * Render Notifications Step.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public function mwp_setup_notification() {
 

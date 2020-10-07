@@ -20,6 +20,9 @@ class MainWP_Hooks {
 	 * Initialize MainWP_Hooks actions/filters upon creation of the object.
 	 *
 	 * @deprecated 4.0.7. Hook deprecation - Please use filter `mainwp_get_error_message` instead of `mainwp_getErrorMessage`.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_UI::get_class_name()
 	 */
 	public function __construct() {
 		add_filter( 'mainwp_getspecificdir', array( MainWP_System_Utility::get_class_name(), 'get_mainwp_specific_dir' ), 10, 1 );
@@ -95,6 +98,8 @@ class MainWP_Hooks {
 	 * MainWP debug log.
 	 *
 	 * @param string $text Debug text.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 */
 	public function mainwp_log_debug( $text ) {
 		MainWP_Logger::instance()->debug( $text );
@@ -106,6 +111,8 @@ class MainWP_Hooks {
 	 * MainWP log info.
 	 *
 	 * @param string $text Info Text.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 */
 	public function mainwp_log_info( $text ) {
 		MainWP_Logger::instance()->info( $text );
@@ -117,6 +124,8 @@ class MainWP_Hooks {
 	 * MainWP log warning.
 	 *
 	 * @param string $text Warning text.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::warning()
 	 */
 	public function mainwp_log_warning( $text ) {
 		MainWP_Logger::instance()->warning( $text );
@@ -126,6 +135,8 @@ class MainWP_Hooks {
 	 * Method enqueue_meta_boxes_scripts()
 	 *
 	 * Enqueue Scripts for all Meta boxes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::enqueue_postbox_scripts()
 	 */
 	public function enqueue_meta_boxes_scripts() {
 		MainWP_System::enqueue_postbox_scripts();
@@ -140,6 +151,9 @@ class MainWP_Hooks {
 	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site.
 	 *
 	 * @return array $ret data fields: response, siteid.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::add_wp_site()
 	 */
 	public function mainwp_add_site( $params ) {
 		$ret = array();
@@ -170,7 +184,10 @@ class MainWP_Hooks {
 	 *
 	 * @param bool $site_id Child site ID.
 	 *
-	 * @return boolean|array Return false if empty and return array error - Site not found | result - SUCCESS.
+	 * @return bool|array Return false if empty and return array error - Site not found | result - SUCCESS.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
 	 */
 	public function hook_delete_site( $site_id = false ) {
 
@@ -255,6 +272,8 @@ class MainWP_Hooks {
 	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id.
 	 *
 	 * @return int $ret Child site ID.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
 	 */
 	public function mainwp_edit_site( $params ) {
 		$ret = array();
@@ -277,6 +296,8 @@ class MainWP_Hooks {
 	 * @param string  $href Menu link.
 	 * @param integer $level Menu level.
 	 * @param string  $parent_key Parent menu.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public function hook_add_sub_left_menu( $title, $slug, $href, $level = 1, $parent_key = 'mainwp_tab' ) {
 		$item = array(
@@ -387,6 +408,8 @@ class MainWP_Hooks {
 	 * @param string $style Default = ''.
 	 * @param array  $selected_websites Selected Child Sites.
 	 * @param array  $selected_groups Selected Groups.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public function select_sites_box( $title = '', $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', $selected_websites = array(), $selected_groups = array() ) {
 		MainWP_UI::select_sites_box( $type, $show_group, $show_select_all, $class, $style, $selected_websites, $selected_groups );
@@ -400,6 +423,8 @@ class MainWP_Hooks {
 	 * @param int    $userId User ID.
 	 * @param string $subject Email Subject.
 	 * @param string $content Email Content.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Notification::send_notify_user()
 	 */
 	public function hook_notify_user( $userId, $subject, $content ) {
 		MainWP_Notification::send_notify_user( $userId, $subject, $content );
@@ -414,6 +439,8 @@ class MainWP_Hooks {
 	 * @param object $extra HTTP error message.
 	 *
 	 * @return string Error message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 */
 	public function get_error_message( $msg, $extra ) {
 		return MainWP_Error_Helper::get_error_message( new MainWP_Exception( $msg, $extra ) );
@@ -616,6 +643,8 @@ class MainWP_Hooks {
 	 *
 	 * @param string $action Action to perform.
 	 * @param string $query_arg Query argument.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
 	 */
 	public function hook_secure_request( $action = '', $query_arg = 'security' ) {
 		MainWP_Post_Handler::instance()->secure_request( $action, $query_arg );
@@ -631,6 +660,8 @@ class MainWP_Hooks {
 	 * @param bool $direct_access Return true if Direct access file system. Default: false.
 	 *
 	 * @return array $newdir, $url.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
 	public function hook_get_mainwp_dir( $false = false, $dir = null, $direct_access = false ) {
 		return MainWP_System_Utility::get_mainwp_dir( $dir, $direct_access );
@@ -643,6 +674,8 @@ class MainWP_Hooks {
 	 * Hook to check if multi user.
 	 *
 	 * @return bool true|false.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_multi_user()
 	 */
 	public function is_multi_user() {
 		return MainWP_System::instance()->is_multi_user();
@@ -654,9 +687,11 @@ class MainWP_Hooks {
 	 * Hook to create new MainWP_QQ2_File_Uploader() class.
 	 *
 	 * @param mixed $allowedExtensions Allowed files extentions.
-	 * @param mixed $sizeLimit Maximum file size allowed to be uploaded.
+	 * @param mixed $sizeLimit         Maximum file size allowed to be uploaded.
 	 *
-	 * @return bool Return true on upload false on failer.
+	 * @return MainWP_QQ2_File_Uploader Return instance of MainWP_QQ2_File_Uploader
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_QQ2_File_Uploader
 	 */
 	public function filter_qq2_file_uploader( $allowedExtensions, $sizeLimit ) {
 		return new MainWP_QQ2_File_Uploader( $allowedExtensions, $sizeLimit );
@@ -668,6 +703,8 @@ class MainWP_Hooks {
 	 * Hook to get meta boxes.
 	 *
 	 * @return string|bool Return error or true.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::$metaboxes
 	 */
 	public function get_metaboxes_post() {
 		return MainWP_System::instance()->metaboxes;
@@ -683,6 +720,8 @@ class MainWP_Hooks {
 	 * @param string $title Email title.
 	 *
 	 * @return string|bool Return error or true.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Format::format_email()
 	 */
 	public function get_formated_email( $body, $email, $title = '' ) {
 		return MainWP_Format::format_email( $email, $body, $title );
@@ -732,6 +771,9 @@ class MainWP_Hooks {
 	 * Method upgrade_plugin_theme()
 	 *
 	 * Hook to update theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public function upgrade_plugin_theme() {
 		try {

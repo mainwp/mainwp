@@ -69,6 +69,8 @@ class MainWP_User {
 	 * Method init_menu()
 	 *
 	 * Initiate menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -129,6 +131,8 @@ class MainWP_User {
 
 	/**
 	 * Initiates sub pages menu.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -171,6 +175,10 @@ class MainWP_User {
 	 *
 	 * @param array $subPages Sub pages array.
 	 * @param int   $level What level to display on.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array(), $level = 2 ) {
 		MainWP_Menu::add_left_menu(
@@ -232,6 +240,10 @@ class MainWP_User {
 	 * Render Users page header.
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '' ) {
 		$params = array(
@@ -305,8 +317,9 @@ class MainWP_User {
 	 * Renders manage users dashboard.
 	 *
 	 * @return void
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
@@ -1139,9 +1152,10 @@ class MainWP_User {
 	 * @param mixed $data Search data.
 	 * @param mixed $website Child Site.
 	 * @param mixed $output Output to pass to self::users_search_handler_renderer().
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-	 * @uses \MainWP\Dashboard\MainWP_Exception
+     *
+     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+     * @uses \MainWP\Dashboard\MainWP_Exception
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function users_search_handler( $data, $website, &$output ) {
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1191,15 +1205,17 @@ class MainWP_User {
 	 * Users actions.
 	 *
 	 * @param mixed  $pAction Action to perform delete|update_user|update_password.
-	 * @param string $extra Additional Roles to add if any.
+	 * @param string $extra   Additional Roles to add if any.
 	 *
 	 * @return mixed $information User update info that is returned.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @throws \Exception
+     *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $extra = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$userId    = isset( $_POST['userId'] ) ? sanitize_text_field( wp_unslash( $_POST['userId'] ) ) : false;
@@ -1299,6 +1315,8 @@ class MainWP_User {
 
 	/**
 	 * Renders the Add New user form.
+     *
+     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_bulk_add() {
 
@@ -1306,9 +1324,9 @@ class MainWP_User {
 		 * Filter: mainwp_new_user_password_complexity
 		 *
 		 * Filters the Password lenght for the Add New user, Password field.
-	 *
+	     *
 		 * Since 4.1
-	 */
+	     */
 		$pass_complexity = apply_filters( 'mainwp_new_user_password_complexity', '24' );
 		self::render_header( 'Add' );
 		?>
@@ -1623,12 +1641,14 @@ class MainWP_User {
 	 * Method do_bulk_add()
 	 *
 	 * Bulk User addition $_POST Handler.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 */
 	public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 		$errors      = array();
@@ -1790,6 +1810,11 @@ class MainWP_User {
 
 	/**
 	 * Renders twitter bragger notice.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+     * @uses \MainWP\Dashboard\MainWP_Twitter
 	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {
@@ -1838,6 +1863,8 @@ class MainWP_User {
 
 	/**
 	 * Renders Import Users Modal window.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
@@ -1981,14 +2008,15 @@ class MainWP_User {
 
 	/**
 	 * User Import $_POST handler.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
-	 * @uses \MainWP\Dashboard\MainWP_DB::query()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_url()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     *
+     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
+     * @uses \MainWP\Dashboard\MainWP_DB::query()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_url()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 

@@ -30,8 +30,9 @@ class MainWP_Site_Open {
 	 * This method checks to see if the current user is allow to access the
 	 * Child Site, then grabs the websiteid, location, openurl & passes it onto
 	 * either open_site_location or open_site methods.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) {
@@ -86,8 +87,9 @@ class MainWP_Site_Open {
 
 	/**
 	 * This renders the method open_site _restore()
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function render_restore() {
 		if ( ! isset( $_GET['websiteid'] ) ) {

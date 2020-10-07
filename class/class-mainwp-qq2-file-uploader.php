@@ -44,6 +44,9 @@ class MainWP_QQ2_File_Uploader {
 	 *
 	 * @param array $allowedExtensions Array of allowed Extensions.
 	 * @param int   $sizeLimit Maximum allowed file size.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_QQ2_Uploaded_File_Form
+	 * @uses \MainWP\Dashboard\MainWP_QQ2_Uploaded_File_Xhr
 	 */
 	public function __construct( array $allowedExtensions = array(), $sizeLimit = 8388608 ) {
 		$allowedExtensions = array_map( 'strtolower', $allowedExtensions );

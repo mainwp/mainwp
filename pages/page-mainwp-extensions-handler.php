@@ -282,7 +282,11 @@ class MainWP_Extensions_Handler {
 		return $r;
 	}
 
-	/** Activate MainWP Extension License.  */
+	/**
+	 * Activate MainWP Extension License.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
+	 */
 	public static function activate_license() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activatelicense' );
 		$item_id  = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
@@ -297,6 +301,8 @@ class MainWP_Extensions_Handler {
 	 * @param bool  $activatePlugin true|false Whether or not to activate extension.
 	 *
 	 * @return mixed $return
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function install_plugin( $url, $activatePlugin = false ) {
 
@@ -481,6 +487,8 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $key PThe child-key.
 	 *
 	 * @return mixed null|sql query.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function hook_get_dashboard_sites( $pluginFile, $key ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -533,6 +541,8 @@ class MainWP_Extensions_Handler {
 	 * @param null  $rawResponse Raw responce.
 	 *
 	 * @return mixed false|throw|error
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function hook_fetch_url_authed( $pluginFile, $key, $websiteId, $what, $params, $rawResponse = null ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -620,6 +630,8 @@ class MainWP_Extensions_Handler {
 	 * @param array  $others Array of others.
 	 *
 	 * @return array $output Array of content to output.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -826,6 +838,9 @@ class MainWP_Extensions_Handler {
 	 * @param bool  $force_update true|false, force an update.
 	 *
 	 * @return mixed false|$ret
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -925,6 +940,9 @@ class MainWP_Extensions_Handler {
 	 * @param bool  $clone_site_id Cloned Site ID.
 	 *
 	 * @return mixed false|array Array => "Success".
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
 	 */
 	public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {

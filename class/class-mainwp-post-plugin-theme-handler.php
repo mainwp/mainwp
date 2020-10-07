@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Plugin_Theme_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 
@@ -289,6 +291,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::activate_plugin()
 	 */
 	public function mainwp_widget_plugin_activate() {
 		$this->secure_request( 'mainwp_widget_plugin_activate' );
@@ -300,6 +304,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Deactivate plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::deactivate_plugin()
 	 */
 	public function mainwp_widget_plugin_deactivate() {
 		$this->secure_request( 'mainwp_widget_plugin_deactivate' );
@@ -311,6 +317,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete plugin,
 	 * Widget: Plugins.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Plugins::delete_plugin()
 	 */
 	public function mainwp_widget_plugin_delete() {
 		$this->secure_request( 'mainwp_widget_plugin_delete' );
@@ -322,6 +330,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Activate theme,
 	 * Widget: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Themes::activate_theme()
 	 */
 	public function mainwp_widget_theme_activate() {
 		$this->secure_request( 'mainwp_widget_theme_activate' );
@@ -333,6 +343,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete theme,
 	 * Widget: Themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Widget_Themes::delete_theme()
 	 */
 	public function mainwp_widget_theme_delete() {
 		$this->secure_request( 'mainwp_widget_theme_delete' );

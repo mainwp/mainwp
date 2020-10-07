@@ -11,6 +11,8 @@ namespace MainWP\Dashboard;
  * Class MainWP_Post_Site_Handler
  *
  * @package MainWP\Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 
@@ -153,6 +155,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method get_site_icon()
 	 *
 	 * Get Child Site Favicon.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
 	 */
 	public function get_site_icon() {
 		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
@@ -274,6 +278,9 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_syncsites()
 	 *
 	 * Sync Child Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::dismiss_sync_errors()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::sync_site()
 	 */
 	public function mainwp_syncsites() {
 		$this->secure_request( 'mainwp_syncsites' );
@@ -285,6 +292,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_checksites()
 	 *
 	 * Check Child Sites.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::ajax_check_status_site()
 	 */
 	public function mainwp_checksites() {
 		$this->secure_request( 'mainwp_checksites' );

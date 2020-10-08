@@ -270,7 +270,11 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** MainWP Version 4 update Notice. */
+	/**
+	 * MainWP Version 4 update Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function mainwp_4_update_notice() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_4' ) ) {
 			?>
@@ -316,7 +320,11 @@ class MainWP_System_View {
 		self::check_rating_notice( $current_options );
 	}
 
-	/** Render PHP Version Notice. */
+	/**
+	 * Render PHP Version Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function render_notice_version() {
 		$phpver = phpversion();
 		if ( version_compare( $phpver, '5.5', '<' ) ) {
@@ -332,7 +340,11 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render OpenSSL Error message. */
+	/**
+	 * Render OpenSSL Error message.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
@@ -646,6 +658,7 @@ class MainWP_System_View {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_footer_content( $websites ) {
 

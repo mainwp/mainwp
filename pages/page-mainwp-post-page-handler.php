@@ -160,6 +160,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_ids()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function get_categories() {
 		$websites = array();
@@ -238,6 +239,8 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
 	 * @uses \MainWP\Dashboard\MainWP_Twitter
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';

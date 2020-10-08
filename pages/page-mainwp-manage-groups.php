@@ -113,6 +113,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );

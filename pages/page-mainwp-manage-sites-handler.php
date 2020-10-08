@@ -31,6 +31,7 @@ class MainWP_Manage_Sites_Handler {
 	 * @return mixed send json encode data
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function check_site() {
 		$url     = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
@@ -71,12 +72,13 @@ class MainWP_Manage_Sites_Handler {
 	/**
 	 * Method reconnect_site()
 	 *
-	 * Try to recconnect to Child Site.
+	 * Try to reconnect to Child Site.
 	 *
 	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Manage_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function reconnect_site() {
 		$siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false;
@@ -174,6 +176,7 @@ class MainWP_Manage_Sites_Handler {
 	 * Save Child Site Note.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function save_note() {
 		if ( isset( $_POST['websiteid'] ) ) {

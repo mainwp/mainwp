@@ -374,6 +374,7 @@ class MainWP_Manage_Sites_View {
 	 * Render import sites dialog.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 */
 	public static function render_import_sites() {
 		?>
@@ -753,6 +754,8 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_groups_by_website_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::starts_with()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
 	public static function render_edit_site( $websiteid, $updated ) {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'edit_sites' ) ) {
@@ -1301,7 +1304,7 @@ class MainWP_Manage_Sites_View {
 	/**
 	 * Method m_reconnect_site()
 	 *
-	 * Reconnect chid site.
+	 * Reconnect child site.
 	 *
 	 * @param object $website The website object.
 	 *
@@ -1315,6 +1318,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function m_reconnect_site( $website ) {
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
@@ -1440,6 +1444,7 @@ class MainWP_Manage_Sites_View {
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function add_wp_site( $website, $params = array(), &$output = array() ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$error      = '';
@@ -1602,6 +1607,7 @@ class MainWP_Manage_Sites_View {
 	 * @throws \Exception Error message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function update_wp_site( $params ) {
 		if ( ! isset( $params['websiteid'] ) || ! MainWP_Utility::ctype_digit( $params['websiteid'] ) ) {

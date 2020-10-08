@@ -810,6 +810,7 @@ class MainWP_Live_Reports {
 	 * @return array $filtered_reports Array of filtered reports.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function filter_report( $report, $allowed_tokens ) {
 
@@ -861,6 +862,7 @@ class MainWP_Live_Reports {
      * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_tokens()
 	 * @uses \MainWP\Dashboard\MainWP_Live_Reports_Responder_DB::get_site_tokens()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 */
 	public static function filter_report_website( $report, $website, $allowed_tokens = array() ) { // phpcs:ignore -- required to achieve desired results, pull request solutions appreciated.
 		$output                  = new \stdClass();

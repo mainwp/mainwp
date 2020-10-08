@@ -40,6 +40,7 @@ abstract class MainWP_Post_Base_Handler {
 	 * @param string $query_arg Query argument.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function secure_request( $action = '', $query_arg = 'security' ) {
 		if ( ! MainWP_System_Utility::is_admin() ) {

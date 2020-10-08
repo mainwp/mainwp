@@ -33,6 +33,8 @@ class MainWP_Notes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function render() {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

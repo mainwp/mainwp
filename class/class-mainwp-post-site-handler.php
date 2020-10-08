@@ -192,6 +192,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::try_visit()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
 	public function mainwp_testwp() {
 		$this->secure_request( 'mainwp_testwp' );

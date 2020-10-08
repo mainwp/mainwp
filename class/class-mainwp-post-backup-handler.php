@@ -283,6 +283,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function mainwp_createbackup_getfilesize() {
 		$this->secure_request( 'mainwp_createbackup_getfilesize' );

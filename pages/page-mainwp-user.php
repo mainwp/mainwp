@@ -840,8 +840,8 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function render_table_body( $role = '', $groups = '', $sites = '', $search = '' ) { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		MainWP_Cache::init_cache( 'Users' );
@@ -1651,8 +1651,8 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
-     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function do_bulk_add() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 		$errors      = array();
@@ -1869,7 +1869,7 @@ class MainWP_User {
 	 * Renders Import Users Modal window.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_Utility::starts_with()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::starts_with()
 	 */
 	public static function render_bulk_upload() {
 		self::render_header( 'Import' );
@@ -2022,7 +2022,7 @@ class MainWP_User {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function do_import() { // phpcs:ignore -- Current complexity is required to achieve desired results. Pull request solutions appreciated.
 

@@ -91,7 +91,7 @@ class MainWP_Overview {
 	 * Add MainWP Overview top level menu.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function on_admin_menu() {
 		if ( MainWP_System_Utility::is_admin() ) {
@@ -327,7 +327,7 @@ class MainWP_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 * @uses \MainWP\Dashboard\MainWP_UI::do_widget_boxes()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
 	public static function render_dashboard_body( $websites, $dashboard, $screen_layout ) {
 

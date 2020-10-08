@@ -138,7 +138,7 @@ class MainWP_Updates_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 */
 	public static function render_sites() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 
@@ -536,8 +536,8 @@ class MainWP_Updates_Overview {
 	 * @param bool   $globalView                Global view or not.
 	 * @param int    $current_wpid              Current site ID.
 	 * @param string $continue_update           String of continue update.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
 	 */
 	public static function render_wordpress_update( $user_can_update_wordpress, $total_wp_upgrades, $globalView, $current_wpid, $continue_update ) {
@@ -627,9 +627,9 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $globalView global view or not.
 	 * @param int             $current_wpid  current site id.
 	 * @param string          $continue_update  string of continue update.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
-     * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
 	 */
 	public static function render_plugins_update( $user_can_update_plugins, $total_plugin_upgrades, $globalView, $current_wpid, $continue_update ) {
 		/**
@@ -698,8 +698,8 @@ class MainWP_Updates_Overview {
 	 * @param bool true|false $globalView global view or not.
 	 * @param int             $current_wpid  current site id.
 	 * @param string          $continue_update  string of continue update.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
 	 */
 	public static function render_themes_update( $user_can_update_themes, $total_theme_upgrades, $globalView, $current_wpid, $continue_update ) {
@@ -767,9 +767,9 @@ class MainWP_Updates_Overview {
 	 * @param bool   $globalView                  Global view or not.
 	 * @param int    $current_wpid                Current site id.
 	 * @param string $continue_update             String of continue update.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
-     * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::get_continue_update_selector()
 	 */
 	public static function render_language_update( $user_can_update_translation, $total_translation_upgrades, $globalView, $current_wpid, $continue_update ) {
 		/**

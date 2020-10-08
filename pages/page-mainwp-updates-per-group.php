@@ -40,9 +40,9 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_wp()
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_wp()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 		?>
@@ -174,10 +174,10 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_plugins()
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_plugins()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
@@ -381,11 +381,11 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_themes()
-     * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_themes()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_themes()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::set_continue_update_html_selector()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_themes()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
@@ -584,8 +584,8 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_show_all_updates_button()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_trans()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_update_trans()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
 	 */
 	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 
@@ -734,8 +734,8 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_abandoned_plugins( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );
@@ -885,8 +885,8 @@ class MainWP_Updates_Per_Group {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_sorting_icons()
-     * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
-     * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::render_site_link_dashboard()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::user_can_ignore_updates()
 	 */
 	public static function render_abandoned_themes( $websites, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) {
 		$str_format = __( 'Updated %s days ago', 'mainwp' );

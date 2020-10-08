@@ -217,6 +217,8 @@ class MainWP_Post {
 	 * Get columns to display.
 	 *
 	 * @return array $colums Array of columns to display on the page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
@@ -812,6 +814,7 @@ class MainWP_Post {
 	 * @param string $search_on Site on all sites. Default = all.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -970,6 +973,9 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
@@ -1129,6 +1135,9 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+     * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {

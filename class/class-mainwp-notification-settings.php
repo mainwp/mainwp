@@ -57,6 +57,8 @@ class MainWP_Notification_Settings {
 	 * Manage general email settings.
 	 *
 	 * @return bool True if saved successfully, false if not.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function emails_general_settings_handle() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsEmail' ) ) {

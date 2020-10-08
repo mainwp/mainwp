@@ -323,7 +323,9 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param bool   $offset       Query offset. Default: false.
 	 * @param bool   $rowcount     Row count. Default: falese.
 	 *
-	 * @return object|null Return database query or null on failer.
+	 * @return object|null Return database query or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_sql_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
@@ -456,7 +458,9 @@ class MainWP_DB extends MainWP_DB_Base {
 	 *
 	 * @param array $params to get sites. Default: array().
 	 *
-	 * @return object|null Results or null on failer.
+	 * @return array Results or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public function get_websites_for_current_user( $params = array() ) {
 		if ( ! is_array( $params ) ) {
@@ -766,10 +770,12 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * Get child site by id via SQL.
 	 *
 	 * @param int   $id           Child site ID.
-	 * @param array $selectGroups Selected groups.
+	 * @param bool  $selectGroups Selected groups.
 	 * @param mixed $extra_view   Extra view value.
 	 *
 	 * @return object|null Database query result or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
 
@@ -881,6 +887,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param null   $search_site  Site search field value. Default: null.
 	 *
 	 * @return object|null Return database query or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_sql_websites_by_group_id(
 		$id,
@@ -1019,6 +1027,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int    $isStaging Whether or not child site is staging site.
 	 *
 	 * @return int|false Child site ID or false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function add_website(
 		$userid,
@@ -1138,6 +1148,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @param int $websiteid Child site ID.
 	 *
 	 * @return int|boolean Return child site ID that was removed or false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function remove_website( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -1214,6 +1226,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @return boolean ture on success or false on failure.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_website(
 		$websiteid,

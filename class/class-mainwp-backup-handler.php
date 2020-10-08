@@ -52,6 +52,12 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::date()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		// phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -535,6 +541,7 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function backup_download_file( $pSiteId, $pType, $pUrl, $pFile ) {
 		$hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -648,6 +655,14 @@ class MainWP_Backup_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::date()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -771,6 +786,15 @@ class MainWP_Backup_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Logger::debug_for_website()
 	 * @uses  \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses  \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::date()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
+	 *
 	 */
 	public static function backup(
 		$pSiteId,
@@ -1101,6 +1125,7 @@ class MainWP_Backup_Handler {
 	 * @return bool true|false
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function handle_settings_post() {
 		if ( MainWP_System_Utility::is_admin() ) {

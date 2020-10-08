@@ -64,6 +64,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_User::render_header()
+     * @uses \MainWP\Dashboard\MainWP_User::render_footer()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$show_form = true;

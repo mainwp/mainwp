@@ -78,6 +78,9 @@ class MainWP_Widget_Themes {
 	 *
 	 * @param object $website   Object containing the child site info.
 	 * @param array  $allThemes Array containing all detected themes data.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 */
 	public static function render_html_widget( $website, $allThemes ) {
 

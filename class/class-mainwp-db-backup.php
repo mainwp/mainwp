@@ -45,7 +45,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * 
 	 * @param mixed $websiteid Child Site ID.
 	 * 
-	 * @return (object|null) Database query result for Child Site backup settings or null on failure
+	 * @return object|null Database query result for Child Site backup settings or null on failure
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_website_backup_settings( $websiteid ) {
 		if ( ! MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -227,30 +229,33 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method add_backup_task()
-	 * 
+	 *
 	 * Add backup task.
-	 * 
-	 * @param mixed $userid Current user ID.
-	 * @param mixed $name Name of backup.
-	 * @param mixed $schedule Backup schedual.
-	 * @param mixed $type Type of backup, full|db.
-	 * @param mixed $exclude Files or directories to exclude.
-	 * @param mixed $sites Child Sites to backup.
-	 * @param mixed $groups Groups to backup.
-	 * @param mixed $subfolder Folder the backups are going into.
-	 * @param mixed $filename Filename of the backups.
-	 * @param mixed $template Backup template.
-	 * @param mixed $excludebackup Backup files to exclude.
-	 * @param mixed $excludecache Cache files to exclude.
-	 * @param mixed $excludenonwp Non-wp files to exclude.
-	 * @param mixed $excludezip Archives to exclude.
-	 * @param mixed $archiveFormat Format to store backups in.
+	 *
+	 * @param mixed $userid                         Current user ID.
+	 * @param mixed $name                           Name of backup.
+	 * @param mixed $schedule                       Backup schedual.
+	 * @param mixed $type                           Type of backup, full|db.
+	 * @param mixed $exclude                        Files or directories to exclude.
+	 * @param mixed $sites                          Child Sites to backup.
+	 * @param mixed $groups                         Groups to backup.
+	 * @param mixed $subfolder                      Folder the backups are going into.
+	 * @param mixed $filename                       Filename of the backups.
+	 * @param mixed $template                       Backup template.
+	 * @param mixed $excludebackup                  Backup files to exclude.
+	 * @param mixed $excludecache                   Cache files to exclude.
+	 * @param mixed $excludenonwp                   Non-wp files to exclude.
+	 * @param mixed $excludezip                     Archives to exclude.
+	 * @param mixed $archiveFormat                  Format to store backups in.
 	 * @param mixed $maximumFileDescriptorsOverride Overide maximum file descriptors.
-	 * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
-	 * @param mixed $maximumFileDescriptors Maximum file descriptors.
-	 * @param mixed $loadFilesBeforeZip Load files before Zip.
-	 * 
-	 * @return (int|false) The number of rows added, or false on error.
+	 * @param mixed $maximumFileDescriptorsAuto     Auto maximum file discriptors.
+	 * @param mixed $maximumFileDescriptors         Maximum file descriptors.
+	 * @param mixed $loadFilesBeforeZip             Load files before Zip.
+	 *
+	 * @return int|false The number of rows added, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 */
 	public function add_backup_task( 
 		$userid, 
@@ -342,6 +347,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $loadFilesBeforeZip Load files before Zip.
 	 * 
 	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 */
 	public function update_backup_task( 
 		$userid, 
@@ -419,7 +427,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * 
 	 * @param mixed $id Task ID.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_backup_run( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -444,7 +454,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * 
 	 * @param mixed $id Task ID.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_backup_run_manually( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -461,7 +473,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * 
 	 * @param mixed $id Task ID.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_backup_completed( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -479,7 +493,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $id Task ID.
 	 * @param mixed $errors Backup errors.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_backup_errors( $id, $errors ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -503,7 +519,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $id Task ID. 
 	 * @param mixed $completedSites Completed sites.
 	 * 
-	 * @return (int|false) The number of rows updated, or false on error.
+	 * @return int|false The number of rows updated, or false on error.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_completed_sites( $id, $completedSites ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {

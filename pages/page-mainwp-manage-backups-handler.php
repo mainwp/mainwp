@@ -295,6 +295,9 @@ class MainWP_Manage_Backups_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
 	 */
 	public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- not quite complex function.
 
@@ -461,16 +464,19 @@ class MainWP_Manage_Backups_Handler {
 	}
 
 	/**
-	 * Prepair Child Site to be backed up.
+	 * Prepare Child Site to be backed up.
 	 *
-	 * @param mixed $pTaskId Task ID.
-	 * @param mixed $pSiteId Child Site ID.
-	 * @param mixed $pFileNameUID Filename Eunique ID.
+	 * @param mixed $pTaskId      Task ID.
+	 * @param mixed $pSiteId      Child Site ID.
+	 * @param mixed $pFileNameUID Filename Unique ID.
 	 *
 	 * @return self MainWP_Manage_Sites_Handler()
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @throws MainWP_Exception
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
 	 */
 	public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
 		$backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $pTaskId );

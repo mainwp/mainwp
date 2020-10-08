@@ -634,6 +634,9 @@ class MainWP_Manage_Backups {
 	 * @param mixed $item Item to go in column.
 	 *
 	 * @return string Action content.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public function column_details( $item ) {
 		$output  = '<strong>' . __( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( 0 == $item->last_run_manually ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';

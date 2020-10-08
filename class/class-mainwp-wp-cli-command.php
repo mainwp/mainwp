@@ -284,6 +284,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::value_to_string()
 	 */
 	public function plugin( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();
@@ -553,6 +555,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::value_to_string()
 	 */
 	public function theme( $args, $assoc_args ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$sites = array();

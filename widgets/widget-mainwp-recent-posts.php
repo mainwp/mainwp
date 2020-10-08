@@ -182,6 +182,12 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+     *
 	 */
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
@@ -278,6 +284,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_draft_posts( $allPosts, $recent_number ) {
 
@@ -372,6 +383,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     *@uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_pending_posts( $allPosts, $recent_number ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
@@ -466,6 +482,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_future_posts( $allPosts, $recent_number ) {
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
@@ -560,6 +581,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_trash_posts( $allPosts, $recent_number ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );

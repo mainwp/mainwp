@@ -60,6 +60,8 @@ class MainWP_Install extends MainWP_DB_Base {
 	 * Installs the new DB.
 	 *
 	 * @return void
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function install() {
 		// get_site_option is multisite aware!

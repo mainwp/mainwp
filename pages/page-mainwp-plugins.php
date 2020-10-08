@@ -642,6 +642,8 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
 		$keyword = trim( $keyword );
@@ -1385,6 +1387,8 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_all_active_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1537,6 +1541,8 @@ class MainWP_Plugins {
 	 * @param mixed $search_status trust|untrust|ignored.
 	 * @param array $decodedIgnoredPlugins Decoded ignored plugins array.
 	 * @param array $trustedPluginsNotes Trusted plugins notes.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function render_all_active_html( $plugins, $trustedPlugins, $search_status, $decodedIgnoredPlugins, $trustedPluginsNotes ) {
 

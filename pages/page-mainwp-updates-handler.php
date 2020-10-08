@@ -30,12 +30,14 @@ class MainWP_Updates_Handler {
 	 *
 	 * @param int $id Child site ID.
 	 *
+	 * @return string
 	 * @throws MainWP_Exception Error messages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function upgrade_site( $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -119,6 +121,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function ignore_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -198,6 +201,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function unignore_plugin_theme( $type, $slug, $id ) {
 		if ( ! empty( $id ) ) {
@@ -439,6 +443,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function unignore_abandoned_plugin_theme( $type, $slug, $id ) {
 		if ( isset( $id ) ) {
@@ -545,6 +550,7 @@ class MainWP_Updates_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function dismiss_plugin_theme( $type, $slug, $name, $id ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -619,15 +625,17 @@ class MainWP_Updates_Handler {
 	 *
 	 * Upgrade plugin or theme translations.
 	 *
-	 * @param int    $id Child site ID.
+	 * @param int    $id   Child site ID.
 	 * @param string $type Plugin or theme.
 	 * @param array  $list List of theme or plugin names seperated by comma.
 	 *
+	 * @return array
 	 * @throws MainWP_Exception Error messages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function upgrade_plugin_theme_translation( $id, $type, $list ) {
 		if ( isset( $id ) && MainWP_Utility::ctype_digit( $id ) ) {

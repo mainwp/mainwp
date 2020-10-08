@@ -295,6 +295,8 @@ class MainWP_Plugins_Handler {
 
 	/**
 	 * Save the trusted plugin note.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function save_trusted_plugin_note() {
 		$slug                = isset( $_POST['slug'] ) ? urldecode( wp_unslash( $_POST['slug'] ) ) : '';

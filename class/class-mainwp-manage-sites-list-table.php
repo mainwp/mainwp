@@ -74,6 +74,8 @@ class MainWP_Manage_Sites_List_Table {
 	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public function column_backup( $item ) {
 
@@ -529,6 +531,7 @@ class MainWP_Manage_Sites_List_Table {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_DB::num_rows()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function prepare_items( $optimize = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1221,10 +1224,16 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * Optimize for shared hosting or big networks.
 	 *
-	 * @return string Rows html.
+	 * @return array Rows html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
 	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_http_codes()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public function ajax_get_datatable_rows() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$all_rows  = array();
@@ -1534,6 +1543,8 @@ class MainWP_Manage_Sites_List_Table {
 	 * Single Row.
 	 *
 	 * @param mixed $website Child Site.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
 	 */
 	public function single_row( $website ) {
 		$classes = '';
@@ -1572,6 +1583,11 @@ class MainWP_Manage_Sites_List_Table {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_favico_url()
 	 * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_options_array()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_http_codes()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	protected function single_row_columns( $website, $good_health = false ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 

@@ -31,6 +31,8 @@ function check_live_reporting_access( $siteurl ) {
 
 /**
  * Live Reports secure connection.
+ *
+ * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
  */
 function live_reports_responder_secure_connection() {
 

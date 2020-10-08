@@ -157,6 +157,7 @@ class MainWP_Themes_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function ignore_updates() {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;

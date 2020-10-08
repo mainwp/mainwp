@@ -1362,6 +1362,8 @@ class MainWP_UI {
 	 * Integrate UserSnap.
 	 *
 	 * @return bool True, Inject UserSnap meta data. False if $showtime is false.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function usersnap_integration() {
 

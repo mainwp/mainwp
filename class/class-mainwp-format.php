@@ -30,7 +30,9 @@ class MainWP_Format {
 	 *
 	 * Get plugins update.
 	 *
-	 * @return string $update_items Plugins update items.
+	 * @return array $update_items Plugins update items.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
 	 */
 	public static function get_update_plugins_items() {
 
@@ -64,7 +66,9 @@ class MainWP_Format {
 	 *
 	 * Get themes update items to email.
 	 *
-	 * @return string $update_items Update themes.
+	 * @return array $update_items Update themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
 	 */
 	public static function get_update_themes_items() {
 
@@ -100,6 +104,8 @@ class MainWP_Format {
 	 * Get WP update to email.
 	 *
 	 * @return array $update_items WP update items.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::array_merge()
 	 */
 	public static function get_update_wp_items() {
 

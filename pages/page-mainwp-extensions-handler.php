@@ -213,6 +213,8 @@ class MainWP_Extensions_Handler {
 	 * @param mixed $slug Extension slug.
 	 *
 	 * @return boolean true|false.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function add_extension_menu( $slug ) {
 		$snMenuExtensions = get_option( 'mainwp_extmenu' );
@@ -574,6 +576,9 @@ class MainWP_Extensions_Handler {
 	 * @param bool   $options Options.
 	 *
 	 * @return array $dbwebsites.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function hook_get_db_sites( $pluginFile, $key, $sites, $groups = '', $options = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -632,6 +637,7 @@ class MainWP_Extensions_Handler {
 	 * @return array $output Array of content to output.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function hook_get_sites( $pluginFile, $key, $websiteid = null, $for_manager = false, $others = array() ) { // phpcs:ignore -- not quite complex function.
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {
@@ -841,6 +847,7 @@ class MainWP_Extensions_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_www_prefix()
 	 */
 	public static function hook_clone_site( $pluginFile, $key, $websiteid, $cloneID, $clone_url, $force_update = false ) {
 		if ( ! self::hook_verify( $pluginFile, $key ) ) {

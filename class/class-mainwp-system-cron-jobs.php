@@ -262,6 +262,8 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -1120,6 +1122,8 @@ class MainWP_System_Cron_Jobs {
 	 * Clear settings field values.
 	 *
 	 * @param bool $diff_day Either different day.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function refresh_saved_fields( $diff_day ) {
 		$empty_fields = array(
@@ -1164,6 +1168,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_general_email_settings()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_site_email_settings()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_http_codes()
 	 */
 	public function start_notification_http_check( $plain_text ) {
 
@@ -1244,6 +1249,8 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ends_with()
 	 */
 	public function cron_ping_childs() {
 		MainWP_Logger::instance()->info( 'CRON :: ping childs' );
@@ -1280,6 +1287,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_backups_continue() {
 
@@ -1334,6 +1342,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::validate_backup_tasks()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_backups() {
 		if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
@@ -1410,6 +1419,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info_for_website()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::m_reconnect_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_stats() {
 		MainWP_Logger::instance()->info( 'CRON :: stats' );
@@ -1453,6 +1463,7 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::check_to_purge_records()
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_check_websites_status() {
 
@@ -1565,6 +1576,7 @@ class MainWP_System_Cron_Jobs {
 	 * Cron job to check site health.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::info()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function cron_check_websites_health() {
 

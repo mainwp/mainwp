@@ -10,7 +10,10 @@
 namespace MainWP\Dashboard;
 
 /**
- * Class MainWP_Backup_Tasks
+ * Class MainWP_Backup_Tasks.
+ *
+ * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+ * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
  */
 class MainWP_Backup_Tasks {
 

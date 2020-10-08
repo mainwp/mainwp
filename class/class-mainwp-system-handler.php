@@ -226,6 +226,7 @@ class MainWP_System_Handler {
 	 * Handle mainwp tools settings.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_all_twitter_messages()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
@@ -362,7 +363,7 @@ class MainWP_System_Handler {
 	/**
 	 * Method check_update_custom()
 	 *
-	 * Check MainWP Exensions for updates.
+	 * Check MainWP Extensions for updates.
 	 *
 	 * @param object $transient Transient information.
 	 *
@@ -371,6 +372,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_upgrade_information()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extension_slug()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
@@ -466,6 +468,7 @@ class MainWP_System_Handler {
 	 * Check if Extension has an update.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_API_Handler::check_exts_upgrade()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	private function check_upgrade() {
 		$result = MainWP_API_Handler::check_exts_upgrade();
@@ -521,6 +524,8 @@ class MainWP_System_Handler {
 	 * @param mixed $file File to upload.
 	 *
 	 * @return void
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ends_with()
 	 */
 	public function upload_file( $file ) {
 		header( 'Content-Description: File Transfer' );

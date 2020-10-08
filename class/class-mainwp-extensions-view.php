@@ -108,6 +108,7 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
+     * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
 	public static function render() {
 

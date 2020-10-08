@@ -762,6 +762,9 @@ class MainWP_Server_Information {
 	 * Renders the Cron Schedule page.
 	 *
 	 * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_cron() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
@@ -1227,6 +1230,7 @@ class MainWP_Server_Information {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger
 	 * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
+     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function render_action_logs() {
 		self::render_header( 'ActionLogs' );

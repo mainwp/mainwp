@@ -5,6 +5,8 @@
  * To overwrite this template, make a new template with the same filename and place it in the ../wp-content/uploads/mainwp/templates/email/ directory.
  *
  * @package     MainWP/Dashboard
+ *
+ * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
  */
 
 defined( 'ABSPATH' ) || exit;

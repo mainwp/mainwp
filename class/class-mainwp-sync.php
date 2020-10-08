@@ -37,11 +37,11 @@ class MainWP_Sync {
 	/**
 	 * Method sync_site()
 	 *
-	 * @param mixed $pWebsite Null|userid.
-	 * @param bool  $pForceFetch Check if a fourced Sync.
+	 * @param mixed $pWebsite         Null|userid.
+	 * @param bool  $pForceFetch      Check if a fourced Sync.
 	 * @param bool  $pAllowDisconnect Check if allowed to disconect.
 	 *
-	 * @return array sync_information_array
+	 * @return bool sync_information_array
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension_by_user_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
@@ -51,6 +51,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function sync_site( &$pWebsite = null, $pForceFetch = false, $pAllowDisconnect = true ) {
 		if ( null == $pWebsite ) {
@@ -171,6 +172,8 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::warning_for_website()
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::get_health_noticed_status_value()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
 	 */
 	public static function sync_information_array( &$pWebsite, &$information, $sync_errors = '', $check_result = 1, $error = false, $pAllowDisconnect = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$emptyArray        = wp_json_encode( array() );
@@ -498,6 +501,7 @@ class MainWP_Sync {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function sync_site_icon( $siteId = null ) {
 		if ( MainWP_Utility::ctype_digit( $siteId ) ) {

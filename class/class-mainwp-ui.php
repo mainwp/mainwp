@@ -514,9 +514,7 @@ class MainWP_UI {
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		if ( ! is_array( $websites ) ) {
-			$websites = array();
-		}
+
 		?>
 		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
 			<div class="ui segment" style="margin-bottom:0px">
@@ -530,35 +528,35 @@ class MainWP_UI {
 				</div>
 			</div>
 			<div class="ui fluid vertical accordion menu" id="mainwp-sites-sidebar-menu" style="margin-top:0px;border-radius:0px;box-shadow:none;">
-				<?php foreach ( $websites as $website ) : ?>
+				<?php while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) { ?>
 					<div class="item mainwp-site-menu-item">
 						<a class="title">
 							<i class="dropdown icon"></i>
-							<label><?php echo esc_html( $website['name'] ); ?></label>
+							<label><?php echo esc_html( $website->name ); ?></label>
 						</a>
 						<div class="content">
 							<div class="ui link tiny list">
-								<a class="item" href="<?php echo 'admin.php?page=managesites&dashboard=' . $website['id']; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&dashboard=' . $website->id; ?>">
 									<i class="grid layout icon"></i>
 									<?php esc_html_e( 'Overview', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website['id']; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&updateid=' . $website->id; ?>">
 									<i class="sync alternate icon"></i>
 									<?php esc_html_e( 'Updates', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website['id']; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&id=' . $website->id; ?>">
 									<i class="edit icon"></i>
 									<?php esc_html_e( 'Edit Site', 'mainwp' ); ?>
 								</a>
-								<a class="item" href="<?php echo 'admin.php?page=managesites&scanid=' . $website['id']; ?>">
+								<a class="item" href="<?php echo 'admin.php?page=managesites&scanid=' . $website->id; ?>">
 									<i class="shield icon"></i>
 									<?php esc_html_e( 'Security Scan', 'mainwp' ); ?>
 								</a>
-								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website['id']; ?>">
+								<a class="item" target="_blank" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>">
 									<i class="sign-in icon"></i>
 									<?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?>
 								</a>
-								<a class="item" target="_blank" href="<?php echo esc_url( $website['url'] ); ?>">
+								<a class="item" target="_blank" href="<?php echo esc_url( $website->url ); ?>">
 									<i class="globe icon"></i>
 									<?php esc_html_e( 'Visit Site', 'mainwp' ); ?>
 								</a>
@@ -584,7 +582,7 @@ class MainWP_UI {
 							</div>
 						</div>
 					</div>
-				<?php endforeach; ?>
+				<?php } ?>
 			</div>
 		</div>
 		<div class="ui segment right wide help sidebar" id="mainwp-documentation-sidebar">

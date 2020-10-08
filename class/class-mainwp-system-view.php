@@ -232,8 +232,8 @@ class MainWP_System_View {
 	 * @param mixed $status Status of plugin activation.
 	 *
 	 * @return string Activation warning message.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_indexed_extensions_infor()
 	 */
 	public static function after_extensions_plugin_row( $plugin_slug, $plugin_data, $status ) {
 		$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor();
@@ -270,7 +270,11 @@ class MainWP_System_View {
 		<?php
 	}
 
-	/** MainWP Version 4 update Notice. */
+	/**
+	 * MainWP Version 4 update Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function mainwp_4_update_notice() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'upgrade_4' ) ) {
 			?>
@@ -285,10 +289,10 @@ class MainWP_System_View {
 
 	/**
 	 * Render Administration Notice.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
-     * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::check_auto_update_plugin()
-     * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_openssl_config_warning()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::check_auto_update_plugin()
+	 * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_openssl_config_warning()
 	 */
 	public static function admin_notices() {
 
@@ -316,7 +320,11 @@ class MainWP_System_View {
 		self::check_rating_notice( $current_options );
 	}
 
-	/** Render PHP Version Notice. */
+	/**
+	 * Render PHP Version Notice.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function render_notice_version() {
 		$phpver = phpversion();
 		if ( version_compare( $phpver, '5.5', '<' ) ) {
@@ -332,7 +340,11 @@ class MainWP_System_View {
 		}
 	}
 
-	/** Render OpenSSL Error message. */
+	/**
+	 * Render OpenSSL Error message.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+	 */
 	public static function render_notice_config_warning() {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
 			if ( MainWP_Utility::show_mainwp_message( 'notice', 'ssl_warn' ) ) {
@@ -364,8 +376,8 @@ class MainWP_System_View {
 	 * Render MainWP Review Request.
 	 *
 	 * @param bool $current_options false|true Weather or not to display request.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
 	public static function check_rating_notice( $current_options ) {
 		$display_request1 = false;
@@ -549,8 +561,8 @@ class MainWP_System_View {
 
 	/**
 	 * Admin print styles.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
 	 */
 	public static function admin_print_styles() {
 		?>
@@ -626,8 +638,8 @@ class MainWP_System_View {
 	 * @param mixed $class_string MainWP CSS Class attributes.
 	 *
 	 * @return string $class_string The CSS attributes to add to the page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System::is_mainwp_pages()
 	 */
 	public static function admin_body_class( $class_string ) {
 		if ( MainWP_System::is_mainwp_pages() ) {
@@ -646,6 +658,7 @@ class MainWP_System_View {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_footer_content( $websites ) {
 

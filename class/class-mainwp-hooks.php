@@ -149,13 +149,18 @@ class MainWP_Hooks {
 	 *
 	 * Hook to add Child Site.
 	 *
-	 * @since 3.2.2
-	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version, http_user, http_pass, websiteid - if edit site.
+	 * @param array $params site data fields: url, name, wpadmin, unique_id, groupids, ssl_verify, ssl_version,
+	 *                      http_user, http_pass, websiteid - if edit site.
 	 *
 	 * @return array $ret data fields: response, siteid.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
-	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::add_wp_site()
+	 * @throws \Exception
+	 *
+	 * @since 3.2.2
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Manage_Sites_View::add_wp_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function mainwp_add_site( $params ) {
 		$ret = array();
@@ -274,12 +279,16 @@ class MainWP_Hooks {
 	 *
 	 * Hook to edit Child Site.
 	 *
-	 * @since 3.2.2
 	 * @param array $params site data fields: websiteid, name, wpadmin, unique_id.
 	 *
-	 * @return int $ret Child site ID.
+	 * @return array $ret Child site ID.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
+	 * @throws \Exception
+	 *
+	 * @since 3.2.2
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Manage_Sites_View::update_wp_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function mainwp_edit_site( $params ) {
 		$ret = array();
@@ -547,6 +556,8 @@ class MainWP_Hooks {
 	 * @since 3.4.4
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public function hook_get_all_posts( $sites, $post_data = array() ) {
 
@@ -613,11 +624,15 @@ class MainWP_Hooks {
 	 *
 	 * To escape response data.
 	 *
-	 * @param mixed  $response response data.
-	 * @param string $fields fields of response data - option.
-	 * @param string $more_allowed input allowed tags - option.
+	 * @param mixed $response     response data.
+	 * @param bool  $fields       fields of response data - option.
+	 * @param array $more_allowed input allowed tags - option.
 	 *
 	 * @return mixed $response valid response data.
+	 * @throws \Exception
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_mixed_content()
 	 */
 	public function hook_escape_response( $response, $fields = false, $more_allowed = array() ) {
 
@@ -793,6 +808,7 @@ class MainWP_Hooks {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function upgrade_plugin_theme() {
 		try {

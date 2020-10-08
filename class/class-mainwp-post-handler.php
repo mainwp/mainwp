@@ -141,6 +141,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Page: User.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
+	 * @uses \MainWP\Dashboard\MainWP_User::render_table()
 	 */
 	public function mainwp_users_search() {
 		$this->secure_request( 'mainwp_users_search' );
@@ -163,6 +164,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 * @uses \MainWP\Dashboard\MainWP_Post::render_table()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mainwp_posts_search() {
 		$this->secure_request( 'mainwp_posts_search' );
@@ -193,6 +195,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
 	 * @uses \MainWP\Dashboard\MainWP_Page::render_table()
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mainwp_pages_search() {
 		$this->secure_request( 'mainwp_pages_search' );
@@ -244,6 +248,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Delete User from Child Site,
 	 * Page: Users.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::delete()
 	 */
 	public function mainwp_user_delete() {
 		$this->secure_request( 'mainwp_user_delete' );
@@ -255,6 +261,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Edit User from Child Site,
 	 * Page: Users.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::edit()
 	 */
 	public function mainwp_user_edit() {
 		$this->secure_request( 'mainwp_user_edit' );
@@ -264,8 +272,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_user_update_password(
 	 *
-	 * Update User passowrd from Child Site,
+	 * Update User password from Child Site,
 	 * Page: Users.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::update_password()
 	 */
 	public function mainwp_user_update_password() {
 		$this->secure_request( 'mainwp_user_update_password' );
@@ -277,6 +287,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Update User from Child Site,
 	 * Page: Users.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::update_user()
 	 */
 	public function mainwp_user_update_user() {
 		$this->secure_request( 'mainwp_user_update_user' );
@@ -432,8 +444,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_notice_status_update()
 	 *
-	 * Hide after installtion notices,
+	 * Hide after installation notices,
 	 * (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mainwp_notice_status_update() {
 		$this->secure_request( 'mainwp_notice_status_update' );
@@ -530,6 +544,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method ajax_mainwp_save_settings()
 	 *
 	 * Update saved MainWP Settings.
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function ajax_mainwp_save_settings() {
 		$this->secure_request( 'mainwp_save_settings' );
@@ -819,6 +835,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * Bulk Add User for,
 	 * Page: BulkAddUser.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::do_bulk_add()
 	 */
 	public function mainwp_bulkadduser() {
 		if ( ! $this->check_security( 'mainwp_bulkadduser' ) ) {
@@ -832,6 +850,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_importuser()
 	 *
 	 * Import user.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_User::do_import()
 	 */
 	public function mainwp_importuser() {
 		$this->secure_request( 'mainwp_importuser' );

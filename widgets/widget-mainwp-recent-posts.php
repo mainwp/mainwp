@@ -38,12 +38,12 @@ class MainWP_Recent_Posts {
 	 * Method render_sites()
 	 *
 	 * Build the recent posts list.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function render_sites() {
 
@@ -182,6 +182,12 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+     *
 	 */
 	public static function render_published_posts( $allPosts, $recent_number ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
@@ -278,6 +284,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_draft_posts( $allPosts, $recent_number ) {
 
@@ -372,6 +383,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     *@uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_pending_posts( $allPosts, $recent_number ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
@@ -466,6 +482,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_future_posts( $allPosts, $recent_number ) {
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
@@ -560,6 +581,11 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_trash_posts( $allPosts, $recent_number ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
@@ -716,13 +742,13 @@ class MainWP_Recent_Posts {
 	 * @param string $pAction Post Action.
 	 * @param string $type    Post type.
 	 *
-	 * @throws \Exception
-     *
+	 * @throws \Exception Error message.
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action( $pAction, $type = 'post' ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
@@ -780,12 +806,12 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param mixed $pAction Post Action.
 	 *
-	 * @throws \Exception
-     *
+	 * @throws \Exception Error message.
+	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function action_update( $pAction ) {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;

@@ -465,6 +465,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Update a specific WP core.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_site()
 	 */
 	public function mainwp_upgradewp() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'update_wordpress' ) ) {
@@ -498,6 +499,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::backup_full_task_running()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::get_plugin_theme_slugs()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::upgrade_plugin_theme_translation()
 	 */
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -623,6 +626,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_unignoreabandonedplugintheme()
 	 *
 	 * Unignore abandoned plugin or theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::ignore_plugin_theme()
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_abandoned_plugin_theme()
 	 */
 	public function mainwp_unignoreabandonedplugintheme() {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
@@ -641,6 +647,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_unignoreabandonedpluginthemes()
 	 *
 	 * Unignore abandoned plugins or themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_abandoned_plugins_themes()
 	 */
 	public function mainwp_unignoreabandonedpluginsthemes() {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
@@ -658,6 +666,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_dismissoutdateplugintheme()
 	 *
 	 * Dismiss outdated plugin or theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::dismiss_plugin_theme()
 	 */
 	public function mainwp_dismissoutdateplugintheme() {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
@@ -676,6 +686,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_dismissoutdatepluginthemes()
 	 *
 	 * Dismiss outdated plugins or themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::dismiss_plugins_themes()
 	 */
 	public function mainwp_dismissoutdatepluginsthemes() {
 		$this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
@@ -699,6 +711,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_unignoreplugintheme()
 	 *
 	 * Unignore plugin or theme.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_plugin_theme()
 	 */
 	public function mainwp_unignoreplugintheme() {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
@@ -716,6 +730,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Method mainwp_ignorepluginthemes()
 	 *
 	 * Ignore plugins or themes.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Updates_Handler::ignore_plugins_themes()
 	 */
 	public function mainwp_ignorepluginsthemes() {
 		$this->secure_request( 'mainwp_ignorepluginsthemes' );

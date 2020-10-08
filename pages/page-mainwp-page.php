@@ -82,8 +82,8 @@ class MainWP_Page {
 	 * Initiate Menu.
 	 *
 	 * @return void Initiated menus.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Pages', 'mainwp' ), '<span id="mainwp-Pages">' . __( 'Pages', 'mainwp' ) . '</span>', 'read', 'PageBulkManage', array( self::get_class_name(), 'render' ) );
@@ -129,8 +129,8 @@ class MainWP_Page {
 	 * Add edit on load bulk posts.
 	 *
 	 * @return void Returns post to edit.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Post::on_load_bulkpost()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post::on_load_bulkpost()
 	 */
 	public static function on_load_add_edit() {
 
@@ -161,8 +161,8 @@ class MainWP_Page {
 	 * Method init_subpages_menu()
 	 *
 	 * Initiate subpages menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -202,10 +202,10 @@ class MainWP_Page {
 	 * Initiate left menu.
 	 *
 	 * @param array $subPages Left menu sub pages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_left_menu( $subPages = array() ) {
 
@@ -261,6 +261,8 @@ class MainWP_Page {
 	 * Get columns to display.
 	 *
 	 * @return array $colums Columns to display.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
@@ -348,10 +350,10 @@ class MainWP_Page {
 	 *
 	 * @param string $shownPage Current page.
 	 * @param int    $post_id Post ID.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 
@@ -422,9 +424,9 @@ class MainWP_Page {
 	 * Renders Bulk Page Manager.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
@@ -727,6 +729,7 @@ class MainWP_Page {
 	 * @return void Page table html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all' ) {
 		?>
@@ -868,6 +871,9 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
@@ -982,11 +988,15 @@ class MainWP_Page {
 	 * @param mixed $output Search output.
 	 *
 	 * @return void Search box html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
-     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -1138,8 +1148,8 @@ class MainWP_Page {
 	 * Method publish()
 	 *
 	 * Publish page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function publish() {
 		MainWP_Recent_Posts::action( 'publish', 'page' );
@@ -1150,8 +1160,8 @@ class MainWP_Page {
 	 * Method unpublish()
 	 *
 	 * Unpublish page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function unpublish() {
 		MainWP_Recent_Posts::action( 'unpublish', 'page' );
@@ -1162,8 +1172,8 @@ class MainWP_Page {
 	 * Method trash()
 	 *
 	 * Trash page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function trash() {
 		MainWP_Recent_Posts::action( 'trash', 'page' );
@@ -1174,8 +1184,8 @@ class MainWP_Page {
 	 * Method delete()
 	 *
 	 * Delete page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function delete() {
 		MainWP_Recent_Posts::action( 'delete', 'page' );
@@ -1186,8 +1196,8 @@ class MainWP_Page {
 	 * Method restore()
 	 *
 	 * Restore page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Recent_Posts::action()
 	 */
 	public static function restore() {
 		MainWP_Recent_Posts::action( 'restore', 'page' );
@@ -1246,8 +1256,8 @@ class MainWP_Page {
 	 * @param mixed $what Current page.
 	 *
 	 * @return void Display page header, bulkpost body & footer.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Post::render_bulkpost()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post::render_bulkpost()
 	 */
 	public static function render_addedit( $post_id, $what ) {
 		self::render_header( $what, $post_id );
@@ -1261,15 +1271,17 @@ class MainWP_Page {
 	 * Render Posting page modal window.
 	 *
 	 * @return void Posting page modal window html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
-     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';
@@ -1491,7 +1503,7 @@ class MainWP_Page {
 							<div class="ui relaxed list">
 								<?php foreach ( $dbwebsites as $website ) { ?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?>
+										: <?php echo ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '"  class="mainwp-may-hide-referrer" target="_blank">View Page</a>' : 'ERROR: ' . $output->errors[ $website->id ] ); ?>
 									</div>
 								<?php } ?>
 							</div>
@@ -1559,11 +1571,11 @@ class MainWP_Page {
 	 * Render twitter notice.
 	 *
 	 * @return void Output twitter notice.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-     * @uses \MainWP\Dashboard\MainWP_Twitter
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
 	 */
 	public static function render_twitter_notice() {
 		if ( MainWP_Twitter::enabled_twitter_messages() ) {

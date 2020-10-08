@@ -151,6 +151,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function save_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_saveextensionapilogin' );
@@ -224,6 +225,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Save whenther or not to verify MainWP API SSL certificate.
 	 *
 	 * @return void
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function save_api_ssl_verify() {
 		$this->check_security( 'mainwp_extension_apisslverifycertificate' );
@@ -238,6 +241,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function test_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_testextensionapilogin' );
@@ -319,6 +323,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * Remove Extensions menu from MainWP Menu.
 	 *
 	 * @return void
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function remove_extension_menu_from_mainwp_menu() {
 		$this->check_security( 'mainwp_extension_remove_menu' );

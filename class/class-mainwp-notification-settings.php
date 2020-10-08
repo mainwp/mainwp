@@ -57,6 +57,8 @@ class MainWP_Notification_Settings {
 	 * Manage general email settings.
 	 *
 	 * @return bool True if saved successfully, false if not.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function emails_general_settings_handle() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsEmail' ) ) {
@@ -218,10 +220,10 @@ class MainWP_Notification_Settings {
 	 *
 	 * @param string $type          Email notification type.
 	 * @param bool   $updated_templ True if page loaded after update, false if not.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_edit_template()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_name_by_notification_type()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Template::is_overrided_template()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_edit_template()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_name_by_notification_type()
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::is_overrided_template()
 	 */
 	public function render_edit_settings( $type, $updated_templ ) {
 
@@ -429,9 +431,9 @@ class MainWP_Notification_Settings {
 	 * @param object $website Object containing the child site information.
 	 *
 	 * @return array An array containing the email settings.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
 	 */
 	public static function get_site_email_settings( $type, $website ) {
 		if ( empty( $website ) || ! property_exists( $website, 'settings_notification_emails' ) ) {
@@ -475,8 +477,8 @@ class MainWP_Notification_Settings {
 	 * @param bool   $general General or individual site settings.
 	 *
 	 * @return string Email field settings value.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public static function get_default_emails_fields( $type, $field = '', $general = false ) {
 
@@ -534,8 +536,8 @@ class MainWP_Notification_Settings {
 	 * @param object $website The website.
 	 *
 	 * @return array $options array of fields.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
 	 */
 	public static function replace_tokens_for_settings( $options, $fields = array(), $website ) {
 
@@ -605,9 +607,9 @@ class MainWP_Notification_Settings {
 	 * @param object $website The website.
 	 *
 	 * @return string $content after replaced tokens.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
 	 */
 	public static function replace_tokens_for_content( $content, $website ) {
 

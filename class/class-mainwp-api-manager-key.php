@@ -203,6 +203,8 @@ class MainWP_Api_Manager_Key {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function test_login_api( $args ) {
 

@@ -55,15 +55,19 @@ class MainWP_Bulk_Update_Admin_Passwords {
 
 	/**
 	 * Renders the Admin Passwords page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_User::render_header()
+     * @uses \MainWP\Dashboard\MainWP_User::render_footer()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$show_form = true;
@@ -229,10 +233,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 	 * Renders bulk update administrator password form.
 	 *
 	 * @param object $websites Object containing child sites info.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render_bulk_form( $websites ) {
 

@@ -129,6 +129,7 @@ class MainWP_Api_Manager {
 	 * @param mixed $info    Activation information.
 	 *
 	 * @return mixed Set activation info.
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function set_activation_info( $ext_key, $info ) {
 
@@ -152,6 +153,7 @@ class MainWP_Api_Manager {
 	 * @return array Activation info.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::activate()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function license_key_activation( $api, $api_key, $api_email ) {
 

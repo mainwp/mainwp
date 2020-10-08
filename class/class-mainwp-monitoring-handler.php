@@ -24,6 +24,7 @@ class MainWP_Monitoring_Handler {
 	 * @return bool True on success, false on failure.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
@@ -46,6 +47,7 @@ class MainWP_Monitoring_Handler {
 	 * @return bool True for cleaning.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Monitoring::purge_monitoring_records()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function check_to_purge_records() {
 		$last_purge_records = get_option( 'mainwp_cron_checksites_purge_records_last_timestamp', 0 );
@@ -171,8 +173,8 @@ class MainWP_Monitoring_Handler {
 	 */
 	private static function get_duration_for_status( $website, $time ) {
 
-		$use_indi_interval = ( 0 < $website->status_check_interval ) ? true : false;
-
+		$use_indi_interval  = ( 0 < $website->status_check_interval ) ? true : false;
+		$duration_site_last = 0;
 		if ( 0 != $website->offline_checks_last ) {
 			$duration_site_last = $time - $website->offline_checks_last; // duration equal now (time()) minus last time checked.
 		}
@@ -214,6 +216,7 @@ class MainWP_Monitoring_Handler {
 	 * Check child site status via AJAX.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function ajax_check_status_site() {
 		$website = null;
@@ -271,6 +274,7 @@ class MainWP_Monitoring_Handler {
 			return;
 		}
 
+		$email = '';
 		// for individual notification, one site loop.
 		foreach ( $websites as $site ) {
 			$addition_emails = $site->monitoring_notification_emails;

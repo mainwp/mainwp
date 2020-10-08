@@ -127,7 +127,10 @@ class MainWP_Notification_Template {
 	 * @param string $template_name Template name.
 	 * @param array  $args          Arguments. (default: array).
 	 *
-	 *  @uses \MainWP\Dashboard\MainWP_Notification_Settings::replace_tokens_for_content()
+	 * @return false|string|void
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::replace_tokens_for_content()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public function get_template( $template_name, $args = array() ) {
 

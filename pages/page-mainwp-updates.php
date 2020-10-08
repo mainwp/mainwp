@@ -81,9 +81,8 @@ class MainWP_Updates {
 
 	/**
 	 * Instantiates MainWP Updates Page.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
-     *
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post::get_class_name()
 	 */
 	public static function init() {
 		/**
@@ -109,8 +108,8 @@ class MainWP_Updates {
 
 	/**
 	 * Renders init updates menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
 	 */
 	public static function init_menu() {
 		add_submenu_page(
@@ -141,8 +140,8 @@ class MainWP_Updates {
 	 * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
 	 *
 	 * @param string $shownPage The page slug shown at this moment.
-     *
-     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
 	 */
 	public static function render_header( $shownPage = '' ) {
 
@@ -246,6 +245,7 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_Utility::array_sort()
 	 */
 	public static function render() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$websites      = self::get_sites();
@@ -659,6 +659,8 @@ class MainWP_Updates {
 	 * @param string $site_view              Current view.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_wpcore_updates()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_wpcore_updates()
 	 */
 	public static function render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view ) {
 		?>
@@ -771,6 +773,10 @@ class MainWP_Updates {
 	 * @param array  $pluginsInfo            Array of all plugins info.
 	 * @param int    $site_offset_for_groups Offset value.
 	 * @param string $site_view              Current view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_plugins_updates()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_plugins_updates()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_plugins_updates()
 	 */
 	public static function render_plugins_update_tab( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $allPlugins, $pluginsInfo, $site_offset_for_groups, $site_view ) {
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
@@ -940,6 +946,10 @@ class MainWP_Updates {
 	 * @param array  $themesInfo             Array of all themes info.
 	 * @param int    $site_offset_for_groups Offset value.
 	 * @param string $site_view              Current view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_themes_updates()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_themes_updates()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_themes_updates()
 	 */
 	public static function render_themes_update_tab( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $allThemes, $themesInfo, $site_offset_for_groups, $site_view ) {
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
@@ -1110,6 +1120,10 @@ class MainWP_Updates {
 	 * @param bool   $mainwp_show_language_updates Either or not show language updates.
 	 * @param int    $site_offset_for_groups     Offset value.
 	 * @param string $site_view                  Current Site view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_trans_update()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_trans_update()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_trans_update()
 	 */
 	public static function render_trans_update_tab( $websites, $total_translation_upgrades, $userExtension, $all_groups_sites, $all_groups, $allTranslations, $translationsInfo, $mainwp_show_language_updates, $site_offset_for_groups, $site_view ) {
 		if ( 1 == $mainwp_show_language_updates ) {
@@ -1275,6 +1289,10 @@ class MainWP_Updates {
 	 * @param array  $decodedDismissedPlugins Array of dismissed abandoned plugins.
 	 * @param int    $site_offset_for_groups  Offset value.
 	 * @param string $site_view               Current site view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_abandoned_plugins()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_abandoned_plugins()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_abandoned_plugins()
 	 */
 	public static function render_abandoned_plugins_tab( $websites, $all_groups_sites, $all_groups, $allPluginsOutdate, $decodedDismissedPlugins, $site_offset_for_groups, $site_view ) {
 		?>
@@ -1422,6 +1440,10 @@ class MainWP_Updates {
 	 * @param array  $decodedDismissedThemes Array of dismissed abandoned plugins.
 	 * @param int    $site_offset_for_groups Offset value.
 	 * @param string $site_view              Current site view.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Group::render_abandoned_themes()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Item::render_abandoned_themes()
+     * @uses \MainWP\Dashboard\MainWP_Updates_Per_Site::render_abandoned_themes()
 	 */
 	public static function render_abandoned_themes_tab( $websites, $all_groups_sites, $all_groups, $allThemesOutdate, $decodedDismissedThemes, $site_offset_for_groups, $site_view ) {
 		?>
@@ -1632,7 +1654,7 @@ class MainWP_Updates {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
 	 */
 	public static function get_sites() {
 
@@ -1759,11 +1781,11 @@ class MainWP_Updates {
 
 	/**
 	 * Renders the twitter bragger message.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Twitter
-     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 */
 	public static function render_twitter_notice() {
 

@@ -79,9 +79,9 @@ class MainWP_Post {
 	 * Initiate Page menu.
 	 *
 	 * @return void
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
 	 */
 	public static function init_menu() {
 		$_page = add_submenu_page( 'mainwp_tab', __( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . __( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( self::get_class_name(), 'render' ) );
@@ -217,6 +217,8 @@ class MainWP_Post {
 	 * Get columns to display.
 	 *
 	 * @return array $colums Array of columns to display on the page.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
@@ -293,8 +295,8 @@ class MainWP_Post {
 	 * Initiate subpages menu.
 	 *
 	 * @return void Render subpages menu.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 */
 	public static function init_subpages_menu() {
 		?>
@@ -337,10 +339,10 @@ class MainWP_Post {
 	 *
 	 * @return void Menu arrays are assed on to MainWP_Menu::init_subpages_left_menu() & MainWP_Menu::init_left_menu().
 	 *
-     * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     */
+	 * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 */
 	public static function init_left_menu( $subPages = array() ) {
 
 		MainWP_Menu::add_left_menu(
@@ -410,10 +412,10 @@ class MainWP_Post {
 	 *
 	 * @param string $shownPage Current page slug.
 	 * @param null   $post_id BulkEdit Post ID.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
-     * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
+	 * @uses \MainWP\Dashboard\MainWP_UI::render_page_navigation()
 	 */
 	public static function render_header( $shownPage = '', $post_id = null ) {
 		$params = array(
@@ -485,9 +487,9 @@ class MainWP_Post {
 	 * Render the page content.
 	 *
 	 * @return string Post page html content.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
-     * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
+	 * @uses \MainWP\Dashboard\MainWP_UI::select_sites_box()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_posts' ) ) {
@@ -812,6 +814,7 @@ class MainWP_Post {
 	 * @param string $search_on Site on all sites. Default = all.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table( $cached = true, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $postId = 0, $userId = 0, $post_type = '', $search_on = 'all' ) {
 		?>
@@ -970,6 +973,9 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+     * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Post' );
@@ -1124,11 +1130,14 @@ class MainWP_Post {
 	 * @param mixed $output Html to output.
 	 *
 	 * @return string Returned search results html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
-     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Cache::add_body()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+     * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function posts_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex method.
 		if ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
@@ -1325,10 +1334,10 @@ class MainWP_Post {
 	 *
 	 * @param array $entry Post array.
 	 * @param int   $count Counter variable.
-     *
+	 *
 	 * @return string $r Custom Fields meta box HTML.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public static function list_meta_row( $entry, &$count ) {
 
@@ -1836,10 +1845,10 @@ class MainWP_Post {
 	 * @param mixed $input_type Post type.
 	 *
 	 * @return string Edit bulk post html.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_slug()
-     * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
-     * @uses \MainWP\Dashboard\MainWP_UI
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_slug()
+	 * @uses \MainWP\Dashboard\MainWP_Meta_Boxes::add_tags()
+	 * @uses \MainWP\Dashboard\MainWP_UI
 	 */
 	public static function render_bulkpost( $post_id, $input_type ) {
 		$post = get_post( $post_id );
@@ -2372,8 +2381,8 @@ class MainWP_Post {
 	 * @param mixed  $data search data.
 	 * @param object $website child site object.
 	 * @param mixed  $output output.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
 	 */
 	public static function hook_posts_search_handler( $data, $website, &$output ) {
 		$posts = array();

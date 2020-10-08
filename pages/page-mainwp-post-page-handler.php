@@ -68,9 +68,9 @@ class MainWP_Post_Page_Handler {
 	 * Method ajax_add_meta()
 	 *
 	 * Ajax process to add post meta data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
-     * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
+	 * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
 	 */
 	public static function ajax_add_meta() {
 
@@ -160,6 +160,7 @@ class MainWP_Post_Page_Handler {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_ids()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_ids()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function get_categories() {
 		$websites = array();
@@ -225,19 +226,21 @@ class MainWP_Post_Page_Handler {
 	 * Method posting()
 	 *
 	 * Create bulk posts on sites.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
-     * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
-     * @uses \MainWP\Dashboard\MainWP_Twitter
-     * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
+	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::enabled_twitter_messages()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
+	 * @uses \MainWP\Dashboard\MainWP_Twitter
+	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$succes_message = '';
@@ -492,7 +495,7 @@ class MainWP_Post_Page_Handler {
 								foreach ( $dbwebsites as $website ) {
 									?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? $succes_message . ' <a href="' . $output->link[ $website->id ] . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
+									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
 									</div>
 							<?php } ?>
 							</div>
@@ -572,12 +575,12 @@ class MainWP_Post_Page_Handler {
 	 * Method get_post()
 	 *
 	 * Get post from child site to edit.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
-     * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
+	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_Exception
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function get_post() {
 		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
@@ -831,8 +834,8 @@ class MainWP_Post_Page_Handler {
 	 * @param array  $img_data Array of image data.
 	 *
 	 * @return mixed array of result or null.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 */
 	public static function upload_image( $img_url, $img_data = array() ) {
 		if ( ! is_array( $img_data ) ) {

@@ -128,7 +128,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @param mixed $id Group ID.
 	 *
-	 * @return (object|null) Database query result for chosen Group ID or null on failure.
+	 * @return object|null Database query result for chosen Group ID or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_group_by_id( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
@@ -207,6 +209,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $websiteid Child Site ID.
 	 *
 	 * @return object|null Database query result for groups by website ID or null on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function get_groups_by_website_id( $websiteid ) {
 		if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
@@ -416,6 +420,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $name Name of group to add.
 	 *
 	 * @return boolean true
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function add_group( $userid, $name ) {
 		if ( MainWP_Utility::ctype_digit( $userid ) ) {
@@ -441,7 +448,9 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @param mixed $groupid Group ID.
 	 *
-	 * @return (int|boolean) Group that was deleted or false on failer.
+	 * @return int|boolean Group that was deleted or false on failure.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function remove_group( $groupid ) {
 		if ( MainWP_Utility::ctype_digit( $groupid ) ) {
@@ -477,6 +486,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * @param mixed $groupname Group Name.
 	 *
 	 * @return boolean true|false.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public function update_group( $groupid, $groupname ) {
 		if ( MainWP_Utility::ctype_digit( $groupid ) ) {

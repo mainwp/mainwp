@@ -203,8 +203,8 @@ class MainWP_Server_Information_Handler {
 	 * Get any SSL Warning Messages.
 	 *
 	 * @return string SSL Error message.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_openssl_conf()
 	 */
 	public static function get_ssl_warning() {
 		$conf     = array( 'private_key_bits' => 2048 );

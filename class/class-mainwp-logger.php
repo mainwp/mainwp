@@ -211,6 +211,8 @@ class MainWP_Logger {
 	 * @param string $message Debug message.
 	 *
 	 * @return mixed Website debug info.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public function debug_for_website( $website, $action, $message ) {
 		if ( empty( $website ) ) {
@@ -230,6 +232,8 @@ class MainWP_Logger {
 	 * @param string $message Info message.
 	 *
 	 * @return mixed Website Info.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public function info_for_website( $website, $action, $message ) {
 		if ( empty( $website ) ) {

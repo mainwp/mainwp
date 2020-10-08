@@ -95,18 +95,21 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_UI::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_WP_CLI_Command::init()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Overview::init()
-     * @uses \MainWP\Dashboard\MainWP_Extensions::init()
-     * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
-     * @uses \MainWP\Dashboard\MainWP_Install_Bulk::init()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init()
-     * @uses \MainWP\Dashboard\MainWP_Overview::get()
-     * @uses \MainWP\Dashboard\MainWP_Page::init()
-     * @uses \MainWP\Dashboard\MainWP_Plugins::init()
-     * @uses \MainWP\Dashboard\MainWP_Post::init()
-     * @uses \MainWP\Dashboard\MainWP_Settings::init()
-     * @uses \MainWP\Dashboard\MainWP_Themes::init()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions::init()
+	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
+	 * @uses \MainWP\Dashboard\MainWP_Install_Bulk::init()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init()
+	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init()
+	 * @uses \MainWP\Dashboard\MainWP_Overview::get()
+	 * @uses \MainWP\Dashboard\MainWP_Page::init()
+	 * @uses \MainWP\Dashboard\MainWP_Plugins::init()
+	 * @uses \MainWP\Dashboard\MainWP_Post::init()
+	 * @uses \MainWP\Dashboard\MainWP_Settings::init()
+	 * @uses \MainWP\Dashboard\MainWP_Themes::init()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::init()
+     * @uses \MainWP\Dashboard\MainWP_User::init()
      * @uses \MainWP\Dashboard\MainWP_Updates::init()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -228,7 +231,7 @@ class MainWP_System {
 		}
 		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 			if ( isset( $_GET['mainwp_run'] ) && ! empty( $_GET['mainwp_run'] ) ) {
-				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), 8 );
+				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
 			}
 		}
 		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
@@ -364,6 +367,7 @@ class MainWP_System {
 	 * @param string $error Array of error messages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -558,7 +562,7 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
-     * @uses \MainWP\Dashboard\MainWP_Setup_Wizard()
+	 * @uses \MainWP\Dashboard\MainWP_Setup_Wizard()
 	 */
 	public function parse_init() {
 		if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
@@ -1051,6 +1055,7 @@ class MainWP_System {
 	 * Activate MainWP.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Install::install()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function activation() {
 		MainWP_Install::instance()->install();

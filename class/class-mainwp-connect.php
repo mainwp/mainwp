@@ -46,6 +46,8 @@ class MainWP_Connect {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
+	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
 	 */
 	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
@@ -255,6 +257,8 @@ class MainWP_Connect {
 	 * @param array $website Child Site information.
 	 *
 	 * @return mixed False|try visit result.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::is_domain_valid()
 	 */
 	public static function check_website_status( $website ) {
 		$http_user         = null;
@@ -750,6 +754,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
@@ -1153,8 +1158,6 @@ class MainWP_Connect {
 	 *
 	 * @return mixed $information
 	 *
-	 * @throws \Exception
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
 	 * @uses \MainWP\Dashboard\MainWP_Premium_Update::maybe_request_premium_updates()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
@@ -1386,6 +1389,8 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function fetch_url_site( // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		&$website,
@@ -1608,6 +1613,7 @@ class MainWP_Connect {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::close_open_requests()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	private static function check_constraints( &$identifier, $website ) {
 		$semLock      = '103218';
@@ -1904,6 +1910,7 @@ class MainWP_Connect {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 */
 	public static function get_favico_url( $website ) {
 		$favi    = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );

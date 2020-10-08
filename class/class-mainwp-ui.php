@@ -39,8 +39,8 @@ class MainWP_UI {
 	 * @param array   $selected_groups Selected Groups.
 	 * @param bool    $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param integer $postId Post Meta ID.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public static function select_sites_box( $type = 'checkbox', $show_group = true, $show_select_all = true, $class = '', $style = '', &$selected_websites = array(), &$selected_groups = array(), $enableOfflineSites = false, $postId = 0 ) {
 
@@ -459,10 +459,10 @@ class MainWP_UI {
 	 * Render top header.
 	 *
 	 * @param array $params Page parameters.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB::query()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
-     * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB::query()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
+	 * @uses \MainWP\Dashboard\MainWP_Menu::render_left_menu()
 	 */
 	public static function render_top_header( $params = array() ) {
 
@@ -514,7 +514,9 @@ class MainWP_UI {
 		}
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-
+		if ( ! is_array( $websites ) ) {
+			$websites = array();
+		}
 		?>
 		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
 			<div class="ui segment" style="margin-bottom:0px">
@@ -1010,8 +1012,8 @@ class MainWP_UI {
 	 * @param string      $priority high|core|default|low, Default: default.
 	 *
 	 * @return void Sets Global $mainwp_widget_boxes[ $page ][ $context ][ $priority ][ $id ].
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
 	public static function add_widget_box( $id, $callback, $screen = null, $context = null, $title = null, $priority = 'default' ) { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		/**
@@ -1106,8 +1108,8 @@ class MainWP_UI {
 	 * @param string      $object Empty string.
 	 *
 	 * @return void Renders widget container box.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
 	public static function do_widget_boxes( $screen, $context = null, $object = '' ) {
 		global $mainwp_widget_boxes;
@@ -1360,6 +1362,8 @@ class MainWP_UI {
 	 * Integrate UserSnap.
 	 *
 	 * @return bool True, Inject UserSnap meta data. False if $showtime is false.
+     *
+     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function usersnap_integration() {
 

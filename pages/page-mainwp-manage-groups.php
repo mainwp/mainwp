@@ -113,6 +113,7 @@ class MainWP_Manage_Groups {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
+     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function get_website_list_content() {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -572,12 +573,12 @@ class MainWP_Manage_Groups {
 	 * Method update_group()
 	 *
 	 * Update groups Sites.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::clear_group()
-     * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group_site()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::clear_group()
+	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_group_site()
+	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function update_group() {
 		$groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;

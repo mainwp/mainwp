@@ -106,8 +106,8 @@ class MainWP_Widget_Plugins {
 	 *
 	 * @param object $website    Object containing the child site info.
 	 * @param array  $allPlugins Array containing all detected plugins data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 */
 	public static function render_html_widget( $website, $allPlugins ) {

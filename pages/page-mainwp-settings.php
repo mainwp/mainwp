@@ -382,7 +382,7 @@ class MainWP_Settings {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function handle_settings_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
@@ -458,7 +458,7 @@ class MainWP_Settings {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_View
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
 	 */
 	public static function render() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
@@ -710,7 +710,7 @@ class MainWP_Settings {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_last_automatic_sync()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count_where_dts_automatic_sync_smaller_then_start()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 */
 	public static function get_websites_automatic_update_time() {
 		$lastAutomaticUpdate    = MainWP_DB::instance()->get_websites_last_automatic_sync();
@@ -777,8 +777,8 @@ class MainWP_Settings {
 
 	/**
 	 * Render Advanced Options Subpage.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function render_advanced() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
@@ -1048,7 +1048,7 @@ class MainWP_Settings {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_for_current_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function export_sites() {
 		if ( isset( $_GET['doExportSites'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'export_sites' ) ) {
@@ -1131,8 +1131,8 @@ class MainWP_Settings {
 
 	/**
 	 * Render Client Reports Responder.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function render_report_responder() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {

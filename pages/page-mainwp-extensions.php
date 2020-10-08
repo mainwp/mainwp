@@ -66,7 +66,7 @@ class MainWP_Extensions {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::added_on_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function init_menu() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( ! MainWP_Menu::is_disable_menu_item( 2, 'Extensions' ) ) {
@@ -343,7 +343,7 @@ class MainWP_Extensions {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );

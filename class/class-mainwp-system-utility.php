@@ -483,10 +483,26 @@ class MainWP_System_Utility {
 	 */
 	public static function get_child_response( $data ) {
 		if ( is_serialized( $data ) ) {
-			return unserialize( $data, array( 'allowed_classes' => false ) ); // phpcs:ignore -- for compatability.
+			$resp = unserialize( $data, array( 'allowed_classes' => false ) ); // phpcs:ignore -- for compatability.
 		} else {
-			return json_decode( $data, true );
+			$resp = json_decode( $data, true );
 		}
+
+		if ( is_array( $resp ) ) {
+			if ( isset( $resp['error'] ) ) {
+				$resp['error'] = MainWP_Utility::esc_content( $resp['error'] );
+			}
+
+			if ( isset( $resp['message'] ) ) {
+				$resp['message'] = MainWP_Utility::esc_content( $resp['message'] );
+			}
+
+			if ( isset( $resp['error_message'] ) ) {
+				$resp['error_message'] = MainWP_Utility::esc_content( $resp['error_message'] );
+			}
+		}
+
+		return $resp;
 	}
 
 	/**

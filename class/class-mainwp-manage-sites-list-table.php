@@ -461,7 +461,7 @@ class MainWP_Manage_Sites_List_Table {
 								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
 								foreach ( $groups as $group ) {
 									?>
-									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo stripslashes( $group->name ); ?></div>
+									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
 									<?php
 								}
 								?>

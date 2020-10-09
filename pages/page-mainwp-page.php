@@ -974,7 +974,7 @@ class MainWP_Page {
 		if ( 'publish' == $status ) {
 			return 'Published';
 		}
-		return ucfirst( $status );
+		return esc_html( ucfirst( $status ) );
 	}
 
 

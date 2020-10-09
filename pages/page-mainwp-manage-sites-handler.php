@@ -210,7 +210,7 @@ class MainWP_Manage_Sites_Handler {
 			}
 
 			if ( '' !== $error ) {
-				die( wp_json_encode( array( 'error' => $error ) ) );
+				die( wp_json_encode( array( 'error' => esc_html( $error ) ) ) );
 			} elseif ( isset( $information['deactivated'] ) ) {
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} elseif ( isset( $information['removed'] ) ) {

@@ -1117,7 +1117,7 @@ class MainWP_Post {
 			return 'Published';
 		}
 
-		return ucfirst( $status );
+		return esc_html( ucfirst( $status ) );
 	}
 
 	/**

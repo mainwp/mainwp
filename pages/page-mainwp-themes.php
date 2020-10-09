@@ -615,9 +615,9 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
-     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
@@ -1429,8 +1429,8 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_Themes_Handler::get_class_name()
-     * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_all_themes_table( $output = null ) { // phpcs:ignore -- not quite complex function.
 		$keyword       = null;
@@ -1563,8 +1563,8 @@ class MainWP_Themes {
 	 * @param mixed $trustedThemes Trusted themes.
 	 * @param mixed $trustedThemesNotes Trusted themes notes.
 	 * @param mixed $decodedIgnoredThemes Decoded ignored themes.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function render_all_themes_html( $themes, $search_status, $trustedThemes, $trustedThemesNotes, $decodedIgnoredThemes ) {
 

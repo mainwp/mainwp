@@ -107,9 +107,9 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init()
 	 * @uses \MainWP\Dashboard\MainWP_Themes::init()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::init()
-     * @uses \MainWP\Dashboard\MainWP_User::init()
-     * @uses \MainWP\Dashboard\MainWP_Updates::init()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_User::init()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::init()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
@@ -365,7 +365,7 @@ class MainWP_System {
 	 * @param string $error Array of error messages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -1053,7 +1053,7 @@ class MainWP_System {
 	 * Activate MainWP.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Install::install()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function activation() {
 		MainWP_Install::instance()->install();

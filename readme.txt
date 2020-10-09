@@ -179,6 +179,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 4.1.2.1 - 10-9-20 =
 * Fixed: An issue with Quick Site Shortcuts sidebar
 * Fixed: Semantic UI error related to the Help sidebar
+* Preventative: Multiple security improvements
 * Removed: The Enable Managed Client Reports for WooCommmerce option when not used
 * Removed: Usersnap integration
 

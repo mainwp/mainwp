@@ -139,8 +139,8 @@ class MainWP_Install_Bulk {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function prepare_install() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -258,7 +258,7 @@ class MainWP_Install_Bulk {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function perform_install() {
 		MainWP_Utility::end_session();
@@ -346,8 +346,8 @@ class MainWP_Install_Bulk {
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_download_url()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function prepare_upload() {
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
@@ -422,7 +422,7 @@ class MainWP_Install_Bulk {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
 	public static function perform_upload() {
 		MainWP_Utility::end_session();

@@ -22,8 +22,8 @@ class MainWP_Manage_Sites_Backup_View {
 	 * @param array  $dbBackups DB Backups Array.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function show_backups( &$website, $fullBackups, $dbBackups ) {
 		$mwpDir = MainWP_System_Utility::get_mainwp_dir();

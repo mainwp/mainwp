@@ -1321,7 +1321,7 @@ class MainWP_Connect {
 	 * @param array   $others Other functions to perform.
 	 * @param array   $output Output values.
 	 *
-	 * @throws \Exception Excetpion message.
+	 * @throws \Exception Exception message.
 	 *
 	 * @return mixed self::fetch_url_site()
 	 */

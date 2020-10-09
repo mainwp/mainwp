@@ -234,7 +234,6 @@ class MainWP_System {
 				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
 			}
 		}
-		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
 	}
 
 	/**
@@ -290,7 +289,6 @@ class MainWP_System {
 				'mainwp_daily_digest_plain_text',
 				'mainwp_enable_managed_cr_for_wc',
 				'mainwp_hide_update_everything',
-				'mainwp_show_usersnap',
 				'mainwp_number_overview_columns',
 				'mainwp_disable_update_confirmations',
 				'mainwp_settings_hide_widgets',

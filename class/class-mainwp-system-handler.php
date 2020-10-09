@@ -184,6 +184,14 @@ class MainWP_System_Handler {
 		}
 		$count = count( $output );
 		for ( $i = 0; $i < $count; $i ++ ) {
+
+			if ( 'mainwp_getmetaboxes' === $filter ) {
+				// pass custom widget.
+				if ( isset( $output[ $i ]['custom'] ) && $output[ $i ]['custom'] && isset( $output[ $i ]['plugin'] ) ) {
+					continue;
+				}
+			}
+
 			if ( ! isset( $output[ $i ]['plugin'] ) || ! isset( $output[ $i ]['key'] ) ) {
 				unset( $output[ $i ] );
 				continue;
@@ -259,7 +267,6 @@ class MainWP_System_Handler {
 			}
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
-			MainWP_Utility::update_option( 'mainwp_show_usersnap', ( ! isset( $_POST['mainwp_show_usersnap'] ) ? 0 : time() ) );
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
 		}
 	}

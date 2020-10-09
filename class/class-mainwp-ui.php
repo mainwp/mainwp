@@ -642,6 +642,7 @@ class MainWP_UI {
 			jQuery( document ).ready( function () {
 
 				jQuery('#mainwp-sites-menu-sidebar').prependTo('body');
+				jQuery('#mainwp-documentation-sidebar').prependTo('body');
 				jQuery('body > div#wpwrap').addClass('pusher');
 
 				jQuery( '.ui.sticky' ).sticky();
@@ -905,13 +906,6 @@ class MainWP_UI {
 			</a>
 			<?php
 		}
-		?>
-		<?php if ( get_option( 'mainwp_show_usersnap', false ) ) : ?>
-			<a class="ui button black icon" id="usersnap-bug-report-button" data-position="bottom right" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click here (or use Ctrl + U keyboard shortcut) to open the Bug reporting mode.', 'mainwp' ); ?>" target="_blank" href="#">
-				<i class="bug icon"></i>
-			</a>
-			<?php endif; ?>
-		<?php
 		$output = ob_get_clean();
 		return $output;
 	}
@@ -1355,48 +1349,6 @@ class MainWP_UI {
 	}
 
 	/**
-	 * Method usersnap_integration()
-	 *
-	 * Integrate UserSnap.
-	 *
-	 * @return bool True, Inject UserSnap meta data. False if $showtime is false.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
-	 */
-	public static function usersnap_integration() {
-
-		$showtime = get_option( 'mainwp_show_usersnap', false );
-
-		if ( ! $showtime ) {
-			return false;
-		}
-
-		if ( time() > ( $showtime + 24 * 60 * 60 ) ) {
-			MainWP_Utility::update_option( 'mainwp_show_usersnap', 0 );
-			return false;
-		}
-
-		echo '<script type="text/javascript">
-		window.onUsersnapLoad = function(api) {
-			api.init();
-			window.Usersnap = api;
-		}
-		var script = document.createElement(\'script\');
-		script.async = 1;
-		script.src = \'https://api.usersnap.com/load/0e400c4c-d713-4c62-975a-4eba2a096375.js?onload=onUsersnapLoad\';
-		document.getElementsByTagName(\'head\')[0].appendChild(script);
-
-		jQuery(function() {
-			jQuery("#usersnap-bug-report-button").click(function() {
-				Usersnap.open();
-				return false;
-			});
-		});
-		</script>';
-		return true;
-	}
-
-	/**
 	 * Method render_screen_options()
 	 *
 	 * Render modal window for Screen Options.
@@ -1497,35 +1449,6 @@ class MainWP_UI {
 				}
 				?>
 				</ul>
-			</div>
-		</div>
-
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"></label>
-			<div class="ten wide column">
-				<div class="ui info message">
-					<div class="header"><?php esc_html_e( 'Privacy Notice', 'mainwp' ); ?></div>
-					<p><?php esc_html_e( 'The Bug Recorder uses a program called Usersnap to take a screen capture of your issue. However, the Bug Recorder only records your screen and browser information when press the bug button on the top right of your screen.', 'mainwp' ); ?></p>
-					<p><?php esc_html_e( 'Information recorded when you take a screen shot includes:', 'mainwp' ); ?></p>
-					<div class="ui bulleted list">
-						<div class="item"><?php esc_html_e( 'Screenshot', 'mainwp' ); ?></div>
-						<div class="item"><?php esc_html_e( 'Page URL', 'mainwp' ); ?></div>
-						<div class="item"><?php esc_html_e( 'Browser', 'mainwp' ); ?></div>
-						<div class="item"><?php esc_html_e( 'Screen Size', 'mainwp' ); ?></div>
-						<div class="item"><?php esc_html_e( 'Operating System', 'mainwp' ); ?></div>
-						<div class="item"><?php esc_html_e( 'Full Console Logs', 'mainwp' ); ?></div>
-					</div>
-					<p>
-						<strong><?php esc_html_e( 'The option gets automatically disabled on your Dashboard after 24 hours or you can turn it off anytime using the Bug Recorder switch.', 'mainwp' ); ?></strong>
-					</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Show Usersnap button', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the Usersnap button will show in the MainWP header.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
-				<input type="checkbox" name="mainwp_show_usersnap" <?php echo ( ( false != get_option( 'mainwp_show_usersnap' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
 		<?php

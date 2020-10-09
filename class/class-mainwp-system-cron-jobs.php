@@ -366,6 +366,11 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
+		if ( ! $updatecheck_running ) {
+			$lasttimeStartAutomaticUpdate = time();
+			MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', $lasttimeStartAutomaticUpdate ); // start new update checking.
+		}
+
 		$websites             = array();
 		$checkupdate_websites = MainWP_DB::instance()->get_websites_check_updates( 4, $lasttimeStartAutomaticUpdate );
 
@@ -481,7 +486,6 @@ class MainWP_System_Cron_Jobs {
 
 			if ( ! $updatecheck_running ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );
-				MainWP_Utility::update_option( 'mainwp_updatescheck_start_last_timestamp', time() ); // start new update checking.
 			}
 
 			$userExtension = MainWP_DB_Common::instance()->get_user_extension_by_user_id( $userid );

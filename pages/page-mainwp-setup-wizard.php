@@ -200,8 +200,6 @@ class MainWP_Setup_Wizard {
 	 * Method setup_wizard_footer()
 	 *
 	 * Render Setup Wizard's footer.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_UI::usersnap_integration()
 	 */
 	public function setup_wizard_footer() {
 		?>
@@ -212,15 +210,6 @@ class MainWP_Setup_Wizard {
 							<a class="" href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php esc_html_e( 'Quit MainWP Quick Setup Wizard and Go to WP Admin', 'mainwp' ); ?></a> | <a class="" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'Quit MainWP Quick Setup Wizard and Go to MainWP', 'mainwp' ); ?></a>
 						</div>
 					</div>
-					<?php if ( MainWP_UI::usersnap_integration() ) { ?>
-					<div class="row" style="position:fixed !important; bottom: 10px;">
-						<div class="right aligned column">
-							<a class="ui button black icon" id="usersnap-bug-report-button" data-position="top right" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click here (or use Ctrl + U keyboard shortcut) to open the Bug reporting mode.', 'mainwp' ); ?>" target="_blank" href="#">
-								<i class="bug icon"></i>
-							</a>
-						</div>
-					</div>
-					<?php } ?>
 				</div>
 			</body>
 		</html>
@@ -369,8 +358,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_installation_save()
 	 *
 	 * Installation Step save to DB.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_installation_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -599,8 +588,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_hosting_save()
 	 *
 	 * Save hosting form data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_hosting_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -672,7 +661,7 @@ class MainWP_Setup_Wizard {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_optimization_save() {
 		$userExtension  = MainWP_DB_Common::instance()->get_user_extension();
@@ -776,8 +765,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_monitoring_save()
 	 *
 	 * Save Monitoring form data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_monitoring_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -872,8 +861,8 @@ class MainWP_Setup_Wizard {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
-     * @uses \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
 	 */
 	public function mwp_setup_notification_save() {
 		check_admin_referer( 'mwp-setup' );
@@ -1002,8 +991,8 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_backup_save()
 	 *
 	 * Save Backup step form data.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_backup_save() {
 		$planning_backup = ( ! isset( $_POST['mwp_setup_planning_backup'] ) ? 0 : 1 );
@@ -1031,7 +1020,7 @@ class MainWP_Setup_Wizard {
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::purchase_software()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
 	 * @uses \MainWP\Dashboard\MainWP_Cache::init_session()
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function mwp_setup_purchase_extension_save() {
 		MainWP_Cache::init_session();
@@ -1122,7 +1111,7 @@ class MainWP_Setup_Wizard {
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
-     * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public static function ajax_get_backup_extension() {
 

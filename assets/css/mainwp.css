@@ -1376,9 +1376,6 @@ div.http-response-ok span.http-notok-status{
 .mainwp-ui-leftmenu.mainwp-ui-page #wpcontent{
     margin-left: 0;
 }
-html.wp-toolbar{
-    padding-top: 0; /* will reset to WP default value 32px, if hide mainwp custom menu or is not mainwp pages */
-}
 #wpcontent h2 {
     display: block;
 }

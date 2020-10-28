@@ -309,7 +309,7 @@ class MainWP_DB extends MainWP_DB_Base {
 				WHERE wp.disable_status_check <> 1 AND ( ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )
 				OR ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) ) )' .
 				$where . '
-				LIMIT 0, ' . intval( $count );
+				LIMIT ' . intval( $count );
 		return $sql;
 	}
 
@@ -360,6 +360,8 @@ class MainWP_DB extends MainWP_DB_Base {
 
 			if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 				$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+			} elseif ( false !== $rowcount ) {
+				$qry .= ' LIMIT ' . $rowcount;
 			}
 
 			return $qry;
@@ -448,6 +450,8 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 			$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+		} elseif ( false !== $rowcount ) {
+			$qry .= ' LIMIT ' . $rowcount;
 		}
 
 		return $qry;
@@ -640,6 +644,8 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 			$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+		} elseif ( false !== $rowcount ) {
+			$qry .= ' LIMIT ' . $rowcount;
 		}
 		return $qry;
 	}
@@ -938,6 +944,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			}
 			if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
 				$qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+			} elseif ( false !== $rowcount ) {
+				$qry .= ' LIMIT ' . $rowcount;
 			}
 
 			return $qry;
@@ -1331,7 +1339,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (( wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart > ' . $lasttime_start . ') OR (wp_sync.dtsAutomaticSyncStart = 0)) ' . $where );
+		return $this->wpdb->get_var( 'SELECT count(wp.id) FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (( wp_sync.dtsAutomaticSync < wp_sync.dtsAutomaticSyncStart AND wp_sync.dtsAutomaticSyncStart > ' . intval( $lasttime_start ) . ') OR (wp_sync.dtsAutomaticSyncStart = 0)) ' . $where );
 	}
 
 	/**
@@ -1354,7 +1362,7 @@ class MainWP_DB extends MainWP_DB_Base {
 	public function get_websites_check_updates( $limit, $lasttime_start ) {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 
-		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) ' . $where . ' ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT 0,' . $limit, OBJECT );
+		return $this->wpdb->get_results( 'SELECT wp.*,wp_sync.*,wp_optionview.* FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid WHERE ( wp_sync.dtsAutomaticSync = 0 OR wp_sync.dtsAutomaticSyncStart = 0 OR wp_sync.dtsAutomaticSyncStart < ' . intval( $lasttime_start ) . ' ) ' . $where . ' ORDER BY wp_sync.dtsAutomaticSyncStart ASC LIMIT ' . $limit, OBJECT );
 	}
 
 	/**

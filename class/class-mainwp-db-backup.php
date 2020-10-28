@@ -40,11 +40,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_website_backup_settings()
-	 * 
+	 *
 	 * Get Child Site backup settings.
-	 * 
+	 *
 	 * @param mixed $websiteid Child Site ID.
-	 * 
+	 *
 	 * @return object|null Database query result for Child Site backup settings or null on failure
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -59,13 +59,13 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_task_progress()
-	 * 
+	 *
 	 * Update backup tasuk progress.
-	 * 
+	 *
 	 * @param mixed $task_id Task ID.
 	 * @param mixed $wp_id Child Site ID.
 	 * @param mixed $values Values to update.
-	 * 
+	 *
 	 * @return void get_backup_task_progres()
 	 */
 	public function update_backup_task_progress( $task_id, $wp_id, $values ) {
@@ -73,8 +73,8 @@ class MainWP_DB_Backup extends MainWP_DB {
 			$this->table_name( 'wp_backup_progress' ),
 			$values,
 			array(
-				'task_id'    => $task_id,
-				'wp_id'      => $wp_id,
+				'task_id' => $task_id,
+				'wp_id'   => $wp_id,
 			)
 		);
 
@@ -83,13 +83,13 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method add_backup_task_progress()
-	 * 
+	 *
 	 * Add backup task progress.
-	 * 
+	 *
 	 * @param mixed $task_id Task ID.
 	 * @param mixed $wp_id Child Site ID.
 	 * @param mixed $information Task info to add.
-	 * 
+	 *
 	 * @return (array|null) $this->get_backup_task_progress() or null on failure
 	 */
 	public function add_backup_task_progress( $task_id, $wp_id, $information ) {
@@ -112,12 +112,12 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_task_progress()
-	 * 
+	 *
 	 * Get backup task progress.
-	 * 
+	 *
 	 * @param mixed $task_id Task ID.
 	 * @param mixed $wp_id Child Site ID.
-	 * 
+	 *
 	 * @return (array|null) Backup Progress or null on failer.
 	 */
 	public function get_backup_task_progress( $task_id, $wp_id ) {
@@ -132,11 +132,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method backup_full_task_running()
-	 * 
-	 * Check if full backup task is running. 
-	 * 
+	 *
+	 * Check if full backup task is running.
+	 *
 	 * @param mixed $wp_id Child Site ID.
-	 * 
+	 *
 	 * @return boolean true|false.
 	 */
 	public function backup_full_task_running( $wp_id ) {
@@ -163,11 +163,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method remove_backup_task()
-	 * 
+	 *
 	 * Remove backup task.
-	 * 
+	 *
 	 * @param mixed $id Task ID.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function remove_backup_task( $id ) {
@@ -176,11 +176,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_task_by_id()
-	 * 
+	 *
 	 * Get backup task by id.
-	 * 
+	 *
 	 * @param mixed $id Task ID.
-	 * 
+	 *
 	 * @return (object|null) Database query result for Backup Task or null on failure
 	 */
 	public function get_backup_task_by_id( $id ) {
@@ -189,11 +189,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_tasks_for_user()
-	 * 
+	 *
 	 * Get backup tasks for current user.
-	 * 
+	 *
 	 * @param string $orderBy Task order.
-	 * 
+	 *
 	 * @return object|null Database query result for backup tasks for current user or null on failer.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
@@ -212,15 +212,15 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 		return $this->get_backup_tasks( $current_user->ID, $orderBy );
 	}
-	
+
 	/**
 	 * Method get_backup_tasks()
-	 * 
+	 *
 	 * Get backup tasks for current user.
-	 * 
-	 * @param null $userid Current user ID.
+	 *
+	 * @param null   $userid Current user ID.
 	 * @param string $orderBy Task order.
-	 * 
+	 *
 	 * @return (object|null) Database query result for backup tasks for current user or null on failer.
 	 */
 	public function get_backup_tasks( $userid = null, $orderBy = null ) {
@@ -257,25 +257,25 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 */
-	public function add_backup_task( 
-		$userid, 
-		$name, 
-		$schedule, 
-		$type, 
-		$exclude, 
-		$sites, 
-		$groups, 
-		$subfolder, 
-		$filename, 
-		$template, 
-		$excludebackup, 
-		$excludecache, 
-		$excludenonwp, 
-		$excludezip, 
-		$archiveFormat, 
-		$maximumFileDescriptorsOverride, 
-		$maximumFileDescriptorsAuto, 
-		$maximumFileDescriptors, 
+	public function add_backup_task(
+		$userid,
+		$name,
+		$schedule,
+		$type,
+		$exclude,
+		$sites,
+		$groups,
+		$subfolder,
+		$filename,
+		$template,
+		$excludebackup,
+		$excludecache,
+		$excludenonwp,
+		$excludezip,
+		$archiveFormat,
+		$maximumFileDescriptorsOverride,
+		$maximumFileDescriptorsAuto,
+		$maximumFileDescriptors,
 		$loadFilesBeforeZip ) {
 
 		// to fix null value.
@@ -323,9 +323,10 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_task()
-	 * 
+	 *
 	 * Update backup task.
-	 * 
+	 *
+	 * @param mixed $id task id.
 	 * @param mixed $userid Current user ID.
 	 * @param mixed $name Name of backup.
 	 * @param mixed $schedule Backup schedual.
@@ -335,7 +336,6 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $groups Groups to backup.
 	 * @param mixed $subfolder Folder the backups are going into.
 	 * @param mixed $filename Filename of the backups.
-	 * @param mixed $template Backup template.
 	 * @param mixed $excludebackup Backup files to exclude.
 	 * @param mixed $excludecache Cache files to exclude.
 	 * @param mixed $excludenonwp Non-wp files to exclude.
@@ -345,31 +345,31 @@ class MainWP_DB_Backup extends MainWP_DB {
 	 * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
 	 * @param mixed $maximumFileDescriptors Maximum file descriptors.
 	 * @param mixed $loadFilesBeforeZip Load files before Zip.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 */
-	public function update_backup_task( 
-		$userid, 
-		$name, 
-		$schedule, 
-		$type, 
-		$exclude, 
-		$sites, 
-		$groups, 
-		$subfolder, 
-		$filename, 
-		$template, 
-		$excludebackup, 
-		$excludecache, 
-		$excludenonwp, 
-		$excludezip, 
-		$archiveFormat, 
-		$maximumFileDescriptorsOverride, 
-		$maximumFileDescriptorsAuto, 
-		$maximumFileDescriptors, 
+	public function update_backup_task(
+		$id,
+		$userid,
+		$name,
+		$schedule,
+		$type,
+		$exclude,
+		$sites,
+		$groups,
+		$subfolder,
+		$filename,
+		$excludebackup,
+		$excludecache,
+		$excludenonwp,
+		$excludezip,
+		$archiveFormat,
+		$maximumFileDescriptorsOverride,
+		$maximumFileDescriptorsAuto,
+		$maximumFileDescriptors,
 		$loadFilesBeforeZip ) {
 
 		if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -404,12 +404,12 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_task_with_values()
-	 * 
+	 *
 	 * Update backup task with values.
-	 * 
-	 * @param mixed $id Task ID. 
+	 *
+	 * @param mixed $id Task ID.
 	 * @param mixed $values values to update.
-	 * 
+	 *
 	 * @return (int|false) The number of rows updated, or false on error.
 	 */
 	public function update_backup_task_with_values( $id, $values ) {
@@ -422,11 +422,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_run()
-	 * 
+	 *
 	 * Update backup run.
-	 * 
+	 *
 	 * @param mixed $id Task ID.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -436,9 +436,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 			return $this->wpdb->update(
 				$this->table_name( 'wp_backup' ),
 				array(
-					'last_run'           => time(),
-					'last'               => time(),
-					'completed_sites'    => wp_json_encode( array() ),
+					'last_run'        => time(),
+					'last'            => time(),
+					'completed_sites' => wp_json_encode( array() ),
 				),
 				array( 'id' => $id )
 			);
@@ -449,11 +449,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_run_manually()
-	 * 
+	 *
 	 * Update backup run manually.
-	 * 
+	 *
 	 * @param mixed $id Task ID.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -468,11 +468,11 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_backup_completed()
-	 * 
+	 *
 	 * Update backup completed()
-	 * 
+	 *
 	 * @param mixed $id Task ID.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -487,12 +487,12 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method  update_backup_errors()
-	 * 
+	 *
 	 * Update backup errors.
-	 * 
+	 *
 	 * @param mixed $id Task ID.
 	 * @param mixed $errors Backup errors.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -513,12 +513,12 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method update_completed_sites()
-	 * 
+	 *
 	 * Update completed sites.
-	 * 
-	 * @param mixed $id Task ID. 
+	 *
+	 * @param mixed $id Task ID.
 	 * @param mixed $completedSites Completed sites.
-	 * 
+	 *
 	 * @return int|false The number of rows updated, or false on error.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
@@ -533,9 +533,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_tasks_to_complete()
-	 * 
+	 *
 	 * Get backup tasks to complete.
-	 * 
+	 *
 	 * @return object Backup tasks.
 	 */
 	public function get_backup_tasks_to_complete() {
@@ -544,9 +544,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_tasks_todo_daily()
-	 * 
+	 *
 	 * Get daily backup tasks.
-	 * 
+	 *
 	 * @return object Backup tasks.
 	 */
 	public function get_backup_tasks_todo_daily() {
@@ -555,9 +555,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_tasks_todo_weekly()
-	 * 
+	 *
 	 * Get weekly backup tasks.
-	 * 
+	 *
 	 * @return object Backup tasks.
 	 */
 	public function get_backup_tasks_todo_weekly() {
@@ -566,9 +566,9 @@ class MainWP_DB_Backup extends MainWP_DB {
 
 	/**
 	 * Method get_backup_tasks_todo_monthly()
-	 * 
+	 *
 	 * Get monthly backup tasks.
-	 * 
+	 *
 	 * @return object Backup tasks.
 	 */
 	public function get_backup_tasks_todo_monthly() {

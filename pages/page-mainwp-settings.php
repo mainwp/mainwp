@@ -726,7 +726,7 @@ class MainWP_Settings {
 		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$nextAutomaticUpdate = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) ); // phpcs:ignore -- run at midnight local time
+			$nextAutomaticUpdate = self::get_next_time_automatic_update_to_show();
 		}
 
 		if ( 0 == $lastAutomaticUpdate ) {
@@ -741,6 +741,44 @@ class MainWP_Settings {
 		);
 	}
 
+	/**
+	 * Method get_next_time_automatic_update_to_show()
+	 *
+	 * Get websites automatic update next time.
+	 *
+	 * @return mixed array
+	 */
+	public static function get_next_time_automatic_update_to_show() {
+		$next_time = 0;
+
+		$local_timestamp = MainWP_Utility::get_timestamp();
+
+		$total_frequency_daily_update = get_option( 'mainwp_frequencyDailyUpdate' );
+		if ( $total_frequency_daily_update <= 0 ) {
+			$total_frequency_daily_update = 1;
+		}
+
+		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
+		if ( $total_frequency_daily_update > 1 ) { // check this if frequency > 1 only.
+			$frequence_period_in_seconds = DAY_IN_SECONDS / $total_frequency_daily_update;
+			$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
+			$frequence_now               = round( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= total_frequency_daily_update, computes frequence value now.
+			if ( $frequence_now > $frequence_today_count ) {
+				$next_time = __( 'Any minute', 'mainwp' );
+			} elseif ( $frequence_now < $frequence_today_count ) {
+				$frequence_now = $frequence_today_count;
+				$next_time     = $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
+			} else { // frequence_now = frequence_today_count.
+				$next_time = $frequence_period_in_seconds * ( $frequence_today_count + 1 ); // calculate nex time.
+			}
+		}
+
+		if ( empty( $next_time ) ) {
+			$next_time = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) ); // phpcs:ignore -- midnight local time.
+		}
+
+		return $next_time;
+	}
 
 	/**
 	 * Returns false or the location of the OpenSSL Lib File.

@@ -1269,9 +1269,6 @@ class MainWP_Server_Information {
 							<option value="<?php echo MainWP_Logger::INFO; ?>" <?php echo ( MainWP_Logger::INFO == $enabled ? 'selected' : '' ); ?>>
 								<?php esc_html_e( 'Info', 'mainwp' ); ?>
 							</option>
-							<option value="<?php echo MainWP_Logger::INFO_UPDATE; ?>" <?php echo ( MainWP_Logger::INFO_UPDATE == $enabled ? 'selected' : '' ); ?>>
-								<?php esc_html_e( 'Info update', 'mainwp' ); ?>
-							</option>
 						<option value="<?php echo MainWP_Logger::WARNING; ?>" <?php echo ( MainWP_Logger::WARNING == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Warning', 'mainwp' ); ?>
 						</option>

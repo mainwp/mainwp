@@ -1568,7 +1568,7 @@ class MainWP_Connect {
 		$output['fetch_data']  = $data;
 		$output['http_status'] = $http_status;
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
 		if ( '400' == $http_status ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 		}
@@ -1593,7 +1593,7 @@ class MainWP_Connect {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
 			return $data;
 		} else {
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP' );
 			$thr_error = new MainWP_Exception( 'NOMAINWP', $url );
 		}
 

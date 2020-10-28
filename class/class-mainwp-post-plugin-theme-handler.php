@@ -607,7 +607,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	/**
 	 * Method mainwp_ignoreplugintheme()
 	 *
-	 * Ignore plugin or theme.
+	 * Ignores a plugin or a theme.
 	 */
 	public function mainwp_ignoreplugintheme() {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );

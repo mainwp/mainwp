@@ -159,7 +159,7 @@ class MainWP_Manage_Backups_Handler {
 		$type           = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
 		$excludedFolder = explode( "\n", $excludedFolder );
-		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
+		$excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 		$excludedFolder = implode( ',', $excludedFolder );
 		$sites          = '';
@@ -225,7 +225,7 @@ class MainWP_Manage_Backups_Handler {
 		$type           = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
 		$excludedFolder = explode( "\n", $excludedFolder );
-		$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
+		$excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
 		$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 		$excludedFolder = implode( ',', $excludedFolder );
 

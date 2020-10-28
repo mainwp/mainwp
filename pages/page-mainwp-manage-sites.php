@@ -99,7 +99,7 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
 		add_action( 'mainwp_pagefooter_sites', array( self::get_class_name(), 'render_footer' ) );
 
-		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
+		add_action( 'mainwp_securityissues_sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
 		add_action( 'mainwp_extension_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
 
 		// Hook the Help Sidebar content.

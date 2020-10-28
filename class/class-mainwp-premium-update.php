@@ -270,8 +270,6 @@ class MainWP_Premium_Update {
 	 * @param mixed $website Child Site.
 	 * @param mixed $where_url page to redirerct to.
 	 *
-	 * @return respose $reponse http response.
-	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
@@ -295,12 +293,6 @@ class MainWP_Premium_Update {
 
 		MainWP_Logger::instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
 
-		$reponse = wp_remote_get( $request_url, $args );
-		$body    = is_array( $reponse ) && isset( $reponse['body'] ) ? $reponse['body'] : '';
-
-		MainWP_Logger::instance()->debug( ' :: Response :: ' . $body );
-
-		return $reponse;
 	}
 
 	/**

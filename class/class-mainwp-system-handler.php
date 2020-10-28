@@ -271,6 +271,24 @@ class MainWP_System_Handler {
 		}
 	}
 
+
+	/**
+	 * Method handle_rest_api_settings()
+	 *
+	 * Handle rest api settings
+	 */
+	public function handle_rest_api_settings() {
+		$update_screen_options = false;
+		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'RESTAPI' === $_GET['page'] ) {
+			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
+				// $update_screen_options = true;
+
+				MainWP_Utility::update_option( 'mainwp_enable_rest_api', ( ! isset( $_POST['mainwp_enable_rest_api'] ) ? 0 : 1 ) );
+
+			}
+		} 
+	}
+
 	/**
 	 * Method handle_settings_post()
 	 *
@@ -289,6 +307,7 @@ class MainWP_System_Handler {
 
 		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
 			$this->handle_mainwp_tools_settings();
+			$this->handle_rest_api_settings();
 			$this->handle_manage_sites_screen_settings();
 		}
 

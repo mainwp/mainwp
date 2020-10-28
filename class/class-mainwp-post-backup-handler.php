@@ -131,7 +131,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 
 			$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
 			$excludedFolder = explode( "\n", $excludedFolder );
-			$excludedFolder = array_map( array( 'MainWP_Utility', 'trim_slashes' ), $excludedFolder );
+			$excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
 			$excludedFolder = array_map( 'htmlentities', $excludedFolder );
 			$excludedFolder = implode( ',', $excludedFolder );
 

@@ -467,7 +467,7 @@ class MainWP_Updates {
 						$pluginsInfo[ $slug ] = array(
 							'name'      => esc_html( $plugin_upgrade['Name'] ),
 							'slug'      => esc_html( $plugin_upgrade['update']['slug'] ),
-							'premium'   => ( isset( $plugin_upgrade['premium'] ) ? $plugin_upgrade['premium'] : 0 ),
+							'premium'   => ( isset( $plugin_upgrade['premium'] ) ? esc_html( $plugin_upgrade['premium'] ) : 0 ),
 							'PluginURI' => esc_html( $plugin_upgrade['PluginURI'] ),
 						);
 					}

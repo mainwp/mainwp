@@ -36,7 +36,7 @@ class MainWP_Api_Manager {
 	/**
 	 * MainWP installation domain name.
 	 *
-	 * @var string $domain Emtpy by default.
+	 * @var string $domain Empty by default.
 	 */
 	public $domain = '';
 
@@ -70,7 +70,7 @@ class MainWP_Api_Manager {
 	}
 
 	/**
-	 * Unserializing instances of this class is forbidden.
+	 * Un-serializing instances of this class is forbidden.
 	 *
 	 * @since 1.2
 	 */
@@ -82,7 +82,7 @@ class MainWP_Api_Manager {
 	 *
 	 * Run each time the class is called.
 	 *
-	 * Replace HTTP procol to HTTPS.
+	 * Replace HTTP protocol to HTTPS.
 	 */
 	public function __construct() {
 		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );

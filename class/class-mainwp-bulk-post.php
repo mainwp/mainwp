@@ -30,7 +30,7 @@ class MainWP_Bulk_Post {
 	/**
 	 * Method handle_edit_bulkpost()
 	 *
-	 * Handle bulkpost edit process.
+	 * Handle bulk post edit process.
 	 */
 	public function handle_edit_bulkpost() {
 
@@ -105,7 +105,7 @@ class MainWP_Bulk_Post {
 	/**
 	 * Method save_bulkpost().
 	 *
-	 * Save page (Bulkpost custom post type).
+	 * Save page (Bulk post custom post type).
 	 *
 	 * @param int $post_id Post ID.
 	 *
@@ -148,7 +148,7 @@ class MainWP_Bulk_Post {
 		/**
 		 * Action: mainwp_save_bulkpost
 		 *
-		 * Fires when saving the bulkpost.
+		 * Fires when saving the bulk post.
 		 *
 		 * @param int $post_id Post ID.
 		 *
@@ -162,7 +162,7 @@ class MainWP_Bulk_Post {
 			/**
 			 * Action: mainwp_before_redirect_posting_bulkpost
 			 *
-			 * Fires before redirection to posting 'bulkpost' page after post submission.
+			 * Fires before redirection to posting 'bulk post' page after post submission.
 			 *
 			 * @param object $_post Object containing post data.
 			 *
@@ -177,7 +177,7 @@ class MainWP_Bulk_Post {
 	/**
 	 * Method save_bulkpage().
 	 *
-	 * Save page (Bulkpage custom post type).
+	 * Save page (Bulk page custom post type).
 	 *
 	 * @param int $post_id Page ID.
 	 *
@@ -217,7 +217,7 @@ class MainWP_Bulk_Post {
 		/**
 		 * Action: mainwp_save_bulkpage
 		 *
-		 * Fires when saving the bulkpage.
+		 * Fires when saving the bulk page.
 		 *
 		 * @param int $post_id Post ID.
 		 *
@@ -231,7 +231,7 @@ class MainWP_Bulk_Post {
 			/**
 			 * Action: mainwp_before_redirect_posting_bulkpage
 			 *
-			 * Fires before redirection to posting 'bulkpage' page after post submission.
+			 * Fires before redirection to posting 'bulk page' page after post submission.
 			 *
 			 * @param object $_post Object containing post data.
 			 *

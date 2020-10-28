@@ -598,7 +598,7 @@ class MainWP_System_Utility {
 
 	/**
 	 *
-	 * set time limit.
+	 * Set timeout limit.
 	 *
 	 * @param int $timeout timeout value.
 	 */

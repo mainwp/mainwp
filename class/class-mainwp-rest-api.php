@@ -103,7 +103,7 @@ class Rest_Api {
 		update_option( 'mainwp_rest_api_consumer_key', $consumer_key_hashed );
 		update_option( 'mainwp_rest_api_consumer_secret', $consumer_secret_hashed );
 
-		wp_die( json_encode( $return_data ) );
+		wp_die( wp_json_encode( $return_data ) );
 	}
 
 	/**

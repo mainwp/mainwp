@@ -117,10 +117,9 @@ class MainWP_System {
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
-		//includes rest api work
-		require('class-mainwp-rest-api.php');
+		// includes rest api work
+		require 'class-mainwp-rest-api.php';
 		Rest_Api::instance()->init();
-
 
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';

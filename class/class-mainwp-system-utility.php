@@ -601,9 +601,8 @@ class MainWP_System_Utility {
 	 * set time limit.
 	 *
 	 * @param int $timeout timeout value.
-	 *
 	 */
-	public static function  set_time_limit( $timeout = 0 ) {
+	public static function set_time_limit( $timeout = 0 ) {
 		if ( false !== strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
 			set_time_limit( $timeout );
 		}

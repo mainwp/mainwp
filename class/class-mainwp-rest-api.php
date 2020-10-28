@@ -410,7 +410,6 @@ class Rest_Api {
 				)
 			);
 		}
-
 	}
 
 	/**
@@ -440,7 +439,6 @@ class Rest_Api {
 		} else {
 			return false;
 		}
-
 	}
 
 	/**
@@ -458,7 +456,6 @@ class Rest_Api {
 		$response->set_status( 401 );
 
 		return $response;
-
 	}
 
 	/**
@@ -476,7 +473,6 @@ class Rest_Api {
 		$response->set_status( 400 );
 
 		return $response;
-
 	}
 
 	/**
@@ -494,7 +490,6 @@ class Rest_Api {
 		$response->set_status( 400 );
 
 		return $response;
-
 	}
 
 	/**
@@ -512,7 +507,6 @@ class Rest_Api {
 		$response->set_status( 200 );
 
 		return $response;
-
 	}
 
 	/**
@@ -543,7 +537,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -578,7 +571,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -609,7 +601,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -644,7 +635,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -675,7 +665,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -710,7 +699,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -748,7 +736,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -786,7 +773,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -824,7 +810,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -870,7 +855,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -917,7 +901,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -964,7 +947,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1014,7 +996,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1062,7 +1043,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1113,7 +1093,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1161,7 +1140,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1212,7 +1190,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1259,7 +1236,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1309,7 +1285,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1357,7 +1332,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1405,7 +1379,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1456,7 +1429,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1512,7 +1484,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1575,7 +1546,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1622,7 +1592,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1672,7 +1641,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1719,7 +1687,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1769,7 +1736,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1816,7 +1782,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1873,7 +1838,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1920,7 +1884,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -1953,7 +1916,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2000,7 +1962,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2046,7 +2007,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2093,7 +2053,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2140,7 +2099,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2185,7 +2143,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2232,7 +2189,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2291,7 +2247,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2350,7 +2305,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2409,7 +2363,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2465,7 +2418,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2532,7 +2484,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2599,7 +2550,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2646,7 +2596,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2695,7 +2644,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2728,7 +2676,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2775,7 +2722,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2808,7 +2754,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2855,7 +2800,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2896,7 +2840,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2938,7 +2881,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -2978,7 +2920,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 	/**
@@ -3019,7 +2960,6 @@ class Rest_Api {
 		}
 
 		return $response;
-
 	}
 
 }

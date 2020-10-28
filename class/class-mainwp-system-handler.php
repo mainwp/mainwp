@@ -286,7 +286,7 @@ class MainWP_System_Handler {
 				MainWP_Utility::update_option( 'mainwp_enable_rest_api', ( ! isset( $_POST['mainwp_enable_rest_api'] ) ? 0 : 1 ) );
 
 			}
-		} 
+		}
 	}
 
 	/**

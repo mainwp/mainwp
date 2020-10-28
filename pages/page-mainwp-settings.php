@@ -1138,7 +1138,7 @@ class MainWP_Settings {
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'RESTAPI' ); ?>" />
-						<!-- <h3 class="ui dividing header"><?php //esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3> -->
+						<!-- <h3 class="ui dividing header"><?php // esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3> -->
 						<?php
 						/**
 						 * Action: rest_api_form_top
@@ -1195,13 +1195,13 @@ class MainWP_Settings {
 						</div>
 						
 						<?php
-	/**
+						/**
 						 * Action: rest_api_form_bottom
-	 *
+						 *
 						 * Fires at the bottom of REST API form.
 						 *
 						 * @since 4.1
-	 */
+						 */
 						do_action( 'rest_api_form_bottom' );
 						?>
 						<div class="ui divider"></div>

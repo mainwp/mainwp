@@ -569,7 +569,7 @@ class MainWP_System_View {
 		<style>
 		<?php
 		if ( MainWP_System::is_mainwp_pages() ) {
-		?>
+			?>
 			#wpbody-content > div.update-nag,
 			#wpbody-content > div.updated {
 				margin-left: 190px;
@@ -577,7 +577,7 @@ class MainWP_System_View {
 			html.wp-toolbar{
 				padding-top: 0 !important;
 			}
-		<?php
+			<?php
 		}
 		?>
 			.mainwp-checkbox:before {

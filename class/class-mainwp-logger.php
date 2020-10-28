@@ -18,11 +18,11 @@ class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-	const DISABLED    = - 1;
-	const LOG         = 0;
-	const WARNING     = 1;
-	const INFO        = 2;
-	const DEBUG       = 3;
+	const DISABLED = - 1;
+	const LOG      = 0;
+	const WARNING  = 1;
+	const INFO     = 2;
+	const DEBUG    = 3;
 
 	const LOG_COLOR     = '#999999';
 	const DEBUG_COLOR   = '#666666';

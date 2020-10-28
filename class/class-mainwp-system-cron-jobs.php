@@ -308,7 +308,7 @@ class MainWP_System_Cron_Jobs {
 			$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
 			$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
 			$frequence_now               = round( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= frequencyDailyUpdate, computes frequence value now.
-			
+
 			if ( $frequence_now > $frequence_today_count ) {
 				$frequence_today_count = $frequence_now;
 				// ok, run.

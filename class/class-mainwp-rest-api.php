@@ -734,7 +734,7 @@ class Rest_Api {
 				try {
 					MainWP_Sync::sync_site( $website );
 				} catch ( \Exception $e ) {
-
+					// ok.
 				}
 			}
 			MainWP_DB::free_result( $websites );
@@ -772,7 +772,7 @@ class Rest_Api {
 				try {
 					MainWP_Monitoring_Handler::handle_check_website( $website );
 				} catch ( \Exception $e ) {
-
+					// ok.
 				}
 			}
 			MainWP_DB::free_result( $websites );
@@ -810,7 +810,7 @@ class Rest_Api {
 				try {
 					MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
 				} catch ( \Exception $e ) {
-
+					// ok.
 				}
 			}
 			MainWP_DB::free_result( $websites );
@@ -2028,7 +2028,7 @@ class Rest_Api {
 					try {
 						MainWP_Sync::sync_site( $website );
 					} catch ( \Exception $e ) {
-
+						// ok.
 					}
 					// do common process response.
 					$response = $this->mainwp_run_process_success();
@@ -2074,7 +2074,7 @@ class Rest_Api {
 					try {
 						MainWP_Manage_Sites_View::m_reconnect_site( $website );
 					} catch ( \Exception $e ) {
-
+						// ok.
 					}
 					// do common process response.
 					$response = $this->mainwp_run_process_success();
@@ -2121,7 +2121,7 @@ class Rest_Api {
 					try {
 							MainWP_Connect::fetch_url_authed( $website, 'disconnect' );
 					} catch ( \Exception $e ) {
-
+						// ok.
 					}
 					// do common process response.
 					$response = $this->mainwp_run_process_success();
@@ -2508,7 +2508,7 @@ class Rest_Api {
 								)
 							);
 						} catch ( \Exception $e ) {
-
+							// ok.
 						}
 
 						// do common process response.
@@ -2575,7 +2575,7 @@ class Rest_Api {
 								)
 							);
 						} catch ( \Exception $e ) {
-
+							// ok.
 						}
 
 						// do common process response.

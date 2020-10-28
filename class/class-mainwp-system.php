@@ -117,7 +117,7 @@ class MainWP_System {
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
-		// includes rest api work
+		// includes rest api work.
 		require 'class-mainwp-rest-api.php';
 		Rest_Api::instance()->init();
 

@@ -667,7 +667,7 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			set_time_limit( $timeout );
+			MainWP_System_Utility::set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
 				@curl_multi_add_handle( $mh, $ch );
@@ -686,7 +686,7 @@ class MainWP_Connect {
 			$lastRun = 0;
 			do {
 				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout );
+					MainWP_System_Utility::set_time_limit( $timeout );
 					$lastRun = time();
 				}
 
@@ -923,7 +923,7 @@ class MainWP_Connect {
 			}
 
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			set_time_limit( $timeout );
+			MainWP_System_Utility::set_time_limit( $timeout );
 
 			$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
 			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
@@ -1518,7 +1518,7 @@ class MainWP_Connect {
 
 		$timeout = 20 * 60 * 60;
 		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		set_time_limit( $timeout );
+		MainWP_System_Utility::set_time_limit( $timeout );
 
 		MainWP_Utility::end_session();
 
@@ -1532,7 +1532,7 @@ class MainWP_Connect {
 			$lastRun = 0;
 			do {
 				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout );
+					MainWP_System_Utility::set_time_limit( $timeout );
 					$lastRun = time();
 				}
 				@curl_multi_exec( $mh, $running );

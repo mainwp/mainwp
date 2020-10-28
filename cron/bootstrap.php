@@ -13,7 +13,9 @@
 
 // set php.ini variables.
 @ignore_user_abort( true );
-@set_time_limit( 0 );
+if ( false !== strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
+	@set_time_limit( 0 );
+}
 $mem = '512M';
 @ini_set( 'memory_limit', $mem );
 @ini_set( 'max_execution_time', 0 );

@@ -595,4 +595,17 @@ class MainWP_System_Utility {
 		$values = array_values( $replace_tokens );
 		return str_replace( $tokens, $values, $string );
 	}
+
+	/**
+	 *
+	 * set time limit.
+	 *
+	 * @param int $timeout timeout value.
+	 *
+	 */
+	public static function  set_time_limit( $timeout = 0 ) {
+		if ( false !== strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
+			set_time_limit( $timeout );
+		}
+	}
 }

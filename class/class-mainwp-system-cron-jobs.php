@@ -267,7 +267,7 @@ class MainWP_System_Cron_Jobs {
 	public function cron_updates_check() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		ignore_user_abort( true );
-		set_time_limit( 0 );
+		MainWP_System_Utility::set_time_limit( 0 );
 		add_filter(
 			'admin_memory_limit',
 			function() {
@@ -1310,7 +1310,7 @@ class MainWP_System_Cron_Jobs {
 		MainWP_Logger::instance()->info( 'CRON :: backups continue' );
 
 		ignore_user_abort( true );
-		set_time_limit( 0 );
+		MainWP_System_Utility::set_time_limit( 0 );
 		add_filter(
 			'admin_memory_limit',
 			function() {
@@ -1364,7 +1364,7 @@ class MainWP_System_Cron_Jobs {
 		MainWP_Logger::instance()->info( 'CRON :: backups' );
 
 		ignore_user_abort( true );
-		set_time_limit( 0 );
+		MainWP_System_Utility::set_time_limit( 0 );
 		add_filter(
 			'admin_memory_limit',
 			function() {

@@ -663,4 +663,153 @@ class MainWP_DB_Common extends MainWP_DB {
 		return $row;
 	}
 
+
+	/**
+	 * Method rest_api_update_website().
+	 *
+	 * Rest API update website
+	 *
+	 * @param int   $websitei website ID.
+	 * @param array $data Update fields array:
+	 * 'http_user'
+	 * 'http_pass'
+	 * 'name'
+	 * 'admin'
+	 * 'sslversion'
+	 * 'uniqueid'
+	 * 'verify'
+	 * 'protocol'
+	 * 'disablechecking'
+	 * 'checkinterval'
+	 * 'disablehealthchecking'
+	 * 'healththreshold'
+	 * 'groupids'
+	 * 'automatic_update'
+	 * 'backup_before_upgrade'
+	 * 'force_use_ipv4'
+	 * 'ignore_core_updates'
+	 * 'ignore_plugin_updates'
+	 * 'ignore_theme_updates'
+	 * 'monitoring_emails'
+	 *
+	 * @return bool true|false
+	 */
+	public function rest_api_update_website( $websiteid, $data ) {
+
+		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+		if ( empty( $website ) ) {
+			return false;
+		}
+
+		$map_fields = array(
+			'http_user'   => 'http_user',
+			'http_pass'   => 'http_pass',
+			'name'        => 'name',
+			'adminname'   => 'admin',
+			'ssl_version' => 'sslversion',
+			'uniqueId'    => 'uniqueid',
+		);
+
+		$sql_set = '';
+
+		foreach ( $map_fields as $field => $name ) {
+			if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
+				$sql_set .= ' ' . $field . ' = "' . $this->escape( $data[ $name ] ) . '",';
+			}
+		}
+
+		if ( isset( $data['verify'] ) ) {
+			$verify   = intval( $data['verify'] );
+			$sql_set .= ' verify_certificate = "' . $this->escape( $verify ) . '",';
+		}
+
+		if ( isset( $data['protocol'] ) && ( 'http' == $data['protocol'] || 'https' == $data['protocol'] ) ) {
+			$url      = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
+			$sql_set .= ' url = "' . $this->escape( $url ) . '",';
+		}
+
+		if ( isset( $data['disablechecking'] ) ) {
+			$sql_set .= ' disable_status_check= "' . ( $data['disablechecking'] ? 1 : 0 ) . '",';
+		}
+
+		if ( isset( $data['checkinterval'] ) ) {
+			$sql_set .= ' status_check_interval= "' . intval( $data['checkinterval'] ) . '",';
+		}
+
+		if ( isset( $data['disablehealthchecking'] ) ) {
+			$sql_set .= ' disable_health_check = "' . ( $data['disablehealthchecking'] ? 1 : 0 ) . '",';
+		}
+
+		if ( isset( $data['healththreshold'] ) ) {
+			$sql_set .= ' health_threshold = "' . intval( $data['healththreshold'] ) . '",';
+		}
+
+		if ( ! empty( $sql_set ) ) {
+			$sql_set = rtrim( $sql_set, ',' );
+			$this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp' ) . ' SET ' . $sql_set . ' WHERE id=%d', $websiteid ) );
+		}
+
+		$groupids = array();
+		if ( isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ) {
+			$groupids = explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) );
+		}
+
+		if ( ! empty( $groupids ) ) {
+			// remove groups.
+			$this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $this->table_name( 'wp_group' ) . ' WHERE wpid=%d', $websiteid ) );
+
+			// update groups.
+			foreach ( $groupids as $groupid ) {
+				$this->wpdb->insert(
+					$this->table_name( 'wp_group' ),
+					array(
+						'wpid'    => $websiteid,
+						'groupid' => $groupid,
+					)
+				);
+			}
+		}
+
+		$newValues = array();
+
+		if ( isset( $data['automatic_update'] ) ) {
+			$newValues['automatic_update'] = $data['automatic_update'] ? 1 : 0;
+		}
+
+		if ( isset( $data['backup_before_upgrade'] ) ) {
+			$newValues['backup_before_upgrade'] = $data['backup_before_upgrade'] ? 1 : 0;
+		}
+		if ( isset( $data['force_use_ipv4'] ) ) {
+			$forceuseipv4 = intval( $data['force_use_ipv4'] );
+			if ( 2 < $forceuseipv4 ) {
+				$forceuseipv4 = 0;
+			}
+			$newValues['force_use_ipv4'] = $forceuseipv4;
+		}
+
+		if ( isset( $data['ignore_core_updates'] ) ) {
+			$newValues['is_ignoreCoreUpdates'] = $data['ignore_core_updates'] ? 1 : 0;
+		}
+
+		if ( isset( $data['ignore_plugin_updates'] ) ) {
+			$newValues['is_ignorePluginUpdates'] = $data['ignore_plugin_updates'] ? 1 : 0;
+		}
+
+		if ( isset( $data['ignore_theme_updates'] ) ) {
+			$newValues['is_ignoreThemeUpdates'] = $data['ignore_theme_updates'] ? 1 : 0;
+		}
+
+		if ( ! empty( $newValues ) ) {
+			MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+		}
+
+		if ( isset( $data['monitoring_emails'] ) ) {
+			$moniroting_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
+			MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $moniroting_emails );
+		}
+
+		return true;
+	}
+
+
 }

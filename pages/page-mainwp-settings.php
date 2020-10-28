@@ -96,6 +96,20 @@ class MainWP_Settings {
 			);
 		}
 
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'REST API', 'mainwp' ),
+				' <div class="mainwp-hidden">' . __( 'REST API', 'mainwp' ) . '</div>',
+				'read',
+				'RESTAPI',
+				array(
+					self::get_class_name(),
+					'render_rest_api',
+				)
+			);
+		}
+
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
@@ -183,6 +197,9 @@ class MainWP_Settings {
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'MainWP Tools', 'mainwp' ); ?></a>
 					<?php } ?>					
+					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
+					<?php } ?>					
 					<?php
 					if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
@@ -263,6 +280,13 @@ class MainWP_Settings {
 				'slug'       => 'MainWPTools',
 				'right'      => '',
 			),
+			array(
+				'title'      => __( 'REST API', 'mainwp' ),
+				'parent_key' => 'Settings',
+				'href'       => 'admin.php?page=RESTAPI',
+				'slug'       => 'RESTAPI',
+				'right'      => '',
+			),
 		);
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
@@ -331,6 +355,14 @@ class MainWP_Settings {
 				'title'  => __( 'MainWP Tools', 'mainwp' ),
 				'href'   => 'admin.php?page=MainWPTools',
 				'active' => ( 'MainWPTools' == $shownPage ) ? true : false,
+			);
+		}
+
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) {
+			$renderItems[] = array(
+				'title'  => __( 'REST API', 'mainwp' ),
+				'href'   => 'admin.php?page=RESTAPI',
+				'active' => ( 'RESTAPI' == $shownPage ) ? true : false,
 			);
 		}
 
@@ -1081,6 +1113,109 @@ class MainWP_Settings {
 
 		self::render_footer( 'MainWPTools' );
 	}
+
+
+	/** Render REST API SubPage */
+	public static function render_rest_api() {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_dashboard_settings' ) ) {
+			mainwp_do_not_have_permissions( __( 'manage dashboard settings', 'mainwp' ) );
+
+			return;
+		}
+
+		self::render_header( 'RESTAPI' );
+
+		?>
+		<div id="rest-api-settings" class="ui segment">
+				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>
+					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
+					
+				<?php endif; ?>
+
+				<div id="api-credentials-created" style="display: none;" class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully generated. Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. You can retrieve new credentials any time by clicking the "Generate new API credentials" button below.', 'mainwp' ); ?></div>
+
+				<div class="ui form">
+					<form method="POST" action="">
+						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'RESTAPI' ); ?>" />
+						<!-- <h3 class="ui dividing header"><?php //esc_html_e( 'MainWP Dashboard Tools', 'mainwp' ); ?></h3> -->
+						<?php
+						/**
+						 * Action: rest_api_form_top
+						 *
+						 * Fires at the top of REST API form.
+						 *
+						 * @since 4.1
+						 */
+						do_action( 'rest_api_form_top' );
+						?>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable REST API', 'mainwp' ); ?></label>
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the REST API will be activated.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" <?php echo ( ( 1 == get_option( 'mainwp_enable_rest_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
+							</div>
+						</div>
+
+
+
+						<div class="ui grid field">
+							<div class="six wide column">
+							</div>
+							<div class="ten wide column">
+								<a id="generate-new-api-credentials" href="#" data-tooltip="<?php esc_attr_e( 'Generate new API credentials.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Generate new API credentials.', 'mainwp' ); ?></a>	
+							</div>
+						</div>
+
+						
+
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Key', 'mainwp' ); ?></label>
+
+							<div class="five wide column">
+								<input type="password" name="mainwp_consumer_key" id="mainwp_consumer_key" value="<?php echo ( ( false === get_option( 'mainwp_rest_api_consumer_key' ) ) ? '' : get_option( 'mainwp_rest_api_consumer_key' ) ); ?>" readonly />
+							</div>
+
+							<div class="five wide column">
+								<input id="mainwp_consumer_key_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
+							</div>
+							
+						</div>
+
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Secret', 'mainwp' ); ?></label>
+
+							<div class="five wide column">
+								<input type="password" name="mainwp_consumer_secret" id="mainwp_consumer_secret" value="<?php echo ( ( false === get_option( 'mainwp_rest_api_consumer_secret' ) ) ? '' : get_option( 'mainwp_rest_api_consumer_secret' ) ); ?>" readonly />
+							</div>
+
+							<div class="five wide column">
+								<input id="mainwp_consumer_secret_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
+							</div>
+							
+						</div>
+						
+						<?php
+	/**
+						 * Action: rest_api_form_bottom
+	 *
+						 * Fires at the bottom of REST API form.
+						 *
+						 * @since 4.1
+	 */
+						do_action( 'rest_api_form_bottom' );
+						?>
+						<div class="ui divider"></div>
+						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<div style="clear:both"></div>
+					</form>
+				</div>
+			</div>
+		<?php
+
+		self::render_footer( 'RESTAPI' );
+	}
+
+
 
 	/**
 	 * Export Child Sites and save as .csv file.

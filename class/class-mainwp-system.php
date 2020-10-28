@@ -117,6 +117,11 @@ class MainWP_System {
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
+		//includes rest api work
+		require('class-mainwp-rest-api.php');
+		Rest_Api::instance()->init();
+
+
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
 			$pluginData            = get_plugin_data( $mainwp_plugin_file );
@@ -857,6 +862,8 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
 		}
 
 		if ( $load_cust_scripts ) {

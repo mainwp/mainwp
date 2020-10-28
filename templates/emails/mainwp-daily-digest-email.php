@@ -79,8 +79,8 @@ if ( empty( $heading ) ) {
 													<?php foreach ( $wp_updates as $item ) : ?>
 													<tr>
 														<td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo $item['new'] ? '<span style="background:#7fb100;padding:3px 6px;color:#fff;font-size:0.6em">NEW</span>' : ''; ?> <a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $item['id'] ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['name'] ); ?></a></td>
-														<td style="padding:10px;border-bottom: 1px solid #eee;" align="center"><?php echo esc_html( $item['new_version'] ); ?></td>
-														<td style="padding:10px;border-bottom: 1px solid #eee;" align="center"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['current'] ); ?></a></td>
+														<td style="padding:10px;border-bottom: 1px solid #eee;" align="center"><?php echo esc_html( $item['current'] ); ?></td>
+														<td style="padding:10px;border-bottom: 1px solid #eee;" align="center"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['new_version'] ); ?></a></td>
 														<td style="padding:10px;border-bottom: 1px solid #eee;" align="center"><?php echo $item['trusted'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Yes</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">No</span>'; ?></td>
 													</tr>
 												<?php endforeach; ?>

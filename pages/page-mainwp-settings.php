@@ -1129,11 +1129,8 @@ class MainWP_Settings {
 		<div id="rest-api-settings" class="ui segment">
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
-					
 				<?php endif; ?>
-
 				<div id="api-credentials-created" style="display: none;" class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully generated. Please copy the consumer key and secret now as after you leave this page the credentials will no longer be accessible. You can retrieve new credentials any time by clicking the "Generate new API credentials" button below.', 'mainwp' ); ?></div>
-
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1154,9 +1151,6 @@ class MainWP_Settings {
 								<input type="checkbox" name="mainwp_enable_rest_api" id="mainwp_enable_rest_api" <?php echo ( ( 1 == get_option( 'mainwp_enable_rest_api', 0 ) ) ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
-
-
-
 						<div class="ui grid field">
 							<div class="six wide column">
 							</div>
@@ -1164,9 +1158,6 @@ class MainWP_Settings {
 								<a id="generate-new-api-credentials" href="#" data-tooltip="<?php esc_attr_e( 'Generate new API credentials.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Generate new API credentials.', 'mainwp' ); ?></a>	
 							</div>
 						</div>
-
-						
-
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Consumer Key', 'mainwp' ); ?></label>
 
@@ -1177,7 +1168,6 @@ class MainWP_Settings {
 							<div class="five wide column">
 								<input id="mainwp_consumer_key_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
 							</div>
-							
 						</div>
 
 						<div class="ui grid field">
@@ -1190,9 +1180,7 @@ class MainWP_Settings {
 							<div class="five wide column">
 								<input id="mainwp_consumer_secret_clipboard_button" style="display: none;" type="button" name="" class="ui green basic button copy-to-clipboard" value="<?php esc_attr_e( 'Copy to Clipboard', 'mainwp' ); ?>">
 							</div>
-							
 						</div>
-						
 						<?php
 						/**
 						 * Action: rest_api_form_bottom

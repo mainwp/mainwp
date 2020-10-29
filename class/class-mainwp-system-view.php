@@ -569,15 +569,15 @@ class MainWP_System_View {
 		<style>
 			<?php
 			if ( MainWP_System::is_mainwp_pages() ) {
-			?>
-				#wpbody-content > div.update-nag,
-				#wpbody-content > div.updated {
-					margin-left: 190px;
-				}
-				html.wp-toolbar{
-					padding-top: 0 !important;
-				}
-			<?php
+				?>
+					#wpbody-content > div.update-nag,
+					#wpbody-content > div.updated {
+						margin-left: 190px;
+					}
+					html.wp-toolbar{
+						padding-top: 0 !important;
+					}
+				<?php
 			}
 			?>
 			.mainwp-checkbox:before {

@@ -669,7 +669,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * Rest API update website
 	 *
-	 * @param int   $websitei website ID.
+	 * @param int   $websiteid website ID.
 	 * @param array $data Update fields array:
 	 * 'http_user'
 	 * 'http_pass'

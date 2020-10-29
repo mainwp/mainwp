@@ -292,7 +292,6 @@ class MainWP_Premium_Update {
 		}
 
 		MainWP_Logger::instance()->debug( ' :: tryRequest :: [website=' . $website->url . '] [url=' . $where_url . ']' );
-
 	}
 
 	/**

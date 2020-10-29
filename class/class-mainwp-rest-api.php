@@ -82,7 +82,6 @@ class Rest_Api {
 	 *
 	 * Generates consumer key and secret and saves to the database encrypted.
 	 *
-	 * @return string $return_data JSON formatted consumer key and secret unhashed.
 	 */
 	public function mainwp_generate_api_credentials() {
 

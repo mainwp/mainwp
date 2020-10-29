@@ -281,12 +281,10 @@ class MainWP_System_Handler {
 		$update_screen_options = false;
 		if ( isset( $_POST['submit'] ) && isset( $_GET['page'] ) && 'RESTAPI' === $_GET['page'] ) {
 			if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) {
-				// $update_screen_options = true;
-
 				MainWP_Utility::update_option( 'mainwp_enable_rest_api', ( ! isset( $_POST['mainwp_enable_rest_api'] ) ? 0 : 1 ) );
 
 			}
-		} 
+		}
 	}
 
 	/**

@@ -1,9 +1,7 @@
 jQuery( document ).ready( function ($) {
 
-    $('body').on('click','#generate-new-api-credentials', function(event){
-
+    $('body').on('click','#generate-new-api-credentials', function(){
         console.log('I was clicked');
-
         //do ajax to generate consumer key and secret
         var data = {
             'action': 'mainwp_generate_api_credentials',
@@ -40,15 +38,7 @@ jQuery( document ).ready( function ($) {
         });
 
     });
-
-
-
-    $('body').on('click','.copy-to-clipboard', function(event){
-
+    $('body').on('click','.copy-to-clipboard', function(){
         alert('Copied!');
-        
     });
-
-
-
 });

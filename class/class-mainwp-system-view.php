@@ -567,19 +567,19 @@ class MainWP_System_View {
 	public static function admin_print_styles() {
 		?>
 		<style>
-		<?php
-		if ( MainWP_System::is_mainwp_pages() ) {
-		?>
-			#wpbody-content > div.update-nag,
-			#wpbody-content > div.updated {
-				margin-left: 190px;
+			<?php
+			if ( MainWP_System::is_mainwp_pages() ) {
+			?>
+				#wpbody-content > div.update-nag,
+				#wpbody-content > div.updated {
+					margin-left: 190px;
+				}
+				html.wp-toolbar{
+					padding-top: 0 !important;
+				}
+			<?php
 			}
-			html.wp-toolbar{
-				padding-top: 0 !important;
-			}
-		<?php
-		}
-		?>
+			?>
 			.mainwp-checkbox:before {
 				content: '<?php esc_html_e( 'YES', 'mainwp' ); ?>';
 			}

@@ -153,19 +153,19 @@ class MainWP_Manage_Sites_Handler {
 	 * @param array $data fields array.
 	 * @param array $output Output array.
 	 *
-	 * $data fields:
-	 * 'url'
-	 * 'name'
-	 * 'admin'
-	 * 'uniqueid'
-	 * 'ssl_verify'
-	 * 'force_use_ipv4'
-	 * 'ssl_version'
-	 * 'http_user'
-	 * 'http_pass'
-	 * 'groupids'
+	 * $data fields.
+	 * 'url'.
+	 * 'name'.
+	 * 'admin'.
+	 * 'uniqueid'.
+	 * 'ssl_verify'.
+	 * 'force_use_ipv4'.
+	 * 'ssl_version'.
+	 * 'http_user'.
+	 * 'http_pass'.
+	 * 'groupids'.
 	 *
-	 * @return mixed Results
+	 * @return mixed Results.
 	 */
 	public static function rest_api_add_site( $data, &$output = array() ) {
 		$params['url']            = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';

@@ -1023,7 +1023,7 @@ class MainWP_System {
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp_sync.dtsSync DESC, wp.url ASC', false, false, null, false, array(), $is_staging ) );
 		}
 
-		MainWP_System_View::render_footer_content( $websites );
+		MainWP_System_View::render_footer_content( $websites, $current_wpid );
 		if ( empty( $current_wpid ) ) {
 			MainWP_DB::free_result( $websites );
 		}

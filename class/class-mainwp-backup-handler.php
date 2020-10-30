@@ -1108,7 +1108,7 @@ class MainWP_Backup_Handler {
 	public static function get_real_extension( $path ) {
 		$checks = array( '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2', '.tar.gz', '.tar.bz2' );
 		foreach ( $checks as $check ) {
-			if ( self::ends_with( $path, $check ) ) {
+			if ( MainWP_Utility::ends_with( $path, $check ) ) {
 				return $check;
 			}
 		}

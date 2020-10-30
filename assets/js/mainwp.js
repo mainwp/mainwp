@@ -627,6 +627,10 @@ mainwp_sync_sites_data = function ( syncSiteIds, pAction ) {
       window.location.href = location.href;
   } } );
 
+  if ( jQuery('#mainwp-sync-sites-modal').attr('current-wpid') > 0 ){
+    globalSync = false;
+  }
+  
   dashboard_update(allWebsiteIds, globalSync, pAction );
 
   if (pAction != 'checknow') {
@@ -634,7 +638,7 @@ mainwp_sync_sites_data = function ( syncSiteIds, pAction ) {
         var data = {
             action:'mainwp_status_saving',
             status: 'last_sync_sites',
-            isGlobalSync: globalSync
+            isGlobalSync: globalSync ? 1 : 0
         };
         jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
 

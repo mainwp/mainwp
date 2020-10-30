@@ -57,7 +57,7 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
-	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
+	 * @uses \MainWP\Dashboard\self::get_real_extension()
 	 */
 	public static function backup_site( $siteid, $pTask, $subfolder ) {
 		// phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -430,7 +430,7 @@ class MainWP_Backup_Handler {
 						$filename        = str_replace( '%', '', $filename );
 						$localBackupFile = $dir . $filename;
 					}
-					$localBackupFile .= MainWP_Utility::get_real_extension( $information['db'] );
+					$localBackupFile .= self::get_real_extension( $information['db'] );
 
 					$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
@@ -446,7 +446,7 @@ class MainWP_Backup_Handler {
 			}
 
 			if ( $information['full'] ) {
-				$realExt         = MainWP_Utility::get_real_extension( $information['full'] );
+				$realExt         = self::get_real_extension( $information['full'] );
 				$what            = 'full';
 				$regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 				if ( '' == $backupTaskProgress->downloadedFULL ) {
@@ -662,7 +662,7 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::normalize_filename()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
-	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
+	 * @uses \MainWP\Dashboard\self::get_real_extension()
 	 */
 	public static function backup_check_pid( $pSiteId, $pid, $type, $subfolder, $pFilename ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
@@ -708,10 +708,10 @@ class MainWP_Backup_Handler {
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
 			if ( 'db' === $type ) {
-				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['file'] );
+				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['file'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
-				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['file'] );
+				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['file'] );
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
@@ -738,9 +738,9 @@ class MainWP_Backup_Handler {
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
 				if ( 'db' === $type ) {
-					$localBackupFile .= MainWP_Utility::get_real_extension( $information['file'] );
+					$localBackupFile .= self::get_real_extension( $information['file'] );
 				} else {
-					$localBackupFile .= MainWP_Utility::get_real_extension( $information['file'] );
+					$localBackupFile .= self::get_real_extension( $information['file'] );
 				}
 			}
 
@@ -793,7 +793,7 @@ class MainWP_Backup_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
-	 * @uses \MainWP\Dashboard\MainWP_Utility::get_real_extension()
+	 * @uses \MainWP\Dashboard\self::get_real_extension()
 	 *
 	 */
 	public static function backup(
@@ -962,10 +962,10 @@ class MainWP_Backup_Handler {
 			$fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
 			if ( 'db' === $pType ) {
-				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['db'] );
+				$localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['db'] );
 				$localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
 			} else {
-				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Utility::get_real_extension( $information['full'] );
+				$localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . self::get_real_extension( $information['full'] );
 				$localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
 			}
 
@@ -992,9 +992,9 @@ class MainWP_Backup_Handler {
 				$localBackupFile = MainWP_Utility::normalize_filename( $localBackupFile );
 
 				if ( 'db' === $pType ) {
-					$localBackupFile .= MainWP_Utility::get_real_extension( $information['db'] );
+					$localBackupFile .= self::get_real_extension( $information['db'] );
 				} else {
-					$localBackupFile .= MainWP_Utility::get_real_extension( $information['full'] );
+					$localBackupFile .= self::get_real_extension( $information['full'] );
 				}
 			}
 

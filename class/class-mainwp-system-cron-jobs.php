@@ -1408,7 +1408,7 @@ class MainWP_System_Cron_Jobs {
 				continue;
 			}
 
-			if ( ! MainWP_Manage_Backups::validate_backup_tasks( array( $task ) ) ) {
+			if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $task ) ) ) {
 				$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			}
 

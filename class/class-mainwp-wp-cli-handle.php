@@ -1617,8 +1617,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * Command Example: wp mainwp sites --sync-sites.
 	 *
-	 * @param array  $args       Arguments.
-	 * @param array  $assoc_args Arguments.
+	 * @param array $args       Arguments.
+	 * @param array $assoc_args Arguments.
 	 */
 	public static function handle_sync_sites( $args = array(), $assoc_args = false ) {
 

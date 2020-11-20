@@ -404,9 +404,9 @@ class MainWP_Logger {
 	 *
 	 * Prepare log data.
 	 *
-	 * @param mixed $prepare_log Log data.
+	 * @param mixed $data Log data.
 	 *
-	 * @return mixed $data Log data.
+	 * @return mixed $data filtered data.
 	 */
 	public function prepare_log_info( $data ) {
 		$patterns[0]    = '/user=([^\&]+)\&/';
@@ -489,7 +489,7 @@ class MainWP_Logger {
 
 		$today_m_y = date( 'd/m/Y' ); //phpcs:ignore -- local time.
 		// one time per day.
-		if ( $today_m_y != get_option( 'mainwp_logger_check_daily' ) ) {
+		if ( get_option( 'mainwp_logger_check_daily' ) != $today_m_y ) {
 			$num_days = apply_filters( 'mainwp_logger_keep_days', 7 );
 			MainWP_DB_Common::instance()->delete_action_log( $num_days );
 			MainWP_Utility::update_option( 'mainwp_logger_check_daily', $today_m_y );
@@ -500,8 +500,6 @@ class MainWP_Logger {
 	 * Method clear_log_db()
 	 *
 	 * Clear the log file.
-	 *
-	 * @param int $days number of days to keep logs.
 	 */
 	public function clear_log_db() {
 		MainWP_DB_Common::instance()->delete_action_log();
@@ -548,16 +546,16 @@ class MainWP_Logger {
 			$prefix = $time . ' ';
 
 			$currentColor = '';
-			if ( $type == self::DEBUG ) {
+			if ( self::DEBUG == $type ) {
 				$currentColor = self::DEBUG_COLOR;
 				$prefix      .= '[DEBUG]';
-			} elseif ( $type == self::INFO ) {
+			} elseif ( self::INFO == $type ) {
 				$currentColor = self::INFO_COLOR;
 				$prefix      .= '[INFO]';
-			} elseif ( $type == self::WARNING ) {
+			} elseif ( self::WARNING == $type ) {
 				$currentColor = self::WARNING_COLOR;
 				$prefix      .= '[WARNING]';
-			} elseif ( $type == self::LOG ) {
+			} elseif ( self::LOG == $type ) {
 				$currentColor = self::LOG_COLOR;
 				$prefix      .= '[LOG]';
 			}

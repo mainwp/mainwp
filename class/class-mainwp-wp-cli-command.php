@@ -128,10 +128,14 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp mainwp site --site
-	 *     wp mainwp site --site-info
+	 *     wp mainwp site --site [<websiteid>]
+	 *     wp mainwp site --site-info [<websiteid>]
 	 *
 	 * ## Synopsis [--site] [--site-info] [...]
+	 * 
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
+	 * 
 	 */
 	public function site( $args, $assoc_args ) {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'site', $args, $assoc_args );
@@ -155,6 +159,10 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 *     wp mainwp updates --ignored-plugins-updates
 	 *
 	 * ## Synopsis [--available-updates] [--ignored-plugins-updates] [...]
+	 * 
+	 * @param array $args Function arguments.
+	 * @param array $assoc_args Function associate arguments.
+	 * 
 	 */
 	public function updates( $args, $assoc_args ) {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'updates', $args, $assoc_args );

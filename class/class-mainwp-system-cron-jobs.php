@@ -293,7 +293,7 @@ class MainWP_System_Cron_Jobs {
 					MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 					return;
 				} else {
-					if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) {
+					if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) {  // phpcs:ignore -- local time.
 						$sync_time_runable = true; // today not run.
 					}
 				}

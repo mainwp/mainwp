@@ -332,6 +332,8 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Method delete_action_log()
 	 *
 	 * Delete action log.
+	 * 
+	 * @param int $days number days.
 	 *
 	 * @return void
 	 */
@@ -708,32 +710,32 @@ class MainWP_DB_Common extends MainWP_DB {
 	/**
 	 * Method rest_api_update_website().
 	 *
-	 * Rest API update website
+	 * Rest API update website.
 	 *
 	 * @param int   $websiteid website ID.
 	 * @param array $data Update fields array.
-	 * 'http_user'
-	 * 'http_pass'
-	 * 'name'
-	 * 'admin'
-	 * 'sslversion'
-	 * 'uniqueid'
-	 * 'verify'
-	 * 'protocol'
-	 * 'disablechecking'
-	 * 'checkinterval'
-	 * 'disablehealthchecking'
-	 * 'healththreshold'
-	 * 'groupids'
-	 * 'automatic_update'
-	 * 'backup_before_upgrade'
-	 * 'force_use_ipv4'
-	 * 'ignore_core_updates'
-	 * 'ignore_plugin_updates'
-	 * 'ignore_theme_updates'
-	 * 'monitoring_emails'
+	 * 'http_user'.
+	 * 'http_pass'.
+	 * 'name'.
+	 * 'admin'.
+	 * 'sslversion'.
+	 * 'uniqueid'.
+	 * 'verify'.
+	 * 'protocol'.
+	 * 'disablechecking'.
+	 * 'checkinterval'.
+	 * 'disablehealthchecking'.
+	 * 'healththreshold'.
+	 * 'groupids'.
+	 * 'automatic_update'.
+	 * 'backup_before_upgrade'.
+	 * 'force_use_ipv4'.
+	 * 'ignore_core_updates'.
+	 * 'ignore_plugin_updates'.
+	 * 'ignore_theme_updates'.
+	 * 'monitoring_emails'.
 	 *
-	 * @return bool true|false
+	 * @return bool true|false.
 	 */
 	public function rest_api_update_website( $websiteid, $data ) {
 

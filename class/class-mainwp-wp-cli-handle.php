@@ -866,7 +866,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $plugin['Name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gURI:%n ' ) . $plugin['PluginURI'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $plugin['Version'] );
-			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $plugin['last_updated'] ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $plugin['last_updated'] ) ); // phpcs:ignore -- local time.
 			\WP_CLI::line( '' );
 		}
 	}
@@ -907,7 +907,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		foreach ( $themes as $theme ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $theme['Name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $theme['Version'] );
-			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $theme['last_updated'] ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $theme['last_updated'] ) ); // phpcs:ignore -- local time.
 			\WP_CLI::line( '' );
 		}
 	}
@@ -1010,7 +1010,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_site_add_site( $args = array(), $assoc_args, $website = false ) {
 		$fields = self::get_cli_params( $args, $assoc_args, 'add-site' );
 		$data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
-		\WP_CLI::line( '  -> Add site result: ' . print_r( $data, true ) );
+		\WP_CLI::line( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
 	}
 
 	/**
@@ -1341,12 +1341,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param object $website    Object containing child site data.
 	 */
 	public static function callback_site_check_site_http_status( $args = array(), $assoc_args, $website = false ) {
-		\WP_CLI::line('');
+		\WP_CLI::line( '' );
 		\WP_CLI::line( __( 'Checking ', 'mainwp' ) . $website->name . ' (' . $website->url . '). ' . __( 'Please wait... ', 'mainwp' ) );
-		\WP_CLI::line('');
+		\WP_CLI::line( '' );
 		$data = MainWP_Monitoring_Handler::handle_check_website( $website );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'HTTP Status: ', 'mainwp' ) . '%n' . $data['httpCode'] . ' (' . $data['httpCodeString'] . ')') );
-		\WP_CLI::line('');
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'HTTP Status: ', 'mainwp' ) . '%n' . $data['httpCode'] . ' (' . $data['httpCodeString'] . ')' ) );
+		\WP_CLI::line( '' );
 	}
 
 	/**

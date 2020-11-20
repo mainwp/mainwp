@@ -67,7 +67,7 @@ if ( empty( $heading ) ) {
 									<?php if ( 80 <= $site->health_value ) : ?>
 									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
 									<?php else : ?>
-									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
+									<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
 									<?php endif; ?>
 								</td>
 							</tr>
@@ -88,7 +88,7 @@ if ( empty( $heading ) ) {
 											<?php if ( 80 <= $site->health_value ) : ?>
 											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#7fb100;"><?php esc_html_e( 'Good', 'mainwp' ); ?>.</strong></p>
 											<?php else : ?>
-											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health is ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
+											<p><?php printf( esc_html__( 'The site health check shows that your site %1$s (%2$s) health ', 'mainwp' ), $site_name, $site_url ); ?><strong style="color:#f2711c;"><?php esc_html_e( 'Should be improved ', 'mainwp' ); ?></strong><?php esc_html_e( 'as soon as possible to improve its performance and security.', 'mainwp' ); ?></p>
 											<?php endif; ?>
 										</td>
 									</tr>

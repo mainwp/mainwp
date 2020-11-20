@@ -332,7 +332,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 * Method delete_action_log()
 	 *
 	 * Delete action log.
-	 * 
+	 *
 	 * @param int $days number days.
 	 *
 	 * @return void

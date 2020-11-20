@@ -372,7 +372,7 @@ class MainWP_Server_Information {
 	 */
 	public static function render_actions_bar() {
 		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) :
-		?>
+			?>
 		<div class="mainwp-actions-bar">
 			<div class="ui two column grid">
 				<div class="column"></div>
@@ -382,7 +382,7 @@ class MainWP_Server_Information {
 				</div>
 			</div>
 		</div>
-		<?php
+			<?php
 		endif;
 	}
 
@@ -1265,8 +1265,6 @@ class MainWP_Server_Information {
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
 		}
 
-		
-
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
 			$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 			if ( $log_to_db ) {
@@ -1308,12 +1306,12 @@ class MainWP_Server_Information {
 			</div>
 		</div>
 		<div>
-		<?php 
+		<?php
 		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 		if ( $log_to_db ) {
 			return MainWP_Logger::instance()->show_log_db();
 		} else {
-			MainWP_Logger::instance()->show_log(); 
+			MainWP_Logger::instance()->show_log();
 		}
 		?>
 		</div>

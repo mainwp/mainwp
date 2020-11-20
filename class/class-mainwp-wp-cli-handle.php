@@ -252,8 +252,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	/**
 	 * Maps arguments.
 	 *
-	 * @param array  $assoc_args Arguments.
-	 * @param array  $fields     Fields.
+	 * @param array $assoc_args Arguments.
+	 * @param array $fields     Fields.
 	 *
 	 * @return array $data Required data.
 	 */
@@ -474,7 +474,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%gMySQL Version:%n ' ) . $data['mysql_version'] );
 		\WP_CLI::line( \WP_CLI::colorize( '%gActive Theme:%n ' ) . $data['themeactivated'] );
 		\WP_CLI::line( \WP_CLI::colorize( '%gIP Address:%n ' ) . $data['ip'] );
-
 	}
 
 	/**
@@ -493,7 +492,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Installed Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $plugins as $plugin ) {
+		foreach ( $plugins as $plugin ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Name:%n ' ) . $plugin['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Slug:%n ' ) . $plugin['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Description:%n ' ) . $plugin['description'] );
@@ -542,7 +541,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Active Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $plugin ) {
+		foreach ( $data as $plugin ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Name:%n ' ) . $plugin['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Slug:%n ' ) . $plugin['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Description:%n ' ) . $plugin['description'] );
@@ -586,7 +585,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Inactive Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $plugin ) {
+		foreach ( $data as $plugin ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Name:%n ' ) . $plugin['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Slug:%n ' ) . $plugin['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gPlugin Description:%n ' ) . $plugin['description'] );
@@ -630,7 +629,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Installed Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $themes as $theme ) {
+		foreach ( $themes as $theme ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Name:%n ' ) . $theme['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Slug:%n ' ) . $theme['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Description:%n ' ) . $theme['description'] );
@@ -679,7 +678,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Active Theme', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $theme ) {
+		foreach ( $data as $theme ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Name:%n ' ) . $theme['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Slug:%n ' ) . $theme['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Description:%n ' ) . $theme['description'] );
@@ -705,7 +704,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Inactive Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $theme ) {
+		foreach ( $data as $theme ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Name:%n ' ) . $theme['name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Slug:%n ' ) . $theme['slug'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gTheme Description:%n ' ) . $theme['description'] );
@@ -771,13 +770,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
-			foreach( $plugin_upgrades as $plugin_upgrade ) {
+			foreach ( $plugin_upgrades as $plugin_upgrade ) {
 				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $plugin_upgrade['Name'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $plugin_upgrade['Version'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $plugin_upgrade['update']['new_version'] );
 				\WP_CLI::line( '' );
 			}
-
 		}
 
 		if ( 0 < count( $theme_upgrades ) ) {
@@ -785,13 +783,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
-			foreach( $theme_upgrades as $theme_upgrade ) {
+			foreach ( $theme_upgrades as $theme_upgrade ) {
 				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $theme_upgrade['Name'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $theme_upgrade['Version'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $theme_upgrade['update']['new_version'] );
 				\WP_CLI::line( '' );
 			}
-
 		}
 
 		if ( 0 < count( $translation_upgrades ) ) {
@@ -799,15 +796,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( '' );
 
-			foreach( $translation_upgrades as $translation_upgrade ) {
+			foreach ( $translation_upgrades as $translation_upgrade ) {
 				\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $translation_upgrade['Name'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $translation_upgrade['Version'] );
 				\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $translation_upgrade['update']['new_version'] );
 				\WP_CLI::line( '' );
 			}
-
 		}
-
 	}
 
 	/**
@@ -849,7 +844,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%gTotal:%n ' ) . $data['total'] );
 		\WP_CLI::line( '' );
-
 	}
 
 	/**
@@ -868,14 +862,13 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Plugins', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $plugins as $plugin ) {
+		foreach ( $plugins as $plugin ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $plugin['Name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gURI:%n ' ) . $plugin['PluginURI'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $plugin['Version'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $plugin['last_updated'] ) );
 			\WP_CLI::line( '' );
 		}
-
 	}
 
 	/**
@@ -911,13 +904,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Abandoned Themes', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $themes as $theme ) {
+		foreach ( $themes as $theme ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $theme['Name'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gVersion:%n ' ) . $theme['Version'] );
 			\WP_CLI::line( \WP_CLI::colorize( '%gLatest Update:%n ' ) . date( 'F j, Y', $theme['last_updated'] ) );
 			\WP_CLI::line( '' );
 		}
-
 	}
 
 	/**
@@ -949,7 +941,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_site_site_http_status( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		MainWP_Monitoring_Handler::handle_check_website( $website );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' .  __( 'Process ran successfully on ', 'mainwp' ) . $website->name . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Process ran successfully on ', 'mainwp' ) . $website->name . '%n' ) );
 	}
 
 	/**
@@ -1059,10 +1051,9 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		if ( empty( $error ) ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' synced successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' .  __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
 		}
-
 	}
 
 	/**
@@ -1086,7 +1077,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		if ( empty( $error ) ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' reconnected successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' .  __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
 		}
 	}
@@ -1111,12 +1102,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		}
 
 		if ( empty( $error ) ) {
-			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' disconnected successfully.', 'mainwp' )  . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' disconnected successfully.', 'mainwp' ) . '%n' ) );
 		} else {
-			\WP_CLI::line( \WP_CLI::colorize( '%r' .  __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%r' . __( 'Process failed with error:', 'mainwp' ) . '%n' ) );
 			\WP_CLI::line( $error );
-	}
-
+		}
 	}
 
 	/**
@@ -1131,7 +1121,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	public static function callback_site_remove_site( $args = array(), $assoc_args, $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$data = MainWP_Manage_Sites_Handler::remove_website( $website->id );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' .  __( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
+		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
 	}
 
 	/**
@@ -1239,7 +1229,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				'list' => $list,
 			)
 		);
-
 	}
 
 	/**
@@ -1365,8 +1354,8 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * Command Example: wp mainwp updates --available-updates [<websiteid>].
 	 *
-	 * @param array  $args       Arguments.
-	 * @param array  $assoc_args Arguments.
+	 * @param array $args       Arguments.
+	 * @param array $assoc_args Arguments.
 	 */
 	public static function callback_updates_available_updates( $args = array(), $assoc_args = array() ) {
 
@@ -1377,12 +1366,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		$all_updates = array();
 		$websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-			$wp_upgrades                 = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
-			$plugin_upgrades             = json_decode( $website->plugin_upgrades, true );
-			$theme_upgrades              = json_decode( $website->theme_upgrades, true );
-			$translation_upgrades        = json_decode( $website->translation_upgrades, true );
+			$wp_upgrades          = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+			$plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
+			$theme_upgrades       = json_decode( $website->theme_upgrades, true );
+			$translation_upgrades = json_decode( $website->translation_upgrades, true );
 
-			\WP_CLI::line( \WP_CLI::colorize( '%B' . $website->name . ' (' .  $website->url . ')%n' ) );
+			\WP_CLI::line( \WP_CLI::colorize( '%B' . $website->name . ' (' . $website->url . ')%n' ) );
 			if ( 0 < count( $wp_upgrades ) ) {
 				\WP_CLI::line( '' );
 				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'WordPress Core', 'mainwp' ) . '%n' ) );
@@ -1397,13 +1386,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Plugin Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
-				foreach( $plugin_upgrades as $plugin_upgrade ) {
+				foreach ( $plugin_upgrades as $plugin_upgrade ) {
 					\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $plugin_upgrade['Name'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $plugin_upgrade['Version'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $plugin_upgrade['update']['new_version'] );
 					\WP_CLI::line( '' );
 				}
-
 			}
 
 			if ( 0 < count( $theme_upgrades ) ) {
@@ -1411,13 +1399,12 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Theme Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
-				foreach( $theme_upgrades as $theme_upgrade ) {
+				foreach ( $theme_upgrades as $theme_upgrade ) {
 					\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $theme_upgrade['Name'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $theme_upgrade['Version'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $theme_upgrade['update']['new_version'] );
 					\WP_CLI::line( '' );
 				}
-
 			}
 
 			if ( 0 < count( $translation_upgrades ) ) {
@@ -1425,18 +1412,15 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 				\WP_CLI::line( \WP_CLI::colorize( '%9' . __( 'Available Translation Updates', 'mainwp' ) . '%n' ) );
 				\WP_CLI::line( '' );
 
-				foreach( $translation_upgrades as $translation_upgrade ) {
+				foreach ( $translation_upgrades as $translation_upgrade ) {
 					\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $translation_upgrade['Name'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gDetected:%n ' ) . $translation_upgrade['Version'] );
 					\WP_CLI::line( \WP_CLI::colorize( '%gLatest:%n ' ) . $translation_upgrade['update']['new_version'] );
 					\WP_CLI::line( '' );
 				}
-
 			}
-
 		}
 		MainWP_DB::free_result( $websites );
-
 	}
 
 	/**
@@ -1444,23 +1428,22 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * Command Example: wp mainwp updates --ignored-plugins-updates [<websiteid>].
 	 *
-	 * @param array  $args       Arguments.
-	 * @param array  $assoc_args Arguments.
+	 * @param array $args       Arguments.
+	 * @param array $assoc_args Arguments.
 	 */
 	public static function callback_updates_ignored_plugins_updates( $args = array(), $assoc_args = array() ) {
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-		$data = json_decode( $userExtension->ignored_plugins, true );
+		$data          = json_decode( $userExtension->ignored_plugins, true );
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $plugin => $value) {
+		foreach ( $data as $plugin => $value ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
 		}
 
 		\WP_CLI::line( '' );
-
 	}
 
 	/**
@@ -1479,12 +1462,11 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $plugin => $value) {
+		foreach ( $data as $plugin => $value ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
 		}
 
 		\WP_CLI::line( '' );
-
 	}
 
 	/**
@@ -1498,18 +1480,17 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_updates_ignored_themes_updates( $args = array(), $assoc_args, $website = false ) {
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
-		$data = json_decode( $userExtension->ignored_themes, true );
+		$data          = json_decode( $userExtension->ignored_themes, true );
 
 		\WP_CLI::line( '' );
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $theme => $value) {
+		foreach ( $data as $theme => $value ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
 		}
 
 		\WP_CLI::line( '' );
-
 	}
 
 	/**
@@ -1529,21 +1510,20 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		\WP_CLI::line( \WP_CLI::colorize( '%9' . $website->name . ' ' . __( 'Ignored Updates', 'mainwp' ) . '%n' ) );
 		\WP_CLI::line( '' );
 
-		foreach( $data as $theme => $value) {
+		foreach ( $data as $theme => $value ) {
 			\WP_CLI::line( \WP_CLI::colorize( '%gName:%n ' ) . $value );
 		}
 
 		\WP_CLI::line( '' );
-
 	}
 
 	/**
 	 * Ignores an update globally.
 	 *
 	 * Command Example: wp mainwp updates --ignore-updates --type=[type] --slug=[slug] --name=[name].
-	 * 
+	 *
 	 * type: plugin|theme
-	 * 
+	 *
 	 * @param array  $args       Arguments.
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
@@ -1643,7 +1623,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function handle_sync_sites( $args = array(), $assoc_args = false ) {
 
-		$sites = self::get_cli_params( $args, $assoc_args, 'sites' );
+		$sites    = self::get_cli_params( $args, $assoc_args, 'sites' );
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
 
 		$warnings = 0;
@@ -1683,7 +1663,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 			\WP_CLI::success( __( 'Sync process completed successfully.', 'mainwp' ) );
 		}
 		\WP_CLI::line( '' );
-
 	}
 
 

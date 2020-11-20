@@ -594,7 +594,6 @@ class MainWP_Logger {
 			</div>
 		</div>
 		<?php
-
 	}
 
 	/**

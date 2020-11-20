@@ -844,7 +844,7 @@ class MainWP_UI {
 				<?php
 			endif;
 		else :
-		?>
+			?>
 		<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 			<?php
 			/**

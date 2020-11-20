@@ -135,7 +135,6 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * 
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
-	 * 
 	 */
 	public function site( $args, $assoc_args ) {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'site', $args, $assoc_args );
@@ -162,7 +161,6 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * 
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
-	 * 
 	 */
 	public function updates( $args, $assoc_args ) {
 		MainWP_WP_CLI_Handle::handle_cli_callback( 'updates', $args, $assoc_args );

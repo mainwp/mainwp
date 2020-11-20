@@ -737,7 +737,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	 *
 	 * @return bool true|false.
 	 */
-	public function rest_api_update_website( $websiteid, $data ) {
+	public function rest_api_update_website( $websiteid, $data ) { // phpcs:ignore -- complex function.
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
 		if ( empty( $website ) ) {

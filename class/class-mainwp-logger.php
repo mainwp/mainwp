@@ -318,7 +318,7 @@ class MainWP_Logger {
 	 *
 	 * @return bool true|false Default is False.
 	 */
-	public function log( $text, $priority ) {
+	public function log( $text, $priority ) { // phpcs:ignore -- complex function.
 
 		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 		if ( $log_to_db ) {

@@ -44,7 +44,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	}
 
 	/**
-	 * returnd available MainWP WP CLI Commands.
+	 * Return available MainWP WP CLI Commands.
 	 *
 	 * @param string $comm MainWP WP CLI Command.
 	 *
@@ -1619,7 +1619,6 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 *
 	 * @param array  $args       Arguments.
 	 * @param array  $assoc_args Arguments.
-	 * @param object $website    Object containing child site data.
 	 */
 	public static function handle_sync_sites( $args = array(), $assoc_args = false ) {
 

@@ -204,7 +204,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		if ( ( count( $sites ) == 0 ) && ( ! isset( $assoc_args['all'] ) ) ) {
 			\WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
-		MainWP_WP_CLI_Handle::handle_sync_sites( $args, $assoc_args ); 
+		MainWP_WP_CLI_Handle::handle_sync_sites( $args, $assoc_args );
 	}
 
 	/**

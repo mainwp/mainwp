@@ -17,6 +17,8 @@ namespace MainWP\Dashboard;
  */
 class Rest_Api {
 
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+	
 	/**
 	 * Protected static variable to hold the single instance of the class.
 	 *

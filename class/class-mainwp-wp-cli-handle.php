@@ -24,6 +24,8 @@ if ( ! defined( 'WP_CLI' ) ) {
  */
 class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 	/**
 	 * Singleton.
 	 *

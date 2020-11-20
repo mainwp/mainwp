@@ -28,7 +28,7 @@ jQuery( document ).ready( function () {
             this.checked = false;
         } );
         mainwp_edit_users_box_init();
-        jQuery( '#mainwp-edit-users-modal' ).modal('show');
+        jQuery( '#mainwp-edit-users-modal' ).modal( 'setting', 'closable', false ).modal('show');
         mainwpuser_postAction( jQuery( this ), 'edit' );
         return false;
     } );
@@ -48,7 +48,7 @@ jQuery( document ).ready( function () {
     var _callback = function() {
 
             if ( action == 'edit' ) {
-                jQuery( '#mainwp-edit-users-modal' ).modal('show');
+                jQuery( '#mainwp-edit-users-modal' ).modal( 'setting', 'closable', false ).modal('show');
                 mainwp_edit_users_box_init();
                 return;
             }
@@ -284,7 +284,7 @@ mainwp_fetch_users = function () {
             "targets": 'no-sort',
             "orderable": false
         } ],
-        "preDrawCallback": function() {					
+        "preDrawCallback": function() {
             jQuery('#mainwp-users-table .ui.dropdown').dropdown();
             jQuery('#mainwp-users-table .ui.checkbox').checkbox();
             mainwp_datatable_fix_menu_overflow();
@@ -370,22 +370,22 @@ mainwp_import_users_next = function () {
 
     var decoded_data = false;
 	var pos_data = [ ];
-    var errors = [ ];	
-	
+    var errors = [ ];
+
     try {
-        decoded_data = JSON.parse( import_data );		
-    } catch(e) {        
+        decoded_data = JSON.parse( import_data );
+    } catch(e) {
 		decoded_data = false;
         errors.push( __( 'Invalid import data.' ) );
     }
 
     if ( false != decoded_data ) {
-		jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + '] ' + original_line + '\n');		
-		var valid = mainwp_import_users_valid_data( decoded_data );		
-		pos_data = valid.data;					
-		errors = valid.errors;		
-    }	
-	
+		jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + '] ' + original_line + '\n');
+		var valid = mainwp_import_users_valid_data( decoded_data );
+		pos_data = valid.data;
+		errors = valid.errors;
+    }
+
     if ( errors.length > 0 ) {
         jQuery( '#import_user_import_failed_rows' ).append( '<span>' + original_line + '</span>' );
         jQuery( '#import_user_import_logging .log' ).append( '[' + import_user_current_line_number + ']>> Error - ' + errors.join( " " ) + '\n' );
@@ -393,31 +393,31 @@ mainwp_import_users_next = function () {
         mainwp_import_users_next();
         return;
     }
-	
+
 	if ( 0 == pos_data.length ) {
 		console.log( 'Error: import user data!' );
-		return; 
+		return;
 	}
-	
+
 	pos_data.action = 'mainwp_importuser';
-	pos_data.line_number = import_user_current_line_number;		
+	pos_data.line_number = import_user_current_line_number;
 	var data = mainwp_secure_data( pos_data );
-	
-    //Add user via ajax!!    
+
+    //Add user via ajax!!
 	jQuery.post( ajaxurl, data, function ( response_data ) {
             if ( response_data.error != undefined )
-                return;			
+                return;
 			mainwp_import_users_response( response_data );
             mainwp_import_users_next();
     }, 'json' );
 };
 
 /* eslint-disable complexity */
-mainwp_import_users_valid_data = function( decoded_data ) {	
-	
+mainwp_import_users_valid_data = function( decoded_data ) {
+
 	var errors = []; // array.
 	var val_data = {}; // object.
-	
+
 	val_data.user_login = decoded_data.user_login == undefined ? '' : decoded_data.user_login;
 	val_data.email = decoded_data.email == undefined ? '' : decoded_data.email;
 	val_data.first_name = decoded_data.first_name == undefined ? '' : decoded_data.first_name;
@@ -429,7 +429,7 @@ mainwp_import_users_valid_data = function( decoded_data ) {
 	val_data.select_sites = decoded_data.select_sites == undefined ? '' : decoded_data.select_sites;
 	val_data.select_groups = decoded_data.select_groups == undefined ? '' : decoded_data.select_groups;
 	val_data.select_by = '';
-	
+
 	if ( val_data.user_login == '' ) {
 		errors.push( __( 'Please enter a username.' ) );
 	}
@@ -463,12 +463,12 @@ mainwp_import_users_valid_data = function( decoded_data ) {
 			val_data.select_groups = selected_groups;
 			val_data.select_by = 'group';
 		}
-	}	
-	return { 
-		errors: errors, 
+	}
+	return {
+		errors: errors,
 		data: val_data
 	};
-	
+
 };
 /* eslint-enable complexity */
 
@@ -501,6 +501,5 @@ mainwp_import_users_finished = function() {
 	if ( import_user_count_create_fails > 0 ) {
 		jQuery( '#import_user_btn_save_csv' ).removeAttr( "disabled" ); //Enable
 	}
-	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );	
+	jQuery( '#import_user_import_logging' ).scrollTop( jQuery( '#import_user_import_logging .log' ).height() );
 }
-

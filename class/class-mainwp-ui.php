@@ -819,6 +819,31 @@ class MainWP_UI {
 		$sites_count = MainWP_DB::instance()->get_websites_count();
 		$website_id  = '';
 		ob_start();
+		if ( isset( $_GET['dashboard'] ) ) :
+			$id      = intval( $_GET['dashboard'] );
+			$website = MainWP_DB::instance()->get_website_by_id( $id );
+
+			if ( '' != $website->sync_errors ) :
+				?>
+				<a href="#" class="mainwp-site-overview-reconnect-site ui green button" siteid="<?php echo $website->id; ?>" data-position="bottom right" data-tooltip="Reconnect <?php echo stripslashes( $website->name ); ?>" data-inverted=""><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></a>
+				<?php
+			else :
+				?>
+				<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
+					<?php
+					/**
+					 * Filter: mainwp_main_sync_button_text
+					 *
+					 * Filters the Sync Dashboard with Child Sites button text.
+					 *
+					 * @since 4.1
+					 */
+					echo esc_html( apply_filters( 'mainwp_site_sync_button_text', __( 'Sync Dashboard with Child Site', 'mainwp' ) ) );
+					?>
+				</button>
+				<?php
+			endif;
+		else :
 		?>
 		<button class="ui button green <?php echo ( 0 < $sites_count ? '' : 'disabled' ); ?>" id="mainwp-sync-sites" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Get fresh data from your child sites.', 'mainwp' ); ?>">
 			<?php
@@ -832,6 +857,10 @@ class MainWP_UI {
 			echo esc_html( apply_filters( 'mainwp_main_sync_button_text', __( 'Sync Dashboard with Child Sites', 'mainwp' ) ) );
 			?>
 		</button>
+			<?php
+		endif;
+		?>
+
 		<div class="ui <?php echo ( 0 == $sites_count ? 'green' : '' ); ?> buttons" id="mainwp-add-new-buttons">
 			<a class="ui button" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'Add a new Website to your MainWP Dashboard', 'mainwp' ); ?>" href="<?php echo esc_attr( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
 			<div class="ui floating dropdown icon button"  style="z-index: 999;" data-inverted="" data-position="bottom right" data-tooltip="<?php esc_attr_e( 'More options', 'mainwp' ); ?>">

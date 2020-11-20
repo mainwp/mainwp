@@ -370,6 +370,18 @@ class MainWP_Overview {
 			<?php } ?>
 		</div>
 
+		<div class="mainwp-primary-content-wrap">
+			<?php
+			if ( ! empty( $current_wp_id ) ) {
+				if ( ! empty( $website->sync_errors ) ) {
+					?>
+					<div class="ui red message">
+						<p><?php echo '<strong>' . $website->name . '</strong>' . __( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?></p>
+					</div>
+					<?php
+				}
+			}
+			?>
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 		<div class="mainwp-primary-content-wrap">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>

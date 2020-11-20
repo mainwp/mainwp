@@ -43,8 +43,8 @@ class MainWP_Server_Information {
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
-			__( 'Server Information', 'mainwp' ),
-			' <span id="mainwp-ServerInformation">' . __( 'Server Information', 'mainwp' ) . '</span>',
+			__( 'Status', 'mainwp' ),
+			' <span id="mainwp-ServerInformation">' . __( 'Status', 'mainwp' ) . '</span>',
 			'read',
 			'ServerInformation',
 			array(
@@ -352,6 +352,9 @@ class MainWP_Server_Information {
 			}
 
 			MainWP_UI::render_page_navigation( $renderItems );
+
+			self::render_actions_bar();
+
 			echo '<div class="ui segment">';
 	}
 
@@ -362,6 +365,25 @@ class MainWP_Server_Information {
 	 */
 	public static function render_footer( $shownPage ) {
 		echo '</div>';
+	}
+
+	/**
+	 * Renders Server Information action bar element.
+	 */
+	public static function render_actions_bar() {
+		if ( isset( $_GET['page'] ) && 'ServerInformation' === $_GET['page'] ) :
+		?>
+		<div class="mainwp-actions-bar">
+			<div class="ui two column grid">
+				<div class="column"></div>
+				<div class="right aligned column">
+					<a href="#" style="margin-left:5px" class="ui mini basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
+					<a href="#" class="ui mini green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
+				</div>
+			</div>
+		</div>
+		<?php
+		endif;
 	}
 
 	/**
@@ -420,13 +442,6 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_server_info_table' );
 		?>
-			<div class="ui two column grid">
-			<div class="column"></div>
-			<div class="right aligned column">
-			<a href="#" style="margin-left:5px" class="ui small basic green button" id="mainwp-copy-meta-system-report" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Copy the system report to paste it to the MainWP Community.', 'mainwp' ); ?>"><?php esc_html_e( 'Copy System Report for the MainWP Community', 'mainwp' ); ?></a>
-			<a href="#" class="ui small green button" id="mainwp-download-system-report"><?php esc_html_e( 'Download System Report', 'mainwp' ); ?></a>
-			</div>
-			</div>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
 				<thead>
 					<tr>
@@ -1250,8 +1265,15 @@ class MainWP_Server_Information {
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
 		}
 
+		
+
 		if ( isset( $_REQUEST['actionlogs_clear'] ) ) {
-			MainWP_Logger::clear_log();
+			$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
+			if ( $log_to_db ) {
+				MainWP_Logger::instance()->clear_log_db();
+			} else {
+				MainWP_Logger::instance()->clear_log();
+			}
 		}
 
 		$enabled = MainWP_Logger::instance()->get_log_status();
@@ -1286,7 +1308,14 @@ class MainWP_Server_Information {
 			</div>
 		</div>
 		<div>
-			<?php MainWP_Logger::show_log(); ?>
+		<?php 
+		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
+		if ( $log_to_db ) {
+			return MainWP_Logger::instance()->show_log_db();
+		} else {
+			MainWP_Logger::instance()->show_log(); 
+		}
+		?>
 		</div>
 		<?php
 		self::render_footer( 'ActionLogs' );

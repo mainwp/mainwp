@@ -7,9 +7,9 @@ jQuery( document ).ready( function () {
 // to fix issue not loaded calendar js library
 if (jQuery( '.ui.calendar' ).length > 0 ) {
             if (mainwpParams.use_wp_datepicker == 1) {
-                jQuery( '#mainwp-manage-pages .ui.calendar input[type=text]' ).datepicker( { dateFormat: "yy-mm-dd" } );
+                jQuery( '#mainwp-manage-pages .ui.calendar input[type=text],#mainwp-manage-posts .ui.calendar input[type=text]' ).datepicker( { dateFormat: "yy-mm-dd" } );
             } else {
-                jQuery( '#mainwp-manage-pages .ui.calendar' ).calendar({
+                jQuery( '#mainwp-manage-pages .ui.calendar, #mainwp-manage-posts .ui.calendar' ).calendar({
                         type: 'date',
                         monthFirst: false,
                         formatter: {
@@ -408,9 +408,8 @@ mainwp_fetch_posts = function ( postId, userId ) {
         response = jQuery.trim( response );
         jQuery( '#mainwp-loading-posts-row' ).hide();
         jQuery( '#mainwp_posts_main' ).show();
-        // jQuery( '#mainwp-posts-table-wrapper' ).empty();
         jQuery( '#mainwp-posts-table-wrapper' ).html( response );
-        // re-initialize datatable
+        // re-initialize datatable.
         jQuery("#mainwp-posts-table").DataTable().destroy();
         jQuery('#mainwp-posts-table').DataTable({
             "colReorder": {

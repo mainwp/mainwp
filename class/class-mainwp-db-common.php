@@ -303,6 +303,47 @@ class MainWP_DB_Common extends MainWP_DB {
 	}
 
 	/**
+	 * Method get_sql_log()
+	 *
+	 * Get sql log.
+	 *
+	 * @return string sql query.
+	 */
+	public function get_sql_log() {
+		return 'SELECT log.*
+                FROM ' . $this->table_name( 'action_log' ) . ' log
+                WHERE 1 LIMIT 0, 300 ';
+	}
+
+	/**
+	 * Method insert_action_log()
+	 *
+	 * Insert action log.
+	 *
+	 * @param array $data log data.
+	 *
+	 * @return void
+	 */
+	public function insert_action_log( $data ) {
+		$this->wpdb->insert( $this->table_name( 'action_log' ), $data );
+	}
+
+	/**
+	 * Method delete_action_log()
+	 *
+	 * Delete action log.
+	 *
+	 * @return void
+	 */
+	public function delete_action_log( $days = false ) {
+		$where = '';
+		if ( ! empty( $days ) ) {
+			$where .= ' AND log_timestamp < ' . ( time() - $days * DAY_IN_SECONDS );
+		}
+		$this->wpdb->query( 'DELETE FROM `' . $this->table_name( 'action_log' ) . '` WHERE 1 ' . $where );
+	}
+
+	/**
 	 * Method insert_or_update_request_log()
 	 *
 	 * Insert or update request log.
@@ -714,7 +755,7 @@ class MainWP_DB_Common extends MainWP_DB {
 
 		foreach ( $map_fields as $field => $name ) {
 			if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
-				$sql_set .= ' ' . $field . ' = "' . $this->escape( $data[ $name ] ) . '",';
+				$sql_set .= ' `' . $this->escape( $field ) . '` = "' . $this->escape( $data[ $name ] ) . '",';
 			}
 		}
 

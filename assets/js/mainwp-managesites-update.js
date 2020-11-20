@@ -173,7 +173,7 @@ managesites_update_pluginsthemes_done = function ( pType )
             
             if ( websitesError <= 0 && websitesEveryError <= 0 )
             {
-                mainwpPopup( '#mainwp-sync-sites-modal' ).close(true);
+                mainwpPopup( '#mainwp-sync-sites-modal' ).close( true );
             } else
             {
                 var message = websitesError + ' Site' + ( websitesError > 1 ? 's' : '' ) + ' Timed / Errored out. <br/><span class="mainwp-small">(There was an error syncing some of your sites. <a href="https://kb.mainwp.com/docs/potential-issues/">Please check this help doc for possible solutions.</a>)</span>';

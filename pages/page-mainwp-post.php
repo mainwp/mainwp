@@ -512,7 +512,7 @@ class MainWP_Post {
 		self::render_header( 'BulkManage' );
 
 		?>
-		<div class="ui alt mainwp-posts segment">
+		<div class="ui alt mainwp-posts segment" id="mainwp-manage-posts">
 			<div class="mainwp-main-content">
 				<div class="mainwp-actions-bar ui mini form">
 					<div class="ui grid">
@@ -916,6 +916,7 @@ class MainWP_Post {
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
+				jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
 				jQuery( '#mainwp-posts-table' ).DataTable( {
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,

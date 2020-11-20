@@ -51,7 +51,16 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * [--list]
 	 *  : Get a list of all child sites
 	 *
-	 * ## Synopsis [--list]
+	 * [--count]
+	 *  : If set, count child sites.
+	 *
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp mainwp sites --list
+	 *     wp mainwp sites --all-sites-count
+	 *
+	 * ## Synopsis [--list] [--all-sites-count]
 	 *
 	 * @param array $args Function arguments.
 	 * @param array $assoc_args Function associate arguments.
@@ -63,7 +72,16 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 */
 	public function sites( $args, $assoc_args ) {
-		$websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+
+		// support new mainwp sites cli commands.
+		$handle = MainWP_WP_CLI_Handle::get_assoc_args_commands( 'sites', $assoc_args );
+		if ( ! empty( $handle ) ) {
+			MainWP_WP_CLI_Handle::handle_cli_callback( 'sites', $args, $assoc_args );
+			return;
+		}
+
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+
 		$idLength      = strlen( 'id' );
 		$nameLength    = strlen( 'name' );
 		$urlLength     = strlen( 'url' );
@@ -94,6 +112,52 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 
 		\WP_CLI::line( sprintf( "+%'--" . ( $idLength + 2 ) . "s+%'--" . ( $nameLength + 2 ) . "s+%'--" . ( $urlLength + 2 ) . "s+%'--" . ( $versionLength + 2 ) . 's+', '', '', '', '' ) );
 		MainWP_DB::free_result( $websites );
+	}
+
+	/**
+	 * Site commands.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--site]
+	 *  : Get site data
+	 *
+	 * [--site-info]
+	 *  : If set, get site info.
+	 *
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp mainwp site --site
+	 *     wp mainwp site --site-info
+	 *
+	 * ## Synopsis [--site] [--site-info] [...]
+	 */
+	public function site( $args, $assoc_args ) {
+		MainWP_WP_CLI_Handle::handle_cli_callback( 'site', $args, $assoc_args );
+	}
+
+	/**
+	 * Updates commands.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--available-updates]
+	 *  : Get available updates
+	 *
+	 * [--ignored-plugins-updates]
+	 *  : If set, get ignored plugins updates.
+	 *
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp mainwp updates --available-updates
+	 *     wp mainwp updates --ignored-plugins-updates
+	 *
+	 * ## Synopsis [--available-updates] [--ignored-plugins-updates] [...]
+	 */
+	public function updates( $args, $assoc_args ) {
+		MainWP_WP_CLI_Handle::handle_cli_callback( 'updates', $args, $assoc_args );
 	}
 
 	/**
@@ -140,37 +204,7 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command {
 		if ( ( count( $sites ) == 0 ) && ( ! isset( $assoc_args['all'] ) ) ) {
 			\WP_CLI::error( 'Please specify one or more child sites, or use --all.' );
 		}
-
-		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
-		\WP_CLI::line( 'Sync started' );
-		$warnings = 0;
-		$errors   = 0;
-		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-			if ( ( count( $sites ) > 0 ) && ( ! in_array( $website->id, $sites, true ) ) ) {
-				continue;
-			}
-
-			\WP_CLI::line( '  -> ' . $website->name . ' (' . $website->url . ')' );
-			try {
-				if ( MainWP_Sync::sync_site( $website ) ) {
-					\WP_CLI::success( '  Sync succeeded' );
-				} else {
-					\WP_CLI::warning( '  Sync failed' );
-					$warnings++;
-				}
-			} catch ( \Exception $e ) {
-				\WP_CLI::error( '  Sync failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
-				$errors++;
-			}
-		}
-		MainWP_DB::free_result( $websites );
-		if ( $errors > 0 ) {
-			\WP_CLI::error( 'Sync completed with errors' );
-		} elseif ( $warnings > 0 ) {
-			\WP_CLI::warning( 'Sync completed with warnings' );
-		} else {
-			\WP_CLI::success( 'Sync completed' );
-		}
+		MainWP_WP_CLI_Handle::handle_sync_sites( $args, $assoc_args ); 
 	}
 
 	/**

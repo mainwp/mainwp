@@ -162,7 +162,7 @@ class MainWP_Connect {
 			curl_close( $ch );
 		}
 
-		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data=' . $data . ']' );
+		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
 
 		$host   = wp_parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
 		$ip     = false;
@@ -1406,7 +1406,9 @@ class MainWP_Connect {
 
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+		if ( ! empty( $website ) ) {
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+		}
 
 		$identifier = null;
 		if ( $checkConstraints ) {

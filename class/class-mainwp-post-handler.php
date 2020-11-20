@@ -174,8 +174,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		$keyword   = isset( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
-		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstart'] ) ) : '';
-		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( $_POST['dtsstop'] ) ) : '';
+		$dtsstart  = isset( $_POST['dtsstart'] ) ? sanitize_text_field( wp_unslash( trim($_POST['dtsstart']) ) ) : '';
+		$dtsstop   = isset( $_POST['dtsstop'] ) ? sanitize_text_field( wp_unslash( trim($_POST['dtsstop'] )) ) : '';
 		$status    = isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '';
 		$groups    = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
 		$sites     = isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) : '';

@@ -285,12 +285,17 @@ class MainWP_System_Cron_Jobs {
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 		$mainwpLastAutomaticUpdate    = get_option( 'mainwp_updatescheck_last' );
 
+		$sync_time_runable = false;
 		if ( ! $updatecheck_running ) {
 			if ( ! empty( $timeDailyUpdate ) ) {
 				$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 				if ( $local_timestamp < $run_timestamp && ( ( $local_timestamp - $lasttimeAutomaticUpdate ) < DAY_IN_SECONDS ) ) { // not run this time.
 					MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 					return;
+				} else {
+					if ( date( 'd/m/Y' ) !== $mainwpLastAutomaticUpdate ) {
+						$sync_time_runable = true; // today not run.
+					}
 				}
 			}
 		}
@@ -348,6 +353,8 @@ class MainWP_System_Cron_Jobs {
 				}
 			} elseif ( $enableFrequencyAutomaticUpdate ) {
 				$websites = array(); // ok, go check.
+			} elseif ( $sync_time_runable ) {
+				$websites = array(); // ok, runtime.
 			} elseif ( date( 'd/m/Y' ) === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
 				return;
@@ -939,7 +946,7 @@ class MainWP_System_Cron_Jobs {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
 					}
-					MainWP_Logger::instance()->debug( 'CRON :: auto update :: websites id :: ' . $websiteId . ' :: plugins :: ' . implode( ',', $slugs ) );
+					MainWP_Logger::instance()->debug( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']' );
 
 					try {
 
@@ -1032,7 +1039,7 @@ class MainWP_System_Cron_Jobs {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
 					}
-					MainWP_Logger::Instance()->debug( 'CRON :: auto update core :: websites id :: ' . $websiteId );
+					MainWP_Logger::Instance()->debug( 'CRON :: auto update core [websiteid=' . $websiteId . ']' );
 					try {
 						MainWP_Connect::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( \Exception $e ) {

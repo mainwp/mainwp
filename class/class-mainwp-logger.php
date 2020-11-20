@@ -255,6 +255,58 @@ class MainWP_Logger {
 		return $this->log( '[' . $website->name . '] [' . MainWP_Utility::get_nice_url( $website->url ) . ']  ::' . $action . ':: ' . $message . $stackTrace, self::WARNING );
 	}
 
+	/**
+	 * Method log()
+	 *
+	 * Log to database.
+	 *
+	 * @param string $text Log record text.
+	 * @param int    $priority Set priority.
+	 *
+	 * @return bool true|false Default is False.
+	 */
+	public function log_to_db( $text, $priority ) {
+
+		$text = $this->prepare_log_info( $text );
+
+		$do_log = false;
+		if ( $this->logPriority >= $priority ) {
+			$do_log = true;
+		}
+
+		if ( $do_log ) {
+
+			$time = gmdate( $this->logDateFormat );
+
+			/**
+			 * Current user global.
+			 *
+			 * @global string
+			 */
+			global $current_user;
+
+			$user = '';
+			if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
+				$user = $current_user->user_login;
+			} elseif ( defined( 'WP_CLI' ) ) {
+				$user = 'WP_CLI';
+			} elseif ( defined( 'DOING_CRON' ) ) {
+				$user = 'DOING_CRON';
+			}
+
+			$data = array();
+
+			$data['log_content']   = $text;
+			$data['log_user']      = $user;
+			$data['log_type']      = $priority;
+			$data['log_timestamp'] = time();
+
+			MainWP_DB_Common::instance()->insert_action_log( $data );
+
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Method log()
@@ -267,6 +319,13 @@ class MainWP_Logger {
 	 * @return bool true|false Default is False.
 	 */
 	public function log( $text, $priority ) {
+
+		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
+		if ( $log_to_db ) {
+			return $this->log_to_db( $text, $priority );
+		}
+
+		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
 		if ( $this->logPriority >= $priority ) {
@@ -289,7 +348,7 @@ class MainWP_Logger {
 				global $current_user;
 
 				if ( ! empty( $current_user ) && ! empty( $current_user->user_login ) ) {
-					$prefix .= ' [' . $current_user->user_login . ']';
+					$prefix .= ' [administrator]';
 				}
 
 				fwrite( $logCurrentHandle, $time . ' ' . $prefix . ' ' . $text . "\n" );
@@ -337,6 +396,27 @@ class MainWP_Logger {
 		}
 
 		return false;
+	}
+
+
+	/**
+	 * Method prepare_log_info()
+	 *
+	 * Prepare log data.
+	 *
+	 * @param mixed $prepare_log Log data.
+	 *
+	 * @return mixed $data Log data.
+	 */
+	public function prepare_log_info( $data ) {
+		$patterns[0]    = '/user=([^\&]+)\&/';
+		$replacement[0] = 'user=xxxxxx&';
+		$patterns[1]    = '/alt_user=([^\&]+)\&/';
+		$replacement[1] = 'alt_user=xxxxxx&';
+		$patterns[2]    = '/\&server=([^\&]+)\&/';
+		$replacement[2] = '&server=xxxxxx&';
+		$data           = preg_replace( $patterns, $replacement, $data );
+		return $data;
 	}
 
 	/**
@@ -394,12 +474,46 @@ class MainWP_Logger {
 	}
 
 	/**
+	 * Method check_log_daily()
+	 *
+	 * Daily checks to clear the log file.
+	 *
+	 * @param int $days number of days to keep logs.
+	 */
+	public function check_log_daily( $days = false ) {
+
+		$enabled = $this->get_log_status();
+		if ( ! $enabled ) {
+			return;
+		}
+
+		$today_m_y = date( 'd/m/Y' ); //phpcs:ignore -- local time.
+		// one time per day.
+		if ( $today_m_y != get_option( 'mainwp_logger_check_daily' ) ) {
+			$num_days = apply_filters( 'mainwp_logger_keep_days', 7 );
+			MainWP_DB_Common::instance()->delete_action_log( $num_days );
+			MainWP_Utility::update_option( 'mainwp_logger_check_daily', $today_m_y );
+		}
+	}
+
+	/**
+	 * Method clear_log_db()
+	 *
+	 * Clear the log file.
+	 *
+	 * @param int $days number of days to keep logs.
+	 */
+	public function clear_log_db() {
+		MainWP_DB_Common::instance()->delete_action_log();
+	}
+
+	/**
 	 * Method clear_log()
 	 *
 	 * Clear the log file.
 	 */
-	public static function clear_log() {
-		$logFile = self::instance()->get_log_file();
+	public function clear_log() {
+		$logFile = $this->get_log_file();
 		if ( ! unlink( $logFile ) ) {
 			$fh = fopen( $logFile, 'w' );
 			if ( false === $fh ) {
@@ -411,12 +525,85 @@ class MainWP_Logger {
 	}
 
 	/**
+	 * Method show_log_db()
+	 *
+	 * Grab log file and build output to screen.
+	 */
+	public function show_log_db() {
+
+		echo '<div class="ui hidden divider"></div>';
+		echo '<div class="ui divided padded relaxed list">';
+
+		$rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log() );
+
+		$start_wrapper = '<span class="ui mini label mainwp-action-log-show-more">Click to See Response</span><div class="mainwp-action-log-site-response" style="display: none;">';
+		$end_wrapper   = '</div>';
+
+		while ( $rows && ( $row  = MainWP_DB::fetch_object( $rows ) ) ) {
+			$type = $row->log_type;
+			$line = $row->log_content;
+
+			$time = gmdate( $this->logDateFormat, $row->log_timestamp );
+
+			$prefix = $time . ' ';
+
+			$currentColor = '';
+			if ( $type == self::DEBUG ) {
+				$currentColor = self::DEBUG_COLOR;
+				$prefix      .= '[DEBUG]';
+			} elseif ( $type == self::INFO ) {
+				$currentColor = self::INFO_COLOR;
+				$prefix      .= '[INFO]';
+			} elseif ( $type == self::WARNING ) {
+				$currentColor = self::WARNING_COLOR;
+				$prefix      .= '[WARNING]';
+			} elseif ( $type == self::LOG ) {
+				$currentColor = self::LOG_COLOR;
+				$prefix      .= '[LOG]';
+			}
+
+			$line = htmlentities( $line );
+
+			if ( false !== strpos( $line, '[data-start]' ) ) {
+				$line = str_replace( '[data-start]', $start_wrapper, $line );
+				$line = str_replace( '[data-end]', $end_wrapper, $line );
+			}
+
+			echo '<div class="item" style="color:' . $currentColor . '"><div class="mainwpactionlogsline">';
+
+			echo $prefix . ' ' . $line;
+
+			echo '</div></div>';
+		}
+
+		echo '</div></div>';
+
+		echo '</div>';
+
+		?>
+		<div class="ui large modal" id="mainwp-action-log-response-modal">
+			<div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+				</div>
+			</div>
+			<div class="scrolling content content-response"></div>
+			<div class="actions">
+				<button class="ui green button mainwp-response-copy-button"><?php esc_html_e( 'Copy Response', 'mainwp' ); ?></button>				
+				<div class="ui cancel button mainwp-reload"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<?php
+
+	}
+
+	/**
 	 * Method show_log()
 	 *
 	 * Grab log file and build output to screen.
 	 */
-	public static function show_log() {
-		$logFile = self::instance()->get_log_file();
+	public function show_log() {
+		$logFile = $this->get_log_file();
 
 		if ( ! file_exists( $logFile ) ) {
 			return;

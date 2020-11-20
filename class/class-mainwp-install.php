@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.42';
+	protected $mainwp_db_version = '8.51';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -287,6 +287,19 @@ class MainWP_Install extends MainWP_DB_Base {
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
+
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . ' (
+	id int(11) NOT NULL auto_increment,
+	log_content mediumtext NOT NULL DEFAULT "",	
+	log_type tinyint(1) DEFAULT 0,	
+	log_user varchar(128) NOT NULL DEFAULT "",
+	log_timestamp int(11) NOT NULL DEFAULT 0';
+		if ( '' == $currentVersion || version_compare( $currentVersion, '8.50', '<=' ) ) {
+			$tbl .= ',
+	PRIMARY KEY  (id)  ';
+		}
+			$tbl  .= ') ' . $charset_collate . ';';
+			$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'request_log' ) . ' (
   id int(11) NOT NULL auto_increment,

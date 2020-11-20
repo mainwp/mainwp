@@ -448,7 +448,7 @@ class Rest_Api {
 	 */
 	public function mainwp_authentication_error() {
 
-		$data = array( 'ERROR' => __( 'Incorrect consumer key and or secret. If the issue persists please reset your authentication details from the plugin settings.', 'mainwp' ) );
+		$data = array( 'ERROR' => __( 'Incorrect or missing consumer key and/or secret. If the issue persists please reset your authentication details from the MainWP > Settings > REST API page, on your MainWP Dashboard site.', 'mainwp' ) );
 
 		$response = new \WP_REST_Response( $data );
 		$response->set_status( 401 );

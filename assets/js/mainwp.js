@@ -319,9 +319,15 @@ feedback = function ( id, text, type, append ) {
       currentHtml = text;
     }
     jQuery( '#' + id ).html( currentHtml );
+    jQuery( '#' + id ).removeClass( 'yellow' );
+    jQuery( '#' + id ).removeClass( 'green' );
+    jQuery( '#' + id ).removeClass( 'red' );
     jQuery( '#' + id ).addClass( type );
   } else {
     jQuery( '#' + id ).html( text );
+    jQuery( '#' + id ).removeClass( 'yellow' );
+    jQuery( '#' + id ).removeClass( 'green' );
+    jQuery( '#' + id ).removeClass( 'red' );
     jQuery( '#' + id ).addClass( type );
   }
   jQuery( '#' + id ).show();
@@ -915,8 +921,8 @@ jQuery( document ).ready( function () {
       return false;
     } );
 
-    jQuery( '.mainwp-updates-overview-reconnect-site' ).on( 'click', function () {
-        mainwp_overview_reconnect( jQuery( this ) );
+    jQuery( '.mainwp-site-overview-reconnect-site' ).on( 'click', function () {
+        mainwp_site_overview_reconnect( jQuery( this ) );
         return false;
     } );
 
@@ -941,19 +947,15 @@ managesites_init = function () {
     jQuery( '.sync-ext-row span.status' ).css( 'color', '#0073aa' );
 };
 
-mainwp_overview_reconnect = function ( pElement ) {
-    var wrapElement = pElement.closest('.mainwp_wp_sync');
-    var parent = pElement.parent();
-    parent.html( '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' );
-
+mainwp_site_overview_reconnect = function ( pElement ) {
+    feedback( 'mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...', '' );
     var data = mainwp_secure_data( {
         action: 'mainwp_reconnectwp',
-        siteid: wrapElement.attr( 'site_id' )
+        siteid: pElement.attr( 'siteid' )
     } );
 
     jQuery.post( ajaxurl, data, function () {
         return function ( response ) {
-            parent.hide();
             response = jQuery.trim( response );
             if ( response.substr( 0, 5 ) == 'ERROR' ) {
                 var error;
@@ -1378,7 +1380,7 @@ mainwp_managesites_test = function () {
     if ( errors.length > 0 ) {
       feedback( 'mainwp-message-zone', errors.join( '<br />' ), 'red' );
     } else {
-      jQuery( '#mainwp-test-connection-modal' ).modal( 'show' );
+      jQuery( '#mainwp-test-connection-modal' ).modal( 'setting', 'closable', false ).modal( 'show' );
       jQuery( '#mainwp-test-connection-modal .dimmer' ).show();
       jQuery( '#mainwp-test-connection-modal .content #mainwp-test-connection-result' ).hide();
 
@@ -1596,7 +1598,7 @@ mainwp_createuser = function () {
                 }
             } else {
         jQuery( '#mainwp-add-new-user-form' ).append( response );
-        jQuery( '#mainwp-creating-new-user-modal' ).modal( 'show' );
+        jQuery( '#mainwp-creating-new-user-modal' ).modal( 'setting', 'closable', false ).modal( 'show' );
 
             }
         } );
@@ -1761,7 +1763,7 @@ mainwp_install_bulk = function ( type, slug ) {
         }
     }( type, jQuery( '#chk_activate_plugin' ).is( ':checked' ), jQuery( '#chk_overwrite' ).is( ':checked' ) ), 'json' );
 
-    jQuery( '#plugintheme-installation-progress-modal' ).modal( 'show' );
+    jQuery( '#plugintheme-installation-progress-modal' ).modal('setting', 'closable', false).modal( 'show' );
 
 };
 
@@ -1962,7 +1964,7 @@ mainwp_upload_bulk = function ( type ) {
         }
     }( type, files, jQuery( '#chk_activate_plugin' ).is( ':checked' ), jQuery( '#chk_overwrite' ).is( ':checked' ) ), 'json' );
 
-    jQuery( '#plugintheme-installation-progress-modal' ).modal('show');
+    jQuery( '#plugintheme-installation-progress-modal' ).modal( 'setting', 'closable', false ).modal('show');
      jQuery('.qq-upload-list').html(''); // empty files list
     return false;
 };
@@ -2117,7 +2119,7 @@ jQuery( document ).ready( function () {
 } );
 
 mainwp_notes_show = function () {
-  jQuery( '#mainwp-notes' ).modal( 'show' );
+  jQuery( '#mainwp-notes' ).modal( 'setting', 'closable', false ).modal( 'show' );
   jQuery( '#mainwp-notes-html' ).show();
   jQuery( '#mainwp-notes-editor' ).hide();
   jQuery( '#mainwp-notes-save' ).hide();

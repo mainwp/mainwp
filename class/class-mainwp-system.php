@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.2.1';
+	public static $version = '4.1.3-beta1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -312,6 +312,7 @@ class MainWP_System {
 				'mainwp_show_language_updates',
 				'mwp_setup_installationHostingType',
 				'mwp_setup_installationSystemType',
+				'mainwp_logger_check_daily',
 			);
 
 			$query = "SELECT option_name, option_value FROM $wpdb->options WHERE option_name in (";
@@ -793,6 +794,7 @@ class MainWP_System {
 				die();
 			}
 		}
+		MainWP_Logger::instance()->check_log_daily();
 	}
 
 	/**

@@ -1382,6 +1382,13 @@ class MainWP_Manage_Sites_List_Table {
 					$t_color = 'green';
 				}
 
+				if ( $hasSyncErrors ) {
+					$a_color = '';
+					$w_color = '';
+					$p_color = '';
+					$t_color = '';
+				}
+
 				$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 				$hstatus       = MainWP_Utility::get_site_health( $health_status );
 				$hval          = $hstatus['val'];
@@ -1393,6 +1400,11 @@ class MainWP_Manage_Sites_List_Table {
 				} else {
 					$h_color = 'orange';
 					$h_text  = __( 'Should be improved', 'mainwp' );
+				}
+
+				if ( $hasSyncErrors ) {
+					$h_color = '';
+					$h_color = '';
 				}
 
 				$note       = html_entity_decode( $website['note'] );
@@ -1705,6 +1717,16 @@ class MainWP_Manage_Sites_List_Table {
 			$t_color = 'green';
 		}
 
+		$hasSyncErrors = ( '' !== $website['sync_errors'] );
+		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
+
+		if ( $hasSyncErrors ) {
+			$a_color = '';
+			$w_color = '';
+			$p_color = '';
+			$t_color = '';
+		}
+
 		$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 		$hstatus       = MainWP_Utility::get_site_health( $health_status );
 		$hval          = $hstatus['val'];
@@ -1718,8 +1740,10 @@ class MainWP_Manage_Sites_List_Table {
 			$h_text  = __( 'Should be improved', 'mainwp' );
 		}
 
-		$hasSyncErrors = ( '' !== $website['sync_errors'] );
-		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
+		if ( $hasSyncErrors ) {
+			$h_color = '';
+			$h_color = '';
+		}
 
 		$note       = html_entity_decode( $website['note'] );
 		$esc_note   = MainWP_Utility::esc_content( $note );

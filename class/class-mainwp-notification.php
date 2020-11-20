@@ -94,7 +94,7 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $email ) ) {
-			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail to :: ' . $email );
+			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail ::' );
 			self::send_wp_mail(
 				$email,
 				$subject,
@@ -182,7 +182,7 @@ class MainWP_Notification {
 			)
 		);
 
-		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digest :: send mail to [' . $email . ']' );
+		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digest :: send mail ::' );
 		$subject = $email_settings['subject'];
 		self::send_wp_mail(
 			$email,
@@ -215,7 +215,7 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $emails ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: sites status :: send mail to [' . $emails . ']' );
+			MainWP_Logger::instance()->debug( 'CRON :: sites status :: send mail ::' );
 			self::send_wp_mail(
 				$emails,
 				$subject,
@@ -246,7 +246,7 @@ class MainWP_Notification {
 		}
 
 		if ( ! empty( $email ) && '' != $mail_content ) {
-			MainWP_Logger::instance()->debug( 'CRON :: sites health :: send mail to [' . $email . ']' );
+			MainWP_Logger::instance()->debug( 'CRON :: sites health :: send mail ::' );
 			self::send_wp_mail(
 				$email,
 				$subject,

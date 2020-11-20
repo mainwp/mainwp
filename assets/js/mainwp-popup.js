@@ -38,26 +38,25 @@
                 actionsCloseCallback: null,
                 title: '',
                 totalSites: 0,
-                progressMax: 0, // length of process bar
-                progressInit: 0, // init value of process bar
+                progressMax: 0, // length of process bar.
+                progressInit: 0, // init value of process bar.
                 statusText: '',
                 hideStatusText: false,                
                 doCloseCallback: null,
                 init: function ( data ) {
                     data = data || { };
-                    // convert property
+                    // convert property.
                     if ( data.callback ) {
                         this.actionsCloseCallback = data.callback;
                         delete data.callback;
                     }
                     var defaultVal = {
-                        //title: 'Syncing Websites',
                         totalSites: 0,
                         progressMax: 0,
                         progressInit: 0,
                         statusText: 'synced'
                     };
-                    this.doCloseCallback = true; // default is yes
+                    this.doCloseCallback = true; // default is yes.
                     $.extend( this, defaultVal, data );
                     if ( 0 == this.totalSites ){
                         this.totalSites = this.progressMax;
@@ -66,7 +65,7 @@
                     this.render();
                     this.bindEvents();
                 },
-                initWrapper: function ( el ) {  // may be call this very first to set custom wrapper
+                initWrapper: function ( el ) {  // may be call this very first to set custom wrapper.
                     this.overlayId = el;
                     this.$overlayElementId = $( this.overlayId );
                 },
@@ -86,18 +85,17 @@
                     }
 
                     if ( ! this.progressMax )
-                        this.$overlayElementId.find( '.mainwp-modal-progress' ).hide(); // hide status and progress
+                        this.$overlayElementId.find( '.mainwp-modal-progress' ).hide(); // hide status and progress.
                     else
                         this.$overlayElementId.find( '.mainwp-modal-progress' ).show();
-                    //this.$overlayElementId.modal({closable: false});
                     var self = this;
                     this.$overlayElementId.modal( { onHide: function (){
                                                         self.onHideModal();
-                                                    }} ).modal('show').modal('set active'); // trick to fix diplay issue
+                                                    }} ).modal( 'setting', 'closable', false ).modal('show').modal('set active'); // trick to fix diplay issue.
                 },
                 onHideModal: function() {
                     if (this.doCloseCallback) {
-                        // do call back when clicking on close button or clicking on dimmer
+                        // do call back when clicking on close button or clicking on dimmer.
                         typeof this.actionsCloseCallback === 'function' && this.actionsCloseCallback();
                     }
                 },
@@ -159,9 +157,9 @@
                     this.$overlayElementId.find( '.mainwp-popup-wrap' ).css( 'z-index', val );
                     this.$overlayElementId.find( '.mainwp-popup-backdrop' ).css( 'z-index', val );
                 },
-                // close modal with executing callback or not executing callback
+                // close modal with executing callback or not executing callback.
                 close: function (execCallback) {
-                    this.doCloseCallback = typeof execCallback !== 'undefined' && execCallback ? true : false; // do not do callback
+                    this.doCloseCallback = typeof execCallback !== 'undefined' && execCallback ? true : false; // do not do callback.
                     this.closePopup();
                 },
                 closePopup: function () {

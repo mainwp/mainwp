@@ -117,6 +117,21 @@ class MainWP_Meta_Boxes {
 	}
 
 	/**
+	 * Method add_categories()
+	 *
+	 * Add categories.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public function add_categories( $post_id = false ) {
+		if ( empty( $post_id ) ) {
+			return;
+		}
+		$post = get_post( $post_id );
+		MainWP_Post::render_categories( $post );
+	}
+
+	/**
 	 * Method add_categories_handle()
 	 *
 	 * Handle adding categories.

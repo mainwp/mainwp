@@ -616,13 +616,16 @@ class MainWP_Updates {
 
 		self::render_header_tabs( $mainwp_show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view );
 
+		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
+		if ( $enable_http_check ) {
+			echo '<div class="ui segment" style="margin-bottom:0px;">';
+			self::render_http_checks( $websites );
+			echo '</div>';
+		}
+
 		?>
 		<div class="ui segment" id="mainwp-manage-updates">
 		<?php
-		$enable_http_check = get_option( 'mainwp_check_http_response', 0 );
-		if ( $enable_http_check ) {
-			self::render_http_checks( $websites );
-		}
 
 		if ( 'wordpress-updates' === $current_tab ) {
 			self::render_wp_update_tab( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups, $site_view );
@@ -1854,8 +1857,11 @@ class MainWP_Updates {
 			 */
 			do_action( 'mainwp_updates_before_http_response_table' );
 			?>
-			<table class="ui stackable single line red table" id="mainwp-http-response-issues-table">
+			<table class="ui single line inverted table" id="mainwp-http-response-issues-table">
 				<thead>
+					<tr>
+						<th class="no-sort" colspan="3"><?php esc_html_e( 'HTTP Response Check Results', 'mainwp' ); ?></th>
+					</tr>
 					<tr>
 						<th><?php esc_html_e( 'Website', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'HTTP Code', 'mainwp' ); ?></th>
@@ -1880,7 +1886,7 @@ class MainWP_Updates {
 						}
 					}
 					?>
-					<tr>
+					<tr id="child-site-<?php echo $website->id; ?>" class="child-site mainwp-child-site-<?php echo $website->id; ?>" siteid="<?php echo $website->id; ?>" site-url="<?php echo $website->url; ?>">
 						<td>
 							<?php self::render_site_link_dashboard( $website ); ?>
 						</td>
@@ -1890,6 +1896,9 @@ class MainWP_Updates {
 						<td class="right aligned">
 							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo esc_attr( $website->id ); ?>" class="ui mini button" target="_blank"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a>
 							<a href="javascript:void(0)" onclick="return updatesoverview_recheck_http( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini green button"><?php esc_html_e( 'Recheck', 'mainwp' ); ?></a>
+							<?php if ( ! empty( $website->sync_errors ) ) { ?>
+							<a href="#" class="mainwp_site_reconnect ui green mini button"><?php esc_html_e( 'Reconnect', 'mainwp' ); ?></a>
+							<?php } ?>
 							<a href="javascript:void(0)" onClick="return updatesoverview_ignore_http_response( this, <?php echo esc_attr( $website->id ); ?> )" class="ui basic mini button"><?php esc_html_e( 'Ignore', 'mainwp' ); ?></a>
 					<?php if ( ! empty( $restoreSlug ) ) { ?>
 							<a href="<?php echo $restoreSlug; ?>" class="ui green mini basic button"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>

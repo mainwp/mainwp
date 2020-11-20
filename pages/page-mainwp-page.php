@@ -820,6 +820,7 @@ class MainWP_Page {
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
+				jQuery("#mainwp-pages-table").DataTable().destroy(); // fixed re-initialize datatable issue.
 				jQuery( '#mainwp-pages-table' ).DataTable( {
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,

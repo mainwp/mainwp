@@ -796,6 +796,7 @@ class MainWP_User {
 		<script type="text/javascript">
 		jQuery( document ).ready( function () {
 			try {
+				jQuery("#mainwp-users-table").DataTable().destroy(); // to fix re-init database issue.
 				jQuery( '#mainwp-users-table' ).DataTable( {
 					"searching" : <?php echo $table_features['searching']; ?>,
 					"colReorder" : <?php echo $table_features['colReorder']; ?>,

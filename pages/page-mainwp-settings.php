@@ -539,7 +539,7 @@ class MainWP_Settings {
 						?>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned" local-datetime="<?php echo date_i18n( 'Y-m-d H:i:s' ); ?>"; ><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set specific time for the automatic daily sync process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="time-selector">
 									<div class="ui input left icon">

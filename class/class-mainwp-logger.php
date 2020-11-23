@@ -487,7 +487,7 @@ class MainWP_Logger {
 			return;
 		}
 
-		$today_m_y = date( 'd/m/Y' ); //phpcs:ignore -- local time.
+		$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
 		// one time per day.
 		if ( get_option( 'mainwp_logger_check_daily' ) != $today_m_y ) {
 			$num_days = apply_filters( 'mainwp_logger_keep_days', 7 );

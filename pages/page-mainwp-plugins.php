@@ -1320,6 +1320,10 @@ class MainWP_Plugins {
 				<div class="mainwp-search-options">
 					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 					<div class="ui info message">
+						<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
+						<p><?php echo sprintf( __( 'Check out %show to disable the WordPress built in auto-updates feature%s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
+					</div>
+					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-auto-updates"></i>
 						<p><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
 						<p><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></p>

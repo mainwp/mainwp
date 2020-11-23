@@ -103,7 +103,7 @@ class MainWP_Plugins {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Plugins', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . __( 'Advanced Auto Updates', 'mainwp' ) . '</div>',
 			'read',
 			'PluginsAutoUpdate',
 			array(
@@ -192,7 +192,7 @@ class MainWP_Plugins {
 							<?php endif; ?>
 							<?php endif; ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsAutoUpdate' ) ) : ?>
-							<a href="<?php echo admin_url( 'admin.php?page=PluginsAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Auto Updates', 'mainwp' ); ?></a>
+							<a href="<?php echo admin_url( 'admin.php?page=PluginsAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
 							<?php endif; ?>
 							<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsIgnore' ) ) : ?>
 								<a href="<?php echo admin_url( 'admin.php?page=PluginsIgnore' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
@@ -256,7 +256,7 @@ class MainWP_Plugins {
 				'right'      => 'install_plugins',
 			),
 			array(
-				'title'      => __( 'Auto Updates', 'mainwp' ),
+				'title'      => __( 'Advanced Auto Updates', 'mainwp' ),
 				'parent_key' => 'PluginsManage',
 				'href'       => 'admin.php?page=PluginsAutoUpdate',
 				'slug'       => 'PluginsAutoUpdate',
@@ -324,7 +324,7 @@ class MainWP_Plugins {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginsAutoUpdate' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Auto Updates', 'mainwp' ),
+				'title'  => __( 'Advanced Auto Updates', 'mainwp' ),
 				'href'   => 'admin.php?page=PluginsAutoUpdate',
 				'active' => ( 'AutoUpdate' === $shownPage ) ? true : false,
 			);
@@ -1321,9 +1321,9 @@ class MainWP_Plugins {
 					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-auto-updates"></i>
-						<p><?php esc_html_e( 'The MainWP Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
+						<p><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
 						<p><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></p>
-						<p><strong><?php esc_html_e( 'Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></p>
+						<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></p>
 					</div>
 					<div class="ui header" style="margin-top:1rem"><?php esc_html_e( 'Plugin Status to Search', 'mainwp' ); ?></div>
 					<div class="ui mini form">

@@ -98,7 +98,7 @@ class MainWP_Themes {
 		add_submenu_page(
 			'mainwp_tab',
 			__( 'Themes', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Auto Updates', 'mainwp' ) . '</div>',
+			'<div class="mainwp-hidden">' . __( 'Advanced Auto Updates', 'mainwp' ) . '</div>',
 			'read',
 			'ThemesAutoUpdate',
 			array(
@@ -171,7 +171,7 @@ class MainWP_Themes {
 						<?php } ?>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesAutoUpdate' ) ) { ?>
-					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Auto Updates', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=ThemesAutoUpdate' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Auto Updates', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesIgnore' ) ) { ?>
 					<a href="<?php echo admin_url( 'admin.php?page=ThemesIgnore' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Ignored Updates', 'mainwp' ); ?></a>
@@ -236,7 +236,7 @@ class MainWP_Themes {
 				'right'      => 'install_themes',
 			),
 			array(
-				'title'      => __( 'Auto Updates', 'mainwp' ),
+				'title'      => __( 'Advanced Auto Updates', 'mainwp' ),
 				'parent_key' => 'ThemesManage',
 				'href'       => 'admin.php?page=ThemesAutoUpdate',
 				'slug'       => 'ThemesAutoUpdate',
@@ -302,7 +302,7 @@ class MainWP_Themes {
 
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ThemesAutoUpdate' ) ) {
 				$renderItems[] = array(
-					'title'  => __( 'Auto Updates', 'mainwp' ),
+					'title'  => __( 'Advanced Auto Updates', 'mainwp' ),
 					'href'   => 'admin.php?page=ThemesAutoUpdate',
 					'active' => ( 'AutoUpdate' === $shownPage ) ? true : false,
 				);
@@ -1362,9 +1362,9 @@ class MainWP_Themes {
 					<div class="mainwp-search-options" style="margin-top:1rem">
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="themes-auto-updates"></i>
-							<p><?php esc_html_e( 'The MainWP Auto Updates feature is a tool for your Dashboard to automatically update themes that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
+							<p><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update themes that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
 							<p><?php esc_html_e( 'Only mark themes as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!	', 'mainwp' ); ?></p>
-							<p><strong><?php esc_html_e( 'Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></p>
+							<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></p>
 						</div>
 						<div class="ui header"><?php esc_html_e( 'Theme Status to Search', 'mainwp' ); ?></div>
 						<div class="ui mini form">

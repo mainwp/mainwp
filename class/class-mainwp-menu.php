@@ -90,7 +90,7 @@ class MainWP_Menu {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions::init_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Update_Admin_Passwords::init_menu()
 	 */
-	public static function init_mainwp_menus() {
+	public static function init_mainwp_menus() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		if ( MainWP_System_Utility::is_admin() ) {
 			if ( ! self::is_disable_menu_item( 2, 'UpdatesManage' ) ) {
 				MainWP_Updates::init_menu();

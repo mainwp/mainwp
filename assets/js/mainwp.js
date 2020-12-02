@@ -2570,7 +2570,6 @@ updatesoverview_send_twitt_info = function () {
 mainwp_datatable_fix_menu_overflow = function () {
 
   var fix_overflow = jQuery('.mainwp-content-wrap').attr('menu-overflow');
-  var top = 0;
   // Fix the overflow prbolem for the actions menu element (right pointing menu).
   jQuery('table tr td .ui.right.pointing.dropdown.button').on('click', function () {
     jQuery(this).closest('.dataTables_scrollBody').css('position', '');

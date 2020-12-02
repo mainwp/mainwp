@@ -111,7 +111,9 @@ class MainWP_Menu {
 				MainWP_Plugins::init_menu();
 			}
 			if ( ! self::is_disable_menu_item( 2, 'UserBulkManage' ) ) {
-				MainWP_User::init_menu();
+				if ( mainwp_current_user_have_right( 'dashboard', 'manage_users' ) ) {
+					MainWP_User::init_menu();
+				}
 			}
 			if ( ! self::is_disable_menu_item( 2, 'ManageBackups' ) ) {
 				MainWP_Manage_Backups::init_menu();

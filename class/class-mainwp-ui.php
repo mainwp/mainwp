@@ -616,8 +616,13 @@ class MainWP_UI {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_before_mainwp_content_wrap', $websites );
+		global $wp_version;
+		$fix_menu_overflow = 1;
+		if ( version_compare( $wp_version, '5.5.3', '>' ) ) {
+			$fix_menu_overflow = 2;
+		}
 		?>
-		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>">
+		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>" menu-overflow="<?php echo intval( $fix_menu_overflow ); ?>">
 			<?php
 			/**
 			 * Action: mainwp_before_header

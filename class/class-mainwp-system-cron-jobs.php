@@ -1097,6 +1097,8 @@ class MainWP_System_Cron_Jobs {
 
 		$sendMail       = false;
 		$updateAvaiable = false;
+		$plugin_updates = array();
+		$theme_updates  = array();
 
 		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
 			$plugin_updates = MainWP_Format::get_site_updates_items( 'plugin', $sites_ids );

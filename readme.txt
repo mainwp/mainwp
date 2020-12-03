@@ -181,8 +181,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: An issue with running scheduled tasks
 * Fixed: Multiple translation issues
 * Fixed: An issue with displaying date-picker
-* Added: REST API
-* Added: New MainWP CLI commands
+* Added: [REST API](https://mainwp.dev/rest-api/)
+* Added: New [MainWP CLI commands](https://kb.mainwp.com/mainwp-wp-cli-commands/)
 * Updated: Action logs to save records to the database table
 * Updated: Multiple cosmetic updates
 

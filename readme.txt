@@ -5,7 +5,7 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 3.6
-Tested up to: 5.5.1
+Tested up to: 5.5.3
 Requires PHP: 5.6
 Stable tag: 4.1.3
 License: GPLv3 or later
@@ -175,6 +175,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.3 - 12-3-20 =
+* Fxied: Multiple PHP warnings
+* Fixed: An issue with running scheduled tasks
+* Fixed: Multiple translation issues
+* Fixed: An issue with displaying date-picker
+* Added: REST API
+* Added: New MainWP CLI commands
+* Updated: Action logs to save records to the database table
+* Updated: Multiple cosmetic updates
 
 = 4.1.2.1 - 10-9-20 =
 * Fixed: An issue with Quick Site Shortcuts sidebar

@@ -177,7 +177,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 4.1.3 - 12-3-20 =
-* Fxied: Multiple PHP warnings
+* Fixed: Multiple PHP warnings
 * Fixed: An issue with running scheduled tasks
 * Fixed: Multiple translation issues
 * Fixed: An issue with displaying date-picker

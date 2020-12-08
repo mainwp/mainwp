@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.6
 Requires PHP: 7.0
-Stable tag: 4.1.3
+Stable tag: 4.1.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.3.1 - 12-8-20 =
+* Fixed: An issue with Reconnecting sites when using the Reconnect button in Connection Status widget 
+* Fixed: An issue with the Test Connection feature on specific hosts
+* Updated: Site removal confirmation notice
+* Updated: Support for translating strings ([PR459](https://github.com/mainwp/mainwp/pull/459) - thanks [Santiago Becerra](https://github.com/sanbec))
 
 = 4.1.3 - 12-3-20 =
 * Fixed: Multiple PHP warnings

@@ -62,8 +62,8 @@ if ( empty( $heading ) ) {
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 									<?php if ( $available_updates ) : ?>
-									<h3 style="color:#7fb100;">Available Updates</h3>
-									<p><?php esc_html_e( 'The following updates are availble on your MainWP Dashboard.', 'mainwp' ); ?></p>
+									<h3 style="color:#7fb100;"><?php esc_html_e( 'Available Updates', 'mainwp' ); ?></h3>
+									<p><?php esc_html_e( 'The following updates are available on your MainWP Dashboard.', 'mainwp' ); ?></p>
 										<?php if ( is_array( $wp_updates ) && 0 < count( $wp_updates ) ) : ?>
 											<h4 style="color:#444;"><?php esc_html_e( 'WordPress Core Updates', 'mainwp' ); ?></h4>
 											<table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">
@@ -88,7 +88,7 @@ if ( empty( $heading ) ) {
 											</table>
 										<?php endif; ?>
 										<?php if ( is_array( $plugin_updates ) && 0 < count( $plugin_updates ) ) : ?>
-											<h4 style="color:#444;">Plugins Updates</h4>
+											<h4 style="color:#444;"><?php esc_html_e( 'Plugins Updates', 'mainwp' ); ?></h4>
 											<table border="0" cellpadding="0" cellspacing="0" align="left" width="100%" style="font-size:11px; margin-bottom:30px;">
 												<thead style="background: #eee">
 													<tr>

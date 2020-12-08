@@ -921,7 +921,7 @@ jQuery(document).ready(function () {
     return false;
   });
 
-  jQuery('.mainwp-site-overview-reconnect-site').on('click', function () {
+  jQuery('.mainwp-updates-overview-reconnect-site').on('click', function () {
     mainwp_site_overview_reconnect(jQuery(this));
     return false;
   });
@@ -1439,10 +1439,13 @@ mainwp_managesites_test = function () {
     }, 'json');
   }
 };
-managesites_remove = function (id) {
+managesites_remove = function ( obj ) {
   managesites_init();
 
-  var msg = __('Are you sure you want to remove this site from your MainWP Dashboard?');
+  var name = jQuery( obj ).attr('site-name');
+  var id = jQuery( obj ).attr('site-id'); 
+
+  var msg = sprintf( __( 'Are you sure you want to remove %1 from your MainWP Dashboard?', name ) );
 
   mainwp_confirm(msg, function () {
     jQuery('tr#child-site-' + id).html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Removing and deactivating the MainWP Child plugin! Please wait...' + '</td>');

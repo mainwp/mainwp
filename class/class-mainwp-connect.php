@@ -212,12 +212,15 @@ class MainWP_Connect {
 		$out = array(
 			'host'           => $host,
 			'httpCode'       => $http_status,
-			'error'          => ( '' == $err && false === $found ? 'Invalid host.' : $err ),
 			'httpCodeString' => MainWP_Utility::get_http_codes( $http_status ),
 		);
+
 		if ( false !== $ip ) {
 			$out['ip'] = $ip;
+			$found     = true;
 		}
+
+		$out['error'] = ( '' == $err && false === $found ? 'Invalid host.' : $err );
 
 		return $out;
 	}

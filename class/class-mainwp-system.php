@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.2';
+	public static $version = '4.1.2.1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -107,15 +107,19 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Settings::init()
 	 * @uses \MainWP\Dashboard\MainWP_Themes::init()
 	 * @uses \MainWP\Dashboard\MainWP_Updates::init()
-     * @uses \MainWP\Dashboard\MainWP_User::init()
-     * @uses \MainWP\Dashboard\MainWP_Updates::init()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses \MainWP\Dashboard\MainWP_User::init()
+	 * @uses \MainWP\Dashboard\MainWP_Updates::init()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function __construct( $mainwp_plugin_file ) {
 		self::$instance = $this;
 		$this->load_all_options();
 		$this->update();
 		$this->plugin_slug = plugin_basename( $mainwp_plugin_file );
+
+		// includes rest api work.
+		require 'class-mainwp-rest-api.php';
+		Rest_Api::instance()->init();
 
 		if ( is_admin() ) {
 			include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'plugin.php';
@@ -234,7 +238,6 @@ class MainWP_System {
 				add_action( 'init', array( MainWP_System_Cron_Jobs::instance(), 'cron_active' ), PHP_INT_MAX );
 			}
 		}
-		add_action( 'mainwp_admin_footer', array( MainWP_UI::get_class_name(), 'usersnap_integration' ) );
 	}
 
 	/**
@@ -290,7 +293,6 @@ class MainWP_System {
 				'mainwp_daily_digest_plain_text',
 				'mainwp_enable_managed_cr_for_wc',
 				'mainwp_hide_update_everything',
-				'mainwp_show_usersnap',
 				'mainwp_number_overview_columns',
 				'mainwp_disable_update_confirmations',
 				'mainwp_settings_hide_widgets',
@@ -367,7 +369,7 @@ class MainWP_System {
 	 * @param string $error Array of error messages.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function wp_mail_failed( $error ) {
 		$mail_failed = get_option( 'mainwp_notice_wp_mail_failed' );
@@ -859,6 +861,8 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-datatables-fixedcolumns', MAINWP_PLUGIN_URL . 'assets/js/fixedcolumns/dataTables.fixedColumns.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-calendar', MAINWP_PLUGIN_URL . 'assets/js/calendar/calendar.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
 		}
 
 		if ( $load_cust_scripts ) {
@@ -1055,7 +1059,7 @@ class MainWP_System {
 	 * Activate MainWP.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Install::install()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function activation() {
 		MainWP_Install::instance()->install();

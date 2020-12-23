@@ -18,12 +18,11 @@ class MainWP_Logger {
 
 	// phpcs:disable WordPress.WP.AlternativeFunctions -- for custom read/write logging file.
 
-	const DISABLED    = - 1;
-	const LOG         = 0;
-	const WARNING     = 1;
-	const INFO        = 2;
-	const DEBUG       = 3;
-	const INFO_UPDATE = 10;
+	const DISABLED = - 1;
+	const LOG      = 0;
+	const WARNING  = 1;
+	const INFO     = 2;
+	const DEBUG    = 3;
 
 	const LOG_COLOR     = '#999999';
 	const DEBUG_COLOR   = '#666666';
@@ -188,20 +187,6 @@ class MainWP_Logger {
 	}
 
 	/**
-	 * Method info_update()
-	 *
-	 * Grab info update
-	 *
-	 * @param string $text Info Update message text.
-	 *
-	 * @return string Log info update message.
-	 */
-	public function info_update( $text ) {
-		return $this->log( $text, self::INFO_UPDATE );
-	}
-
-
-	/**
 	 * Method debug_for_website()
 	 *
 	 * Grab website debug and info.
@@ -211,8 +196,8 @@ class MainWP_Logger {
 	 * @param string $message Debug message.
 	 *
 	 * @return mixed Website debug info.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public function debug_for_website( $website, $action, $message ) {
 		if ( empty( $website ) ) {
@@ -232,8 +217,8 @@ class MainWP_Logger {
 	 * @param string $message Info message.
 	 *
 	 * @return mixed Website Info.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public function info_for_website( $website, $action, $message ) {
 		if ( empty( $website ) ) {
@@ -284,8 +269,7 @@ class MainWP_Logger {
 	public function log( $text, $priority ) {
 
 		$do_log = false;
-		if ( ( self::INFO_UPDATE == $priority && self::INFO_UPDATE == $this->logPriority ) ||
-				( self::INFO_UPDATE != $priority && $this->logPriority >= $priority ) ) {
+		if ( $this->logPriority >= $priority ) {
 			$do_log = true;
 		}
 
@@ -404,8 +388,6 @@ class MainWP_Logger {
 				return 'INFO';
 			case self::WARNING:
 				return 'WARNING';
-			case self::INFO_UPDATE:
-				return 'INFO UPDATE';
 			default:
 				return 'LOG';
 		}
@@ -435,7 +417,12 @@ class MainWP_Logger {
 	 */
 	public static function show_log() {
 		$logFile = self::instance()->get_log_file();
-		$fh      = fopen( $logFile, 'r' );
+
+		if ( ! file_exists( $logFile ) ) {
+			return;
+		}
+
+		$fh = fopen( $logFile, 'r' );
 		if ( false === $fh ) {
 			return;
 		}

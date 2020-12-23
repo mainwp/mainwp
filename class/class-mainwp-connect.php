@@ -39,7 +39,7 @@ class MainWP_Connect {
 	 * @param string $http_user HTTPAuth Username. Default = null.
 	 * @param string $http_pass HTTPAuth Password. Default = null.
 	 * @param int    $sslVersion        Child Site SSL Version.
-	 * @param bool   $forceUseIPv4      Option to fource IP4. Default = null.
+	 * @param bool   $forceUseIPv4      Option to force IP4. Default = null.
 	 * @param bool   $no_body           Option to set CURLOPT_NOBODY option. Default = false.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
@@ -340,7 +340,7 @@ class MainWP_Connect {
 					/**
 					 * Filter: mainwp_alter_login_user
 					 *
-					 * Filtes users accounts so it allows you user to jump to child site under alternative administartor account.
+					 * Filters users accounts so it allows you user to jump to child site under alternative administrator account.
 					 *
 					 * @param int $website->id Child site ID.
 					 * @param int $current_user->ID User ID.
@@ -457,10 +457,10 @@ class MainWP_Connect {
 	/**
 	 * Method fetch_urls_authed()
 	 *
-	 * Fethech authorized URLs.
+	 * Fetch authorized URLs.
 	 *
 	 * @param object $websites Websites information.
-	 * @param string $what Action to perorm.
+	 * @param string $what Action to perform.
 	 * @param array  $params Request parameters.
 	 * @param mixed  $handler Request handler.
 	 * @param mixed  $output Request output.
@@ -667,7 +667,7 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			set_time_limit( $timeout );
+			MainWP_System_Utility::set_time_limit( $timeout );
 
 			if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
 				@curl_multi_add_handle( $mh, $ch );
@@ -686,7 +686,7 @@ class MainWP_Connect {
 			$lastRun = 0;
 			do {
 				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout );
+					MainWP_System_Utility::set_time_limit( $timeout );
 					$lastRun = time();
 				}
 
@@ -739,7 +739,7 @@ class MainWP_Connect {
 	 * To debug fetch authorized URLs.
 	 *
 	 * @param object $websites Websites information.
-	 * @param string $what Action to perorm.
+	 * @param string $what Action to perform.
 	 * @param array  $params Request parameters.
 	 * @param mixed  $handler Request handler.
 	 * @param mixed  $output Request output.
@@ -923,7 +923,7 @@ class MainWP_Connect {
 			}
 
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			set_time_limit( $timeout );
+			MainWP_System_Utility::set_time_limit( $timeout );
 
 			$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
 			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
@@ -1150,8 +1150,8 @@ class MainWP_Connect {
 	 *
 	 * @param object $website          Website information.
 	 * @param string $what             Function to perform.
-	 * @param null   $params           Function paramerters.
-	 * @param bool   $checkConstraints Whether or not to check contraints.
+	 * @param null   $params           Function parameters.
+	 * @param bool   $checkConstraints Whether or not to check constraints.
 	 * @param bool   $pForceFetch      Whether or not to force the fetch.
 	 * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
 	 * @param null   $rawResponse      Raw response.
@@ -1208,7 +1208,7 @@ class MainWP_Connect {
 			 *
 			 * Fires before the child site update process.
 			 *
-			 * @param object $website Object conaining child site info.
+			 * @param object $website Object containing child site info.
 			 * @param string $type    Type parameter.
 			 * @param string $list    List parameter.
 			 *
@@ -1241,10 +1241,10 @@ class MainWP_Connect {
 			 *
 			 * Fires after the child site update process.
 			 *
-			 * @param object $website     Object conaining child site info.
+			 * @param object $website     Object containing child site info.
 			 * @param string $type        Type parameter.
 			 * @param string $list        List parameter.
-			 * @param array  $information Array containng the information fetched from the child site.
+			 * @param array  $information Array containing the information fetched from the child site.
 			 *
 			 * @since Unknown
 			 */
@@ -1265,7 +1265,7 @@ class MainWP_Connect {
 	 * @param string  $url URL to fetch from.
 	 * @param string  $admin Admin name.
 	 * @param string  $what Function to perform.
-	 * @param null    $params Function paramerters.
+	 * @param null    $params Function parameters.
 	 * @param bool    $pForceFetch true|false Whether or not to force the fetch.
 	 * @param null    $verifyCertificate Verify the SSL Certificate.
 	 * @param null    $http_user htaccess username.
@@ -1312,7 +1312,7 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check constraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param bool    $pRetryFailed ture|false Whether or not the Retry has failed.
 	 * @param null    $http_user htaccess username.
@@ -1321,7 +1321,7 @@ class MainWP_Connect {
 	 * @param array   $others Other functions to perform.
 	 * @param array   $output Output values.
 	 *
-	 * @throws \Exception Excetpion message.
+	 * @throws \Exception Exception message.
 	 *
 	 * @return mixed self::fetch_url_site()
 	 */
@@ -1372,7 +1372,7 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check constraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.
@@ -1518,7 +1518,7 @@ class MainWP_Connect {
 
 		$timeout = 20 * 60 * 60;
 		curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-		set_time_limit( $timeout );
+		MainWP_System_Utility::set_time_limit( $timeout );
 
 		MainWP_Utility::end_session();
 
@@ -1532,7 +1532,7 @@ class MainWP_Connect {
 			$lastRun = 0;
 			do {
 				if ( 20 < time() - $lastRun ) {
-					@set_time_limit( $timeout );
+					MainWP_System_Utility::set_time_limit( $timeout );
 					$lastRun = time();
 				}
 				@curl_multi_exec( $mh, $running );
@@ -1568,7 +1568,7 @@ class MainWP_Connect {
 		$output['fetch_data']  = $data;
 		$output['http_status'] = $http_status;
 
-		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . '] data: [' . $data . ']' );
+		MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
 		if ( '400' == $http_status ) {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
 		}
@@ -1593,7 +1593,7 @@ class MainWP_Connect {
 			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
 			return $data;
 		} else {
-			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Result was: [' . $data . ']' );
+			MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP' );
 			$thr_error = new MainWP_Exception( 'NOMAINWP', $url );
 		}
 

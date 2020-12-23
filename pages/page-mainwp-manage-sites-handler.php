@@ -146,6 +146,42 @@ class MainWP_Manage_Sites_Handler {
 	}
 
 	/**
+	 * Method rest_api_add_site().
+	 *
+	 * Rest API add website.
+	 *
+	 * @param array $data fields array.
+	 * @param array $output Output array.
+	 *
+	 * $data fields:
+	 * 'url'
+	 * 'name'
+	 * 'admin'
+	 * 'uniqueid'
+	 * 'ssl_verify'
+	 * 'force_use_ipv4'
+	 * 'ssl_version'
+	 * 'http_user'
+	 * 'http_pass'
+	 * 'groupids'
+	 *
+	 * @return mixed Results
+	 */
+	public static function rest_api_add_site( $data, &$output = array() ) {
+		$params['url']            = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';
+		$params['name']           = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
+		$params['wpadmin']        = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
+		$params['unique_id']      = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
+		$params['ssl_verify']     = empty( $data['ssl_verify'] ) ? null : intval( $data['ssl_verify'] );
+		$params['force_use_ipv4'] = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
+		$params['ssl_version']    = ! isset( $data['ssl_version'] ) || empty( $data['ssl_version'] ) ? null : intval( $data['ssl_version'] );
+		$params['http_user']      = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
+		$params['http_pass']      = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';
+		$params['groupids']       = isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) ) : array();
+		return MainWP_Manage_Sites_View::add_wp_site( false, $params, $output );
+	}
+
+	/**
 	 * Method apply_plugin_settings()
 	 *
 	 * Apply plugin settings.
@@ -210,7 +246,7 @@ class MainWP_Manage_Sites_Handler {
 			}
 
 			if ( '' !== $error ) {
-				die( wp_json_encode( array( 'error' => $error ) ) );
+				die( wp_json_encode( array( 'error' => esc_html( $error ) ) ) );
 			} elseif ( isset( $information['deactivated'] ) ) {
 				die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
 			} elseif ( isset( $information['removed'] ) ) {

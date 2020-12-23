@@ -584,9 +584,11 @@ class MainWP_Menu {
 		}
 
 		foreach ( $submenu_items as $sub_key => $sub_item ) {
-			$title       = $sub_item[0];
-			$href        = $sub_item[1];
-			$right       = $sub_item[2];
+			$title  = $sub_item[0];
+			$href   = $sub_item[1];
+			$right  = $sub_item[2];
+			$_blank = isset( $sub_item[3] ) ? $sub_item[3] : '';
+
 			$right_group = 'dashboard';
 			if ( ! empty( $right ) ) {
 				if ( strpos( $right, 'extension_' ) === 0 ) {
@@ -596,7 +598,7 @@ class MainWP_Menu {
 			}
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
-			<a class="item" href="<?php echo esc_url( $href ); ?>"><?php echo esc_html( $title ); ?></a>
+			<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>><?php echo esc_html( $title ); ?></a>
 				<?php
 			}
 		}

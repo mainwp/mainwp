@@ -261,8 +261,8 @@ class MainWP_Page {
 	 * Get columns to display.
 	 *
 	 * @return array $colums Columns to display.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+	 *
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function get_manage_columns() {
 		$colums = array(
@@ -729,7 +729,7 @@ class MainWP_Page {
 	 * @return void Page table html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Cache::echo_body()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table( $cached, $keyword = '', $dtsstart = '', $dtsstop = '', $status = '', $groups = '', $sites = '', $search_on = 'all' ) {
 		?>
@@ -871,9 +871,9 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $search_on = 'all' ) {
 
@@ -974,7 +974,7 @@ class MainWP_Page {
 		if ( 'publish' == $status ) {
 			return 'Published';
 		}
-		return ucfirst( $status );
+		return esc_html( ucfirst( $status ) );
 	}
 
 
@@ -993,10 +993,10 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_Error_Helper::get_error_message()
 	 * @uses \MainWP\Dashboard\MainWP_Exception
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_child_response()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function pages_search_handler( $data, $website, &$output ) { // phpcs:ignore -- complex function.
 		if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
@@ -1280,8 +1280,8 @@ class MainWP_Page {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::update_twitter_info()
 	 * @uses \MainWP\Dashboard\MainWP_Bulk_Add::get_class_name()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function posting() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreciated.
 		$succes_message = '';

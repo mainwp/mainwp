@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.5.1
 Requires PHP: 5.6
-Stable tag: 4.1.2
+Stable tag: 4.1.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,13 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.2.1 - 10-9-20 =
+* Fixed: An issue with Quick Site Shortcuts sidebar
+* Fixed: Semantic UI error related to the Help sidebar
+* Preventative: Multiple security improvements
+* Removed: The Enable Managed Client Reports for WooCommmerce option when not used
+* Removed: Usersnap integration
 
 = 4.1.2 - 10-7-20 =
 * Fixed: An issue with scheduled actions

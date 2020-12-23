@@ -99,7 +99,7 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp-pagefooter-sites', array( self::get_class_name(), 'render_footer' ) ); // @deprecated Use 'mainwp_pagefooter_sites' instead.
 		add_action( 'mainwp_pagefooter_sites', array( self::get_class_name(), 'render_footer' ) );
 
-		add_action( 'mainwp-securityissues-sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
+		add_action( 'mainwp_securityissues_sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
 		add_action( 'mainwp_extension_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
 
 		// Hook the Help Sidebar content.
@@ -131,7 +131,7 @@ class MainWP_Manage_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::init_left_menu()
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 * @uses \MainWP\Dashboard\MainWP_Site_Open::get_class_name()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 */
 	public static function init_menu() {
 		self::$page = MainWP_Manage_Sites_View::init_menu();
@@ -1209,7 +1209,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
 	 */
 	private static function update_site_emails_settings_handle( $website ) {
 		$updated = false;
@@ -1273,8 +1273,8 @@ class MainWP_Manage_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_option()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
+	 * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
 	 */
 	private static function update_site_handle( $website ) {
 

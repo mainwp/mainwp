@@ -154,7 +154,7 @@ class MainWP_Hooks {
 	 *
 	 * @return array $ret data fields: response, siteid.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Exception message.
 	 *
 	 * @since 3.2.2
 	 *
@@ -283,7 +283,7 @@ class MainWP_Hooks {
 	 *
 	 * @return array $ret Child site ID.
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Exception message.
 	 *
 	 * @since 3.2.2
 	 *
@@ -629,7 +629,7 @@ class MainWP_Hooks {
 	 * @param array $more_allowed input allowed tags - option.
 	 *
 	 * @return mixed $response valid response data.
-	 * @throws \Exception
+	 * @throws \Exception Exception message.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_mixed_content()

@@ -175,11 +175,11 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param array $allPages      All pages data.
 	 * @param int   $recent_number Number of posts.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-     * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_published_posts( $allPages, $recent_number ) {
 
@@ -276,11 +276,11 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param array $allPages      All pages data.
 	 * @param int   $recent_number Number of pages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-     * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_draft_posts( $allPages, $recent_number ) {
 
@@ -377,10 +377,10 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param array $allPages      All pages data.
 	 * @param int   $recent_number Number of pages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_pending_posts( $allPages, $recent_number ) {
 
@@ -477,11 +477,11 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param array $allPages      All pages data.
 	 * @param int   $recent_number Number of pages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
-     * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
-     * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
 	public static function render_future_posts( $allPages, $recent_number ) {
 		$recent_pages_future = MainWP_Utility::get_sub_array_having( $allPages, 'status', 'future' );
@@ -578,8 +578,8 @@ class MainWP_Recent_Pages {
 	 *
 	 * @param array $allPages      All pages data.
 	 * @param int   $recent_number Number of pages.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()

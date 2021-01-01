@@ -56,7 +56,7 @@ if ( empty( $heading ) ) {
 							<tr>
 								<td align="left" valign="top" style="padding:30px 30px 0 30px;">
 									<strong><?php esc_html_e( 'Hi there', 'mainwp' ); ?>,</strong>
-									<p><?php esc_html_e( 'Please take a few minutes to review the latest udates from your MainWP Dashboard.', 'mainwp' ); ?></p>
+									<p><?php esc_html_e( 'Please take a few minutes to review the latest updates from your MainWP Dashboard.', 'mainwp' ); ?></p>
 								</td>
 							</tr>
 							<tr>

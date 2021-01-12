@@ -1810,7 +1810,7 @@ class MainWP_Connect {
 	/**
 	 * Method init_coockiesdir()
 	 *
-	 * Check for cookies directory and crate it if it doesn't already exist,
+	 * Check for cookies directory and create it if it doesn't already exist,
 	 * set the file permissions and update htaccess.
 	 *
 	 * @param mixed $cookieDir Cookies directory.

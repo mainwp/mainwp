@@ -1180,7 +1180,7 @@ mainwp_managesites_add = function () {
       if (errors.length > 0) {
         jQuery('#mainwp-message-zone').removeClass('green');
         managesites_init();
-        jQuery('#mainwp_managesites_add').removeAttr('disabled'); //Enable add button   
+        jQuery('#mainwp_managesites_add').removeAttr('disabled'); //Enable add button
         if (resp_data != '') {
           errors.push(show_resp);
         }
@@ -1443,7 +1443,7 @@ managesites_remove = function ( obj ) {
   managesites_init();
 
   var name = jQuery( obj ).attr('site-name');
-  var id = jQuery( obj ).attr('site-id'); 
+  var id = jQuery( obj ).attr('site-id');
 
   var msg = sprintf( __( 'Are you sure you want to remove %1 from your MainWP Dashboard?', name ) );
 
@@ -1858,26 +1858,26 @@ mainwp_install_bulk_you_know_msg = function (pType, pTotal) {
   if (mainwpParams.installedBulkSettingsManager && mainwpParams.installedBulkSettingsManager == 1) {
     if (pType == 'plugin') {
       if (pTotal == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        msg = __('Would you like to use the Bulk Settings Manager with this plugin? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        msg = __('Would you like to use the Bulk Settings Manager with these plugins? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
     } else {
       if (pTotal == 1)
-        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        msg = __('Would you like to use the Bulk Settings Manager with this theme? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
       else
-        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="http://docs.mainwp.com/category/mainwp-extensions/mainwp-bulk-settings-manager/" target="_blank">', '</a>');
+        msg = __('Would you like to use the Bulk Settings Manager with these themes? Check out the %1Documentation%2.', '<a href="https://kb.mainwp.com/docs/bulk-settings-manager-extension/" target="_blank">', '</a>');
     }
   } else {
     if (pType == 'plugin') {
       if (pTotal == 1)
-        msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        msg = __('Did you know with the %1 you can control the settings of this plugin directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
       else
-        msg = __('Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        msg = __('Did you know with the %1 you can control the settings of these plugins directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
     } else {
       if (pTotal == 1)
-        msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        msg = __('Did you know with the %1 you can control the settings of this theme directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
       else
-        msg = __('Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extensions/bulk-settings-manager" target="_blank">Bulk Settings Extension</a>');
+        msg = __('Did you know with the %1 you can control the settings of these themes directly from your MainWP Dashboard?', '<a href="https://mainwp.com/extension/bulk-settings-manager/" target="_blank">Bulk Settings Extension</a>');
     }
   }
   return msg;
@@ -2586,7 +2586,7 @@ mainwp_datatable_fix_menu_overflow = function () {
       position = jQuery(this).closest('td').position();
       var top = position.top + 60;
     }
-  
+
     jQuery(this).find('.menu').css('top', top);
     jQuery(this).find('.menu').css('right', right);
     jQuery(this).find('.menu').css('min-width', '170px');
@@ -2606,8 +2606,8 @@ mainwp_datatable_fix_menu_overflow = function () {
 
     if (fix_overflow > 1) {
       position = jQuery(this).closest('td').position();
-      var scroll_left = jQuery('.dataTables_scrollBody').scrollLeft();      
-      top = position.top + 55;      
+      var scroll_left = jQuery('.dataTables_scrollBody').scrollLeft();
+      top = position.top + 55;
       left = position.left - scroll_left - 145;
     }
 

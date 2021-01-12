@@ -63,7 +63,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function install() {
+	public function install() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		// get_site_option is multisite aware!
 		$currentVersion = get_site_option( 'mainwp_db_version' );
 

@@ -296,7 +296,10 @@ class MainWP_Updates_Per_Item {
 													if ( ! is_array( $theme_upgrades ) ) {
 														$theme_upgrades = array();
 													}
-													$premiumUpgrade             = array_filter( $premiumUpgrade );
+													$premiumUpgrade = array_filter( $premiumUpgrade );
+													if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
+														$theme_upgrades[ $crrSlug ] = array();
+													}
 													$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
 												}
 											}

@@ -1097,25 +1097,24 @@ class MainWP_System_Cron_Jobs {
 		$plugin_updates = array();
 		$theme_updates  = array();
 
-		
 		$plugin_updates = MainWP_Format::get_site_updates_items( 'plugin', $sites_ids );
 		if ( 0 < count( $plugin_updates ) ) {
 			$sendMail       = true;
 			$updateAvaiable = true;
 		}
-		
+
 		$theme_updates = MainWP_Format::get_site_updates_items( 'theme', $sites_ids );
 		if ( 0 < count( $theme_updates ) ) {
 			$sendMail       = true;
 			$updateAvaiable = true;
 		}
-		
+
 		$wp_updates = MainWP_Format::get_site_updates_items( 'wpcore', $sites_ids );
 		if ( 0 < count( $wp_updates ) ) {
 			$sendMail       = true;
 			$updateAvaiable = true;
 		}
-	
+
 		$sites_disconnected = MainWP_DB::instance()->get_disconnected_websites( $sites_ids );
 
 		if ( 0 < count( $sites_disconnected ) ) {

@@ -1008,7 +1008,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 */
 	public function mainwp_ignore_http_response() {
-		$this->check_security( 'mainwp_ignore_http_response' );		
+		$this->check_security( 'mainwp_ignore_http_response' );
 		$siteid = isset( $_POST['websiteid'] ) ? intval( $_POST['websiteid'] ) : false;
 
 		if ( empty( $siteid ) ) {

@@ -1481,7 +1481,6 @@ class MainWP_DB extends MainWP_DB_Base {
 		$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www' ), array( '', '', '', '', '' ), $url );
 
 		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . " WHERE  replace(replace(replace(replace(replace(url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')  = %s ", $this->escape( $url ) ), OBJECT );
-
 	}
 
 	/**

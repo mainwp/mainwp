@@ -330,6 +330,11 @@ class MainWP_Connect {
 				$data['recent_number'] = $recent_number;
 			}
 
+			$scan_dir = apply_filters( 'mainwp_stats_scan_dir', false, $website );
+			if ( ! empty( $scan_dir ) ) {
+				$data['scan_dir'] = 1;
+			}
+
 			/**
 			 * Current user global.
 			 *

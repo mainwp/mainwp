@@ -70,7 +70,7 @@ class MainWP_Updates_Overview {
 		if ( is_wp_error( $request ) ) {
 			$url  = isset( $_REQUEST['url'] ) ? esc_url_raw( wp_unslash( $_REQUEST['url'] ) ) : '';
 			$name = isset( $_REQUEST['name'] ) ? wp_unslash( $_REQUEST['name'] ) : '';
-			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . rawurldecode( $url ) . '" target="_blank">' . rawurldecode( $name ) . '</a>' ), $request->get_error_message() );
+			$res  = new \WP_Error( 'plugins_api_failed', __( '<h3>No plugin information found.</h3> This may be a premium plugin and no other details are available from WordPress.', 'mainwp' ) . ' ' . ( '' == $url ? __( 'Please visit the plugin website for more information.', 'mainwp' ) : __( 'Please visit the plugin website for more information: ', 'mainwp' ) . '<a href="' . esc_html( rawurldecode( $url ) ) . '" target="_blank">' . esc_html( rawurldecode( $name ) ) . '</a>' ), $request->get_error_message() );
 
 			return $res;
 		}

@@ -1426,8 +1426,8 @@ class MainWP_DB extends MainWP_DB_Base {
 	 * @return object|null Database query result of null on failure.
 	 */
 	public function get_websites_stats_update_sql() {
-		$where = $this->get_sql_where_allow_access_sites();
-		return 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE (statsUpdate = 0 OR ' . time() . ' - statsUpdate >= ' . ( 60 * 60 * 24 * 7 ) . ')' . $where . ' ORDER BY statsUpdate ASC';
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		return 'SELECT wp.*,wp_sync.sync_errors FROM ' . $this->table_name( 'wp' ) . ' wp  JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid WHERE (wp.statsUpdate = 0 OR ' . time() . ' - wp.statsUpdate >= ' . ( 60 * 60 * 24 ) . ')' . $where . ' ORDER BY wp.statsUpdate ASC';
 	}
 
 	/**
@@ -1459,8 +1459,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( '/' != substr( $url, - 1 ) ) {
 			$url .= '/';
 		}
-		$where   = '';
-		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ', $this->escape( $url ) ), OBJECT );
 		if ( $results ) {
 			return $results;
 		}
@@ -1474,7 +1473,15 @@ class MainWP_DB extends MainWP_DB_Base {
 			$url = str_replace( 'http://', 'http://www.', $url );
 		}
 
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ' . $where, $this->escape( $url ) ), OBJECT );
+		$results = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . ' WHERE url = %s ', $this->escape( $url ) ), OBJECT );
+		if ( $results ) {
+			return $results;
+		}
+
+		$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www' ), array( '', '', '', '', '' ), $url );
+
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . " WHERE  replace(replace(replace(replace(replace(url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')  = %s ", $this->escape( $url ) ), OBJECT );
+
 	}
 
 	/**

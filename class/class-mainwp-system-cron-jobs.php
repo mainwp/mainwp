@@ -462,7 +462,7 @@ class MainWP_System_Cron_Jobs {
 			$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
 			if ( ! $gen_email_settings['disable'] ) {
 				// send general daily digests.
-				$this->start_notification_daily_digest( $gen_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text ); // general email.
+				$this->start_notification_daily_digest( $gen_email_settings, $plain_text ); // general email.
 			}
 
 			$to_admin_digestWebsites = array();
@@ -474,7 +474,7 @@ class MainWP_System_Cron_Jobs {
 					$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'daily_digest', $website );  // get site email settings.
 					if ( ! $email_settings['disable'] ) {
 						$to_admin_digestWebsites[] = $siteid;
-						$sent                      = $this->start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, array( $siteid ), false, $website );
+						$sent                      = $this->start_notification_daily_digest( $email_settings, $plain_text, array( $siteid ), false, $website );
 						if ( $sent ) {
 							usleep( 100000 );
 						}
@@ -487,7 +487,7 @@ class MainWP_System_Cron_Jobs {
 				$admin_email_settings['disable']    = 0;
 				$admin_email_settings['recipients'] = ''; // sent to admin only.
 				// send all individual daily digest to admin in one email.
-				$this->start_notification_daily_digest( $admin_email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $to_admin_digestWebsites, true ); // true: so will send email to admin.
+				$this->start_notification_daily_digest( $admin_email_settings, $plain_text, $to_admin_digestWebsites, true ); // true: so will send email to admin.
 			}
 
 			// send http check notification.
@@ -1078,9 +1078,6 @@ class MainWP_System_Cron_Jobs {
 	 * Send email notification.
 	 *
 	 * @param array  $email_settings Email settings.
-	 * @param bool   $plugin_automaticDailyUpdate Auto update plugins daily.
-	 * @param bool   $theme_automaticDailyUpdate Auto update themes daily.
-	 * @param bool   $mainwpAutomaticDailyUpdate Auto update core daily.
 	 * @param bool   $plain_text Text format value.
 	 * @param array  $sites_ids Array of websites ids (option).
 	 * @param bool   $to_admin Send to admin or not.
@@ -1093,37 +1090,32 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_Notification
 	 */
-	public function start_notification_daily_digest( $email_settings, $plugin_automaticDailyUpdate, $theme_automaticDailyUpdate, $mainwpAutomaticDailyUpdate, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
+	public function start_notification_daily_digest( $email_settings, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
 
 		$sendMail       = false;
 		$updateAvaiable = false;
 		$plugin_updates = array();
 		$theme_updates  = array();
 
-		if ( ! empty( $plugin_automaticDailyUpdate ) ) {
-			$plugin_updates = MainWP_Format::get_site_updates_items( 'plugin', $sites_ids );
-			if ( 0 < count( $plugin_updates ) ) {
-				$sendMail       = true;
-				$updateAvaiable = true;
-			}
+		
+		$plugin_updates = MainWP_Format::get_site_updates_items( 'plugin', $sites_ids );
+		if ( 0 < count( $plugin_updates ) ) {
+			$sendMail       = true;
+			$updateAvaiable = true;
 		}
-
-		if ( ! empty( $theme_automaticDailyUpdate ) ) {
-			$theme_updates = MainWP_Format::get_site_updates_items( 'theme', $sites_ids );
-			if ( 0 < count( $theme_updates ) ) {
-				$sendMail       = true;
-				$updateAvaiable = true;
-			}
+		
+		$theme_updates = MainWP_Format::get_site_updates_items( 'theme', $sites_ids );
+		if ( 0 < count( $theme_updates ) ) {
+			$sendMail       = true;
+			$updateAvaiable = true;
 		}
-
-		if ( ! empty( $mainwpAutomaticDailyUpdate ) ) {
-			$wp_updates = MainWP_Format::get_site_updates_items( 'wpcore', $sites_ids );
-			if ( 0 < count( $wp_updates ) ) {
-				$sendMail       = true;
-				$updateAvaiable = true;
-			}
+		
+		$wp_updates = MainWP_Format::get_site_updates_items( 'wpcore', $sites_ids );
+		if ( 0 < count( $wp_updates ) ) {
+			$sendMail       = true;
+			$updateAvaiable = true;
 		}
-
+	
 		$sites_disconnected = MainWP_DB::instance()->get_disconnected_websites( $sites_ids );
 
 		if ( 0 < count( $sites_disconnected ) ) {
@@ -1452,7 +1444,7 @@ class MainWP_System_Cron_Jobs {
 
 		$start = time();
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			if ( ( $start - time() ) > ( 60 * 60 * 2 ) ) {
+			if ( ( time() - $start ) > ( 60 * 60 * 2 ) ) {
 				break;
 			}
 

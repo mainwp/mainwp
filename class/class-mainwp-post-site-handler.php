@@ -143,11 +143,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::check_site()
 	 */
 	public function mainwp_checkwp() {
-		if ( $this->check_security( 'mainwp_checkwp', 'security' ) ) {
-			MainWP_Manage_Sites_Handler::check_site();
-		} else {
-			die( wp_json_encode( array( 'response' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_checkwp', 'security' );
+		MainWP_Manage_Sites_Handler::check_site();
 	}
 
 	/**
@@ -158,11 +155,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::add_site()
 	 */
 	public function mainwp_addwp() {
-		if ( $this->check_security( 'mainwp_addwp', 'security' ) ) {
-			MainWP_Manage_Sites_Handler::add_site();
-		} else {
-			die( wp_json_encode( array( 'response' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_addwp', 'security' );
+		MainWP_Manage_Sites_Handler::add_site();
 	}
 
 	/**
@@ -173,16 +167,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
 	 */
 	public function get_site_icon() {
-		if ( $this->check_security( 'mainwp_get_site_icon', 'security' ) ) {
-			$siteId = null;
-			if ( isset( $_POST['siteId'] ) ) {
-				$siteId = intval( $_POST['siteId'] );
-			}
-			$result = MainWP_Sync::sync_site_icon( $siteId );
-			wp_send_json( $result );
-		} else {
-			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
+		$this->check_security( 'mainwp_get_site_icon', 'security' );
+		$siteId = null;
+		if ( isset( $_POST['siteId'] ) ) {
+			$siteId = intval( $_POST['siteId'] );
 		}
+		$result = MainWP_Sync::sync_site_icon( $siteId );
+		wp_send_json( $result );
 	}
 
 	/**

@@ -481,21 +481,23 @@ class MainWP_Menu {
 					 */
 					$go_back_link = apply_filters( 'mainwp_go_back_wpadmin_link', $link );
 
-					if ( is_array( $go_back_link ) ) {
-						if ( isset( $go_back_link['url'] ) ) {
-							$link['url'] = $go_back_link['url'];
+					if ( false !== $go_back_link ) {
+						if ( is_array( $go_back_link ) ) {
+							if ( isset( $go_back_link['url'] ) ) {
+								$link['url'] = $go_back_link['url'];
+							}
+							if ( isset( $go_back_link['text'] ) ) {
+								$link['text'] = $go_back_link['text'];
+							}
+							if ( isset( $go_back_link['tip'] ) ) {
+								$link['tip'] = $go_back_link['tip'];
+							}
 						}
-						if ( isset( $go_back_link['text'] ) ) {
-							$link['text'] = $go_back_link['text'];
-						}
-						if ( isset( $go_back_link['tip'] ) ) {
-							$link['tip'] = $go_back_link['tip'];
-						}
-					}
-					?>
+						?>
 					<div class="item item-wp-admin" style="background-color: rgba(255,255,255,.15);">
 						<a href="<?php echo esc_html( $link['url'] ); ?>" class="title" style="display:inline" data-position="top left" data-tooltip="<?php echo esc_html( $link['tip'] ); ?>"><b><i class="wordpress icon"></i> <?php echo esc_html( $link['text'] ); ?></b></a> <a class="ui small label" data-position="top right" data-tooltip="<?php esc_html_e( 'Logout', 'mainwp' ); ?>" href="<?php echo wp_logout_url(); ?>"><i class="sign-out icon" style="margin:0"></i></a> <?php //phpcs:ignore -- to avoid auto fix wordpress icon ?>
 					</div>
+					<?php } ?>
 					<div class="hamburger">
 						<span class="hamburger-bun"></span>
 						<span class="hamburger-patty"></span>

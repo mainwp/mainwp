@@ -536,7 +536,10 @@ class MainWP_Sync {
 						$filename = strtok( $filename, '?' );
 						if ( $filename ) {
 							$filename = 'favi-' . $siteId . '-' . $filename;
-							$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
+							$size     = false;
+							if ( MainWP_Utility::check_image_file_name( $filename ) ) {
+								$size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
+							}
 							if ( $size ) {
 								MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
 								MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );

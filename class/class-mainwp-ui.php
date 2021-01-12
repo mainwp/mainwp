@@ -634,6 +634,16 @@ class MainWP_UI {
 			 * @since 4.0
 			 */
 			do_action( 'mainwp_before_header', $websites );
+
+			$more_tags = array(
+				'img' => array(
+					'src'    => array(),
+					'width'  => array(),
+					'height' => array(),
+				),
+			);
+			$left      = MainWP_Utility::esc_content( $left, 'note', $more_tags );
+
 			?>
 			<div id="mainwp-top-header" class="ui sticky">
 				<div class="ui stackable grid">

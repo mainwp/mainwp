@@ -782,6 +782,9 @@ class MainWP_Manage_Sites_View {
 		 * @since 4.1.3
 		 */
 		$disable_site_url_field = apply_filters( 'mainwp_disable_site_url_field', true );
+
+		$website_url = MainWP_Utility::remove_http_prefix( $website->url, true );
+
 		?>
 		<div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
 			<?php if ( $updated ) : ?>
@@ -799,7 +802,7 @@ class MainWP_Manage_Sites_View {
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 							</select>
-							<input type="text" id="mainwp_managesites_edit_siteurl" <?php echo $disable_site_url_field ? 'disabled="disabled"' : ''; ?> name="mainwp_managesites_edit_siteurl" value="<?php echo MainWP_Utility::remove_http_prefix( $website->url, true ); ?>" />
+							<input type="text" id="mainwp_managesites_edit_siteurl" <?php echo $disable_site_url_field ? 'disabled="disabled"' : ''; ?> name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
 						</div>
 					</div>
 				</div>

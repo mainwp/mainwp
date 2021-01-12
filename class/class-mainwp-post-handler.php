@@ -841,9 +841,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_User::do_bulk_add()
 	 */
 	public function mainwp_bulkadduser() {
-		if ( ! $this->check_security( 'mainwp_bulkadduser' ) ) {
-			die( 'ERROR ' . wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_bulkadduser' );
 		MainWP_User::do_bulk_add();
 		die();
 	}
@@ -977,9 +975,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_check_website()
 	 */
 	public function ajax_recheck_http() {
-		if ( ! $this->check_security( 'mainwp_recheck_http' ) ) {
-			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_recheck_http' );
 
 		if ( ! isset( $_POST['websiteid'] ) || empty( $_POST['websiteid'] ) ) {
 			die( -1 );
@@ -1012,9 +1008,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 */
 	public function mainwp_ignore_http_response() {
-		if ( ! $this->check_security( 'mainwp_ignore_http_response' ) ) {
-			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_ignore_http_response' );		
 		$siteid = isset( $_POST['websiteid'] ) ? intval( $_POST['websiteid'] ) : false;
 
 		if ( empty( $siteid ) ) {

@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.51';
+	protected $mainwp_db_version = '8.55';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -152,8 +152,9 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_sync' ) . ' (
-   wpid int(11) NOT NULL,
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_sync' ) . ' (
+  sync_id int(11) NOT NULL auto_increment,
+  wpid int(11) NOT NULL,
   version text NOT NULL DEFAULT "",
   sync_errors longtext NOT NULL DEFAULT "",
   uptodate longtext NOT NULL DEFAULT "",
@@ -167,20 +168,42 @@ class MainWP_Install extends MainWP_DB_Base {
   last_post_gmt int(11) NOT NULL DEFAULT 0,
   health_value int(11) NOT NULL DEFAULT 0,
   health_site_noticed tinyint(1) NOT NULL DEFAULT 1,
-  KEY idx_wpid (wpid)) ' . $charset_collate;
+  KEY idx_wpid (wpid)';
+
+		if ( '' == $currentVersion ) {
+			$tbl .= ',
+	PRIMARY KEY  (sync_id)';
+		}
+
+		$tbl .= ') ' . $charset_collate;
+
 		$sql[] = $tbl;
 
-		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_options' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_options' ) . ' (
+  opt_id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
   name text NOT NULL DEFAULT "",
   value longtext NOT NULL DEFAULT "",
-  KEY idx_wpid (wpid)) ' . $charset_collate;
+  KEY idx_wpid (wpid)';
+
+		if ( '' == $currentVersion ) {
+			$tbl .= ',
+	PRIMARY KEY  (opt_id)';
+		}
+		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' (
+  set_id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
   archiveFormat text NOT NULL,
-  KEY idx_wpid (wpid)) ' . $charset_collate;
+  KEY idx_wpid (wpid)';
+
+		if ( '' == $currentVersion ) {
+			$tbl .= ',
+	PRIMARY KEY  (set_id)';
+		}
+		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'users' ) . " (
@@ -235,7 +258,7 @@ class MainWP_Install extends MainWP_DB_Base {
   KEY idx_groupid (groupid)
         ) ' . $charset_collate;
 
-		$tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
   task_id int(11) NOT NULL,
   wp_id int(11) NOT NULL,
   dtsFetched int(11) NOT NULL DEFAULT 0,
@@ -248,8 +271,12 @@ class MainWP_Install extends MainWP_DB_Base {
   attempts int(11) NOT NULL DEFAULT 0,
   last_error text NOT NULL DEFAULT "",
   pid int(11) NOT NULL DEFAULT 0,
-  KEY idx_task_id (task_id)
-         ) ' . $charset_collate;
+  KEY idx_task_id (task_id)';
+		if ( '' == $currentVersion || version_compare( $currentVersion, '8.53', '<=' ) ) {
+			$tbl .= ',
+			UNIQUE (task_id)';
+		}
+		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup' ) . ' (
@@ -402,6 +429,13 @@ class MainWP_Install extends MainWP_DB_Base {
 				$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'users' ) . ' DROP COLUMN ' . $column );
 				$this->wpdb->suppress_errors( $suppress );
 			}
+		}
+
+		// fix missing PRIMARY keys.
+		if ( version_compare( $currentVersion, '8.53', '<=' ) ) {
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_options' ) . ' ADD opt_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_settings_backup' ) . ' ADD set_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
+			$this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp_sync' ) . ' ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY' );
 		}
 	}
 

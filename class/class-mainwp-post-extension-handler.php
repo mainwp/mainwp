@@ -73,11 +73,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::apply_plugin_settings()
 	 */
 	public function mainwp_ext_applypluginsettings() {
-		if ( $this->check_security( 'mainwp_ext_applypluginsettings', 'security' ) ) {
-			MainWP_Manage_Sites_Handler::apply_plugin_settings();
-		} else {
-			die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( 'mainwp_ext_applypluginsettings' );
+		MainWP_Manage_Sites_Handler::apply_plugin_settings();
 	}
 
 	/**

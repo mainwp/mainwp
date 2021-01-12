@@ -50,9 +50,7 @@ abstract class MainWP_Post_Base_Handler {
 			return;
 		}
 
-		if ( ! $this->check_security( $action, $query_arg ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
-		}
+		$this->check_security( $action, $query_arg );
 
 		if ( isset( $_POST['dts'] ) ) {
 			$ajaxPosts = get_option( 'mainwp_ajaxposts' );
@@ -77,21 +75,30 @@ abstract class MainWP_Post_Base_Handler {
 	 *
 	 * @param string $action Action to perform.
 	 * @param string $query_arg Query argument.
+	 * @param bool   $die return or exit.
 	 *
 	 * @return bool true or false
 	 */
-	public function check_security( $action = - 1, $query_arg = 'security' ) {
+	public function check_security( $action = - 1, $query_arg = 'security', $die = true ) {
+		$secure = true;
 		if ( - 1 === $action ) {
-			return false;
+			$secure = false;
+		} else {
+			$adminurl = strtolower( admin_url() );
+			$referer  = strtolower( wp_get_referer() );
+			$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false;
+			if ( ! $result && 0 !== strpos( $referer, $adminurl ) ) {
+				$secure = false;
+			}
 		}
 
-		$adminurl = strtolower( admin_url() );
-		$referer  = strtolower( wp_get_referer() );
-		$result   = isset( $_REQUEST[ $query_arg ] ) ? wp_verify_nonce( sanitize_key( $_REQUEST[ $query_arg ] ), $action ) : false;
-		if ( ! $result && ! ( - 1 === $action && 0 === strpos( $referer, $adminurl ) ) ) {
-			return false;
+		if ( ! $secure ) {
+			if ( $die ) {
+				die( wp_json_encode( array( 'error' => __( 'ERROR: Invalid request!', 'mainwp' ) ) ) );
+			} else {
+				return false;
+			}
 		}
-
 		return true;
 	}
 

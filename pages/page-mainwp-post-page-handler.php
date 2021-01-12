@@ -851,7 +851,10 @@ class MainWP_Post_Page_Handler {
 			$upload_dir     = wp_upload_dir();
 			$local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
 			$local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
-			$moved          = rename( $temporary_file, $local_img_path );
+			$moved          = false;
+			if ( MainWP_Utility::check_image_file_name( $local_img_path ) ) {
+				$moved = rename( $temporary_file, $local_img_path );
+			}
 			if ( $moved ) {
 				$wp_filetype = wp_check_filetype( basename( $img_url ), null );
 				$attachment  = array(

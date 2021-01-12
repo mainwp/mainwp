@@ -392,6 +392,8 @@ mainwp_managesites_refresh_favico_int = function( siteid ) {
         data: data,
         success: function(pSiteid) { return function (response) {
             currentThreads--;
+            websitesDone++;
+            mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
             if (response.error != undefined)
             {
                 dashboard_update_site_status( pSiteid, '<i class="red times icon"></i>' );

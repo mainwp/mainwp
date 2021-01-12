@@ -508,6 +508,10 @@ class MainWP_Utility {
 				'h2'     => array(),
 			);
 
+			if ( is_array( $more_allowed ) && ! empty( $more_allowed ) ) {
+				$allowed_html = array_merge( $allowed_html, $more_allowed );
+			}
+
 			$content = wp_kses( $content, $allowed_html );
 
 		} elseif ( 'mixed' == $type ) {
@@ -882,4 +886,28 @@ class MainWP_Utility {
 		$valid_emails = implode( ',', $valid_emails );
 		return $valid_emails;
 	}
+
+	/**
+	 * Method check_image_file_name()
+	 *
+	 * Check if the file image.
+	 *
+	 * @param string $filename Contains image (file) name.
+	 *
+	 * @return true|false valid name or not.
+	 */
+	public static function check_image_file_name( $filename ) {
+		if ( validate_file( $filename ) ) {
+			return false;
+		}
+
+		$allowed_files = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico' );
+		$file_ext      = strtolower( end( explode( '.', $filename ) ) );
+		if ( ! in_array( $file_ext, $allowed_files ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
 }

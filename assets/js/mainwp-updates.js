@@ -918,7 +918,8 @@ updatesoverview_plugins_upgrade_all_upgrade_next = function ()
     websitesLeft--;
 
     var websiteId = websitesToUpdatePlugins[currentWebsite++];
-    updatesoverview_plugins_upgrade_all_update_site_status( websiteId, '<i class="sync loading icon"></i>' );
+
+    updatesoverview_plugins_upgrade_all_update_site_status( websiteId, '<i class="notched circle loading icon"></i>' );
 
     var slugToUpgrade = currentPluginSlugToUpgrade;
     if ( slugToUpgrade == undefined )
@@ -999,29 +1000,24 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                     {
                         var slugParts = pSlug.split( ',' );                        
                         var done = false;
-                        for ( var i = 0; i < slugParts.length; i++ )
-                        {
-                            
+                        for ( var i = 0; i < slugParts.length; i++ ) {
                             var websiteHolder = jQuery( '.plugins-bulk-updates[plugin_slug="' + slugParts[i] + '"] tr[site_id="' + pWebsiteId + '"]' );
-                            if ( !websiteHolder.exists() )
-                            {
+                            if ( !websiteHolder.exists() ) {
                                 websiteHolder = jQuery( '.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + slugParts[i] + '"]' );
                             }
 
-                            if ( response.error )
-                            {
+                            if ( response.error ) {
                                 if ( !done && pBulkMode )
                                     updatesoverview_plugins_upgrade_all_update_site_status( pWebsiteId, '<i class="red times icon"></i>' );
                                 websiteHolder.find( 'td:last-child' ).html( '<i class="red times icon"></i>' );
-                            } else
-                            {
+                            } else {
                                 var res = response.result;
                                 if ( res[slugParts[i]] )
                                 {
                                     if ( !done && pBulkMode )
-                                        updatesoverview_plugins_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId) );
+                                      updatesoverview_plugins_upgrade_all_update_site_status( pWebsiteId, '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin( '', pWebsiteId ) );
                                     websiteHolder.attr( 'updated', 1 );
-                                    websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId) );
+                                      websiteHolder.find( 'td:last-child' ).html( '<i class="green check icon"></i>' + ' ' + mainwp_links_visit_site_and_admin( '', pWebsiteId ) );
                                     
                                     countRealItemsUpdated++;
                                     if (itemsToUpdate.indexOf(slugParts[i]) == -1) itemsToUpdate.push(slugParts[i]);

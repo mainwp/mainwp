@@ -383,6 +383,18 @@ class MainWP_Menu {
 		?>
 		<div class="mainwp-nav-wrap">
 			<div id="mainwp-logo">
+				<a href="
+				<?php
+				/**
+				 * Filter: mainwp_menu_logo_href
+				 *
+				 * Filters the Logo link.
+				 *
+				 * @since 4.1.4
+				 */
+				echo apply_filters( 'mainwp_menu_logo_href', admin_url( 'admin.php?page=mainwp_tab' ) );
+				?>
+				">
 				<img src="
 				<?php
 				/**
@@ -406,6 +418,7 @@ class MainWP_Menu {
 				echo apply_filters( 'mainwp_menu_logo_alt', 'MainWP' );
 				?>
 				" />
+				</a>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">

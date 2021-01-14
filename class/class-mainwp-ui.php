@@ -670,7 +670,10 @@ class MainWP_UI {
 				} );
 				jQuery( '#mainwp-sites-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.sites.sidebar' ).sidebar( {
-						transition: 'overlay'
+						transition: 'overlay',
+						'onShow': function() {
+							jQuery( '#mainwp-sites-menu-filter' ).focus();
+						}
 					} );
 					jQuery( '.ui.sites.sidebar' ).sidebar( 'toggle' );
 					return false;
@@ -1273,7 +1276,7 @@ class MainWP_UI {
 				 */
 				do_action( 'mainwp_before_plugin_theme_install_progress' );
 				?>
-				<div id="plugintheme-installation-queue" ></div>
+				<div id="plugintheme-installation-queue"></div>
 				<?php
 				/**
 				 * Action: mainwp_after_plugin_theme_install_progress

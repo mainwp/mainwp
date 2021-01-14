@@ -221,6 +221,7 @@ class MainWP_Manage_Sites_List_Table {
 			'last_post'   => array( 'last_post', false ),
 			'site_health' => array( 'site_health', false ),
 			'status_code' => array( 'status_code', false ),
+			'notes'       => array( 'notes', false ),
 			'phpversion'  => array( 'phpversion', false ),
 			'update'      => array( 'update', false ),
 		);
@@ -881,7 +882,7 @@ class MainWP_Manage_Sites_List_Table {
 		 */
 		do_action( 'mainwp_before_manage_sites_table' );
 		?>
-		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable stackable table">
+		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable stackable table">
 			<thead>
 			<tr>
 				<?php $this->print_column_headers( $optimize, true ); ?>

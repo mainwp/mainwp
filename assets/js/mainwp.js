@@ -1994,6 +1994,8 @@ mainwp_upload_bulk = function( type ) {
 
   data['files[]'] = files;
 
+  jQuery( '#plugintheme-installation-queue' ).html( placeholder );
+  
   jQuery.post( ajaxurl, data, function ( type, files, activatePlugin, overwrite ) {
     return function ( response ) {
       var installQueue = '';
@@ -2051,7 +2053,7 @@ mainwp_upload_bulk_start_next = function( type, urls, activatePlugin, overwrite 
     var data = mainwp_secure_data( {
       action: 'mainwp_cleanbulkuploadplugintheme'
     } );
-
+    jQuery.post(ajaxurl, data, function () { });
     var msg = mainwp_install_bulk_you_know_msg( type, jQuery( '#bulk_upload_info' ).attr( 'number-files' ) );
 
     jQuery( '#bulk_upload_info' ).html( '<div class="mainwp-notice mainwp-notice-blue">' + msg + '</div>' );

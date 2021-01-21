@@ -195,10 +195,6 @@ table#mainwp-manage-sites-table .error a{
   background: #f9ffea !important;
 }
 
-#mainwp-manage-updates{
-    padding: 10px 40px;
-}
-
 /* temporary */
 .hidden.divider {
   display: block !important;

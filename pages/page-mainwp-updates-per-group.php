@@ -622,10 +622,10 @@ class MainWP_Updates_Per_Group {
 				<tr>
 					<th class="collapsing no-sort"></th>
 					<th>
-					   <div class="ui main-master checkbox ">
+						<div class="ui main-master checkbox ">
 							<input type="checkbox" name="">
 						</div>
-					   <?php esc_html_e( 'Group', 'mainwp' ); ?>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?>
 					</th>
 					<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
 					<th class="no-sort right aligned"></th>
@@ -794,7 +794,7 @@ class MainWP_Updates_Per_Group {
 				<tr>
 					<th class="collapsing no-sort"></th>
 					<th>
-					   <div class="ui main-master checkbox ">
+						<div class="ui main-master checkbox">
 							<input type="checkbox" name="">
 						</div>
 						<?php esc_html_e( 'Group', 'mainwp' ); ?>

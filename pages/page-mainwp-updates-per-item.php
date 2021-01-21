@@ -117,7 +117,6 @@ class MainWP_Updates_Per_Item {
 							<?php endif; ?>
 						</td>
 					</tr>
-					
 					<tr style="display:none" class="plugins-bulk-updates child-checkbox" plugin_slug="<?php echo $plugin_name; ?>" plugin_name="<?php echo rawurlencode( $pluginsInfo[ $slug ]['name'] ); ?>" premium="<?php echo $pluginsInfo[ $slug ]['premium'] ? 1 : 0; ?>">
 						<td colspan="5" class="ui content">
 							<table id="mainwp-plugins-updates-sites-inner-table" class="ui stackable single line table">

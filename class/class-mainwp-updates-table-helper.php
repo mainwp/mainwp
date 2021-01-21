@@ -159,7 +159,6 @@ class MainWP_Updates_Table_Helper {
 	 *
 	 * @param mixed $value Value of column.
 	 * @param mixed $column_name Name of column.
-	 * @param mixed $website The website.
 	 */
 	public function column_default( $value, $column_name ) {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();

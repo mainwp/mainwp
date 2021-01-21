@@ -16,7 +16,7 @@
 }
 
 .mainwp-ui .ui.vertical.menu > .item:first-child {
-  border-radius: 0px !important;
+  border-radius: 0 !important;
 }
 
 .mainwp-ui .ui.message:last-child {

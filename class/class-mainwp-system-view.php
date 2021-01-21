@@ -659,7 +659,6 @@ class MainWP_System_View {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
 	public static function render_footer_content( $websites, $current_wpid = false ) {
-
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
 			$count = count( $websites );
@@ -678,7 +677,6 @@ class MainWP_System_View {
 				}
 			}
 		}
-
 		/**
 		 * Action: mainwp_admin_footer
 		 *
@@ -687,7 +685,6 @@ class MainWP_System_View {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_admin_footer' );
-
 		?>
 		<div class="ui longer modal" id="mainwp-sync-sites-modal" current-wpid="<?php echo intval( $current_wpid ); ?>">
 			<div class="header"><?php esc_html_e( 'Data Synchronization', 'mainwp' ); ?></div>
@@ -741,9 +738,7 @@ class MainWP_System_View {
 				<div class="mainwp-modal-close ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 		</div>
-
 		<input type="hidden" id="sync_selected_site_ids" value="" />
-
 		<div class="ui tiny modal" id="mainwp-modal-confirm">
 			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
 			<div class="content">

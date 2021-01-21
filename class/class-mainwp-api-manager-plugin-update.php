@@ -163,8 +163,6 @@ class MainWP_Api_Manager_Plugin_Update {
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );
-		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
-
 		$default = array(
 			'timeout'   => 50,
 			'sslverify' => 1,

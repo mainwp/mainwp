@@ -164,12 +164,17 @@ class MainWP_Api_Manager_Plugin_Update {
 	public function plugin_information( $args, $bulk_check = false ) {
 		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );
 		$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( get_option( 'mainwp_api_sslVerifyCertificate' ) == 1 ) ) ? 1 : 0;
-		$request      = wp_remote_get(
+
+		$default = array(
+			'timeout'   => 50,
+			'sslverify' => 1,
+		);
+
+		$params = apply_filters( 'mainwp_plugin_information_sslverify', $default, $args );
+
+		$request = wp_remote_get(
 			$target_url,
-			array(
-				'timeout'   => 50,
-				'sslverify' => $apisslverify,
-			)
+			$params,
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

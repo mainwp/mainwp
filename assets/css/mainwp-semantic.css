@@ -15,6 +15,10 @@
   font-size: .95em;
 }
 
+.mainwp-ui .ui.vertical.menu > .item:first-child {
+  border-radius: 0px !important;
+}
+
 .mainwp-ui .ui.message:last-child {
   margin-bottom: 1em;
 }

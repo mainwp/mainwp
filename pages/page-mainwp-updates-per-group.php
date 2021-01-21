@@ -46,11 +46,18 @@ class MainWP_Updates_Per_Group {
 	 */
 	public static function render_wpcore_updates( $websites, $total_wp_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 		?>
-			<table class="ui stackable single line table" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
+			<table class="ui stackable single line table main-master-checkbox" id="mainwp-wordpress-updates-groups-table"> <!-- Per Group table -->
 				<thead>
 					<tr>
-						<th class="collapsing no-sort"></th>
-						<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+						<th class="collapsing no-sort trigger-all-accordion">
+							<span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span>
+						</th>
+						<th class="indicator-accordion-sorting handle-accordion-sorting">
+							<div class="ui main-master checkbox ">
+								<input type="checkbox" name="">
+							</div>
+							<?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+						</th>
 						<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 						<th class="no-sort right aligned">
 							<?php
@@ -58,7 +65,8 @@ class MainWP_Updates_Per_Group {
 								if ( 0 < $total_wp_upgrades ) {
 									MainWP_Updates::set_continue_update_html_selector( 'wpcore_global_upgrade_all' );
 									?>
-									<a class="ui green mini basic button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Groups', 'mainwp' ); ?></a>
+									<a class="ui green mini basic button" onclick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( false, true );" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Selected', 'mainwp' ); ?></a>
+									<a class="ui green mini button" onclick="return updatesoverview_wordpress_global_upgrade_all();" href="javascript:void(0)" data-position="top right" data-tooltip="<?php esc_attr_e( 'Update WordPress Core files on all child sites.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Update All Groups', 'mainwp' ); ?></a>
 									<?php
 								}
 							}
@@ -72,17 +80,23 @@ class MainWP_Updates_Per_Group {
 						$total_group_wp_updates = 0;
 						$group_name             = $all_groups[ $group_id ];
 						?>
-						<tr row-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui title">
+						<tr row-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui title master-checkbox">
 							<td  class="accordion-trigger"><i class="icon dropdown"></i></td>
-							<td><?php echo stripslashes( $group_name ); ?></td>
+							<td>
+								<div class="ui master checkbox">
+									<input type="checkbox" name="">
+								</div>
+								<?php echo stripslashes( $group_name ); ?>
+							</td>
 							<td sort-value="0"><span total-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" data-inverted="" data-tooltip="<?php echo esc_attr( __( 'Click to see available updates', 'mainwp' ) ); ?>"></span></td>
 							<td class="right aligned">
 								<?php if ( MainWP_Updates::user_can_update_wp() ) : ?>
 								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the group', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui green button" onClick="return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" data-tooltip="<?php esc_attr_e( 'Update all sites in the group', 'mainwp' ); ?>" data-inverted="" data-position="left center" btn-all-uid2="uid_wp_upgrades_<?php echo esc_attr( $group_id ); ?>" class="ui basic green button" onClick="event.stopPropagation(); return updatesoverview_wordpress_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 								<?php endif; ?>
 							</td>
 						</tr>
-						<tr style="display:none">
+						<tr style="display:none" class="child-checkbox">
 							<td colspan="4" class="ui content">
 								<table id="mainwp-wordpress-updates-groups-inner-table" class="ui stackable single line table mainwp-per-group-table">
 									<thead>
@@ -113,6 +127,9 @@ class MainWP_Updates_Per_Group {
 											?>
 											<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
 												<td>
+													<div class="ui child checkbox">
+														<input type="checkbox" name="">
+													</div>
 													<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 													<input type="hidden" id="wp-updated-<?php echo esc_attr( $website->id ); ?>" value="<?php echo ( 0 < count( $wp_upgrades ) ? '0' : '1' ); ?>" />
 												</td>
@@ -145,7 +162,12 @@ class MainWP_Updates_Per_Group {
 				<tfoot>
 					<tr>
 						<th></th>
-						<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
+						<th>
+						    <div class="ui main-master checkbox ">
+								<input type="checkbox" name="">
+							</div>
+							<?php esc_html_e( 'Group', 'mainwp' ); ?>
+						</th>
 						<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
 						<th class="right aligned"></th>
 					</tr>
@@ -182,11 +204,18 @@ class MainWP_Updates_Per_Group {
 	public static function render_plugins_updates( $websites, $total_plugin_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedPlugins ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view );
 		?>
-		<table class="ui stackable single line table" id="mainwp-plugins-updates-groups-table">
+		<table class="ui stackable single line table main-master-checkbox" id="mainwp-plugins-updates-groups-table">
 			<thead>
 				<tr>
-					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="collapsing no-sort trigger-all-accordion">
+						<span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span>
+					</th>
+					<th class="indicator-accordion-sorting handle-accordion-sorting">
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+					</th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
@@ -195,7 +224,8 @@ class MainWP_Updates_Per_Group {
 							MainWP_Updates::set_continue_update_html_selector( 'plugins_global_upgrade_all' );
 							if ( 0 < $total_plugin_upgrades ) {
 								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
+							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all( false, true );" class="ui mini green basic button" data-tooltip="<?php esc_html_e( 'Update Selected Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Plugins' ); ?></a>
+							<a href="javascript:void(0)" onClick="return updatesoverview_plugins_global_upgrade_all();" class="ui mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Plugins' ); ?></a>
 								<?php
 							}
 						}
@@ -213,17 +243,23 @@ class MainWP_Updates_Per_Group {
 					$total_group_plugin_updates = 0;
 					$group_name                 = $all_groups[ $group_id ];
 					?>
-					<tr class="title" row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>">
+					<tr class="title main-master-checkbox" row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>">
 						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
+						<td>
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php echo stripslashes( $group_name ); ?>
+						</td>
 						<td total-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned" >
 						<?php if ( MainWP_Updates::user_can_update_plugins() ) { ?>
 							<a href="javascript:void(0)" btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" none-btn-all-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_plugins_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
 					</tr>
-					<tr row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
+					<tr class="main-child-checkbox" row-uid="uid_plugin_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
 						<td colspan="4" class="content">
 							<table id="mainwp-wordpress-updates-sites-inner-table" class="ui stackable single line grey table mainwp-per-group-table">
 								<thead>
@@ -277,23 +313,27 @@ class MainWP_Updates_Per_Group {
 											continue;
 										}
 										?>
-										<tr class="ui title">
+										<tr class="ui title master-checkbox">
 											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
 											<td>
+												<div class="ui master checkbox">
+													<input type="checkbox" name="">
+												</div>
 												<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 											</td>
 											<td sort-value="<?php echo count( $plugin_upgrades ); ?>"><?php echo count( $plugin_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_update_plugins() ) : ?>
 													<?php if ( 0 < count( $plugin_upgrades ) ) : ?>
-														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_plugin_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 													<?php endif; ?>
 												<?php endif; ?>
 											</td>
 										</tr>
-										<tr style="display:none">
+										<tr style="display:none"  class="child-checkbox">
 											<td colspan="4" class="content">
-												<table id="mainwp-wordpress-updates-plugins-inner-table" class="ui stackable single line table">
+												<table id="mainwp-wordpress-updates-plugins-inner-table" class="ui stackable single line table mainwp-updates-list">
 													<thead>
 														<tr>
 														<?php $updates_table_helper->print_column_headers(); ?>
@@ -352,7 +392,12 @@ class MainWP_Updates_Per_Group {
 			<tfoot>
 				<tr>
 					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
+					<th>
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?>
+					</th>
 					<th><?php echo $total_plugin_upgrades . ' ' . _n( 'Update', 'Updates', $total_plugin_upgrades, 'mainwp' ); ?></th>
 					<th class="no-sort right aligned"></th>
 				</tr>
@@ -390,11 +435,16 @@ class MainWP_Updates_Per_Group {
 	public static function render_themes_updates( $websites, $total_theme_upgrades, $userExtension, $all_groups_sites, $all_groups, $site_offset_for_groups, $trustedThemes ) { // phpcs:ignore -- not quite complex method.
 		$updates_table_helper = new MainWP_Updates_Table_Helper( $userExtension->site_view, 'theme' );
 		?>
-		<table class="ui stackable single line table" id="mainwp-themes-updates-groups-table">
+		<table class="ui stackable single line table main-master-checkbox" id="mainwp-themes-updates-groups-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="indicator-accordion-sorting handle-accordion-sorting">
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+					</th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="no-sort right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
@@ -403,7 +453,8 @@ class MainWP_Updates_Per_Group {
 							MainWP_Updates::set_continue_update_html_selector( 'themes_global_upgrade_all' );
 							if ( 0 < $total_theme_upgrades ) {
 								?>
-							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui basic mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
+							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all( false, true );" class="ui mini basic green button" data-tooltip="<?php esc_html_e( 'Update selected sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Themes' ); ?></a>	
+							<a href="javascript:void(0)" onClick="return updatesoverview_themes_global_upgrade_all();" class="ui mini green button" data-tooltip="<?php esc_html_e( 'Update all sites.', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Themes' ); ?></a>
 								<?php
 							}
 						}
@@ -421,17 +472,23 @@ class MainWP_Updates_Per_Group {
 					$total_group_theme_updates = 0;
 					$group_name                = $all_groups[ $group_id ];
 					?>
-					<tr class="title" row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>">
+					<tr class="title main-master-checkbox" row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>">
 						<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
+						<td>
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php echo stripslashes( $group_name ); ?>
+						</td>
 						<td total-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned" >
 						<?php if ( MainWP_Updates::user_can_update_themes() ) { ?>
 						<a href="javascript:void(0)" btn-all-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						<a href="javascript:void(0)" btn-all-uid2="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green basic mini button" onClick="return updatesoverview_themes_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
 					</tr>
-					<tr row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
+					<tr class="title main-child-checkbox" row-uid="uid_theme_updates_<?php echo esc_attr( $group_id ); ?>" style="display:none">
 						<td colspan="4" class="content">
 							<table id="mainwp-wordpress-updates-sites-inner-table" class="ui stackable single line grey table mainwp-per-group-table">
 								<thead>
@@ -485,23 +542,27 @@ class MainWP_Updates_Per_Group {
 											continue;
 										}
 										?>
-										<tr class="ui title">
+										<tr class="ui title master-checkbox">
 											<td class="accordion-trigger"><i class="icon dropdown"></i></td>
-											<td>
+											<td>											
+												<div class="ui master checkbox">
+													<input type="checkbox" name="">
+												</div>
 												<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 											</td>
 											<td sort-value="<?php echo count( $theme_upgrades ); ?>"><?php echo count( $theme_upgrades ) . ' ' . _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ); ?></td>
 											<td class="right aligned">
 												<?php if ( MainWP_Updates::user_can_update_themes() ) : ?>
 													<?php if ( 0 < count( $theme_upgrades ) ) : ?>
-														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+														<a href="javascript:void(0)" class="ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_theme_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 													<?php endif; ?>
 												<?php endif; ?>
 											</td>
 										</tr>
-										<tr style="display:none">
+										<tr style="display:none" class="child-checkbox">
 											<td colspan="4" class="content">
-												<table id="mainwp-wordpress-updates-themes-inner-table" class="ui stackable single line table">
+												<table id="mainwp-wordpress-updates-themes-inner-table" class="ui stackable single line table mainwp-updates-list">
 													<thead>
 														<tr>
 															<?php $updates_table_helper->print_column_headers(); ?>
@@ -560,7 +621,12 @@ class MainWP_Updates_Per_Group {
 			<tfoot>
 				<tr>
 					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
+					<th>
+					   <div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+					   <?php esc_html_e( 'Group', 'mainwp' ); ?>
+					</th>
 					<th><?php echo $total_theme_upgrades . ' ' . _n( 'Update', 'Updates', $total_theme_upgrades, 'mainwp' ); ?></th>
 					<th class="no-sort right aligned"></th>
 				</tr>
@@ -590,17 +656,23 @@ class MainWP_Updates_Per_Group {
 	public static function render_trans_update( $websites, $total_translation_upgrades, $all_groups_sites, $all_groups, $site_offset_for_groups ) {
 
 		?>
-		<table class="ui stackable single line table" id="mainwp-translations-groups-table">
+		<table class="ui stackable single line table main-master-checkbox" id="mainwp-translations-groups-table">
 			<thead>
 				<tr>
 					<th class="collapsing no-sort trigger-all-accordion"><span class="trigger-handle-arrow"><i class="caret right icon"></i><i class="caret down icon"></i></span></th>
-					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
+					<th class="indicator-accordion-sorting handle-accordion-sorting">
+						<div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?>
+					</th>
 					<th class="indicator-accordion-sorting handle-accordion-sorting"><?php esc_html_e( 'Updates', 'mainwp' ); ?><?php MainWP_UI::render_sorting_icons(); ?></th>
 					<th class="right aligned">
 						<?php MainWP_UI::render_show_all_updates_button(); ?>
 						<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 							<?php if ( 0 < $total_translation_upgrades ) : ?>
-								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button basic mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all( false, true );" class="ui button mini basic green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update Selected Sites', 'mainwp' ); ?></a>
+								<a href="javascript:void(0)" onClick="return updatesoverview_translations_global_upgrade_all();" class="ui button mini green" data-tooltip="<?php esc_html_e( 'Update all translations', 'mainwp' ); ?>" data-inverted="" data-position="top right"><?php esc_html_e( 'Update All Sites', 'mainwp' ); ?></a>
 							<?php endif; ?>
 						<?php endif; ?>
 					</th>
@@ -612,17 +684,23 @@ class MainWP_Updates_Per_Group {
 					$total_group_translation_updates = 0;
 					$group_name                      = $all_groups[ $group_id ];
 					?>
-					<tr row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui title">
+					<tr row-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui title main-master-checkbox">
 						<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-						<td><?php echo stripslashes( $group_name ); ?></td>
+						<td>
+							<div class="ui main-master checkbox ">
+								<input type="checkbox" name="">
+							</div>
+							<?php echo stripslashes( $group_name ); ?>
+						</td>
 						<td total-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
 						<td class="right aligned">
 						<?php if ( MainWP_Updates::user_can_update_trans() ) { ?>
 							<a href="javascript:void(0)" btn-all-uid="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green mini button"  onClick="return updatesoverview_translations_global_upgrade_all( <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+							<a href="javascript:void(0)" btn-all-uid2="uid_translation_updates_<?php echo esc_attr( $group_id ); ?>" class="ui green basic mini button"  onClick="event.stopPropagation(); return updatesoverview_translations_global_upgrade_all( <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 						<?php } ?>
 						</td>
 					</tr>
-					<tr style="display:none">
+					<tr style="display:none" class="main-child-checkbox">
 						<td colspan="4" class="ui content">
 							<table class="ui stackable single line grey table mainwp-per-group-table" id="mainwp-translations-sites-table">
 								<thead>
@@ -646,9 +724,12 @@ class MainWP_Updates_Per_Group {
 										continue;
 									}
 									?>
-									<tr class="ui title">
+									<tr class="ui title master-checkbox">
 										<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 										<td>
+												<div class="ui master checkbox">
+													<input type="checkbox" name="">
+												</div>
 											<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 										</td>
 										<td sort-value="<?php echo count( $translation_upgrades ); ?>">
@@ -657,12 +738,13 @@ class MainWP_Updates_Per_Group {
 										<td class="right aligned">
 										<?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
 											<?php if ( 0 < count( $translation_upgrades ) ) : ?>
-												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, this )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" class="ui green mini button" onClick="return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?> )"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+												<a href="javascript:void(0)" class="ui green basic mini button" onClick="event.stopPropagation(); return updatesoverview_group_upgrade_translation_all( <?php echo esc_attr( $website->id ); ?>, <?php echo esc_attr( $group_id ); ?>, true )"><?php esc_html_e( 'Update Selected', 'mainwp' ); ?></a>
 											<?php endif; ?>
 										<?php endif; ?>
 										</td>
 									</tr>
-									<tr style="display:none">
+									<tr style="display:none" class="child-checkbox">
 										<td class="content" colspan="4">
 											<table class="ui stackable single line table" id="mainwp-translations-table">
 												<thead>
@@ -680,6 +762,9 @@ class MainWP_Updates_Per_Group {
 													?>
 													<tr class="mainwp-translation-update" translation_slug="<?php echo $translation_slug; ?>" updated="0">
 														<td>
+														<div class="ui child checkbox">
+																<input type="checkbox" name="">
+															</div>
 															<?php echo $translation_name; ?>
 															<input type="hidden" id="wp_upgraded_translation_<?php echo esc_attr( $website->id ); ?>_group_<?php echo esc_attr( $group_id ); ?>_<?php echo $translation_slug; ?>" value="0"/>
 														</td>
@@ -708,7 +793,12 @@ class MainWP_Updates_Per_Group {
 			<tfoot>
 				<tr>
 					<th class="collapsing no-sort"></th>
-					<th><?php esc_html_e( 'Group', 'mainwp' ); ?></th>
+					<th>
+					   <div class="ui main-master checkbox ">
+							<input type="checkbox" name="">
+						</div>
+						<?php esc_html_e( 'Group', 'mainwp' ); ?>
+					</th>
 					<th><?php esc_html_e( 'Updates', 'mainwp' ); ?></th>
 					<th class="right aligned"></th>
 				</tr>
@@ -754,7 +844,7 @@ class MainWP_Updates_Per_Group {
 				$total_group_plugins_outdate = 0;
 				$group_name                  = $all_groups[ $group_id ];
 				?>
-				<tr row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" class="title">
+				<tr class="title" row-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>">
 					<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 					<td><?php echo stripslashes( $group_name ); ?></td>
 					<td class="right aligned" total-uid="uid_plugins_outdate_<?php echo esc_attr( $group_id ); ?>" sort-value="0"></td>
@@ -797,16 +887,16 @@ class MainWP_Updates_Per_Group {
 								$total_group_plugins_outdate += count( $plugins_outdate );
 								?>
 								<?php if ( 0 < count( $plugins_outdate ) ) : ?>
-								<tr class="ui title">
+								<tr class="ui title master-checkbox">
 									<td class="accordion-trigger"><i class="dropdown icon"></i></td>
-									<td>
+									<td>										
 										<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td class="right aligned" sort-value="<?php echo count( $plugins_outdate ); ?>">
 										<?php echo count( $plugins_outdate ); ?> <?php echo _n( 'Plugin', 'Plugins', count( $plugins_outdate ), 'mainwp' ); ?>
 									</td>
 								</tr>
-								<tr style="display:none">
+								<tr style="display:none" class="child-checkbox">
 									<td colspan="3" class="ui content">
 										<table class="ui stackable single line table" id="mainwp-abandoned-plugins-table">
 											<thead>

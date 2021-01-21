@@ -607,6 +607,7 @@ class MainWP_Post {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_posts_before_search_options
@@ -621,7 +622,7 @@ class MainWP_Post {
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_post_search_type">
 								<option value=""><?php esc_html_e( 'Select status', 'mainwp' ); ?></option>
-								<option value="publish"><?php esc_html_e( 'Published', 'mainwp' ); ?></option>
+								<option value="publish" selected><?php esc_html_e( 'Published', 'mainwp' ); ?></option>
 								<option value="pending"><?php esc_html_e( 'Pending', 'mainwp' ); ?></option>
 								<option value="private"><?php esc_html_e( 'Private', 'mainwp' ); ?></option>
 								<option value="future"><?php esc_html_e( 'Scheduled', 'mainwp' ); ?></option>

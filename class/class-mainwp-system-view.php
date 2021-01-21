@@ -755,6 +755,15 @@ class MainWP_System_View {
 				<div class="ui positive right labeled icon button"><?php esc_html_e( 'Yes', 'mainwp' ); ?><i class="checkmark icon"></i></div>
 			</div>
 		</div>
+		<div class="ui tiny modal" id="mainwp-modal-confirm-select">
+			<div class="header"><?php esc_html_e( 'Confirmation', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="content-massage"></div>
+			</div>
+			<div class="actions">
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
+		</div>
 		<?php
 	}
 

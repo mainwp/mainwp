@@ -461,6 +461,7 @@ class MainWP_User {
 
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<div class="ui header"><?php esc_html_e( 'Select Roles', 'mainwp' ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_users_before_search_options
@@ -474,7 +475,7 @@ class MainWP_User {
 					<div class="ui mini form">
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
-								<option value=""><?php esc_html_e( 'Select role', 'mainwp' ); ?></option>
+								<option value=""><?php esc_html_e( 'Select wanted role(s)', 'mainwp' ); ?></option>
 								<?php
 								foreach ( $user_roles as $r => $n ) {
 									if ( empty( $r ) ) {
@@ -1349,7 +1350,7 @@ class MainWP_User {
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
-					<div id="mainwp-add-new-user-form" class="ui segment">
+					<div id="mainwp-add-new-user-form" >
 						<?php
 						/**
 						 * Action: mainwp_before_new_user_form_fields
@@ -1361,7 +1362,6 @@ class MainWP_User {
 						do_action( 'mainwp_before_new_user_form_fields' );
 						?>
 						<div class="ui form">
-							<h3 class="ui dividing header"><?php esc_html_e( 'Create a New User', 'mainwp' ); ?></h3>
 							<div class="ui grid field">
 								<label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
 								<div class="ui six wide column">

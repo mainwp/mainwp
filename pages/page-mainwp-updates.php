@@ -1744,6 +1744,18 @@ class MainWP_Updates {
 			<div class="ui grid">
 				<div class="equal width row">
 				<div class="middle aligned column">
+						<form method="post" action="" class="ui mini form">
+							<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+							<div class="inline field">
+								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)" id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
+									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Site', 'mainwp' ); ?></option>
+									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Plugin/Theme', 'mainwp' ); ?></option>
+									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Show updates per Group', 'mainwp' ); ?></option>
+								</select>
+							</div>
+						</form>
+					</div>
+					<div class="middle aligned column">
 						<?php
 						/**
 						 * Filter: mainwp_widgetupdates_actions_top
@@ -1754,19 +1766,6 @@ class MainWP_Updates {
 						 */
 						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
 						?>
-					</div>
-					<div class="right aligned middle aligned column">
-						<form method="post" action="" class="ui mini form">
-							<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-							<div class="inline field">
-								<label for="mainwp_select_options_siteview"><?php esc_html_e( 'Show updates per ', 'mainwp' ); ?></label>
-								<select class="ui dropdown" onchange="mainwp_siteview_onchange(this)"  id="mainwp_select_options_siteview" name="select_mainwp_options_siteview">
-									<option value="1" class="item" <?php echo MAINWP_VIEW_PER_SITE == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Site', 'mainwp' ); ?></option>
-									<option value="0" class="item" <?php echo MAINWP_VIEW_PER_PLUGIN_THEME == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Plugin/Theme', 'mainwp' ); ?></option>
-									<option value="2" class="item" <?php echo MAINWP_VIEW_PER_GROUP == $site_view ? 'selected' : ''; ?>><?php esc_html_e( 'Group', 'mainwp' ); ?></option>
-								</select>
-							</div>
-						</form>
 					</div>
 			</div>
 			</div>

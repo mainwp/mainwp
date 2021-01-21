@@ -74,11 +74,6 @@
   background: #f9fafb;
   border-bottom: 1px solid #dadada; }
 
-  .mainwp-actions-bar .ui.dropdown,
-  .mainwp-sub-header .ui.dropdown {
-    border-bottom: 1px solid #333333;
-    margin: .3em 1em; }
-
 /* Page Navigation */
 
 #mainwp-page-navigation-wrapper {
@@ -198,6 +193,10 @@ table#mainwp-manage-sites-table .error a{
 
 #mainwp-manage-updates table tr.active table td {
   background: #f9ffea !important;
+}
+
+#mainwp-manage-updates{
+    padding: 10px 40px;
 }
 
 /* temporary */

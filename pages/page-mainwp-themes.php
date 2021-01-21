@@ -380,7 +380,7 @@ class MainWP_Themes {
 
 		<div id="mainwp-manage-themes" class="ui alt segment">
 			<div class="mainwp-main-content">
-				<div class="mainwp-actions-bar">
+				<div class="ui mini form mainwp-actions-bar">
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
@@ -405,7 +405,7 @@ class MainWP_Themes {
 								?>
 							</div>
 							<div class="right aligned column">
-								<button id="mainwp-install-themes-to-selected-sites" class="ui green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_right
@@ -427,11 +427,22 @@ class MainWP_Themes {
 					</div>
 					<div id="mainwp-themes-main-content" <?php echo ( null != $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
 						<div id="mainwp-themes-content">
-						<?php
-						if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
-								echo $cachedResult['result'];
-						}
-						?>
+						<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
+								<?php echo $cachedResult['result']; ?>
+						<?php else : ?>
+							<table id="mainwp-manage-themes-table-placeholder" class="ui table">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Sites / Themes', 'mainwp' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td><?php esc_html_e( 'Please use the search options to find wanted themes.', 'mainwp' ); ?></td>
+									</tr>
+								</tbody>
+							</table>
+						<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -474,6 +485,7 @@ class MainWP_Themes {
 				</div>
 				<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_before_search_options
@@ -492,7 +504,7 @@ class MainWP_Themes {
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_themes_search_by_status">
 								<option value=""><?php esc_html_e( 'Select status', 'mainwp' ); ?></option>
-								<option value="active"><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
+								<option value="active" selected><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
 								<option value="inactive"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></option>
 							</select>
 						</div>
@@ -996,11 +1008,9 @@ class MainWP_Themes {
 	public static function render_bulk_actions( $status ) {
 			ob_start();
 		?>
-		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
-		<div class="ui dropdown" id="mainwp-bulk-actions">
+		<div class="ui selection dropdown" id="mainwp-bulk-actions">
 			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
 			<div class="menu">
-				<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
 					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
 						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>

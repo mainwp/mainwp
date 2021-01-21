@@ -399,7 +399,7 @@ class MainWP_Plugins {
 
 		<div id="mainwp-manage-plugins" class="ui alt segment">
 			<div class="mainwp-main-content">
-				<div class="mainwp-actions-bar">
+				<div class="ui mini form mainwp-actions-bar">
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
@@ -424,9 +424,9 @@ class MainWP_Plugins {
 								?>
 							</div>
 							<div class="right aligned column">
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui small button"><?php esc_html_e( 'Select all', 'mainwp' ); ?></a>
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui small button"><?php esc_html_e( 'Select none', 'mainwp' ); ?></a>
-								<button id="mainwp-install-to-selected-sites" class="ui olive basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
+								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_right
@@ -448,11 +448,22 @@ class MainWP_Plugins {
 					</div>
 					<div id="mainwp-plugins-main-content" <?php echo ( null != $cachedSearch ) ? 'style="display: block;"' : ''; ?> >
 						<div id="mainwp-plugins-content">
-							<?php
-							if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) {
-								echo $cachedResult['result'];
-							}
-							?>
+							<?php if ( is_array( $cachedResult ) && isset( $cachedResult['result'] ) ) : ?>
+								<?php echo $cachedResult['result']; ?>
+							<?php else : ?>
+								<table id="mainwp-manage-plugins-table-placeholder" class="ui table">
+									<thead>
+										<tr>
+											<th><?php esc_html_e( 'Sites / Plugins', 'mainwp' ); ?></th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td><?php esc_html_e( 'Please use the search options to find wanted plugins.', 'mainwp' ); ?></td>
+										</tr>
+									</tbody>
+								</table>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>
@@ -495,6 +506,7 @@ class MainWP_Plugins {
 					</div>
 					<div class="ui divider"></div>
 				<div class="mainwp-search-options">
+					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_before_search_options
@@ -513,7 +525,7 @@ class MainWP_Plugins {
 						<div class="field">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_plugins_search_by_status">
 								<option value=""><?php esc_html_e( 'Select status', 'mainwp' ); ?></option>
-								<option value="active"><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
+								<option value="active" selected><?php esc_html_e( 'Active', 'mainwp' ); ?></option>
 								<option value="inactive"><?php esc_html_e( 'Inactive', 'mainwp' ); ?></option>
 							</select>
 						</div>
@@ -645,7 +657,7 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex method.
+	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
@@ -875,11 +887,9 @@ class MainWP_Plugins {
 	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
-		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
-		<div class="ui dropdown" id="mainwp-bulk-actions">
+		<div class="ui selection dropdown" id="mainwp-bulk-actions">
 			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
 			<div class="menu">
-		<div class="item" data-value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div>
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
 			<?php if ( 'active' === $status || 'all' === $status ) : ?>
 			<div class="item" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>

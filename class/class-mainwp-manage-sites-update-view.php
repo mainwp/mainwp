@@ -143,7 +143,7 @@ class MainWP_Manage_Sites_Update_View {
 						<?php $wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true ); ?>
 						<?php if ( ( 0 !== count( $wp_upgrades ) ) && ! ( '' !== $website->sync_errors ) ) : ?>
 						<tr class="mainwp-wordpress-update" site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo rawurlencode( stripslashes( $website->name ) ); ?>" updated="<?php echo ( 0 < count( $wp_upgrades ) ) ? '0' : '1'; ?>">
-							<td>
+							<td>								
 								<?php if ( 0 < count( $wp_upgrades ) ) : ?>
 									<?php echo esc_html( $wp_upgrades['current'] ); ?>
 								<?php endif; ?>
@@ -235,7 +235,7 @@ class MainWP_Manage_Sites_Update_View {
 				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE );
 
 				?>
-				<table id="mainwp-updates-plugins-table" class="ui stackable single line table">
+				<table id="mainwp-updates-plugins-table" class="ui stackable single line table mainwp-updates-list">
 					<thead>
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>						
@@ -342,7 +342,7 @@ class MainWP_Manage_Sites_Update_View {
 				$updates_table_helper = new MainWP_Updates_Table_Helper( MAINWP_VIEW_PER_SITE, 'theme' );
 
 				?>
-				<table id="mainwp-updates-themes-table" class="ui stackable single line table">
+				<table id="mainwp-updates-themes-table" class="ui stackable single line table mainwp-updates-list">
 					<thead>
 						<tr>
 						<?php $updates_table_helper->print_column_headers(); ?>
@@ -499,7 +499,7 @@ class MainWP_Manage_Sites_Update_View {
 						$outdate_notice           = sprintf( $str_format, $diff_in_days );
 						?>
 						<tr dismissed="0">
-							<td>
+							<td>							
 								<a href="<?php echo admin_url() . 'plugin-install.php?tab=plugin-information&plugin=' . dirname( $slug ) . '&url=' . ( isset( $plugin_outdate['PluginURI'] ) ? rawurlencode( $plugin_outdate['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_outdate['Name'] ) . '&TB_iframe=true&width=772&height=887'; ?>" target="_blank" class="thickbox open-plugin-details-modal"><?php echo esc_html( $plugin_outdate['Name'] ); ?></a>
 								<input type="hidden" id="wp_dismissed_plugin_<?php echo esc_attr( $website->id ); ?>_<?php echo $plugin_name; ?>" value="0"/>
 							</td>

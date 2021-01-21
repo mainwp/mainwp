@@ -2000,7 +2000,7 @@ mainwp_upload_bulk = function( type ) {
     return function ( response ) {
       var installQueue = '';
 
-      installQueue += '<div class="ui middle aligned divided list">';
+      installQueue += '<div class="ui middle aligned selection divided list">';
 
       for ( var siteId in response.sites ) {
         var site = response.sites[siteId];

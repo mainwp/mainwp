@@ -488,6 +488,7 @@ class MainWP_Post_Page_Handler {
 							$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
 							$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
 
+							$posting_succeed = false;
 							if ( false === $after_posting ) {
 								?>
 							<div class="ui relaxed list">
@@ -495,16 +496,38 @@ class MainWP_Post_Page_Handler {
 								foreach ( $dbwebsites as $website ) {
 									?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: <?php echo( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ? esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>' : $output->errors[ $website->id ] ); ?>
+									: <?php 
+									if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+										echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
+										$posting_succeed = true;
+									} else {
+										echo $output->errors[ $website->id ];
+									}
+									?>
 									</div>
 							<?php } ?>
 							</div>
 								<?php
+							} else {
+								$posting_succeed = true;
 							}
 
+							$delete_bulk_post = apply_filters( 'mainwp_after_posting_delete_bulk_post', true, $posting_succeed );
+
 							$do_not_del = get_post_meta( $id, '_bulkpost_do_not_del', true );
-							if ( 'yes' !== $do_not_del ) {
+							
+							$deleted_bulk_post = false;
+							if ( 'yes' !== $do_not_del && $delete_bulk_post ) {
 								wp_delete_post( $id, true );
+								$deleted_bulk_post = true;
+							}
+
+							if ( ! $deleted_bulk_post ){
+							?>
+								<div class="item">
+								<a href="<?php echo admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
+								</div>
+							<?php	
 							}
 
 							$countSites     = 0;

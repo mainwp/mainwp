@@ -376,18 +376,15 @@ class MainWP_Manage_Sites_List_Table {
 		$actions = array(
 			'sync'                => __( 'Sync Data', 'mainwp' ),
 			'reconnect'           => __( 'Reconnect', 'mainwp' ),
-			'refresh_favico'      => __( 'Refresh Favicon', 'mainwp' ),
+			'refresh_favico'      => __( 'Reload Favicon', 'mainwp' ),
 			'delete'              => __( 'Remove', 'mainwp' ),
-			'seperator_1'         => '',
-			'open_wpadmin'        => __( 'Jump to WP Admin', 'mainwp' ),
-			'open_frontpage'      => __( 'Jump to Front Page', 'mainwp' ),
-			'seperator_2'         => '',
+			'open_wpadmin'        => __( 'Go to WP Admin', 'mainwp' ),
+			'open_frontpage'      => __( 'Go to Site', 'mainwp' ),
 			'update_plugins'      => __( 'Update Plugins', 'mainwp' ),
 			'update_themes'       => __( 'Update Themes', 'mainwp' ),
 			'update_wpcore'       => __( 'Update WordPress', 'mainwp' ),
 			'update_translations' => __( 'Update Translations', 'mainwp' ),
 			'update_everything'   => __( 'Update Everything', 'mainwp' ),
-
 		);
 
 		/**
@@ -422,24 +419,13 @@ class MainWP_Manage_Sites_List_Table {
 		<div class="ui grid">
 			<div class="equal width row ui mini form">
 			<div class="middle aligned column">
-					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
 					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
-						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
+						<div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
-							<?php
-							foreach ( $items_bulk as $value => $title ) {
-								if ( 'seperator_' === substr( $value, 0, 10 ) ) {
-									?>
-									<div class="ui divider"></div>
-									<?php
-								} else {
-									?>
+							<?php foreach ( $items_bulk as $value => $title ) : ?>
 									<div class="item" data-value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $title ); ?></div>
-									<?php
-								}
-							}
-							?>
+							<?php endforeach; ?>
 						</div>
 					</div>
 					<button class="ui tiny basic button" id="mainwp-do-sites-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>

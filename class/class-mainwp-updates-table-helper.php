@@ -158,9 +158,19 @@ class MainWP_Updates_Table_Helper {
 	 * Default column.
 	 *
 	 * @param mixed $value Value of column.
+	 * @param mixed $column_name Name of column.
+	 * @param mixed $website The website.
 	 */
-	public function column_default( $value ) {
-		return '<td>' . $value . '</td>';
+	public function column_default( $value, $column_name ) {
+		$current_wpid = MainWP_System_Utility::get_current_wpid();
+		$col          = '<td>';
+		if ( 'title' == $column_name && empty( $current_wpid ) ) {
+			$col .= '<div class="ui child checkbox">
+			<input type="checkbox" name="">
+		  </div>';
+		}
+		$col .= $value . '</td>';
+		return $col;
 	}
 
 	/**
@@ -180,7 +190,7 @@ class MainWP_Updates_Table_Helper {
 				if ( method_exists( $this, 'column_' . $col ) ) {
 					echo call_user_func( array( &$this, 'column_' . $col ), $value );
 				} else {
-					echo $this->column_default( $value );
+					echo $this->column_default( $value, $col );
 				}
 			}
 		}

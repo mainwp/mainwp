@@ -620,14 +620,11 @@ class MainWP_Manage_Sites_View {
 	public static function render_header_tabs( $active_tab, $active_text, $show_language_updates ) {
 		?>
 		<div class="mainwp-sub-header">
-			<div class="ui grid">
+			<div class="ui grid mini form">
 				<div class="equal width row">
-					<div class="middle aligned column">
-						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); ?>
-					</div>
 					<div class="right aligned middle aligned column">
 						<div class="inline field">
-							<div class="ui selection dropdown">
+							<div class="ui selection fluid dropdown">
 								<div class="text"><?php echo $active_text; ?></div>
 								<i class="dropdown icon"></i>
 								<div class="menu">
@@ -643,6 +640,11 @@ class MainWP_Manage_Sites_View {
 							</div>
 						</div>
 					</div>
+					<div class="middle aligned column">
+						<?php echo apply_filters( 'mainwp_widgetupdates_actions_top', '' ); ?>
+					</div>
+					<div class="middle aligned column"></div>
+					<div class="middle aligned column"></div>
 				</div>
 			</div>
 		</div>

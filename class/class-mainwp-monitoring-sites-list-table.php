@@ -242,9 +242,8 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		<div class="ui grid">
 			<div class="equal width row ui mini form">
 			<div class="middle aligned column">
-					<?php esc_html_e( 'Bulk actions: ', 'mainwp' ); ?>
 					<div id="mainwp-sites-bulk-actions-menu" class="ui selection dropdown">
-						<div class="default text"><?php esc_html_e( 'Select action', 'mainwp' ); ?></div>
+						<div class="default text"><?php esc_html_e( 'Bulk actions', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
 							<?php

@@ -1237,7 +1237,6 @@ class MainWP_UI {
 	 */
 	public static function render_empty_bulk_actions() {
 		?>
-		<?php esc_html_e( 'Bulk Actions: ', 'mainwp' ); ?>
 		<div class="ui disabled dropdown" id="mainwp-bulk-actions">
 			<?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?> <i class="dropdown icon"></i>
 			<div class="menu"></div>
@@ -1328,7 +1327,7 @@ class MainWP_UI {
 	 */
 	public static function render_sorting_icons() {
 		?>
-		<i class="sort icon"></i><i class="sort up icon"></i><i class="sort down icon">
+		<i class="sort icon"></i><i class="sort up icon"></i><i class="sort down icon"></i>
 		<?php
 	}
 

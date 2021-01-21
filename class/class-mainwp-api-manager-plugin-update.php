@@ -162,8 +162,8 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
 	 */
 	public function plugin_information( $args, $bulk_check = false ) {
-		$target_url   = $this->create_upgrade_api_url( $args, $bulk_check );
-		$default = array(
+		$target_url = $this->create_upgrade_api_url( $args, $bulk_check );
+		$default    = array(
 			'timeout'   => 50,
 			'sslverify' => 1,
 		);

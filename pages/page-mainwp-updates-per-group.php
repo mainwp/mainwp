@@ -163,7 +163,7 @@ class MainWP_Updates_Per_Group {
 					<tr>
 						<th></th>
 						<th>
-						    <div class="ui main-master checkbox ">
+							<div class="ui main-master checkbox ">
 								<input type="checkbox" name="">
 							</div>
 							<?php esc_html_e( 'Group', 'mainwp' ); ?>

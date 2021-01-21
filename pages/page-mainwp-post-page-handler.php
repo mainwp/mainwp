@@ -496,7 +496,8 @@ class MainWP_Post_Page_Handler {
 								foreach ( $dbwebsites as $website ) {
 									?>
 									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: <?php 
+									: 
+									<?php
 									if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
 										echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
 										$posting_succeed = true;
@@ -515,19 +516,19 @@ class MainWP_Post_Page_Handler {
 							$delete_bulk_post = apply_filters( 'mainwp_after_posting_delete_bulk_post', true, $posting_succeed );
 
 							$do_not_del = get_post_meta( $id, '_bulkpost_do_not_del', true );
-							
+
 							$deleted_bulk_post = false;
 							if ( 'yes' !== $do_not_del && $delete_bulk_post ) {
 								wp_delete_post( $id, true );
 								$deleted_bulk_post = true;
 							}
 
-							if ( ! $deleted_bulk_post ){
-							?>
+							if ( ! $deleted_bulk_post ) {
+								?>
 								<div class="item">
 								<a href="<?php echo admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
 								</div>
-							<?php	
+								<?php
 							}
 
 							$countSites     = 0;

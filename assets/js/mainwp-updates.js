@@ -3053,7 +3053,7 @@ updatesoverview_upgrade_plugintheme_all = function ( what, id, noCheck, updatesS
                     }                        
                 
                 });
-            };    
+            }    
             var siteName = jQuery( "#wp_" + pWhat + "_upgrades_" + pId ).attr('site_name');
             updatesoverview_upgrade_plugintheme_list_popup(pWhat, pId, siteName, list);            
         }

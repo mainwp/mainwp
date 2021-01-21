@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.6
 Requires PHP: 7.0
-Stable tag: 4.1.3.1
+Stable tag: 4.1.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.4 - 1-21-21 =
+* Fixed: An issue with loading the Refresh favicons progress bar
+* Fixed: An issue with the auto-reconnect feature
+* Fixed: An issue with missing primary keys for multiple database tables
+* Fixed: Multiple PHP warnings
+* Fixed: Multiple typos and incorrect links
+* Added: Ability to select available updates to process
+* Added: New actions and filters
+* Updated: The mainwp_getwebsitesbyurl hook
+* Updated: Multiple cosmetic and usability improvements
+* Preventative: Multiple security improvements
 
 = 4.1.3.1 - 12-8-20 =
 * Fixed: An issue with Reconnecting sites when using the Reconnect button in Connection Status widget 

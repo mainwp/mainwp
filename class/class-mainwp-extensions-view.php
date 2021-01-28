@@ -297,6 +297,18 @@ class MainWP_Extensions_View {
 		}
 		?>
 			<div class="card extension-card-<?php echo esc_attr( $extension['name'] ); ?>" extension-slug="<?php echo esc_attr( $extension['slug'] ); ?>" <?php echo $queue_status; ?> license-status="<?php echo $active ? 'activated' : 'deactivated'; ?>">
+				<?php
+				/**
+				 * Action: mainwp_extension_card_top
+				 *
+				 * Fires at the Extension card top
+				 *
+				 * @since 4.1.4.1
+				 *
+				 * @param array $extension Array containing the Extension information.
+				 */
+				do_action( 'mainwp_extension_card_top', $extension );
+				?>
 				<div class="content">
 					<img class="right floated mini ui image" src="<?php echo esc_url( $img_url ); ?>">
 					<div class="header">
@@ -350,6 +362,18 @@ class MainWP_Extensions_View {
 					<a class="ui mini right floated button" id="mainwp-manage-extension-license"><?php esc_html_e( 'Manage License', 'mainwp' ); ?></a>
 				</div>
 			<?php endif; ?>
+			<?php
+			/**
+			 * Action: mainwp_extension_card_bottom
+			 *
+			 * Fires at the Extension card bottom
+			 *
+			 * @since 4.1.4.1
+			 *
+			 * @param array $extension Array containing the Extension information.
+			 */
+			do_action( 'mainwp_extension_card_bottom', $extension );
+			?>
 		</div>
 		<?php
 	}

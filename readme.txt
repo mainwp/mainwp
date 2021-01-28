@@ -7,15 +7,15 @@ Plugin URI: https://mainwp.com
 Requires at least: 3.6
 Tested up to: 5.6
 Requires PHP: 7.0
-Stable tag: 4.1.4
+Stable tag: 4.1.4.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-The MainWP WordPress Manager Dashboard allows control of unlimited WordPress sites from your own private self-hosted WordPress install. More than just updates! 
+The MainWP WordPress Manager Dashboard allows control of unlimited WordPress sites from your own private self-hosted WordPress install. More than just updates!
 
 == Description ==
 
-The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control unlimited WordPress sites from your own private self-hosted WordPress install.  
+The [MainWP WordPress Manager](https://mainwp.com) Dashboard plugin allows you to control unlimited WordPress sites from your own private self-hosted WordPress install.
 
 The MainWP WordPress management system is a free and open source.  The system is designed for WordPress professionals who realize that WordPress management for yourself or your clients is more than just plugin and theme updates.
 
@@ -31,7 +31,7 @@ First, Install and Activate this MainWP Dashboard plugin on a WordPress site you
 
 Next, Install and Activate the MainWP Child plugin on a WordPress site you want to connect to your MainWP Dashboard.  WordPress sites connected to your Dashboard are referred to as Child sites.
 
-Lastly, you securely connect your child site to your MainWP Dashboard.  Once connected, your Dashboard can control most aspects of the Child site. 
+Lastly, you securely connect your child site to your MainWP Dashboard.  Once connected, your Dashboard can control most aspects of the Child site.
 
 Still not sure how MainWP works? [Review these detailed steps on installing your Dashboard and connecting your first Child site.](https://mainwp.com/getting-started-with-mainwp/)
 
@@ -111,7 +111,7 @@ Building on WordPress's core principles, the MainWP plugin allows third-party de
 
 = Note: MainWP is not tested on or designed for multisite installs. =
 
-However, we have reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install. 
+However, we have reports that most functions work correctly, but support will be limited. We DO NOT recommend installing the MainWP Dashboard plugin on a multisite install.
 
 1. We HIGHLY recommend a NEW WordPress install for your MainWP Dashboard.
 
@@ -142,16 +142,16 @@ Yes, please read the [Quick Start – Setting up your MainWP](https://kb.mainwp.
 Please post in the [MainWP Community](https://meta.mainwp.com)
 
 = What is the difference between ManageWP and MainWP? =
-Essentially MainWP and ManageWP provide the same type of service but with different philosophies on WordPress management.  
+Essentially MainWP and ManageWP provide the same type of service but with different philosophies on WordPress management.
 
 ManageWP is a Service as a Solution (SaaS) property owned by Godaddy.  The SaaS system makes ManageWP a type of "Walled Garden" with limited customization options.
 
-MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit. 
+MainWP follows the tradition of WordPress and is [open source](https://github.com/mainwp/mainwp), [private](https://mainwp.com/protect-your-data/), and [fully extendable](https://mainwp.dev).   The fact that MainWP is open source and extendable means you have almost unlimited customization option, this allows you to run your WordPress management business as you see fit.
 
-= How do I know my sites are secure using MainWP? = 
-We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.  
+= How do I know my sites are secure using MainWP? =
+We take security very seriously at MainWP. We welcome any peer review of our [100% open source code](https://github.com/mainwp/mainwp) to ensure nobody's MainWP management system is ever compromised or hacked.
 
-We also participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward. 
+We also participate in the [HackerOne](https://www.hackerone.com) bug bounty program; this allows ethical hackers to review MainWP code and directly share any vulnerability information with us in return for a monetary reward.
 
 = How do I customize MainWP for my needs? =
 If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about Extension creation at [MainWP.dev](https://mainwp.dev)
@@ -176,6 +176,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.4.1 - 1-28-21 =
+* Fixed: An issue with sites selection when triggering updates
+* Fixed: A typo ([PR470](https://github.com/mainwp/mainwp/pull/470) - thanks [Dustin Dauncey](https://github.com/d19dotca)
+* Fixed: PHP error
+* Added: New actions in Extension cards elements
+
 = 4.1.4 - 1-21-21 =
 * Fixed: An issue with loading the Refresh favicons progress bar
 * Fixed: An issue with the auto-reconnect feature
@@ -189,7 +195,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Preventative: Multiple security improvements
 
 = 4.1.3.1 - 12-8-20 =
-* Fixed: An issue with Reconnecting sites when using the Reconnect button in Connection Status widget 
+* Fixed: An issue with Reconnecting sites when using the Reconnect button in Connection Status widget
 * Fixed: An issue with the Test Connection feature on specific hosts
 * Updated: Site removal confirmation notice
 * Updated: Support for translating strings ([PR459](https://github.com/mainwp/mainwp/pull/459) - thanks [Santiago Becerra](https://github.com/sanbec))
@@ -224,7 +230,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 4.1.1 - 9-11-20 =
 * Fixed: An issue with WP CLI commands
-* Fixed: An issue with sending multiple notification emails 
+* Fixed: An issue with sending multiple notification emails
 * Fixed: An error with displaying site groups in the Site Infor widget
 * Fixed: Semantic UI error
 * Fixed: Usability error caused by JavaScript error
@@ -341,7 +347,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 4.0.1 - 9-3-19 =
 * Fixed: a
 n issue with incorrect plugin info links
-* Fixed: 
+* Fixed:
 an issue with clearing and preloading WP Rocket cache
 * Fixed: displaying child sites in the Manage Sites issue on some setups
 * Fixed: the extensions settings synchronization issue

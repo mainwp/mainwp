@@ -119,7 +119,7 @@ updatesoverview_wordpress_global_upgrade_all = function ( groupId, updatesSelect
         );
     }
     if ( foundChildren.length == 0 ) {
-        updates_plese_select_items_notice();
+        updates_please_select_items_notice();
         return false;
     }
 } else {
@@ -316,7 +316,7 @@ updatesoverview_translations_global_upgrade_all = function ( groupId, updatesSel
             );
         }
         if ( foundChildren.length == 0 ) {
-            updates_plese_select_items_notice();
+            updates_please_select_items_notice();
             return false;
         }
     } else {
@@ -755,7 +755,7 @@ updatesoverview_plugins_global_upgrade_all = function ( groupId, updatesSelected
             );
         }
         if ( foundChildren.length == 0 ) {
-            updates_plese_select_items_notice();
+            updates_please_select_items_notice();
             return false;
         }
     } else {
@@ -888,7 +888,7 @@ updatesoverview_plugins_upgrade_all = function ( slug, pluginName, updatesSelect
             }
         );
         if ( foundChildren.length == 0 ) {
-            updates_plese_select_items_notice();
+            updates_please_select_items_notice();
             return false;
         }
     } else {
@@ -1113,7 +1113,6 @@ updatesoverview_plugins_upgrade_int = function ( slug, websiteId, bulkMode, noCh
                                 updatesoverview_plugins_upgrade_all_update_done();
                                 done = true;
                             }
-//                            websiteHolder.find( 'td:last-child' ).html( result );
                         }
                         
                         if (websitesDone == websitesTotal)
@@ -1229,7 +1228,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId, updatesSelected 
             );
         }
         if ( foundChildren.length == 0 ) {
-            updates_plese_select_items_notice();
+            updates_please_select_items_notice();
             return false;
         }
     } else {
@@ -1343,7 +1342,7 @@ updatesoverview_themes_global_upgrade_all = function ( groupId, updatesSelected 
     return false;
 };
 
-updates_plese_select_items_notice = function(){    
+updates_please_select_items_notice = function(){    
     var msg = __( 'Please, select items to update.' );
     jQuery('#mainwp-modal-confirm-select .content-massage').html(msg);        
     jQuery('#mainwp-modal-confirm-select').modal('show');
@@ -1368,7 +1367,7 @@ updatesoverview_themes_upgrade_all = function ( slug, themeName, updatesSelected
             }
         );
         if ( foundChildren.length == 0 ) {
-            updates_plese_select_items_notice();
+            updates_please_select_items_notice();
             return false;
         }
     } else {
@@ -3042,7 +3041,7 @@ updatesoverview_upgrade_plugintheme_all = function ( what, id, noCheck, updatesS
                     }
                 });
                 if ( list.length == 0 ) {
-                    updates_plese_select_items_notice();
+                    updates_please_select_items_notice();
                     return false;
                 }
             } else {
@@ -3090,7 +3089,7 @@ updatesoverview_group_upgrade_plugintheme_all = function ( what, id, noCheck, gr
                         }
                     }
                     if ( list.length == 0 ) {
-                        updates_plese_select_items_notice();
+                        updates_please_select_items_notice();
                         return false;
                     }
                 } else {

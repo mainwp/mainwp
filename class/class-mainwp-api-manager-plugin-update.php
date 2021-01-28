@@ -172,7 +172,7 @@ class MainWP_Api_Manager_Plugin_Update {
 
 		$request = wp_remote_get(
 			$target_url,
-			$params,
+			$params
 		);
 
 		if ( is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) != 200 ) {

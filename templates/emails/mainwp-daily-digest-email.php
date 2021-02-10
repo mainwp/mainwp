@@ -118,7 +118,7 @@ if ( empty( $heading ) ) {
 												<thead style="background: #eee">
 													<tr>
 														<th style="padding:5px;" align="left"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
-														<th style="padding:5px;" align="left"><?php esc_html_e( 'Plugin', 'mainwp' ); ?></th>
+														<th style="padding:5px;" align="left"><?php esc_html_e( 'Theme', 'mainwp' ); ?></th>
 														<th style="padding:5px;"><?php esc_html_e( 'Detected', 'mainwp' ); ?></th>
 														<th style="padding:5px;"><?php esc_html_e( 'Latest', 'mainwp' ); ?></th>
 														<th style="padding:5px;"><?php esc_html_e( 'Trusted', 'mainwp' ); ?></th>

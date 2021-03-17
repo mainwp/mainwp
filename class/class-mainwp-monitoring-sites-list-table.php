@@ -396,7 +396,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			} else {
 				MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
 			}
-		} else {
+		} else {		
 			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
 			$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
 		}
@@ -431,13 +431,21 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				'search'       => $search,
 			);
 
+			$qry_group_ids = array();
 			if ( ! empty( $group_ids ) ) {
-				$group_ids = explode( ',', $group_ids ); // convert to array.
+				$group_ids = explode( ',', $group_ids ); // convert to array.	
+				// to fix query deleted groups.			
+				$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+				foreach( $groups as $gr ){
+					if ( in_array( $gr->id, $group_ids ) ) {
+						$qry_group_ids[]  = $gr->id;
+					}
+				}
 			}
 
-			if ( $group_ids && 0 < count( $group_ids ) ) {
-				$total_params['group_id'] = $group_ids;
-				$params['group_id']       = $group_ids;
+			if ( ! empty( $qry_group_ids ) ) {
+				$total_params['group_id'] = $qry_group_ids;
+				$params['group_id']       = $qry_group_ids;
 			}
 
 			if ( ! empty( $where ) ) {
@@ -630,6 +638,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
+							if ( typeof mainwp_preview_init_event !== "undefined" ) {
+								mainwp_preview_init_event();
+							}
 						},
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

@@ -67,12 +67,6 @@ class MainWP_Notification_Settings {
 				$emails_settings = array();
 			}
 
-			// to fix incorrect field name.
-			if ( isset( $emails_settings['daily_digets'] ) ) {
-				$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-				unset( $emails_settings['daily_digets'] );
-			}
-
 			$type                       = isset( $_POST['mainwp_setting_emails_type'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_setting_emails_type'] ) ) : '';
 			$update_settings            = isset( $_POST['mainwp_settingEmails'][ $type ] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_settingEmails'][ $type ] ) ) : '';
 			$update_settings['disable'] = ( isset( $_POST['mainwp_settingEmails'][ $type ] ) && isset( $_POST['mainwp_settingEmails'][ $type ]['disable'] ) ) ? 0 : 1; // to set 'disable' values.
@@ -128,12 +122,6 @@ class MainWP_Notification_Settings {
 		$emails_settings     = get_option( 'mainwp_settings_notification_emails' );
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
-		}
-
-		// to fix incorrect field name.
-		if ( isset( $emails_settings['daily_digets'] ) ) {
-			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-			unset( $emails_settings['daily_digets'] );
 		}
 
 		?>
@@ -235,17 +223,6 @@ class MainWP_Notification_Settings {
 		$emails_settings = get_option( 'mainwp_settings_notification_emails' );
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
-		}
-
-		// to fix incorrect field name.
-		if ( isset( $emails_settings['daily_digets'] ) ) {
-			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-		}
-
-		// to fix incorrect field name.
-		if ( isset( $emails_settings['daily_digets'] ) ) {
-			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-			unset( $emails_settings['daily_digets'] );
 		}
 
 		$options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
@@ -413,15 +390,38 @@ class MainWP_Notification_Settings {
 			$settings = array();
 		}
 
-		// to fix incorrect field name.
-		if ( isset( $settings['daily_digets'] ) ) {
-			$settings['daily_digest'] = $settings['daily_digets'];
-			unset( $settings['daily_digets'] );
-		}
-
 		$options = isset( $settings[ $type ] ) ? $settings[ $type ] : array();
 		$default = self::get_default_emails_fields( $type, '', true );
 		return array_merge( $default, $options );
+	}
+
+	/**
+	 * Get general notification email.
+	 *
+	 * @return string|empty recipients.
+	 */
+	public static function get_general_email() {
+		$gen_email_settings = self::get_general_email_settings( 'daily_digest' );
+		return isset( $gen_email_settings['recipients'] ) ? $gen_email_settings['recipients'] : '';
+	}
+
+	/**
+	 * Update general notification email.
+	 *
+	 * @param string $emails Emails.
+	 *
+	 * @return null.
+	 */
+	public static function update_general_email( $emails ) {
+		$emails_settings = get_option( 'mainwp_settings_notification_emails' );
+		if ( ! is_array( $emails_settings ) ) {
+			$emails_settings = array();
+		}
+		$type                          = 'daily_digest';
+		$update_settings               = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
+		$update_settings['recipients'] = $emails;
+		$emails_settings[ $type ]      = $update_settings;
+		MainWP_Utility::update_option( 'mainwp_settings_notification_emails', $emails_settings );
 	}
 
 	/**
@@ -442,12 +442,6 @@ class MainWP_Notification_Settings {
 		$settings = json_decode( $website->settings_notification_emails, true );
 		if ( ! is_array( $settings ) ) {
 			$settings = array();
-		}
-
-		// to fix incorrect field name.
-		if ( isset( $settings['daily_digets'] ) ) {
-			$settings['daily_digest'] = $settings['daily_digets'];
-			unset( $settings['daily_digets'] );
 		}
 
 		$options = isset( $settings[ $type ] ) ? $settings[ $type ] : array();

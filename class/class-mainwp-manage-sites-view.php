@@ -1044,12 +1044,6 @@ class MainWP_Manage_Sites_View {
 			$emails_settings = array();
 		}
 
-		// to fix incorrect field name.
-		if ( isset( $emails_settings['daily_digets'] ) ) {
-			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-			unset( $emails_settings['daily_digets'] );
-		}
-
 		$default = MainWP_Notification_Settings::get_default_emails_fields( $type );
 		$options = isset( $emails_settings[ $type ] ) ? $emails_settings[ $type ] : array();
 		$options = array_merge( $default, $options );
@@ -1232,12 +1226,6 @@ class MainWP_Manage_Sites_View {
 		$emails_settings = json_decode( $website->settings_notification_emails, true );
 		if ( ! is_array( $emails_settings ) ) {
 			$emails_settings = array();
-		}
-
-		// to fix incorrect field name.
-		if ( isset( $emails_settings['daily_digets'] ) ) {
-			$emails_settings['daily_digest'] = $emails_settings['daily_digets'];
-			unset( $emails_settings['daily_digets'] );
 		}
 
 		$email_description   = '';
@@ -1425,7 +1413,7 @@ class MainWP_Manage_Sites_View {
 		$params['name']              = isset( $_POST['managesites_add_wpname'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpname'] ) ) : '';
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
 		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
-		$params['ssl_verify']        = empty( $_POST['verify_certificate'] ) ? null : intval( $_POST['verify_certificate'] );
+		$params['ssl_verify']        = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
 		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : intval( $_POST['force_use_ipv4'] ) );
 		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : intval( $_POST['ssl_version'] );
 		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
@@ -1487,7 +1475,7 @@ class MainWP_Manage_Sites_View {
 
 				$url = $params['url'];
 
-				$verifyCertificate = ( ! isset( $params['ssl_verify'] ) || ( empty( $params['ssl_verify'] ) && ( '0' !== $params['ssl_verify'] ) ) ? null : $params['ssl_verify'] );
+				$verifyCertificate = ( ! isset( $params['ssl_verify'] ) || empty( $params['ssl_verify'] ) ) ? false : true;
 				$sslVersion        = ! isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? 0 : $params['ssl_version'];
 				$addUniqueId       = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
 				$http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';

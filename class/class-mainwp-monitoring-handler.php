@@ -247,14 +247,13 @@ class MainWP_Monitoring_Handler {
 	 * @param string $admin_email    Notification email.
 	 * @param string $email_settings Email settings.
 	 * @param bool   $plain_text     Determines if the plain text format should be used.
-	 * @param bool   $general        Determines if it's a general notification.
 	 * @param bool   $to_admin Send to admin or not.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::update_website_values()
 	 * @uses \MainWP\Dashboard\MainWP_Notification::send_websites_uptime_monitoring()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
-	public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $general = true, $to_admin = false ) {
+	public static function notice_sites_uptime_monitoring( $websites, $admin_email, $email_settings, $plain_text, $to_admin = false ) {
 
 		$heading = $email_settings['heading'];
 		$subject = $email_settings['subject'];
@@ -325,7 +324,7 @@ class MainWP_Monitoring_Handler {
 	 */
 	public static function notice_site_health_threshold( $email_settings, $websites, $email, $plain_text, $general = true, $to_admin = false ) {
 
-		$admin_email = MainWP_DB_Common::instance()->get_user_notification_email();
+		$admin_email = MainWP_Notification_Settings::get_general_email();
 
 		$heading = $email_settings['heading'];
 		$subject = $email_settings['subject'];

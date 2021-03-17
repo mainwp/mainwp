@@ -410,9 +410,9 @@ class MainWP_Manage_Sites_List_Table {
 		$is_not          = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
 
 		if ( empty( $selected_status ) && empty( $selected_group ) ) {
-			$selected_status = get_option( 'mainwp_managesites_filter_status' );
-			$selected_group  = get_option( 'mainwp_managesites_filter_group' );
-			$is_not          = get_option( 'mainwp_managesites_filter_is_not' );
+			$selected_status = get_user_option( 'mainwp_managesites_filter_status' );
+			$selected_group  = get_user_option( 'mainwp_managesites_filter_group' );
+			$is_not          = get_user_option( 'mainwp_managesites_filter_is_not' );
 		}
 
 		?>
@@ -606,26 +606,26 @@ class MainWP_Manage_Sites_List_Table {
 
 		if ( ! isset( $_REQUEST['status'] ) ) {
 			if ( $get_saved_state ) {
-				$site_status = get_option( 'mainwp_managesites_filter_status' );
+				$site_status = get_user_option( 'mainwp_managesites_filter_status' );
 			} else {
-				MainWP_Utility::update_option( 'mainwp_managesites_filter_status', '' );
+				MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_status', sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) );
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_is_not', $is_not );
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) );
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_is_not', $is_not );
 			$site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
 		}
 
 		if ( $get_all ) {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
 		} elseif ( ! isset( $_REQUEST['g'] ) ) {
 			if ( $get_saved_state ) {
-				$group_ids = get_option( 'mainwp_managesites_filter_group' );
+				$group_ids = get_user_option( 'mainwp_managesites_filter_group' );
 			} else {
-				MainWP_Utility::update_option( 'mainwp_managesites_filter_group', '' );
+				MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
 			}
 		} else {
-			MainWP_Utility::update_option( 'mainwp_managesites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
+			MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
 			$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
 		}
 
@@ -670,13 +670,21 @@ class MainWP_Manage_Sites_List_Table {
 			$total_params['isnot'] = $is_not;
 			$params['isnot']       = $is_not;
 
+			$qry_group_ids = array();
 			if ( ! empty( $group_ids ) ) {
 				$group_ids = explode( ',', $group_ids ); // convert to array.
+				// to fix query deleted groups.
+				$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+				foreach ( $groups as $gr ) {
+					if ( in_array( $gr->id, $group_ids ) ) {
+						$qry_group_ids[] = $gr->id;
+					}
+				}
 			}
 
-			if ( ! empty( $group_ids ) ) {
-				$total_params['group_id'] = $group_ids;
-				$params['group_id']       = $group_ids;
+			if ( ! empty( $qry_group_ids ) ) {
+				$total_params['group_id'] = $qry_group_ids;
+				$params['group_id']       = $qry_group_ids;
 			}
 
 			if ( ! empty( $where ) ) {
@@ -1026,6 +1034,9 @@ class MainWP_Manage_Sites_List_Table {
 						"drawCallback": function( settings ) {
 							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
 							mainwp_datatable_fix_menu_overflow();
+							if ( typeof mainwp_preview_init_event !== "undefined" ) {
+								mainwp_preview_init_event();
+							}
 						},
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

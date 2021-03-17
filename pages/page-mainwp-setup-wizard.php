@@ -794,7 +794,7 @@ class MainWP_Setup_Wizard {
 			$important_notification = get_option( 'mwp_setup_importantNotification' ); // going to outdated.
 		}
 
-		$user_emails = MainWP_System_Utility::get_notification_email();
+		$user_emails = MainWP_Notification_Settings::get_general_email();
 		$user_emails = explode( ',', $user_emails );
 		$i           = 0;
 		?>
@@ -870,11 +870,11 @@ class MainWP_Setup_Wizard {
 		MainWP_Utility::update_option( 'mainwp_setup_important_notification', $important_noti );
 
 		MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', $important_noti );
-		$userExtension             = MainWP_DB_Common::instance()->get_user_extension();
-		$user_emails               = isset( $_POST['mainwp_options_email'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_options_email'] ) ) : '';
-		$save_emails               = MainWP_Utility::valid_input_emails( $user_emails );
-		$userExtension->user_email = $save_emails;
-		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		$user_emails   = isset( $_POST['mainwp_options_email'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_options_email'] ) ) : '';
+		$save_emails   = MainWP_Utility::valid_input_emails( $user_emails );
+		$user_emails   = MainWP_Notification_Settings::update_general_email( $save_emails );
+
 		wp_safe_redirect( $this->get_next_step_link() );
 		exit;
 	}

@@ -42,7 +42,7 @@ class MainWP_Manage_Sites_Handler {
 			$ret['response'] = 'ERROR You already added your site to MainWP';
 		} else {
 			try {
-				$verify_cert    = empty( $_POST['verify_certificate'] ) ? null : intval( $_POST['verify_certificate'] );
+				$verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
 				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : sanitize_text_field( wp_unslash( $_POST['force_use_ipv4'] ) ) );
 				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
@@ -172,7 +172,7 @@ class MainWP_Manage_Sites_Handler {
 		$params['name']           = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
 		$params['wpadmin']        = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
 		$params['unique_id']      = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
-		$params['ssl_verify']     = empty( $data['ssl_verify'] ) ? null : intval( $data['ssl_verify'] );
+		$params['ssl_verify']     = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
 		$params['force_use_ipv4'] = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
 		$params['ssl_version']    = ! isset( $data['ssl_version'] ) || empty( $data['ssl_version'] ) ? null : intval( $data['ssl_version'] );
 		$params['http_user']      = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';

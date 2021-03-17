@@ -393,6 +393,24 @@ class MainWP_Utility {
 	}
 
 	/**
+	 * Method update_user_option()
+	 *
+	 * Update option.
+	 *
+	 * @param mixed $option_name Option name.
+	 * @param mixed $option_value Option value.
+	 *
+	 * @return (boolean) False if value was not updated and true if value was updated.
+	 */
+	public static function update_user_option( $option_name, $option_value ) {
+		$user = wp_get_current_user();
+		if ( $user ) {
+			return update_user_option( $user->ID, $option_name, $option_value );
+		}
+		return false;
+	}
+
+	/**
 	 * Method remove_preslash_spaces()
 	 *
 	 * Remove spaces before slashes.

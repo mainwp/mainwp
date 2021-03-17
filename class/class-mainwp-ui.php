@@ -346,7 +346,7 @@ class MainWP_UI {
 						else :
 							while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 								$selected = false;
-								if ( '' == $website->sync_errors || $enableOfflineSites ) {
+								if ( '' == $website->sync_errors ) {
 										$selected = ( 'all' === $selected_websites || in_array( $website->id, $selected_websites ) );
 										$disabled = '';
 									if ( $edit_site_id ) {
@@ -365,7 +365,7 @@ class MainWP_UI {
 								} else {
 									?>
 									<div title="<?php echo esc_html( $website->url ); ?>" class="mainwp_selected_sites_item item ui <?php echo esc_html( $type ); ?> <?php echo ( $selected ? 'selected_sites_item_checked' : '' ); ?>">
-										<input <?php echo $disabled; ?> type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
+										<input type="<?php echo esc_html( $type ); ?>" disabled="disabled"/>
 										<label for="selected_sites_<?php echo intval( $website->id ); ?>">
 											<?php echo stripslashes( $website->name ); ?>  <span class="url"><?php echo esc_html( $website->url ); ?></span>
 										</label>

@@ -50,7 +50,7 @@ class Rest_Api {
 	public function init() {
 
 		// add ajax action.
-		add_action( 'wp_ajax_mainwp_generate_api_credentials', array( &$this, 'mainwp_generate_api_credentials' ) );
+		MainWP_Post_Handler::instance()->add_post_action( 'mainwp_generate_api_credentials', array( &$this, 'mainwp_generate_api_credentials' ) );
 
 		// only activate the api if enabled in the plugin settings.
 		if ( get_option( 'mainwp_enable_rest_api' ) ) {
@@ -85,6 +85,8 @@ class Rest_Api {
 	 * Generates consumer key and secret and saves to the database encrypted.
 	 */
 	public function mainwp_generate_api_credentials() {
+
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_generate_api_credentials' );
 
 		// we need to generate a consumer key and secret and return the result and save it into the database.
 		$consumer_key    = 'ck_' . $this->mainwp_generate_rand_hash();
@@ -837,6 +839,10 @@ class Rest_Api {
 
 					// get data.
 					$data = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+					if ( ! empty( $data ) && property_exists( $data, 'privkey' ) ) {
+						unset( $data->privkey );
+					}
 
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );

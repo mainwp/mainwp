@@ -889,6 +889,17 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1133708',
 				'group'      => array( 'admin' ),
 			),
+			'mainwp-virusdie-extension'           =>
+			array(
+				'slug'       => 'mainwp-virusdie-extension',
+				'title'      => 'MainWP Virusdie Extension',
+				'desc'       => 'MainWP Virusdie Extension enables you to scan your child sites for various types of malware, spam injections, website errors, and much more. Requires the MainWP Dashboard.',
+				'link'       => 'https://mainwp.com/extension/virusdie/',
+				'img'        => $folder_url . 'virusdie.png',
+				'product_id' => 'MainWP Virusdie Extension',
+				'catalog_id' => '1133708',
+				'group'      => array( 'admin' ),
+			),
 		);
 	}
 

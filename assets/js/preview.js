@@ -11,7 +11,7 @@
  *
  */
 
-jQuery( function ( $ ) {
+ jQuery(document).ready(function ($) {
 
 	/**
 	 * Init site preview function.

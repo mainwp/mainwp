@@ -128,7 +128,7 @@ class MainWP_Security_Issues_Widget {
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				?>
-				<div class="item" siteid="<?php echo intval( $website->id ); ?>">
+				<div class="item" <?php echo  $website->securityIssues > 0 ? 'status="queue"' : ''; ?> siteid="<?php echo intval( $website->id ); ?>">
 				<div class="ui three column grid stackable">
 				<div class="column middle aligned">
 							<a href="

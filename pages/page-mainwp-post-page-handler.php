@@ -289,6 +289,10 @@ class MainWP_Post_Page_Handler {
 							$val             = get_post_meta( $id, '_selected_groups', true );
 							$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
 
+							$selected_by     = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
+							$selected_sites  = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
+							$selected_groups = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
+
 							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
 							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.

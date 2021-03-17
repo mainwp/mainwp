@@ -40,6 +40,7 @@ class MainWP_Extensions_Handler {
 		'theme_upgrades'   => 'theme_upgrades',
 		'premium_upgrades' => 'premium_upgrades',
 		'plugins'          => 'plugins',
+		'themes'           => 'themes',
 		'dtsSync'          => 'dtsSync',
 		'version'          => 'version',
 		'sync_errors'      => 'sync_errors',

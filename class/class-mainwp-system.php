@@ -1005,7 +1005,7 @@ class MainWP_System {
 			$is_staging = 'no';
 			if ( isset( $_GET['page'] ) ) {
 				if ( ( 'managesites' == $_GET['page'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['do'] ) && ! isset( $_GET['dashboard'] ) ) {
-					$group_ids = get_option( 'mainwp_managesites_filter_group' );
+					$group_ids = get_user_option( 'mainwp_managesites_filter_group' );
 					if ( ! empty( $group_ids ) ) {
 						$group_ids = explode( ',', $group_ids ); // convert to array.
 					}

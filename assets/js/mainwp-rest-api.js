@@ -3,9 +3,9 @@ jQuery( document ).ready( function ($) {
     $('body').on('click','#generate-new-api-credentials', function(){
         console.log('I was clicked');
         //do ajax to generate consumer key and secret
-        var data = {
+        var data = mainwp_secure_data({
             'action': 'mainwp_generate_api_credentials',
-        };
+        });
 
         jQuery.post(ajaxurl, data, function (response) {
 

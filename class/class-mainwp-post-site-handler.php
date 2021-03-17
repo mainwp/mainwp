@@ -223,14 +223,24 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			}
 		}
 
-		$rslt = MainWP_Connect::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+		$ssl_verifyhost = false;
+
+		if ( 1 == $verifyCertificate ) {
+			$ssl_verifyhost = true;
+		} elseif ( 2 == $verifyCertificate ) {
+			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+				$ssl_verifyhost = true;
+			}
+		}
+
+		$rslt = MainWP_Connect::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 
 		if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
 			if ( substr( $url, - 1 ) != '/' ) {
 				$url .= '/';
 			}
 			$url    .= 'wp-admin/';
-			$newrslt = MainWP_Connect::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
+			$newrslt = MainWP_Connect::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
 			if ( isset( $newrslt['error'] ) && ( '' !== $rslt['error'] ) ) {
 				$rslt = $newrslt;
 			}

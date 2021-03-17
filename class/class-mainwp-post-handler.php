@@ -123,6 +123,18 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	}
 
 	/**
+	 * Method add_post_action()
+	 *
+	 * Add ajax action.
+	 *
+	 * @param string $action Action to perform.
+	 * @param string $callback Callback to perform.
+	 */
+	public function add_post_action( $action, $callback ) {
+		$this->add_action( $action, $callback );
+	}
+
+	/**
 	 * Method mainwp_installation_warning_hide()
 	 *
 	 * Hide the installation warning.

@@ -35,7 +35,7 @@ class MainWP_Connect {
 	 * Try connecting to Child Site via cURL.
 	 *
 	 * @param string $url Child Site URL.
-	 * @param bool   $verifyCertificate Option to check SSL Certificate. Default = null.
+	 * @param bool   $ssl_verifyhost Option to check SSL Certificate. Default = null.
 	 * @param string $http_user HTTPAuth Username. Default = null.
 	 * @param string $http_pass HTTPAuth Password. Default = null.
 	 * @param int    $sslVersion        Child Site SSL Version.
@@ -49,7 +49,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
 	 */
-	public static function try_visit( $url, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$postdata = array( 'test' => 'yes' );
@@ -83,21 +83,6 @@ class MainWP_Connect {
 		if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
 			$http_pass = stripslashes( $http_pass );
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-		}
-
-		$ssl_verifyhost = false;
-		if ( null !== $verifyCertificate ) {
-			if ( 1 == $verifyCertificate ) {
-				$ssl_verifyhost = true;
-			} elseif ( 2 == $verifyCertificate ) {
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
-			}
-		} else {
-			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-				$ssl_verifyhost = true;
-			}
 		}
 
 		if ( $ssl_verifyhost ) {
@@ -284,8 +269,18 @@ class MainWP_Connect {
 			return false;
 		}
 
+		$ssl_verifyhost = false;
+
+		if ( 1 == $verifyCertificate ) {
+			$ssl_verifyhost = true;
+		} elseif ( 2 == $verifyCertificate || null === $verifyCertificate ) {
+			if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
+				$ssl_verifyhost = true;
+			}
+		}
+
 		$noBody = false;
-		return self::try_visit( $url, $verifyCertificate, $http_user, $http_pass, $sslVersion, $forceUseIPv4, $noBody );
+		return self::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4, $noBody );
 	}
 
 	/**

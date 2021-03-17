@@ -100,11 +100,6 @@ class MainWP_System_Utility {
 			return null;
 		}
 
-		$userExt = MainWP_DB_Common::instance()->get_user_extension();
-		if ( '' != $userExt->user_email ) {
-			return $userExt->user_email;
-		}
-
 		return $user->user_email;
 	}
 
@@ -603,7 +598,7 @@ class MainWP_System_Utility {
 	 * @param int $timeout timeout value.
 	 */
 	public static function set_time_limit( $timeout = 0 ) {
-		if ( false !== strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
+		if ( false === strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) ) {
 			set_time_limit( $timeout );
 		}
 	}

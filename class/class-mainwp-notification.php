@@ -84,11 +84,6 @@ class MainWP_Notification {
 
 		$email = '';
 
-		// do not send individual data to admin.
-		if ( $general ) {
-			$email = get_option( 'mainwp_updatescheck_mail_email' );
-		}
-
 		if ( ! empty( $email_settings['recipients'] ) ) {
 			$email .= ',' . $email_settings['recipients']; // send to recipients.
 		}
@@ -120,7 +115,6 @@ class MainWP_Notification {
 	 * @param mixed $sites_disconnected Sites disconnected.
 	 * @param bool  $plain_text         Text format.
 	 * @param bool  $sites_ids          Websites ids - default false (option).
-	 * @param bool  $to_admin           Send to admin or not - default false (option).
 	 * @param bool  $email_site         current report site.
 	 *
 	 * @return bool
@@ -128,7 +122,7 @@ class MainWP_Notification {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
 	 * @uses \MainWP\Dashboard\MainWP_Notification_Template::get_template_html()
 	 */
-	public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $to_admin = false, $email_site = false ) {
+	public static function send_daily_digest_notification( $email_settings, $available_updates, $wp_updates, $plugin_updates, $theme_updates, $sites_disconnected, $plain_text, $sites_ids = false, $email_site = false ) {
 
 		if ( $email_settings['disable'] ) {
 			return false; // disabled send daily digest notification.
@@ -136,12 +130,8 @@ class MainWP_Notification {
 
 		$email = '';
 
-		if ( empty( $sites_ids ) || $to_admin ) {
-			$email = get_option( 'mainwp_updatescheck_mail_email' ); // general notification, do not send individual notification to admin.
-		}
-
 		if ( ! empty( $email_settings['recipients'] ) ) {
-			$email .= ',' . $email_settings['recipients']; // send to recipients.
+			$email .= ',' . $email_settings['recipients']; // send to recipients, individual email settings or general email settings.
 		}
 
 		if ( empty( $email ) ) {

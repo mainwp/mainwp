@@ -178,7 +178,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 4.1.4.1 - 1-28-21 =
 * Fixed: An issue with sites selection when triggering updates
-* Fixed: A typo ([PR470](https://github.com/mainwp/mainwp/pull/470) - thanks [Dustin Dauncey](https://github.com/d19dotca)
+* Fixed: A typo ([PR470](https://github.com/mainwp/mainwp/pull/470) - thanks [Dustin Dauncey](https://github.com/d19dotca))
 * Fixed: PHP error
 * Added: New actions in Extension cards elements
 

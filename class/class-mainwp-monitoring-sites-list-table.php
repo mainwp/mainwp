@@ -396,7 +396,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			} else {
 				MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', '' );
 			}
-		} else {		
+		} else {
 			MainWP_Utility::update_option( 'mainwp_monitoringsites_filter_group', sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) );
 			$group_ids = sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ); // may be multi groups.
 		}
@@ -433,12 +433,12 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 
 			$qry_group_ids = array();
 			if ( ! empty( $group_ids ) ) {
-				$group_ids = explode( ',', $group_ids ); // convert to array.	
-				// to fix query deleted groups.			
+				$group_ids = explode( ',', $group_ids ); // convert to array.
+				// to fix query deleted groups.
 				$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
-				foreach( $groups as $gr ){
+				foreach ( $groups as $gr ) {
 					if ( in_array( $gr->id, $group_ids ) ) {
-						$qry_group_ids[]  = $gr->id;
+						$qry_group_ids[] = $gr->id;
 					}
 				}
 			}

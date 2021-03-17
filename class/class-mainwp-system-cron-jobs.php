@@ -284,10 +284,10 @@ class MainWP_System_Cron_Jobs {
 		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
 		if ( $frequencyDailyUpdate <= 0 ) {
 			$frequencyDailyUpdate = 1;
-		}		
+		}
 		$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
 		$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
-	
+
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 		$mainwpLastAutomaticUpdate    = get_option( 'mainwp_updatescheck_last' );
@@ -311,7 +311,7 @@ class MainWP_System_Cron_Jobs {
 		$enableFrequencyAutomaticUpdate = false;
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
 			$run_frequency = true;
-			$frequence_now               = round( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= frequencyDailyUpdate, computes frequence value now.
+			$frequence_now = round( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= frequencyDailyUpdate, computes frequence value now.
 			if ( $frequence_now > $frequence_today_count ) {
 				$frequence_today_count = $frequence_now;
 				// ok, run.
@@ -450,7 +450,7 @@ class MainWP_System_Cron_Jobs {
 			if ( $today_m_y !== $mainwpLastAutomaticUpdate ) {
 				$diff_day = true;
 				MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
-				
+
 				// send daily digest email one time per day.
 				$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
 

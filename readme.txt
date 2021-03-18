@@ -4,10 +4,10 @@ Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multipl
 Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
-Requires at least: 3.6
+Requires at least: 5.4
 Tested up to: 5.7
 Requires PHP: 7.0
-Stable tag: 4.1.4.1
+Stable tag: 4.1.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.5 - 3-18-21 =
+* Fixed: an issue with sending double Daily Digest email
+* Fixed: an issue with SSL verification feature when adding a child site
+* Fixed: an issue with the groups filter on the Manage Sites screen
+* Fixed: multiple PHP notices
+* Updated: sites table filters saves per user basis
+* Updated: unset specific data in REST API requests
 
 = 4.1.4.1 - 1-28-21 =
 * Fixed: An issue with sites selection when triggering updates

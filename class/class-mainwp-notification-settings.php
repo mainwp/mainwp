@@ -410,7 +410,7 @@ class MainWP_Notification_Settings {
 	 *
 	 * @param string $emails Emails.
 	 *
-	 * @return null.
+	 * @return void
 	 */
 	public static function update_general_email( $emails ) {
 		$emails_settings = get_option( 'mainwp_settings_notification_emails' );

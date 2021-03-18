@@ -889,7 +889,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1133708',
 				'group'      => array( 'admin' ),
 			),
-			'mainwp-virusdie-extension'           =>
+			'mainwp-virusdie-extension' =>
 			array(
 				'slug'       => 'mainwp-virusdie-extension',
 				'title'      => 'MainWP Virusdie Extension',

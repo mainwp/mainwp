@@ -337,7 +337,7 @@ class MainWP_System_Handler {
 	 * Include pluggable functions.
 	 */
 	public function include_pluggable() {
-		 // may causing of conflict with Post S m t p plugin.
+		// may causing of conflict with Post S m t p plugin.
 		if ( ! function_exists( 'wp_create_nonce' ) ) {
 			include_once ABSPATH . WPINC . '/pluggable.php';
 		}

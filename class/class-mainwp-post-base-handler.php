@@ -22,6 +22,13 @@ abstract class MainWP_Post_Base_Handler {
 	protected static $security_nonces;
 
 	/**
+	 * Protected static variable to hold security nounces.
+	 *
+	 * @var string Security nonce.
+	 */
+	protected static $security_names;
+
+	/**
 	 * Method init()
 	 *
 	 * Force Extending class to define this method.
@@ -112,7 +119,21 @@ abstract class MainWP_Post_Base_Handler {
 	 */
 	public function add_action( $action, $callback ) {
 		add_action( 'wp_ajax_' . $action, $callback );
-		$this->add_security_nonce( $action );
+		$this->add_action_nonce( $action ); // to fix conflict with Post S M T P plugin.
+	}
+
+	/**
+	 * Method add_action_nonce()
+	 *
+	 * Add security nonce.
+	 *
+	 * @param string $action Action to perform.
+	 */
+	public function add_action_nonce( $action ) {
+		if ( ! is_array( self::$security_names ) ) {
+			self::$security_names = array();
+		}
+		self::$security_names[] = $action;
 	}
 
 	/**
@@ -134,11 +155,25 @@ abstract class MainWP_Post_Base_Handler {
 	}
 
 	/**
-	 * Return the security nonces.
+	 * Create the security nonces.
 	 *
 	 * @return self $security_nonces.
 	 */
-	public function get_security_nonces() {
+	public function create_security_nonces() {
+
+		if ( ! is_array( self::$security_nonces ) ) {
+			self::$security_nonces = array();
+		}
+
+		if ( ! empty( self::$security_names ) ) {
+			if ( ! function_exists( 'wp_create_nonce' ) ) {
+				include_once ABSPATH . WPINC . '/pluggable.php';
+			}
+			foreach ( self::$security_names as $action ) {
+				self::$security_nonces[ $action ] = wp_create_nonce( $action );
+			}
+		}
+
 		return self::$security_nonces;
 	}
 

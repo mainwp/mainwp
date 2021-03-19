@@ -119,7 +119,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_manage_sites_display_rows', array( &$this, 'ajax_sites_display_rows' ) );
 		$this->add_action( 'mainwp_monitoring_sites_display_rows', array( &$this, 'ajax_monitoring_display_rows' ) );
 
-		$this->add_security_nonce( 'mainwp-common-nonce' );
+		$this->add_action_nonce( 'mainwp-common-nonce' );
 	}
 
 	/**

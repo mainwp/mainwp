@@ -299,23 +299,24 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Settings::handle_settings_post()
 	 */
 	public function handle_settings_post() {
-		if ( ! function_exists( 'wp_create_nonce' ) ) {
-			include_once ABSPATH . WPINC . '/pluggable.php';
-		}
-
 		if ( isset( $_GET['page'] ) && isset( $_POST['wp_nonce'] ) ) {
+			$this->include_pluggable();
 			$this->handle_mainwp_tools_settings();
 			$this->handle_rest_api_settings();
 			$this->handle_manage_sites_screen_settings();
 		}
 
-		if ( isset( $_POST['select_mainwp_options_siteview'] ) && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-			$userExtension            = MainWP_DB_Common::instance()->get_user_extension();
-			$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
-			MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
+			$this->include_pluggable();
+			if ( check_admin_referer( 'mainwp-admin-nonce' ) ) {
+				$userExtension            = MainWP_DB_Common::instance()->get_user_extension();
+				$userExtension->site_view = ( empty( $_POST['select_mainwp_options_siteview'] ) ? MAINWP_VIEW_PER_PLUGIN_THEME : intval( $_POST['select_mainwp_options_siteview'] ) );
+				MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+			}
 		}
 
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
+			$this->include_pluggable();
 			if ( wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
 				$updated  = MainWP_Settings::handle_settings_post();
 				$updated |= MainWP_Backup_Handler::handle_settings_post();
@@ -327,6 +328,18 @@ class MainWP_System_Handler {
 				wp_safe_redirect( admin_url( 'admin.php?page=Settings' . $msg ) );
 				exit();
 			}
+		}
+	}
+
+	/**
+	 * Method include_pluggable()
+	 *
+	 * Include pluggable functions.
+	 */
+	public function include_pluggable() {
+		 // may causing of conflict with Post S m t p plugin.
+		if ( ! function_exists( 'wp_create_nonce' ) ) {
+			include_once ABSPATH . WPINC . '/pluggable.php';
 		}
 	}
 

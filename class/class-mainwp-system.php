@@ -545,7 +545,7 @@ class MainWP_System {
 
 				if ( empty( $current_user ) ) {
 					if ( ! function_exists( 'wp_get_current_user' ) ) {
-						require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'pluggable.php';
+						require_once ABSPATH . WPINC . '/pluggable.php';
 					}
 				}
 
@@ -637,7 +637,6 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Backup_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Extension_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::init()
-	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::get_security_nonces()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Plugin_Theme_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Site_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_System_Handler::activate_extension()
@@ -726,14 +725,11 @@ class MainWP_System {
 
 		wp_localize_script( 'mainwp', 'mainwpTranslations', $mainwpTranslations );
 
-		$security_nonces = MainWP_Post_Handler::instance()->get_security_nonces();
-
-		$nonces_filter = apply_filters( 'mainwp_security_nonces', array() );
-
+		$security_nonces = MainWP_Post_Handler::instance()->create_security_nonces(); // to fix conflict with Post S M T P plugin.
+		$nonces_filter   = apply_filters( 'mainwp_security_nonces', array() );
 		if ( is_array( $nonces_filter ) && ! empty( $nonces_filter ) ) {
 			$security_nonces = array_merge( $security_nonces, $nonces_filter );
 		}
-
 		wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
 		wp_enqueue_script( 'thickbox' );

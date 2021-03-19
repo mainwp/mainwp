@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.7
 Requires PHP: 7.0
-Stable tag: 4.1.5
+Stable tag: 4.1.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.5.1 - 3-19-21 =
+* Fixed: wp_mail declaration issue
 
 = 4.1.5 - 3-18-21 =
 * Fixed: An issue with sending double Daily Digest email

@@ -752,17 +752,16 @@ class MainWP_Hooks {
 	public function get_metaboxes_post() {
 		return MainWP_System::instance()->metaboxes;
 	}
-	
+
 	/**
 	 * Method get_notification_email()
 	 *
 	 * Hook to get notification email.
 	 *
 	 * @return string Return email.
-	 *
 	 */
 	public function get_notification_email() {
-		return MainWP_Notification_Settings::get_general_email();;
+		return MainWP_Notification_Settings::get_general_email();
 	}
 
 	/**

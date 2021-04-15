@@ -181,7 +181,6 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 	 * Method check_abandoned()
 	 *
 	 * Check abandoned plugins or themes.
-	 *
 	 */
 	public function check_abandoned() {
 		$this->check_security( 'mainwp_check_abandoned', 'security' );
@@ -189,7 +188,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		if ( isset( $_POST['siteId'] ) ) {
 			$siteId = intval( $_POST['siteId'] );
 		}
-		$which = sanitize_text_field( wp_unslash( $_POST['which'] ) );;
+		$which = sanitize_text_field( wp_unslash( $_POST['which'] ) );
+
 		$result = MainWP_Utility::check_abandoned( $siteId, $which );
 		wp_send_json( $result );
 	}

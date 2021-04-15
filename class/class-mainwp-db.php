@@ -650,12 +650,12 @@ class MainWP_DB extends MainWP_DB_Base {
 				}
 			}
 		} elseif ( $group_ids && 0 < count( $group_ids ) ) {
-			$groups     = implode( ',', $group_ids );			
-			if ( $is_not ) {		
-				$join_group = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';		
+			$groups = implode( ',', $group_ids );
+			if ( $is_not ) {
+				$join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 				$where_group = ' AND ( wpgroup.groupid NOT IN (' . $groups . ') OR wpgroup.groupid IS NULL ) ';
 			} else {
-				$join_group = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
+				$join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 				$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
 			}
 		}

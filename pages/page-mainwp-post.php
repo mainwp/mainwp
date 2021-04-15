@@ -56,7 +56,6 @@ class MainWP_Post {
 		 */
 		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_post' instead.
 		add_action( 'mainwp_pageheader_post', array( self::get_class_name(), 'render_header' ) );
-	
 
 		/**
 		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
@@ -1598,13 +1597,12 @@ class MainWP_Post {
 
 		$content .= '<input type="hidden" id="_thumbnail_id" name="_thumbnail_id" value="' . esc_attr( $thumbnail_id ? $thumbnail_id : '-1' ) . '" />';
 
-		$html = '<div class="ui fluid accordion mainwp-sidebar-accordion">';
+		$html  = '<div class="ui fluid accordion mainwp-sidebar-accordion">';
 		$html .= '<div class="title active"><i class="dropdown icon"></i> ' . __( 'Featured Image', 'mainwp' ) . '</div>';
 		$html .= '<div class="content active"';
 		$html .= $content;
 		$html .= '</div>';
 		$html .= '</div>';
-
 
 		/**
 		 * Filters the admin post thumbnail HTML markup to return.
@@ -2086,8 +2084,8 @@ class MainWP_Post {
 				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
-					<?php 
-					do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); 
+					<?php
+					do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type );
 					MainWP_UI::render_sidebar_options( false );
 					?>
 					<div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">

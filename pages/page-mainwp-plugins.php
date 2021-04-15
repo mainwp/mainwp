@@ -479,9 +479,10 @@ class MainWP_Plugins {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_plugins_sidebar_top' );
-				
+
 				MainWP_UI::render_sidebar_options();
-				?>				
+				?>
+								
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
@@ -1007,7 +1008,7 @@ class MainWP_Plugins {
 
 						if ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
 							$active_status_class = 'positive';
-						} else if ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
+						} elseif ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
 							$active_status_class = 'negative';
 						} else {
 							$active_status_class = '';
@@ -1101,16 +1102,16 @@ class MainWP_Plugins {
 			<style type="text/css">
 
 			thead th.mainwp-first-th {
-			    position: sticky !important;
-			    left: 0  !important;
-			    top: 0  !important;
+				position: sticky !important;
+				left: 0  !important;
+				top: 0  !important;
 					z-index: 9 !important;
 			}
 
 			#mainwp-manage-plugins-table tbody tr td:first-child {
-			    position: sticky !important;
-			    left: 0;
-			    top: 0;
+				position: sticky !important;
+				left: 0;
+				top: 0;
 					background: #f9fafb;
 					z-index: 9 !important;
 			}

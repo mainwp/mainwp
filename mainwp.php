@@ -49,7 +49,6 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 if ( ! defined( 'MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER' ) ) {
 	/**
 	 * Define MainWP daily disgest log priority number.
-	 *
 	 */
 	define( 'MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER', 10 );
 }

@@ -1508,16 +1508,16 @@ class MainWP_UI {
 		do_action( 'mainwp_screen_options_modal_bottom' );
 	}
 
-/**
+	/**
 	 * Method render_sidebar_options()
 	 *
 	 * Render sidebar Options.
-	 * 
+	 *
 	 * @param bool $with_form Default: True. With form tags.
-	 * 
+	 *
 	 * @return void  Render sidebar Options html.
 	 */
-	public static function render_sidebar_options( $with_form = true ) {	
+	public static function render_sidebar_options( $with_form = true ) {
 		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
 		if ( false === $sidebarPosition ) {
 			$sidebarPosition = 1;

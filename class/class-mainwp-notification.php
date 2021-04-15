@@ -137,7 +137,7 @@ class MainWP_Notification {
 		}
 
 		$email = trim( $email, ',' );
-		
+
 		if ( empty( $email ) ) {
 			return false;
 		}

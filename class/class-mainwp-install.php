@@ -256,14 +256,13 @@ class MainWP_Install extends MainWP_DB_Base {
   wpid int(11) NOT NULL,
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
-  KEY idx_groupid (groupid)';		
+  KEY idx_groupid (groupid)';
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.57', '<=' ) ) {
 			$tbl .= ',
   PRIMARY KEY  (wp_group_id)  ';
 		}
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
-
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
   task_id int(11) NOT NULL,

@@ -48,7 +48,7 @@ class MainWP_Security_Issues {
 		}
 		$unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
 		?>
-		<table class="ui table" id="mainwp-security-issues-table" un-set="<?php echo $unset_scripts ? "versions,registered_versions" : ""; ?>">
+		<table class="ui table" id="mainwp-security-issues-table" un-set="<?php echo $unset_scripts ? 'versions,registered_versions' : ''; ?>">
 		<thead>
 				<tr>
 					<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>

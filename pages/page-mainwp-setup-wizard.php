@@ -784,7 +784,6 @@ class MainWP_Setup_Wizard {
 	 * Method mwp_setup_notification()
 	 *
 	 * Render Notifications Step.
-	 *
 	 */
 	public function mwp_setup_notification() {
 

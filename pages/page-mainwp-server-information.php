@@ -1251,11 +1251,11 @@ class MainWP_Server_Information {
 		self::render_header( 'ActionLogs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
-			$act_log = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED;
+			$act_log  = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED;
 			$spec_log = 0;
 			if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
-				$act_log = str_replace('specific_', '', $act_log );
-				$spec_log = 1;				
+				$act_log  = str_replace('specific_', '', $act_log );
+				$spec_log = 1;
 			}
 
 			$act_log = intval( $act_log );
@@ -1308,13 +1308,13 @@ class MainWP_Server_Information {
 							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
 						<?php
-						if ( is_array( $specific_logs ) && ! empty( $specific_logs )) {
-							foreach( $specific_logs as $spec_log => $spec_title ) {
-							?>
+						if ( is_array( $specific_logs ) && ! empty( $specific_logs ) ) {
+							foreach ( $specific_logs as $spec_log => $spec_title ) {
+								?>
 							<option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo ( $spec_log == $enabled ? 'selected' : '' ); ?>>
 								<?php echo esc_html( $spec_title ); ?>
 							</option>
-							<?php
+								<?php
 							}
 						}
 						?>

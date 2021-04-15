@@ -374,19 +374,19 @@ class MainWP_Manage_Sites_List_Table {
 	public function get_bulk_actions() {
 
 		$actions = array(
-			'sync'                => __( 'Sync Data', 'mainwp' ),
-			'reconnect'           => __( 'Reconnect', 'mainwp' ),
-			'refresh_favico'      => __( 'Reload Favicon', 'mainwp' ),
-			'delete'              => __( 'Remove', 'mainwp' ),
-			'open_wpadmin'        => __( 'Go to WP Admin', 'mainwp' ),
-			'open_frontpage'      => __( 'Go to Site', 'mainwp' ),
-			'update_plugins'      => __( 'Update Plugins', 'mainwp' ),
-			'update_themes'       => __( 'Update Themes', 'mainwp' ),
-			'update_wpcore'       => __( 'Update WordPress', 'mainwp' ),
-			'update_translations' => __( 'Update Translations', 'mainwp' ),
-			'update_everything'   => __( 'Update Everything', 'mainwp' ),
-			'check_abandoned_plugin'   => __( 'Check abandoned plugins', 'mainwp' ),
-			'check_abandoned_theme'   => __( 'Check abandoned themes', 'mainwp' ),
+			'sync'                   => __( 'Sync Data', 'mainwp' ),
+			'reconnect'              => __( 'Reconnect', 'mainwp' ),
+			'refresh_favico'         => __( 'Reload Favicon', 'mainwp' ),
+			'delete'                 => __( 'Remove', 'mainwp' ),
+			'open_wpadmin'           => __( 'Go to WP Admin', 'mainwp' ),
+			'open_frontpage'         => __( 'Go to Site', 'mainwp' ),
+			'update_plugins'         => __( 'Update Plugins', 'mainwp' ),
+			'update_themes'          => __( 'Update Themes', 'mainwp' ),
+			'update_wpcore'          => __( 'Update WordPress', 'mainwp' ),
+			'update_translations'    => __( 'Update Translations', 'mainwp' ),
+			'update_everything'      => __( 'Update Everything', 'mainwp' ),
+			'check_abandoned_plugin' => __( 'Check abandoned plugins', 'mainwp' ),
+			'check_abandoned_theme'  => __( 'Check abandoned themes', 'mainwp' ),
 		);
 
 		/**

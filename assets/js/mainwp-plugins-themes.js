@@ -430,11 +430,11 @@ jQuery( document ).ready( function () {
         jQuery( ".mainwp-selected-theme[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).each( function () {
             var rowIdx = jQuery( this ).closest( 'tr' ).index();
 			if ( ch_val ) {
-                jQuery('.dataTables_scrollBody table').find('tr').eq( rowIdx + 1 ).find('.mainwp_themes_site_check_all').prop( 'checked', true );
-			}
+                jQuery('#mainwp-manage-themes-table').find('tr').eq( rowIdx + 2 ).find( ".mainwp-selected-theme[value='" + jQuery( this ).val() + "'][version='" + jQuery( this ).attr( 'version' ) + "']" ).prop( 'checked', true );
+            }
 		});
 
-		if (jQuery('.dataTables_scrollBody .mainwp_themes_site_check_all:checkbox:checked').length > 0) {
+		if (jQuery('#mainwp-manage-themes-table .mainwp_themes_site_check_all:checkbox:checked').length > 0) {
             jQuery('#mainwp-install-themes-to-selected-sites').show();
         } else {
             jQuery('#mainwp-install-themes-to-selected-sites').fadeOut(1000);

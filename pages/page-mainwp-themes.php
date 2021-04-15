@@ -880,7 +880,7 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_before_themes_table' );
 		?>
-		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
+		<table id="mainwp-manage-themes-table" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -1014,7 +1014,7 @@ class MainWP_Themes {
 		 */
 		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
 		?>
-							
+
 		<style type="text/css">
 			thead th.mainwp-first-th {
 				position: sticky !important;

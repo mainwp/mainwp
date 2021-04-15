@@ -482,7 +482,7 @@ class MainWP_Plugins {
 
 				MainWP_UI::render_sidebar_options();
 				?>
-							
+
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**

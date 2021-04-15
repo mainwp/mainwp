@@ -169,8 +169,7 @@ class MainWP_Security_Issues {
 						<strong id="versions-status-ok" style="display: none;"><?php esc_html_e( 'Scripts and Stylesheets version information has been removed from URLs', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php esc_html_e( 'After fixing this issue, versions will be removed', 'mainwp' ); ?></em>
-					</td>
-					
+					</td>					
 					<td>
 						<span id="versions_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
 						<span id="versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>

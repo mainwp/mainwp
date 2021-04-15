@@ -482,7 +482,7 @@ class MainWP_Plugins {
 
 				MainWP_UI::render_sidebar_options();
 				?>
-								
+							
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
@@ -1395,7 +1395,7 @@ class MainWP_Plugins {
 					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
-						<p><?php echo sprintf( __( 'Check out %show to disable the WordPress built in auto-updates feature%s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
+						<p><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
 					</div>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-auto-updates"></i>

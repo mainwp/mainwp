@@ -1013,8 +1013,7 @@ class MainWP_Themes {
 		 * @since 4.1
 		 */
 		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
-		?>
-						
+		?>					
 		<style type="text/css">
 			thead th.mainwp-first-th {
 				position: sticky !important;

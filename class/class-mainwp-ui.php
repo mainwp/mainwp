@@ -1513,6 +1513,8 @@ class MainWP_UI {
 	 *
 	 * Render sidebar Options.
 	 * 
+	 * @param bool $with_form Default: True. With form tags.
+	 * 
 	 * @return void  Render sidebar Options html.
 	 */
 	public static function render_sidebar_options( $with_form = true ) {	

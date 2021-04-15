@@ -126,6 +126,7 @@ class MainWP_Logger {
 	 * Sets the log priority.
 	 *
 	 * @param mixed $logPriority Log priority value.
+	 * @param mixed $spec_log Specific log.
 	 */
 	public function set_log_priority( $logPriority, $spec_log = 0 ) {
 		$this->logPriority = $logPriority;

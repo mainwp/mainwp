@@ -811,8 +811,6 @@ class MainWP_Themes {
 			$themesSlug        = array();
 
 			foreach ( $output->themes as $theme ) {
-
-				error_log( print_r( $theme, true ) );
 				$theme['name']       = esc_html( $theme['name'] );
 				$theme['version']    = esc_html( $theme['version'] );
 				$theme['title']      = esc_html( $theme['title'] );
@@ -913,7 +911,7 @@ class MainWP_Themes {
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
 						<div class="ui slider checkbox">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
-					    </div>
+						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
 						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $site_url ); ?></a>
 					</td>
@@ -928,7 +926,7 @@ class MainWP_Themes {
 					do_action( 'mainwp_manage_themes_table_column', $site_id );
 					?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
-					<?php 
+						<?php
 						$active_status_class = '';
 						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['active'] ) {
 							$active_status_class = 'positive';
@@ -937,7 +935,7 @@ class MainWP_Themes {
 						} else {
 							$active_status_class = '';
 						}
-					?>
+						?>
 						<td class="center aligned <?php echo $active_status_class; ?>">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
 								<div class="ui checkbox">
@@ -1015,13 +1013,14 @@ class MainWP_Themes {
 		 * @since 4.1
 		 */
 		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
-		?>		
+		?>
+						
 		<style type="text/css">
 			thead th.mainwp-first-th {
 				position: sticky !important;
 				left: 0  !important;
 				top: 0  !important;
-					z-index: 9 !important;
+				z-index: 9 !important;
 			}
 			#mainwp-manage-themes-table tbody tr td:first-child {
 				position: sticky !important;
@@ -1031,7 +1030,6 @@ class MainWP_Themes {
 				z-index: 9 !important;
 			}
 		</style>
-
 		<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
 				jQuery( '#mainwp-manage-themes-table' ).DataTable( {

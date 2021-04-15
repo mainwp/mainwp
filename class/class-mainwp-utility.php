@@ -933,14 +933,14 @@ class MainWP_Utility {
 	 *
 	 * Get site's icon.
 	 *
-	 * @param mixed $siteId site's id.
+	 * @param mixed  $siteId site's id.
+	 * @param string $which to check plugin/theme.
 	 *
 	 * @return array result error or success
 	 * @throws \Exception Error message.
-	 *
 	 */
 	public static function check_abandoned( $siteId = null, $which ) {
-		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
+		if ( self::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';

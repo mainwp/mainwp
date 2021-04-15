@@ -111,5 +111,5 @@
 .mainwp-ui [data-tooltip][data-inverted]:after { z-index: 4 !important; }
 
 .mainwp-ui .progress .bar {
-  border-radius: 0px;
+  border-radius: 0;
 }

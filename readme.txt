@@ -176,6 +176,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.6 - 4-15-21 =
+* Fixed: Database error caught on specific setups
+* Fixed: An issue with sending Daily Digest email to multiple email addresses
+* Added: New REST API endpoints for the Site route
+* Added: Accordion elements to the sidebar
+* Added: Sidebar Options element to the sidebar
+* Added: Function to trigger Check for Abandoned plugins and themes process
+* Added: "mainwp_fetch_urls_chunk_size" filter to set chunk size in the fetch URLs process
+* Added: "mainwp_log_action" action as support for logging to Actions log
+* Updated: Auto-redirection rule after logging into a MainWP Dashboard site
+* Updated: Manage Plugins and Manage Themes table design
+* Updated: Unset the Scripts and Stylesheets version information security checks
+
 = 4.1.5.1 - 3-19-21 =
 * Fixed: wp_mail declaration issue
 

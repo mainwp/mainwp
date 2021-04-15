@@ -1,15 +1,15 @@
-/*! FixedColumns 3.2.5
- * ©2010-2018 SpryMedia Ltd - datatables.net/license
+/*! FixedColumns 3.3.2
+ * ©2010-2020 SpryMedia Ltd - datatables.net/license
  */
 
 /**
  * @summary     FixedColumns
  * @description Freeze columns in place on a scrolling DataTable
- * @version     3.2.5
+ * @version     3.3.2
  * @file        dataTables.fixedColumns.js
  * @author      SpryMedia Ltd (www.sprymedia.co.uk)
  * @contact     www.sprymedia.co.uk/contact
- * @copyright   Copyright 2010-2018 SpryMedia Ltd.
+ * @copyright   Copyright 2010-2020 SpryMedia Ltd.
  *
  * This source file is free software, available under the following license:
  *   MIT license - http://datatables.net/license/mit
@@ -449,6 +449,25 @@ $.extend( FixedColumns.prototype , {
 		}
 	},
 
+	fnToFixedNode: function ( rowIdx, colIdx )
+	{
+		var found;
+
+		if ( colIdx < this.s.iLeftColumns ) {
+			found = $(this.dom.clone.left.body).find('[data-dt-row='+rowIdx+'][data-dt-column='+colIdx+']');
+		}
+		else if ( colIdx >= this.s.iRightColumns ) {
+			found = $(this.dom.clone.right.body).find('[data-dt-row='+rowIdx+'][data-dt-column='+colIdx+']');
+		}
+
+		if ( found && found.length ) {
+			return found[0];
+		}
+
+		// Fallback - non-fixed node
+		var table = new $.fn.dataTable.Api(this.s.dt);
+		return table.cell(rowIdx, colIdx).node();
+	},
 
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -523,7 +542,7 @@ $.extend( FixedColumns.prototype , {
 					mouseController = 'main';
 				}
 
-				if ( mouseController === 'main' ) {
+				if ( mouseController === 'main' || mouseController === 'key' ) {
 					if ( that.s.iLeftColumns > 0 ) {
 						that.dom.grid.left.liner.scrollTop = that.dom.scroller.scrollTop;
 					}
@@ -541,7 +560,7 @@ $.extend( FixedColumns.prototype , {
 			// When scrolling the left column, scroll the body and right column
 			$(that.dom.grid.left.liner)
 				.on( 'mouseover.DTFC touchstart.DTFC', function () {
-					if ( ! mouseDown ) {
+					if ( ! mouseDown && mouseController !== 'key' ) {
 						mouseController = 'left';
 					}
 				} )
@@ -558,19 +577,26 @@ $.extend( FixedColumns.prototype , {
 					}
 				} )
 				.on( wheelType, function(e) {
+					mouseController = 'left';
+
 					// Pass horizontal scrolling through
 					var xDelta = e.type === 'wheel' ?
 						-e.originalEvent.deltaX :
 						e.originalEvent.wheelDeltaX;
 					that.dom.scroller.scrollLeft -= xDelta;
 				} );
+
+			// Header will not trigger scroll on left column, but might on `main` (sorting)
+			$(that.dom.grid.left.head).on( 'mouseover.DTFC touchstart.DTFC', function () {
+				mouseController = 'main';
+			});
 		}
 
 		if ( that.s.iRightColumns > 0 ) {
 			// When scrolling the right column, scroll the body and the left column
 			$(that.dom.grid.right.liner)
 				.on( 'mouseover.DTFC touchstart.DTFC', function () {
-					if ( ! mouseDown ) {
+					if ( ! mouseDown && mouseController !== 'key' ) {
 						mouseController = 'right';
 					}
 				} )
@@ -587,12 +613,18 @@ $.extend( FixedColumns.prototype , {
 					}
 				} )
 				.on( wheelType, function(e) {
+					mouseController = 'right';
+
 					// Pass horizontal scrolling through
 					var xDelta = e.type === 'wheel' ?
 						-e.originalEvent.deltaX :
 						e.originalEvent.wheelDeltaX;
 					that.dom.scroller.scrollLeft -= xDelta;
 				} );
+
+			$(that.dom.grid.right.head).on( 'mouseover.DTFC touchstart.DTFC', function () {
+				mouseController = 'main';
+			});
 		}
 
 		$(window).on( 'resize.DTFC', function () {
@@ -608,6 +640,10 @@ $.extend( FixedColumns.prototype , {
 				that._fnDraw.call( that, bFirstDraw );
 				bFirstDraw = false;
 			} )
+			.on('key-focus.dt.DTFC', function () {
+				// KeyTable navigation needs to be main focused
+				mouseController = 'key';
+			})
 			.on( 'column-sizing.dt.DTFC', function () {
 				that._fnColCalc();
 				that._fnGridLayout( that );
@@ -622,6 +658,16 @@ $.extend( FixedColumns.prototype , {
 			.on( 'select.dt.DTFC deselect.dt.DTFC', function ( e, dt, type, indexes ) {
 				if ( e.namespace === 'dt' ) {
 					that._fnDraw( false );
+				}
+			} )
+			.on( 'position.dts.dt.DTFC', function (e, tableTop) {
+				// Sync up with Scroller
+				if (that.dom.grid.left.body) {
+					$(that.dom.grid.left.body).find('table').eq(0).css('top', tableTop);
+				}
+
+				if (that.dom.grid.right.body) {
+					$(that.dom.grid.right.body).find('table').eq(0).css('top', tableTop);
 				}
 			} )
 			.on( 'destroy.dt.DTFC', function () {
@@ -735,7 +781,7 @@ $.extend( FixedColumns.prototype , {
 			$('<div class="DTFC_ScrollWrapper" style="position:relative; clear:both;">'+
 				'<div class="DTFC_LeftWrapper" style="position:absolute; top:0; left:0;" aria-hidden="true">'+
 					'<div class="DTFC_LeftHeadWrapper" style="position:relative; top:0; left:0; overflow:hidden;"></div>'+
-					'<div class="DTFC_LeftBodyWrapper" style="position:relative; top:0; left:0; overflow:hidden;">'+
+					'<div class="DTFC_LeftBodyWrapper" style="position:relative; top:0; left:0; height:0; overflow:hidden;">'+
 						'<div class="DTFC_LeftBodyLiner" style="position:relative; top:0; left:0; overflow-y:scroll;"></div>'+
 					'</div>'+
 					'<div class="DTFC_LeftFootWrapper" style="position:relative; top:0; left:0; overflow:hidden;"></div>'+
@@ -744,7 +790,7 @@ $.extend( FixedColumns.prototype , {
 					'<div class="DTFC_RightHeadWrapper" style="position:relative; top:0; left:0;">'+
 						'<div class="DTFC_RightHeadBlocker DTFC_Blocker" style="position:absolute; top:0; bottom:0;"></div>'+
 					'</div>'+
-					'<div class="DTFC_RightBodyWrapper" style="position:relative; top:0; left:0; overflow:hidden;">'+
+					'<div class="DTFC_RightBodyWrapper" style="position:relative; top:0; left:0; height:0; overflow:hidden;">'+
 						'<div class="DTFC_RightBodyLiner" style="position:relative; top:0; left:0; overflow-y:scroll;"></div>'+
 					'</div>'+
 					'<div class="DTFC_RightFootWrapper" style="position:relative; top:0; left:0;">'+
@@ -959,6 +1005,8 @@ $.extend( FixedColumns.prototype , {
 		this._fnGridLayout();
 		this._fnCloneLeft( bAll );
 		this._fnCloneRight( bAll );
+
+		$(this.dom.scroller).trigger('scroll');
 
 		/* Draw callback function */
 		if ( this.s.fnDrawCallback !== null )
@@ -1525,7 +1573,7 @@ FixedColumns.defaults = /** @lends FixedColumns.defaults */{
  *  @default   See code
  *  @static
  */
-FixedColumns.version = "3.2.5";
+FixedColumns.version = "3.3.2";
 
 
 
@@ -1594,6 +1642,14 @@ DataTable.Api.register( 'fixedColumns().cellIndex()', function ( cell ) {
 	else {
 		return this.cell( cell ).index();
 	}
+} );
+
+DataTable.Api.registerPlural( 'cells().fixedNodes()', 'cell().fixedNode()', function () {
+	return this.iterator( 'cell', function ( settings, row, column ) {
+		return settings._oFixedColumns
+			? settings._oFixedColumns.fnToFixedNode( row, column )
+			: this.cell(row, column).node();
+	}, 1 );
 } );
 
 

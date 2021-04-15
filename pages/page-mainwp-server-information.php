@@ -1251,15 +1251,25 @@ class MainWP_Server_Information {
 		self::render_header( 'ActionLogs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {
-			$act_log = isset( $_REQUEST['actionlogs_status'] ) ? intval( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED;
+			$act_log = isset( $_REQUEST['actionlogs_status'] ) ? $_REQUEST['actionlogs_status'] : MainWP_Logger::DISABLED;
+			$spec_log = 0;
+			if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
+				$act_log = str_replace('specific_', '', $act_log );
+				$spec_log = 1;				
+			}
+
+			$act_log = intval( $act_log );
+
+			MainWP_Utility::update_option( 'mainwp_specific_logs', $spec_log );
+
 			if ( MainWP_Logger::DISABLED != $act_log ) {
-				MainWP_Logger::instance()->set_log_priority( $act_log );
+				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
 			}
 
 			MainWP_Logger::instance()->log( 'Action logs set to: ' . MainWP_Logger::instance()->get_log_text( $act_log ), MainWP_Logger::LOG );
 
 			if ( MainWP_Logger::DISABLED == $act_log ) {
-				MainWP_Logger::instance()->set_log_priority( $act_log );
+				MainWP_Logger::instance()->set_log_priority( $act_log, $spec_log );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_actionlogs', $act_log );
@@ -1275,6 +1285,8 @@ class MainWP_Server_Information {
 		}
 
 		$enabled = MainWP_Logger::instance()->get_log_status();
+
+		$specific_logs = apply_filters( 'mainwp_specific_action_logs', array() );
 
 		?>
 		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">
@@ -1295,6 +1307,17 @@ class MainWP_Server_Information {
 						<option value="<?php echo MainWP_Logger::DEBUG; ?>" <?php echo ( MainWP_Logger::DEBUG == $enabled ? 'selected' : '' ); ?>>
 							<?php esc_html_e( 'Debug', 'mainwp' ); ?>
 						</option>
+						<?php
+						if ( is_array( $specific_logs ) && ! empty( $specific_logs )) {
+							foreach( $specific_logs as $spec_log => $spec_title ) {
+							?>
+							<option value="specific_<?php echo intval( $spec_log ); ?>" <?php echo ( $spec_log == $enabled ? 'selected' : '' ); ?>>
+								<?php echo esc_html( $spec_title ); ?>
+							</option>
+							<?php
+							}
+						}
+						?>
 					</select>
 						<input type="submit" class="ui green mini button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
 						<input type="submit" class="ui mini button" name="actionlogs_clear" value="<?php esc_attr_e( 'Delete Log', 'mainwp' ); ?>" />

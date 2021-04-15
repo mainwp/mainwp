@@ -74,6 +74,10 @@ class MainWP_Deprecated_Hooks {
 		'mainwp-pagefooter-sites'          => '4.1',
 		'mainwp-pageheader-extensions'     => '4.1',
 		'mainwp-pagefooter-extensions'     => '4.1',
+		'mainwp-pageheader-post'           => '4.1.5.1',
+		'mainwp-pagefooter-post'           => '4.1.5.1',
+		'mainwp-pageheader-page'           => '4.1.5.1',
+		'mainwp-pagefooter-post'           => '4.1.5.1',
 	);
 
 	/**

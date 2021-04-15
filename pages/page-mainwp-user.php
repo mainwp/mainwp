@@ -420,7 +420,8 @@ class MainWP_User {
 				 */
 				do_action( 'mainwp_manage_users_sidebar_top' );
 				?>
-				<div class="mainwp-select-sites">
+				<?php MainWP_UI::render_sidebar_options(); ?>
+				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
 					 * Action: mainwp_manage_users_before_select_sites
@@ -431,8 +432,8 @@ class MainWP_User {
 					 */
 					do_action( 'mainwp_manage_users_before_select_sites' );
 					?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_users_after_select_sites
@@ -459,9 +460,10 @@ class MainWP_User {
 
 				?>
 
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Select Roles', 'mainwp' ); ?></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Roles', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					/**
 					 * Action: mainwp_manage_users_before_search_options
@@ -500,12 +502,13 @@ class MainWP_User {
 					do_action( 'mainwp_manage_users_after_search_options' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::render_search_options(); ?>
 				</div>
-				<div class="ui divider"></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active"><?php self::render_search_options(); ?></div>
+				</div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php
 					/**
@@ -1474,7 +1477,8 @@ class MainWP_User {
 					 */
 					do_action( 'mainwp_add_new_user_sidebar_top' );
 					?>
-					<div class="mainwp-select-sites">
+					<?php MainWP_UI::render_sidebar_options(); ?>
+					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<?php
 						/**
 						 * Action: mainwp_add_new_user_before_select_sites
@@ -1485,8 +1489,8 @@ class MainWP_User {
 						 */
 						do_action( 'mainwp_add_new_user_before_select_sites' );
 						?>
-						<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-						<?php MainWP_UI::select_sites_box(); ?>
+						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+						<div class="content active"><?php MainWP_UI::select_sites_box(); ?></div>
 						<?php
 						/**
 						 * Action: mainwp_add_new_user_after_select_sites
@@ -1498,7 +1502,7 @@ class MainWP_User {
 						do_action( 'mainwp_add_new_user_after_select_sites' );
 						?>
 					</div>
-					<div class="ui divider"></div>
+					<div class="ui fitted divider"></div>
 					<div class="mainwp-search-submit">
 						<?php
 						/**

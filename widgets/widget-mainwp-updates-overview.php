@@ -892,7 +892,7 @@ class MainWP_Updates_Overview {
 						</div>
 						<div class="right aligned column">
 							<a href="<?php echo $detail_aban_plugins; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					</div>
+						</div>
 			</div>
 		</div>
 		<?php

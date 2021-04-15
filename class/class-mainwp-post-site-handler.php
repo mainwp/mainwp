@@ -48,6 +48,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_checkwp', array( &$this, 'mainwp_checkwp' ) );
 		$this->add_action( 'mainwp_addwp', array( &$this, 'mainwp_addwp' ) );
 		$this->add_action( 'mainwp_get_site_icon', array( &$this, 'get_site_icon' ) );
+		$this->add_action( 'mainwp_check_abandoned', array( &$this, 'check_abandoned' ) );
 
 		if ( mainwp_current_user_have_right( 'dashboard', 'test_connection' ) ) {
 			$this->add_action( 'mainwp_testwp', array( &$this, 'mainwp_testwp' ) );
@@ -173,6 +174,23 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 			$siteId = intval( $_POST['siteId'] );
 		}
 		$result = MainWP_Sync::sync_site_icon( $siteId );
+		wp_send_json( $result );
+	}
+
+	/**
+	 * Method check_abandoned()
+	 *
+	 * Check abandoned plugins or themes.
+	 *
+	 */
+	public function check_abandoned() {
+		$this->check_security( 'mainwp_check_abandoned', 'security' );
+		$siteId = null;
+		if ( isset( $_POST['siteId'] ) ) {
+			$siteId = intval( $_POST['siteId'] );
+		}
+		$which = sanitize_text_field( wp_unslash( $_POST['which'] ) );;
+		$result = MainWP_Utility::check_abandoned( $siteId, $which );
 		wp_send_json( $result );
 	}
 

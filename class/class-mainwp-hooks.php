@@ -68,12 +68,13 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
 		add_filter( 'mainwp_get_metaboxes_post', array( &$this, 'get_metaboxes_post' ), 10, 0 );
-		add_filter( 'mainwp_getnotificationemail', array( MainWP_System_Utility::get_class_name(), 'get_notification_email' ), 10, 1 );
+		add_filter( 'mainwp_getnotificationemail', array( &$this, 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_formated_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
 		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
 		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
+		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 2 );
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
 		add_filter( 'mainwp_addsite', array( &$this, 'mainwp_add_site' ), 10, 1 );
@@ -131,6 +132,22 @@ class MainWP_Hooks {
 	 */
 	public function mainwp_log_warning( $text ) {
 		MainWP_Logger::instance()->warning( $text );
+	}
+
+	/**
+	 * Method mainwp_log_action()
+	 *
+	 * MainWP log action.
+	 *
+	 * @param string $text Debug text.
+	 * @param string $priority priority.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Logger::debug()
+	 */
+	public function mainwp_log_action( $text, $priority = 0 ) {
+		if ( ! empty( $priority ) ) {
+			MainWP_Logger::instance()->log_action( $text, $priority );
+		}
 	}
 
 	/**
@@ -734,6 +751,18 @@ class MainWP_Hooks {
 	 */
 	public function get_metaboxes_post() {
 		return MainWP_System::instance()->metaboxes;
+	}
+	
+	/**
+	 * Method get_notification_email()
+	 *
+	 * Hook to get notification email.
+	 *
+	 * @return string Return email.
+	 *
+	 */
+	public function get_notification_email() {
+		return MainWP_Notification_Settings::get_general_email();;
 	}
 
 	/**

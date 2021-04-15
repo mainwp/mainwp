@@ -231,8 +231,7 @@ class MainWP_Extensions_View {
 	public static function render_search_box( $extensions ) {
 		?>
 		<div class="ui stackable grid">
-			<div class="ten wide column"></div>
-			<div class="six wide column">
+			<div class="eight wide column">
 				<div id="mainwp-search-extensions" class="ui fluid search">
 					<div class="ui icon fluid input">
 						<input class="prompt" type="text" placeholder="Find extension...">
@@ -256,6 +255,7 @@ class MainWP_Extensions_View {
 				} );
 				</script>
 			</div>
+			<div class="eight wide right aligned column"></div>
 		</div>
 		<?php
 	}
@@ -406,6 +406,7 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_side_box( $username, $password ) {
 		?>
+		<?php MainWP_UI::render_sidebar_options(); ?>
 		<div class="ui header">
 			<?php esc_html_e( 'Install and Activate Extensions', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Enter your mainwp.com login to automatically install and activate purchased extensions.', 'mainwp' ); ?></div>
@@ -897,8 +898,8 @@ class MainWP_Extensions_View {
 				'link'       => 'https://mainwp.com/extension/virusdie/',
 				'img'        => $folder_url . 'virusdie.png',
 				'product_id' => 'MainWP Virusdie Extension',
-				'catalog_id' => '1133708',
-				'group'      => array( 'admin' ),
+				'catalog_id' => '1213235',
+				'group'      => array( 'security' ),
 			),
 		);
 	}

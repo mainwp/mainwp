@@ -293,6 +293,8 @@ class MainWP_Monitoring_Handler {
 				$email .= ',' . $email_settings['recipients']; // send to recipients.
 			}
 
+			$email = trim( $email, ',' );
+			
 			if ( ! empty( $mail_content ) ) {
 				MainWP_Notification::send_websites_uptime_monitoring( $email, $subject, $mail_content, $plain_text );
 				// update noticed value.
@@ -368,6 +370,8 @@ class MainWP_Monitoring_Handler {
 				$email .= ',' . $email_settings['recipients']; // send to recipients.
 			}
 
+			$email = trim( $email, ',' );
+			
 			if ( ! empty( $email ) && ! empty( $mail_content ) ) {
 				MainWP_Notification::send_websites_health_status_notification( $email, $subject, $mail_content, $plain_text );
 				// update noticed value.

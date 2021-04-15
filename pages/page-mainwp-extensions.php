@@ -409,7 +409,7 @@ class MainWP_Extensions {
 						<div class="item extension-to-install" download-link="' . $package_url . '" product-id="' . $product_id . '">
 							<div class="ui grid">
 								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . $software_title . '</label></span></div>
+									<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
 									<div class="column"><span class="installing-extension" status="queue"></span></div>
 								</div>
 							</div>
@@ -426,7 +426,7 @@ class MainWP_Extensions {
 						<div class="item">
 							<div class="ui grid">
 								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $software_title . '</label></span></div>
+									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
 									<div class="column"><i class="times circle red icon"></i> ' . $error . '</div>
 								</div>
 							</div>

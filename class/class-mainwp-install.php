@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.55';
+	protected $mainwp_db_version = '8.58';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -251,12 +251,19 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$sql[] = 'CREATE TABLE ' . $this->table_name( 'wp_group' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_group' ) . ' (
+  wp_group_id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
-  KEY idx_groupid (groupid)
-        ) ' . $charset_collate;
+  KEY idx_groupid (groupid)';		
+		if ( '' == $currentVersion || version_compare( $currentVersion, '8.57', '<=' ) ) {
+			$tbl .= ',
+  PRIMARY KEY  (wp_group_id)  ';
+		}
+		$tbl  .= ') ' . $charset_collate;
+		$sql[] = $tbl;
+
 
 		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
   task_id int(11) NOT NULL,

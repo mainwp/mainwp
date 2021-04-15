@@ -72,6 +72,14 @@ class MainWP_Logger {
 	private $logPriority = self::DISABLED;
 
 	/**
+	 * Private varibale to hold the log Specific priotrity.
+	 *
+	 * @var string Disabled
+	 */
+	private $logSpecific = 0;
+
+
+	/**
 	 * Private static varibale to hold the instance.
 	 *
 	 * @var mixed Default null
@@ -106,9 +114,10 @@ class MainWP_Logger {
 		$this->logDirectory = MainWP_System_Utility::get_mainwp_dir();
 		$this->logDirectory = $this->logDirectory[0];
 
-		$enabled = $this->get_log_status();
+		$enabled  = $this->get_log_status();
+		$specific = $this->get_log_specific();
 
-		$this->set_log_priority( $enabled );
+		$this->set_log_priority( $enabled, $specific );
 	}
 
 	/**
@@ -118,8 +127,9 @@ class MainWP_Logger {
 	 *
 	 * @param mixed $logPriority Log priority value.
 	 */
-	public function set_log_priority( $logPriority ) {
+	public function set_log_priority( $logPriority, $spec_log = 0 ) {
 		$this->logPriority = $logPriority;
+		$this->logSpecific = $spec_log;
 	}
 
 	/**
@@ -145,6 +155,18 @@ class MainWP_Logger {
 		}
 
 		return $enabled;
+	}
+
+
+	/**
+	 * Method get_log_specific()
+	 *
+	 * Get log specific status.
+	 *
+	 * @return mixed $enabled log status.
+	 */
+	public function get_log_specific() {
+		return get_option( 'mainwp_specific_logs', 0 );
 	}
 
 	/**
@@ -184,6 +206,21 @@ class MainWP_Logger {
 	 */
 	public function warning( $text ) {
 		return $this->log( $text, self::WARNING );
+	}
+
+
+	/**
+	 * Method actions()
+	 *
+	 * Grab actions information.
+	 *
+	 * @param string $text Warning message text.
+	 * @param int    $priority priority message.
+	 *
+	 * @return string Log warning message.
+	 */
+	public function log_action( $text, $priority ) {
+		return $this->log( $text, $priority );
 	}
 
 	/**
@@ -270,7 +307,12 @@ class MainWP_Logger {
 		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
-		if ( $this->logPriority >= $priority ) {
+
+		if ( 1 == $this->logSpecific ) {
+			if ( $this->logPriority == $priority ) {
+				$do_log = true;
+			}
+		} elseif ( $this->logPriority >= $priority ) {
 			$do_log = true;
 		}
 
@@ -328,7 +370,11 @@ class MainWP_Logger {
 		$text = $this->prepare_log_info( $text );
 
 		$do_log = false;
-		if ( $this->logPriority >= $priority ) {
+		if ( 1 == $this->logSpecific ) {
+			if ( $this->logPriority == $priority ) {
+				$do_log = true;
+			}
+		} elseif ( $this->logPriority >= $priority ) {
 			$do_log = true;
 		}
 

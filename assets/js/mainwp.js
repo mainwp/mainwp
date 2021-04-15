@@ -54,6 +54,11 @@ rowMouseLeave = function (elem) {
     jQuery(elem).children('.mainwp-row-actions').hide();
 };
 
+
+mainwp_sidebar_position_onchange = function(me) {
+  jQuery(me).closest("form").submit();
+}
+
 /**
  * Recent posts
  */
@@ -610,6 +615,21 @@ securityIssues_handle = function (response) {
           }
         }
       }
+
+      var unSetFeatures = jQuery('#mainwp-security-issues-table').attr('un-set');
+      if ( unSetFeatures != '' ) {
+        unSetFeatures = unSetFeatures.split(',');
+        if ( unSetFeatures.length > 0 ) {
+          for (var ival in unSetFeatures) {            
+            issue = unSetFeatures[ival];
+            console.log( res[issue] );
+            if (res[issue] == 'Y') {
+              securityIssues_unfix( issue );
+            }            
+          }          
+        }
+      }
+
     } catch (err) {
       result = '<i class="exclamation circle icon"></i> ' + __('Undefined error!');
     }
@@ -618,6 +638,128 @@ securityIssues_handle = function (response) {
     //show error!
   }
 };
+
+updatesoverview_bulk_check_abandoned = function ( which ) {
+    if ( 'plugin' == which ) {
+      confirmMsg = __( "You are about to check abandoned plugins on the sites?" );
+    } else {
+      confirmMsg = __( "You are about to check abandoned themes on the sites?" );
+    }
+    mainwp_confirm( confirmMsg, _callback = function(){ mainwp_managesites_bulk_check_abandoned( 'all', which ); } );
+}
+
+mainwp_managesites_bulk_check_abandoned = function ( siteIds, which )
+{
+    var allWebsiteIds = jQuery( '.dashboard_wp_id' ).map( function ( indx, el ) {
+        return jQuery( el ).val();
+    } );
+
+    if ( 'all' == siteIds ) {
+      siteIds = allWebsiteIds;
+    }
+
+    var selectedIds = [ ], excludeIds = [ ];
+    if ( siteIds instanceof Array ) {
+        jQuery.grep( allWebsiteIds, function ( el ) {
+            if ( jQuery.inArray( el, siteIds ) !== -1 ) {
+                selectedIds.push( el );
+            } else {
+                excludeIds.push( el );
+            }
+        } );
+        for ( var i = 0; i < excludeIds.length; i++ )
+        {
+            dashboard_update_site_hide( excludeIds[i] );
+        }
+        allWebsiteIds = selectedIds;
+        //jQuery('#refresh-status-total').text(allWebsiteIds.length);
+    }
+
+    var nrOfWebsites = allWebsiteIds.length;
+
+    if ( nrOfWebsites == 0 )
+        return false;
+
+    var siteNames = { };
+
+    for ( var i = 0; i < allWebsiteIds.length; i++ )
+    {
+        dashboard_update_site_status( allWebsiteIds[i], '<i class="clock outline icon"></i>');
+        siteNames[allWebsiteIds[i]] = jQuery( '.sync-site-status[siteid="' + allWebsiteIds[i] + '"]' ).attr( 'niceurl' );
+    }
+    var initData = {
+        progressMax: nrOfWebsites,
+        title: 'Check abandoned ' + ( 'plugin' == which ? 'plugins' : 'themes') ,
+        statusText: __( 'started' ),
+        callback: function () {
+            bulkManageSitesTaskRunning = false;
+            window.location.href = location.href;
+        }
+    };
+    mainwpPopup( '#mainwp-sync-sites-modal' ).init( initData );
+    
+    mainwp_managesites_check_abandoned_all_int( allWebsiteIds, which );
+};
+
+mainwp_managesites_check_abandoned_all_int = function ( websiteIds, which )
+{
+    websitesToUpgrade = websiteIds;
+    currentWebsite = 0;
+    websitesDone = 0;
+    websitesTotal = websitesLeft = websitesToUpgrade.length;
+
+    bulkTaskRunning = true;
+    mainwp_managesites_check_abandoned_all_loop_next( which );
+};
+
+mainwp_managesites_check_abandoned_all_loop_next = function ( which )
+{
+    while ( bulkTaskRunning && ( currentThreads < maxThreads ) && ( websitesLeft > 0 ) )
+    {
+        mainwp_managesites_check_abandoned_all_upgrade_next( which );
+    }
+};
+mainwp_managesites_check_abandoned_all_upgrade_next = function ( which )
+{
+    currentThreads++;
+    websitesLeft--;
+
+    var websiteId = websitesToUpgrade[currentWebsite++];
+    dashboard_update_site_status( websiteId, '<i class="sync alternate loading icon"></i>' );
+
+    mainwp_managesites_check_abandoned_int( websiteId, which );
+};
+
+mainwp_managesites_check_abandoned_int = function( siteid, which ) {
+
+    var data = mainwp_secure_data({
+        action:'mainwp_check_abandoned',
+        siteId: siteid,
+        which: which
+    });
+
+    jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: data,
+        success: function(pSiteid) { return function (response) {
+            currentThreads--;
+            websitesDone++;
+            mainwpPopup( '#mainwp-sync-sites-modal' ).setProgressSite( websitesDone );
+            if (response.error != undefined)
+            {
+                dashboard_update_site_status( pSiteid, '<i class="red times icon"></i>' );
+            } else if (response.result && response.result == 'success') {
+                dashboard_update_site_status(pSiteid, '<i class="green check icon"></i>', true );
+            } else {
+                dashboard_update_site_status( pSiteid, '<i class="red times icon"></i>' );
+            }
+            mainwp_managesites_check_abandoned_all_loop_next( which );
+        } }( siteid),
+        dataType: 'json'});
+    return false;
+};
+
 
 /**
  * Sync Sites

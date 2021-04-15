@@ -59,7 +59,8 @@ class MainWP_Page {
 		 *
 		 * @see \MainWP_Page::render_header
 		 */
-		add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp-pageheader-page', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_page' instead.
+		add_action( 'mainwp_pageheader_page', array( self::get_class_name(), 'render_header' ) );
 
 		/**
 		 * This hook allows you to render the Page page footer via the 'mainwp-pagefooter-page' action.
@@ -72,6 +73,7 @@ class MainWP_Page {
 		 * @see \MainWP_Page::render_footer
 		 */
 		add_action( 'mainwp-pagefooter-page', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp_pagefooter_page', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) ); // Hook the Help Sidebar content.
 	}
@@ -515,8 +517,9 @@ class MainWP_Page {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_pages_sidebar_top' );
+				MainWP_UI::render_sidebar_options();
 				?>
-				<div class="mainwp-select-sites">
+				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
 					 * Action: mainwp_manage_pages_before_select_sites
@@ -527,8 +530,8 @@ class MainWP_Page {
 					 */
 					do_action( 'mainwp_manage_pages_before_select_sites' );
 					?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_pages_after_select_sites
@@ -540,9 +543,10 @@ class MainWP_Page {
 					do_action( 'mainwp_manage_pages_after_select_sites' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					/**
 					 * Action: mainwp_manage_pages_before_search_options
@@ -567,9 +571,11 @@ class MainWP_Page {
 						</div>
 					</div>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+				</div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php self::render_search_options(); ?>
 					<?php
 					/**
@@ -582,7 +588,8 @@ class MainWP_Page {
 					do_action( 'mainwp_manage_pages_after_search_options' );
 					?>
 				</div>
-				<div class="ui divider"></div>
+				</div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php
 					/**

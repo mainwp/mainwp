@@ -336,8 +336,9 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						 * @since 4.1
 						 */
 						do_action( 'mainwp_admin_pass_sidebar_top' );
+						MainWP_UI::render_sidebar_options();
 						?>
-						<div class="mainwp-select-sites">
+						<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 							<?php
 							/**
 							 * Action: mainwp_admin_pass_before_select_sites
@@ -348,8 +349,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							 */
 							do_action( 'mainwp_admin_pass_before_select_sites' );
 							?>
-							<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-							<?php MainWP_UI::select_sites_box(); ?>
+							<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+							<div class="content active"><?php MainWP_UI::select_sites_box(); ?></div>
 							<?php
 							/**
 							 * Action: mainwp_admin_pass_after_select_sites
@@ -361,9 +362,10 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							do_action( 'mainwp_admin_pass_after_select_sites' );
 							?>
 						</div>
-						<div class="ui divider"></div>
-						<div class="mainwp-search-options">
-							<div class="ui header"><?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
+						<div class="ui fitted divider"></div>
+						<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+							<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Update Admin Password', 'mainwp' ); ?></div>
+							<div class="content active">
 							<?php
 							/**
 							 * Action: mainwp_admin_pass_before_pass_form
@@ -396,7 +398,8 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							do_action( 'mainwp_admin_pass_after_pass_form' );
 							?>
 						</div>
-						<div class="ui divider"></div>
+						</div>
+						<div class="ui fitted divider"></div>
 						<div class="mainwp-search-submit">
 							<?php
 							/**

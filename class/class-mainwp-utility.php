@@ -928,4 +928,37 @@ class MainWP_Utility {
 		return true;
 	}
 
+	/**
+	 * Method check_abandoned()
+	 *
+	 * Get site's icon.
+	 *
+	 * @param mixed $siteId site's id.
+	 *
+	 * @return array result error or success
+	 * @throws \Exception Error message.
+	 *
+	 */
+	public static function check_abandoned( $siteId = null, $which ) {
+		if ( MainWP_Utility::ctype_digit( $siteId ) ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+				$error = '';
+				try {
+					$information = MainWP_Connect::fetch_url_authed( $website, 'check_abandoned' );
+				} catch ( MainWP_Exception $e ) {
+					$error = $e->getMessage();
+				}
+
+				if ( '' != $error ) {
+					return array( 'error' => $error );
+				} elseif ( isset( $information['success'] ) && ! empty( $information['success'] ) ) {
+					return array( 'result' => 'success' );
+				} else {
+					return array( 'undefined_error' => true );
+				}
+			}
+		}
+		return array( 'result' => 'NOSITE' );
+	}
 }

@@ -258,7 +258,6 @@ class MainWP_System_Cron_Jobs {
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_site_icon()
 	 * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
@@ -291,6 +290,7 @@ class MainWP_System_Cron_Jobs {
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
 		$mainwpLastAutomaticUpdate    = get_option( 'mainwp_updatescheck_last' );
+		$mainwpLastDailyDigest        = get_option( 'mainwp_dailydigest_last' ); // to send daily digest one time per day.
 
 		$sync_time_runable = false;
 		if ( ! $updatecheck_running ) {
@@ -394,6 +394,8 @@ class MainWP_System_Cron_Jobs {
 		MainWP_Logger::instance()->debug( 'CRON :: backup task running :: found ' . ( count( $checkupdate_websites ) - count( $websites ) ) . ' websites' );
 		MainWP_Logger::instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 
+		MainWP_Logger::instance()->log_action( 'CRON :: updates check found ' . count( $checkupdate_websites ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+
 		$userid = null;
 		foreach ( $websites as $website ) {
 			$websiteValues = array(
@@ -432,6 +434,8 @@ class MainWP_System_Cron_Jobs {
 				}
 			}
 
+			MainWP_Logger::instance()->log_action( 'CRON :: sites to check update empty', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+
 			if ( 'Y' != get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', 'Y' );
 				return false; // return to check time to send mail.
@@ -447,14 +451,18 @@ class MainWP_System_Cron_Jobs {
 
 			$diff_day  = false;
 			$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
-			if ( $today_m_y !== $mainwpLastAutomaticUpdate ) {
+			MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
+
+			if ( $today_m_y !== $mainwpLastDailyDigest ) {
 				$diff_day = true;
-				MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
+				MainWP_Utility::update_option( 'mainwp_dailydigest_last', $today_m_y );
 
 				// send daily digest email one time per day.
 				$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
 
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
+
+				MainWP_Logger::instance()->log_action( 'CRON :: got to the daily digest mail part', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 				$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
 				if ( ! $gen_email_settings['disable'] ) {
@@ -496,6 +504,8 @@ class MainWP_System_Cron_Jobs {
 
 			return;
 		} else {
+
+			MainWP_Logger::instance()->log_action( 'CRON :: Updates check is running', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 			if ( ! $updatecheck_running ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );

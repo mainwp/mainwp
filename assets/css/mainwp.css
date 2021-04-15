@@ -35,6 +35,15 @@
     padding-left: 1em;
 }
 
+.mainwp-sidebar-accordion .title {
+  font-weight: bolder;
+}
+
+.mainwp-sidebar-options {
+    background: #f9fafb;
+    padding: 10px;
+}
+
 .mainwp-ui .button {
   height: auto !important;
   margin: 0 !important; }
@@ -134,14 +143,11 @@
 
 /* Sidebar */
 
-.mainwp-select-sites {
-  margin-top: 1rem;
-}
-
 .mainwp-select-sites,
 .mainwp-search-options,
 .mainwp-search-submit {
-  padding: 10px; }
+  padding: 10px;
+}
 
 /* Select Sites */
 

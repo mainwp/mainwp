@@ -88,6 +88,8 @@ class MainWP_Notification {
 			$email .= ',' . $email_settings['recipients']; // send to recipients.
 		}
 
+		$email = trim( $email, ',' );
+
 		if ( ! empty( $email ) ) {
 			MainWP_Logger::instance()->debug( 'CRON :: http check :: send mail ::' );
 			self::send_wp_mail(
@@ -134,6 +136,8 @@ class MainWP_Notification {
 			$email .= ',' . $email_settings['recipients']; // send to recipients, individual email settings or general email settings.
 		}
 
+		$email = trim( $email, ',' );
+		
 		if ( empty( $email ) ) {
 			return false;
 		}
@@ -173,6 +177,8 @@ class MainWP_Notification {
 		);
 
 		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digest :: send mail ::' );
+		MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+
 		$subject = $email_settings['subject'];
 		self::send_wp_mail(
 			$email,

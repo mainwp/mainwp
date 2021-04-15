@@ -12,12 +12,12 @@ jQuery( document ).on( 'click', '#mainwp-do-sites-bulk-actions', function () {
 /* eslint-disable complexity */
 mainwp_managesites_doaction = function ( action ) {
 
-  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' ) {
+  if ( action == 'delete' || action == 'test_connection' || action == 'sync' || action == 'reconnect' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'refresh_favico' || action == 'checknow' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' ) {
 
     if ( bulkManageSitesTaskRunning )
       return false;
       
-    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'update_everything' ) {
+    if ( action == 'delete' || action == 'update_plugins' || action == 'update_themes' || action == 'update_wpcore' || action == 'update_translations' || action == 'update_everything' || action == 'check_abandoned_plugin' || action == 'check_abandoned_theme' ) {
       var confirmMsg = '';
       var _selection_cancelled = false;      
       switch ( action ) {
@@ -41,6 +41,14 @@ mainwp_managesites_doaction = function ( action ) {
                 _selection_cancelled = true;
             case 'update_everything':
                 confirmMsg = __( "You are about to update everything on the selected sites?" );
+                _selection_cancelled = true;
+            break;
+            case 'check_abandoned_plugin':
+                confirmMsg = __( "You are about to check abandoned plugin on the selected sites?" );
+                _selection_cancelled = true;
+            break;
+            case 'check_abandoned_theme':
+                confirmMsg = __( "You are about to check abandoned theme on the selected sites?" );
                 _selection_cancelled = true;
             break;            
       }
@@ -125,7 +133,11 @@ mainwp_managesites_doaction_process = function( action ) {
 	  mainwp_managesites_bulk_refresh_favico(selectedIds);
 	} else if (action == 'checknow') {            
 	  mainwp_sync_sites_data( selectedIds, 'checknow' );
-	}
+	} else if (action == 'check_abandoned_plugin') {            
+	  mainwp_managesites_bulk_check_abandoned(selectedIds,'plugin');    
+	} else if (action == 'check_abandoned_theme') {            
+	  mainwp_managesites_bulk_check_abandoned(selectedIds,'theme');    
+	} 
 }
    
 

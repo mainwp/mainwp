@@ -171,6 +171,21 @@ class Rest_Api {
 				'callback' => 'disconnect-sites',
 			),
 			array(
+				'route'    => 'sites',
+				'method'   => 'POST',
+				'callback' => 'http-status',
+			),
+			array(
+				'route'    => 'sites',
+				'method'   => 'POST',
+				'callback' => 'health-score',
+			),
+			array(
+				'route'    => 'sites',
+				'method'   => 'POST',
+				'callback' => 'security-issues',
+			),
+			array(
 				'route'    => 'site',
 				'method'   => 'GET',
 				'callback' => 'site',
@@ -719,18 +734,21 @@ class Rest_Api {
 		// first validate the request.
 		if ( $this->mainwp_validate_request( $request ) ) {
 
+			$data = array();
+
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				try {
-					MainWP_Sync::sync_site( $website );
+					$ret = MainWP_Sync::sync_site( $website );
 				} catch ( \Exception $e ) {
-					// ok.
+					$ret = false;
 				}
+				$data[ $website->id ] = $ret ? 'success' : 'failed';
 			}
 			MainWP_DB::free_result( $websites );
 
-			// do common process response.
-			$response = $this->mainwp_run_process_success();
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
 
 		} else {
 			// throw common error.
@@ -756,18 +774,21 @@ class Rest_Api {
 		// first validate the request.
 		if ( $this->mainwp_validate_request( $request ) ) {
 
+			$data = array();
+
 			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				try {
-					MainWP_Monitoring_Handler::handle_check_website( $website );
+					$ret = MainWP_Monitoring_Handler::handle_check_website( $website );
 				} catch ( \Exception $e ) {
-					// ok.
+					$ret = false;
 				}
+				$data[ $website->id ] = $ret ? 'success' : 'failed';
 			}
 			MainWP_DB::free_result( $websites );
 
-			// do common process response.
-			$response = $this->mainwp_run_process_success();
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
 
 		} else {
 			// throw common error.
@@ -806,6 +827,110 @@ class Rest_Api {
 			// do common process response.
 			$response = $this->mainwp_run_process_success();
 
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_http_status_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: http-status
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/http-status
+	 * API Method: POST
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_http_status_callback( $request ) {
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+			$data     = array();
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+				$data[ $website->id ] = $website->http_response_code;
+			}
+			MainWP_DB::free_result( $websites );
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+		return $response;
+	}
+
+
+	/**
+	 * Method mainwp_rest_api_health_score_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: health-score
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/health-score
+	 * API Method: POST
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_health_score_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+			$data                 = array();
+			$params['extra_view'] = array( 'health_site_status' );
+			$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+				$health_status = isset( $website->health_site_status ) ? json_decode( $website->health_site_status, true ) : array();
+				$hstatus       = MainWP_Utility::get_site_health( $health_status );
+				$hval          = $hstatus['val'];
+				$critical      = $hstatus['critical'];
+				if ( 80 <= $hval && 0 == $critical ) {
+					$health_score = 'Good';
+				} else {
+					$health_score = 'Should be improved';
+				}
+				$data[ $website->id ] = $health_score;
+			}
+			MainWP_DB::free_result( $websites );
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_security_issues_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: security-issues
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/security-issues
+	 * API Method: POST
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_security_issues_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+			$data                 = array();
+			$params['extra_view'] = array( 'health_site_status' );
+			$websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+				$ret                  = MainWP_Connect::fetch_url_authed( $website, 'security' );
+				$data[ $website->id ] = $ret;
+			}
+			MainWP_DB::free_result( $websites );
+			$response = new \WP_REST_Response( $data );
+			$response->set_status( 200 );
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();
@@ -2622,7 +2747,7 @@ class Rest_Api {
 
 			$all_updates = array();
 
-			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+			$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true ) );
 
 			while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
 				$wp_upgrades                 = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
@@ -2634,6 +2759,7 @@ class Rest_Api {
 					'plugins'     => $plugin_upgrades,
 					'themes'      => $theme_upgrades,
 					'translation' => $translation_upgrades,
+					'groups'      => $website->wpgroups,
 				);
 			}
 			MainWP_DB::free_result( $websites );

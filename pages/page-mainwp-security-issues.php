@@ -46,9 +46,9 @@ class MainWP_Security_Issues {
 		if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
 			return;
 		}
+		$unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
 		?>
-
-		<table class="ui table" id="mainwp-security-issues-table">
+		<table class="ui table" id="mainwp-security-issues-table" un-set="<?php echo $unset_scripts ? "versions,registered_versions" : ""; ?>">
 		<thead>
 				<tr>
 					<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
@@ -157,18 +157,20 @@ class MainWP_Security_Issues {
 						<span id="php_reporting_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
 					</td>
 				</tr>
+				<?php if ( ! $unset_scripts ) { ?>
 				<tr>
 					<td>
 						<span id="versions_loading"><i class="notched circle big loading icon"></i></span>
 						<span id="versions_ok" style="display: none;"><i class="big check circle green icon"></i></span>
 						<span id="versions_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-					</td>
+					</td>					
 					<td>
 						<strong id="versions-status-nok"><?php esc_html_e( 'Scripts and Stylesheets version information has not been removed from URLs', 'mainwp' ); ?></strong>
 						<strong id="versions-status-ok" style="display: none;"><?php esc_html_e( 'Scripts and Stylesheets version information has been removed from URLs', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php esc_html_e( 'After fixing this issue, versions will be removed', 'mainwp' ); ?></em>
 					</td>
+					
 					<td>
 						<span id="versions_fix" style="display: none"><a href="#" class="ui mini green fluid button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
 						<span id="versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
@@ -179,18 +181,19 @@ class MainWP_Security_Issues {
 						<span id="registered_versions_loading"><i class="notched circle big loading icon"></i></span>
 						<span id="registered_versions_ok" style="display: none;"><i class="big check circle green icon"></i></span>
 						<span id="registered_versions_nok" style="display: none;"><i class="big times circle red icon"></i></span>
-					</td>
+					</td>					
 					<td>
 						<strong id="registered_versions-status-nok"><?php esc_html_e( 'Scripts and Stylesheets registered version information has not been removed from URLs', 'mainwp' ); ?></strong>
 						<strong id="registered_versions-status-ok" style="display: none;"><?php esc_html_e( 'Scripts and Stylesheets registered version information has been removed from URLs', 'mainwp' ); ?></strong>
 						<br />
 						<em><?php esc_html_e( 'After fixing this issue, registered versions will be removed', 'mainwp' ); ?></em>
-					</td>
+					</td>					
 					<td>
 						<span id="registered_versions_fix" style="display: none"><a href="#" class="ui mini fluid green button"><?php esc_html_e( 'Fix', 'mainwp' ); ?></a></span>
 						<span id="registered_versions_unfix" style="display: none"><a href="#" class="ui mini fluid button"><?php esc_html_e( 'Unfix', 'mainwp' ); ?></a></span>
 					</td>
 				</tr>
+				<?php } ?>
 				<?php
 					$is_wpengine = false;
 				if ( property_exists( $website, 'wpe' ) && 1 == $website->wpe ) {
@@ -245,7 +248,7 @@ class MainWP_Security_Issues {
 					</th>
 				</tr>
 			</tfoot>
-		</table>
+		</table>		
 		<?php
 	}
 

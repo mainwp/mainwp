@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  4.1.5.1
+ * Version:  4.1.6
  *
  * @package MainWP/Dashboard
  *
@@ -44,6 +44,14 @@ if ( ! defined( 'MAINWP_PLUGIN_URL' ) ) {
 	 * @source https://github.com/mainwp/mainwp/blob/master/mainwp.php
 	 */
 	define( 'MAINWP_PLUGIN_URL', plugin_dir_url( MAINWP_PLUGIN_FILE ) );
+}
+
+if ( ! defined( 'MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER' ) ) {
+	/**
+	 * Define MainWP daily disgest log priority number.
+	 *
+	 */
+	define( 'MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER', 10 );
 }
 
 // Version information from WordPress.

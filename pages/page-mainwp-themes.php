@@ -458,8 +458,9 @@ class MainWP_Themes {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_themes_sidebar_top' );
+				MainWP_UI::render_sidebar_options();
 				?>
-				<div class="mainwp-select-sites">
+				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_before_select_sites
@@ -470,8 +471,8 @@ class MainWP_Themes {
 					 */
 					do_action( 'mainwp_manage_themes_before_select_sites' );
 					?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_after_select_sites
@@ -483,9 +484,10 @@ class MainWP_Themes {
 					do_action( 'mainwp_manage_themes_after_select_sites' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="active title"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_before_search_options
@@ -520,12 +522,13 @@ class MainWP_Themes {
 					do_action( 'mainwp_manage_themes_after_search_options' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<?php self::render_search_options(); ?>
 				</div>
-				<div class="ui divider"></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active"><?php self::render_search_options(); ?></div>
+				</div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php
 					/**
@@ -809,10 +812,12 @@ class MainWP_Themes {
 
 			foreach ( $output->themes as $theme ) {
 
+				error_log( print_r( $theme, true ) );
 				$theme['name']       = esc_html( $theme['name'] );
 				$theme['version']    = esc_html( $theme['version'] );
 				$theme['title']      = esc_html( $theme['title'] );
 				$theme['slug']       = esc_html( $theme['slug'] );
+				$theme['active']     = ( 1 == $theme['active'] ) ? 1 : 0;
 				$theme['websiteurl'] = esc_url_raw( $theme['websiteurl'] );
 
 				$sites[ $theme['websiteid'] ]                                  = $theme['websiteurl'];
@@ -880,7 +885,7 @@ class MainWP_Themes {
 		<table id="mainwp-manage-themes-table" class="ui celled selectable compact single line definition table">
 			<thead>
 				<tr>
-					<th></th>
+					<th class="mainwp-first-th no-sort"></th>
 					<?php
 					/**
 					 * Action: mainwp_manage_themes_table_header
@@ -895,11 +900,8 @@ class MainWP_Themes {
 						$th_id       = strtolower( $theme_name );
 						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
-						<th id="<?php echo esc_attr( $th_id ); ?>">
-							<div class="ui checkbox not-auto-init">
-								<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" id="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" class="mainwp_theme_check_all" />
-								<label for="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>"><?php echo esc_html( $theme_title ); ?></label>
-							</div>
+						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned mainwp-manage-themes-theme-name">
+							<?php echo esc_html( $theme_title ); ?>
 						</th>
 					<?php endforeach; ?>
 				</tr>
@@ -909,10 +911,11 @@ class MainWP_Themes {
 				<tr>
 					<td>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
-						<div class="ui checkbox">
-							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all" />
-							<label><?php echo esc_html( $site_url ); ?></label>
-						</div>
+						<div class="ui slider checkbox">
+							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
+					    </div>
+						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
+						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $site_url ); ?></a>
 					</td>
 					<?php
 					/**
@@ -925,18 +928,61 @@ class MainWP_Themes {
 					do_action( 'mainwp_manage_themes_table_column', $site_id );
 					?>
 					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
-						<td class="center aligned">
+					<?php 
+						$active_status_class = '';
+						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['active'] ) {
+							$active_status_class = 'positive';
+						} elseif ( isset( $siteThemes[ $site_id ][ $theme_name ]['active'] ) && 0 == $siteThemes[ $site_id ][ $theme_name ]['active'] ) {
+							$active_status_class = 'negative';
+						} else {
+							$active_status_class = '';
+						}
+					?>
+						<td class="center aligned <?php echo $active_status_class; ?>">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
 								<div class="ui checkbox">
 									<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" name="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" class="mainwp-selected-theme" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" slug="<?php echo esc_attr( $themesSlug[ $theme_name ] ); ?>"  />
+									<label></label>
 								</div>
+							</div>
 							<?php endif; ?>
 						</td>
 					<?php endforeach; ?>
 				</tr>
 				<?php endforeach; ?>
 			</tbody>
+			<tfoot>			
+				<tr>
+					<th class="mainwp-first-th"></th>
+					<?php
+					/**
+					 * Action: mainwp_manage_themes_table_header
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_themes_table_header' );
+					?>
+					<?php foreach ( $themesVersion as $theme_name => $theme_info ) : ?>
+						<?php
+						$theme_title = $theme_info['title'] . ' ' . $theme_info['ver'];
+						$th_id       = strtolower( $theme_name );
+						$th_id       = preg_replace( '/[[:space:]]+/', '_', $th_id );
+						?>
+						<th id="<?php echo esc_attr( $th_id ); ?>" class="center aligned">
+							<div class="ui slider checkbox not-auto-init">
+								<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" id="<?php echo esc_attr( $themes[ $theme_name ] ); ?>-<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" class="mainwp_theme_check_all" />
+								<label></label>
+							</div>
+						</th>
+					<?php endforeach; ?>
+				</tr>
+			</tfoot>
 		</table>
+		<div class="ui horizontal list">
+			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
+		</div>
 		<?php
 		/**
 		 * Action: mainwp_after_themes_table
@@ -969,13 +1015,23 @@ class MainWP_Themes {
 		 * @since 4.1
 		 */
 		$table_features = apply_filters( 'mainwp_themes_table_features', $table_features );
-		?>
+		?>		
 		<style type="text/css">
-			.DTFC_LeftBodyLiner { overflow-x: hidden; }
-			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
-			.DTFC_LeftHeadWrapper table { border: none !important; }
-			.dataTables_scrollHeadInner thead th .ui.checkbox label{ height: 25px;}
+			thead th.mainwp-first-th {
+				position: sticky !important;
+				left: 0  !important;
+				top: 0  !important;
+					z-index: 9 !important;
+			}
+			#mainwp-manage-themes-table tbody tr td:first-child {
+				position: sticky !important;
+				left: 0;
+				top: 0;
+				background: #f9fafb;
+				z-index: 9 !important;
+			}
 		</style>
+
 		<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
 				jQuery( '#mainwp-manage-themes-table' ).DataTable( {
@@ -1152,9 +1208,11 @@ class MainWP_Themes {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
-				<div class="mainwp-select-sites">
+				<?php MainWP_UI::render_sidebar_options(); ?>
+				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php do_action( 'mainwp_manage_themes_before_select_sites' ); ?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="active title"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					$selected_sites  = array();
 					$selected_groups = array();
@@ -1166,12 +1224,14 @@ class MainWP_Themes {
 					}
 					?>
 					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					</div>
 					<?php do_action( 'mainwp_manage_themes_after_select_sites' ); ?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 					<?php do_action( 'mainwp_manage_themes_before_search_options' ); ?>
-					<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
+					<div class="content active">
 					<div class="ui form">
 						<div class="field">
 							<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled and the theme already installed on the sites, the already installed version will be overwritten.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
@@ -1180,9 +1240,10 @@ class MainWP_Themes {
 							</div>
 						</div>
 					</div>
+					</div>
 					<?php do_action( 'mainwp_manage_themes_after_search_options' ); ?>
 				</div>
-				<div class="ui divider"></div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php do_action( 'mainwp_manage_themes_before_submit_button' ); ?>
 				<?php
@@ -1369,10 +1430,11 @@ class MainWP_Themes {
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
 					<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
-					<div class="mainwp-search-options" style="margin-top:1rem">
+					<?php MainWP_UI::render_sidebar_options(); ?>
+					<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
-							<p><?php echo sprintf( __( 'Check out %show to disable the WordPress built in auto-updates feature%s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
+							<p><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
 						</div>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="themes-auto-updates"></i>
@@ -1380,7 +1442,8 @@ class MainWP_Themes {
 							<p><?php esc_html_e( 'Only mark themes as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!	', 'mainwp' ); ?></p>
 							<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></p>
 						</div>
-						<div class="ui header"><?php esc_html_e( 'Theme Status to Search', 'mainwp' ); ?></div>
+						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Theme Status to Search', 'mainwp' ); ?></div>
+						<div class="content active">
 						<div class="ui mini form">
 							<div class="field">
 								<select class="ui fluid dropdown" id="mainwp_au_theme_status">
@@ -1391,10 +1454,12 @@ class MainWP_Themes {
 							</div>
 						</div>
 					</div>
-					<div class="ui divider"></div>
-					<div class="mainwp-search-options">
+					</div>
+					<div class="ui fitted divider"></div>
+					<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 						<?php do_action( 'mainwp_manage_themes_before_search_options' ); ?>
-						<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+						<div class="content active">
 						<div class="ui mini form">
 							<div class="field">
 								<select class="ui fluid dropdown" id="mainwp_au_theme_trust_status">
@@ -1410,9 +1475,10 @@ class MainWP_Themes {
 								</div>
 							</div>
 						</div>
+						</div>
 						<?php do_action( 'mainwp_manage_themes_after_search_options' ); ?>
 					</div>
-					<div class="ui divider"></div>
+					<div class="ui fitted divider"></div>
 					<div class="mainwp-search-submit">
 						<?php do_action( 'mainwp_manage_themes_before_submit_button' ); ?>
 						<a href="#" class="ui green big fluid button" id="mainwp_show_all_active_themes"><?php esc_html_e( 'Show Themes', 'mainwp' ); ?></a>

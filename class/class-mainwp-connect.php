@@ -486,7 +486,7 @@ class MainWP_Connect {
 			$params = array();
 		}
 
-		$chunkSize = 10;
+		$chunkSize = apply_filters( 'mainwp_fetch_urls_chunk_size', 10 );
 		if ( count( $websites ) > $chunkSize ) {
 			$total = count( $websites );
 			$loops = ceil( $total / $chunkSize );

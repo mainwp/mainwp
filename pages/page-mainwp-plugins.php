@@ -479,8 +479,10 @@ class MainWP_Plugins {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_plugins_sidebar_top' );
-				?>
-				<div class="mainwp-select-sites">
+				
+				MainWP_UI::render_sidebar_options();
+				?>				
+				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_before_select_sites
@@ -491,8 +493,8 @@ class MainWP_Plugins {
 					 */
 					do_action( 'mainwp_manage_plugins_before_select_sites' );
 					?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-						<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_after_select_sites
@@ -504,9 +506,10 @@ class MainWP_Plugins {
 					do_action( 'mainwp_manage_plugins_after_select_sites' );
 					?>
 					</div>
-					<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+					<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_before_search_options
@@ -541,12 +544,13 @@ class MainWP_Plugins {
 					do_action( 'mainwp_manage_plugins_after_search_options' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-						<?php self::render_search_options(); ?>
 					</div>
-					<div class="ui divider"></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active"><?php self::render_search_options(); ?></div>
+				</div>
+				<div class="ui fitted divider"></div>
 					<div class="mainwp-search-submit">
 					<?php
 					/**
@@ -952,10 +956,10 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" class="ui celled selectable compact single line definition table">
+		<table id="mainwp-manage-plugins-table" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
-					<th></th>
+					<th class="mainwp-first-th no-sort"></th>
 					<?php
 					/**
 					 * Action: mainwp_manage_plugins_table_header
@@ -970,11 +974,8 @@ class MainWP_Plugins {
 						$th_id        = strtolower( $plugin_name );
 						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
 						?>
-						<th id="<?php echo esc_html( $th_id ); ?>">
-							<div class="ui checkbox not-auto-init">
-								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
-								<label for="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>"><?php echo esc_html( $plugin_title ); ?></label>
-							</div>
+						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned mainwp-manage-plugins-plugin-name">
+							<?php echo esc_html( $plugin_title ); ?>
 						</th>
 					<?php endforeach; ?>
 				</tr>
@@ -983,11 +984,12 @@ class MainWP_Plugins {
 				<?php foreach ( $sites as $site_id => $site_url ) : ?>
 				<tr>
 					<td>
-					<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
-					<div class="ui checkbox">
-						<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/>
-						<label><?php echo esc_html( $site_url ); ?></label>
-					</div>
+						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
+						<div class="ui slider checkbox">
+							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
+						</div>
+						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
+						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $site_url ); ?></a>
 					</td>
 					<?php
 					/**
@@ -1000,7 +1002,23 @@ class MainWP_Plugins {
 					do_action( 'mainwp_manage_plugins_table_column', $site_id );
 					?>
 					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
-					<td class="center aligned">
+						<?php
+						$active_status_class = '';
+
+						if ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 1 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
+							$active_status_class = 'positive';
+						} else if ( isset( $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) && 0 == $sitePlugins[ $site_id ][ $plugin_name ]['active'] ) {
+							$active_status_class = 'negative';
+						} else {
+							$active_status_class = '';
+						}
+
+						if ( isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 1 == $muPlugins[ $plugin_name ] ) ) {
+							$active_status_class = 'warning';
+						}
+
+						?>
+						<td class="center aligned <?php echo $active_status_class; ?>">
 						<?php if ( isset( $sitePlugins[ $site_id ] ) && isset( $sitePlugins[ $site_id ][ $plugin_name ] ) && ( 0 == $muPlugins[ $plugin_name ] ) ) : ?>
 							<?php if ( ! isset( $pluginsMainWP[ $plugin_name ] ) || 'F' === $pluginsMainWP[ $plugin_name ] ) : ?>
 						<div class="ui checkbox">
@@ -1015,7 +1033,39 @@ class MainWP_Plugins {
 				</tr>
 				<?php endforeach; ?>
 				</tbody>
+			<tfoot>
+				<tr>
+					<th class="mainwp-first-th"></th>
+					<?php
+					/**
+					 * Action: mainwp_manage_plugins_table_header
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_manage_plugins_table_header' );
+					?>
+					<?php foreach ( $pluginsVersion as $plugin_name => $plugin_info ) : ?>
+						<?php
+						$plugin_title = $plugin_info['name'] . ' ' . $plugin_info['ver'];
+						$th_id        = strtolower( $plugin_name );
+						$th_id        = preg_replace( '/[[:space:]]+/', '_', $th_id );
+						?>
+						<th id="<?php echo esc_html( $th_id ); ?>" class="center aligned">
+							<div class="ui slider checkbox">
+								<input type="checkbox" value="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] ); ?>" id="<?php echo wp_strip_all_tags( $plugins[ $plugin_name ] . '-' . $pluginsRealVersion[ $plugin_name ] ); ?>" version="<?php echo wp_strip_all_tags( $pluginsRealVersion[ $plugin_name ] ); ?>" class="mainwp_plugin_check_all" />
+								<label></label>
+							</div>
+						</th>
+					<?php endforeach; ?>
+				</tr>
+			</tfoot>
 			</table>
+		<div class="ui horizontal list">
+			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#fff4e4;border:1px solid #ffd598;"></a> <?php echo esc_html__( 'Installed/Active/Must Use', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
+		</div>
 			<?php
 			/**
 			 * Action: mainwp_after_plugins_table
@@ -1030,14 +1080,13 @@ class MainWP_Plugins {
 				'searching'      => 'true',
 				'paging'         => 'false',
 				'info'           => 'false',
-				'colReorder'     => 'true',
+				'colReorder'     => 'false',
 				'stateSave'      => 'true',
 				'ordering'       => 'true',
 				'scrollCollapse' => 'true',
-				'scrollY'        => '500',
+				'scrollY'        => '750',
 				'scrollX'        => 'true',
 				'scroller'       => 'true',
-				'fixedColumns'   => 'true',
 			);
 
 			/**
@@ -1050,10 +1099,21 @@ class MainWP_Plugins {
 			$table_features = apply_filters( 'mainwp_plugins_table_features', $table_features );
 			?>
 			<style type="text/css">
-			.DTFC_LeftBodyLiner { overflow-x: hidden; }
-			.DTFC_LeftHeadWrapper table thead th:first-child{ left: 99999px; }
-			.DTFC_LeftHeadWrapper table { border: none !important; }
-			.dataTables_scrollHeadInner thead th .ui.checkbox label{ height: 25px; }
+
+			thead th.mainwp-first-th {
+			    position: sticky !important;
+			    left: 0  !important;
+			    top: 0  !important;
+					z-index: 9 !important;
+			}
+
+			#mainwp-manage-plugins-table tbody tr td:first-child {
+			    position: sticky !important;
+			    left: 0;
+			    top: 0;
+					background: #f9fafb;
+					z-index: 9 !important;
+			}
 			</style>
 			<script type="text/javascript">
 			jQuery( document ).ready( function( $ ) {
@@ -1069,13 +1129,12 @@ class MainWP_Plugins {
 						"scrollY" : <?php echo $table_features['scrollY']; ?>,
 						"scrollX" : <?php echo $table_features['scrollX']; ?>,
 						"scroller" : <?php echo $table_features['scroller']; ?>,
-						"fixedColumns" : <?php echo $table_features['fixedColumns']; ?>,
 						"columnDefs": [ { "orderable": false, "targets": [ 0 ] } ],
 					} );
 				} catch( err ) {
 					// to fix js issues.
 				}
-				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox(); // to fix onclick on plugins checkbox for sorting.
+				jQuery( '.mainwp-ui-page .ui.checkbox:not(.not-auto-init)' ).checkbox();
 			} );
 			</script>
 		<?php
@@ -1196,17 +1255,19 @@ class MainWP_Plugins {
 		?>
 	<div class="mainwp-side-content mainwp-no-padding">
 		<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
-		<div class="mainwp-select-sites">
+		<?php MainWP_UI::render_sidebar_options(); ?>
+		<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 			<?php do_action( 'mainwp_manage_plugins_before_select_sites' ); ?>
-			<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>			
-			<?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+			<div class="content active"><?php	MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 			<?php do_action( 'mainwp_manage_plugins_after_select_sites' ); ?>
 		</div>
 		<input type="hidden" id="plugin_install_selected_sites" name="plugin_install_selected_sites" value="<?php echo esc_html( implode( '-', $selected_sites ) ); ?>" />
-		<div class="ui divider"></div>
-		<div class="mainwp-search-options">
+		<div class="ui fitted divider"></div>
+		<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 			<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
-			<div class="ui header"><?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
+			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Installation Options', 'mainwp' ); ?></div>
+			<div class="content active">
 			<div class="ui form">
 				<div class="field">
 					<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the plugin will be automatically activated after the installation.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
@@ -1221,9 +1282,10 @@ class MainWP_Plugins {
 					</div>
 				</div>
 			</div>
+			</div>
 			<?php do_action( 'mainwp_manage_plugins_after_search_options' ); ?>
 		</div>
-		<div class="ui divider"></div>
+		<div class="ui fitted divider"></div>
 		<div class="mainwp-search-submit">
 			<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 		<?php
@@ -1327,7 +1389,8 @@ class MainWP_Plugins {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
-				<div class="mainwp-search-options">
+				<?php MainWP_UI::render_sidebar_options(); ?>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
@@ -1339,7 +1402,8 @@ class MainWP_Plugins {
 						<p><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></p>
 						<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></p>
 					</div>
-					<div class="ui header" style="margin-top:1rem"><?php esc_html_e( 'Plugin Status to Search', 'mainwp' ); ?></div>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Plugin Status to Search', 'mainwp' ); ?></div>
+					<div class="content active">
 					<div class="ui mini form">
 						<div class="field">
 							<select class="ui fluid dropdown" id="mainwp_au_plugin_status">
@@ -1349,11 +1413,13 @@ class MainWP_Plugins {
 							</select>
 						</div>
 					</div>
+					</div>
 					<?php do_action( 'mainwp_manage_plugins_after_search_options' ); ?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active">
 					<div class="ui mini form">
 						<div class="field">
 							<select class="ui fluid dropdown" id="mainwp_au_plugin_trust_status">
@@ -1370,7 +1436,8 @@ class MainWP_Plugins {
 						</div>
 					</div>
 				</div>
-				<div class="ui divider"></div>
+				</div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php do_action( 'mainwp_manage_plugins_before_submit_button' ); ?>
 					<a href="#" class="ui green big fluid button" id="mainwp_show_all_active_plugins"><?php esc_html_e( 'Show Plugins', 'mainwp' ); ?></a>

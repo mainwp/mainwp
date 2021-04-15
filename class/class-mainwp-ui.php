@@ -484,6 +484,15 @@ class MainWP_UI {
 			$show_menu = $params['show_menu'];
 		}
 
+		$more_tags = array(
+			'img' => array(
+				'src'    => array(),
+				'width'  => array(),
+				'height' => array(),
+			),
+		);
+		$title     = MainWP_Utility::esc_content( $title, 'note', $more_tags );
+
 		/**
 		 * Filter: mainwp_header_left
 		 *
@@ -634,15 +643,6 @@ class MainWP_UI {
 			 * @since 4.0
 			 */
 			do_action( 'mainwp_before_header', $websites );
-
-			$more_tags = array(
-				'img' => array(
-					'src'    => array(),
-					'width'  => array(),
-					'height' => array(),
-				),
-			);
-			$left      = MainWP_Utility::esc_content( $left, 'note', $more_tags );
 
 			?>
 			<div id="mainwp-top-header" class="ui sticky">
@@ -1507,4 +1507,43 @@ class MainWP_UI {
 		 */
 		do_action( 'mainwp_screen_options_modal_bottom' );
 	}
+
+/**
+	 * Method render_sidebar_options()
+	 *
+	 * Render sidebar Options.
+	 * 
+	 * @return void  Render sidebar Options html.
+	 */
+	public static function render_sidebar_options( $with_form = true ) {	
+		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
+		if ( false === $sidebarPosition ) {
+			$sidebarPosition = 1;
+		}
+		?>
+		<div class="mainwp-sidebar-options ui fluid accordion mainwp-sidebar-accordion">
+			<div class="title active"><i class="cog icon"></i> <?php esc_html_e( 'Sidebar Options', 'mainwp' ); ?></div>
+			<div class="content active">
+				<div class="ui mini form">
+					<?php if ( $with_form ) { ?>
+					<form method="post">
+					<?php } ?>
+					<div class="field">
+						<label><?php esc_html_e( 'Sidebar position', 'mainwp' ); ?></label>
+						<select name="mainwp_sidebar_position" id="mainwp_sidebar_position" class="ui dropdown" onchange="mainwp_sidebar_position_onchange(this)">
+							<option value="1" <?php echo ( 1 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
+							<option value="0" <?php echo ( 0 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
+						</select>
+					</div>
+					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'onchange_sidebarposition' ); ?>" />
+					<?php if ( $with_form ) { ?>	
+					</form>
+					<?php } ?>
+				</div>
+			</div>
+		</div>
+		<div class="ui fitted divider"></div>
+		<?php
+	}
+
 }

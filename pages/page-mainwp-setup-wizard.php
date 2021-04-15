@@ -785,7 +785,6 @@ class MainWP_Setup_Wizard {
 	 *
 	 * Render Notifications Step.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_notification_email()
 	 */
 	public function mwp_setup_notification() {
 

@@ -385,6 +385,8 @@ class MainWP_Manage_Sites_List_Table {
 			'update_wpcore'       => __( 'Update WordPress', 'mainwp' ),
 			'update_translations' => __( 'Update Translations', 'mainwp' ),
 			'update_everything'   => __( 'Update Everything', 'mainwp' ),
+			'check_abandoned_plugin'   => __( 'Check abandoned plugins', 'mainwp' ),
+			'check_abandoned_theme'   => __( 'Check abandoned themes', 'mainwp' ),
 		);
 
 		/**

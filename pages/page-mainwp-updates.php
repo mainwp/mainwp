@@ -1765,6 +1765,15 @@ class MainWP_Updates {
 						 * @since Unknown
 						 */
 						echo apply_filters( 'mainwp_widgetupdates_actions_top', '' );
+						if ( 'abandoned-plugins' === $current_tab ) {
+							?>
+							<a href="#" onClick="updatesoverview_bulk_check_abandoned('plugin'); return false;" class="ui green basic right button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Plugins.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Plugins', 'mainwp' ); ?></a>
+							<?php
+						} elseif ( 'abandoned-themes' === $current_tab ) {
+							?>
+							<a href="#" onClick="updatesoverview_bulk_check_abandoned('theme'); return false;" class="ui green basic right button" data-tooltip="<?php esc_html_e( 'Check for Abandoned Themes.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Check for Abandoned Themes', 'mainwp' ); ?></a>
+							<?php
+						}
 						?>
 					</div>
 			</div>

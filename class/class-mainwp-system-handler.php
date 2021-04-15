@@ -329,6 +329,15 @@ class MainWP_System_Handler {
 				exit();
 			}
 		}
+			
+		if ( isset( $_POST['mainwp_sidebar_position'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'onchange_sidebarposition' ) ) {
+			$val  = isset( $_POST['mainwp_sidebar_position'] ) && $_POST['mainwp_sidebar_position'] ? 1 : 0;
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
+			}			
+			return true;
+		}
 	}
 
 	/**

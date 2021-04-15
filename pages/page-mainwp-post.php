@@ -54,7 +54,9 @@ class MainWP_Post {
 		 *
 		 * @see \MainWP_Post::render_header
 		 */
-		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'render_header' ) );
+		add_action( 'mainwp-pageheader-post', array( self::get_class_name(), 'render_header' ) ); // @deprecated Use 'mainwp_pageheader_post' instead.
+		add_action( 'mainwp_pageheader_post', array( self::get_class_name(), 'render_header' ) );
+	
 
 		/**
 		 * This hook allows you to render the Post page footer via the 'mainwp-pagefooter-post' action.
@@ -67,6 +69,7 @@ class MainWP_Post {
 		 * @see \MainWP_Post::render_footer
 		 */
 		add_action( 'mainwp-pagefooter-post', array( self::get_class_name(), 'render_footer' ) );
+		add_action( 'mainwp_pagefooter_post', array( self::get_class_name(), 'render_footer' ) );
 
 		add_filter( 'admin_post_thumbnail_html', array( self::get_class_name(), 'admin_post_thumbnail_html' ), 10, 3 );
 
@@ -580,8 +583,9 @@ class MainWP_Post {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_posts_sidebar_top' );
+				MainWP_UI::render_sidebar_options();
 				?>
-				<div class="mainwp-select-sites">
+				<div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">
 					<?php
 					/**
 					 * Action: mainwp_manage_posts_before_select_sites
@@ -592,8 +596,8 @@ class MainWP_Post {
 					 */
 					do_action( 'mainwp_manage_posts_before_select_sites' );
 					?>
-					<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
-					<?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?>
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<div class="content active"><?php MainWP_UI::select_sites_box( 'checkbox', true, true, 'mainwp_select_sites_box_left', '', $selected_sites, $selected_groups ); ?></div>
 					<?php
 					/**
 					 * Action: mainwp_manage_posts_after_select_sites
@@ -605,9 +609,10 @@ class MainWP_Post {
 					do_action( 'mainwp_manage_posts_after_select_sites' );
 					?>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Status', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php
 					/**
 					 * Action: mainwp_manage_posts_before_search_options
@@ -632,9 +637,11 @@ class MainWP_Post {
 						</div>
 					</div>
 				</div>
-				<div class="ui divider"></div>
-				<div class="mainwp-search-options">
-					<div class="ui header"><?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+				</div>
+				<div class="ui fitted divider"></div>
+				<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+					<div class="content active">
 					<?php self::render_search_options(); ?>
 					<?php
 					/**
@@ -647,7 +654,8 @@ class MainWP_Post {
 					do_action( 'mainwp_manage_posts_after_search_options' );
 					?>
 				</div>
-				<div class="ui divider"></div>
+				</div>
+				<div class="ui fitted divider"></div>
 				<div class="mainwp-search-submit">
 					<?php
 					/**
@@ -1590,8 +1598,13 @@ class MainWP_Post {
 
 		$content .= '<input type="hidden" id="_thumbnail_id" name="_thumbnail_id" value="' . esc_attr( $thumbnail_id ? $thumbnail_id : '-1' ) . '" />';
 
-		$html  = '<div class="ui header">' . __( 'Featured Image', 'mainwp' ) . '</div>';
+		$html = '<div class="ui fluid accordion mainwp-sidebar-accordion">';
+		$html .= '<div class="title active"><i class="dropdown icon"></i> ' . __( 'Featured Image', 'mainwp' ) . '</div>';
+		$html .= '<div class="content active"';
 		$html .= $content;
+		$html .= '</div>';
+		$html .= '</div>';
+
 
 		/**
 		 * Filters the admin post thumbnail HTML markup to return.
@@ -2073,13 +2086,18 @@ class MainWP_Post {
 				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
-					<?php do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); ?>
-					<div class="mainwp-select-sites">
-						<div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+					<?php 
+					do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); 
+					MainWP_UI::render_sidebar_options( false );
+					?>
+					<div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">
+						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+						<div class="content active">
 						<?php MainWP_UI::select_sites_box( $sites_settings['type'], $sites_settings['show_group'], $sites_settings['show_select_all'], $sites_settings['class'], $sites_settings['style'], $sel_sites, $sel_groups, false, $post_ID ); ?>
 						<input type="hidden" name="select_sites_nonce" id="select_sites_nonce" value="<?php echo wp_create_nonce( 'select_sites_' . $post->ID ); ?>" />
 					</div>
-					<div class="ui divider"></div>
+					</div>
+					<div class="ui fitted divider"></div>
 					<?php
 					if ( 'bulkpost' === $post_type ) {
 						self::render_categories( $post );
@@ -2087,7 +2105,7 @@ class MainWP_Post {
 					self::render_post_fields( $post, $post_type );
 					?>
 					<?php self::do_meta_boxes( $post_type, 'side', $post ); ?>
-					<div class="ui divider"></div>
+					<div class="ui fitted divider"></div>
 					<?php
 					/**
 					 * Action: mainwp_edit_posts_before_submit_button
@@ -2139,8 +2157,8 @@ class MainWP_Post {
 	 */
 	public static function render_categories( $post ) {
 		?>
-		<div class="mainwp-search-options">
-			<div class="ui header"><?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
+		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Categories', 'mainwp' ); ?></div>
 		<?php
 		$categories = array();
 		if ( $post ) {
@@ -2157,6 +2175,7 @@ class MainWP_Post {
 			$post_only = get_post_meta( $post->ID, '_post_to_only_existing_categories', true );
 		}
 		?>
+			<div class="content active">
 			<input type="hidden" name="post_category_nonce" id="post_category_nonce" value="<?php echo esc_attr( wp_create_nonce( 'post_category_' . $post->ID ) ); ?>" />
 			<div class="field">
 				<div class="ui checkbox">
@@ -2203,7 +2222,8 @@ class MainWP_Post {
 				<input type="button" id="mainwp-category-add-submit" class="ui fluid basic green mini button" value="<?php esc_attr_e( 'Add New Category', 'mainwp' ); ?>">
 			</div>
 		</div>
-		<div class="ui divider"></div>
+		</div>
+		<div class="ui fitted divider"></div>
 		<?php
 	}
 
@@ -2222,9 +2242,10 @@ class MainWP_Post {
 			<?php self::post_thumbnail_meta_box( $post ); ?>
 				<?php echo '</div>'; ?>
 			</div>
-			<div class="ui divider"></div>
-			<div class="mainwp-search-options">
-				<div class="ui header"><?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
+			<div class="ui fitted divider"></div>
+			<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+				<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Discussion', 'mainwp' ); ?></div>
+				<div class="content active">
 				<div class="field">
 					<div class="ui checkbox">
 						<input type="checkbox" name="comment_status" id="comment_status" value="open" <?php checked( $post->comment_status, 'open' ); ?>>
@@ -2236,9 +2257,11 @@ class MainWP_Post {
 					</div>
 				</div>
 			</div>
-			<div class="ui divider"></div>
-			<div class="mainwp-search-options">
-				<div class="ui header"><?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
+			</div>
+			<div class="ui fitted divider"></div>
+			<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+				<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Publish Options', 'mainwp' ); ?></div>
+				<div class="content active">
 				<div class="field">
 					<label><?php esc_html_e( 'Status', 'mainwp' ); ?></label>
 					<select class="ui dropdown" name="mainwp_edit_post_status" id="post_status">
@@ -2247,7 +2270,6 @@ class MainWP_Post {
 						<option value="pending" <?php echo ( 'pending' === $post->post_status ) ? 'selected="selected"' : ''; ?>><?php esc_html_e( 'Pending review', 'mainwp' ); ?></option>
 					</select>
 				</div>
-
 				<?php
 				if ( 'private' === $post->post_status ) {
 					$post->post_password = '';
@@ -2314,6 +2336,7 @@ class MainWP_Post {
 				</div>
 				<div style="display:none" id="timestampdiv">
 					<?php self::touch_time( $post ); ?>
+					</div>
 				</div>
 			</div>
 			<?php

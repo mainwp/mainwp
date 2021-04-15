@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.5.1';
+	public static $version = '4.1.6';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -785,11 +785,15 @@ class MainWP_System {
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		$_pos        = strlen( $request_uri ) - strlen( '/wp-admin/' );
 		if ( ! empty( $request_uri ) && strpos( $request_uri, '/wp-admin/' ) !== false && strpos( $request_uri, '/wp-admin/' ) == $_pos ) {
-			if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
-				wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
-				die();
+			$referer = wp_get_referer();
+			if ( ! empty( $referer ) && strpos( $referer, 'wp-login.php?redirect_to' ) !== false && strpos( $referer, '&reauth=1' ) !== false ) {
+				if ( mainwp_current_user_have_right( 'dashboard', 'access_global_dashboard' ) ) {
+					wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+					die();
+				}
 			}
 		}
+
 		MainWP_Logger::instance()->check_log_daily();
 	}
 

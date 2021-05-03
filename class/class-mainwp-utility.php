@@ -945,7 +945,7 @@ class MainWP_Utility {
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$error = '';
 				try {
-					$information = MainWP_Connect::fetch_url_authed( $website, 'check_abandoned' );
+					$information = MainWP_Connect::fetch_url_authed( $website, 'check_abandoned', array( 'which' => $which ) );
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}

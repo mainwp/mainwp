@@ -393,21 +393,21 @@ jQuery( document ).on( 'keyup', '#mainwp-sites-menu-filter', function () {
 
 // Accordion initialization on pre-existing markup
 jQuery( document ).ready( function () {
-  jQuery( '.mainwp-sidebar-accordion' ).accordion({
-        "onOpening": function(){
-            var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
-            var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
-            mainwp_accordion_on_collapse( ident , 1 );
-        },
-        "onClosing": function(){
-            var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
-            var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
-            mainwp_accordion_on_collapse( ident , 0 );
-        }
-  });
-  if ( jQuery( '.mainwp-sidebar-accordion' ).length > 0 ) {
-    mainwp_accordion_init_collapse();
-  }
+    if ( jQuery( '.mainwp-sidebar-accordion' ).length > 0 ) {
+        jQuery( '.mainwp-sidebar-accordion' ).accordion({
+                "onOpening": function(){
+                    var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
+                    var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
+                    mainwp_accordion_on_collapse( ident , 1 );
+                },
+                "onClosing": function(){
+                    var parent = jQuery(this).closest('.mainwp-sidebar-accordion');
+                    var ident = jQuery('.mainwp-sidebar-accordion').index(parent);
+                    mainwp_accordion_on_collapse( ident , 0 );
+                }
+        });  
+        mainwp_accordion_init_collapse();
+    }
 } );
 
 mainwp_accordion_on_collapse = function( ident, val ) {

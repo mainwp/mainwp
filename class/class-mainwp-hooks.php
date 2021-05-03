@@ -71,9 +71,12 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getnotificationemail', array( &$this, 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_formated_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
-		add_action( 'mainp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
-		add_action( 'mainp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
-		add_action( 'mainp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
+		add_filter( 'mainwp-extension-is-activated', array( &$this, 'is_extension_activated' ), 10, 2 );
+		add_filter( 'mainwp-extension-is-pro-member', array( &$this, 'is_pro_member' ), 10, 1 );
+
+		add_action( 'mainwp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
+		add_action( 'mainwp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );
+		add_action( 'mainwp_log_warning', array( &$this, 'mainwp_log_warning' ), 10, 1 );
 		add_action( 'mainwp_log_action', array( &$this, 'mainwp_log_action' ), 10, 2 );
 		add_filter( 'mainwp_getactivateextensionnotice', array( &$this, 'get_activate_extension_notice' ), 10, 1 );
 		add_action( 'mainwp_enqueue_meta_boxes_scripts', array( &$this, 'enqueue_meta_boxes_scripts' ), 10, 1 );
@@ -340,6 +343,44 @@ class MainWP_Hooks {
 		);
 		MainWP_Menu::add_left_menu( $item, $level );
 	}
+
+	/**
+	 * Method is_extension_activated()
+	 *
+	 * Check for inactive MainWP Extensions.
+	 *
+	 * @param mixed $input Input value.
+	 * @param mixed $slug MainWP Extension to check.
+	 *
+	 * @return bool Activation notice.
+	 */
+	public function is_extension_activated( $input, $slug ) {
+		return MainWP_Extensions_Handler::is_extension_activated( $slug );
+	}
+
+	/**
+	 * Method is_pro_member()
+	 *
+	 * Check for inactive MainWP Extensions.
+	 *
+	 * @param mixed $input Input value.
+	 * @param mixed $slug MainWP Extension to check.
+	 *
+	 * @return bool Activation notice.
+	 */
+	public function is_pro_member( $input = false ) {
+		$info = get_option( 'mainwp_extensions_plan_info' );
+		if ( ! empty( $info ) ) {
+			$info = json_decode( $info, true );
+			if ( is_array( $info ) && isset( $info['plan_purchased'] ) && isset( $info['plan_status'] ) ) {
+				if ( 'active' === $info['plan_status'] && in_array( $info['plan_purchased'], array( 'monthly', 'yearly', 'lifetime' ) ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 
 	/**
 	 * Method get_activate_extension_notice()

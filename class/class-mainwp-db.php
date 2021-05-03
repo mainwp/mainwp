@@ -385,7 +385,7 @@ class MainWP_DB extends MainWP_DB_Base {
                 JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.userid = ' . $userid . "
                 $where
-                GROUP BY wp.id
+                GROUP BY wp.id, wp_sync.sync_id
                 ORDER BY " . $orderBy;
 			} else {
 				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
@@ -476,7 +476,7 @@ class MainWP_DB extends MainWP_DB_Base {
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
-            GROUP BY wp.id
+            GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
 		} else {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
@@ -484,6 +484,7 @@ class MainWP_DB extends MainWP_DB_Base {
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . '
+            GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
 		}
 
@@ -639,6 +640,9 @@ class MainWP_DB extends MainWP_DB_Base {
 				$groups = implode( ',', $group_ids );
 				if ( $is_not ) {
 					$where_group = ' AND wpgroup.groupid IS NOT NULL AND wpgroup.groupid NOT IN (' . $groups . ') ';
+					// to fix.
+					$sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . $groups . ') ';
+					$where_group      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';
 				} else {
 					$where_group = ' AND ( wpgroup.groupid IS NULL OR wpgroup.groupid IN (' . $groups . ') ) ';
 				}
@@ -654,6 +658,9 @@ class MainWP_DB extends MainWP_DB_Base {
 			if ( $is_not ) {
 				$join_group  = ' LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 				$where_group = ' AND ( wpgroup.groupid NOT IN (' . $groups . ') OR wpgroup.groupid IS NULL ) ';
+				// to fix.
+				$sub_select_is_not = ' SELECT wp.id FROM ' . $this->table_name( 'wp' ) . ' wp JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid WHERE wpgroup.groupid IN (' . $groups . ') ';
+				$where_group      .= ' AND wp.id NOT IN ( ' . $sub_select_is_not . ' ) ';
 			} else {
 				$join_group  = ' JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid ';
 				$where_group = ' AND wpgroup.groupid IN (' . $groups . ') ';
@@ -670,7 +677,7 @@ class MainWP_DB extends MainWP_DB_Base {
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
             WHERE 1 ' . $where . $where_group . '
-			GROUP BY wp.id ' .
+			GROUP BY wp.id, wp_sync.sync_id ' .
 			$orderBy;
 		} else {
 			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*
@@ -678,7 +685,8 @@ class MainWP_DB extends MainWP_DB_Base {
 			$join_group . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
-			WHERE 1 ' . $where . $where_group .
+			WHERE 1 ' . $where . $where_group . '
+			GROUP BY wp.id, wp_sync.sync_id ' .
 			$orderBy;
 		}
 
@@ -855,7 +863,7 @@ class MainWP_DB extends MainWP_DB_Base {
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 JOIN ' . $this->get_option_view( $extra_view ) . ' wp_optionview ON wp.id = wp_optionview.wpid
                 WHERE wp.id = ' . $id . $where . '
-                GROUP BY wp.id';
+                GROUP BY wp.id, wp_sync.sync_id';
 			}
 
 			return 'SELECT wp.*,wp_sync.*,wp_optionview.*
@@ -989,7 +997,7 @@ class MainWP_DB extends MainWP_DB_Base {
                  JOIN ' . $this->get_option_view() . ' wp_optionview ON wp.id = wp_optionview.wpid
                  WHERE wpgroup.groupid = ' . $id . ' ' .
 				( null == $where ? '' : ' AND ' . $where ) . $where_allowed . $where_search . '
-                 GROUP BY wp.id
+                 GROUP BY wp.id, wp_sync.sync_id
                  ORDER BY ' . $orderBy;
 			} else {
 				$qry = 'SELECT wp.*,wp_sync.* FROM ' . $this->table_name( 'wp' ) . ' wp

@@ -274,9 +274,14 @@ class MainWP_System_Cron_Jobs {
 			}
 		);
 
-		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
-		$timeDailyUpdate     = get_option( 'mainwp_timeDailyUpdate' );
-		$run_timestamp       = 0;
+		$updatecheck_running    = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
+		$timeDailyUpdate        = get_option( 'mainwp_timeDailyUpdate' );
+		$second_timeDailyUpdate = DAY_IN_SECONDS;
+		if ( 1 < $timeDailyUpdate ) {
+			$second_timeDailyUpdate = DAY_IN_SECONDS / $timeDailyUpdate;
+		}
+
+		$run_timestamp = 0;
 
 		$local_timestamp = MainWP_Utility::get_timestamp();
 
@@ -286,6 +291,7 @@ class MainWP_System_Cron_Jobs {
 		}
 		$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
 		$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
+		$today_end                    = strtotime( date( 'Y-m-d' ) . ' 23:59:59' ); // phpcs:ignore -- to check localtime.
 
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
@@ -453,9 +459,15 @@ class MainWP_System_Cron_Jobs {
 			$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
 
-			if ( $today_m_y !== $mainwpLastDailyDigest ) {
+			$time_to_noti = false;
+			if ( 1 < $timeDailyUpdate ) {
+				$next_time_to_send = $today_end - $second_timeDailyUpdate;
+				$time_to_noti = ( $local_timestamp > $next_time_to_send ) ? true : false;   
+			}
+
+			if ( 1 == $timeDailyUpdate || $time_to_noti ) {
 				$diff_day = true;
-				MainWP_Utility::update_option( 'mainwp_dailydigest_last', $today_m_y );
+				MainWP_Utility::update_option( 'mainwp_dailydigest_last', $local_timestamp );
 
 				// send daily digest email one time per day.
 				$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
@@ -494,18 +506,17 @@ class MainWP_System_Cron_Jobs {
 					// send all individual daily digest to admin in one email.
 					$this->start_notification_daily_digest( $admin_email_settings, $plain_text, $to_admin_digestWebsites ); // will send email to general notification email.
 				}
+				$this->refresh_saved_fields( $diff_day );
 			}
 			// send http check notification.
 			if ( 1 == get_option( 'mainwp_check_http_response', 0 ) ) {
 				$this->start_notification_http_check( $plain_text );
 			}
 
-			$this->refresh_saved_fields( $diff_day );
-
 			return;
 		} else {
 
-			MainWP_Logger::instance()->log_action( 'CRON :: Updates check is running', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+			MainWP_Logger::instance()->log_action( 'CRON :: auto updates check is running', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 			if ( ! $updatecheck_running ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_is_running', 'Y' );
@@ -951,6 +962,8 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 					MainWP_Logger::instance()->debug( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']' );
+
+					MainWP_Logger::instance()->log_action( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 					try {
 

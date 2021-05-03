@@ -292,6 +292,7 @@ class MainWP_Premium_Update {
 		}
 
 		MainWP_Logger::instance()->debug( ' :: tryRequest :: [website=' . $website->url . ']' );
+		return wp_remote_get( $request_url, $args );
 	}
 
 	/**

@@ -172,17 +172,17 @@ class Rest_Api {
 			),
 			array(
 				'route'    => 'sites',
-				'method'   => 'POST',
+				'method'   => 'GET',
 				'callback' => 'http-status',
 			),
 			array(
 				'route'    => 'sites',
-				'method'   => 'POST',
+				'method'   => 'GET',
 				'callback' => 'health-score',
 			),
 			array(
 				'route'    => 'sites',
-				'method'   => 'POST',
+				'method'   => 'GET',
 				'callback' => 'security-issues',
 			),
 			array(

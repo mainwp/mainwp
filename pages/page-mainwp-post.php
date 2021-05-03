@@ -700,6 +700,24 @@ class MainWP_Post {
 			echo '<script>jQuery(document).ready(function() { mainwp_show_post( ' . intval( $_REQUEST['siteid'] ) . ', undefined, ' . intval( $_REQUEST['userid'] ) . ' ) } );</script>';
 		}
 
+		// to fix issue js code display.
+		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
+		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
+		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
+			$status = '';
+			foreach ( $statuses as $st ) {
+				$status .= "'" . esc_html( $st ) . "',";
+			}
+			$status = rtrim( $status, ',' );
+			?>
+			<script type="text/javascript">
+				jQuery( document ).ready( function () {
+					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output. ?>] );
+				} )
+			</script>
+			<?php
+		}
+
 		self::render_footer( 'BulkManage' );
 	}
 
@@ -712,7 +730,6 @@ class MainWP_Post {
 	 */
 	public static function render_search_options() {
 		$cachedSearch = MainWP_Cache::get_cached_context( 'Post' );
-		$statuses     = isset( $cachedSearch['status'] ) ? $cachedSearch['status'] : array();
 		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
 			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
 		}
@@ -788,22 +805,7 @@ class MainWP_Post {
 				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 			</div>
 		</div>
-		<?php
-		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
-			$status = '';
-			foreach ( $statuses as $st ) {
-				$status .= "'" . esc_html( $st ) . "',";
-			}
-			$status = rtrim( $status, ',' );
-
-			?>
-			<script type="text/javascript">
-				jQuery( document ).ready( function () {
-					jQuery( '#mainwp_post_search_type' ).dropdown( 'set selected', [<?php echo $status; // phpcs:ignore -- safe output. ?>] );
-				} )
-			</script>
-			<?php
-		}
+		<?php		
 	}
 
 	/**

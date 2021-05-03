@@ -117,6 +117,9 @@ class MainWP_Logger {
 		$enabled  = $this->get_log_status();
 		$specific = $this->get_log_specific();
 
+		$enabled  = apply_filters( 'mainwp_log_status', $enabled );
+		$specific = apply_filters( 'mainwp_log_specific', $specific );
+
 		$this->set_log_priority( $enabled, $specific );
 	}
 

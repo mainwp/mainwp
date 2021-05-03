@@ -805,7 +805,7 @@ class MainWP_Post {
 				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 			</div>
 		</div>
-		<?php		
+		<?php
 	}
 
 	/**

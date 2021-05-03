@@ -202,8 +202,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 					MainWP_Utility::update_option( 'mainwp_extensions_api_username', $enscrypt_u );
 					MainWP_Utility::update_option( 'mainwp_extensions_api_password', $enscrypt_p );
 					MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
-					$plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';					
-					MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );				
+					$plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
+					MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
 				}
 				$return['result'] = 'SUCCESS';
 			} elseif ( isset( $result['error'] ) ) {

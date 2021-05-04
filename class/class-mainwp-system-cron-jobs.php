@@ -462,7 +462,7 @@ class MainWP_System_Cron_Jobs {
 			$time_to_noti = false;
 			if ( 1 < $timeDailyUpdate ) {
 				$next_time_to_send = $today_end - $second_timeDailyUpdate;
-				$time_to_noti = ( $local_timestamp > $next_time_to_send ) ? true : false;   
+				$time_to_noti      = ( $local_timestamp > $next_time_to_send ) ? true : false;
 			}
 
 			if ( 1 == $timeDailyUpdate || $time_to_noti ) {

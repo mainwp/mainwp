@@ -892,24 +892,23 @@ class MainWP_Plugins {
 	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
-		<div class="ui selection dropdown" id="mainwp-bulk-actions">
-			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
-			<div class="menu">
+		<select class="ui dropdown" id="mainwp-bulk-actions">
+			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
 			<?php if ( 'active' === $status || 'all' === $status ) : ?>
-			<div class="item" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></div>
+				<option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
-			<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
+				<option value="activate" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
 			<?php endif; ?>
 			<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) : ?>
-			<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+				<option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 			<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-			<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
+				<option value="ignore_updates" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
 		<?php endif; ?>
 		<?php
 		/**
@@ -923,8 +922,7 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_plugins_bulk_action' );
 		?>
-		</div>
-	</div>
+		</select>
 	<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-plugins-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 	<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
 		<?php

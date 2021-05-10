@@ -60,8 +60,10 @@ class MainWP_Recent_Posts {
 
 		if ( $current_wpid ) {
 			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+			$individual = true;
 		} else {
 			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
+			$individual = false;
 		}
 
 		$websites = MainWP_DB::instance()->query( $sql );
@@ -100,11 +102,11 @@ class MainWP_Recent_Posts {
 		 */
 		do_action( 'mainwp_recent_posts_widget_top' );
 
-		self::render_published_posts( $allPosts, $recent_number );
-		self::render_draft_posts( $allPosts, $recent_number );
-		self::render_pending_posts( $allPosts, $recent_number );
-		self::render_future_posts( $allPosts, $recent_number );
-		self::render_trash_posts( $allPosts, $recent_number );
+		self::render_published_posts( $allPosts, $recent_number, $individual );
+		self::render_draft_posts( $allPosts, $recent_number, $individual );
+		self::render_pending_posts( $allPosts, $recent_number, $individual );
+		self::render_future_posts( $allPosts, $recent_number, $individual );
+		self::render_trash_posts( $allPosts, $recent_number, $individual );
 
 		/**
 		 * Action: mainwp_recent_posts_after_lists
@@ -160,7 +162,7 @@ class MainWP_Recent_Posts {
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
-				<div class="ui dropdown right mainwp-dropdown-tab">
+				<div class="ui dropdown top right pointing mainwp-dropdown-tab">
 						<div class="text"><?php esc_html_e( 'Published', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">
@@ -182,13 +184,14 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+	 * @param bool  $individual    Determins if it's individual site dashbaord.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public static function render_published_posts( $allPosts, $recent_number ) {
+	public static function render_published_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_published = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'publish' );
 		$recent_posts_published = MainWP_Utility::sortmulti( $recent_posts_published, 'dts', 'desc' );
 		?>
@@ -239,12 +242,14 @@ class MainWP_Recent_Posts {
 						<div class="six wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_published[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_published[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 						</div>
-						<div class="four wide column middle aligned">
+						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 						<?php echo esc_html( $recent_posts_published[ $i ]['dts'] ); ?>
 						</div>
+						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_published[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
 						</div>
+						<?php endif; ?>
 						<div class="two wide column right aligned">
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
@@ -283,13 +288,14 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+	 * @param bool  $individual    Determins if it's individual site dashbaord.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public static function render_draft_posts( $allPosts, $recent_number ) {
+	public static function render_draft_posts( $allPosts, $recent_number, $individual ) {
 
 		$recent_posts_draft = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'draft' );
 		$recent_posts_draft = MainWP_Utility::sortmulti( $recent_posts_draft, 'dts', 'desc' );
@@ -339,12 +345,14 @@ class MainWP_Recent_Posts {
 						<div class="six wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_draft[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_draft[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 						</div>
-						<div class="four wide column middle aligned">
+						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_draft[ $i ]['dts'] ); ?>
 						</div>
+						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_draft[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
 						</div>
+						<?php endif; ?>
 						<div class="two wide column right aligned">
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
@@ -382,13 +390,14 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+	 * @param bool  $individual    Determins if it's individual site dashbaord.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public static function render_pending_posts( $allPosts, $recent_number ) {
+	public static function render_pending_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_pending = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'pending' );
 		$recent_posts_pending = MainWP_Utility::sortmulti( $recent_posts_pending, 'dts', 'desc' );
 
@@ -438,12 +447,14 @@ class MainWP_Recent_Posts {
 						<div class="six wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_pending[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo htmlentities( $recent_posts_pending[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 						</div>
-						<div class="four wide column middle aligned">
+						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_pending[ $i ]['dts'] ); ?>
 						</div>
+						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_pending[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
 						</div>
+						<?php endif; ?>
 						<div class="two wide column right aligned">
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
@@ -481,13 +492,14 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+	 * @param bool  $individual    Determins if it's individual site dashbaord.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public static function render_future_posts( $allPosts, $recent_number ) {
+	public static function render_future_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_future = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'future' );
 		$recent_posts_future = MainWP_Utility::sortmulti( $recent_posts_future, 'dts', 'desc' );
 		?>
@@ -536,12 +548,14 @@ class MainWP_Recent_Posts {
 						<div class="six wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>?p=<?php echo esc_attr( $recent_posts_future[ $i ]['id'] ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo htmlentities( $recent_posts_future[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?></a>
 						</div>
-						<div class="four wide column middle aligned">
+						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 							<?php echo esc_html( $recent_posts_future[ $i ]['dts'] ); ?>
 						</div>
+						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_future[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo $name; ?></a>
 						</div>
+						<?php endif; ?>
 						<div class="two wide column right aligned">
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>
@@ -580,13 +594,14 @@ class MainWP_Recent_Posts {
 	 *
 	 * @param array $allPosts      All posts data.
 	 * @param int   $recent_number Number of posts.
+	 * @param bool  $individual    Determins if it's individual site dashbaord.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_sub_array_having()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::sortmulti()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::format_timestamp()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_timestamp()
 	 */
-	public static function render_trash_posts( $allPosts, $recent_number ) {
+	public static function render_trash_posts( $allPosts, $recent_number, $individual ) {
 		$recent_posts_trash = MainWP_Utility::get_sub_array_having( $allPosts, 'status', 'trash' );
 		$recent_posts_trash = MainWP_Utility::sortmulti( $recent_posts_trash, 'dts', 'desc' );
 
@@ -636,12 +651,14 @@ class MainWP_Recent_Posts {
 						<div class="six wide column middle aligned">
 						<?php echo htmlentities( $recent_posts_trash[ $i ]['title'], ENT_COMPAT | ENT_HTML401, 'UTF-8' ); ?>
 						</div>
-						<div class="four wide column middle aligned">
+						<div class="<?php echo $individual ? 'eight' : 'four'; ?> wide column middle aligned">
 						<?php echo esc_html( $recent_posts_trash[ $i ]['dts'] ); ?>
 						</div>
+						<?php if ( ! $individual ) : ?>
 						<div class="four wide column middle aligned">
 							<a href="<?php echo esc_url( $recent_posts_trash[ $i ]['website']->url ); ?>" class="mainwp-may-hide-referrer"  target="_blank"><?php echo $name; ?></a>
 						</div>
+						<?php endif; ?>
 						<div class="two wide column right aligned">
 							<div class="ui left pointing dropdown icon mini basic green button" style="z-index:999">
 								<i class="ellipsis horizontal icon"></i>

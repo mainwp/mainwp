@@ -350,18 +350,36 @@ mainwp_show_post = function ( siteId, postId, userId )
     mainwp_fetch_posts( postId, userId );
 };
 
-mainwp_fetch_posts = function ( postId, userId ) {
+mainwp_fetch_posts = function ( postId, userId, start_sites ) {
     var errors = [ ];
     var selected_sites = [ ];
     var selected_groups = [ ];
 
-    if ( jQuery( '#select_by' ).val() == 'site' ) {
+    var i = 0;
+    var num_sites = jQuery('#search-bulk-sites').attr('number-sites');
+    num_sites = parseInt( num_sites );
+
+    var bulk_search = num_sites > 0 ? true : false;
+
+    if ( jQuery( '#select_by' ).val() == 'site' ) {        
+        if ( start_sites == undefined  )
+            start_sites = 0;
         jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
-            selected_sites.push( jQuery( this ).val() );
+            if ( bulk_search ) {                
+                if ( i >= start_sites && i < start_sites + num_sites ) { 
+                    selected_sites.push( jQuery( this ).val() );
+                }  
+                i++;
+            } else {
+                selected_sites.push( jQuery( this ).val() );
+            }           
         } );
         if ( selected_sites.length == 0 ) {
-            errors.push( '<div class="ui yellow message">' + __( 'Please select at least one website or group.' ) + '</div>' );
+            if ( ! bulk_search || ( bulk_search && start_sites == 0 ) ) {
+                errors.push( '<div class="ui yellow message">' + __( 'Please select at least one website or group.' ) + '</div>' );
+            }
         }
+        
     } else {
         jQuery( "input[name='selected_groups[]']:checked" ).each( function () {
             selected_groups.push( jQuery( this ).val() );
@@ -377,7 +395,6 @@ mainwp_fetch_posts = function ( postId, userId ) {
     else {
         _status = statuses.join(',');
     }
-
 
     if ( errors.length > 0 ) {
         jQuery( '#mainwp-message-zone' ).html( errors );
@@ -403,34 +420,59 @@ mainwp_fetch_posts = function ( postId, userId ) {
         search_on: jQuery( "#mainwp_post_search_on" ).val()
     } );
 
+    if ( bulk_search ) {        
+        if ( start_sites > 0 ) {
+            data.table_content = 1;
+        }
+        if ( selected_sites.length == 0 ) {
+            mainwp_fetch_posts_done();
+            return;
+        }
+    }
+    
     jQuery( '#mainwp-loading-posts-row' ).show();
     jQuery.post( ajaxurl, data, function ( response ) {
-        response = jQuery.trim( response );
-        jQuery( '#mainwp-loading-posts-row' ).hide();
-        jQuery( '#mainwp_posts_main' ).show();
-        jQuery( '#mainwp-posts-table-wrapper' ).html( response );
-        // re-initialize datatable.
-        jQuery("#mainwp-posts-table").DataTable().destroy();
-        jQuery('#mainwp-posts-table').DataTable({
-            "colReorder": {
-                fixedColumnsLeft: 1,
-                fixedColumnsRight: 1
-            },
-            "stateSave":  true,
-            "pagingType": "full_numbers",
-            "order": [],
-            "scrollX" : true,
-            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-            "columnDefs": [ {
-              "targets": 'no-sort',
-              "orderable": false
-            } ],
-            "preDrawCallback": function () {
-                jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
-                jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
-                mainwp_datatable_fix_menu_overflow();
-                mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-            }
-        });
+        response = jQuery.trim( response );        
+        if ( bulk_search && start_sites > 0 ) {            
+            jQuery( '#mainwp-posts-list' ).append( response );
+        } else {
+            jQuery( '#mainwp-posts-table-wrapper' ).html( response );
+        }
+
+        if ( bulk_search ) {
+            start_sites = start_sites + num_sites;          
+            mainwp_fetch_posts( postId, userId, start_sites );
+        } else {
+            mainwp_fetch_posts_done();
+        }
+        
     } );
 };
+
+mainwp_fetch_posts_done = function () {
+    jQuery( '#mainwp-loading-posts-row' ).hide();
+    jQuery( '#mainwp_posts_main' ).show();
+    // re-initialize datatable.
+    jQuery("#mainwp-posts-table").DataTable().destroy();
+    jQuery('#mainwp-posts-table').DataTable({
+        "colReorder": {
+            fixedColumnsLeft: 1,
+            fixedColumnsRight: 1
+        },
+        "stateSave":  true,
+        "pagingType": "full_numbers",
+        "order": [],
+        "scrollX" : true,
+        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+        "columnDefs": [ {
+            "targets": 'no-sort',
+            "orderable": false
+        } ],
+        "preDrawCallback": function () {
+            jQuery('#mainwp-posts-table-wrapper table .ui.dropdown').dropdown();
+            jQuery('#mainwp-posts-table-wrapper table .ui.checkbox').checkbox();
+            mainwp_datatable_fix_menu_overflow();
+            mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+        }
+    });
+}

@@ -946,6 +946,10 @@ class MainWP_Utility {
 				$error = '';
 				try {
 					$information = MainWP_Connect::fetch_url_authed( $website, 'check_abandoned', array( 'which' => $which ) );
+					if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+						MainWP_Sync::sync_information_array( $website, $information['sync'] );
+						unset( $information['sync'] );
+					}
 				} catch ( MainWP_Exception $e ) {
 					$error = $e->getMessage();
 				}

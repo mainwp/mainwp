@@ -71,8 +71,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getnotificationemail', array( &$this, 'get_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_formated_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
-		add_filter( 'mainwp-extension-is-activated', array( &$this, 'is_extension_activated' ), 10, 2 );
-		add_filter( 'mainwp-extension-is-pro-member', array( &$this, 'is_pro_member' ), 10, 1 );
+		add_filter( 'mainwp_extension_is_activated', array( &$this, 'is_extension_activated' ), 10, 2 );
+		add_filter( 'mainwp_extension_is_pro_member', array( &$this, 'is_pro_member' ), 10, 1 );
 
 		add_action( 'mainwp_log_debug', array( &$this, 'mainwp_log_debug' ), 10, 1 );
 		add_action( 'mainwp_log_info', array( &$this, 'mainwp_log_info' ), 10, 1 );

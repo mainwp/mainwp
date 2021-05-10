@@ -86,8 +86,12 @@
 /* Page Navigation */
 
 #mainwp-page-navigation-wrapper {
-  padding-top: 20px;
+  padding-top: .85714286em;
   background: #fff; }
+  .mainwp-page-navigation {
+    overflow-x: scroll;
+    border-bottom-width: 1px !important; }
+
 
 /* Menu */
 

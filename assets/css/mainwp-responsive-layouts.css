@@ -57,6 +57,12 @@
 		width: auto !important;
 	}
 
+	#mainwp-top-header #mainwp-sync-sites {
+		display: block;
+		width: 100%;
+		margin-bottom: 20px;
+	}
+
 	.mainwp-side-content {
 		width: 100%;
 		border: none !important;

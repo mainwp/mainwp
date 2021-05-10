@@ -117,6 +117,152 @@ class MainWP_Manage_Sites_Update_View {
 	}
 
 	/**
+	 * Method get_total_info()
+	 *
+	 * Get total Updates information.
+	 *
+	 * @param mixed $website Child Site info.
+	 * @param mixed $userExtension User extension info.
+	 */
+	public static function get_total_info( $site_id ) {
+
+		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
+		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+		$websites      = MainWP_DB::instance()->query( $sql );
+
+		MainWP_DB::data_seek( $websites, 0 );
+		if ( $websites ) {
+			$website = MainWP_DB::fetch_object( $websites );
+		}
+
+		$return = array(
+			'total_wp'            => 0,
+			'total_plugins'       => 0,
+			'total_themes'        => 0,
+			'total_trans'         => 0,
+			'total_aband_plugins' => 0,
+			'total_aband_themes'  => 0,
+			'total_upgrades'      => 0,
+		);
+
+		if ( empty( $website ) ) {
+			return $return;
+		}
+
+		$wp_upgrades        = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+		$return['total_wp'] = $wp_upgrades ? count( $wp_upgrades ) : 0;
+
+		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+		if ( ! is_array( $plugin_upgrades ) ) {
+			$plugin_upgrades = array();
+		}
+
+		$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+		if ( is_array( $decodedPremiumUpgrades ) ) {
+			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+				$premiumUpgrade['premium'] = true;
+				if ( 'plugin' === $premiumUpgrade['type'] ) {
+					$premiumUpgrade = array_filter( $premiumUpgrade );
+
+					if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+						$plugin_upgrades[ $crrSlug ] = array();
+					}
+					$plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+				}
+			}
+		}
+		$ignored_plugins = json_decode( $website->ignored_plugins, true );
+		if ( is_array( $ignored_plugins ) ) {
+			$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+		}
+
+		$ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
+		if ( is_array( $ignored_plugins ) ) {
+			$plugin_upgrades = array_diff_key( $plugin_upgrades, $ignored_plugins );
+		}
+
+		$return['total_plugins'] = count( $plugin_upgrades );
+
+		$theme_upgrades = json_decode( $website->theme_upgrades, true );
+		if ( ! is_array( $theme_upgrades ) ) {
+			$theme_upgrades = array();
+		}
+		$decodedPremiumUpgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' ), true );
+		if ( is_array( $decodedPremiumUpgrades ) ) {
+			foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+				$premiumUpgrade['premium'] = true;
+
+				if ( 'theme' === $premiumUpgrade['type'] ) {
+					$premiumUpgrade = array_filter( $premiumUpgrade );
+
+					if ( ! isset( $theme_upgrades[ $crrSlug ] ) ) {
+						$theme_upgrades[ $crrSlug ] = array();
+					}
+					$theme_upgrades[ $crrSlug ] = array_merge( $theme_upgrades[ $crrSlug ], $premiumUpgrade );
+				}
+			}
+		}
+		$ignored_themes = json_decode( $website->ignored_themes, true );
+		if ( is_array( $ignored_themes ) ) {
+			$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+		}
+
+		$ignored_themes = json_decode( $userExtension->ignored_themes, true );
+		if ( is_array( $ignored_themes ) ) {
+			$theme_upgrades = array_diff_key( $theme_upgrades, $ignored_themes );
+		}
+
+		$return['total_themes'] = count( $theme_upgrades );
+
+		$translation_upgrades = json_decode( $website->translation_upgrades, true );
+		if ( ! is_array( $translation_upgrades ) ) {
+			$translation_upgrades = array();
+		}
+		$return['total_trans'] = count( $translation_upgrades );
+
+		$plugins_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_info' ), true );
+		if ( ! is_array( $plugins_outdate ) ) {
+			$plugins_outdate = array();
+		}
+		if ( 0 < count( $plugins_outdate ) ) {
+			$pluginsOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+			if ( is_array( $pluginsOutdateDismissed ) ) {
+				$plugins_outdate = array_diff_key( $plugins_outdate, $pluginsOutdateDismissed );
+			}
+
+			$decodedDismissedPlugins = json_decode( $userExtension->dismissed_plugins, true );
+			if ( is_array( $decodedDismissedPlugins ) ) {
+				$plugins_outdate = array_diff_key( $plugins_outdate, $decodedDismissedPlugins );
+			}
+		}
+		$return['total_aband_plugins'] = count( $plugins_outdate );
+
+		$themes_outdate = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_info' ), true );
+		if ( ! is_array( $themes_outdate ) ) {
+			$themes_outdate = array();
+		}
+
+		if ( 0 < count( $themes_outdate ) ) {
+			$themesOutdateDismissed = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+			if ( is_array( $themesOutdateDismissed ) ) {
+				$themes_outdate = array_diff_key( $themes_outdate, $themesOutdateDismissed );
+			}
+
+			$decodedDismissedThemes = json_decode( $userExtension->dismissed_themes, true );
+			if ( is_array( $decodedDismissedThemes ) ) {
+				$themes_outdate = array_diff_key( $themes_outdate, $decodedDismissedThemes );
+			}
+		}
+
+		$return['total_aband_plugins'] = count( $themes_outdate );
+
+		$return['total_upgrades'] = $return['total_wp'] + $return['total_plugins'] + $return['total_themes'] + $return['total_trans'];
+
+		return $return;
+	}
+
+
+	/**
 	 * Method render_wpcore_updates()
 	 *
 	 * Render the WordPress Updates Tab.

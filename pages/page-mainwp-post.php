@@ -655,6 +655,10 @@ class MainWP_Post {
 				</div>
 				</div>
 				<div class="ui fitted divider"></div>
+				<?php
+				$num_sites = apply_filters( 'mainwp_posts_search_bulk_sites', 0 );
+				?>												
+				<span id="search-bulk-sites" number-sites="<?php echo intval( $num_sites ); ?>"></span>
 				<div class="mainwp-search-submit">
 					<?php
 					/**
@@ -805,7 +809,7 @@ class MainWP_Post {
 				<input type="text" name="mainwp_maximumPosts"  id="mainwp_maximumPosts" value="<?php echo( ( false === get_option( 'mainwp_maximumPosts' ) ) ? 50 : get_option( 'mainwp_maximumPosts' ) ); ?>"/>
 			</div>
 		</div>
-		<?php		
+		<?php
 	}
 
 	/**
@@ -889,6 +893,7 @@ class MainWP_Post {
 		if ( $cached ) {
 			MainWP_Cache::echo_body( 'Post' );
 		} else {
+			MainWP_Cache::init_cache( 'Post' );
 			self::render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type, $search_on );
 		}
 		?>
@@ -922,39 +927,40 @@ class MainWP_Post {
 		 * @since 4.1
 		 */
 		$table_features = apply_filters( 'mainwp_posts_table_fatures', $table_features );
-		?>
-		<script type="text/javascript">
-		jQuery( document ).ready( function () {
-			try {
-				jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
-				jQuery( '#mainwp-posts-table' ).DataTable( {
-					"searching" : <?php echo $table_features['searching']; ?>,
-					"colReorder" : <?php echo $table_features['colReorder']; ?>,
-					"stateSave":  <?php echo $table_features['stateSave']; ?>,
-					"paging": <?php echo $table_features['paging']; ?>,
-					"info": <?php echo $table_features['info']; ?>,
-					"order": <?php echo $table_features['order']; ?>,
-					"scrollX" : <?php echo $table_features['scrollX']; ?>,
-					"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-					"columnDefs": [ {
-						"targets": 'no-sort',
-						"orderable": false
-					} ],
-					"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted posts.', 'mainwp' ); ?>" },
-					"preDrawCallback": function( settings ) {
-						jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
-						jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
-						mainwp_datatable_fix_menu_overflow();
-						mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
-					}
-				} );
-			} catch ( err ) {
-				// to fix js error.
-			}
-		} );
-		</script>
-
-		<?php
+		if ( $cached ) {
+			?>
+			<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				try {
+					jQuery("#mainwp-posts-table").DataTable().destroy(); // to fix re-init database issue.
+					jQuery('#mainwp-posts-table').DataTable( {
+						"searching" : <?php echo $table_features['searching']; ?>,
+						"colReorder" : <?php echo $table_features['colReorder']; ?>,
+						"stateSave":  <?php echo $table_features['stateSave']; ?>,
+						"paging": <?php echo $table_features['paging']; ?>,
+						"info": <?php echo $table_features['info']; ?>,
+						"order": <?php echo $table_features['order']; ?>,
+						"scrollX" : <?php echo $table_features['scrollX']; ?>,
+						"lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+						"columnDefs": [ {
+							"targets": 'no-sort',
+							"orderable": false
+						} ],
+						"language" : { "emptyTable": "<?php esc_html_e( 'Please use the search options to find wanted posts.', 'mainwp' ); ?>" },
+						"preDrawCallback": function( settings ) {
+							jQuery( '#mainwp-posts-table-wrapper table .ui.dropdown' ).dropdown();
+							jQuery( '#mainwp-posts-table-wrapper table .ui.checkbox' ).checkbox();
+							mainwp_datatable_fix_menu_overflow();
+							mainwp_table_check_columns_init(); // ajax: to fix checkbox all.
+						}
+					} );
+				} catch ( err ) {
+					// to fix js error.
+				}
+			} );
+			</script>
+			<?php
+		}
 	}
 
 	/**
@@ -972,6 +978,7 @@ class MainWP_Post {
 	 * @param integer $userId Current user ID.
 	 * @param string  $post_type Post type.
 	 * @param string  $search_on Site on all sites. Default = all.
+	 * @param bool    $table_content Generate table content only. Default = false.
 	 *
 	 * @return string Post table body html.
 	 *
@@ -988,9 +995,8 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
-	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all' ) { // phpcs:ignore -- complex function.
-		MainWP_Cache::init_cache( 'Post' );
-
+	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false ) { // phpcs:ignore -- complex function.
+		
 		$dbwebsites = array();
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
@@ -1046,6 +1052,7 @@ class MainWP_Post {
 		$output         = new \stdClass();
 		$output->errors = array();
 		$output->posts  = 0;
+		$output->table_rows = '';
 
 		if ( 0 < count( $dbwebsites ) ) {
 			$post_data = array(
@@ -1092,25 +1099,29 @@ class MainWP_Post {
 				),
 				$output
 			);
+			echo $output->table_rows;
 		}
 
-		MainWP_Cache::add_context(
-			'Post',
-			array(
-				'count'     => $output->posts,
-				'keyword'   => $keyword,
-				'dtsstart'  => $dtsstart,
-				'dtsstop'   => $dtsstop,
-				'status'    => $status,
-				'sites'     => ( '' !== $sites ) ? $sites : '',
-				'groups'    => ( '' !== $groups ) ? $groups : '',
-				'search_on' => $search_on,
-			)
-		);
+		if ( ! $table_content ) {
+			MainWP_Cache::add_body( 'Post', $output->table_rows );
+			MainWP_Cache::add_context(
+				'Post',
+				array(
+					'count'     => $output->posts,
+					'keyword'   => $keyword,
+					'dtsstart'  => $dtsstart,
+					'dtsstop'   => $dtsstop,
+					'status'    => $status,
+					'sites'     => ( '' !== $sites ) ? $sites : '',
+					'groups'    => ( '' !== $groups ) ? $groups : '',
+					'search_on' => $search_on,
+				)
+			);
 
-		if ( 0 === $output->posts ) {
-			MainWP_Cache::add_body( 'Post', '' );
-			return;
+			if ( 0 === $output->posts ) {
+				MainWP_Cache::add_body( 'Post', '' );
+				return;
+			}
 		}
 	}
 
@@ -1179,6 +1190,7 @@ class MainWP_Post {
 				}
 			}
 
+			$table_rows = '';
 			foreach ( $posts as $post ) {
 				$raw_dts = '';
 				if ( isset( $post['dts'] ) ) {
@@ -1325,11 +1337,10 @@ class MainWP_Post {
 				</tr>
 				<?php
 				$newOutput = ob_get_clean();
-				echo $newOutput;
-
-				MainWP_Cache::add_body( 'Post', $newOutput );
+				$table_rows .= $newOutput;
 				$output->posts ++;
 			}
+			$output->table_rows .= $table_rows;
 			unset( $posts );
 		} else {
 			$output->errors[ $website->id ] = MainWP_Error_Helper::get_error_message( new MainWP_Exception( 'NOMAINWP', $website->url ) );

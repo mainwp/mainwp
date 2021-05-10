@@ -171,7 +171,7 @@ class MainWP_Extensions_View {
 			<?php endif; ?>
 			<?php self::render_purchase_notice(); ?>
 			</div>
-			<div class="mainwp-side-content">
+			<div class="mainwp-side-content mainwp-no-padding">
 				<?php self::render_side_box( $username, $password ); ?>
 			</div>
 			<div style="clear:both"></div>
@@ -407,6 +407,7 @@ class MainWP_Extensions_View {
 	public static function render_side_box( $username, $password ) {
 		?>
 		<?php MainWP_UI::render_sidebar_options(); ?>
+		<div class="mainwp-search-options">
 		<div class="ui header">
 			<?php esc_html_e( 'Install and Activate Extensions', 'mainwp' ); ?>
 			<div class="sub header"><?php esc_html_e( 'Enter your mainwp.com login to automatically install and activate purchased extensions.', 'mainwp' ); ?></div>
@@ -445,7 +446,7 @@ class MainWP_Extensions_View {
 		<br/>
 		<input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
 		<div class="ui message mainwp-extensions-api-loading" style="display: none"></div>
-
+		</div>
 		<?php
 	}
 	/**

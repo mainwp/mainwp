@@ -224,6 +224,10 @@ class MainWP_Manage_Sites_View {
 			),
 		);
 
+		$total_info    = MainWP_Manage_Sites_Update_View::get_total_info( $site_id );
+		$total_updates = $total_info['total_upgrades'];
+		$after_title   = '<div class="ui small ' . ( 0 == $total_updates ? 'green' : 'red' ) . ' label" timestamp="' . time() . '">' . $total_updates . '</div>';
+
 		$site_pages = array(
 			'ManageSitesDashboard'     => array(
 				'href'   => 'admin.php?page=managesites&dashboard=' . $site_id,
@@ -236,9 +240,10 @@ class MainWP_Manage_Sites_View {
 				'access' => mainwp_current_user_have_right( 'dashboard', 'edit_sites' ),
 			),
 			'ManageSitesUpdates'       => array(
-				'href'   => 'admin.php?page=managesites&updateid=' . $site_id,
-				'title'  => __( 'Updates', 'mainwp' ),
-				'access' => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+				'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
+				'title'       => __( 'Updates', 'mainwp' ),
+				'access'      => mainwp_current_user_have_right( 'dashboard', 'access_individual_dashboard' ),
+				'after_title' => $after_title,
 			),
 			'ManageSitesEmailSettings' => array(
 				'href'   => 'admin.php?page=managesites&emailsettingsid=' . $site_id,

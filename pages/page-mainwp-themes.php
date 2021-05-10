@@ -1062,21 +1062,20 @@ class MainWP_Themes {
 	public static function render_bulk_actions( $status ) {
 			ob_start();
 		?>
-		<div class="ui selection dropdown" id="mainwp-bulk-actions">
-			<div class="text"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></div> <i class="dropdown icon"></i>
-			<div class="menu">
+		<select class="ui dropdown" id="mainwp-bulk-actions">
+			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
 					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-						<div class="item" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></div>
+					<option data-value="activate" value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
-						<div class="item" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></div>
+					<option data-value="delete" value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-					<div class="item" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></div>
+				<option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
 				<?php endif; ?>
 				<?php
 				/**
@@ -1090,8 +1089,7 @@ class MainWP_Themes {
 				 */
 				do_action( 'mainwp_themes_bulk_action' );
 				?>
-			</div>
-		</div>
+		</select>
 		<button class="ui mini basic button" href="javascript:void(0)" id="mainwp-do-themes-bulk-actions"><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 		<span id="mainwp_bulk_action_loading"><i class="ui active inline loader tiny"></i></span>
 		<?php

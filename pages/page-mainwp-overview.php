@@ -383,7 +383,7 @@ class MainWP_Overview {
 			}
 			?>
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
-		<div class="mainwp-primary-content-wrap">
+
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
@@ -400,16 +400,14 @@ class MainWP_Overview {
 			 * @since 4.1
 			 */
 			do_action( 'mainwp_before_overview_widgets' );
+
+			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
+
+			$cls_grid = 'two';
+			if ( 3 == $overviewColumns ) {
+				$cls_grid = 'three';
+			}
 			?>
-
-		<?php
-		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-
-		$cls_grid = 'two';
-		if ( 3 == $overviewColumns ) {
-			$cls_grid = 'three';
-		}
-		?>
 			<div class="ui <?php echo $cls_grid; ?> column stackable grid mainwp-grid-wrapper">
 		<div class="column" id="mainwp-grid-left" widget-context="left">
 						<?php
@@ -522,7 +520,6 @@ class MainWP_Overview {
 			</div>
 				</form>
 		</div>
-	</div>
 	<script type="text/javascript">
 		var page_sortablewidgets = '<?php echo esc_js( MainWP_System_Utility::get_page_id( $screen->id ) ); ?>';
 		jQuery( document ).ready( function( $ ) {

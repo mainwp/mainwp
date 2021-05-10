@@ -121,9 +121,8 @@ class MainWP_Security_Issues_Widget {
 			</div>
 		</div>
 
-		<div class="ui section hidden divider"></div>
-
 		<div id="mainwp-security-issues-widget-list" class="ui middle aligned divided selection list" style="display: none;">
+		<div class="ui section hidden divider"></div>
 			<?php
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {

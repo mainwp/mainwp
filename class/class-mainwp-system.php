@@ -359,7 +359,10 @@ class MainWP_System {
 	 * Loads plugin language files.
 	 */
 	public function localization() {
-		load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
+		$load = apply_filters( 'mainwp_load_text_domain', true );
+		if ( $load ) {
+			load_plugin_textdomain( 'mainwp', false, dirname( dirname( plugin_basename( __FILE__ ) ) ) . '/languages/' );
+		}
 	}
 
 	/**

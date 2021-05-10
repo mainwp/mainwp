@@ -1001,7 +1001,7 @@ class MainWP_UI {
 						}
 
 						?>
-						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>"><?php echo esc_html( $item['title'] ); ?></a>
+						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>"><?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?></a>
 						<?php
 					}
 				}
@@ -1237,10 +1237,9 @@ class MainWP_UI {
 	 */
 	public static function render_empty_bulk_actions() {
 		?>
-		<div class="ui disabled dropdown" id="mainwp-bulk-actions">
-			<?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?> <i class="dropdown icon"></i>
-			<div class="menu"></div>
-		</div>
+		<select class="ui disabled dropdown" id="mainwp-bulk-actions">
+			<option value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+		</select>
 		<button class="ui tiny basic disabled button" href="javascript:void(0)" ><?php esc_html_e( 'Apply', 'mainwp' ); ?></button>
 		<?php
 	}

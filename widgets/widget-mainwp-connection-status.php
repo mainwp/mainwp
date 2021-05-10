@@ -181,7 +181,7 @@ class MainWP_Connection_Status {
 			</div>
 			<?php if ( empty( $current_wpid ) ) { ?>
 			<div class="four wide column right aligned">
-				<div id="widget-connect-status-dropdown-selector" class="ui dropdown right not-auto-init mainwp-dropdown-tab">
+				<div id="widget-connect-status-dropdown-selector" class="ui dropdown top right pointing not-auto-init mainwp-dropdown-tab">
 						<div class="text"><?php esc_html_e( 'All Sites', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">

@@ -657,7 +657,8 @@ class MainWP_Post {
 				<div class="ui fitted divider"></div>
 				<?php
 				$num_sites = apply_filters( 'mainwp_posts_search_bulk_sites', 0 );
-				?>												
+				?>
+																
 				<span id="search-bulk-sites" number-sites="<?php echo intval( $num_sites ); ?>"></span>
 				<div class="mainwp-search-submit">
 					<?php
@@ -996,7 +997,7 @@ class MainWP_Post {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
 	 */
 	public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false ) { // phpcs:ignore -- complex function.
-		
+
 		$dbwebsites = array();
 		if ( '' !== $sites ) {
 			foreach ( $sites as $k => $v ) {
@@ -1049,9 +1050,9 @@ class MainWP_Post {
 			}
 		}
 
-		$output         = new \stdClass();
-		$output->errors = array();
-		$output->posts  = 0;
+		$output             = new \stdClass();
+		$output->errors     = array();
+		$output->posts      = 0;
 		$output->table_rows = '';
 
 		if ( 0 < count( $dbwebsites ) ) {
@@ -1336,7 +1337,7 @@ class MainWP_Post {
 					</td>
 				</tr>
 				<?php
-				$newOutput = ob_get_clean();
+				$newOutput   = ob_get_clean();
 				$table_rows .= $newOutput;
 				$output->posts ++;
 			}

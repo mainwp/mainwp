@@ -971,7 +971,7 @@ class MainWP_Manage_Sites_List_Table {
 						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"initComplete": function( settings, json ) {
-					    jQuery( '#mainwp-sites-table-loader' ).hide();
+						jQuery( '#mainwp-sites-table-loader' ).hide();
 					  }
 					} );
 				} catch(err) {
@@ -1044,7 +1044,7 @@ class MainWP_Manage_Sites_List_Table {
 							}
 						},
 						"initComplete": function( settings, json ) {
-					    jQuery( '#mainwp-sites-table-loader' ).hide();
+						jQuery( '#mainwp-sites-table-loader' ).hide();
 					  },
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

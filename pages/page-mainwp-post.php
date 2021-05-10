@@ -658,7 +658,7 @@ class MainWP_Post {
 				<?php
 				$num_sites = apply_filters( 'mainwp_posts_search_bulk_sites', 0 );
 				?>
-																				
+
 				<span id="search-bulk-sites" number-sites="<?php echo intval( $num_sites ); ?>"></span>
 				<div class="mainwp-search-submit">
 					<?php

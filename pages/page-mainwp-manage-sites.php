@@ -1078,8 +1078,8 @@ class MainWP_Manage_Sites {
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
 			<div class="ui active inverted dimmer" id="mainwp-sites-table-loader">
-			<div class="ui large text loader"><?php esc_html_e( 'Loading sites...', 'mainwp' ); ?></div>
-		  </div>
+				<div class="ui large text loader"><?php esc_html_e( 'Loading sites...', 'mainwp' ); ?></div>
+			</div>
 			<form method="post" class="mainwp-table-container">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<?php

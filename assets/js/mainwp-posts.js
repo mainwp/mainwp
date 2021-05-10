@@ -349,7 +349,7 @@ mainwp_show_post = function ( siteId, postId, userId )
     siteElement.trigger( "change" );
     mainwp_fetch_posts( postId, userId );
 };
-
+/* eslint-disable complexity */
 mainwp_fetch_posts = function ( postId, userId, start_sites ) {
     var errors = [ ];
     var selected_sites = [ ];
@@ -448,6 +448,7 @@ mainwp_fetch_posts = function ( postId, userId, start_sites ) {
         
     } );
 };
+/* eslint-enable complexity */
 
 mainwp_fetch_posts_done = function () {
     jQuery( '#mainwp-loading-posts-row' ).hide();

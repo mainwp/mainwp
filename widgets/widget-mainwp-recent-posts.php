@@ -59,10 +59,10 @@ class MainWP_Recent_Posts {
 		$current_wpid = MainWP_System_Utility::get_current_wpid();
 
 		if ( $current_wpid ) {
-			$sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
+			$sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid );
 			$individual = true;
 		} else {
-			$sql = MainWP_DB::instance()->get_sql_websites_for_current_user();
+			$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user();
 			$individual = false;
 		}
 

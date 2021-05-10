@@ -121,8 +121,7 @@ class MainWP_Manage_Sites_Update_View {
 	 *
 	 * Get total Updates information.
 	 *
-	 * @param mixed $website Child Site info.
-	 * @param mixed $userExtension User extension info.
+	 * @param mixed $site_id Child Site id.
 	 */
 	public static function get_total_info( $site_id ) {
 

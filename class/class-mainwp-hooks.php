@@ -364,7 +364,6 @@ class MainWP_Hooks {
 	 * Check for inactive MainWP Extensions.
 	 *
 	 * @param mixed $input Input value.
-	 * @param mixed $slug MainWP Extension to check.
 	 *
 	 * @return bool Activation notice.
 	 */

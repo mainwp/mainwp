@@ -123,7 +123,7 @@ class MainWP_Manage_Sites_Update_View {
 	 *
 	 * @param mixed $site_id Child Site id.
 	 */
-	public static function get_total_info( $site_id ) {
+	public static function get_total_info( $site_id ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$sql           = MainWP_DB::instance()->get_sql_website_by_id( $site_id, false, array( 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );

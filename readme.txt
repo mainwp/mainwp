@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.7.1
 Requires PHP: 7.0
-Stable tag: 4.1.6
+Stable tag: 4.1.7-beta1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.7-beta1 - 5-11-21 =
+* Fixed: An issue with loading accordion JS library
+* Fixed: An issue with filtering sites in the Sites table
+* Fixed: An issue with sending the Daily Digest email on some setups
+* Fixed: An issue with detecting Abandoned Plugins and Themes
+* Fixed: Multiple cosmetic and usability issues
+* Fixed: An issue with progress indicator for Security fix process
+* Fixed: Multiple PHP warnings
+* Added: Improvement for detecting premium plugins and themes Updates
+* Added: Ability to select items to update on individual site Updates page
+* Added: Support for the new Vulnerability checker API
+
 
 = 4.1.6 - 4-15-21 =
 * Fixed: Database error caught on specific setups

@@ -487,11 +487,11 @@ mainwp_fix_all_security_issues_specific = function (siteToFix) {
     return function () {
       siteToFix.attr('status', 'done');
       el.show();
-      if (bulkInstallDone != 0 && bulkInstallDone == bulkInstallTotal) {
-        window.location.href = location.href;
-      }
       bulkInstallCurrentThreads--;
       bulkInstallDone++;
+      if (bulkInstallDone != 0 && ( bulkInstallTotal == 1 || ( bulkInstallDone >= bulkInstallTotal ) ) ) {
+        window.location.href = location.href;
+      }     
       mainwp_fix_all_security_issues_start_next();
     }
   }(), 'json');

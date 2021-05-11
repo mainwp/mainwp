@@ -278,7 +278,7 @@ class MainWP_System_Cron_Jobs {
 		$timeDailyUpdate        = get_option( 'mainwp_timeDailyUpdate' );
 		$second_timeDailyUpdate = DAY_IN_SECONDS;
 		if ( 1 < $timeDailyUpdate ) {
-			$second_timeDailyUpdate = DAY_IN_SECONDS / $timeDailyUpdate;
+			$second_timeDailyUpdate = ( DAY_IN_SECONDS / intval( $timeDailyUpdate ) );
 		}
 
 		$run_timestamp = 0;

@@ -230,11 +230,11 @@ class MainWP_System_Cron_Jobs {
 			$_mins = 0;
 		}
 		if ( ! empty( $time ) ) {
-			$str_date = date( 'Y-m-d', $time );
+			$str_date = date( 'Y-m-d', $time ); // phpcs:ignore -- update check at local server time.
 		} else {
-			$str_date = date( 'Y-m-d' );
+			$str_date = date( 'Y-m-d' ); // phpcs:ignore -- update check at local server time.
 		}
-		return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- update check at local server time
+		return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- update check at local server time.
 	}
 
 	/**

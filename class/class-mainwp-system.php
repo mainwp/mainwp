@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.7-beta1';
+	public static $version = '4.1.7-beta2';
 
 	/**
 	 * Private static variable to hold the single instance of the class.

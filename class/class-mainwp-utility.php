@@ -920,7 +920,8 @@ class MainWP_Utility {
 		}
 
 		$allowed_files = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png', 'bmp', 'tif', 'tiff', 'ico' );
-		$file_ext      = strtolower( end( explode( '.', $filename ) ) );
+		$file_ext      = array_values( array_slice( explode( '.', $filename ), -1 ) )[0];
+		$file_ext      = strtolower( $file_ext );
 		if ( ! in_array( $file_ext, $allowed_files ) ) {
 			return false;
 		}

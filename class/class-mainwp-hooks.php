@@ -47,7 +47,8 @@ class MainWP_Hooks {
 		add_action( 'mainwp_deletePlugin', array( &$this, 'delete_plugin' ), 10, 0 );
 		add_action( 'mainwp_deleteTheme', array( &$this, 'delete_theme' ), 10, 0 );
 
-		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ) );
+		add_filter( 'mainwp_get_user_extension', array( &$this, 'get_user_extension' ), 10, 2 );
+		add_filter( 'mainwp_update_user_extension', array( &$this, 'update_user_extension' ), 10, 3 );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
 
@@ -94,6 +95,13 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 		add_filter( 'mainwp_escape_response_data', array( &$this, 'hook_escape_response' ), 10, 3 );
+
+		add_filter( 'mainwp_db_fetch_object', array( &$this, 'db_fetch_object' ), 10, 2 );
+		add_filter( 'mainwp_db_fetch_array', array( &$this, 'db_fetch_array' ), 10, 2 );
+		add_filter( 'mainwp_db_data_seek', array( &$this, 'db_data_seek' ), 10, 3 );
+		add_filter( 'mainwp_db_free_result', array( &$this, 'db_free_result' ), 10, 2 );
+		add_filter( 'mainwp_db_num_rows', array( &$this, 'db_num_rows' ), 10, 2 );
+		add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
 
 		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
 	}
@@ -532,6 +540,24 @@ class MainWP_Hooks {
 	}
 
 	/**
+	 * Method update_user_extension()
+	 *
+	 * Hook to update user extension.
+	 *
+	 * @param bool   $false input filter value.
+	 * @param string $option_name option name.
+	 * @param mixed  $option_value option value.
+	 *
+	 * @return bool true.
+	 */
+	public function update_user_extension( $false, $option_name, $option_value ) {
+		$userExtension                 = MainWP_DB_Common::instance()->get_user_extension();
+		$userExtension->{$option_name} = wp_json_encode( $option_value );
+		MainWP_DB_Common::instance()->update_user_extension( $userExtension );
+		return true;
+	}
+
+	/**
 	 * Method hook_get_site_options()
 	 *
 	 * Hook to get Child site options.
@@ -570,6 +596,11 @@ class MainWP_Hooks {
 	 * @return string|null Database query result (as string), or null on failure
 	 */
 	public function hook_update_site_options( $boolean, $website, $option, $value ) {
+		if ( is_numeric( $website ) ) {
+			$obj     = new \stdClass();
+			$obj->id = $website;
+			$website = $obj;
+		}
 		return MainWP_DB::instance()->update_website_option( $website, $option, $value );
 	}
 
@@ -717,6 +748,95 @@ class MainWP_Hooks {
 			}
 		}
 		return $response;
+	}
+
+	/**
+	 * Method db_free_result()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $result     result data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_free_result( $false, $result ) {
+		MainWP_DB::free_result( $result );
+		return true;
+	}
+
+	/**
+	 * Method db_num_rows()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $result     result data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_num_rows( $false, $result ) {
+		return MainWP_DB::num_rows( $result );
+	}
+
+
+	/**
+	 * Method db_get_websites_for_current_user()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $params     params data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_get_websites_for_current_user( $false, $params = array() ) {
+		return MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
+	}
+
+	/**
+	 * Method db_data_seek()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $result     result data.
+	 * @param int   $offset     offset of data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_data_seek( $false, $result, $offset = 0 ) {
+		MainWP_DB::data_seek( $result, $offset );
+		return true;
+	}
+
+	/**
+	 * Method db_fetch_object()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $result     result data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_fetch_object( $false, $result ) {
+		return MainWP_DB::fetch_object( $result );
+	}
+
+
+	/**
+	 * Method db_fetch_array()
+	 *
+	 * To escape response data.
+	 *
+	 * @param mixed $false     input value.
+	 * @param mixed $result     result data.
+	 *
+	 * @return bool true.
+	 */
+	public function db_fetch_array( $false, $result ) {
+		return MainWP_DB::fetch_array( $result );
 	}
 
 	/**

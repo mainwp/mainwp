@@ -176,16 +176,18 @@ class MainWP_Notification {
 			)
 		);
 
-		MainWP_Logger::instance()->debug( 'CRON :: updates check - daily digest :: send mail ::' );
-		MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
-
 		$subject = $email_settings['subject'];
-		self::send_wp_mail(
+		$sent    = self::send_wp_mail(
 			$email,
 			$subject,
 			$formated_content,
 			$content_type
 		);
+		if ( $sent ) {
+			MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail :: successful :: ' . $email, MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+		} else {
+			MainWP_Logger::instance()->log_action( 'CRON :: daily digest :: send mail :: failed :: ' . $email, MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+		}
 		return true;
 	}
 
@@ -264,7 +266,7 @@ class MainWP_Notification {
 	 * @param string $content_type email content.
 	 */
 	public static function send_wp_mail( $email, $subject, $mail_content, $content_type ) {
-		wp_mail(
+		return wp_mail(
 			$email,
 			$subject,
 			$mail_content,

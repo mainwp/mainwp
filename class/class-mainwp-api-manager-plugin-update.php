@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Api_Manager_Plugin_Update {
 
 	/**
-	 * Protected static varibale to hold the instance.
+	 * Protected static variable to hold the instance.
 	 *
 	 * @var null Default value.
 	 */
@@ -131,11 +131,11 @@ class MainWP_Api_Manager_Plugin_Update {
 
 
 	/**
-	 * Check $args, if there is a response, an object eists & response is not false.
+	 * Check $args, if there is a response, an object exists & response is not false.
 	 *
 	 * @param array $args Request arguments.
 	 *
-	 * @return object $response Plugin information.
+	 * @return array|false $response Plugin information.
 	 */
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';

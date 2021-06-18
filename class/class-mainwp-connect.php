@@ -39,7 +39,7 @@ class MainWP_Connect {
 	 * @param string $http_user HTTPAuth Username. Default = null.
 	 * @param string $http_pass HTTPAuth Password. Default = null.
 	 * @param int    $sslVersion        Child Site SSL Version.
-	 * @param bool   $forceUseIPv4      Option to fource IP4. Default = null.
+	 * @param bool   $forceUseIPv4      Option to force IP4. Default = null.
 	 * @param bool   $no_body           Option to set CURLOPT_NOBODY option. Default = false.
 	 *
 	 * @return array $out. 'host IP, Returned HTTP Code, Error Message, http Status error message.
@@ -343,7 +343,7 @@ class MainWP_Connect {
 					/**
 					 * Filter: mainwp_alter_login_user
 					 *
-					 * Filtes users accounts so it allows you user to jump to child site under alternative administartor account.
+					 * Filters users accounts so it allows you user to jump to child site under alternative administrator account.
 					 *
 					 * @param int $website->id Child site ID.
 					 * @param int $current_user->ID User ID.
@@ -460,10 +460,10 @@ class MainWP_Connect {
 	/**
 	 * Method fetch_urls_authed()
 	 *
-	 * Fethech authorized URLs.
+	 * Fetch authorized URLs.
 	 *
 	 * @param object $websites Websites information.
-	 * @param string $what Action to perorm.
+	 * @param string $what Action to perform.
 	 * @param array  $params Request parameters.
 	 * @param mixed  $handler Request handler.
 	 * @param mixed  $output Request output.
@@ -742,7 +742,7 @@ class MainWP_Connect {
 	 * To debug fetch authorized URLs.
 	 *
 	 * @param object $websites Websites information.
-	 * @param string $what Action to perorm.
+	 * @param string $what Action to perform.
 	 * @param array  $params Request parameters.
 	 * @param mixed  $handler Request handler.
 	 * @param mixed  $output Request output.
@@ -1153,8 +1153,8 @@ class MainWP_Connect {
 	 *
 	 * @param object $website          Website information.
 	 * @param string $what             Function to perform.
-	 * @param null   $params           Function paramerters.
-	 * @param bool   $checkConstraints Whether or not to check contraints.
+	 * @param null   $params           Function parameters.
+	 * @param bool   $checkConstraints Whether or not to check constraints.
 	 * @param bool   $pForceFetch      Whether or not to force the fetch.
 	 * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
 	 * @param null   $rawResponse      Raw response.
@@ -1211,7 +1211,7 @@ class MainWP_Connect {
 			 *
 			 * Fires before the child site update process.
 			 *
-			 * @param object $website Object conaining child site info.
+			 * @param object $website Object containing child site info.
 			 * @param string $type    Type parameter.
 			 * @param string $list    List parameter.
 			 *
@@ -1244,10 +1244,10 @@ class MainWP_Connect {
 			 *
 			 * Fires after the child site update process.
 			 *
-			 * @param object $website     Object conaining child site info.
+			 * @param object $website     Object containing child site info.
 			 * @param string $type        Type parameter.
 			 * @param string $list        List parameter.
-			 * @param array  $information Array containng the information fetched from the child site.
+			 * @param array  $information Array containing the information fetched from the child site.
 			 *
 			 * @since Unknown
 			 */
@@ -1268,7 +1268,7 @@ class MainWP_Connect {
 	 * @param string  $url URL to fetch from.
 	 * @param string  $admin Admin name.
 	 * @param string  $what Function to perform.
-	 * @param null    $params Function paramerters.
+	 * @param null    $params Function parameters.
 	 * @param bool    $pForceFetch true|false Whether or not to force the fetch.
 	 * @param null    $verifyCertificate Verify the SSL Certificate.
 	 * @param null    $http_user htaccess username.
@@ -1315,7 +1315,7 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check constraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param bool    $pRetryFailed ture|false Whether or not the Retry has failed.
 	 * @param null    $http_user htaccess username.
@@ -1375,7 +1375,7 @@ class MainWP_Connect {
 	 * @param object  $website Child Site info.
 	 * @param string  $url URL to fetch from.
 	 * @param mixed   $postdata Post data to fetch.
-	 * @param bool    $checkConstraints true|false Whether or not to check contraints.
+	 * @param bool    $checkConstraints true|false Whether or not to check constraints.
 	 * @param null    $verifyCertificate Verify SSL Certificate.
 	 * @param null    $http_user htaccess username.
 	 * @param null    $http_pass htaccess password.

@@ -505,8 +505,8 @@ class MainWP_System_Cron_Jobs {
 				MainWP_Logger::instance()->debug( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
 				MainWP_Logger::instance()->log_action( 'CRON :: busy counter :: found ' . $busyCounter . ' websites', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
-				if ( time() - $lastAutomaticUpdate < HOUR_IN_SECONDS ) {
-					//return;
+				if ( ( time() - $lastAutomaticUpdate ) < HOUR_IN_SECONDS ) {
+					MainWP_Logger::instance()->log_action( 'CRON :: last automatic update :: ' . $lastAutomaticUpdate, MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				}
 			}
 

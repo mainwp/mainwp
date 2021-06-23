@@ -226,8 +226,6 @@ class MainWP_Post_Page_Handler {
 	 * Method posting_bulk()
 	 *
 	 * Create bulk posts on sites.
-	 *
-	 * @param int $post_id Post or Page ID.
 	 */
 	public static function posting_bulk() {
 		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
@@ -404,9 +402,9 @@ class MainWP_Post_Page_Handler {
 	 * Posting posts.
 	 *
 	 * @param int    $post_id Post or Page ID.
-	 * @param string $prepare Pre bulk sites or not.
+	 * @param string $what What posting process.
 	 */
-	public static function posting_posts( $post_id, $what ) {
+	public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( empty( $post_id ) ) {
 			return false;

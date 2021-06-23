@@ -239,7 +239,7 @@ class MainWP_Utility {
 	 * @return void
 	 */
 	public static function end_session() {
-		
+
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			return;
 		}

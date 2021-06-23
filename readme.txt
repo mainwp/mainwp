@@ -176,6 +176,12 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.7-beta2 - 6-4-21 =
+* Fixed: An issue with basic security checks count
+* Fixed: An issue with sending the Daily Digest email on some setups
+* Fixed: Multiple cosmetic and usability issues
+* Updated: Support for the new Vulnerability checker API
+
 = 4.1.7-beta1 - 5-11-21 =
 * Fixed: An issue with loading accordion JS library
 * Fixed: An issue with filtering sites in the Sites table

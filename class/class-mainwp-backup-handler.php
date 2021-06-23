@@ -32,7 +32,7 @@ class MainWP_Backup_Handler {
 	 *
 	 * @param mixed $siteid Child Site ID.
 	 * @param mixed $pTask Task to perform.
-	 * @param mixed $subfolder Subfolder to place backup.
+	 * @param mixed $subfolder Sub folder to place backup.
 	 *
 	 * @gobal object $wp_filesystem WordPress filesystem instance.
 	 *
@@ -647,7 +647,7 @@ class MainWP_Backup_Handler {
 	 * @param mixed $pSiteId   Child Site id.
 	 * @param mixed $pid       Backup pid.
 	 * @param mixed $type      full|db Type of backup.
-	 * @param mixed $subfolder Subfolder for backup.
+	 * @param mixed $subfolder Sub folder for backup.
 	 * @param mixed $pFilename Backups filename
 	 *
 	 * @return array $status, $result.
@@ -761,18 +761,18 @@ class MainWP_Backup_Handler {
 	 *
 	 * @param mixed  $pSiteId                         Child Site ID.
 	 * @param mixed  $pType                           full|db Typ of backup.
-	 * @param mixed  $pSubfolder                      Subfolder to store backup.
+	 * @param mixed  $pSubfolder                      Sub folder to store backup.
 	 * @param mixed  $pExclude                        Exclusion list.
-	 * @param mixed  $excludebackup                   Exclued backup files.
+	 * @param mixed  $excludebackup                   Exclude backup files.
 	 * @param mixed  $excludecache                    Exclude cache files.
 	 * @param mixed  $excludenonwp                    Exclude no WP Files.
 	 * @param mixed  $excludezip                      Exclude Zip files
 	 * @param null   $pFilename                       Name of backup file.
 	 * @param string $pFileNameUID                    File name unique ID.
-	 * @param bool   $pArchiveFormat                  Achive format.
-	 * @param bool   $pMaximumFileDescriptorsOverride Overide maximum file descriptors.
+	 * @param bool   $pArchiveFormat                  Archive format.
+	 * @param bool   $pMaximumFileDescriptorsOverride Override maximum file descriptors.
 	 * @param bool   $pMaximumFileDescriptorsAuto     Auto maximum file descriptors.
-	 * @param bool   $pMaximumFileDescriptors         Maximum file decriptors.
+	 * @param bool   $pMaximumFileDescriptors         Maximum file descriptors.
 	 * @param bool   $pLoadFilesBeforeZip             Load files before zip.
 	 * @param bool   $pid                             Backup pid.
 	 * @param bool   $append                          Append to backup.
@@ -896,14 +896,14 @@ class MainWP_Backup_Handler {
 			} else {
 				$loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
 			}
-		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overriden flow: only fallback to global.
+		} elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overridden flow: only fallback to global.
 			$loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
 			$loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 		} else {
 			$loadFilesBeforeZip = ( 2 === $pLoadFilesBeforeZip );
 		}
 
-		// Nomral flow: check site settings & fallback to global.
+		// Normal flow: check site settings & fallback to global.
 		if ( false === $pArchiveFormat ) {
 			$archiveFormat = self::get_current_archive_extension( $website );
 		} elseif ( 'global' === $pArchiveFormat ) {

@@ -758,7 +758,6 @@ class MainWP_Post_Page_Handler {
 				}
 			}
 		}
-
 	}
 
 	/**

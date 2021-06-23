@@ -91,10 +91,11 @@ class MainWP_Sync {
 						}
 
 						$cloneSites[ $website->id ] = array(
-							'name'    => $website->name,
-							'url'     => $website->url,
-							'extauth' => $website->extauth,
-							'size'    => $website->totalsize,
+							'name'          => $website->name,
+							'url'           => $website->url,
+							'extauth'       => $website->extauth,
+							'size'          => $website->totalsize,
+							'connect_admin' => $website->adminname,
 						);
 					}
 					MainWP_DB::free_result( $websites );
@@ -133,8 +134,7 @@ class MainWP_Sync {
 				true,
 				$pForceFetch
 			);
-			MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', isset( $information['primaryLasttimeBackup'] ) ? $information['primaryLasttimeBackup'] : 0 );
-			$return = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
+			$return      = self::sync_information_array( $pWebsite, $information, '', 1, false, $pAllowDisconnect );
 
 			return $return;
 		} catch ( MainWP_Exception $e ) {
@@ -285,6 +285,16 @@ class MainWP_Sync {
 					$securityStats = array_merge( $securityStats, $filterStats );
 				}
 
+				$unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
+				if ( $unset_scripts ) {
+					if ( isset( $securityStats['versions'] ) ) {
+						unset( $securityStats['versions'] );
+					}
+					if ( isset( $securityStats['registered_versions'] ) ) {
+						unset( $securityStats['registered_versions'] );
+					}
+				}
+
 				$tmp_issues           = array_filter(
 					$securityStats,
 					function( $v, $k ) {
@@ -406,6 +416,11 @@ class MainWP_Sync {
 			$done                      = true;
 		}
 
+		if ( isset( $information['clone_adminname'] ) ) {
+			$websiteValues['adminname'] = $information['clone_adminname'];
+			$done                       = true;
+		}
+
 		if ( isset( $information['admin_nicename'] ) ) {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'admin_nicename', trim( $information['admin_nicename'] ) );
 			$done = true;
@@ -428,6 +443,11 @@ class MainWP_Sync {
 			$done = true;
 		} else {
 			MainWP_DB::instance()->update_website_option( $pWebsite, 'themes_outdate_info', $emptyArray );
+		}
+
+		if ( isset( $information['primaryLasttimeBackup'] ) ) {
+			MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', $information['primaryLasttimeBackup'] );
+			$done = true;
 		}
 
 		if ( ! $done ) {

@@ -223,9 +223,31 @@ class MainWP_Post_Page_Handler {
 	}
 
 	/**
+	 * Method posting_bulk()
+	 *
+	 * Create bulk posts on sites.
+	 *
+	 * @param int $post_id Post or Page ID.
+	 */
+	public static function posting_bulk() {
+		$p_id               = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
+		$posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
+		?>
+		<input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>						
+		<?php
+		if ( ! $posting_bulk_sites ) {
+			self::posting( $p_id );
+		} else {
+			self::posting_prepare( $p_id );
+		}
+	}
+
+	/**
 	 * Method posting()
 	 *
 	 * Create bulk posts on sites.
+	 *
+	 * @param int $post_id Post or Page ID.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
 	 * @uses \MainWP\Dashboard\MainWP_DB::query()
@@ -242,9 +264,9 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function posting() { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function posting( $post_id ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+		$p_id           = $post_id;
 		$succes_message = '';
-		$p_id           = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false;
 		if ( $p_id ) {
 			$edit_id = get_post_meta( $p_id, '_mainwp_edit_post_id', true );
 			if ( $edit_id ) {
@@ -280,291 +302,7 @@ class MainWP_Post_Page_Handler {
 
 				if ( ! $skip_post ) {
 					if ( $p_id ) {
-						$id    = $p_id;
-						$_post = get_post( $id );
-						if ( $_post ) {
-							$selected_by     = get_post_meta( $id, '_selected_by', true );
-							$val             = get_post_meta( $id, '_selected_sites', true );
-							$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
-							$val             = get_post_meta( $id, '_selected_groups', true );
-							$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
-
-							$selected_by     = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
-							$selected_sites  = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
-							$selected_groups = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
-
-							$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-
-							$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-							$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-							$post_custom = get_post_custom( $id );
-
-							$galleries           = get_post_gallery( $id, false );
-							$post_gallery_images = array();
-
-							if ( is_array( $galleries ) && isset( $galleries['ids'] ) ) {
-								$attached_images = explode( ',', $galleries['ids'] );
-								foreach ( $attached_images as $attachment_id ) {
-									$attachment = get_post( $attachment_id );
-									if ( $attachment ) {
-										$post_gallery_images[] = array(
-											'id'          => $attachment_id,
-											'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
-											'caption'     => $attachment->post_excerpt,
-											'description' => $attachment->post_content,
-											'src'         => $attachment->guid,
-											'title'       => $attachment->post_title,
-										);
-									}
-								}
-							}
-
-							include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
-							$featured_image_id   = get_post_thumbnail_id( $id );
-							$post_featured_image = null;
-							$featured_image_data = null;
-							$mainwp_upload_dir   = wp_upload_dir();
-
-							$post_status = get_post_meta( $id, '_edit_post_status', true );
-
-							/**
-							 * Post status
-							 *
-							 * Sets post status when posting 'bulkpost' to child sites.
-							 *
-							 * @param int $id Post ID.
-							 *
-							 * @since Unknown
-							 */
-							$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
-							$new_post    = array(
-								'post_title'     => $_post->post_title,
-								'post_content'   => $_post->post_content,
-								'post_status'    => $post_status,
-								'post_date'      => $_post->post_date,
-								'post_date_gmt'  => $_post->post_date_gmt,
-								'post_tags'      => $post_tags,
-								'post_name'      => $post_slug,
-								'post_excerpt'   => $_post->post_excerpt,
-								'comment_status' => $_post->comment_status,
-								'ping_status'    => $_post->ping_status,
-								'mainwp_post_id' => $_post->ID,
-							);
-
-							if ( null != $featured_image_id ) {
-								$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
-								$post_featured_image = $img[0];
-								$attachment          = get_post( $featured_image_id );
-								$featured_image_data = array(
-									'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
-									'caption'     => $attachment->post_excerpt,
-									'description' => $attachment->post_content,
-									'title'       => $attachment->post_title,
-								);
-							}
-
-							$dbwebsites = array();
-							if ( 'site' === $selected_by ) {
-								foreach ( $selected_sites as $k ) {
-									if ( MainWP_Utility::ctype_digit( $k ) ) {
-										$website                    = MainWP_DB::instance()->get_website_by_id( $k );
-										$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-											$website,
-											array(
-												'id',
-												'url',
-												'name',
-												'adminname',
-												'nossl',
-												'privkey',
-												'nosslkey',
-												'http_user',
-												'http_pass',
-												'ssl_version',
-											)
-										);
-									}
-								}
-							} else {
-								foreach ( $selected_groups as $k ) {
-									if ( MainWP_Utility::ctype_digit( $k ) ) {
-										$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
-										while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-											if ( '' !== $website->sync_errors ) {
-												continue;
-											}
-											$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
-												$website,
-												array(
-													'id',
-													'url',
-													'name',
-													'adminname',
-													'nossl',
-													'privkey',
-													'nosslkey',
-													'http_user',
-													'http_pass',
-													'ssl_version',
-												)
-											);
-										}
-										MainWP_DB::free_result( $websites );
-									}
-								}
-							}
-
-							$output         = new \stdClass();
-							$output->ok     = array();
-							$output->errors = array();
-							$startTime      = time();
-
-							if ( 0 < count( $dbwebsites ) ) {
-								$post_data = array(
-									'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'post_category'       => base64_encode( $post_category ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-									'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-								);
-								MainWP_Connect::fetch_urls_authed(
-									$dbwebsites,
-									'newpost',
-									$post_data,
-									array(
-										MainWP_Bulk_Add::get_class_name(),
-										'posting_bulk_handler',
-									),
-									$output
-								);
-							}
-
-							$failed_posts = array();
-							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
-									$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
-									do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
-									do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
-
-									/**
-									 * Posting post
-									 *
-									 * Fires while posting post.
-									 *
-									 * @param object $website                          Object containing child site data.
-									 * @param int    $output->added_id[ $website->id ] Child site ID.
-									 * @param array  $links                            Links.
-									 *
-									 * @since Unknown
-									 */
-									do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], $links );
-
-									/**
-									 * Posting post completed
-									 *
-									 * Fires after the post posting process is completed.
-									 *
-									 * @param array  $_post   Array containing the post data.
-									 * @param object $website Object containing child site data.
-									 * @param array  $output  Output data.
-									 *
-									 * @since Unknown
-									 */
-									do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
-								} else {
-									$failed_posts[] = $website->id;
-								}
-							}
-
-							/**
-							 * After posting a new post
-							*
-							 * Sets data after the posting process to show the process feedback.
-							 *
-							 * @param array $_post      Array containing the post data.
-							 * @param array $dbwebsites Array containing processed sites.
-							 * @param array $output     Output data.
-							 *
-							 * @since Unknown
-							*/
-							$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
-							$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
-
-							$posting_succeed = false;
-							if ( false === $after_posting ) {
-								?>
-							<div class="ui relaxed list">
-								<?php
-								foreach ( $dbwebsites as $website ) {
-									?>
-									<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
-									: 
-									<?php
-									if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
-										echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
-										$posting_succeed = true;
-									} else {
-										echo $output->errors[ $website->id ];
-									}
-									?>
-									</div>
-							<?php } ?>
-							</div>
-								<?php
-							} else {
-								$posting_succeed = true;
-							}
-
-							$delete_bulk_post = apply_filters( 'mainwp_after_posting_delete_bulk_post', true, $posting_succeed );
-
-							$do_not_del = get_post_meta( $id, '_bulkpost_do_not_del', true );
-
-							$deleted_bulk_post = false;
-							if ( 'yes' !== $do_not_del && $delete_bulk_post ) {
-								wp_delete_post( $id, true );
-								$deleted_bulk_post = true;
-							}
-
-							if ( ! $deleted_bulk_post ) {
-								?>
-								<div class="item">
-								<a href="<?php echo admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
-								</div>
-								<?php
-							}
-
-							$countSites     = 0;
-							$countRealItems = 0;
-							foreach ( $dbwebsites as $website ) {
-								if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
-									$countSites++;
-									$countRealItems++;
-								}
-							}
-
-							if ( ! empty( $countSites ) ) {
-								$seconds = ( time() - $startTime );
-								MainWP_Twitter::update_twitter_info( 'new_post', $countSites, $seconds, $countRealItems, $startTime, 1 );
-							}
-
-							if ( MainWP_Twitter::enabled_twitter_messages() ) {
-								$twitters = MainWP_Twitter::get_twitter_notice( 'new_post' );
-								if ( is_array( $twitters ) ) {
-									foreach ( $twitters as $timeid => $twit_mess ) {
-										if ( ! empty( $twit_mess ) ) {
-											$sendText = MainWP_Twitter::get_twit_to_send( 'new_post', $timeid );
-											?>
-										<div class="mainwp-tips ui info message twitter" style="margin:0">
-											<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
-										</div>
-											<?php
-										}
-									}
-								}
-							}
-						}
+						self::posting_posts( $p_id, 'posting' );
 					} else {
 						?>
 					<div class="error">
@@ -597,6 +335,432 @@ class MainWP_Post_Page_Handler {
 			} );
 		</script>
 		<?php
+	}
+
+	/**
+	 * Method posting_prepare()
+	 *
+	 * Posting posts.
+	 *
+	 * @param int $post_id Post or Page ID.
+	 */
+	public static function posting_prepare( $post_id ) {
+		?>
+		<div class="ui modal" id="mainwp-posting-post-modal">
+			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Post', 'mainwp' ) : esc_html_e( 'New Post', 'mainwp' ); ?></div>
+			<div class="scrolling content">
+				<?php
+				if ( $post_id ) {
+					self::posting_posts( $post_id, 'preparing' );
+				} else {
+					?>
+					<div class="error">
+						<p>
+							<strong><?php esc_html_e( 'ERROR', 'mainwp' ); ?></strong>: <?php esc_html_e( 'An undefined error occured!', 'mainwp' ); ?>
+						</p>
+					</div>
+					<?php
+				}
+				?>
+			</div>
+		<div class="actions">
+			<a href="admin.php?page=PostBulkAdd" class="ui green button"><?php esc_html_e( 'New Post', 'mainwp' ); ?></a>
+			<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+		</div>
+	</div>
+	<div class="ui active inverted dimmer" id="mainwp-posting-running">
+	<div class="ui indeterminate large text loader"><?php esc_html_e( 'Running ...', 'mainwp' ); ?></div>
+	</div>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery( "#mainwp-posting-running" ).hide();
+				jQuery( "#mainwp-posting-post-modal" ).modal( {
+					closable: true,
+					onHide: function() {
+						location.href = 'admin.php?page=PostBulkManage';
+					}
+				} ).modal( 'show' );
+				mainwp_post_posting_start_next( true );
+			} );			
+		</script>
+		<?php
+	}
+
+
+	/**
+	 * Method ajax_posting_posts()
+	 *
+	 * Ajax Posting posts.
+	 */
+	public static function ajax_posting_posts() {
+		$post_id = $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		self::posting_posts( $post_id, 'ajax_posting' );
+		die();
+	}
+
+	/**
+	 * Method posting_posts()
+	 *
+	 * Posting posts.
+	 *
+	 * @param int    $post_id Post or Page ID.
+	 * @param string $prepare Pre bulk sites or not.
+	 */
+	public static function posting_posts( $post_id, $what ) {
+
+		if ( empty( $post_id ) ) {
+			return false;
+		}
+
+		$id    = $post_id;
+		$_post = get_post( $id );
+
+		if ( $_post ) {
+			$selected_by     = 'site';
+			$selected_groups = array();
+			$selected_sites  = array();
+
+			if ( 'posting' == $what || 'preparing' == $what ) {
+				$selected_by     = get_post_meta( $id, '_selected_by', true );
+				$val             = get_post_meta( $id, '_selected_sites', true );
+				$selected_sites  = MainWP_System_Utility::maybe_unserialyze( $val );
+				$val             = get_post_meta( $id, '_selected_groups', true );
+				$selected_groups = MainWP_System_Utility::maybe_unserialyze( $val );
+				$selected_by     = apply_filters( 'mainwp_posting_post_selected_by', $selected_by, $id );
+			} elseif ( 'ajax_posting' == $what ) {
+				$site_id = $_POST['site_id'] ? $_POST['site_id'] : 0;
+				if ( $site_id ) {
+					$selected_sites = array( $site_id );
+				}
+			}
+
+			$selected_sites  = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
+			$selected_groups = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
+
+			if ( 'preparing' != $what ) {
+				$post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+
+				$post_tags   = base64_decode( get_post_meta( $id, '_tags', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$post_slug   = base64_decode( get_post_meta( $id, '_slug', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+				$post_custom = get_post_custom( $id );
+
+				$galleries           = get_post_gallery( $id, false );
+				$post_gallery_images = array();
+
+				if ( is_array( $galleries ) && isset( $galleries['ids'] ) ) {
+					$attached_images = explode( ',', $galleries['ids'] );
+					foreach ( $attached_images as $attachment_id ) {
+						$attachment = get_post( $attachment_id );
+						if ( $attachment ) {
+							$post_gallery_images[] = array(
+								'id'          => $attachment_id,
+								'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+								'caption'     => $attachment->post_excerpt,
+								'description' => $attachment->post_content,
+								'src'         => $attachment->guid,
+								'title'       => $attachment->post_title,
+							);
+						}
+					}
+				}
+
+				include_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'post-thumbnail-template.php';
+				$featured_image_id   = get_post_thumbnail_id( $id );
+				$post_featured_image = null;
+				$featured_image_data = null;
+				$mainwp_upload_dir   = wp_upload_dir();
+
+				$post_status = get_post_meta( $id, '_edit_post_status', true );
+
+				/**
+				 * Post status
+				 *
+				 * Sets post status when posting 'bulkpost' to child sites.
+				 *
+				 * @param int $id Post ID.
+				 *
+				 * @since Unknown
+				 */
+				$post_status = apply_filters( 'mainwp_posting_bulkpost_post_status', $post_status, $id );
+				$new_post    = array(
+					'post_title'     => $_post->post_title,
+					'post_content'   => $_post->post_content,
+					'post_status'    => $post_status,
+					'post_date'      => $_post->post_date,
+					'post_date_gmt'  => $_post->post_date_gmt,
+					'post_tags'      => $post_tags,
+					'post_name'      => $post_slug,
+					'post_excerpt'   => $_post->post_excerpt,
+					'comment_status' => $_post->comment_status,
+					'ping_status'    => $_post->ping_status,
+					'mainwp_post_id' => $_post->ID,
+				);
+
+				if ( null != $featured_image_id ) {
+					$img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
+					$post_featured_image = $img[0];
+					$attachment          = get_post( $featured_image_id );
+					$featured_image_data = array(
+						'alt'         => get_post_meta( $featured_image_id, '_wp_attachment_image_alt', true ),
+						'caption'     => $attachment->post_excerpt,
+						'description' => $attachment->post_content,
+						'title'       => $attachment->post_title,
+					);
+				}
+			}
+
+			$dbwebsites = array();
+
+			if ( 'site' === $selected_by ) {
+				foreach ( $selected_sites as $k ) {
+					if ( MainWP_Utility::ctype_digit( $k ) ) {
+						$website                    = MainWP_DB::instance()->get_website_by_id( $k );
+						$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+							$website,
+							array(
+								'id',
+								'url',
+								'name',
+								'adminname',
+								'nossl',
+								'privkey',
+								'nosslkey',
+								'http_user',
+								'http_pass',
+								'ssl_version',
+							)
+						);
+					}
+				}
+			} else {
+				foreach ( $selected_groups as $k ) {
+					if ( MainWP_Utility::ctype_digit( $k ) ) {
+						$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
+						while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+							if ( '' !== $website->sync_errors ) {
+								continue;
+							}
+							$dbwebsites[ $website->id ] = MainWP_Utility::map_site(
+								$website,
+								array(
+									'id',
+									'url',
+									'name',
+									'adminname',
+									'nossl',
+									'privkey',
+									'nosslkey',
+									'http_user',
+									'http_pass',
+									'ssl_version',
+								)
+							);
+						}
+						MainWP_DB::free_result( $websites );
+					}
+				}
+			}
+
+			if ( 'preparing' == $what ) {
+				?>
+				<div class="ui relaxed list">
+				<?php
+				foreach ( $dbwebsites as $website ) {
+					?>
+					<div class="item site-bulk-posting" site-id="<?php echo intval( $website->id ); ?>" status="queue"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+					<div class="right floated content progress"><i class="clock outline icon"></i></div>
+					</div>
+			<?php } ?>
+			</div>
+				<?php
+			} else {
+
+				$output         = new \stdClass();
+				$output->ok     = array();
+				$output->errors = array();
+				$startTime      = time();
+
+				if ( 0 < count( $dbwebsites ) ) {
+					$post_data = array(
+						'new_post'            => base64_encode( serialize( $new_post ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_custom'         => base64_encode( serialize( $post_custom ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_category'       => base64_encode( $post_category ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_featured_image' => base64_encode( $post_featured_image ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'post_gallery_images' => base64_encode( serialize( $post_gallery_images ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'mainwp_upload_dir'   => base64_encode( serialize( $mainwp_upload_dir ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+						'featured_image_data' => base64_encode( serialize( $featured_image_data ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+					);
+					MainWP_Connect::fetch_urls_authed(
+						$dbwebsites,
+						'newpost',
+						$post_data,
+						array(
+							MainWP_Bulk_Add::get_class_name(),
+							'posting_bulk_handler',
+						),
+						$output
+					);
+				}
+
+				foreach ( $dbwebsites as $website ) {
+					if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
+						$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
+						do_action_deprecated( 'mainwp-post-posting-post', array( $website, $output->added_id[ $website->id ], $links ), '4.0.7.2', 'mainwp_post_posting_post' ); // @deprecated Use 'mainwp_post_posting_page' instead.
+						do_action_deprecated( 'mainwp-bulkposting-done', array( $_post, $website, $output ), '4.0.7.2', 'mainwp_bulkposting_done' ); // @deprecated Use 'mainwp_bulkposting_done' instead.
+
+						/**
+						 * Posting post
+						 *
+						 * Fires while posting post.
+						 *
+						 * @param object $website                          Object containing child site data.
+						 * @param int    $output->added_id[ $website->id ] Child site ID.
+						 * @param array  $links                            Links.
+						 *
+						 * @since Unknown
+						 */
+						do_action( 'mainwp_post_posting_post', $website, $output->added_id[ $website->id ], $links );
+
+						/**
+						 * Posting post completed
+						 *
+						 * Fires after the post posting process is completed.
+						 *
+						 * @param array  $_post   Array containing the post data.
+						 * @param object $website Object containing child site data.
+						 * @param array  $output  Output data.
+						 *
+						 * @since Unknown
+						 */
+						do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
+					}
+				}
+
+				/**
+				 * After posting a new post
+				*
+				* Sets data after the posting process to show the process feedback.
+				*
+				* @param array $_post      Array containing the post data.
+				* @param array $dbwebsites Array containing processed sites.
+				* @param array $output     Output data.
+				*
+				* @since Unknown
+				*/
+				$newExtensions = apply_filters_deprecated( 'mainwp-after-posting-bulkpost-result', array( false, $_post, $dbwebsites, $output ), '4.0.7.2', 'mainwp_after_posting_bulkpost_result' );
+				$after_posting = apply_filters( 'mainwp_after_posting_bulkpost_result', $newExtensions, $_post, $dbwebsites, $output );
+
+				$posting_succeed = false;
+
+				if ( false === $after_posting ) {
+					if ( 'posting' == $what ) {
+						?>
+					<div class="ui relaxed list">
+						<?php
+						foreach ( $dbwebsites as $website ) {
+							?>
+							<div class="item"><a href="<?php echo admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ); ?>"><?php echo stripslashes( $website->name ); ?></a>
+							: 
+							<?php
+							if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+								echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
+								$posting_succeed = true;
+							} else {
+								echo $output->errors[ $website->id ];
+							}
+							?>
+							</div>
+					<?php } ?>
+					</div>
+				<?php } ?>				
+					<?php
+				} else {
+					$posting_succeed = true;
+				}
+
+				$ajax_result = '';
+				if ( 'ajax_posting' == $what ) {
+					if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+						$ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
+						$posting_succeed = true;
+					} else {
+						$ajax_result = $output->errors[ $website->id ];
+					}
+				}
+
+				$delete_bulk_post = apply_filters( 'mainwp_after_posting_delete_bulk_post', true, $posting_succeed );
+				$do_not_del       = get_post_meta( $id, '_bulkpost_do_not_del', true );
+
+				$last_ajax_posting = false;
+				if ( 'ajax_posting' == $what ) {
+					$total = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
+					$count = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
+					if ( $total == $count ) {
+						$last_ajax_posting = true;
+					}
+				}
+
+				$deleted_bulk_post = false;
+				if ( 'yes' !== $do_not_del && $delete_bulk_post && ( 'posting' == $what || $last_ajax_posting ) ) {
+					wp_delete_post( $id, true );
+					$deleted_bulk_post = true;
+				}
+
+				$edit_link = '';
+				if ( ! $deleted_bulk_post ) {
+					if ( 'posting' == $what ) {
+						?>
+						<div class="item">
+							<a href="<?php echo admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ); ?>"><?php esc_html_e( 'Edit Post', 'mainwp' ); ?></a>
+						</div>
+						<?php
+					} elseif ( $last_ajax_posting ) {
+						$edit_link = '<div class="item"><a href="' . admin_url( 'admin.php?page=PostBulkEdit&post_id=' . $id ) . '">' . esc_html__( 'Edit Post', 'mainwp' ) . '</a></div>';
+					}
+				}
+
+				if ( 'ajax_posting' == $what ) {
+					die(
+						wp_json_encode(
+							array(
+								'result'    => $ajax_result,
+								'edit_link' => $edit_link,
+							)
+						)
+					);
+				}
+			}
+
+			if ( MainWP_Twitter::enabled_twitter_messages() ) {
+				if ( 'posting' == $what ) {
+					$countRealItems = 0;
+					foreach ( $dbwebsites as $website ) {
+						if ( isset( $output->ok[ $website->id ] ) && 1 == $output->ok[ $website->id ] ) {
+							$countRealItems++;
+						}
+					}
+					if ( ! empty( $countRealItems ) ) {
+						$seconds = ( time() - $startTime );
+						MainWP_Twitter::update_twitter_info( 'new_post', $countRealItems, $seconds, $countRealItems, $startTime, 1 );
+					}
+
+					$twitters = MainWP_Twitter::get_twitter_notice( 'new_post' );
+					if ( is_array( $twitters ) ) {
+						foreach ( $twitters as $timeid => $twit_mess ) {
+							if ( ! empty( $twit_mess ) ) {
+								$sendText = MainWP_Twitter::get_twit_to_send( 'new_post', $timeid );
+								?>
+							<div class="mainwp-tips ui info message twitter" style="margin:0">
+								<i class="ui close icon mainwp-dismiss-twit"></i><span class="mainwp-tip" twit-what="new_post" twit-id="<?php echo $timeid; ?>"><?php echo $twit_mess; ?></span>&nbsp;<?php MainWP_Twitter::gen_twitter_button( $sendText ); ?>
+							</div>
+								<?php
+							}
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	/**

@@ -239,6 +239,11 @@ class MainWP_Utility {
 	 * @return void
 	 */
 	public static function end_session() {
+		
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return;
+		}
+
 		session_write_close();
 		if ( 0 < ob_get_length() ) {
 			ob_end_flush();

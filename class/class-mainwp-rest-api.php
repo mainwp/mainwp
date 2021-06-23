@@ -969,6 +969,14 @@ class Rest_Api {
 						unset( $data->privkey );
 					}
 
+					if ( ! empty( $data ) && property_exists( $data, 'nosslkey' ) ) {
+						unset( $data->nosslkey );
+					}
+
+					if ( ! empty( $data ) && property_exists( $data, 'adminname' ) ) {
+						unset( $data->adminname );
+					}
+
 					$response = new \WP_REST_Response( $data );
 					$response->set_status( 200 );
 

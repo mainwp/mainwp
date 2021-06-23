@@ -82,7 +82,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 			$this->add_action( 'mainwp_post_restore', array( &$this, 'mainwp_post_restore' ) );
 			$this->add_action( 'mainwp_post_approve', array( &$this, 'mainwp_post_approve' ) );
 		}
-		$this->add_action( 'mainwp_post_addmeta', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_add_meta' ) );
 		// Page: Pages.
 		if ( mainwp_current_user_have_right( 'dashboard', 'manage_pages' ) ) {
 			$this->add_action( 'mainwp_page_unpublish', array( &$this, 'mainwp_page_unpublish' ) );
@@ -101,6 +100,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_posts_search', array( &$this, 'mainwp_posts_search' ) );
 		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) );
 		$this->add_action( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
+		$this->add_action( 'mainwp_post_postingbulk', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_posting_posts' ) );
 
 		// Page: Pages.
 		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) );

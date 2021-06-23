@@ -34,7 +34,12 @@ class MainWP_Manage_Sites_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
 	 */
 	public static function check_site() {
-		$url     = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+
+		if ( false == strpos( $url, '/', -1 ) ) { // to fix: valid url to check.
+			die( wp_json_encode( array( 'error' => __( 'Invalid url!', 'mainwp' ) ) ) );
+		}
+
 		$website = MainWP_DB::instance()->get_websites_by_url( $url );
 		$ret     = array();
 

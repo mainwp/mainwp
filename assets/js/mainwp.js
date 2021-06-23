@@ -116,6 +116,43 @@ postAction = function (elem, what) {
   return false;
 };
 
+
+mainwp_post_posting_start_next = function( start ) {
+  if ( typeof start !== "undefined" && start ) {
+    bulkInstallDone = 0;
+    bulkInstallCurrentThreads = 0;
+    bulkInstallTotal = jQuery('.site-bulk-posting[status="queue"]').length;
+  }
+	while ((siteToPosting = jQuery('.site-bulk-posting[status="queue"]:first')) && (siteToPosting.length > 0) && (bulkInstallCurrentThreads < bulkInstallMaxThreads)) {
+	  mainwp_post_posting_start_specific( siteToPosting );
+	}	
+};
+
+mainwp_post_posting_start_specific = function( siteToPosting ) {  
+  siteToPosting.attr('status', 'progress'); 
+  bulkInstallDone++;
+  bulkInstallCurrentThreads++; 
+  var data = mainwp_secure_data( {
+      action: 'mainwp_post_postingbulk',
+      post_id: jQuery('#bulk_posting_id').val(),
+      site_id: jQuery(siteToPosting).attr('site-id'),
+      count: bulkInstallDone,
+      total: bulkInstallTotal
+  } );   
+  siteToPosting.find('.progress').html('<i class="notched circle loading icon"></i>');
+  jQuery.post( ajaxurl, data, function ( response ) {
+    bulkInstallCurrentThreads--;
+      if ( response && response.result ){
+        siteToPosting.find('.progress').html(response.result);
+        if ( response.edit_link !== '' ){
+          siteToPosting.after(response.edit_link);
+        }
+      }      
+      mainwp_post_posting_start_next();
+  }, 'json' );
+}
+
+
 /**
  * Plugins Widget
  */

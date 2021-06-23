@@ -1455,7 +1455,6 @@ class MainWP_Page {
 							MainWP_Connect::fetch_urls_authed( $dbwebsites, 'newpost', $post_data, array( MainWP_Bulk_Add::get_class_name(), 'posting_bulk_handler' ), $output );
 						}
 
-						$failed_posts = array();
 						foreach ( $dbwebsites as $website ) {
 							if ( isset( $output->ok[ $website->id ] ) && ( 1 == $output->ok[ $website->id ] ) && ( isset( $output->added_id[ $website->id ] ) ) ) {
 								$links = isset( $output->link[ $website->id ] ) ? $output->link[ $website->id ] : null;
@@ -1488,8 +1487,6 @@ class MainWP_Page {
 								 * @since Unknown
 								 */
 								do_action( 'mainwp_bulkposting_done', $_post, $website, $output );
-							} else {
-								$failed_posts[] = $website->id;
 							}
 						}
 

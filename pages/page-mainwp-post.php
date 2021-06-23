@@ -108,7 +108,7 @@ class MainWP_Post {
 			'PostingBulkPost',
 			array(
 				MainWP_Post_Page_Handler::get_class_name(),
-				'posting',
+				'posting_bulk',
 			)
 		);
 

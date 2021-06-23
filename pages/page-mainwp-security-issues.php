@@ -346,6 +346,21 @@ class MainWP_Security_Issues {
 			$post_data['skip_features'] = $skip_features;
 		}
 
+		$unset_scripts = apply_filters( 'mainwp_unset_security_scripts_stylesheets', true );
+		if ( $unset_scripts ) {
+			if ( ! isset( $post_data['skip_features'] ) ) {
+				$post_data['skip_features'] = array();
+			}
+
+			if ( ! in_array( 'versions', $post_data['skip_features'] ) ) {
+				$post_data['skip_features'][] = 'versions';
+			}
+
+			if ( ! in_array( 'registered_versions', $post_data['skip_features'] ) ) {
+				$post_data['skip_features'][] = 'registered_versions';
+			}
+		}
+
 		$information = MainWP_Connect::fetch_url_authed( $website, 'securityFix', $post_data );
 		if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
 			MainWP_Sync::sync_information_array( $website, $information['sync'] );

@@ -1284,9 +1284,11 @@ class MainWP_Server_Information {
 			}
 		}
 
-		$enabled = MainWP_Logger::instance()->get_log_status();
-
-		$specific_logs = apply_filters( 'mainwp_specific_action_logs', array() );
+		$enabled          = MainWP_Logger::instance()->get_log_status();
+		$specific_default = array(
+			MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER => __( 'Update Checking', 'mainwp' ),
+		);
+		$specific_logs    = apply_filters( 'mainwp_specific_action_logs', $specific_default );
 
 		?>
 		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">

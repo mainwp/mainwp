@@ -474,7 +474,7 @@ class MainWP_System_Cron_Jobs {
 		$userid = null;
 		foreach ( $websites as $website ) {
 			$websiteValues = array(
-				'dtsAutomaticSyncStart' => time(),
+				'dtsAutomaticSyncStart' => $local_timestamp,
 			);
 			if ( null === $userid ) {
 				$userid = $website->userid;
@@ -503,9 +503,10 @@ class MainWP_System_Cron_Jobs {
 			$busyCounter = MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomaticUpdate );
 			if ( 0 != $busyCounter ) {
 				MainWP_Logger::instance()->debug( 'CRON :: busy counter :: found ' . $busyCounter . ' websites' );
+				MainWP_Logger::instance()->log_action( 'CRON :: busy counter :: found ' . $busyCounter . ' websites', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				$lastAutomaticUpdate = MainWP_DB::instance()->get_websites_last_automatic_sync();
 				if ( time() - $lastAutomaticUpdate < HOUR_IN_SECONDS ) {
-					return;
+					//return;
 				}
 			}
 
@@ -601,7 +602,7 @@ class MainWP_System_Cron_Jobs {
 
 				if ( ! MainWP_Sync::sync_site( $website, false, true ) ) {
 					$websiteValues = array(
-						'dtsAutomaticSync' => time(),
+						'dtsAutomaticSync' => $local_timestamp,
 					);
 
 					MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
@@ -785,7 +786,7 @@ class MainWP_System_Cron_Jobs {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_daily_digest_action', $website, $plain_text );
-				MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsAutomaticSync' => time() ) );
+				MainWP_DB::instance()->update_website_sync_values( $website->id, array( 'dtsAutomaticSync' => $local_timestamp ) );
 				MainWP_DB::instance()->update_website_option( $website, 'last_wp_upgrades', wp_json_encode( $websiteCoreUpgrades ) );
 				MainWP_DB::instance()->update_website_option( $website, 'last_plugin_upgrades', $website->plugin_upgrades );
 				MainWP_DB::instance()->update_website_option( $website, 'last_theme_upgrades', $website->theme_upgrades );

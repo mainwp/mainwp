@@ -244,6 +244,10 @@ class MainWP_Utility {
 			return;
 		}
 
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			return;
+		}
+
 		session_write_close();
 		if ( 0 < ob_get_length() ) {
 			ob_end_flush();

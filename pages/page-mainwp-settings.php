@@ -539,12 +539,12 @@ class MainWP_Settings {
 						?>
 
 						<div class="ui grid field">
-							<label class="six wide column middle aligned" local-datetime="<?php echo date_i18n( 'Y-m-d H:i:s' ); ?>"; ><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set specific time for the automatic daily sync process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="time-selector">
 									<div class="ui input left icon">
 										<i class="clock icon"></i>
-										<input type="text" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+										<input type="text" timezone-datetime="<?php echo date_i18n( 'Y-m-d H:i:s' ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
 									</div>
 								</div>
 								<script type="text/javascript">

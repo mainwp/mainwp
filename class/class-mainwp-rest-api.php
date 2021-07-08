@@ -2028,8 +2028,8 @@ class Rest_Api {
 	/**
 	 * Method mainwp_rest_api_add_site_callback()
 	 *
-	 * Callback function for managing the response to API requests made for the endpoint: site-add
-	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/site-add
+	 * Callback function for managing the response to API requests made for the endpoint: add-site
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/add-site
 	 * API Method: POST
 	 *
 	 * @param array $request The request made in the API call which includes all parameters.
@@ -2060,8 +2060,8 @@ class Rest_Api {
 	/**
 	 * Method mainwp_rest_api_edit_site_callback()
 	 *
-	 * Callback function for managing the response to API requests made for the endpoint: site-edit
-	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/site-edit
+	 * Callback function for managing the response to API requests made for the endpoint: edit-site
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/site/edit-site
 	 * API Method: PUT
 	 *
 	 * @param array $request The request made in the API call which includes all parameters.

@@ -312,7 +312,11 @@ class MainWP_System_Cron_Jobs {
 		$lasttimeDailyDigest          = get_option( 'mainwp_updatescheck_dailydigest_last_timestamp' );
 		$mainwpLastDailydigest        = get_option( 'mainwp_dailydigest_last' );
 
-		if ( $today_m_y !== $mainwpLastDailydigest && 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
+		$sendmail_for_each_auto_sync = apply_filters( 'mainwp_updatescheck_sendmail_for_each_auto_sync_finished', false );
+
+		$check_ready_sendmail = ( $sendmail_for_each_auto_sync || $today_m_y !== $mainwpLastDailydigest ) ? true : false;
+
+		if ( $check_ready_sendmail && 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
 			/**
 			 * Filter: mainwp_updatescheck_sendmail_at_time
 			 *
@@ -353,7 +357,7 @@ class MainWP_System_Cron_Jobs {
 				MainWP_Logger::instance()->log_action( 'CRON :: got to the daily digest mail part', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 				$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
-				if ( ! $gen_email_settings['disable'] ) {
+				if ( empty( $gen_email_settings['disable'] ) ) {
 					// send general daily digests.
 					$this->start_notification_daily_digest( $gen_email_settings, $plain_text ); // general email.
 				}
@@ -1156,6 +1160,7 @@ class MainWP_System_Cron_Jobs {
 
 		if ( ! $sendMail ) {
 			MainWP_Logger::instance()->debug( 'CRON :: updates check :: sendMail is false' );
+			MainWP_Logger::instance()->log_action( 'CRON :: updates check :: sendMail is false', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 			return false;
 		}
 

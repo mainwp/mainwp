@@ -580,7 +580,7 @@ class MainWP_Logger {
 	public function show_log_db() {
 
 		echo '<div class="ui hidden divider"></div>';
-		echo '<div class="ui divided padded relaxed list">';
+		echo '<div class="ui divided padded relaxed list" local-datetime="' . date( 'Y-m-d H:i:s' ) . '">';
 
 		$rows = MainWP_DB::instance()->query( MainWP_DB_Common::instance()->get_sql_log() );
 

@@ -452,7 +452,7 @@ class Rest_Api {
 
 			if ( isset( $headers['x-api-key'] ) ) {
 				$header_keys = $headers['x-api-key'];
-				$api_keys    = json_decode( base64_decode( $header_keys ), true );
+				$api_keys    = json_decode( $header_keys, true );
 				if ( is_array( $api_keys ) && isset( $api_keys['consumer_key'] ) ) {
 					// users entered consumer key and secret.
 					$consumer_key    = $api_keys['consumer_key'];

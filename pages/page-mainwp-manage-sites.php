@@ -587,7 +587,7 @@ class MainWP_Manage_Sites {
 						<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
 					</div>
 				</div>
-				
+
 				<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
 				<input style="display:none" type="text" name="fakeusernameremembered"/>
 				<input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -609,7 +609,7 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-				
+
 				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
 
 				<?php

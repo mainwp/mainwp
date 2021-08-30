@@ -93,7 +93,7 @@ class MainWP_Manage_Screenshots {
 						?>
 					<div class="card" site-url="<?php echo $website->url; ?>">
 						<div class="image">						
-							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo urlencode( $website->url ); ?>?w=900">
+							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo rawurlencode( $website->url ); ?>?w=900">
 						</div>
 						<div class="content">
 						<h5 class="ui small header"><?php echo $website->name; ?></h5>
@@ -146,9 +146,6 @@ class MainWP_Manage_Screenshots {
 	 *
 	 * Render Sites sub page header tabs.
 	 *
-	 * @param mixed $active_tab Currently active tab.
-	 * @param mixed $active_text Currently active drop down text.
-	 * @param mixed $show_language_updates Whether or not to show translations.
 	 */
 	public static function render_header_tabs() {
 		$selected_group = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
@@ -210,7 +207,7 @@ class MainWP_Manage_Screenshots {
 					window.location = 'admin.php?page=ScreenshotsSites' + params;
 					return false;
 				};
-				
+
 				jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
 					var filter = jQuery(this).val().toLowerCase();
 					var siteItems =  jQuery('#mainwp-sites-previews').find( '.card' );

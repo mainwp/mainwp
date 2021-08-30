@@ -203,7 +203,6 @@ class MainWP_Setup_Wizard {
 	 */
 	public function setup_wizard_steps() {
 		$ouput_steps = $this->steps;
-		// array_shift( $ouput_steps );
 		?>
 		<div id="mainwp-quick-setup-wizard-steps" class="ui ordered fluid steps" style="">
 			<?php foreach ( $ouput_steps as $step_key => $step ) : ?>
@@ -359,8 +358,8 @@ class MainWP_Setup_Wizard {
 				<label><?php esc_html_e( 'Is MainWP Child plugin installed and activated on the WordPress site that you want to connect?', 'mainwp' ); ?></label>
 			<div class="ui hidden divider"></div>
 				<div class="ui toggle checkbox">
-				  <input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
-				  <label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
+					<input type="checkbox" name="mainwp-qsw-verify-mainwp-child-active" id="mainwp-qsw-verify-mainwp-child-active">
+					<label for="mainwp-qsw-verify-mainwp-child-active"><?php esc_html_e( 'Select to confirm that the MainWP Child plugin is active.', 'mainwp' ); ?></label>
 				</div>
 			</div>
 		</div>

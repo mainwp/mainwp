@@ -544,7 +544,7 @@ class MainWP_Settings {
 								<div class="time-selector">
 									<div class="ui input left icon">
 										<i class="clock icon"></i>
-										<input type="text" timezone-datetime="<?php echo date_i18n( 'Y-m-d H:i:s' ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+										<input type="text" timezone-datetime="<?php echo date_i18n( 'Y-m-d H:i:s' ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s' ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
 									</div>
 								</div>
 								<script type="text/javascript">

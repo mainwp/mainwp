@@ -369,7 +369,7 @@ class MainWP_Updates {
 				$total_translation_upgrades += count( $translation_upgrades );
 			}
 
-			if ( is_array( $plugin_upgrades ) ) {
+			if ( is_array( $plugin_upgrades ) && ! $website->is_ignorePluginUpdates ) {
 				$_ignored_plugins = json_decode( $website->ignored_plugins, true );
 				if ( is_array( $_ignored_plugins ) ) {
 					$plugin_upgrades = array_diff_key( $plugin_upgrades, $_ignored_plugins );

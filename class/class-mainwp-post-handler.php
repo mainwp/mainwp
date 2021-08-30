@@ -101,6 +101,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 		$this->add_action( 'mainwp_get_categories', array( &$this, 'mainwp_get_categories' ) );
 		$this->add_action( 'mainwp_post_get_edit', array( &$this, 'mainwp_post_get_edit' ) );
 		$this->add_action( 'mainwp_post_postingbulk', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_posting_posts' ) );
+		$this->add_action( 'mainwp_get_sites_of_groups', array( MainWP_Post_Page_Handler::get_class_name(), 'ajax_get_sites_of_groups' ) );
 
 		// Page: Pages.
 		$this->add_action( 'mainwp_pages_search', array( &$this, 'mainwp_pages_search' ) );

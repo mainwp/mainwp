@@ -230,7 +230,7 @@ class MainWP_Server_Information_Handler {
 	public static function is_openssl_config_warning() {
 		$ssl_warning = self::get_ssl_warning();
 		if ( '' !== $ssl_warning ) {
-			if ( false !== stristr( $ssl_warning, __( 'No such file or directory found', 'mainwp' ) ) ) {
+			if ( false !== stristr( $ssl_warning, 'No such file or directory found', 'mainwp' ) || false !== stristr( $ssl_warning, 'No such process', 'mainwp' ) || false !== stristr( $ssl_warning, 'BIO_new_file:no such file', 'mainwp' ) ) {
 				return true;
 			}
 		}

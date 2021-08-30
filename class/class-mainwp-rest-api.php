@@ -440,9 +440,26 @@ class Rest_Api {
 	 */
 	public function mainwp_validate_request( $request ) {
 
-		// users entered consumer key and secret.
-		$consumer_key    = $request['consumer_key'];
-		$consumer_secret = $request['consumer_secret'];
+		$consumer_key    = null;
+		$consumer_secret = null;
+
+		if ( ! empty( $request['consumer_key'] ) && ! empty( $request['consumer_secret'] ) ) {
+			// users entered consumer key and secret.
+			$consumer_key    = $request['consumer_key'];
+			$consumer_secret = $request['consumer_secret'];
+		} else {
+			$headers = apache_request_headers();
+
+			if ( isset( $headers['x-api-key'] ) ) {
+				$header_keys = $headers['x-api-key'];
+				$api_keys    = json_decode( base64_decode( $header_keys ), true );
+				if ( is_array( $api_keys ) && isset( $api_keys['consumer_key'] ) ) {
+					// users entered consumer key and secret.
+					$consumer_key    = $api_keys['consumer_key'];
+					$consumer_secret = $api_keys['consumer_secret'];
+				}
+			}
+		}
 
 		// data stored in database.
 		$consumer_key_option    = get_option( 'mainwp_rest_api_consumer_key' );

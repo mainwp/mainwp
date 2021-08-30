@@ -165,7 +165,7 @@ class MainWP_Post_Page_Handler {
 	public static function get_categories() {
 		$websites = array();
 		if ( isset( $_REQUEST['sites'] ) && ( '' !== $_REQUEST['sites'] ) ) {
-			$siteIds          = explode( ',', urldecode( wp_unslash( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
+			$siteIds          = explode( ',', wp_unslash( urldecode( $_REQUEST['sites'] ) ) ); // do not sanitize encoded values.
 			$siteIdsRequested = array();
 			foreach ( $siteIds as $siteId ) {
 				$siteId = $siteId;
@@ -177,7 +177,7 @@ class MainWP_Post_Page_Handler {
 
 			$websites = MainWP_DB::instance()->get_websites_by_ids( $siteIdsRequested );
 		} elseif ( isset( $_REQUEST['groups'] ) && ( '' !== $_REQUEST['groups'] ) ) {
-			$groupIds          = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
+			$groupIds          = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['groups'] ) ) ) );  // sanitize ok.
 			$groupIdsRequested = array();
 			foreach ( $groupIds as $groupId ) {
 				$groupId = $groupId;
@@ -195,7 +195,7 @@ class MainWP_Post_Page_Handler {
 		$selectedCategories2 = array();
 
 		if ( isset( $_REQUEST['selected_categories'] ) && ( '' !== $_REQUEST['selected_categories'] ) ) {
-			$selectedCategories = explode( ',', urldecode( sanitize_text_field( wp_unslash( $_REQUEST['selected_categories'] ) ) ) );
+			$selectedCategories = explode( ',', sanitize_text_field( wp_unslash( urldecode( $_REQUEST['selected_categories'] ) ) ) );
 		}
 
 		if ( ! is_array( $selectedCategories ) ) {
@@ -391,9 +391,28 @@ class MainWP_Post_Page_Handler {
 	 * Ajax Posting posts.
 	 */
 	public static function ajax_posting_posts() {
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
 		$post_id = $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
 		self::posting_posts( $post_id, 'ajax_posting' );
 		die();
+	}
+
+	/**
+	 * Method ajax_get_sites_of_groups()
+	 *
+	 * Ajax Get sites of groups.
+	 */
+	public static function ajax_get_sites_of_groups() {
+		MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
+		$groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
+		$websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
+		$site_Ids = array();
+		if ( $websites ) {
+			foreach ( $websites as $website ) {
+				$site_Ids[] = $website->id;
+			}
+		}
+		die( wp_json_encode( $site_Ids ) );
 	}
 
 	/**

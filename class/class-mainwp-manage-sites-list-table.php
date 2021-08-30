@@ -434,7 +434,7 @@ class MainWP_Manage_Sites_List_Table {
 				</div>
 				<div class="right aligned middle aligned column">
 						<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui selection dropdown" id="mainwp_is_not_site" style="min-width:8em;">
+					<div class="ui selection dropdown" id="mainwp_is_not_site">
 							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
 							<i class="dropdown icon"></i>
 							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
@@ -1252,22 +1252,7 @@ class MainWP_Manage_Sites_List_Table {
 
 		if ( $this->items ) {
 			foreach ( $this->items as $website ) {
-				$rw_classes = '';
-				if ( isset( $website['groups'] ) && ! empty( $website['groups'] ) ) {
-					$group_class = $website['groups'];
-					$group_class = explode( ',', $group_class );
-					if ( is_array( $group_class ) ) {
-						foreach ( $group_class as $_class ) {
-							$_class      = trim( $_class );
-							$_class      = MainWP_Utility::sanitize_file_name( $_class );
-							$rw_classes .= ' ' . strtolower( $_class );
-						}
-					} else {
-						$_class      = MainWP_Utility::sanitize_file_name( $group_class );
-						$rw_classes .= ' ' . strtolower( $_class );
-					}
-				}
-
+				$rw_classes    = $this->get_groups_classes( $website );
 				$hasSyncErrors = ( '' !== $website['sync_errors'] );
 				$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );
 
@@ -1544,6 +1529,31 @@ class MainWP_Manage_Sites_List_Table {
 	}
 
 	/**
+	 * Get groups classes row.
+	 *
+	 * @param array $item Array containing child site data.
+	 * @return mixed Single Row Classes Item.
+	 */
+	public function get_groups_classes( $item ) {
+		$rw_classes = '';
+		if ( isset( $item['wpgroupids'] ) && ! empty( $item['wpgroupids'] ) ) {
+			$group_class = $item['wpgroupids'];
+			$group_class = explode( ',', $group_class );
+			if ( is_array( $group_class ) ) {
+				foreach ( $group_class as $_class ) {
+					$_class      = trim( $_class );
+					$_class      = 'group-' . MainWP_Utility::sanitize_file_name( $_class );
+					$rw_classes .= ' ' . strtolower( $_class );
+				}
+			} else {
+				$_class      = MainWP_Utility::sanitize_file_name( $group_class );
+				$rw_classes .= ' group-' . strtolower( $_class );
+			}
+		}
+		return $rw_classes;
+	}
+
+	/**
 	 * Fetch single row item.
 	 *
 	 * @return mixed Single Row Item.
@@ -1567,21 +1577,7 @@ class MainWP_Manage_Sites_List_Table {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize_file_name()
 	 */
 	public function single_row( $website ) {
-		$classes = '';
-		if ( isset( $website['groups'] ) && ! empty( $website['groups'] ) ) {
-			$group_class = $website['groups'];
-			$group_class = explode( ',', $group_class );
-			if ( is_array( $group_class ) ) {
-				foreach ( $group_class as $_class ) {
-					$_class   = trim( $_class );
-					$_class   = MainWP_Utility::sanitize_file_name( $_class );
-					$classes .= ' ' . strtolower( $_class );
-				}
-			} else {
-				$_class   = MainWP_Utility::sanitize_file_name( $group_class );
-				$classes .= ' ' . strtolower( $_class );
-			}
-		}
+		$classes = $this->get_groups_classes( $website );
 
 		$hasSyncErrors = ( '' !== $website['sync_errors'] );
 		$md5Connection = ( ! $hasSyncErrors && ( 1 == $website['nossl'] ) );

@@ -813,6 +813,12 @@ jQuery(document).ready(function () {
   });
 });
 
+jQuery('.mainwp-sync-this-site').on('click', function () {
+  var syncSiteIds = [];
+  syncSiteIds.push(jQuery(this).attr('site-id'));
+  mainwp_sync_sites_data(syncSiteIds);
+});
+
 mainwp_sync_sites_data = function (syncSiteIds, pAction) {
   var allWebsiteIds = jQuery('.dashboard_wp_id').map(function (indx, el) {
     return jQuery(el).val();
@@ -1271,8 +1277,6 @@ mainwp_managesites_add = function () {
       url: url,
       admin: jQuery('#mainwp_managesites_add_wpadmin').val(),
       verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
-      force_use_ipv4: jQuery('#mainwp_managesites_force_use_ipv4').val(),
-      ssl_version: jQuery('#mainwp_managesites_ssl_version').val(),
       http_user: jQuery('#mainwp_managesites_add_http_user').val(),
       http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
     });
@@ -1319,9 +1323,6 @@ mainwp_managesites_add = function () {
           managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
-          verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
-          force_use_ipv4: jQuery('#mainwp_managesites_force_use_ipv4').val(),
-          ssl_version: jQuery('#mainwp_managesites_ssl_version').val(),
           managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
           managesites_add_http_pass: jQuery('#mainwp_managesites_add_http_pass').val(),
         });
@@ -1380,8 +1381,6 @@ mainwp_managesites_add = function () {
             jQuery('#mainwp_managesites_add_uniqueId').val('');
             jQuery('#mainwp_managesites_add_addgroups').dropdown('clear');
             jQuery('#mainwp_managesites_verify_certificate').val(1);
-            jQuery('#mainwp_managesites_force_use_ipv4').val(0);
-            jQuery('#mainwp_managesites_ssl_version').val('auto');
 
             jQuery("input[name^='creport_token_']").each(function () {
               jQuery(this).val('');
@@ -1614,8 +1613,6 @@ mainwp_managesites_test = function () {
       action: 'mainwp_testwp',
       url: url,
       test_verify_cert: jQuery('#mainwp_managesites_verify_certificate').val(),
-      test_force_use_ipv4: jQuery('#mainwp_managesites_force_use_ipv4').val(),
-      test_ssl_version: jQuery('#mainwp_managesites_ssl_version').val(),
       http_user: jQuery('#mainwp_managesites_add_http_user').val(),
       http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
     });

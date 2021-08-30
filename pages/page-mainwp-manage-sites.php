@@ -576,34 +576,18 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
+
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
 				</h3>
-
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<input type="checkbox" name="mainwp_managesites_verify_certificate" id="mainwp_managesites_verify_certificate" checked="true" />
 					</div>
 				</div>
-
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'SSL version (optional)', 'mainwp' ); ?></label>
-					<div class="six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<select name="mainwp_managesites_ssl_version" id="mainwp_managesites_ssl_version" class="ui dropdown">
-							<option selected value="auto"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-							<option value="1.2"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
-							<option value="1.x"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
-							<option value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
-							<option value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
-							<option value="1.0"><?php esc_html_e( 'TLS v1.0', 'mainwp' ); ?></option>
-							<option value="1.1"><?php esc_html_e( 'TLS v1.1', 'mainwp' ); ?></option>
-						</select>
-					</div>
-				</div>
-
+				
 				<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
 				<input style="display:none" type="text" name="fakeusernameremembered"/>
 				<input style="display:none" type="password" name="fakepasswordremembered"/>
@@ -625,13 +609,8 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4 (optional)', 'mainwp' ); ?></label>
-					<div class="six wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Do you want to force IPv4 for this child site?', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_force_use_ipv4" id="mainwp_managesites_force_use_ipv4" />
-					</div>
-				</div>
+				
+				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
 
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.

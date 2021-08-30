@@ -62,6 +62,11 @@ class MainWP_Manage_Sites_View {
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
 					<?php } ?>
+					<?php if ( get_option( 'mainwp_enable_screenshots', 1 ) ) { ?>
+						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ScreenshotsSites' ) ) { ?>
+						<a href="<?php echo admin_url( 'admin.php?page=ScreenshotsSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Screenshots', 'mainwp' ); ?></a>
+					<?php } ?>
+					<?php } ?>
 					<?php
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
 						foreach ( $subPages as $subPage ) {
@@ -146,6 +151,16 @@ class MainWP_Manage_Sites_View {
 			),
 		);
 
+		if ( get_option( 'mainwp_enable_screenshots', 1 ) ) {
+			$items_menu[] = array(
+				'title'      => __( 'Screenshots', 'mainwp' ),
+				'parent_key' => 'managesites',
+				'href'       => 'admin.php?page=ScreenshotsSites',
+				'slug'       => 'ScreenshotsSites',
+				'right'      => '',
+			);
+		}
+
 		MainWP_Menu::init_subpages_left_menu( $subPages, $items_menu, 'managesites', 'ManageSites' );
 
 		foreach ( $items_menu as $item ) {
@@ -223,6 +238,14 @@ class MainWP_Manage_Sites_View {
 				'access' => true,
 			),
 		);
+
+		if ( get_option( 'mainwp_enable_screenshots', 1 ) ) {
+			$managesites_pages['ScreenshotsSites'] = array(
+				'href'   => 'admin.php?page=ScreenshotsSites',
+				'title'  => __( 'Screenshots', 'mainwp' ),
+				'access' => true,
+			);
+		}
 
 		$total_info    = MainWP_Manage_Sites_Update_View::get_total_info( $site_id );
 		$total_updates = $total_info['total_upgrades'];
@@ -519,8 +542,8 @@ class MainWP_Manage_Sites_View {
 			?>
 
 			<h3 class="ui dividing header">
-				<?php esc_html_e( ' Extensions Settings Synchronization', 'mainwp' ); ?>
-				<div class="sub header"><?php esc_html_e( 'You have Extensions installed that require an additional plugin to be installed on this new Child Site for the Extension to work correctly. From the list below select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
+				<?php esc_html_e( 'Extensions Settings Synchronization', 'mainwp' ); ?>
+				<div class="sub header"><?php esc_html_e( 'Select the plugins you want to install and if you want to apply the Extensions default settings to this Child site.', 'mainwp' ); ?></div>
 			</h3>
 
 			<?php
@@ -781,15 +804,6 @@ class MainWP_Manage_Sites_View {
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 
-		/**
-		 * Filter: mainwp_disable_site_url_field
-		 *
-		 * Filters the URL field "Disabled" attribute.
-		 *
-		 * @since 4.1.3
-		 */
-		$disable_site_url_field = apply_filters( 'mainwp_disable_site_url_field', true );
-
 		$website_url = MainWP_Utility::remove_http_prefix( $website->url, true );
 
 		?>
@@ -809,7 +823,7 @@ class MainWP_Manage_Sites_View {
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 							</select>
-							<input type="text" id="mainwp_managesites_edit_siteurl" <?php echo $disable_site_url_field ? 'disabled="disabled"' : ''; ?> name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
+							<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
 						</div>
 					</div>
 				</div>
@@ -1419,8 +1433,7 @@ class MainWP_Manage_Sites_View {
 		$params['wpadmin']           = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
 		$params['unique_id']         = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
 		$params['ssl_verify']        = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
-		$params['force_use_ipv4']    = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : intval( $_POST['force_use_ipv4'] ) );
-		$params['ssl_version']       = ! isset( $_POST['ssl_version'] ) || empty( $_POST['ssl_version'] ) ? null : intval( $_POST['ssl_version'] );
+		$params['force_use_ipv4']    = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
 		$params['http_user']         = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
 		$params['http_pass']         = isset( $_POST['managesites_add_http_pass'] ) ? wp_unslash( $_POST['managesites_add_http_pass'] ) : '';
 		$params['groupids']          = isset( $_POST['groupids'] ) && ! empty( $_POST['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $_POST['groupids'] ) ) ) : array();

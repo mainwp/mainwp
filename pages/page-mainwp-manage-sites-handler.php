@@ -36,7 +36,7 @@ class MainWP_Manage_Sites_Handler {
 	public static function check_site() {
 		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
 
-		if ( false == strpos( $url, '/', -1 ) ) { // to fix: valid url to check.
+		if ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) { // to fix: valid url to check.
 			die( wp_json_encode( array( 'error' => __( 'Invalid url!', 'mainwp' ) ) ) );
 		}
 
@@ -48,7 +48,7 @@ class MainWP_Manage_Sites_Handler {
 		} else {
 			try {
 				$verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
-				$force_use_ipv4 = ( ! isset( $_POST['force_use_ipv4'] ) || ( empty( $_POST['force_use_ipv4'] ) && ( '0' !== $_POST['force_use_ipv4'] ) ) ? null : sanitize_text_field( wp_unslash( $_POST['force_use_ipv4'] ) ) );
+				$force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
 				$http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
 				$http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
 				$admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
@@ -179,7 +179,6 @@ class MainWP_Manage_Sites_Handler {
 		$params['unique_id']      = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
 		$params['ssl_verify']     = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
 		$params['force_use_ipv4'] = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
-		$params['ssl_version']    = ! isset( $data['ssl_version'] ) || empty( $data['ssl_version'] ) ? null : intval( $data['ssl_version'] );
 		$params['http_user']      = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
 		$params['http_pass']      = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';
 		$params['groupids']       = isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) ) : array();

@@ -163,7 +163,7 @@ class MainWP_Twitter {
 					$real_updated = $value['real_items'];
 					$message     .= ', ' . _n( sprintf( '<strong>%d</strong> total update', $real_updated ), sprintf( '<strong>%d</strong> total updates', $real_updated ), $real_updated, 'mainwp' );
 				}
-				$message .= ' ' . _n( sprintf( 'in <strong>%d</strong> second', $real_updated ), sprintf( 'in <strong>%d</strong> seconds', $in_sec ), $in_sec, 'mainwp' );
+				$message .= ' ' . _n( sprintf( 'in <strong>%d</strong> second', $in_sec ), sprintf( 'in <strong>%d</strong> seconds', $in_sec ), $in_sec, 'mainwp' );
 			}
 			$message .= '!';
 		}

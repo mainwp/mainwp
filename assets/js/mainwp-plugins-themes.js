@@ -369,7 +369,7 @@ mainwp_fetch_plugins = function () {
 
     jQuery.post( ajaxurl, data, function ( response ) {
         jQuery( '#mainwp-loading-plugins-row' ).hide();
-    jQuery( '#mainwp-plugins-main-content' ).show();
+        jQuery( '#mainwp-plugins-main-content' ).show();
 
         if ( response && response.result ) {
             jQuery( '#mainwp-plugins-content' ).html( response.result );

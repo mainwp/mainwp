@@ -1451,6 +1451,13 @@ class MainWP_UI {
 				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable screenshots', 'mainwp' ); ?></label>
+			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable screenshots feature.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<div class="ui info message"><?php esc_html_e( 'This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?></div>
+				<input type="checkbox" name="enable_screenshots_feature" <?php echo ( ( 1 == get_option( 'mainwp_enable_screenshots', 1 ) ) ? 'checked="true"' : '' ); ?> />
+			</div>
+		</div>
 		<?php
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 		if ( 2 != $overviewColumns && 3 != $overviewColumns ) {

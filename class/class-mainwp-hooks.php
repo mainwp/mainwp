@@ -69,7 +69,7 @@ class MainWP_Hooks {
 		add_action( 'mainwp_cache_add_body', array( &$this, 'cache_add_body' ), 10, 2 );
 
 		add_filter( 'mainwp_get_metaboxes_post', array( &$this, 'get_metaboxes_post' ), 10, 0 );
-		add_filter( 'mainwp_getnotificationemail', array( &$this, 'get_notification_email' ), 10, 1 );
+		add_filter( 'mainwp_getnotificationemail', array( &$this, 'hook_notification_email' ), 10, 1 );
 		add_filter( 'mainwp_getformatemail', array( &$this, 'get_formated_email' ), 10, 3 );
 		add_filter( 'mainwp-extension-available-check', array( MainWP_Extensions_Handler::get_class_name(), 'is_extension_available' ) );
 		add_filter( 'mainwp_extension_is_activated', array( &$this, 'is_extension_activated' ), 10, 2 );
@@ -914,13 +914,13 @@ class MainWP_Hooks {
 	}
 
 	/**
-	 * Method get_notification_email()
+	 * Method hook_notification_email()
 	 *
 	 * Hook to get notification email.
 	 *
 	 * @return string Return email.
 	 */
-	public function get_notification_email() {
+	public function hook_notification_email() {
 		return MainWP_Notification_Settings::get_general_email();
 	}
 

@@ -76,7 +76,6 @@ mainwp_managesites_import_sites = function () {
     var import_http_username = decodedVal.http_user;
     var import_http_password = decodedVal.http_pass;
     var import_verify_certificate = decodedVal.verify_certificate;
-    var import_ssl_version = decodedVal.ssl_version;
 
     if ( typeof ( import_wpname ) == "undefined" )
         import_wpname = '';
@@ -119,9 +118,7 @@ mainwp_managesites_import_sites = function () {
         url: import_wpurl,
         admin: import_wpadmin,
         check_me: import_current,
-
         verify_certificate: import_verify_certificate,
-        ssl_version: import_ssl_version,
         http_user: import_http_username,
         http_pass: import_http_password
     } );
@@ -162,9 +159,7 @@ mainwp_managesites_import_sites = function () {
                 'groupids[]': groupids,
                 groupnames_import: import_wpgroups,
                 add_me: import_current,
-
                 verify_certificate: import_verify_certificate,
-                ssl_version: import_ssl_version,
                 managesites_add_http_user: import_http_username,
                 managesites_add_http_pass: import_http_password
             } );

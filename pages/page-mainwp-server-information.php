@@ -253,20 +253,6 @@ class MainWP_Server_Information {
 				'slug'       => 'ActionLogs',
 				'right'      => '',
 			),
-			array(
-				'title'      => __( 'WP-Config File', 'mainwp' ),
-				'parent_key' => 'ServerInformation',
-				'href'       => 'admin.php?page=WPConfig',
-				'slug'       => 'WPConfig',
-				'right'      => '',
-			),
-			array(
-				'title'      => __( '.htaccess File', 'mainwp' ),
-				'parent_key' => 'ServerInformation',
-				'href'       => 'admin.php?page=.htaccess',
-				'slug'       => '.htaccess',
-				'right'      => '',
-			),
 		);
 
 		if ( ! MainWP_Server_Information_Handler::is_apache_server_software() ) {
@@ -331,24 +317,6 @@ class MainWP_Server_Information {
 					'href'   => 'admin.php?page=ActionLogs',
 					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
 				);
-			}
-
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'WPConfig' ) ) {
-				$renderItems[] = array(
-					'title'  => __( 'WP-Config File', 'mainwp' ),
-					'href'   => 'admin.php?page=WPConfig',
-					'active' => ( 'WPConfig' === $shownPage ) ? true : false,
-				);
-			}
-
-			if ( ! MainWP_Menu::is_disable_menu_item( 3, '.htaccess' ) ) {
-				if ( MainWP_Server_Information_Handler::is_apache_server_software() ) {
-					$renderItems[] = array(
-						'title'  => __( '.htaccess File', 'mainwp' ),
-						'href'   => 'admin.php?page=.htaccess',
-						'active' => ( '.htaccess' === $shownPage ) ? true : false,
-					);
-				}
 			}
 
 			MainWP_UI::render_page_navigation( $renderItems );

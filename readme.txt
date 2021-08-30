@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 5.7.2
+Tested up to: 5.8
 Requires PHP: 7.0
-Stable tag: 4.1.7
+Stable tag: 4.1.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.8 - 8-30-21 =
+* Fixed: An issue with counting available updates on specific setups
+* Fixed: An issue with loading categories in the New Posts screen
+* Fixed: An issue with triggering updates on specific setups
+* Fixed: Multiple cosmetic and usability issues
+* Added: Screenshot feature (page) to the Sites section
+* Updated: Quick Setup Wizard design
+* Removed: Redundant options from the Add Site form
+* Removed: Redundant options from the Quick Setup Wizard
 
 = 4.1.7 - 6-29-21 =
 * Fixed: An issue with basic security checks count

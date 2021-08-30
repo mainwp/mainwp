@@ -50,6 +50,9 @@
   margin-bottom: 10px;
   box-shadow: none; }
 
+  .mainwp-ui .ui.secondary.segment, .mainwp-quick-setup .ui.secondary.segment {
+    box-shadow: none; }
+
 .mainwp-ui .ui.alt.segment {
   border-top: none;
   padding-top: 0; }

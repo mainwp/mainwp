@@ -222,8 +222,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler {
 				die( wp_json_encode( array( 'error' => __( 'Invalid URL.', 'mainwp' ) ) ) );
 			}
 
-			$verifyCertificate = isset( $_POST['test_verify_cert'] ) ? sanitize_text_field( wp_unslash( $_POST['test_verify_cert'] ) ) : false;
-			$forceUseIPv4      = isset( $_POST['test_force_use_ipv4'] ) ? sanitize_text_field( wp_unslash( $_POST['test_force_use_ipv4'] ) ) : false;
+			$verifyCertificate = apply_filters( 'mainwp_manage_sites_verify_certificate', true, $url );
+			$forceUseIPv4      = apply_filters( 'mainwp_manage_sites_force_use_ipv4', false, $url );
 			$sslVersion        = isset( $_POST['test_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['test_ssl_version'] ) ) : false;
 			$http_user         = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '';
 			$http_pass         = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';

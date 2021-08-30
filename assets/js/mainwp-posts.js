@@ -362,8 +362,9 @@ mainwp_fetch_posts = function ( postId, userId, start_sites ) {
     var bulk_search = num_sites > 0 ? true : false;
 
     if ( jQuery( '#select_by' ).val() == 'site' ) {        
-        if ( start_sites == undefined  )
+        if ( start_sites == undefined  ) {
             start_sites = 0;
+        }
         jQuery( "input[name='selected_sites[]']:checked" ).each( function () {
             if ( bulk_search ) {                
                 if ( i >= start_sites && i < start_sites + num_sites ) { 
@@ -386,6 +387,40 @@ mainwp_fetch_posts = function ( postId, userId, start_sites ) {
         } );
         if ( selected_groups.length == 0 ) {
             errors.push( '<div class="ui yellow message">' + __( 'Please select at least one website or group.' ) + '</div>' );
+        } else if ( bulk_search ) {            
+    
+            if ( start_sites == undefined  ) {
+                console.log( num_sites );
+                start_sites = 0;
+                // get sites of groups.
+                var data = mainwp_secure_data( {
+                    action: 'mainwp_get_sites_of_groups',
+                    'groups[]': selected_groups
+                } );
+                jQuery( '#mainwp-loading-posts-row' ).show();
+                jQuery.post( ajaxurl, data, function ( response ) {
+                    var site_ids = response;
+                    console.log( site_ids );
+                    if ( site_ids ) {
+                        jQuery( "input[name='selected_sites[]'][bulk-search=true]" ).attr( 'bulk-search', false );
+                        jQuery.each( site_ids, function( index, value ) {                          
+                            jQuery( "input[name='selected_sites[]'][value=" + value + "]" ).attr( 'bulk-search', true );
+                        });                  
+                    }     
+                    mainwp_fetch_posts( postId, userId, start_sites );
+                }, 'json' );
+                return; 
+            }
+          
+            console.log( jQuery( "input[name='selected_sites[]'][bulk-search=true]" ).length );
+
+            jQuery( "input[name='selected_sites[]'][bulk-search=true]" ).each( function () {    
+                if ( i >= start_sites && i < start_sites + num_sites ) {
+                    selected_sites.push( jQuery( this ).val() );
+                }  
+                i++;                       
+            } );
+            console.log( selected_sites );
         }
     }
     var _status = '';

@@ -134,12 +134,12 @@ class MainWP_Extensions_View {
 			<?php if ( 0 == count( $extensions ) ) : ?>
 				<?php self::render_intro_notice(); ?>
 				<?php
-			else :
-				self::render_search_box( $extensions );
-				?>
+				else :
+					self::render_search_box( $extensions );
+					?>
 				<div class="ui four stackable cards" id="mainwp-extensions-list">
-				<?php $available_extensions_data = self::get_available_extensions(); ?>
-				<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
+					<?php $available_extensions_data = self::get_available_extensions(); ?>
+					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
 						<?php foreach ( $extensions as $extension ) : ?>
 							<?php
 							if ( ! mainwp_current_user_have_right( 'extension', dirname( $extension['slug'] ) ) ) {
@@ -213,9 +213,10 @@ class MainWP_Extensions_View {
 		?>
 		<div class="ui secondary segment">
 			<h2 class="header"><?php esc_html_e( 'What are extensions?', 'mainwp' ); ?></h2>
-			<p><?php esc_html_e( 'Extensions are specific features or tools created for the purpose of expanding the basic functionality of MainWP. The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
-			<p><?php esc_html_e( 'MainWP Extensions are composed of PHP scripts that extend the functionality of your MainWP Dashboard. They offer new additions to your Dashboard that either enhance features that were already available or add new features to your Dashboard.', 'mainwp' ); ?></p>
-			<p><?php esc_html_e( 'MainWP offers a variety of Free and Premium Extensions in multiple categories which can be purchased separately or through one of the MainWP Membership Plans.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'Extensions are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
+			<p><?php esc_html_e( 'MainWP offers a variety of Free and Premium Extensions in multiple categories that you can purchase through one of the MainWP Pro plans.', 'mainwp' ); ?></p>
+			<h2 class="header"><?php esc_html_e( 'How to install your MainWP Extensions?', 'mainwp' ); ?></h2>
+			<p><?php echo sprintf( __( 'Once you have ordered a MainWP Extension, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/">', '</a>' ); ?></p>
 			<a class="ui green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a>
 		</div>
 		<?php
@@ -891,7 +892,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1133708',
 				'group'      => array( 'admin' ),
 			),
-			'mainwp-virusdie-extension' =>
+			'mainwp-virusdie-extension'              =>
 			array(
 				'slug'       => 'mainwp-virusdie-extension',
 				'title'      => 'MainWP Virusdie Extension',

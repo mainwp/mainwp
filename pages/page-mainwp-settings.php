@@ -823,26 +823,8 @@ class MainWP_Settings {
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
 			return true;
 		} else {
-			if ( self::is_local_window_config() ) {
-				return false;
-			} else {
-				return '' != get_option( 'mainwp_opensslLibLocation' ) ? true : false;
-			}
+			return false;
 		}
-	}
-
-	/**
-	 * Check MainWP Installation Hosting Type & System Type.
-	 *
-	 * @return boolean true|false
-	 */
-	public static function is_local_window_config() {
-		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
-		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
-		if ( 2 == $setup_hosting_type && 3 == $setup_system_type ) {
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -878,11 +860,7 @@ class MainWP_Settings {
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
 				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
-				if ( self::is_local_window_config() ) {
-					MainWP_Utility::update_option( 'mwp_setup_opensslLibLocation', stripslashes( $openssl_loc ) );
-				} else {
-					MainWP_Utility::update_option( 'mainwp_opensslLibLocation', stripslashes( $openssl_loc ) );
-				}
+				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', stripslashes( $openssl_loc ) );
 			}
 
 			/**
@@ -917,28 +895,19 @@ class MainWP_Settings {
 						do_action( 'mainwp_advanced_settings_form_top' );
 
 						if ( self::show_openssl_lib_config() ) {
-							if ( self::is_local_window_config() ) {
-								$openssl_loc = get_option( 'mwp_setup_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
-							} else {
-								$openssl_loc = 'c:\xampplite\apache\conf\openssl.cnf';
-							}
+							$openssl_loc = get_option( 'mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
 							?>
-							<div class="ui attached message">
-								<div class="header"><?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?></div>
-								<p><?php esc_html_e( 'Due to bug with PHP on Windows servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></p>
-								<p><?php esc_html_e( 'If your <strong>openssl.cnf</strong> file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?></p>
-							</div>
-							<div class="ui attached segment" style="border: 1px solid #dadada;">
+							<h3 class="ui dividing header">
+								<?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?>
+								<div class="sub header"><?php esc_html_e( 'Due to bug with PHP on some servers it is required to set the OpenSSL Library location so MainWP Dashboard can connect to your child sites.', 'mainwp' ); ?></div>
+							</h3>
 								<div class="ui grid field">
 									<label class="six wide column middle aligned"><?php esc_html_e( 'OpenSSL.cnf location', 'mainwp' ); ?></label>
 									<div class="ten wide column ui field">
 										<input type="text" name="mainwp_openssl_lib_location" value="<?php echo esc_html( $openssl_loc ); ?>">
+									<em><?php esc_html_e( 'If your openssl.cnf file is saved to a different path from what is entered please enter your exact path.', 'mainwp' ); ?> <?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></em>
 									</div>
 								</div>
-							</div>
-							<div class="ui attached info message">
-								<p><?php echo sprintf( __( 'If you are not sure how to find the openssl.cnf location, please %1$scheck this help document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/how-to-find-the-openssl-cnf-file/" target="_blank">', '</a>' ); ?></p>
-							</div>
 							<?php
 						}
 						?>

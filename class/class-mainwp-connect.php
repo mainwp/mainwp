@@ -93,6 +93,10 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
+		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
+		$headers['Expect'] = self::get_expect_header( $postdata );
+		$headers           = \Requests::flatten( $headers );
+
 		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
@@ -899,8 +903,12 @@ class MainWP_Connect {
 				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 			}
 
+			$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
+			$headers['Expect'] = self::get_expect_header( $postdata );
+			$headers           = \Requests::flatten( $headers );
+
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 			curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 			$force_use_ipv4 = false;
@@ -1040,6 +1048,33 @@ class MainWP_Connect {
 				call_user_func_array( $handler, array( $data, $website, &$output ) );
 			}
 		}
+	}
+
+	/**
+	 * Credits WordPress org.
+	 *
+	 * Get the correct "Expect" header for the given request data.
+	 *
+	 * @param string|array $data Data to send either as the POST body, or as parameters in the URL for a GET/HEAD.
+	 * @return string The "Expect" header.
+	 */
+	protected static function get_expect_header( $data ) {
+		if ( ! is_array( $data ) ) {
+			return strlen( (string) $data ) >= 1048576 ? '100-Continue' : '';
+		}
+
+		$bytesize = 0;
+		$iterator = new \RecursiveIteratorIterator( new \RecursiveArrayIterator( $data ) );
+
+		foreach ( $iterator as $datum ) {
+			$bytesize += strlen( (string) $datum );
+
+			if ( $bytesize >= 1048576 ) {
+				return '100-Continue';
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -1496,7 +1531,12 @@ class MainWP_Connect {
 		}
 
 		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
+
+		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
+		$headers['Expect'] = self::get_expect_header( $postdata );
+		$headers           = \Requests::flatten( $headers );
+
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
 		$force_use_ipv4 = false;

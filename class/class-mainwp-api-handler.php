@@ -145,7 +145,7 @@ class MainWP_API_Handler {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$rslt       = null;
 		foreach ( $extensions as $ext ) {
-			if ( $pSlug == $ext['api'] && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+			if ( isset( $ext['api'] ) && $pSlug == $ext['api'] && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
 				$args                     = array();
 				$args['plugin_name']      = $ext['api'];
 				$args['version']          = $ext['version'];

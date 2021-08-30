@@ -1,32 +1,13 @@
 jQuery( document ).ready( function () {
-    jQuery( 'input[type=radio][name=mwp_setup_installation_hosting_type]' ).change( function () {
-        if (this.value == 2) {
-            jQuery('input[name="mwp_setup_installation_system_type"]').removeAttr("disabled");
-        }
-        else {
-            jQuery('input[name="mwp_setup_installation_system_type"]').attr("disabled", "disabled");
-        }
-        mainwp_setup_showhide_os_settings(this.value == 2 ? true : false);
-    } );
 
-    jQuery( 'input[type=radio][name=mwp_setup_installation_system_type]' ).change( function () {
-        mainwp_setup_showhide_ssl_settings( true );
-    } );
-
-    jQuery( '#mwp_setup_planning_backup' ).change( function () {
+    jQuery( '#mainwp-qsw-verify-mainwp-child-active' ).change( function () {
         if ( jQuery( this ).is( ':checked' ) ) {
-            jQuery( '#mwp_setup_tr_backup_method' ).fadeIn( 500 );
-            jQuery( '#mwp_setup_backup_method' ).removeAttr( 'disabled' );
+            jQuery( '#mainwp-qsw-connect-site-form' ).fadeIn( 500 );
         } else {
-            jQuery( '#mwp_setup_tr_backup_method' ).fadeOut( 500 );
-            jQuery( '#mwp_setup_backup_method' ).attr( 'disabled', 'disabled' );
+            jQuery( '#mainwp-qsw-connect-site-form' ).fadeOut( 500 );
         }
     } );
 
-    jQuery( '#mwp_setup_backup_method' ).on( 'change', function () {
-        var bkmethod = jQuery( this ).val();
-        jQuery( '#mainwp-quick-setup-account-login').toggle( (bkmethod != '' ? true : false) );
-    } );
 
     jQuery( '#mwp_setup_manage_planning' ).change( function () {
         if ( ( jQuery( this ).val() == 2 ) && ( jQuery( '#mwp_setup_type_hosting' ).val() == 3 ) ) {
@@ -43,33 +24,6 @@ jQuery( document ).ready( function () {
         mainwp_setup_showhide_hosting_notice();
     } )
 } );
-
-
-mainwp_setup_showhide_os_settings = function( pShow ) {
-    var row = jQuery('#mainwp-quick-setup-system-type');
-    if ( pShow ) {
-        row.fadeIn( 500 );
-    } else {
-        row.fadeOut( 500 );
-    }
-    mainwp_setup_showhide_ssl_settings( pShow );
-}
-
-mainwp_setup_showhide_ssl_settings = function( pShow ) {
-    var show = false;
-    if ( pShow ) {
-        if (jQuery('input[name="mwp_setup_installation_system_type"]:checked').val() == 3) {
-            show = true;
-        }
-    }
-
-    var row = jQuery('#mainwp-quick-setup-opessl-location');
-    if (show) {
-        row.fadeIn( 500 );
-    } else {
-        row.fadeOut( 500 );
-    }
-}
 
 
 mainwp_setup_auth_uptime_robot = function ( url ) {
@@ -313,11 +267,6 @@ mainwp_setup_managesites_add = function () {
         name: name,
         url: url,
         admin: jQuery( '#mainwp_managesites_add_wpadmin' ).val(),
-        verify_certificate: jQuery( '#mainwp_managesites_verify_certificate' ).is(':checked') ? 1 : 0,
-//        force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
-//        ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
-//        http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
-//        http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()
       });
 
       jQuery.post( ajaxurl, data, function ( res_things ) {
@@ -346,7 +295,6 @@ mainwp_setup_managesites_add = function () {
 
           var name = jQuery( '#mainwp_managesites_add_wpname' ).val();
           name = name.replace( /"/g, '&quot;' );
-//          var group_ids = jQuery( '#mainwp_managesites_add_addgroups' ).dropdown('get value');
           var group_ids = '';
           var data = mainwp_setup_secure_data( {
             action: 'mainwp_addwp',
@@ -355,12 +303,7 @@ mainwp_setup_managesites_add = function () {
             managesites_add_wpadmin: jQuery( '#mainwp_managesites_add_wpadmin' ).val(),
             managesites_add_uniqueId: jQuery( '#mainwp_managesites_add_uniqueId' ).val(),
             groupids: group_ids,
-            verify_certificate: jQuery( '#mainwp_managesites_verify_certificate' ).is(':checked') ? 1 : 0,
             qsw_page: true,
-//            force_use_ipv4: jQuery( '#mainwp_managesites_force_use_ipv4' ).val(),
-//            ssl_version: jQuery( '#mainwp_managesites_ssl_version' ).val(),
-//            managesites_add_http_user: jQuery( '#mainwp_managesites_add_http_user' ).val(),
-//            managesites_add_http_pass: jQuery( '#mainwp_managesites_add_http_pass' ).val()
           } );
 
           // to support add client reports tokens values
@@ -403,10 +346,6 @@ mainwp_setup_managesites_add = function () {
               jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val( 'https' );
               jQuery( '#mainwp_managesites_add_wpadmin' ).val( '' );
               jQuery( '#mainwp_managesites_add_uniqueId' ).val( '' );
-//              jQuery( '#mainwp_managesites_add_addgroups').dropdown('clear');
-              jQuery( '#mainwp_managesites_verify_certificate' ).val( 1 );
-//              jQuery( '#mainwp_managesites_force_use_ipv4' ).val( 0 );
-//              jQuery( '#mainwp_managesites_ssl_version' ).val( 'auto' );
 
               jQuery( "input[name^='creport_token_']" ).each(function(){
                 jQuery( this ).val( '' );
@@ -458,11 +397,6 @@ jQuery( document ).ready( function ($) {
     }
   });
   
-  jQuery( document ).on( 'click', '#mainwp-multi-emails-remove', function () {
-      jQuery( this ).closest( '#mainwp-multi-emails' ).remove();
-      return false;
-  } );
-
     jQuery( document ).on( 'click', '#mainwp_managesites_add', function (event) {
         mainwp_setup_managesites_add( event );
     } );

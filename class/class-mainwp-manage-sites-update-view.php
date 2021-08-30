@@ -148,10 +148,20 @@ class MainWP_Manage_Sites_Update_View {
 			return $return;
 		}
 
-		$wp_upgrades        = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+		$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
+
+		if ( $website->is_ignoreCoreUpdates ) {
+			$wp_upgrades = array();
+		}
+
 		$return['total_wp'] = $wp_upgrades ? count( $wp_upgrades ) : 0;
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
+
+		if ( $website->is_ignorePluginUpdates ) {
+			$plugin_upgrades = array();
+		}
+
 		if ( ! is_array( $plugin_upgrades ) ) {
 			$plugin_upgrades = array();
 		}
@@ -183,6 +193,11 @@ class MainWP_Manage_Sites_Update_View {
 		$return['total_plugins'] = count( $plugin_upgrades );
 
 		$theme_upgrades = json_decode( $website->theme_upgrades, true );
+
+		if ( $website->is_ignoreThemeUpdates ) {
+			$theme_upgrades = array();
+		}
+
 		if ( ! is_array( $theme_upgrades ) ) {
 			$theme_upgrades = array();
 		}
@@ -253,7 +268,7 @@ class MainWP_Manage_Sites_Update_View {
 			}
 		}
 
-		$return['total_aband_plugins'] = count( $themes_outdate );
+		$return['total_aband_themes'] = count( $themes_outdate );
 
 		$return['total_upgrades'] = $return['total_wp'] + $return['total_plugins'] + $return['total_themes'] + $return['total_trans'];
 
@@ -426,6 +441,7 @@ class MainWP_Manage_Sites_Update_View {
 			<?php endif; ?>
 			</div>
 		<?php
+		MainWP_Updates::render_updates_modal();
 	}
 
 	/**

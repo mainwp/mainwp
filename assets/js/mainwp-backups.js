@@ -1434,7 +1434,7 @@ mainwp_updatesoverview_checkBackups = function ( sitesToUpdate, siteNames ) {
                         siteFeedback = undefined;
                 }
 
-                if ( siteFeedback != undefined )
+                 if ( siteFeedback != undefined )
                 {
                     var backupPrimary = '';
                     if ( response['result']['primary_backup'] && response['result']['primary_backup'] != undefined )

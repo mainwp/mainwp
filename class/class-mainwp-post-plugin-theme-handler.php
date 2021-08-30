@@ -456,6 +456,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	 * Page: ManageSites.
 	 */
 	public function mainwp_ext_performinstallplugintheme() {
+		$this->secure_request( 'mainwp_ext_performinstallplugintheme' );
 		do_action( 'mainwp_performinstallplugintheme' );
 	}
 

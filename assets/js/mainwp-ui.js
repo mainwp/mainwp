@@ -429,3 +429,28 @@ mainwp_accordion_init_collapse = function() {
     });
 };
 
+jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
+    var filter = jQuery(this).val().toLowerCase();
+    var parent = jQuery( this ).closest( '.mainwp_select_sites_wrapper' );
+    var tab = jQuery( '#select_sites_tab' ).val();
+    var siteItems = [];
+
+    if (tab == 'group') {
+      siteItems = parent.find( '.mainwp_selected_groups_item' );
+    } else if (tab == 'site' || tab == 'staging') {
+      siteItems =  parent.find( '.mainwp_selected_sites_item' );
+    }
+
+    for ( var i = 0; i < siteItems.length; i++ ) {
+        var currentElement = jQuery( siteItems[i] );
+        var value = currentElement.find('label').text().toLowerCase();
+        if ( value.indexOf( filter ) > -1 ) {
+            currentElement.removeClass( 'no-select' ).show();
+        } else {
+            currentElement.addClass( 'no-select' ).hide();
+        }
+    }
+    if (tab == 'site' || tab == 'staging') {
+      mainwp_newpost_updateCategories();
+    }
+} );

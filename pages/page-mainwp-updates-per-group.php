@@ -1041,7 +1041,7 @@ class MainWP_Updates_Per_Group {
 								<tr class="ui title">
 									<td class="accordion-trigger"><i class="dropdown icon"></i></td>
 									<td>
-									<?php MainWP_Updates::render_site_link_dashboard(); ?>
+									<?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
 									</td>
 									<td class="right aligned" sort-value="<?php echo count( $themes_outdate ); ?>">
 										<?php echo count( $themes_outdate ); ?> <?php echo _n( 'Theme', 'Themes', count( $themes_outdate ), 'mainwp' ); ?>

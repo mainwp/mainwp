@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.7';
+	public static $version = '4.1.8';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -305,13 +305,10 @@ class MainWP_System {
 				'mainwp_settings_notification_emails',
 				'mainwp_ignore_HTTP_response_status',
 				'mainwp_check_http_response',
-				'mainwp_setup_important_notification',
 				'mainwp_extmenu',
 				'mainwp_opensslLibLocation',
 				'mainwp_notice_wp_mail_failed',
 				'mainwp_show_language_updates',
-				'mwp_setup_installationHostingType',
-				'mwp_setup_installationSystemType',
 				'mainwp_logger_check_daily',
 			);
 

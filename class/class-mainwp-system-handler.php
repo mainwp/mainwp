@@ -268,6 +268,7 @@ class MainWP_System_Handler {
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
+			MainWP_Utility::update_option( 'mainwp_enable_screenshots', ( ! isset( $_POST['enable_screenshots_feature'] ) ? 0 : 1 ) );
 		}
 	}
 
@@ -373,6 +374,10 @@ class MainWP_System_Handler {
 			return $false;
 		}
 
+		if ( is_array( $arg ) ) {
+			$arg = (object) $arg;
+		}
+
 		if ( ! isset( $arg->slug ) || ( '' === $arg->slug ) ) {
 			return $false;
 		}
@@ -386,8 +391,9 @@ class MainWP_System_Handler {
 
 		if ( '' !== $am_slugs ) {
 			$am_slugs = explode( ',', $am_slugs );
-			if ( in_array( $arg->slug, $am_slugs ) ) {
-				$info = MainWP_API_Handler::get_plugin_information( $arg->slug );
+			$dir_slug = dirname( $arg->slug );
+			if ( in_array( $dir_slug, $am_slugs ) ) {
+				$info = MainWP_API_Handler::get_plugin_information( $dir_slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
 						$exts_data = MainWP_Extensions_View::get_available_extensions();

@@ -80,27 +80,7 @@ class MainWP_System_Utility {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
 	 */
 	public static function get_notification_email( $user = null ) {
-		if ( null == $user ) {
-
-			/**
-			 * Current user global.
-			 *
-			 * @global string
-			 */
-			global $current_user;
-
-			$user = $current_user;
-		}
-
-		if ( null == $user ) {
-			return null;
-		}
-
-		if ( ! ( $user instanceof \WP_User ) ) {
-			return null;
-		}
-
-		return $user->user_email;
+		return get_option( 'admin_email' );
 	}
 
 	/**
@@ -526,8 +506,6 @@ class MainWP_System_Utility {
 	 * Method get_openssl_conf()
 	 *
 	 * Get dashboard openssl configuration.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Settings::is_local_window_config()
 	 */
 	public static function get_openssl_conf() {
 
@@ -535,13 +513,7 @@ class MainWP_System_Utility {
 			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
 		}
 
-		$setup_conf_loc = '';
-		if ( MainWP_Settings::is_local_window_config() ) {
-			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
-		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
-			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
-		}
-		return $setup_conf_loc;
+		return get_option( 'mainwp_opensslLibLocation', '' );
 	}
 
 	/**

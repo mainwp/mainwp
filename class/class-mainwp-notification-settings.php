@@ -476,13 +476,8 @@ class MainWP_Notification_Settings {
 	 */
 	public static function get_default_emails_fields( $type, $field = '', $general = false ) {
 
-		$important_noti = get_option( 'mainwp_setup_important_notification' );
-		if ( false === $important_noti ) {
-			$important_noti = get_option( 'mwp_setup_importantNotification' ); // going to outdated.
-		}
-
 		$recipients = MainWP_System_Utility::get_notification_email();
-		$disable    = $general && $important_noti ? 0 : 1;
+		$disable    = $general ? 0 : 1;
 
 		$default_fields = array(
 			'daily_digest' => array(

@@ -377,7 +377,7 @@ class MainWP_DB extends MainWP_DB_Base {
 			$where .= $this->get_sql_where_allow_access_sites( 'wp' );
 
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -469,7 +469,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -669,7 +669,7 @@ class MainWP_DB extends MainWP_DB_Base {
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
 		if ( $selectgroups ) {
-			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
+			$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
             FROM ' . $this->table_name( 'wp' ) . ' wp ' .
 			$join_group . '
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
@@ -856,7 +856,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
 			if ( $selectGroups ) {
-				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
+				return 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -988,7 +988,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$where_allowed = $this->get_sql_where_allow_access_sites( 'wp', $is_staging );
 			if ( $selectgroups ) {
-				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups
+				$qry = 'SELECT wp.*,wp_sync.*,wp_optionview.*, GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ", ") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.id SEPARATOR ", ") as wpgroupids
                  FROM ' . $this->table_name( 'wp' ) . ' wp
                  JOIN ' . $this->table_name( 'wp_group' ) . ' wpgroup ON wp.id = wpgroup.wpid
                  LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid

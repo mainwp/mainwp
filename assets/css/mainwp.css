@@ -1421,6 +1421,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme{
     margin: 0 !important;
     height: 1rem !important;
 }
+.mainwp-quick-setup .ui.secondary.segment {
+  box-shadow: none; }
 .trigger-all-accordion .trigger-handle-arrow .down.icon,
 .trigger-all-accordion.active .trigger-handle-arrow .right.icon{
     display: none;

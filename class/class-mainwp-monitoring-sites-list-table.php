@@ -783,21 +783,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_site_health()
 	 */
 	public function single_row( $website ) {
-		$classes = '';
-		if ( isset( $website['groups'] ) && ! empty( $website['groups'] ) ) {
-			$group_class = $website['groups'];
-			$group_class = explode( ',', $group_class );
-			if ( is_array( $group_class ) ) {
-				foreach ( $group_class as $_class ) {
-					$_class   = trim( $_class );
-					$_class   = MainWP_Utility::sanitize_file_name( $_class );
-					$classes .= ' ' . strtolower( $_class );
-				}
-			} else {
-				$_class   = MainWP_Utility::sanitize_file_name( $group_class );
-				$classes .= ' ' . strtolower( $_class );
-			}
-		}
+		$classes = $this->get_groups_classes( $website );
 
 		$health_status = isset( $website['health_site_status'] ) ? json_decode( $website['health_site_status'], true ) : array();
 

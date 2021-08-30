@@ -145,7 +145,6 @@ class MainWP_Manage_Screenshots {
 	 * Method render_header_tabs()
 	 *
 	 * Render Sites sub page header tabs.
-	 *
 	 */
 	public static function render_header_tabs() {
 		$selected_group = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';

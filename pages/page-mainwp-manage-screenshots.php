@@ -139,7 +139,6 @@ class MainWP_Manage_Screenshots {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_pagefooter_sites', 'ScreenshotsSites' );
-
 	}
 
 	/**

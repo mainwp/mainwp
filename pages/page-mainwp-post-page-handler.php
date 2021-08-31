@@ -263,16 +263,9 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
 	public static function posting( $post_id ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		$p_id           = $post_id;
-		$succes_message = '';
-		if ( $p_id ) {
-			$edit_id = get_post_meta( $p_id, '_mainwp_edit_post_id', true );
-			if ( $edit_id ) {
-				$succes_message = __( 'Post has been updated successfully', 'mainwp' );
-			} else {
-				$succes_message = __( 'New post created', 'mainwp' );
-			}
-		}
+		$p_id = $post_id;
+
+		$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 
 		?>
 		<div class="ui modal" id="mainwp-posting-post-modal">
@@ -343,6 +336,7 @@ class MainWP_Post_Page_Handler {
 	 * @param int $post_id Post or Page ID.
 	 */
 	public static function posting_prepare( $post_id ) {
+		$edit_id = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
 		?>
 		<div class="ui modal" id="mainwp-posting-post-modal">
 			<div class="header"><?php $edit_id ? esc_html_e( 'Edit Post', 'mainwp' ) : esc_html_e( 'New Post', 'mainwp' ); ?></div>
@@ -427,6 +421,14 @@ class MainWP_Post_Page_Handler {
 
 		if ( empty( $post_id ) ) {
 			return false;
+		}
+
+		$succes_message = '';
+		$edit_id        = get_post_meta( $post_id, '_mainwp_edit_post_id', true );
+		if ( $edit_id ) {
+			$succes_message = __( 'Post has been updated successfully', 'mainwp' );
+		} else {
+			$succes_message = __( 'New post created', 'mainwp' );
 		}
 
 		$id    = $post_id;

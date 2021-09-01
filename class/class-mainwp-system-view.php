@@ -352,7 +352,7 @@ class MainWP_System_View {
 					?>
 					<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 						<i class="exclamation circle icon"></i>
-						<?php printf( __( 'MainWP has detected that the <strong>OpenSSL.cnf</strong> file is not configured properly. It is required to configure this so you can start connecting your child sites. Please, %1$sclick here to configure it!%2$s', 'mainwp' ), '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
+						<?php echo sprintf( __( 'MainWP has detected that the&nbsp;%1$sOpenSSL.cnf%2$s&nbsp;file is not configured properly. It is required to configure this so you can start connecting your child sites. Please,&nbsp;%3$sclick here to configure it!%4$s', 'mainwp' ), '<strong>', '</strong>', '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
 						<i class="close icon mainwp-notice-dismiss" notice-id="ssl_warn"></i>
 					</div>
 					<?php
@@ -447,7 +447,7 @@ class MainWP_System_View {
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews1_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 			</div>
-			<i class="close icon mainwp-notice-dismiss" notice="request_reviews1"></i>
+			<i class="close icon mainwp-events-notice-dismiss" notice="request_reviews1_forever"></i>
 		</div>
 		<?php
 	}
@@ -467,7 +467,7 @@ class MainWP_System_View {
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2"><?php esc_html_e( 'Nope, maybe later.', 'mainwp' ); ?></a>
 				<a href="" class="ui mini green basic button mainwp-events-notice-dismiss" notice="request_reviews2_forever"><?php esc_html_e( 'I already did.', 'mainwp' ); ?></a>
 			</div>
-			<i class="close icon mainwp-notice-dismiss" notice="request_reviews2"></i>
+			<i class="close icon mainwp-events-notice-dismiss" notice="request_reviews2_forever"></i>
 		</div>
 		<?php
 	}

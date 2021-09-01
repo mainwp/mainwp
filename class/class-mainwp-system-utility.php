@@ -513,7 +513,12 @@ class MainWP_System_Utility {
 			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
 		}
 
-		return get_option( 'mainwp_opensslLibLocation', '' );
+		$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
+		if ( ! empty( $setup_conf_loc ) ) {
+			return $setup_conf_loc; // to compatible.
+		}
+
+		return get_option( 'mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
 	}
 
 	/**

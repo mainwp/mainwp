@@ -1355,7 +1355,7 @@ class MainWP_Manage_Sites_View {
 						$conf['config'] = $conf_loc;
 					}
 					$res = openssl_pkey_new( $conf );
-					openssl_pkey_export( $res, $privkey, null, $conf );
+					@openssl_pkey_export( $res, $privkey, null, $conf ); // phpcs:ignore -- prevent warning.
 					$pubkey = openssl_pkey_get_details( $res );
 					$pubkey = $pubkey['key'];
 				} else {
@@ -1483,7 +1483,7 @@ class MainWP_Manage_Sites_View {
 						$conf['config'] = $conf_loc;
 					}
 					$res = openssl_pkey_new( $conf );
-					openssl_pkey_export( $res, $privkey, null, $conf );
+					@openssl_pkey_export( $res, $privkey, null, $conf );  // phpcs:ignore -- prevent warning.
 					$pubkey = openssl_pkey_get_details( $res );
 					$pubkey = $pubkey['key'];
 				} else {

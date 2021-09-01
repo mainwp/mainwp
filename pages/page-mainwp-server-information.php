@@ -255,12 +255,6 @@ class MainWP_Server_Information {
 			),
 		);
 
-		if ( ! MainWP_Server_Information_Handler::is_apache_server_software() ) {
-			if ( '.htaccess' === $init_sub_subleftmenu[5]['slug'] ) {
-				unset( $init_sub_subleftmenu[5] );
-			}
-		}
-
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Server' );
 		foreach ( $init_sub_subleftmenu as $item ) {
 			if ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {

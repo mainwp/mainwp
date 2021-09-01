@@ -860,7 +860,11 @@ class MainWP_Settings {
 
 			if ( isset( $_POST['mainwp_openssl_lib_location'] ) ) {
 				$openssl_loc = ! empty( $_POST['mainwp_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_openssl_lib_location'] ) ) : '';
-				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', stripslashes( $openssl_loc ) );
+				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', $openssl_loc );
+				$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
+				if ( ! empty( $setup_conf_loc ) ) {
+					delete_option( 'mwp_setup_opensslLibLocation' );
+				}
 			}
 
 			/**
@@ -895,7 +899,7 @@ class MainWP_Settings {
 						do_action( 'mainwp_advanced_settings_form_top' );
 
 						if ( self::show_openssl_lib_config() ) {
-							$openssl_loc = get_option( 'mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
+							$openssl_loc = MainWP_System_Utility::get_openssl_conf();
 							?>
 							<h3 class="ui dividing header">
 								<?php esc_html_e( 'OpenSSL Settings', 'mainwp' ); ?>

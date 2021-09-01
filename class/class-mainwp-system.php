@@ -307,6 +307,7 @@ class MainWP_System {
 				'mainwp_check_http_response',
 				'mainwp_extmenu',
 				'mainwp_opensslLibLocation',
+				'mwp_setup_opensslLibLocation',
 				'mainwp_notice_wp_mail_failed',
 				'mainwp_show_language_updates',
 				'mainwp_logger_check_daily',

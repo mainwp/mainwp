@@ -277,10 +277,7 @@ class MainWP_Setup_Wizard {
 		<?php
 		$show_ssl = false;
 		if ( MainWP_Server_Information_Handler::is_openssl_config_warning() ) {
-			$openssl_loc = get_option( 'mainwp_opensslLibLocation' );
-			if ( false === $openssl_loc ) {
-				$openssl_loc = 'c:\xampplite\apache\conf\openssl.cnf';
-			}
+			$openssl_loc = MainWP_System_Utility::get_openssl_conf();
 			?>
 				<div class="ui secondary segment">
 			<div class="grouped fields">

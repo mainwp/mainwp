@@ -353,7 +353,7 @@ class MainWP_System_View {
 				<div class="ui icon yellow message" style="margin-bottom: 0; border-radius: 0;">
 					<i class="exclamation circle icon"></i>
 					<?php echo sprintf( __( 'MainWP has detected that the&nbsp;%1$sOpenSSL.cnf%2$s&nbsp;file is not configured properly. It is required to configure this so you can start connecting your child sites. Please,&nbsp;%3$sclick here to configure it!%4$s', 'mainwp' ), '<strong>', '</strong>', '<a href="admin.php?page=SettingsAdvanced">', '</a>' ); ?>
-				&nbsp;<button class="ui mini button yellow close icon mainwp-notice-dismiss" notice-id="ssl_warn"><?php echo esc_html__( 'Error Fixed', 'mainwp' ); ?></button>
+				&nbsp;<button class="ui mini button yellow close icon mainwp-notice-dismiss" style="top:auto !important;margin-right:10px !important" notice-id="ssl_warn"><?php echo esc_html__( 'Error Fixed', 'mainwp' ); ?></button>
 				</div>
 					<?php
 				}

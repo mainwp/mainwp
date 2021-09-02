@@ -956,7 +956,7 @@ class MainWP_Manage_Sites_List_Table {
 
 			jQuery( document ).ready( function( $ ) {				
 			<?php if ( ! $optimize ) { ?>
-				try {				
+				try {								
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"paging" : <?php echo $table_features['paging']; ?>,
@@ -980,7 +980,7 @@ class MainWP_Manage_Sites_List_Table {
 				}
 				mainwp_datatable_fix_menu_overflow();				
 			<?php } else { ?>
-				try {	
+				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
 						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
 						if (!processing) {

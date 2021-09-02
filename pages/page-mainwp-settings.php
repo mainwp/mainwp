@@ -828,6 +828,22 @@ class MainWP_Settings {
 	}
 
 	/**
+	 * Check MainWP Installation Hosting Type & System Type.
+	 *
+	 * To compatible.
+	 *
+	 * @return boolean true|false
+	 */
+	public static function is_local_window_config() {
+		$setup_hosting_type = get_option( 'mwp_setup_installationHostingType' );
+		$setup_system_type  = get_option( 'mwp_setup_installationSystemType' );
+		if ( 2 == $setup_hosting_type && 3 == $setup_system_type ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Render Advanced Options Subpage.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
@@ -863,7 +879,9 @@ class MainWP_Settings {
 				MainWP_Utility::update_option( 'mainwp_opensslLibLocation', $openssl_loc );
 				$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
 				if ( ! empty( $setup_conf_loc ) ) {
-					delete_option( 'mwp_setup_opensslLibLocation' );
+					delete_option( 'mwp_setup_opensslLibLocation' );  // delete old version settings.
+					delete_option( 'mwp_setup_installationHostingType' );
+					delete_option( 'mwp_setup_installationSystemType' );
 				}
 			}
 

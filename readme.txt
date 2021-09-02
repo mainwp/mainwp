@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8
 Requires PHP: 7.0
-Stable tag: 4.1.8
+Stable tag: 4.1.8.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,15 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.8.1 - 9-2-21 =
+* Fixed: An error with overwriting openssl.cnf file path
+* Fixed: Undefined offset notice in page-mainwp-server-information.php on line 259
+* Fixed: An error with dismissing the promo notification that shows after the first 30 days of MainWP plugin usage
+* Fixed: An error with striping slashes from the openssl.cnf file path form field
+* Added: Dismiss button to the warning message that shows when openssl.cnf file path is not correct
+* Added: Walkthrough button to the first step of the quick setup wizard
+* Updated: Notification text that shows after removing a child site
 
 = 4.1.8 - 8-30-21 =
 * Fixed: An issue with counting available updates on specific setups

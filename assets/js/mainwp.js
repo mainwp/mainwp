@@ -1684,7 +1684,7 @@ managesites_remove = function (obj) {
       } else if (response.result == 'NOSITE') {
         error = '<i class="close icon"></i>' + __('The requested site has not been found.');
       } else {
-        result = '<i class="close icon"></i>' + __('The site has been removed but the MainWP Child plugin could not be disabled. Please deactive the MainWP Child plugin manually!');
+        result = '<i class="close icon"></i>' + __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly.');
       }
 
       if (error != '') {

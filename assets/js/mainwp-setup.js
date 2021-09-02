@@ -8,6 +8,10 @@ jQuery( document ).ready( function () {
         }
     } );
 
+    jQuery( '#mainwp-toggle-optional-settings' ).on( 'click', function () {
+      jQuery( '#mainwp-qsw-optional-settings-form' ).toggle( 300 );
+      return false;
+    } );
 
     jQuery( '#mwp_setup_manage_planning' ).change( function () {
         if ( ( jQuery( this ).val() == 2 ) && ( jQuery( '#mwp_setup_type_hosting' ).val() == 3 ) ) {

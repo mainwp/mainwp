@@ -513,12 +513,13 @@ class MainWP_System_Utility {
 			return MAINWP_CRYPT_RSA_OPENSSL_CONFIG;
 		}
 
-		$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
-		if ( ! empty( $setup_conf_loc ) ) {
-			return $setup_conf_loc; // to compatible.
+		$setup_conf_loc = '';
+		if ( MainWP_Settings::is_local_window_config() ) { // to compatible
+			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
+		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
+			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );
 		}
-
-		return get_option( 'mainwp_opensslLibLocation', 'c:\xampplite\apache\conf\openssl.cnf' );
+		return $setup_conf_loc;
 	}
 
 	/**

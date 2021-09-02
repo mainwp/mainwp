@@ -250,6 +250,9 @@ class MainWP_Setup_Wizard {
 		?>
 		<h1 class="ui header"><?php esc_html_e( 'MainWP Quick Setup Wizard', 'mainwp' ); ?></h1>
 		<p><?php esc_html_e( 'Thank you for choosing MainWP for managing your WordPress sites. This quick setup wizard will help you configure the basic settings. It\'s completely optional and shouldn\'t take longer than five minutes.', 'mainwp' ); ?></p>
+		<div class="ui hidden divider"></div>
+		<a href="https://kb.mainwp.com/docs/quick-setup-wizard-video/" class="ui big icon green button"><i class="youtube icon"></i> <?php esc_html_e( 'Walkthrough', 'mainwp' ); ?></a>
+		<div class="ui hidden divider"></div>
 		<p><?php esc_html_e( 'If you don\'t want to go through the setup wizard, you can skip and proceed to your MainWP Dashboard by clicking the "Not right now" button. If you change your mind, you can come back later by starting the Setup Wizard from the MainWP > Settings > MainWP Tools page! ', 'mainwp' ); ?></p>
 		<p><?php esc_html_e( 'To go back to the WordPress Admin section, click the "Back to WP Admin" button.', 'mainwp' ); ?></p>
 		<div class="ui hidden divider"></div>
@@ -395,15 +398,20 @@ class MainWP_Setup_Wizard {
 				<input type="text" id="mainwp_managesites_add_wpname" name="mainwp_managesites_add_wpname" value="" />
 			</div>
 			<div class="ui hidden divider"></div>
+			<a href="#" id="mainwp-toggle-optional-settings"><i class="ui eye icon"></i> <?php esc_html_e( 'Advanced options', 'mainwp' ); ?></a>
 			<div class="ui hidden divider"></div>
-			<div class="ui horizontal divider"><?php esc_html_e( 'Optional Settings', 'mainwp' ); ?></div>
+			<div id="mainwp-qsw-optional-settings-form" style="display:none">
+			<div class="ui hidden divider"></div>
+				<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Optoins (optional)', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
-			<div class="ui hidden divider"></div>
+
 			<div class="field">
 						<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
 				<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
 			</div>
+			</div>
+			<div class="ui hidden divider"></div>
 			<div class="ui divider"></div>
 			<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php esc_attr_e( 'Connect Site', 'mainwp' ); ?>" />
 				</div>

@@ -514,7 +514,7 @@ class MainWP_System_Utility {
 		}
 
 		$setup_conf_loc = '';
-		if ( MainWP_Settings::is_local_window_config() ) { // to compatible
+		if ( MainWP_Settings::is_local_window_config() ) { // to compatible.
 			$setup_conf_loc = get_option( 'mwp_setup_opensslLibLocation' );
 		} elseif ( get_option( 'mainwp_opensslLibLocation' ) != '' ) {
 			$setup_conf_loc = get_option( 'mainwp_opensslLibLocation' );

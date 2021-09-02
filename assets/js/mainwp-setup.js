@@ -342,7 +342,7 @@ mainwp_setup_managesites_add = function () {
               //Message the WP was added
               jQuery( '#mainwp-message-zone' ).removeClass( 'red' );
               jQuery( '#mainwp-message-zone' ).html( response ).addClass('green' ).show();
-              jQuery( '#mainwp-info-zone' ).html( 'You can also add more sites now or <a href="admin.php?page=mainwp-setup&step=optimization" class="ui blue mini button">Continue with Quick Setup Wizard</a>' ).show();
+              jQuery( '#mainwp-info-zone' ).html( 'You can also add more sites now or <a href="admin.php?page=mainwp-setup&step=monitoring" class="ui blue mini button">Continue with Quick Setup Wizard</a>' ).show();
 
               //Reset fields
               jQuery( '#mainwp_managesites_add_wpname' ).val( '' );

@@ -230,11 +230,12 @@ class MainWP_System_Cron_Jobs {
 			$_mins = 0;
 		}
 		if ( ! empty( $time ) ) {
-			$str_date = date( 'Y-m-d', $time ); // phpcs:ignore -- update check at local server time.
+			$str_date = date( 'Y-m-d', $time ); // phpcs:ignore -- check update at given time.
 		} else {
-			$str_date = date( 'Y-m-d' ); // phpcs:ignore -- update check at local server time.
+			$lctime   = MainWP_Utility::get_timestamp();
+			$str_date = date( 'Y-m-d', $lctime ); // phpcs:ignore -- check update at local server time.
 		}
-		return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- update check at local server time.
+		return strtotime( $str_date . ' ' . $_hour . ':' . $_mins . ':59' ); // phpcs:ignore -- check update at given time.
 	}
 
 	/**
@@ -304,7 +305,7 @@ class MainWP_System_Cron_Jobs {
 		$today_end                    = strtotime( date( 'Y-m-d' ) . ' 23:59:59' ); // phpcs:ignore -- to check localtime.
 		$today_end = MainWP_Utility::get_timestamp( $today_end );
 
-		$today_m_y = date_i18n( 'd/m/Y' ); //phpcs:ignore -- local time.
+		$today_m_y = date( 'd/m/Y', MainWP_Utility::get_timestamp() ); //phpcs:ignore -- local time.
 
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
@@ -344,6 +345,8 @@ class MainWP_System_Cron_Jobs {
 			}
 
 			if ( 1 == $frequencyDailyUpdate || $time_notice_at || $time_to_noti ) {
+
+				$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 
 				MainWP_Utility::update_option( 'mainwp_dailydigest_last', $today_m_y );
 
@@ -692,7 +695,7 @@ class MainWP_System_Cron_Jobs {
 					$check_individual_digest = true;
 
 					$change_log = '';
-					if ( $pluginInfo['update']['url'] && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
+					if ( isset( $pluginInfo['update']['url'] ) && ( false !== strpos( $pluginInfo['update']['url'], 'wordpress.org/plugins' ) ) ) {
 						$change_log = $pluginInfo['update']['url'];
 						if ( substr( $change_log, - 1 ) != '/' ) {
 							$change_log .= '/';

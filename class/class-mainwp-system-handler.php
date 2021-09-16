@@ -243,6 +243,7 @@ class MainWP_System_Handler {
 				$update_screen_options = true;
 				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+				MainWP_Utility::update_option( 'mainwp_enable_screenshots', ( ! isset( $_POST['enable_screenshots_feature'] ) ? 0 : 1 ) );
 
 				$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
 				MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
@@ -268,7 +269,6 @@ class MainWP_System_Handler {
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
-			MainWP_Utility::update_option( 'mainwp_enable_screenshots', ( ! isset( $_POST['enable_screenshots_feature'] ) ? 0 : 1 ) );
 		}
 	}
 

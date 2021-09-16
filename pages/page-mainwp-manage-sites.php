@@ -1053,11 +1053,10 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		$total_sites = MainWP_DB::instance()->get_websites_count( null, true );
 		?>
 		<div id="mainwp-manage-sites-content" class="ui segment">
 			<div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
-			<div class="ui active inverted dimmer" id="mainwp-sites-table-loader" <?php echo $total_sites ? '' : 'style="display:none;"'; ?>>
+			<div class="ui active inverted dimmer" id="mainwp-sites-table-loader">
 				<div class="ui large text loader"><?php esc_html_e( 'Loading sites...', 'mainwp' ); ?></div>
 			</div>
 			<form method="post" class="mainwp-table-container">

@@ -956,7 +956,8 @@ class MainWP_Manage_Sites_List_Table {
 
 			jQuery( document ).ready( function( $ ) {				
 			<?php if ( ! $optimize ) { ?>
-				try {								
+				try {	
+					jQuery( '#mainwp-sites-table-loader' ).hide();							
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
 						"searching" : <?php echo $table_features['searching']; ?>,
 						"paging" : <?php echo $table_features['paging']; ?>,
@@ -971,7 +972,6 @@ class MainWP_Manage_Sites_List_Table {
 						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
 						"pageLength": <?php echo intval( $sites_per_page ); ?>,
 						"initComplete": function( settings, json ) {
-							jQuery( '#mainwp-sites-table-loader' ).hide();
 						}
 					} );
 				} catch(err) {
@@ -1042,9 +1042,9 @@ class MainWP_Manage_Sites_List_Table {
 							if ( typeof mainwp_preview_init_event !== "undefined" ) {
 								mainwp_preview_init_event();
 							}
+							jQuery( '#mainwp-sites-table-loader' ).hide();
 						},
 						"initComplete": function( settings, json ) {
-							jQuery( '#mainwp-sites-table-loader' ).hide();
 						},
 						rowCallback: function (row, data) {
 							jQuery( row ).addClass(data.rowClass);

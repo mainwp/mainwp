@@ -1,4 +1,4 @@
-
+/* eslint complexity: ["error", 100] */
 
 jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
 {

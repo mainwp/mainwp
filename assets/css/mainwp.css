@@ -217,7 +217,7 @@ table#mainwp-manage-sites-table .error a{
 
 /* WP UI Fixes */
 
-.mainwp-ui #wpbody-content { padding-bottom: 0px; }
+.mainwp-ui #wpbody-content { padding-bottom: 0; }
 .mainwp-ui #wp-content-editor-tools { background-color: #fff !important; }
 .mainwp-ui .wrap { margin: 0 0 0 200px }
 

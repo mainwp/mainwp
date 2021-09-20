@@ -331,21 +331,11 @@ class MainWP_Manage_Sites {
 			$hide_cols = array();
 		}
 
-		// update for ver 4.1, remove later.
-		if ( ! get_option( 'mainwp_update_confirm_site_preview', false ) ) {
-			$hide_cols[] = 'site_preview';
-			$user        = wp_get_current_user();
-			if ( $user ) {
-				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
-			}
-			update_option( 'mainwp_update_confirm_site_preview', true );
-		}
-
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
 			<div class="scrolling content ui form">
-				<form method="POST" action="" id="manage-sites-screen-options-form">
+				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />
 					<div class="ui grid field">
@@ -391,9 +381,11 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 				<div class="actions">
-					<input type="submit" class="ui green button" name="submit" id="submit" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+					<input type="button" class="ui basic button" style="float:left" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Restore Defaults', 'mainwp' ); ?>" />
+					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
+				<input type="hidden" name="reset_managersites_columns_order" value="0">
 			</form>
 		</div>
 		<div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
@@ -412,7 +404,7 @@ class MainWP_Manage_Sites {
 					onUnchecked   : function() {
 						var $chk = jQuery( this );
 						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
-							allowMultiple: true,
+							allowMultiple: true, // multiple modals.
 							width: 100,
 							onDeny: function () {
 								$chk.prop('checked', true);
@@ -420,6 +412,15 @@ class MainWP_Manage_Sites {
 						} ).modal( 'show' );
 					}
 				} );
+				jQuery('#reset-managersites-settings').on( 'click', function () {
+					mainwp_confirm(__( 'Are you sure.' ), function(){
+						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
+						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_hide_column_"]').prop( 'checked', false );
+						jQuery('input[name=reset_managersites_columns_order]').attr('value',1);
+						jQuery('#submit-managersites-settings').click();						
+					}, false, false, true );
+					return false;
+				});
 			} );
 		</script>
 		<?php

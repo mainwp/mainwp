@@ -212,11 +212,11 @@ class MainWP_Extensions_View {
 	public static function render_intro_notice() {
 		?>
 		<div class="ui secondary segment">
-			<h2 class="header"><?php esc_html_e( 'What are extensions?', 'mainwp' ); ?></h2>
+			<h2 class="header"><?php esc_html_e( 'What are Extensions?', 'mainwp' ); ?></h2>
 			<p><?php esc_html_e( 'Extensions are specific features or tools created to expand the basic functionality of MainWP. The core of MainWP has been designed to provide the functions most needed by our users and minimize code bloat. Extensions offer custom functions and features so that each user can tailor their MainWP Dashboard to their specific needs.', 'mainwp' ); ?></p>
 			<p><?php esc_html_e( 'MainWP offers a variety of Free and Premium Extensions in multiple categories that you can purchase through one of the MainWP Pro plans.', 'mainwp' ); ?></p>
 			<h2 class="header"><?php esc_html_e( 'How to install your MainWP Extensions?', 'mainwp' ); ?></h2>
-			<p><?php echo sprintf( __( 'Once you have ordered a MainWP Extension, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/">', '</a>' ); ?></p>
+			<p><?php echo sprintf( __( 'Once you have ordered a MainWP Extension, you can either use the %1$sautomatic extension installation%2$s option or %3$smanual installation%4$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-extensions/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/my-downloads-and-api-keys/" target="_blank">', '</a>' ); ?></p>
 			<a class="ui green button" href="https://mainwp.com/mainwp-extensions/" target="_blank"><?php esc_html_e( 'Browse All MainWP Extensions', 'mainwp' ); ?></a>
 		</div>
 		<?php
@@ -440,13 +440,14 @@ class MainWP_Extensions_View {
 				</div>
 			</div>
 		</div>
-		<br/>
+		<div class="ui compact hidden divider"></div>
+		<div class="ui message mainwp-extensions-api-loading" style="display: none"></div>
 		<input type="button" class="ui fluid button" id="mainwp-extensions-savelogin" value="<?php esc_attr_e( 'Verify My Login', 'mainwp' ); ?>">
 		<div class="ui divider"></div>
 		<input type="button" class="ui fluid basic green button" id="mainwp-extensions-bulkinstall" value="<?php esc_attr_e( 'Install Extensions', 'mainwp' ); ?>">
 		<br/>
 		<input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
-		<div class="ui message mainwp-extensions-api-loading" style="display: none"></div>
+
 		</div>
 		<?php
 	}

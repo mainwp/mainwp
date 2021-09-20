@@ -911,7 +911,7 @@ class MainWP_UI {
 			<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
 		<?php endif; ?>
 		<?php if ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) ) : ?>
-		<a class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Screen Options', 'mainwp' ); ?>">
+		<a class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Screen Options', 'mainwp' ); ?>">
 			<i class="cog icon"></i>
 		</a>
 		<?php endif; ?>
@@ -1262,6 +1262,10 @@ class MainWP_UI {
 				esc_html_e( 'Theme Installation', 'mainwp' );
 			}
 			?>
+			</div>
+			<div class="ui green progress mainwp-modal-progress">
+				<div class="bar"><div class="progress"></div></div>
+				<div class="label"></div>
 			</div>
 			<div class="scrolling content">
 				<?php

@@ -40,6 +40,11 @@ class MainWP_Manage_Screenshots {
 				'render_all_screenshots',
 			)
 		);
+
+		if ( isset( $_GET['page'] ) && ( 'ScreenshotsSites' == $_GET['page'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'mainwp_nonce' ) ) {
+			MainWP_Utility::update_option( 'enable_disable_screenshots', ( isset( $_GET['enable'] ) && 'true' == sanitize_key( $_GET['enable'] ) ) ? true : false );
+			wp_safe_redirect( admin_url( 'admin.php?page=ScreenshotsSites' ) );
+		}
 	}
 
 
@@ -67,12 +72,20 @@ class MainWP_Manage_Screenshots {
 		do_action( 'mainwp_pageheader_sites', 'ScreenshotsSites' );
 
 		self::render_header_tabs();
+		$enableScr = get_option( 'enable_disable_screenshots', true );
 
 		$websites = self::prepare_items();
 
 		MainWP_DB::data_seek( $websites, 0 );
 
-		?>
+		if ( $enableScr ) {
+			?>
+		<div class="ui secondary segment" style="margin-bottom:0;">
+			<div class="ui form">
+				<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
+			</div>
+		</div>
+		<?php } ?>
 		<div id="mainwp-screenshots-sites" class="ui segment">
 		<?php
 		/**
@@ -83,13 +96,15 @@ class MainWP_Manage_Screenshots {
 		 * @since 4.1.8
 		 */
 		$cards_per_row = apply_filters( 'mainwp_cards_per_row', 'five' );
-		$i             = 0;
-		?>
-			<div class="ui segment" id="mainwp-sites-previews">							
+		if ( $enableScr ) {
+			?>
+
+			<div id="mainwp-sites-previews">
+
 				<div class="ui <?php echo $cards_per_row; ?> cards" >
 					<?php
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-						$i++;
+
 						?>
 					<div class="card" site-url="<?php echo $website->url; ?>">
 						<div class="image">						
@@ -129,7 +144,8 @@ class MainWP_Manage_Screenshots {
 				duration   : 1000
 			});
 		</script>
-		<?php
+			<?php
+		}
 		MainWP_DB::free_result( $websites );
 		/**
 		 * Sites Page Footer
@@ -154,13 +170,16 @@ class MainWP_Manage_Screenshots {
 			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
 			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
 		}
-
+		$enableScr = get_option( 'enable_disable_screenshots', true );
 		?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">
 				<div class="equal width row ui mini form">
 				<div class="middle aligned column">
-						<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
+						<div class="ten wide column ui toggle checkbox not-auto-init" id="enable_disable_screenshots" data-tooltip="<?php esc_attr_e( 'Enable/Disable screenshots.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable the Screenshots feature', 'mainwp' ); ?></label>
+							<input type="checkbox" <?php echo $enableScr ? 'checked="true"' : ''; ?>/>
+						</div>
 					</div>
 					<div class="right aligned middle aligned column">
 					<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>

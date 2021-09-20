@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8
 Requires PHP: 7.0
-Stable tag: 4.1.8.1
+Stable tag: 4.1.8.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,18 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.8.2 - 9-21-2021 =
+Fixed: Letter capitalization error on the Manage Extensions page
+Added: Restore Defaults button to the Screen Options form
+Added: Info text to the Manage Groups page
+Added: Enable/Disable toggle option to the Screenshots page
+Added: Progress Bar to progress modals
+Added: Tooltips to Manage Sites table data
+Updated: Screenshots preview icon in the Manage Sites table
+Updates: Screenshots page layout
+Updated: Usability improvements of the login form on the Manage Extensions page
+Updated: PHP minimal requirement on the Server Information page
 
 = 4.1.8.1 - 9-2-21 =
 * Fixed: An error with overwriting openssl.cnf file path

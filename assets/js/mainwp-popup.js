@@ -68,12 +68,17 @@
                 initWrapper: function ( el ) {  // may be call this very first to set custom wrapper.
                     this.overlayId = el;
                     this.$overlayElementId = $( this.overlayId );
-                },
+                },                
                 initProgress: function () {
                     var pData = {
                         value: this.progressInit,
                         total: this.progressMax,                        
                     };
+
+                    if ( typeof pMax !== 'undefined' ) {
+                        pData.total = pMax;
+                    }
+                    
                     if ( ! this.hideStatusText ){                       
                         this.setStatusText( '0 / ' + this.totalSites + ' ' + this.statusText );
                     }

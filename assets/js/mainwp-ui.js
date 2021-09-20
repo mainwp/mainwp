@@ -149,7 +149,7 @@ jQuery( document ).ready( function () {
     stick_element_init();
 } );
 
-mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateType ) {    // updateType: 1 single update, 2 multi update
+mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateType, multiple ) {    // updateType: 1 single update, 2 multi update
     if ( jQuery('#mainwp-disable-update-confirmations').length > 0 ) {            
         var confVal = jQuery('#mainwp-disable-update-confirmations').val();
         if ( typeof updateType !== 'undefined' && (confVal == 2 || (confVal == 1 && updateType == 1 ) ) ) // disable for all update or disable for single updates only
@@ -162,8 +162,7 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateTy
     }
     
     jQuery('#mainwp-modal-confirm .content-massage').html(msg);
-        
-    jQuery('#mainwp-modal-confirm').modal({
+    var opts = {
         onApprove : function() {
             if (confirmed_callback && typeof confirmed_callback == 'function')
                 confirmed_callback();
@@ -172,7 +171,13 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateTy
             if (cancelled_callback && typeof cancelled_callback == 'function')
                 cancelled_callback();
         }
-    }).modal('show');
+    }
+
+    if ( multiple ) {
+        opts.allowMultiple = true;
+    }
+    
+    jQuery('#mainwp-modal-confirm').modal(opts).modal('show');
     
     // if it is update confirm and then display the update confirm notice text
     if ( typeof updateType !== 'undefined' && ( updateType == 1 || updateType == 2) ) { 

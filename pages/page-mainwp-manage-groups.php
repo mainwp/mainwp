@@ -156,6 +156,16 @@ class MainWP_Manage_Groups {
 			<div id="mainwp-message-zone" style="display: none;">
 				<div class="ui message green"><?php esc_html_e( 'Selection saved successfully.', 'mainwp' ); ?></div>
 			</div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
+			<div class="ui message info">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
+				<?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to split sites into different groups. Later, you will be able to make Site Selection by a group that will speed up your work and makes it much easier.', 'mainwp' ); ?>
+				<br />
+				<?php esc_html_e( 'One child site can be assigned to multiple Groups at the same time.', 'mainwp' ); ?>
+				<br />
+				<?php echo sprintf( __( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?>
+			</div>
+			<?php } ?>
 			<?php
 			/**
 			 * Action: mainwp_before_groups_table

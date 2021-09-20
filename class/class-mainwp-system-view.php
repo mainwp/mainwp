@@ -625,7 +625,7 @@ class MainWP_System_View {
 	/** Render Admin Header */
 	public static function admin_head() {
 		?>
-		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>"</script>
+		<script type="text/javascript">var mainwp_ajax_nonce = "<?php echo wp_create_nonce( 'mainwp_ajax' ); ?>", mainwp_js_nonce = "<?php echo wp_create_nonce( 'mainwp_nonce' ); ?>";</script>
 		<?php
 	}
 

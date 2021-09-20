@@ -1996,7 +1996,7 @@ mainwp_install_bulk = function (type, slug) {
       installQueueContent += '</div>';
 
       jQuery('#plugintheme-installation-queue').html(installQueueContent);
-
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).progress({ value: 0, total:  bulkInstallTotal });
       mainwp_install_bulk_start_next(type, response.url, activatePlugin, overwrite);
     }
   }(type, jQuery('#chk_activate_plugin').is(':checked'), jQuery('#chk_overwrite').is(':checked')), 'json');
@@ -2106,8 +2106,8 @@ mainwp_install_bulk_start_specific = function (type, url, activatePlugin, overwr
 
       bulkInstallCurrentThreads--;
       bulkInstallDone++;
-
-      mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite);
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).progress( 'set progress', bulkInstallDone);
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).find('.label').html( bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed') );      mainwp_install_bulk_start_next(type, url, activatePlugin, overwrite);
     }
   }(type, url, activatePlugin, overwrite, siteToInstall), 'json');
 };
@@ -2215,6 +2215,8 @@ mainwp_upload_bulk = function (type) {
   jQuery.post(ajaxurl, data, function (type, files, activatePlugin, overwrite) {
     return function (response) {
       var installQueue = '';
+      bulkInstallTotal = 0;
+      bulkInstallDone = 0;
 
       installQueue += '<div class="ui middle aligned selection divided list">';
 
@@ -2231,12 +2233,14 @@ mainwp_upload_bulk = function (type) {
           '<div class="content">' + mainwp_links_visit_site_and_admin('', siteId) + ' ' + '<a href="' + site['url'] + '">' + site['name'].replace(/\\(.)/mg, "$1") + '</a></div>' +
           '<div class="installation-entries"></div>' +
           '</div>';
+          bulkInstallTotal++;
       }
 
       installQueue += '</div>';
 
       jQuery('#plugintheme-installation-queue').html(installQueue);
 
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).progress({ value: 0, total:  bulkInstallTotal });
       mainwp_upload_bulk_start_next(type, response.urls, activatePlugin, overwrite);
     }
   }(type, files, jQuery('#chk_activate_plugin').is(':checked'), jQuery('#chk_overwrite').is(':checked')), 'json');
@@ -2335,6 +2339,9 @@ mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, overwr
       }
 
       bulkInstallCurrentThreads--;
+      bulkInstallDone++;
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).progress( 'set progress', bulkInstallDone);
+      jQuery( '#plugintheme-installation-progress-modal .mainwp-modal-progress' ).find('.label').html( bulkInstallDone + '/' + bulkInstallTotal + ' ' + __('Installed') );
       mainwp_upload_bulk_start_next(type, urls, activatePlugin, overwrite);
     }
   }(type, urls, activatePlugin, overwrite, siteToInstall), 'json');
@@ -2584,6 +2591,16 @@ jQuery(document).ready(function () {
     }
   });
 });
+
+jQuery( document ).ready( function () {
+  $enableScreenshotsCheckbox = jQuery( '#enable_disable_screenshots' );
+  $enableScreenshotsCheckbox.checkbox( {
+    onChange: function() {
+      val = $enableScreenshotsCheckbox.checkbox('is checked');
+      window.location = 'admin.php?page=ScreenshotsSites&enable=' + ( val ? 'true' : 'false') + '&_wpnonce=' + mainwp_js_nonce;
+    }
+  } );  
+} );
 
 /*
  * Server Info

@@ -189,13 +189,19 @@ function mainwp_extensions_savelogin( pObj, retring ) {
         saveLogin: jQuery( '#extensions_api_savemylogin_chk' ).is( ':checked' ) ? 1 : 0
     } );
 
+  if ( username == '' || pwd == '' ) {
+    statusEl.html( __( "Usenrname and Password fields are required." ) ).show();
+    statusEl.addClass( 'yellow' );
+  } else {
+
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
     } else
         statusEl.removeClass( 'red' );
         statusEl.removeClass( 'green' );
+        statusEl.removeClass( 'yellow' );
         statusEl.show();
-        statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Please wait...' ) );
+        statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Verifying. Please wait...' ) );
 
     jQuery.post( ajaxurl, data, function ( response ) {
         var undefError = false;
@@ -205,7 +211,7 @@ function mainwp_extensions_savelogin( pObj, retring ) {
         statusEl.html( 'Login saved.' ).fadeIn();
             } else if ( response.result == 'SUCCESS' ) {
                 statusEl.addClass( 'green' );
-        statusEl.html( 'Login info is valid.' ).fadeIn();
+                statusEl.html( 'Account verification successful!' ).fadeIn();
                   setTimeout( function () {
                     statusEl.fadeOut();
                 }, 3000 );
@@ -228,6 +234,8 @@ function mainwp_extensions_savelogin( pObj, retring ) {
             statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
         }
     }, 'json' );
+
+  }
     return false;
 }
 
@@ -254,13 +262,18 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
         password: pwd
     } );
 
+  if ( username == '' || pwd == '' ) {
+    statusEl.html( __( "Username and Password fields are required." ) ).show();
+    statusEl.addClass( 'yellow' );
+  } else {
     if ( retring == true ) {
     statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
   } else {
     statusEl.removeClass( 'red' );
+      statusEl.removeClass( 'yellow' );
     statusEl.removeClass( 'green' );
     statusEl.show();
-    statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Please wait...' ) );
+      statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Verifying. Please wait...' ) );
   }
 
   jQuery.post( ajaxurl, data, function ( response ) {
@@ -268,7 +281,7 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
         if ( response ) {
             if ( response.result == 'SUCCESS' ) {
       statusEl.addClass( 'green' );
-      statusEl.html( 'Login info is valid.' ).fadeIn();
+            statusEl.html( 'Account verification successful!' ).fadeIn();
         setTimeout( function () {
                     statusEl.fadeOut();
                 }, 3000 );
@@ -293,6 +306,7 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
       statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
         }
     }, 'json' );
+    }
     return false;
 }
 
@@ -377,25 +391,27 @@ jQuery( document ).on( 'click', '#mainwp-extensions-bulkinstall', function () {
 mainwp_extension_grab_purchased = function ( pObj, retring ) {
 
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
-
   var username = grabingEl.find( '#mainwp_com_username' ).val();
   var pwd = grabingEl.find( '#mainwp_com_password' ).val();
-
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
-
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_getpurchased',
         username: username,
         password: pwd
     } );
 
+  if ( username == '' || pwd == '' ) {
+    statusEl.html( __( "Username and Password fields are required." ) ).show();
+    statusEl.addClass( 'yellow' );
+  } else {
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
     } else
         statusEl.removeClass( 'red' );
         statusEl.removeClass( 'green' );
+      statusEl.removeClass( 'yellow' );
         statusEl.show();
-        statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Please wait...' ) );
+      statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Verifying. Please wait...' ) );
 
     jQuery.post( ajaxurl, data, function ( response ) {
           var undefError = false;
@@ -428,6 +444,7 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
         statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
           }
       }, 'json' );
+    }
       return false;
 }
 

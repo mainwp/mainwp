@@ -230,7 +230,7 @@ updatesoverview_wordpress_upgrade_all_upgrade_next = function ()
     websitesLeft--;
 
     var websiteId = websitesToUpgrade[currentWebsite++];
-    updatesoverview_wordpress_upgrade_all_update_site_status( websiteId, __( '<i class="sync loading icon"></i>' ) );
+    updatesoverview_wordpress_upgrade_all_update_site_status( websiteId, __( '<i class="notched circle loading icon"></i>' ) );
 
     updatesoverview_wordpress_upgrade_int( websiteId, true );
 };
@@ -545,7 +545,7 @@ updatesoverview_translations_upgrade_all_upgrade_next = function ()
     websitesLeft--;
 
     var websiteId = websitesToUpdateTranslations[currentWebsite++];
-    updatesoverview_translations_upgrade_all_update_site_status( websiteId, '<i class="sync loading icon"></i>' );
+    updatesoverview_translations_upgrade_all_update_site_status( websiteId, '<i class="notched circle loading icon"></i>' );
 
     var slugToUpgrade = currentTranslationSlugToUpgrade;
     if ( slugToUpgrade == undefined )
@@ -1473,7 +1473,7 @@ updatesoverview_themes_upgrade_all_upgrade_next = function ()
     websitesLeft--;
 
     var websiteId = websitesToUpdate[currentWebsite++];
-    updatesoverview_themes_upgrade_all_update_site_status( websiteId, '<i class="sync loading icon"></i>' );
+    updatesoverview_themes_upgrade_all_update_site_status( websiteId, '<i class="notched circle loading icon"></i>' );
 
     var slugToUpgrade = currentThemeSlugToUpgrade;
     if ( slugToUpgrade == undefined )
@@ -1930,7 +1930,7 @@ updatesoverview_upgrade_all_upgrade_next = function ()
     websitesLeft--;
 
     var websiteId = websitesToUpdate[currentWebsite++];
-    updatesoverview_upgrade_all_update_site_status( websiteId, '<i class="sync loading icon"></i>' );
+    updatesoverview_upgrade_all_update_site_status( websiteId, '<i class="notched circle loading icon"></i>' );
 
     var themeSlugToUpgrade = websitesThemeSlugsToUpgrade[websiteId];
     var pluginSlugToUpgrade = websitesPluginSlugsToUpgrade[websiteId];
@@ -3263,7 +3263,7 @@ updatesoverview_upgrade_plugintheme_list_popup  = function ( what, pId, pSiteNam
         slug: list.join( ',' )
     } );
 
-    updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="sync loading icon"></i>' );
+    updatesoverview_plugins_upgrade_all_update_site_status( pId, '<i class="notched circle loading icon"></i>' );
 
     jQuery.post( ajaxurl, data, function ( response ) {
         if ( response.error ) {

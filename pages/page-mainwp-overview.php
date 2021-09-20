@@ -499,7 +499,7 @@ class MainWP_Overview {
 						 */
 						do_action( 'mainwp_overview_screen_options_top' );
 						?>
-				<form method="POST" action="">
+				<form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
 					<?php echo MainWP_UI::render_screen_options( false ); ?>
@@ -515,9 +515,11 @@ class MainWP_Overview {
 							?>
 			</div>
 			<div class="actions">
-				<input type="submit" class="ui green button" name="submit" id="submit" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+				<input type="button" class="ui basic button left" style="float:left" name="reset" id="reset-overview-settings" value="<?php esc_attr_e( 'Restore Defaults', 'mainwp' ); ?>" />
+				<input type="submit" class="ui green button" id="submit-overview-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
 				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
+			<input type="hidden" name="reset_overview_widgets_order" value="0" />					
 				</form>
 		</div>
 	<script type="text/javascript">
@@ -560,6 +562,16 @@ class MainWP_Overview {
 
 			} );
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
+			jQuery('#reset-overview-settings').on( 'click', function () {
+				mainwp_confirm(__( 'Are you sure.' ), function(){
+					jQuery('input[name=hide_update_everything]').prop( 'checked', false );
+					jQuery('input[name=number_overview_columns][value=2]').prop( 'checked', true );
+					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_hide_widgets[]"]').prop( 'checked', false );
+					jQuery('input[name=reset_overview_widgets_order]').attr( 'value', 1 );
+					jQuery('#submit-overview-settings').click();
+				}, false, false, true );
+				return false;
+			});
 		} );
 	</script>
 		<?php

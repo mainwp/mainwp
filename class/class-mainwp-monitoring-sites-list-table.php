@@ -116,7 +116,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'site_health'  => __( 'Site Health', 'mainwp' ),
 			'status_code'  => __( 'Status Code', 'mainwp' ),
 			'last_check'   => __( 'Last Check', 'mainwp' ),
-			'site_preview' => '<i class="eye icon"></i>',
+			'site_preview' => '<i class="camera icon"></i>',
 		);
 	}
 

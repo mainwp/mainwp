@@ -402,7 +402,7 @@ class MainWP_Setup_Wizard {
 			<div class="ui hidden divider"></div>
 			<div id="mainwp-qsw-optional-settings-form" style="display:none">
 			<div class="ui hidden divider"></div>
-				<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Optoins (optional)', 'mainwp' ); ?></div>
+				<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
 

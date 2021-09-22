@@ -485,7 +485,6 @@ class MainWP_Manage_Sites_List_Table {
 	public function no_items() {
 		?>
 		<div class="ui center aligned segment">
-		<?php if ( 0 == MainWP_DB::instance()->get_websites_count( null, true ) ) : ?>
 			<i class="globe massive icon"></i>
 			<div class="ui header">
 				<?php esc_html_e( 'No websites connected to the MainWP Dashboard yet.', 'mainwp' ); ?>
@@ -494,9 +493,6 @@ class MainWP_Manage_Sites_List_Table {
 			<div class="ui sub header">
 				<?php printf( esc_html__( 'If all your child sites are missing from your MainWP Dashboard, please check this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/all-child-sites-disappeared-from-my-mainwp-dashboard/" target="_blank">', '</a>' ); ?>
 			</div>
-		<?php else : ?>
-			<?php esc_html_e( 'No websites found.', 'mainwp' ); ?>
-		<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -878,7 +874,13 @@ class MainWP_Manage_Sites_List_Table {
 		 */
 		do_action( 'mainwp_before_manage_sites_table' );
 		?>
-		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable stackable table">
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
+			<div class="ui message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
+				<?php echo __( 'To hide or show a column, click the "Cog" icon and select options from "Show columns"', 'mainwp' ); ?>
+			</div>
+		<?php endif; ?>
+		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable table">
 			<thead>
 				<tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
 			</thead>
@@ -891,6 +893,17 @@ class MainWP_Manage_Sites_List_Table {
 				<tr><?php $this->print_column_headers( $optimize, false ); ?></tr>
 	</tfoot>
 	</table>
+		<?php
+		$count = MainWP_DB::instance()->get_websites_count( null, true );
+		if ( 0 == $count ) {
+			?>
+		<div id="sites-table-count-empty" style="display: none;">
+			<?php $this->no_items(); ?>
+		</div>
+			<?php
+		}
+		?>
+	
 		<?php
 		/**
 		 * Action: mainwp_after_manage_sites_table
@@ -931,7 +944,7 @@ class MainWP_Manage_Sites_List_Table {
 		?>
 
 	<script type="text/javascript">
-		mainwp_manage_sites_screen_options = function () {
+			mainwp_manage_sites_screen_options = function () {
 				jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
 					allowMultiple: true,
 					onHide: function () {
@@ -953,125 +966,169 @@ class MainWP_Manage_Sites_List_Table {
 				return false;
 			};
 
-			jQuery( document ).ready( function( $ ) {				
+			jQuery( document ).ready( function( $ ) {
+
 			<?php if ( ! $optimize ) { ?>
-				try {	
-					jQuery( '#mainwp-sites-table-loader' ).hide();							
-					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
-						"searching" : <?php echo $table_features['searching']; ?>,
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"pagingType" : <?php echo $table_features['pagingType']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
-						"scrollX" : <?php echo $table_features['scrollX']; ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; ?>,
-						"stateSave" : <?php echo $table_features['stateSave']; ?>,
-						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
-						"order" : <?php echo $table_features['order']; ?>,
-						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-						"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
-						"pageLength": <?php echo intval( $sites_per_page ); ?>,
-						"initComplete": function( settings, json ) {
-						}
-					} );
-				} catch(err) {
-					// to fix js error.
-					console.log(err);
-				}
-				mainwp_datatable_fix_menu_overflow();				
-			<?php } else { ?>
-				try {
-					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
-						jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
-						if (!processing) {
-							var tb = jQuery( '#mainwp-manage-sites-table' );
-							tb.find( 'th[cell-cls]' ).each( function(){
-								var ceIdx = this.cellIndex;
-								var cls = jQuery( this ).attr( 'cell-cls' );
-								jQuery( '#mainwp-manage-sites-table tr' ).each(function(){
-									jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
-								} );
+						try {	
+							jQuery( '#mainwp-sites-table-loader' ).hide();							
+							$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
+								"searching" : <?php echo $table_features['searching']; ?>,
+								"paging" : <?php echo $table_features['paging']; ?>,
+								"pagingType" : <?php echo $table_features['pagingType']; ?>,
+								"info" : <?php echo $table_features['info']; ?>,
+								"scrollX" : <?php echo $table_features['scrollX']; ?>,
+								"colReorder" : <?php echo $table_features['colReorder']; ?>,
+								"stateSave" : <?php echo $table_features['stateSave']; ?>,
+								"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+								"order" : <?php echo $table_features['order']; ?>,
+								"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
+								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+								"pageLength": <?php echo intval( $sites_per_page ); ?>,
+								"initComplete": function( settings, json ) {
+								},
+								"language": {
+									"emptyTable": "<?php esc_html_e( 'No websites found.', 'mainwp' ); ?>"
+								},
+								"drawCallback": function( settings ) {
+									if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+										jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
+										
+									}
+								}
 							} );
+						} catch(err) {
+							// to fix js error.
+							console.log(err);
+						}
+						mainwp_datatable_fix_menu_overflow();				
+			<?php } else { ?>
+					try {
+						$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).on( 'processing.dt', function ( e, settings, processing ) {
+							jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+							if (!processing) {
+								var tb = jQuery( '#mainwp-manage-sites-table' );
+								tb.find( 'th[cell-cls]' ).each( function(){
+									var ceIdx = this.cellIndex;
+									var cls = jQuery( this ).attr( 'cell-cls' );
+									jQuery( '#mainwp-manage-sites-table tr' ).each(function(){
+										jQuery(this).find( 'td:eq(' + ceIdx + ')' ).addClass(cls);
+									} );
+								} );
+								$( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
+								$( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
+							}
+
+						} ).on( 'column-reorder.dt', function ( e, settings, details ) {
 							$( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
-						}
-
-					} ).on( 'column-reorder.dt', function ( e, settings, details ) {
-						$( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
-						$( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
-					} ).DataTable( {
-						"ajax": {
-							"url": ajaxurl,
-							"type": "POST",
-							"data":  function ( d ) {
-								return $.extend( {}, d, mainwp_secure_data( {
-									action: 'mainwp_manage_sites_display_rows',
-									status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
-									g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
-									isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
-								} )
-							);
-							},
-							"dataSrc": function ( json ) {
-								for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
-									json.data[i].syncError = json.rowsInfo[i].syncError ? json.rowsInfo[i].syncError : false;
-									json.data[i].rowClass = json.rowsInfo[i].rowClass;
-									json.data[i].siteID = json.rowsInfo[i].siteID;
-									json.data[i].siteUrl = json.rowsInfo[i].siteUrl;
+						} ).DataTable( {
+							"ajax": {
+								"url": ajaxurl,
+								"type": "POST",
+								"data":  function ( d ) {
+									return $.extend( {}, d, mainwp_secure_data( {
+										action: 'mainwp_manage_sites_display_rows',
+										status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
+										g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
+										isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
+									} )
+								);
+								},
+								"dataSrc": function ( json ) {
+									for ( var i=0, ien=json.data.length ; i < ien ; i++ ) {
+										json.data[i].syncError = json.rowsInfo[i].syncError ? json.rowsInfo[i].syncError : false;
+										json.data[i].rowClass = json.rowsInfo[i].rowClass;
+										json.data[i].siteID = json.rowsInfo[i].siteID;
+										json.data[i].siteUrl = json.rowsInfo[i].siteUrl;
+									}
+									return json.data;
 								}
-								return json.data;
-							}
-						},
-						"searching" : <?php echo $table_features['searching']; ?>,
-						"paging" : <?php echo $table_features['paging']; ?>,
-						"pagingType" : <?php echo $table_features['pagingType']; ?>,
-						"info" : <?php echo $table_features['info']; ?>,
-						"colReorder" : <?php echo $table_features['colReorder']; ?>,
-						"scrollX" : <?php echo $table_features['scrollX']; ?>,
-						"stateSave" : <?php echo $table_features['stateSave']; ?>,
-						"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
-						"order" : <?php echo $table_features['order']; ?>,
-						"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
-						serverSide: true,
-						"pageLength": <?php echo intval( $sites_per_page ); ?>,
-						"columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
-						"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
-						"drawCallback": function( settings ) {
-							this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
-							mainwp_datatable_fix_menu_overflow();
-							if ( typeof mainwp_preview_init_event !== "undefined" ) {
-								mainwp_preview_init_event();
-							}
-							jQuery( '#mainwp-sites-table-loader' ).hide();
-						},
-						"initComplete": function( settings, json ) {
-						},
-						rowCallback: function (row, data) {
-							jQuery( row ).addClass(data.rowClass);
-							jQuery( row ).attr( 'site-url', data.siteUrl );
-							jQuery( row ).attr( 'siteid', data.siteID );
-							jQuery( row ).attr( 'id', "child-site-" + data.siteID );
-							if ( data.syncError ) {
-								jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
-							};
-						}
-					} );	
-				} catch(err) {
-					// to fix js error.
-				}			
-					<?php } ?>
-					_init_manage_sites_screen = function() {
-						jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_hide_column_"]' ).each( function() {
-							var col_id = jQuery( this ).attr( 'id' );
-							col_id = col_id.replace( "mainwp_hide_column_", "" );
-							try {	
-								$manage_sites_table.column( '#' + col_id ).visible( !jQuery(this).is( ':checked' ) );
-							} catch(err) {
-								// to fix js error.
+							},
+							"searching" : <?php echo $table_features['searching']; ?>,
+							"paging" : <?php echo $table_features['paging']; ?>,
+							"pagingType" : <?php echo $table_features['pagingType']; ?>,
+							"info" : <?php echo $table_features['info']; ?>,
+							"colReorder" : <?php echo $table_features['colReorder']; ?>,
+							"scrollX" : <?php echo $table_features['scrollX']; ?>,
+							"stateSave" : <?php echo $table_features['stateSave']; ?>,
+							"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
+							"order" : <?php echo $table_features['order']; ?>,
+							"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All"] ],
+							serverSide: true,
+							"pageLength": <?php echo intval( $sites_per_page ); ?>,
+							"columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
+							"columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
+							"language": {
+								"emptyTable": "<?php esc_html_e( 'No websites found.', 'mainwp' ); ?>"
+							},
+							"drawCallback": function( settings ) {
+								this.api().tables().body().to$().attr( 'id', 'mainwp-manage-sites-body-table' );
+								mainwp_datatable_fix_menu_overflow();
+								if ( typeof mainwp_preview_init_event !== "undefined" ) {
+									mainwp_preview_init_event();
+								}
+								jQuery( '#mainwp-sites-table-loader' ).hide();
+								if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
+									jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
+									
+								}
+							},
+							"initComplete": function( settings, json ) {
+							},
+							rowCallback: function (row, data) {
+								jQuery( row ).addClass(data.rowClass);
+								jQuery( row ).attr( 'site-url', data.siteUrl );
+								jQuery( row ).attr( 'siteid', data.siteID );
+								jQuery( row ).attr( 'id', "child-site-" + data.siteID );
+								if ( data.syncError ) {
+									jQuery( row ).find( 'td.column-site-bulk' ).addClass( 'site-sync-error' );
+								};
 							}
 						} );
+					} catch(err) {
+						// to fix js error.
+					}			
+		<?php } ?>
+					_init_manage_sites_screen = function() {
+						<?php
+						if ( 0 == $count ) {
+							?>
+							jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+								var col_id = jQuery( this ).attr( 'id' );
+								col_id = col_id.replace( "mainwp_show_column_", "" );
+								try {	
+									$manage_sites_table.column( '#' + col_id ).visible( false );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+
+							//default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
+							var cols = ['site','login','url','update','site_health','last_sync', 'site_actions'];
+							jQuery.each( cols, function ( index, value ) {
+								try {	
+									$manage_sites_table.column( '#' + value ).visible( true );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+							<?php
+						} else {
+							?>
+								
+							jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+								var col_id = jQuery( this ).attr( 'id' );
+								col_id = col_id.replace( "mainwp_show_column_", "" );
+								try {	
+									$manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+					<?php } ?>
 					};
 					_init_manage_sites_screen();
-				} );
+			} );
 
 				mainwp_manage_sites_filter = function() {
 					<?php if ( ! $optimize ) { ?>
@@ -1096,7 +1153,7 @@ class MainWP_Manage_Sites_List_Table {
 						}
 					<?php } ?>
 				};			
-				</script>
+		</script>
 		<?php
 	}
 
@@ -1106,10 +1163,6 @@ class MainWP_Manage_Sites_List_Table {
 	public function display_rows_or_placeholder() {
 		if ( $this->has_items() ) {
 			$this->display_rows();
-		} else {
-			echo '<tr class="no-items"><td class="colspanchange" colspan="' . $this->get_column_count() . '">';
-			$this->no_items();
-			echo '</td></tr>';
 		}
 	}
 
@@ -1469,9 +1522,9 @@ class MainWP_Manage_Sites_List_Table {
 									<?php if ( '' == $website['note'] ) : ?>
 										<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit site notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 									<?php else : ?>
-										<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+										<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 									<?php endif; ?>
-										<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
+										<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
 									<?php } elseif ( 'phpversion' === $column_name ) { ?>
 								<?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?>
 							<?php } elseif ( 'site_actions' === $column_name ) { ?>
@@ -1839,9 +1892,9 @@ class MainWP_Manage_Sites_List_Table {
 					<?php if ( '' === $website['note'] ) : ?>
 						<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php esc_attr_e( 'Edit site notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
 					<?php else : ?>
-						<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+						<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website['id']; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
 					<?php endif; ?>
-						<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo $esc_note; ?></span>
+						<span style="display: none" id="mainwp-notes-<?php echo $website['id']; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
 				</td>
 		<?php } elseif ( 'phpversion' === $column_name ) { ?>
 				<td class="collapsing center aligned"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>

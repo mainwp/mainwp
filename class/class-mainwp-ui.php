@@ -1181,9 +1181,19 @@ class MainWP_UI {
 			}
 		}
 
-		$hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
-		if ( ! is_array( $hide_widgets ) ) {
-			$hide_widgets = array();
+		$show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
+		if ( false === $show_widgets ) {
+			$hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
+			if ( ! is_array( $hide_widgets ) ) {
+				$hide_widgets = array();
+			}
+			foreach ( $hide_widgets as $name ) {
+				$show_widgets[ $name ] = 0;
+			}
+		}
+
+		if ( ! is_array( $show_widgets ) ) {
+			$show_widgets = array();
 		}
 
 		if ( isset( $mainwp_widget_boxes[ $page ][ $context ] ) ) {
@@ -1195,7 +1205,7 @@ class MainWP_UI {
 						}
 
 						// to avoid hidden widgets.
-						if ( in_array( $box['id'], $hide_widgets ) ) {
+						if ( isset( $show_widgets[ $box['id'] ] ) && 0 == $show_widgets[ $box['id'] ] ) {
 							continue;
 						}
 
@@ -1345,7 +1355,7 @@ class MainWP_UI {
 	 */
 	public static function render_modal_edit_notes( $what = 'site' ) {
 		?>
-		<div id="mainwp-notes" class="ui modal">
+		<div id="mainwp-notes-modal" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Notes', 'mainwp' ); ?></div>
 			<div class="content" id="mainwp-notes-content">
 				<?php
@@ -1435,11 +1445,21 @@ class MainWP_UI {
 			$default_widgets = array_merge( $default_widgets, $custom_opts );
 		}
 
-		$hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
-		if ( ! is_array( $hide_widgets ) ) {
-			$hide_widgets = array();
+		$show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
+		if ( false === $show_widgets ) {
+			$hide_widgets = get_user_option( 'mainwp_settings_hide_widgets' );
+			if ( ! is_array( $hide_widgets ) ) {
+				$hide_widgets = array();
+			}
+			foreach ( $hide_widgets as $name ) {
+				$show_widgets[ $name ] = 0;
+			}
 		}
 
+		if ( ! is_array( $show_widgets ) ) {
+			$show_widgets = array();
+		}
+		
 		/**
 		 * Action: mainwp_screen_options_modal_top
 		 *
@@ -1487,21 +1507,22 @@ class MainWP_UI {
 		</div>
 
 		<div class="ui grid field">
-			<label class="six wide column"><?php esc_html_e( 'Hide unwanted widgets', 'mainwp' ); ?></label>
+			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
 			<div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
 				<ul class="mainwp_hide_wpmenu_checkboxes">
-				<?php
+				<?php				
 				foreach ( $default_widgets as $name => $title ) {
 					$_selected = '';
-					if ( in_array( $name, $hide_widgets ) ) {
+					if ( ! isset( $show_widgets[ $name ] ) || 1 == $show_widgets[ $name ] ) {
 						$_selected = 'checked';
 					}
 					?>
 					<li>
 						<div class="ui checkbox">
-							<input type="checkbox" id="mainwp_hide_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_widgets[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
-							<label for="mainwp_hide_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
+							<input type="checkbox" id="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" name="mainwp_show_widgets[]" <?php echo $_selected; ?> value="<?php echo esc_attr( $name ); ?>">
+							<label for="mainwp_show_widget_<?php echo esc_attr( $name ); ?>" ><?php echo esc_html( $title ); ?></label>
 						</div>
+						<input type="hidden" name="mainwp_widgets_name[]" value="<?php echo esc_attr( $name ); ?>">
 					</li>
 					<?php
 				}

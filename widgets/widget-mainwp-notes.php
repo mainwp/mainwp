@@ -92,7 +92,7 @@ class MainWP_Notes {
 				?>
 				<div class="content">
 				<?php
-				echo $esc_note;
+				echo wp_unslash( $esc_note );
 				?>
 				</div>
 				<div class="ui section hidden divider"></div>
@@ -100,7 +100,7 @@ class MainWP_Notes {
 				<?php
 			}
 			?>
-		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo $esc_note; ?></span>
+		<span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
 		<?php
 		/**
 		 * Action: mainwp_notes_widget_bottom

@@ -190,7 +190,7 @@ function mainwp_extensions_savelogin( pObj, retring ) {
     } );
 
   if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Usenrname and Password fields are required." ) ).show();
+    statusEl.html( __( "Username and Password is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
 
@@ -263,7 +263,7 @@ function mainwp_extensions_grabkeys( pObj, retring ) {
     } );
 
   if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Username and Password fields are required." ) ).show();
+    statusEl.html( __( "Username and Password is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
@@ -401,7 +401,7 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
     } );
 
   if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Username and Password fields are required." ) ).show();
+    statusEl.html( __( "Username and Password is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {

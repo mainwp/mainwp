@@ -326,9 +326,47 @@ class MainWP_Manage_Sites {
 			$columns['site_actions'] = __( 'Actions', 'mainwp' );
 		}
 
-		$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
-		if ( ! is_array( $hide_cols ) ) {
-			$hide_cols = array();
+		$show_cols = get_user_option( 'mainwp_settings_show_manage_sites_columns' );
+		if ( false === $show_cols ) { // to backwards.
+			$hide_cols = get_user_option( 'mainwp_settings_hide_manage_sites_columns' );
+
+			$default_cols = array();
+			if ( false === $hide_cols ) {
+				$default_cols = array(
+					'site'         => 1,
+					'login'        => 1,
+					'url'          => 1,
+					'update'       => 1,
+					'site_health'  => 1,
+					'last_sync'    => 1,
+					'site_actions' => 1,
+				);
+			}
+
+			if ( ! is_array( $hide_cols ) ) {
+				$hide_cols = array();
+			}
+
+			$show_cols = array();
+			foreach ( $columns as $name => $title ) {
+				if ( in_array( $default_cols[ $name ] ) ) {
+					$show_cols[ $name ] = 1;
+				} elseif ( in_array( $name, $hide_cols, true ) ) { // to backwards.
+					$show_cols[ $name ] = 0;
+				} elseif ( in_array( $default_cols[ $name ] ) ) {
+					$show_cols[ $name ] = 1;
+				} else {
+					$show_cols[ $name ] = 1;
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
+			}
+		}
+
+		if ( ! is_array( $show_cols ) ) {
+			$show_cols = array();
 		}
 
 		?>
@@ -352,7 +390,7 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 					<div class="ui grid field">
-						<label class="six wide column"><?php esc_html_e( 'Hide unwanted columns', 'mainwp' ); ?></label>
+						<label class="six wide column"><?php esc_html_e( 'Show columns', 'mainwp' ); ?></label>
 						<div class="ten wide column">
 							<ul class="mainwp_hide_wpmenu_checkboxes">
 								<?php
@@ -365,12 +403,14 @@ class MainWP_Manage_Sites {
 										<div class="ui checkbox <?php echo ( 'site_preview' == $name ) ? 'site_preview not-auto-init' : ''; ?>">
 											<input type="checkbox"
 											<?php
-											if ( in_array( $name, $hide_cols, true ) ) {
+											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
+											if ( $show_col ) {
 												echo 'checked="checked"';
 											}
 											?>
-											id="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" name="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
-											<label for="mainwp_hide_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
+											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											<input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
 										</div>
 									</li>
 									<?php
@@ -381,8 +421,8 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 				<div class="actions">
-					<input type="button" class="ui basic button" style="float:left" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Restore Defaults', 'mainwp' ); ?>" />
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+					<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 				</div>
 				<input type="hidden" name="reset_managersites_columns_order" value="0">
@@ -415,7 +455,12 @@ class MainWP_Manage_Sites {
 				jQuery('#reset-managersites-settings').on( 'click', function () {
 					mainwp_confirm(__( 'Are you sure.' ), function(){
 						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
-						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_hide_column_"]').prop( 'checked', false );
+						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
+						//default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
+						var cols = ['site','login','url','update','site_health','last_sync', 'site_actions'];
+						jQuery.each( cols, function ( index, value ) {
+							jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
+						} );
 						jQuery('input[name=reset_managersites_columns_order]').attr('value',1);
 						jQuery('#submit-managersites-settings').click();						
 					}, false, false, true );
@@ -510,6 +555,18 @@ class MainWP_Manage_Sites {
 
 			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
 			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
+			
+			<div class="ui info message" id="mainwp_message_verify_installed_child" style="display:none">
+				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
+				<?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
+				<ol>
+					<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
+					<li><?php printf( __( 'Go to the %1$sWP > Plugins%2$s page', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( __( 'Click %1$sAdd New%2$s to install a new plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( __( 'In the %1$sSearch Field%2$s, enter "MainWP Child" and once the plugin shows, click the Install button', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+					<li><?php printf( __( '%1$sActivate%2$s the plugin', 'mainwp' ), '<strong>', '</strong>' ); ?></li>
+				</ol>
+			</div>
 
 			<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -517,6 +574,14 @@ class MainWP_Manage_Sites {
 					<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
 					<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
 				</h3>
+
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify that MainWP Child is Installed and Activated', 'mainwp' ); ?></label>
+					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Verify that MainWP Child is Installed and Activated.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_verify_installed_child" id="mainwp_managesites_verify_installed_child" />
+						<label><?php esc_attr_e( 'Select to confirm that the MainWP Child plugin is active on the child site.', 'mainwp' ); ?></label>
+					</div>
+				</div>
 
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
@@ -530,7 +595,6 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
-
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">

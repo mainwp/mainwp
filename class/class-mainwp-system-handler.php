@@ -213,16 +213,23 @@ class MainWP_System_Handler {
 	 */
 	public function handle_manage_sites_screen_settings() {
 		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
-			$hide_cols = array();
+			$show_cols = array();
 			foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
-				if ( false !== strpos( $key, 'mainwp_hide_column_' ) ) {
-					$col         = str_replace( 'mainwp_hide_column_', '', $key );
-					$hide_cols[] = $col;
+				if ( false !== strpos( $key, 'mainwp_show_column_' ) ) {
+					$col               = str_replace( 'mainwp_show_column_', '', $key );
+					$show_cols[ $col ] = 1;
+				}
+			}
+			if ( isset( $_POST['show_columns_name'] ) ) {
+				foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['show_columns_name'] ) ) as $col ) {
+					if ( ! isset( $show_cols[ $col ] ) ) {
+						$show_cols[ $col ] = 0; // uncheck, hide columns.
+					}
 				}
 			}
 			$user = wp_get_current_user();
 			if ( $user ) {
-				update_user_option( $user->ID, 'mainwp_settings_hide_manage_sites_columns', $hide_cols, true );
+				update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
 				update_option( 'mainwp_default_sites_per_page', ( isset( $_POST['mainwp_default_sites_per_page'] ) ? intval( $_POST['mainwp_default_sites_per_page'] ) : 25 ) );
 			}
 		}
@@ -258,13 +265,26 @@ class MainWP_System_Handler {
 		}
 
 		if ( $update_screen_options ) {
-			$hide_wids = array();
-			if ( isset( $_POST['mainwp_hide_widgets'] ) && is_array( $_POST['mainwp_hide_widgets'] ) ) {
-				$hide_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_hide_widgets'] ) );
+			$show_wids = array();
+			if ( isset( $_POST['mainwp_show_widgets'] ) && is_array( $_POST['mainwp_show_widgets'] ) ) {
+				$selected_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_show_widgets'] ) );
+				foreach ( $selected_wids as $name ) {
+					$show_wids[ $name ] = 1;
+				}
 			}
+
+			if ( isset( $_POST['mainwp_widgets_name'] ) && is_array( $_POST['mainwp_widgets_name'] ) ) {
+				$name_wids = array_map( 'sanitize_text_field', wp_unslash( $_POST['mainwp_widgets_name'] ) );
+				foreach ( $name_wids as $name ) {
+					if ( ! isset( $show_wids[ $name ] ) ) {
+						$show_wids[ $name ] = 0;
+					}
+				}
+			}
+
 			$user = wp_get_current_user();
 			if ( $user ) {
-				update_user_option( $user->ID, 'mainwp_settings_hide_widgets', $hide_wids, true );
+				update_user_option( $user->ID, 'mainwp_settings_show_widgets', $show_wids, true );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );

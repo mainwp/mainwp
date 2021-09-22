@@ -272,7 +272,7 @@ jQuery( document ).ready( function () {
         var slug = rowEl.attr( 'theme-slug' );
         var name = rowEl.attr( 'theme-name' );
         var note = rowEl.find( '.esc-content-note' ).html();
-        jQuery( '#mainwp-notes' ).removeClass( 'edit-mode' );
+        jQuery( '#mainwp-notes-modal' ).removeClass( 'edit-mode' );
         jQuery( '#mainwp-notes-title' ).html( decodeURIComponent( name ) );
         jQuery( '#mainwp-notes-html' ).html( note == '' ? 'No saved notes. Click the Edit button to edit theme notes.' : note );
         jQuery( '#mainwp-notes-note' ).val( note );

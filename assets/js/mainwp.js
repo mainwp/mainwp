@@ -385,6 +385,10 @@ feedback = function (id, text, type, append) {
   jQuery('#' + id).show();
 
   // automatically scroll to error message if it's not visible
+  scrollElementTop(id);
+};
+
+scrollElementTop = function (id) {
   var scrolltop = jQuery(window).scrollTop();
   var off = jQuery('#' + id).offset();
   if (scrolltop > off.top - 40)
@@ -395,7 +399,7 @@ feedback = function (id, text, type, append) {
     });
   else
     shake_element('#' + id); // shake the error message to get attention :)
-};
+}
 
 jQuery(document).ready(function () {
   jQuery('div.mainwp-hidden').parent().parent().css("display", "none");
@@ -1166,6 +1170,12 @@ jQuery(document).ready(function () {
   managesites_init();
 });
 
+jQuery(document).on('change', '#mainwp_managesites_verify_installed_child', function () {
+  if ( jQuery(this).is(':checked') ){
+    jQuery('#mainwp_message_verify_installed_child').hide();
+  }
+});
+
 managesites_init = function () {
   jQuery('#mainwp-message-zone').hide();
   jQuery('.sync-ext-row span.status').html('');
@@ -1231,7 +1241,14 @@ mainwp_managesites_reconnect = function (pElement) {
 // Connect a new website
 mainwp_managesites_add = function () {
   managesites_init();
-
+  if ( ! jQuery('#mainwp_managesites_verify_installed_child').is(':checked')) {
+    jQuery('#mainwp_message_verify_installed_child').show();
+    scrollElementTop('mainwp_message_verify_installed_child');
+    return;
+  } else {
+    jQuery('#mainwp_message_verify_installed_child').hide();
+  }
+  
   var errors = [];
 
   if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
@@ -2421,14 +2438,14 @@ jQuery(document).ready(function () {
 });
 
 mainwp_notes_show = function () {
-  jQuery('#mainwp-notes').modal('setting', 'closable', false).modal('show');
+  jQuery('#mainwp-notes-modal').modal('setting', 'closable', false).modal('show');
   jQuery('#mainwp-notes-html').show();
   jQuery('#mainwp-notes-editor').hide();
   jQuery('#mainwp-notes-save').hide();
   jQuery('#mainwp-notes-edit').show();
 };
 mainwp_notes_hide = function () {
-  jQuery('#mainwp-notes').modal('hide');
+  jQuery('#mainwp-notes-modal').modal('hide');
 };
 mainwp_notes_site_save = function () {
   var normalid = jQuery('#mainwp-notes-websiteid').val();

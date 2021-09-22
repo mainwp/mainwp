@@ -469,6 +469,46 @@ class MainWP_Settings {
 				$check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
 				MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
 
+				
+				// Handle custom date/time formats.
+				if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
+					&& '\c\u\s\t\o\m' === wp_unslash( $_POST['date_format'] )
+				) {
+					$_POST['date_format'] = $_POST['date_format_custom'];
+				}
+		
+				if ( ! empty( $_POST['time_format'] ) && isset( $_POST['time_format_custom'] )
+					&& '\c\u\s\t\o\m' === wp_unslash( $_POST['time_format'] )
+				) {
+					$_POST['time_format'] = $_POST['time_format_custom'];
+				}
+		
+				// Map UTC+- timezones to gmt_offsets and set timezone_string to empty.
+				if ( ! empty( $_POST['timezone_string'] ) && preg_match( '/^UTC[+-]/', $_POST['timezone_string'] ) ) {
+					$_POST['gmt_offset']      = $_POST['timezone_string'];
+					$_POST['gmt_offset']      = preg_replace( '/UTC\+?/', '', $_POST['gmt_offset'] );
+					$_POST['timezone_string'] = '';
+				}
+			
+				$options = array ( 
+					'gmt_offset',
+					'date_format',
+					'time_format',
+					'timezone_string',
+				);
+
+				foreach ( $options as $option ) {
+					$value  = null;
+					if ( isset( $_POST[ $option ] ) ) {
+						$value = $_POST[ $option ];
+						if ( ! is_array( $value ) ) {
+							$value = trim( $value );
+						}
+						$value = wp_unslash( $value );
+					}
+					update_option( $option, $value );
+				}
+
 				/**
 				* Action: mainwp_after_save_general_settings
 				*
@@ -595,7 +635,10 @@ class MainWP_Settings {
 								</select>
 							</div>
 						</div>
-
+						<?php
+						self::render_timezone_settings();
+						self::render_datetime_settings();
+						?>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
 						<?php
 						$snAutomaticDailyUpdate            = get_option( 'mainwp_automaticDailyUpdate' );
@@ -711,7 +754,7 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
-						<?php MainWP_Monitoring_View::render_settings(); ?>
+						<?php MainWP_Monitoring_View::render_settings(); ?>					
 						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<?php
 						/**
@@ -731,6 +774,248 @@ class MainWP_Settings {
 			</div>
 		<?php
 		self::render_footer( '' );
+	}
+
+	/**
+	 * Render Timezone settings.
+	 */
+	public static function render_timezone_settings() {	
+
+		$current_offset = get_option( 'gmt_offset' );
+		$tzstring       = get_option( 'timezone_string' );
+
+		$check_zone_info = true;
+
+		// Remove old Etc mappings. Fallback to gmt_offset.
+		if ( false !== strpos( $tzstring, 'Etc/GMT' ) ) {
+			$tzstring = '';
+		}
+
+		if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists.
+			$check_zone_info = false;
+			if ( 0 == $current_offset ) {
+				$tzstring = 'UTC+0';
+			} elseif ( $current_offset < 0 ) {
+				$tzstring = 'UTC' . $current_offset;
+			} else {
+				$tzstring = 'UTC+' . $current_offset;
+			}
+		}
+
+		$timezone_format = _x( 'Y-m-d H:i:s', 'timezone date format' );
+
+	?>
+	<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>			
+			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Timezone.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<select id="timezone_string" name="timezone_string" aria-describedby="timezone-description">
+				<?php echo wp_timezone_choice( $tzstring, get_user_locale() ); ?>
+				</select>
+
+				<p class="description" id="timezone-description">
+				<?php
+				printf(
+					/* translators: %s: UTC abbreviation */
+					__( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.' ),
+					'<abbr>UTC</abbr>'
+				);
+				?>
+				</p>
+
+				<p class="timezone-info">
+				<span id="utc-time">
+				<?php
+					printf(
+						/* translators: %s: UTC time. */
+						__( 'Universal time is %s.' ),
+						'<code>' . date_i18n( $timezone_format, false, true ) . '</code>'
+					);
+					?>
+				</span>
+				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
+				<span id="local-time">
+				<?php
+					printf(
+						/* translators: %s: Local time. */
+						__( 'Local time is %s.' ),
+						'<code>' . date_i18n( $timezone_format ) . '</code>'
+					);
+				?>
+				</span>
+				<?php endif; ?>
+				</p>
+
+				<?php if ( $check_zone_info && $tzstring ) : ?>
+						<p class="timezone-info">
+						<span>
+						<?php
+						$now = new \DateTime( 'now', new \DateTimeZone( $tzstring ) );
+						$dst = (bool) $now->format( 'I' );
+
+						if ( $dst ) {
+							_e( 'This timezone is currently in daylight saving time.' );
+						} else {
+							_e( 'This timezone is currently in standard time.' );
+						}
+						?>
+						<br />
+						<?php
+						if ( in_array( $tzstring, timezone_identifiers_list(), true ) ) {
+							$transitions = timezone_transitions_get( timezone_open( $tzstring ), time() );
+
+							// 0 index is the state at current time, 1 index is the next transition, if any.
+							if ( ! empty( $transitions[1] ) ) {
+								echo ' ';
+								$message = $transitions[1]['isdst'] ?
+									/* translators: %s: Date and time. */
+									__( 'Daylight saving time begins on: %s.' ) :
+									/* translators: %s: Date and time. */
+									__( 'Standard time begins on: %s.' );
+								printf(
+									$message,
+									'<code>' . wp_date( __( 'F j, Y' ) . ' ' . __( 'g:i a' ), $transitions[1]['ts'] ) . '</code>'
+								);
+							} else {
+								_e( 'This timezone does not observe daylight saving time.' );
+							}
+						}
+						?>
+						</span>
+						</p>					
+			<?php endif; ?>
+
+			</div>
+		</div>
+	<?php
+
+	}
+
+	/**
+	 * Render Date/Time settings.
+	 */
+	public static function render_datetime_settings() {
+		?>
+		<div class="ui grid field">
+			<label class="six wide column middle aligned"><?php esc_html_e( 'Date Format', 'mainwp' ); ?></label>
+			<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Date Format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+			
+			<?php
+				/**
+				 * Filters the default date formats.
+				 *
+				 * @since 2.7.0
+				 * @since 4.0.0 Added ISO date standard YYYY-MM-DD format.
+				 *
+				 * @param string[] $default_date_formats Array of default date formats.
+				 */
+				$date_formats = array_unique( apply_filters( 'date_formats', array( __( 'F j, Y' ), 'Y-m-d', 'm/d/Y', 'd/m/Y' ) ) );
+
+				$custom = true;
+
+			foreach ( $date_formats as $format ) {
+				echo "\t<label><input type='radio' name='date_format' value='" . esc_attr( $format ) . "'";
+				if ( get_option( 'date_format' ) === $format ) { // checked() uses "==" rather than "===".
+					echo " checked='checked'";
+					$custom = false;
+				}
+				echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+			}
+
+				echo '<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"';
+				checked( $custom );
+				echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom date format in the following field' ) . '</span></span></label>' .
+					'<label for="date_format_custom" class="screen-reader-text">' . __( 'Custom date format:' ) . '</label>' .
+					'<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
+					'<br />' .
+					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
+					"<span class='spinner'></span>\n" . '</p>';
+			?>		
+		</div>
+	</div>
+
+	<div class="ui grid field">
+		<label class="six wide column middle aligned"><?php esc_html_e( 'Time Format', 'mainwp' ); ?></label>
+		<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Time Format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+		<?php
+				/**
+				 * Filters the default time formats.
+				 *
+				 * @since 2.7.0
+				 *
+				 * @param string[] $default_time_formats Array of default time formats.
+				 */
+				$time_formats = array_unique( apply_filters( 'time_formats', array( __( 'g:i a' ), 'g:i A', 'H:i' ) ) );
+
+				$custom = true;
+
+			foreach ( $time_formats as $format ) {
+				echo "\t<label><input type='radio' name='time_format' value='" . esc_attr( $format ) . "'";
+				if ( get_option( 'time_format' ) === $format ) { // checked() uses "==" rather than "===".
+					echo " checked='checked'";
+					$custom = false;
+				}
+				echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+			}
+
+				echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
+				checked( $custom );
+				echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom time format in the following field' ) . '</span></span></label>' .
+					'<label for="time_format_custom" class="screen-reader-text">' . __( 'Custom time format:' ) . '</label>' .
+					'<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
+					'<br />' .
+					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
+					"<span class='spinner'></span>\n" . '</p>';
+
+				echo "\t<p class='date-time-doc'>" . __( '<a href="https://wordpress.org/support/article/formatting-date-and-time/">Documentation on date and time formatting</a>.' ) . "</p>\n";
+			?>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+			jQuery(document).ready(function($){
+			
+				$( 'input[name="date_format"]' ).on( 'click', function() {
+					if ( 'date_format_custom_radio' !== $(this).attr( 'id' ) )
+						$( 'input[name="date_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
+				});
+
+				$( 'input[name="date_format_custom"]' ).on( 'click input', function() {
+					$( '#date_format_custom_radio' ).prop( 'checked', true );
+				});
+
+				$( 'input[name="time_format"]' ).on( 'click', function() {
+					if ( 'time_format_custom_radio' !== $(this).attr( 'id' ) )
+						$( 'input[name="time_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
+				});
+
+				$( 'input[name="time_format_custom"]' ).on( 'click input', function() {
+					$( '#time_format_custom_radio' ).prop( 'checked', true );
+				});
+
+				$( 'input[name="date_format_custom"], input[name="time_format_custom"]' ).on( 'input', function() {
+					var format = $( this ),
+						fieldset = format.closest( '.fieldset-wrapper' ),
+						example = fieldset.find( '.example' ),
+						spinner = fieldset.find( '.spinner' );
+
+					// Debounce the event callback while users are typing.
+					clearTimeout( $.data( this, 'timer' ) );
+					$( this ).data( 'timer', setTimeout( function() {
+						// If custom date is not empty.
+						if ( format.val() ) {
+							spinner.addClass( 'is-active' );
+
+							$.post( ajaxurl, {
+								action: 'date_format_custom' === format.attr( 'name' ) ? 'date_format' : 'time_format',
+								date 	: format.val()
+							}, function( d ) { spinner.removeClass( 'is-active' ); example.text( d ); } );
+						}
+					}, 500 ) );
+				} );
+			});
+		</script>
+
+	<?php
 	}
 
 	/**

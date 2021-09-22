@@ -387,7 +387,7 @@ class MainWP_Overview {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
 				<div class="ui message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
-					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Tools%2$s page and select options from "Hide unwanted widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
+					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Tools%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 
@@ -515,8 +515,8 @@ class MainWP_Overview {
 							?>
 			</div>
 			<div class="actions">
-				<input type="button" class="ui basic button left" style="float:left" name="reset" id="reset-overview-settings" value="<?php esc_attr_e( 'Restore Defaults', 'mainwp' ); ?>" />
 				<input type="submit" class="ui green button" id="submit-overview-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+				<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any widgets you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-overview-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
 			</div>
 			<input type="hidden" name="reset_overview_widgets_order" value="0" />					
@@ -566,7 +566,7 @@ class MainWP_Overview {
 				mainwp_confirm(__( 'Are you sure.' ), function(){
 					jQuery('input[name=hide_update_everything]').prop( 'checked', false );
 					jQuery('input[name=number_overview_columns][value=2]').prop( 'checked', true );
-					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_hide_widgets[]"]').prop( 'checked', false );
+					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop( 'checked', true );
 					jQuery('input[name=reset_overview_widgets_order]').attr( 'value', 1 );
 					jQuery('#submit-overview-settings').click();
 				}, false, false, true );

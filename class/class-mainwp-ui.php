@@ -1459,7 +1459,7 @@ class MainWP_UI {
 		if ( ! is_array( $show_widgets ) ) {
 			$show_widgets = array();
 		}
-		
+
 		/**
 		 * Action: mainwp_screen_options_modal_top
 		 *
@@ -1510,7 +1510,7 @@ class MainWP_UI {
 			<label class="six wide column"><?php esc_html_e( 'Show widgets', 'mainwp' ); ?></label>
 			<div class="ten wide column" <?php echo $setting_page ? 'data-tooltip="' . esc_attr_e( 'Select widgets that you want to hide in the MainWP Overview page.', 'mainwp' ) . '"' : ''; ?> data-inverted="" data-position="top left">
 				<ul class="mainwp_hide_wpmenu_checkboxes">
-				<?php				
+				<?php
 				foreach ( $default_widgets as $name => $title ) {
 					$_selected = '';
 					if ( ! isset( $show_widgets[ $name ] ) || 1 == $show_widgets[ $name ] ) {

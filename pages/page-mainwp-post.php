@@ -1966,7 +1966,7 @@ class MainWP_Post {
 						<div id="postdivrich" class="postarea
 						<?php
 						if ( $_wp_editor_expand ) {
-							echo ' wp-editor-expand'; 
+							echo ' wp-editor-expand';
 						}
 						?>
 						">

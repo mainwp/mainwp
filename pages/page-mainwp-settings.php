@@ -926,8 +926,7 @@ class MainWP_Settings {
 					'<br />' .
 					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</p>';
-			?>
-					
+			?>		
 		</div>
 	</div>
 
@@ -968,10 +967,8 @@ class MainWP_Settings {
 		?>
 		</div>
 	</div>
-
 	<script type="text/javascript">
 			jQuery(document).ready(function($){
-			
 				$( 'input[name="date_format"]' ).on( 'click', function() {
 					if ( 'date_format_custom_radio' !== $(this).attr( 'id' ) )
 						$( 'input[name="date_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
@@ -1012,7 +1009,6 @@ class MainWP_Settings {
 				} );
 			});
 		</script>
-
 		<?php
 	}
 

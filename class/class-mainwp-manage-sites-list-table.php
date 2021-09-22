@@ -902,9 +902,6 @@ class MainWP_Manage_Sites_List_Table {
 		</div>
 			<?php
 		}
-		?>
-	
-		<?php
 		/**
 		 * Action: mainwp_after_manage_sites_table
 		 *
@@ -1017,7 +1014,6 @@ class MainWP_Manage_Sites_List_Table {
 								$( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
 								$( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();
 							}
-
 						} ).on( 'column-reorder.dt', function ( e, settings, details ) {
 							$( '#mainwp-manage-sites-table .ui.dropdown' ).dropdown();
 							$( '#mainwp-manage-sites-table .ui.checkbox' ).checkbox();

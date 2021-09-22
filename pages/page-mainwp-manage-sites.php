@@ -308,7 +308,7 @@ class MainWP_Manage_Sites {
 	 *
 	 * Render Screen Options Modal.
 	 */
-	public static function render_screen_options() {
+	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$columns = self::$sitesTable->get_columns();
 

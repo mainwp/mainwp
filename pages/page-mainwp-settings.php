@@ -882,11 +882,9 @@ class MainWP_Settings {
 						</span>
 						</p>					
 			<?php endif; ?>
-
 			</div>
 		</div>
 		<?php
-
 	}
 
 	/**

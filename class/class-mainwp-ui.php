@@ -1150,7 +1150,7 @@ class MainWP_UI {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_page_id()
 	 */
-	public static function do_widget_boxes( $screen, $context = null, $object = '' ) {
+	public static function do_widget_boxes( $screen, $context = null, $object = '' ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		global $mainwp_widget_boxes;
 		static $already_sorted = false;
 

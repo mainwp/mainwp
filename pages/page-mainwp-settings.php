@@ -926,7 +926,8 @@ class MainWP_Settings {
 					'<br />' .
 					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</p>';
-			?>		
+			?>
+					
 		</div>
 	</div>
 

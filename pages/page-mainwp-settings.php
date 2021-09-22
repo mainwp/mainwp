@@ -469,28 +469,27 @@ class MainWP_Settings {
 				$check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
 				MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
 
-				
 				// Handle custom date/time formats.
 				if ( ! empty( $_POST['date_format'] ) && isset( $_POST['date_format_custom'] )
 					&& '\c\u\s\t\o\m' === wp_unslash( $_POST['date_format'] )
 				) {
 					$_POST['date_format'] = $_POST['date_format_custom'];
 				}
-		
+
 				if ( ! empty( $_POST['time_format'] ) && isset( $_POST['time_format_custom'] )
 					&& '\c\u\s\t\o\m' === wp_unslash( $_POST['time_format'] )
 				) {
 					$_POST['time_format'] = $_POST['time_format_custom'];
 				}
-		
+
 				// Map UTC+- timezones to gmt_offsets and set timezone_string to empty.
 				if ( ! empty( $_POST['timezone_string'] ) && preg_match( '/^UTC[+-]/', $_POST['timezone_string'] ) ) {
 					$_POST['gmt_offset']      = $_POST['timezone_string'];
 					$_POST['gmt_offset']      = preg_replace( '/UTC\+?/', '', $_POST['gmt_offset'] );
 					$_POST['timezone_string'] = '';
 				}
-			
-				$options = array ( 
+
+				$options = array(
 					'gmt_offset',
 					'date_format',
 					'time_format',
@@ -498,7 +497,7 @@ class MainWP_Settings {
 				);
 
 				foreach ( $options as $option ) {
-					$value  = null;
+					$value = null;
 					if ( isset( $_POST[ $option ] ) ) {
 						$value = $_POST[ $option ];
 						if ( ! is_array( $value ) ) {
@@ -779,7 +778,7 @@ class MainWP_Settings {
 	/**
 	 * Render Timezone settings.
 	 */
-	public static function render_timezone_settings() {	
+	public static function render_timezone_settings() {
 
 		$current_offset = get_option( 'gmt_offset' );
 		$tzstring       = get_option( 'timezone_string' );
@@ -804,7 +803,7 @@ class MainWP_Settings {
 
 		$timezone_format = _x( 'Y-m-d H:i:s', 'timezone date format' );
 
-	?>
+		?>
 	<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>			
 			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Timezone.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -830,17 +829,17 @@ class MainWP_Settings {
 						__( 'Universal time is %s.' ),
 						'<code>' . date_i18n( $timezone_format, false, true ) . '</code>'
 					);
-					?>
+				?>
 				</span>
 				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
 				<span id="local-time">
-				<?php
+					<?php
 					printf(
 						/* translators: %s: Local time. */
 						__( 'Local time is %s.' ),
 						'<code>' . date_i18n( $timezone_format ) . '</code>'
 					);
-				?>
+					?>
 				</span>
 				<?php endif; ?>
 				</p>
@@ -886,7 +885,7 @@ class MainWP_Settings {
 
 			</div>
 		</div>
-	<?php
+		<?php
 
 	}
 
@@ -929,7 +928,8 @@ class MainWP_Settings {
 					'<br />' .
 					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</p>';
-			?>		
+			?>
+					
 		</div>
 	</div>
 
@@ -948,14 +948,14 @@ class MainWP_Settings {
 
 				$custom = true;
 
-			foreach ( $time_formats as $format ) {
-				echo "\t<label><input type='radio' name='time_format' value='" . esc_attr( $format ) . "'";
-				if ( get_option( 'time_format' ) === $format ) { // checked() uses "==" rather than "===".
-					echo " checked='checked'";
-					$custom = false;
-				}
-				echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+		foreach ( $time_formats as $format ) {
+			echo "\t<label><input type='radio' name='time_format' value='" . esc_attr( $format ) . "'";
+			if ( get_option( 'time_format' ) === $format ) { // checked() uses "==" rather than "===".
+				echo " checked='checked'";
+				$custom = false;
 			}
+			echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
+		}
 
 				echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
 				checked( $custom );
@@ -967,7 +967,7 @@ class MainWP_Settings {
 					"<span class='spinner'></span>\n" . '</p>';
 
 				echo "\t<p class='date-time-doc'>" . __( '<a href="https://wordpress.org/support/article/formatting-date-and-time/">Documentation on date and time formatting</a>.' ) . "</p>\n";
-			?>
+		?>
 		</div>
 	</div>
 
@@ -1015,7 +1015,7 @@ class MainWP_Settings {
 			});
 		</script>
 
-	<?php
+		<?php
 	}
 
 	/**

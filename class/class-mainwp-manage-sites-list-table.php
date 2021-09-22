@@ -1070,7 +1070,6 @@ class MainWP_Manage_Sites_List_Table {
 								jQuery( '#mainwp-sites-table-loader' ).hide();
 								if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
 									jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
-									
 								}
 							},
 							"initComplete": function( settings, json ) {

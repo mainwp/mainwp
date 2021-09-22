@@ -989,7 +989,6 @@ class MainWP_Manage_Sites_List_Table {
 								"drawCallback": function( settings ) {
 									if ( jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').length > 0 && jQuery('#sites-table-count-empty').length ){
 										jQuery('#mainwp-manage-sites-body-table td.dataTables_empty').html(jQuery('#sites-table-count-empty').html());
-										
 									}
 								}
 							} );
@@ -1110,7 +1109,6 @@ class MainWP_Manage_Sites_List_Table {
 							<?php
 						} else {
 							?>
-								
 							jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
 								var col_id = jQuery( this ).attr( 'id' );
 								col_id = col_id.replace( "mainwp_show_column_", "" );

@@ -895,7 +895,6 @@ class MainWP_Settings {
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Date Format', 'mainwp' ); ?></label>
 			<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Date Format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-			
 			<?php
 				/**
 				 * Filters the default date formats.
@@ -926,7 +925,7 @@ class MainWP_Settings {
 					'<br />' .
 					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
 					"<span class='spinner'></span>\n" . '</p>';
-			?>		
+			?>
 		</div>
 	</div>
 

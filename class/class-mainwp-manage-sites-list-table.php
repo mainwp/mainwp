@@ -1504,7 +1504,9 @@ class MainWP_Manage_Sites_List_Table {
 							} elseif ( 'status_code' === $column_name ) {
 								if ( $website['http_response_code'] ) {
 									$code = $website['http_response_code'];
-									?><span data-tooltip="<?php esc_attr_e( 'Site status code.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php
+									?>
+									<span data-tooltip="<?php esc_attr_e( 'Site status code.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+									<?php
 									echo esc_html( $code );
 									if ( isset( $http_error_codes[ $code ] ) ) {
 										echo ' - ' . $http_error_codes[ $code ];
@@ -1875,7 +1877,9 @@ class MainWP_Manage_Sites_List_Table {
 					<?php
 					if ( $website['http_response_code'] ) {
 						$code = $website['http_response_code'];
-						?><span data-tooltip="<?php esc_attr_e( 'Site status code.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><?php
+						?>
+						<span data-tooltip="<?php esc_attr_e( 'Site status code.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+						<?php
 						echo esc_html( $code );
 						if ( isset( $http_error_codes[ $code ] ) ) {
 							echo ' - ' . $http_error_codes[ $code ];

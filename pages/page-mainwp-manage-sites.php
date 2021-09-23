@@ -349,14 +349,12 @@ class MainWP_Manage_Sites {
 
 			$show_cols = array();
 			foreach ( $columns as $name => $title ) {
-				if ( in_array( $default_cols[ $name ] ) ) {
+				if ( isset( $default_cols[ $name ] ) ) {
 					$show_cols[ $name ] = 1;
 				} elseif ( in_array( $name, $hide_cols, true ) ) { // to backwards.
-					$show_cols[ $name ] = 0;
-				} elseif ( in_array( $default_cols[ $name ] ) ) {
-					$show_cols[ $name ] = 1;
+					$show_cols[ $name ] = 0; // hide columns.
 				} else {
-					$show_cols[ $name ] = 1;
+					$show_cols[ $name ] = 1; // show other columns.
 				}
 			}
 			$user = wp_get_current_user();
@@ -447,13 +445,13 @@ class MainWP_Manage_Sites {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
-					onUnchecked   : function() {
+					onChecked   : function() {
 						var $chk = jQuery( this );
 						jQuery( '#mainwp-manage-sites-site-preview-screen-options-modal' ).modal( {
 							allowMultiple: true, // multiple modals.
 							width: 100,
 							onDeny: function () {
-								$chk.prop('checked', true);
+								$chk.prop('checked', false);
 							}
 						} ).modal( 'show' );
 					}

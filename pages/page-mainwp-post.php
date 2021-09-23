@@ -2029,7 +2029,7 @@ class MainWP_Post {
 				<?php if ( 'bulkpost' === $post_type ) { ?>
 					<div class="field">
 						<label><?php esc_html_e( 'Excerpt', 'mainwp' ); ?></label>
-							<textarea rows="1" name="excerpt" id="excerpt"></textarea>
+							<textarea rows="1" name="excerpt" id="excerpt"><?php echo esc_attr( $post->post_excerpt ); ?></textarea>
 						<em><?php esc_html_e( 'Excerpts are optional hand-crafted summaries of your content that can be used in your theme.', 'mainwp' ); ?></em>
 					</div>
 					<div class="field">

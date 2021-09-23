@@ -1027,7 +1027,7 @@ class MainWP_Manage_Sites_View {
 				do_action( 'mainwp_extension_sites_edit_tablerow', $website );
 				?>
 				<div class="ui divider"></div>
-				<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+				<input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</form>
 		</div>
 		</div>
@@ -1134,7 +1134,7 @@ class MainWP_Manage_Sites_View {
 			</div>	
 			<div class="ui divider"></div>
 			<a href="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui big basic green button"><?php esc_html_e( 'Back', 'mainwp' ); ?></a>
-			<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+			<input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</form>
 		</div>
 		</div>		

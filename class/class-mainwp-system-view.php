@@ -746,8 +746,14 @@ class MainWP_System_View {
 				<div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( __( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
 			</div>
 			<div class="actions">
+				<div class="ui two columns grid">
+					<div class="ui left aligned column">
+						<div class="ui green positive button"><?php esc_html_e( 'Yes, proceed!', 'mainwp' ); ?></div>
+					</div>
+					<div class="ui right aligned column">
 				<div class="ui cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
-				<div class="ui positive right labeled icon button"><?php esc_html_e( 'Yes', 'mainwp' ); ?><i class="checkmark icon"></i></div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="ui tiny modal" id="mainwp-modal-confirm-select">

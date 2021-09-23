@@ -187,9 +187,9 @@ class MainWP_Settings {
 			<div class="wp-submenu sub-open" style="">
 				<div class="mainwp_boxout">
 					<div class="mainwp_boxoutin"></div>
-					<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Global Options', 'mainwp' ); ?></a>
+					<a href="<?php echo admin_url( 'admin.php?page=Settings' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></a>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=SettingsAdvanced' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Options', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=SettingsAdvanced' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Advanced Settings', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=SettingsEmail' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
@@ -253,14 +253,14 @@ class MainWP_Settings {
 
 		$init_sub_subleftmenu = array(
 			array(
-				'title'      => __( 'Global Options', 'mainwp' ),
+				'title'      => __( 'General Settings', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=Settings',
 				'slug'       => 'Settings',
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'Advanced Options', 'mainwp' ),
+				'title'      => __( 'Advanced Settings', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=SettingsAdvanced',
 				'slug'       => 'SettingsAdvanced',
@@ -329,14 +329,14 @@ class MainWP_Settings {
 		$renderItems = array();
 
 		$renderItems[] = array(
-			'title'  => __( 'Global Options', 'mainwp' ),
+			'title'  => __( 'General Settings', 'mainwp' ),
 			'href'   => 'admin.php?page=Settings',
 			'active' => ( '' == $shownPage ) ? true : false,
 		);
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsAdvanced' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'Advanced Options', 'mainwp' ),
+				'title'  => __( 'Advanced Settings', 'mainwp' ),
 				'href'   => 'admin.php?page=SettingsAdvanced',
 				'active' => ( 'Advanced' == $shownPage ) ? true : false,
 			);
@@ -557,14 +557,14 @@ class MainWP_Settings {
 						 */
 						do_action( 'mainwp_settings_form_top' );
 						?>
-						<h3 class="ui dividing header"><?php esc_html_e( 'Optimization', 'mainwp' ); ?></h3>
+						<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Optimize for shared hosting or big networks', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will cache updates for faster loading.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
 								<input type="checkbox" name="mainwp_optimize" id="mainwp_optimize" <?php echo ( ( 1 == get_option( 'mainwp_optimize' ) ) ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
-						<h3 class="ui dividing header"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Use WP Cron', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Disabling this option will disable the WP Cron so all scheduled events will stop working.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -617,6 +617,8 @@ class MainWP_Settings {
 						</div>
 
 						<?php
+						self::render_timezone_settings();
+						self::render_datetime_settings();
 
 						$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
 						if ( false === $sidebarPosition ) {
@@ -624,7 +626,6 @@ class MainWP_Settings {
 						}
 
 						?>
-
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Sidebar position', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show sidebar with option on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
@@ -634,10 +635,6 @@ class MainWP_Settings {
 								</select>
 							</div>
 						</div>
-						<?php
-						self::render_timezone_settings();
-						self::render_datetime_settings();
-						?>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
 						<?php
 						$snAutomaticDailyUpdate            = get_option( 'mainwp_automaticDailyUpdate' );
@@ -766,7 +763,7 @@ class MainWP_Settings {
 						do_action( 'mainwp_settings_form_bottom' );
 						?>
 						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui button green big right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
 					</form>
 				</div>
@@ -780,9 +777,8 @@ class MainWP_Settings {
 	 */
 	public static function render_timezone_settings() {
 
-		$current_offset = get_option( 'gmt_offset' );
-		$tzstring       = get_option( 'timezone_string' );
-
+		$current_offset  = get_option( 'gmt_offset' );
+		$tzstring        = get_option( 'timezone_string' );
 		$check_zone_info = true;
 
 		// Remove old Etc mappings. Fallback to gmt_offset.
@@ -806,83 +802,46 @@ class MainWP_Settings {
 		?>
 	<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Timezone', 'mainwp' ); ?></label>			
-			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Timezone.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<select id="timezone_string" name="timezone_string" aria-describedby="timezone-description">
+			<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+				<select id="timezone_string" class="ui dropdown" name="timezone_string" aria-describedby="timezone-description">
 				<?php echo wp_timezone_choice( $tzstring, get_user_locale() ); ?>
 				</select>
-
-				<p class="description" id="timezone-description">
-				<?php
-				printf(
-					/* translators: %s: UTC abbreviation */
-					__( 'Choose either a city in the same timezone as you or a %s (Coordinated Universal Time) time offset.' ),
-					'<abbr>UTC</abbr>'
-				);
-				?>
-				</p>
-
-				<p class="timezone-info">
-				<span id="utc-time">
-				<?php
-					printf(
-						/* translators: %s: UTC time. */
-						__( 'Universal time is %s.' ),
-						'<code>' . date_i18n( $timezone_format, false, true ) . '</code>'
-					);
-				?>
-				</span>
+				<div class="ui hidden fitted divider"></div>
+				<div class="ui secondary segment">
+					<?php printf( __( 'Universal time is %s.' ), '<code>' . date_i18n( $timezone_format, false, true ) . '</code>' ); ?>
+					<div class="ui hidden fitted divider"></div>
 				<?php if ( get_option( 'timezone_string' ) || ! empty( $current_offset ) ) : ?>
-				<span id="local-time">
-					<?php
-					printf(
-						/* translators: %s: Local time. */
-						__( 'Local time is %s.' ),
-						'<code>' . date_i18n( $timezone_format ) . '</code>'
-					);
-					?>
-				</span>
+						<?php printf( __( 'Local time is %s.' ), '<code>' . date_i18n( $timezone_format ) . '</code>' ); ?>
+						<div class="ui hidden fitted divider"></div>
 				<?php endif; ?>
-				</p>
-
 				<?php if ( $check_zone_info && $tzstring ) : ?>
-						<p class="timezone-info">
-						<span>
 						<?php
 						$now = new \DateTime( 'now', new \DateTimeZone( $tzstring ) );
 						$dst = (bool) $now->format( 'I' );
 
 						if ( $dst ) {
-							_e( 'This timezone is currently in daylight saving time.' );
+							_e( 'This timezone is currently in daylight saving time.', 'mainwp' );
 						} else {
-							_e( 'This timezone is currently in standard time.' );
+							_e( 'This timezone is currently in standard time.', 'mainwp' );
 						}
 						?>
-						<br />
+						<div class="ui hidden fitted divider"></div>
 						<?php
 						if ( in_array( $tzstring, timezone_identifiers_list(), true ) ) {
 							$transitions = timezone_transitions_get( timezone_open( $tzstring ), time() );
 
-							// 0 index is the state at current time, 1 index is the next transition, if any.
 							if ( ! empty( $transitions[1] ) ) {
 								echo ' ';
-								$message = $transitions[1]['isdst'] ?
-									/* translators: %s: Date and time. */
-									__( 'Daylight saving time begins on: %s.' ) :
-									/* translators: %s: Date and time. */
-									__( 'Standard time begins on: %s.' );
-								printf(
-									$message,
-									'<code>' . wp_date( __( 'F j, Y' ) . ' ' . __( 'g:i a' ), $transitions[1]['ts'] ) . '</code>'
-								);
+								$message = $transitions[1]['isdst'] ? __( 'Daylight saving time begins on: %s.', 'mainwp' ) : __( 'Standard time begins on: %s.', 'mainwp' );
+								printf( $message, '<code>' . wp_date( __( 'F j, Y' ) . ' ' . __( 'g:i a' ), $transitions[1]['ts'] ) . '</code>' );
 							} else {
-								_e( 'This timezone does not observe daylight saving time.' );
+								_e( 'This timezone does not observe daylight saving time.', 'mainwp' );
 							}
 						}
 						?>
-						</span>
-						</p>					
 			<?php endif; ?>
 			</div>
+		</div>
 		</div>
 		<?php
 	}
@@ -923,15 +882,15 @@ class MainWP_Settings {
 					'<label for="date_format_custom" class="screen-reader-text">' . __( 'Custom date format:' ) . '</label>' .
 					'<input type="text" name="date_format_custom" id="date_format_custom" value="' . esc_attr( get_option( 'date_format' ) ) . '" class="small-text" />' .
 					'<br />' .
-					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
-					"<span class='spinner'></span>\n" . '</p>';
+					'<em><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'date_format' ) ) . '</span>' .
+					"<span class='spinner'></span>\n" . '</em>';
 			?>
 		</div>
 	</div>
 
 	<div class="ui grid field">
-		<label class="six wide column middle aligned"><?php esc_html_e( 'Time Format', 'mainwp' ); ?></label>
-		<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Time Format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+		<label class="six wide column middle aligned"><?php esc_html_e( 'Time format', 'mainwp' ); ?></label>
+		<div class="ten wide column fieldset-wrapper" data-tooltip="<?php esc_attr_e( 'Select preferred time format.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 		<?php
 				/**
 				 * Filters the default time formats.
@@ -952,39 +911,36 @@ class MainWP_Settings {
 			}
 			echo ' /> <span class="date-time-text format-i18n">' . date_i18n( $format ) . '</span><code>' . esc_html( $format ) . "</code></label><br />\n";
 		}
-
-				echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
-				checked( $custom );
-				echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom time format in the following field' ) . '</span></span></label>' .
-					'<label for="time_format_custom" class="screen-reader-text">' . __( 'Custom time format:' ) . '</label>' .
-					'<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
-					'<br />' .
-					'<p><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
-					"<span class='spinner'></span>\n" . '</p>';
-
-				echo "\t<p class='date-time-doc'>" . __( '<a href="https://wordpress.org/support/article/formatting-date-and-time/">Documentation on date and time formatting</a>.' ) . "</p>\n";
+			echo '<label><input type="radio" name="time_format" id="time_format_custom_radio" value="\c\u\s\t\o\m"';
+			checked( $custom );
+			echo '/> <span class="date-time-text date-time-custom-text">' . __( 'Custom:' ) . '<span class="screen-reader-text"> ' . __( 'enter a custom time format in the following field' ) . '</span></span></label>' .
+				'<label for="time_format_custom" class="screen-reader-text">' . __( 'Custom time format:' ) . '</label>' .
+				'<input type="text" name="time_format_custom" id="time_format_custom" value="' . esc_attr( get_option( 'time_format' ) ) . '" class="small-text" />' .
+				'<br />' .
+			'<em><strong>' . __( 'Preview:' ) . '</strong> <span class="example">' . date_i18n( get_option( 'time_format' ) ) . '</span>' .
+			"<span class='spinner'></span>\n" . '</em>';
 		?>
 		</div>
 	</div>
 	<script type="text/javascript">
-			jQuery(document).ready(function($){
+			jQuery(document).ready( function($) {
 				$( 'input[name="date_format"]' ).on( 'click', function() {
-					if ( 'date_format_custom_radio' !== $(this).attr( 'id' ) )
+					if ( 'date_format_custom_radio' !== $( this ).attr( 'id' ) )
 						$( 'input[name="date_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
-				});
+				} );
 
 				$( 'input[name="date_format_custom"]' ).on( 'click input', function() {
 					$( '#date_format_custom_radio' ).prop( 'checked', true );
-				});
+				} );
 
 				$( 'input[name="time_format"]' ).on( 'click', function() {
 					if ( 'time_format_custom_radio' !== $(this).attr( 'id' ) )
 						$( 'input[name="time_format_custom"]' ).val( $( this ).val() ).closest( '.fieldset-wrapper' ).find( '.example' ).text( $( this ).parent( 'label' ).children( '.format-i18n' ).text() );
-				});
+				} );
 
 				$( 'input[name="time_format_custom"]' ).on( 'click input', function() {
 					$( '#time_format_custom_radio' ).prop( 'checked', true );
-				});
+				} );
 
 				$( 'input[name="date_format_custom"], input[name="time_format_custom"]' ).on( 'input', function() {
 					var format = $( this ),
@@ -1278,7 +1234,7 @@ class MainWP_Settings {
 
 						?>
 						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
 					</form>
 				</div>
@@ -1379,7 +1335,7 @@ class MainWP_Settings {
 						do_action( 'mainwp_tools_form_bottom' );
 						?>
 						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
 					</form>
 				</div>
@@ -1467,7 +1423,7 @@ class MainWP_Settings {
 						do_action( 'rest_api_form_bottom' );
 						?>
 						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
 					</form>
 				</div>
@@ -1670,7 +1626,7 @@ class MainWP_Settings {
 					</div>
 					<?php } ?>
 					<div class="ui divider"></div>
-					<input type="submit" name="save_changes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" class="ui button green big right floated"
+					<input type="submit" name="save_changes" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" class="ui button green big"
 						<?php
 						if ( ! empty( $pubkey ) ) {
 							echo 'disabled'; }

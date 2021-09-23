@@ -421,9 +421,15 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+						</div>
+						<div class="ui right aligned column">
 					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-					<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
 					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+				</div>
+					</div>
 				</div>
 				<input type="hidden" name="reset_managersites_columns_order" value="0">
 			</form>
@@ -570,18 +576,9 @@ class MainWP_Manage_Sites {
 			<form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<h3 class="ui dividing header">
-					<?php esc_html_e( 'Add a Single Site', 'mainwp' ); ?>
-					<div class="sub header"><?php esc_html_e( 'Required fields.', 'mainwp' ); ?></div>
+					<?php esc_html_e( 'Add a New Site', 'mainwp' ); ?>
+					<div class="sub header"><?php esc_html_e( 'Add a new site or use the Test Connection feature to check if the site can be connected.', 'mainwp' ); ?></div>
 				</h3>
-
-				<div class="ui grid field">
-					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify that MainWP Child is Installed and Activated', 'mainwp' ); ?></label>
-					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Verify that MainWP Child is Installed and Activated.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_verify_installed_child" id="mainwp_managesites_verify_installed_child" />
-						<label><?php esc_attr_e( 'Select to confirm that the MainWP Child plugin is active on the child site.', 'mainwp' ); ?></label>
-					</div>
-				</div>
-
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -593,7 +590,24 @@ class MainWP_Manage_Sites {
 							<input type="text" id="mainwp_managesites_add_wpurl" name="mainwp_managesites_add_wpurl" value="" />
 						</div>
 					</div>
+					<div class="ui four wide middle aligned column">
+						<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
 				</div>
+				</div>
+				<div class="ui grid field">
+					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify that the MainWP Child plugin is installed and activated', 'mainwp' ); ?></label>
+					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Verify that MainWP Child is Installed and Activated.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+						<input type="checkbox" name="mainwp_managesites_verify_installed_child" id="mainwp_managesites_verify_installed_child" />
+						<label><?php esc_attr_e( 'Select to confirm that the MainWP Child plugin is active on the child site.', 'mainwp' ); ?></label>
+					</div>
+				</div>
+
+				<div id="mainwp-add-site-hidden-form" style="display:none">
+					<h3 class="ui dividing header">
+						<?php esc_html_e( 'Required Settings', 'mainwp' ); ?>
+						<div class="sub header"><?php esc_html_e( 'Enter administrator username and site title.', 'mainwp' ); ?></div>
+					</h3>
+
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -612,9 +626,19 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 
+					<div class="ui grid field">
+						<div class="six wide column middle aligned">
+							<a href="#" id="mainwp-add-site-advanced-options-toggle"><i class="eye slash outline icon"></i> <?php esc_html_e( 'Show Optional Settings', 'mainwp' ); ?></a>
+						</div>
+						<div class="six wide column middle aligned">
+						</div>
+					</div>
+
+					<div id="mainwp-add-site-advanced-options" class="ui secondary segment" style="display:none" >
+
 				<h3 class="ui dividing header">
 					<?php esc_html_e( 'Optional Settings', 'mainwp' ); ?>
-					<div class="sub header"><?php esc_html_e( 'Use these fields as per your perferrence.', 'mainwp' ); ?></div>
+							<div class="sub header"><?php esc_html_e( 'Use optional settings when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
 				</h3>
 
 				<div class="ui grid field">
@@ -641,10 +665,6 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 
-				<h3 class="ui dividing header">
-					<?php esc_html_e( 'Advanced Options', 'mainwp' ); ?>
-					<div class="sub header"><?php esc_html_e( 'Use advanced options when needed. In most cases, you can leave the default values.', 'mainwp' ); ?></div>
-				</h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate (optional)', 'mainwp' ); ?></label>
 					<div class="six wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Do you want to verify SSL certificate.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -652,7 +672,7 @@ class MainWP_Manage_Sites {
 					</div>
 				</div>
 
-				<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
+						<!-- fake fields are a workaround for chrome autofill getting the wrong fields. -->
 				<input style="display:none" type="text" name="fakeusernameremembered"/>
 				<input style="display:none" type="password" name="fakepasswordremembered"/>
 
@@ -673,8 +693,9 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 				</div>
+						<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
+					</div>
 
-				<?php MainWP_Manage_Sites_View::render_sync_exts_settings(); ?>
 
 				<?php
 				do_action_deprecated( 'mainwp-manage-sites-edit', array( false ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead.
@@ -690,8 +711,9 @@ class MainWP_Manage_Sites {
 				?>
 
 				<div class="ui divider"></div>
-				<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green big" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
-				<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big right floated" value="<?php esc_attr_e( 'Add Site', 'mainwp' ); ?>" />
+					<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui button green big" value="<?php esc_attr_e( 'Add Site', 'mainwp' ); ?>" />
+					<div class="ui hidden clearing divider"></div>
+				</div>
 			</form>
 		</div>
 
@@ -784,8 +806,8 @@ class MainWP_Manage_Sites {
 							</div>
 						</div>
 						<div class="ui divider"></div>
+						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
 						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
-						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green right floated button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
 					</form>
 				</div>
 				<?php

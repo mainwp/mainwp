@@ -29,6 +29,20 @@ jQuery(document).ready(function ($) {
 		}
 	} );
 
+  //Toggle Add Site form
+  jQuery( '#mainwp_managesites_verify_installed_child' ).change( function () {
+    if ( jQuery( this ).is( ':checked' ) ) {
+      jQuery( '#mainwp-add-site-hidden-form' ).fadeIn( 500 );
+    } else {
+      jQuery( '#mainwp-add-site-hidden-form' ).fadeOut( 500 );
+    }
+  } );
+
+  // Toggle Add Site / Optional Settings section
+  jQuery( '#mainwp-add-site-advanced-options-toggle' ).on( 'click', function () {
+    jQuery( '#mainwp-add-site-advanced-options' ).toggle( 500 );
+    return false;
+  });
 
 });
 

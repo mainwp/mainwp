@@ -17,7 +17,7 @@
         "source": "https://github.com/mainwp/mainwp"
     },
     "require": {
-        "composer/installers": "^1.6",
+        "composer/installers": "^2.0",
         "php": ">=5.6|>=7.0"
     },
     "require-dev": {

@@ -177,28 +177,28 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 4.1.9 - 9-23-2021 =
-Fixed: Letter capitalization error on the Manage Extensions page
-Fixed: An issue with escaping site notes field
-Fixed: An issue with loading Boilerplate Posts and Pages excerpt
-Added: Reset Page button to the Screen Options modal
-Added: Info text to the Manage Groups page
-Added: Info text to the Manage Sites page
-Added: Enable/Disable toggle option to the Screenshots page
-Added: Progress Bar to progress modals
-Added: Tooltips to Manage Sites table data
-Added: Timezone, Time and Date format options in General Settings
-Added: Verify MainWP Child has been installed option to the Add Site form
-Updated: Add Site form layout
-Updated: Screenshots preview icon in the Manage Sites table
-Updates: Screenshots page layout
-Updated: Usability improvements of the login form on the Manage Extensions page
-Updated: PHP minimal requirement on the Server Information page
-Updated: Reduced the number of default Manage Sites columns
-Updated: Reversed the checkbox options for hiding and unhiding
-Overview widgets and Manage Sites columns
-Updated: Renamed the Global Options to General Settings page
-Updated: Renamed the Advanced Options to Advanced Settings page
-Updated: Merged General Settings and Optimization sections in Settings
+* Fixed: Letter capitalization error on the Manage Extensions page
+* Fixed: An issue with escaping site notes field
+* Fixed: An issue with loading Boilerplate Posts and Pages excerpt
+* Added: Reset Page button to the Screen Options modal
+* Added: Info text to the Manage Groups page
+* Added: Info text to the Manage Sites page
+* Added: Enable/Disable toggle option to the Screenshots page
+* Added: Progress Bar to progress modals
+* Added: Tooltips to Manage Sites table data
+* Added: Timezone, Time and Date format options in General Settings
+* Added: Verify MainWP Child has been installed option to the Add Site form
+* Updated: Add Site form layout
+* Updated: Screenshots preview icon in the Manage Sites table
+* Updates: Screenshots page layout
+* Updated: Usability improvements of the login form on the Manage Extensions page
+* Updated: PHP minimal requirement on the Server Information page
+* Updated: Reduced the number of default Manage Sites columns
+* Updated: Reversed the checkbox options for hiding and unhiding
+* Overview widgets and Manage Sites columns
+* Updated: Renamed the Global Options to General Settings page
+* Updated: Renamed the Advanced Options to Advanced Settings page
+* Updated: Merged General Settings and Optimization sections in Settings
 
 = 4.1.8.1 - 9-2-21 =
 * Fixed: An error with overwriting openssl.cnf file path

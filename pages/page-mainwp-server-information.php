@@ -487,7 +487,7 @@ class MainWP_Server_Information {
 							'>=',
 							array(
 								'openssl_version_number' => 269484032,
-								'version'        => 'OpenSSL/1.1.0',
+								'version'                => 'OpenSSL/1.1.0',
 							),
 							'get_curl_ssl_version',
 							'',

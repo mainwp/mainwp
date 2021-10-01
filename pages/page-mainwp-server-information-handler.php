@@ -99,7 +99,7 @@ class MainWP_Server_Information_Handler {
 	/**
 	 * Compares cURL SSL Version.
 	 *
-	 * @param mixed $value    CURL SSL version number.
+	 * @param mixed $version CURL SSL version number.
 	 * @param null  $operator Comparison operator.
 	 *
 	 * @return mixed false|version

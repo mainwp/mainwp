@@ -486,8 +486,8 @@ class MainWP_Server_Information {
 							'cURL SSL Version',
 							'>=',
 							array(
-								'version_number' => 0x009080cf,
-								'version'        => 'OpenSSL/0.9.8l',
+								'openssl_version_number' => 269484032,
+								'version'        => 'OpenSSL/1.1.0',
 							),
 							'get_curl_ssl_version',
 							'',
@@ -944,8 +944,8 @@ class MainWP_Server_Information {
 			<td><?php echo( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
 				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
+				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>
@@ -981,8 +981,8 @@ class MainWP_Server_Information {
 			<td><?php echo ( true === $currentVersion ? 'true' : $currentVersion ); ?></td>
 			<?php if ( 'filesize' === $whatType ) { ?>
 			<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
-			<?php } elseif ( 'curlssl' === $whatType ) { ?>
-			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
+			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
 			<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>

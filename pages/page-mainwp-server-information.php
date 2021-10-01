@@ -482,13 +482,11 @@ class MainWP_Server_Information {
 					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
 						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
+						$openssl_version = 'OpenSSL/1.1.0';
 						self::render_row(
 							'cURL SSL Version',
 							'>=',
-							array(
-								'openssl_version_number' => 269484032,
-								'version'                => 'OpenSSL/1.1.0',
-							),
+							$openssl_version,
 							'get_curl_ssl_version',
 							'',
 							'',
@@ -703,10 +701,7 @@ class MainWP_Server_Information {
 				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '7.0', 'get_php_version', '', '', null );
 				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
 				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
-				$openssl_version = array(
-					'openssl_version_number' => 269484032,
-					'version'                => 'OpenSSL/1.1.0',
-				);
+				$openssl_version = 'OpenSSL/1.1.0';
 				self::render_row_with_description(
 					'cURL SSL Version',
 					'>=',
@@ -718,7 +713,7 @@ class MainWP_Server_Information {
 					'curlssl'
 				);
 
-				if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version ) ) {
+				if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version, '>=' ) ) {
 					echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( __( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old. 4 year old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
 				}
 				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
@@ -963,7 +958,7 @@ class MainWP_Server_Information {
 			<?php if ( 'filesize' === $whatType ) { ?>
 				<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+				<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( ( 'get_max_input_time' === $getter || 'get_max_execution_time' === $getter ) && -1 == $currentVersion ) { ?>
 				<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>
@@ -1000,7 +995,7 @@ class MainWP_Server_Information {
 			<?php if ( 'filesize' === $whatType ) { ?>
 			<td><?php echo ( MainWP_Server_Information_Handler::filesize_compare( $currentVersion, $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_curl_ssl_version' === $getter ) { ?>
-			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
+			<td><?php echo ( MainWP_Server_Information_Handler::curlssl_compare( $version, $compare ) ? '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>' : self::get_warning_html( $errorType ) ); ?></td>
 			<?php } elseif ( 'get_max_input_time' === $getter && -1 == $currentVersion ) { ?>
 			<td><?php echo '<div class="ui green basic label"><i class="check circle icon"></i> ' . __( 'Pass', 'mainwp' ) . '</div>'; ?></td>
 			<?php } else { ?>

@@ -100,14 +100,15 @@ class MainWP_Server_Information_Handler {
 	 * Compares cURL SSL Version.
 	 *
 	 * @param mixed $value    CURL SSL version number.
+	 * @param null  $operator Comparison operator.
 	 *
 	 * @return mixed false|version
 	 */
-	public static function curlssl_compare( $value ) {
-		if ( isset( $value['openssl_version_number'] ) && defined( 'OPENSSL_VERSION_NUMBER' ) ) {
-			return OPENSSL_VERSION_NUMBER >= intval( $value['openssl_version_number'] ) ? true : false;
+	public static function curlssl_compare( $version, $operator ) {
+		if ( function_exists( 'curl_version' ) ) {
+			$ver = self::get_curl_ssl_version();
+			return version_compare( $ver, $version, $operator );
 		}
-
 		return false;
 	}
 

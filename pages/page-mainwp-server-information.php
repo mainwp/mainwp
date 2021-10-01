@@ -689,13 +689,13 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_system_requirements_check' );
 		?>
-		<table id="mainwp-quick-system-requirements-check" class="ui tablet stackable single line table">
+		<table id="mainwp-quick-system-requirements-check" class="ui single line table">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Check', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Required Value', 'mainwp' ); ?></th>
 					<th><?php esc_html_e( 'Detected Value', 'mainwp' ); ?></th>
-					<th class="collapsing center aligned"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+					<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -703,6 +703,24 @@ class MainWP_Server_Information {
 				self::render_row_with_description( __( 'PHP Version', 'mainwp' ), '>=', '7.0', 'get_php_version', '', '', null );
 				self::render_row_with_description( __( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
 				self::render_row_with_description( __( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
+				$openssl_version = array(
+					'openssl_version_number' => 269484032,
+					'version'                => 'OpenSSL/1.1.0',
+				);
+				self::render_row_with_description(
+					'cURL SSL Version',
+					'>=',
+					$openssl_version,
+					'get_curl_ssl_version',
+					'',
+					'',
+					null,
+					'curlssl'
+				);
+
+				if ( ! MainWP_Server_Information_Handler::curlssl_compare( $openssl_version ) ) {
+					echo "<tr class='warning'><td colspan='4'><i class='attention icon'></i>" . sprintf( __( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old. 4 year old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</td></tr>';
+				}
 				self::render_row_with_description( __( 'MySQL Version', 'mainwp' ), '>=', '5.0', 'get_mysql_version', '', '', null );
 				?>
 			</tbody>

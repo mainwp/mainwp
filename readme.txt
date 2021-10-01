@@ -177,7 +177,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 4.1.9.1 - 10-1-2021 =
-Updated: OpenSSL version requirement to 1.1.0 or greater
+* Updated: OpenSSL version requirement to 1.1.0 or greater
 
 = 4.1.9 - 9-23-2021 =
 * Fixed: Letter capitalization error on the Manage Extensions page

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8
 Requires PHP: 7.0
-Stable tag: 4.1.9
+Stable tag: 4.1.9.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.9.1 - 10-1-2021 =
+Updated: OpenSSL version requirement to 1.1.0 or greater
 
 = 4.1.9 - 9-23-2021 =
 * Fixed: Letter capitalization error on the Manage Extensions page

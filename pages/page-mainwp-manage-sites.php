@@ -503,7 +503,7 @@ class MainWP_Manage_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_View::render_sync_exts_settings()
 	 */
 	public static function render_new_site() {
-		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		$showpage = 'AddNew';
 		self::render_header( $showpage );

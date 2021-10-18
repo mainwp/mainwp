@@ -245,23 +245,23 @@ class MainWP_System_Handler {
 	 */
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
-		$user = wp_get_current_user();
+		$user                  = wp_get_current_user();
 		if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
 			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
 					delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
 				} else {
-				$update_screen_options = true;
-				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
-				MainWP_Utility::update_option( 'mainwp_enable_screenshots', ( ! isset( $_POST['enable_screenshots_feature'] ) ? 0 : 1 ) );
+					$update_screen_options = true;
+					MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+					MainWP_Utility::update_option( 'mainwp_enable_screenshots', ( ! isset( $_POST['enable_screenshots_feature'] ) ? 0 : 1 ) );
 
-				$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
-				MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
-				if ( ! $enabled_twit ) {
-					MainWP_Twitter::clear_all_twitter_messages();
+					$enabled_twit = ! isset( $_POST['mainwp_hide_twitters_message'] ) ? 0 : 1;
+					MainWP_Utility::update_option( 'mainwp_hide_twitters_message', $enabled_twit );
+					if ( ! $enabled_twit ) {
+						MainWP_Twitter::clear_all_twitter_messages();
+					}
 				}
-			}
 			}
 		}
 
@@ -287,7 +287,7 @@ class MainWP_System_Handler {
 				}
 			}
 
-			$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
+			$val = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_show_widgets', $show_wids, true );
 				update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );

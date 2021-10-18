@@ -507,7 +507,8 @@ class MainWP_Updates_Overview {
 				 *
 				 * @since 4.1
 				 */
-				if ( $can_total_update ) : ?>
+				if ( $can_total_update ) :
+					?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
 					<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>

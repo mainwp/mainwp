@@ -1159,12 +1159,12 @@ class MainWP_Manage_Sites_View {
 				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 					<?php if ( $overrided ) : ?>
 						<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
-					<?php  else : ?>
+					<?php else : ?>
 					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
 					<?php endif; ?>
 					<?php if ( $overrided ) : ?>
 						<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>
-					<?php  else : ?>
+					<?php else : ?>
 				<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				</div>		

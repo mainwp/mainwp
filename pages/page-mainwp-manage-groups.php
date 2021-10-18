@@ -269,7 +269,7 @@ class MainWP_Manage_Groups {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
-						}
+	}
 
 	/**
 	 * Method render_groups_menu_element()
@@ -280,7 +280,7 @@ class MainWP_Manage_Groups {
 		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
 		if ( false === $sidebarPosition ) {
 			$sidebarPosition = 1;
-							}
+		}
 		?>
 		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
 			<h4 class="item ui header"><?php esc_html_e( 'Sites Groups', 'mainwp' ); ?></h4>
@@ -298,7 +298,7 @@ class MainWP_Manage_Groups {
 			</div>
 		</div>
 		<?php
-						}
+	}
 
 	/**
 	 * Method render_groups_sites_table_element()

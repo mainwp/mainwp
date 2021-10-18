@@ -253,8 +253,14 @@ class MainWP_Bulk_Update_Admin_Passwords {
 				<form action="" method="post" name="createuser" id="createuser">
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<input type="hidden" name="security" value="<?php echo wp_create_nonce( 'mainwp_updateadminpassword' ); ?>"/>
-					<div class="mainwp-main-content">
-						<div class="ui hidden divider"></div>
+				<div class="mainwp-main-content" >
+					<div class="ui em hidden divider"></div>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
+							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites. If needed, use the provided form to set a new password for these accounts. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 						<?php
 						/**
 						 * Action: mainwp_admin_pass_before_users_table
@@ -336,7 +342,6 @@ class MainWP_Bulk_Update_Admin_Passwords {
 						 * @since 4.1
 						 */
 						do_action( 'mainwp_admin_pass_sidebar_top' );
-						MainWP_UI::render_sidebar_options();
 						?>
 						<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 							<?php
@@ -379,7 +384,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 							<div class="ui mini form">
 								<div class="field">
 									<label><?php esc_html_e( 'New Password', 'mainwp' ); ?></label>
-									<div class="ui fluid input">
+								<div class="ui fluid input" data-tooltip="<?php esc_attr_e( 'Enter a new password or use the Generate Password button.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
 										<input class="hidden" value=" "/>
 										<input type="text" id="password" name="password" autocomplete="off" value="<?php echo esc_attr( wp_generate_password( $pass_complexity ) ); ?>">
 									</div>

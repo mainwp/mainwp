@@ -88,7 +88,7 @@ class MainWP_Plugins_Handler {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
@@ -158,7 +158,7 @@ class MainWP_Plugins_Handler {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );

@@ -113,7 +113,7 @@ class MainWP_Updates_Overview {
 		}
 
 		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		if ( MainWP_Sync::sync_website( $website ) ) {
@@ -507,8 +507,7 @@ class MainWP_Updates_Overview {
 				 *
 				 * @since 4.1
 				 */
-				if ( $can_total_update ) :
-					?>
+				if ( $can_total_update ) : ?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
 					<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
@@ -602,7 +601,7 @@ class MainWP_Updates_Overview {
 						<a href="#" onClick="return updatesoverview_global_upgrade_all('wp');" class="ui green basic button <?php echo MainWP_Updates::get_continue_update_selector(); ?>" data-tooltip="<?php esc_html_e( 'Clicking this button will update WP Core files on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php else : ?>
 						<a href="<?php echo $detail_wp_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-						<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+						<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php endif; ?>
 				<?php endif; ?>
 			</div>
@@ -666,7 +665,7 @@ class MainWP_Updates_Overview {
 					if ( 0 == $total_plugin_upgrades ) {
 						?>
 							<a href="<?php echo $detail_plugins_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-								<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+								<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 						<?php
 					} else {
 						?>
@@ -736,7 +735,7 @@ class MainWP_Updates_Overview {
 				if ( 0 == $total_theme_upgrades ) {
 					?>
 					<a href="<?php echo $detail_themes_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
 					?>
@@ -805,7 +804,7 @@ class MainWP_Updates_Overview {
 				if ( 0 == $total_translation_upgrades ) {
 					?>
 					<a href="<?php echo $detail_trans_up; ?>" class="ui button"><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
-					<a href="#" disabled class="ui grey basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
+					<a href="#" class="ui disabled green basic button"><?php esc_html_e( 'Update All', 'mainwp' ); ?></a>
 					<?php
 				} else {
 					?>

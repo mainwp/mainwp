@@ -88,6 +88,13 @@ class MainWP_Manage_Sites_Update_View {
 		MainWP_Manage_Sites_View::render_header_tabs( $active_tab, $active_text, $mainwp_show_language_updates )
 		?>
 		<div class="ui segment" id="mainwp-manage-<?php echo $id; ?>-updates">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-site-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-site-message"></i>
+					<div><?php echo sprintf( __( 'Manage available updates for the child site. From here, you can update update %splugins%s, %sthemes%s, and %sWordPress core%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'Also, from here, you can ignore updates for %sWordPress core%s, %splugins%s, and %sthemes%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+				</div>
+			<?php endif; ?>
 			<?php
 			self::render_wpcore_updates( $website, $active_tab );
 			self::render_plugins_updates( $website, $active_tab, $userExtension );

@@ -504,6 +504,12 @@ class MainWP_Page {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp_pages_wrap_table">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
+							<?php echo sprintf( __( 'Manage existing pages on your child sites. Here you can edit, view and delete pages. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<?php self::render_table( true ); ?>
 				</div>
 			</div>
@@ -517,7 +523,6 @@ class MainWP_Page {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_pages_sidebar_top' );
-				MainWP_UI::render_sidebar_options();
 				?>
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
@@ -1614,11 +1619,11 @@ class MainWP_Page {
 			<p><?php esc_html_e( 'If you need help with managing pages, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">Manage Pages</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/create-a-new-page/" target="_blank">Create a New Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/edit-an-existing-page/" target="_blank">Edit an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/view-an-existing-page/" target="_blank">View an Existing Page</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-pages/delete-pages/" target="_blank">Delete Page(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">Create a New Page</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-page/" target="_blank">Edit an Existing Page</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-page/" target="_blank">Change Status of an Existing Page</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-page/" target="_blank">View an Existing Page</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-pages/" target="_blank">Delete Page(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_pages_help_item

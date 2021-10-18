@@ -195,7 +195,7 @@ updatesoverview_wordpress_global_upgrade_all = function ( groupId, updatesSelect
         }
       } );
       var confirmMsg = __( 'You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __( 'WordPress Core' ), sitesList.join( '<br />' ) );
-      mainwp_confirm( confirmMsg,_callback, false, 2);
+      mainwp_confirm( confirmMsg, _callback, false, 2 );
     }
     return false;
   }

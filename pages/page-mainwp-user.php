@@ -350,6 +350,7 @@ class MainWP_User {
 						<div class="ui two column row">
 							<div class="column">
 								<select class="ui dropdown" id="mainwp-bulk-actions">
+									<option value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 									<option value="edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 									<?php
@@ -393,7 +394,6 @@ class MainWP_User {
 						</div>
 					</div>
 				</div>
-				<div id="mainwp_users_error"></div>
 				<div id="mainwp-loading-users-row" style="display: none;">
 					<div class="ui active inverted dimmer">
 						<div class="ui indeterminate large text loader"><?php esc_html_e( 'Loading Users...', 'mainwp' ); ?>
@@ -402,6 +402,12 @@ class MainWP_User {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp_users_wrap_table">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
+							<?php echo sprintf( __( 'Manage existing users on your child sites. Here you can Delete, Edit or Change Role for existing users. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
 					<?php self::render_table( true ); ?>
 				</div>
@@ -420,7 +426,6 @@ class MainWP_User {
 				 */
 				do_action( 'mainwp_manage_users_sidebar_top' );
 				?>
-				<?php MainWP_UI::render_sidebar_options(); ?>
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
 					/**
@@ -475,7 +480,7 @@ class MainWP_User {
 					do_action( 'mainwp_manage_users_before_search_options' );
 					?>
 					<div class="ui mini form">
-						<div class="field">
+						<div class="field" data-tooltip="<?php esc_attr_e( 'Select specific roles that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
 							<select multiple="" class="ui fluid dropdown" id="mainwp_user_roles">
 								<option value=""><?php esc_html_e( 'Select wanted role(s)', 'mainwp' ); ?></option>
 								<?php
@@ -565,7 +570,7 @@ class MainWP_User {
 		?>
 
 		<div class="ui mini form">
-			<div class="field">
+			<div class="field" data-tooltip="<?php esc_attr_e( 'Enter specific username that you want to search for.', 'mainwp' ); ?>" data-inverted="" data-position="top right">
 				<div class="ui input fluid">
 					<input type="text" placeholder="<?php esc_attr_e( 'Username', 'mainwp' ); ?>" id="mainwp_search_users" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
@@ -1231,7 +1236,7 @@ class MainWP_User {
 		$pass      = isset( $_POST['update_password'] ) ? utf8_decode( urldecode( wp_unslash( $_POST['update_password'] ) ) ) : '';
 
 		if ( empty( $userId ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Site ID or user ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );
@@ -1352,6 +1357,12 @@ class MainWP_User {
 				<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 				<div class="mainwp-main-content">
 					<div class="ui hidden divider"></div>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
+					<div class="ui info message">
+						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
+						<?php echo sprintf( __( 'Use the provided form to create a new user on your child site. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
+					</div>
+				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
 					<div id="mainwp-add-new-user-form" >
 						<?php
@@ -1477,7 +1488,6 @@ class MainWP_User {
 					 */
 					do_action( 'mainwp_add_new_user_sidebar_top' );
 					?>
-					<?php MainWP_UI::render_sidebar_options(); ?>
 					<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 						<?php
 						/**
@@ -1585,7 +1595,13 @@ class MainWP_User {
 	public static function render_import_users() {
 		?>
 		<div class="ui segment" id="mainwp-import-sites">
-			<div class="ui hidden divider"></div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
+					<?php echo sprintf( __( 'Use the form to bulk import users. You can download the sample CSV file to see how to fomat the import file properly. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
+
 			<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 			<?php
 			/**
@@ -1597,37 +1613,25 @@ class MainWP_User {
 			 */
 			do_action( 'mainwp_before_import_users' );
 			?>
-			<h3 class="ui dividing header"><?php esc_html_e( 'Import Users', 'mainwp' ); ?></h3>
 				<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
-				<div class="ui segment form">
+			<div class="ui form">
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Upload the CSV file', 'mainwp' ); ?></label>
-							<div class="ten wide column">
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click to upload the import file.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="file" name="import_user_file_bulkupload" id="import_user_file_bulkupload" accept="text/comma-separated-values" />
 							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'CSV file contains a header', 'mainwp' ); ?></label>
-							<div class="ui toggle checkbox">
-								<input type="checkbox" name="import_user_chk_header_first" checked="checked" id="import_user_chk_header_first" value="1"/>
+						<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable if the import file contains a header.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<input type="checkbox" name="import_user_chk_header_first" checked="checked" id="import_user_chk_header_first" value="1" />
 							</div>
 						</div>
 						<div class="ui divider"></div>
-					<a href="
-					<?php
-					/**
-					 * Filter: mainwp_import_users_download_CSV_url
-					 *
-					 * Filters the Import Users Download Sample CSV file URL.
-					 *
-					 * @since 4.1
-					 */
-					echo apply_filters( 'mainwp_import_users_download_csv_url', 'https://mainwp.com/csv/sample_users.csv' );
-					?>
-					" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
-						<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green right floated button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>"/>
+					<input type="button" name="createuser" id="bulk_import_createuser" class="ui big green button" value="<?php esc_attr_e( 'Import Users', 'mainwp' ); ?>" />
+				<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample_users.csv'; ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>
 			<?php
@@ -1991,25 +1995,23 @@ class MainWP_User {
 					<?php
 
 				} else {
-					$errors[] = __( 'Data is not valid.', 'mainwp' ) . '<br />';
+					$errors[] = __( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
 				}
 			} else {
-				$errors[] = __( 'Upload error.', 'mainwp' ) . '<br />';
+				$errors[] = __( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
 			}
 		} else {
-			$errors[] = __( 'Upload error.', 'mainwp' ) . '<br />';
+			$errors[] = __( 'File could not be uploaded. Please try again. If process keeps failing, please contact the MainWP support.', 'mainwp' );
 		}
 
 		if ( 0 < count( $errors ) ) {
 			?>
-			<div class="error below-h2">
 				<?php foreach ( $errors as $error ) { ?>
-					<p><strong><?php esc_html_e( 'Error', 'mainwp' ); ?></strong>: <?php echo esc_html( $error ); ?></p>
+				<div class="ui error message"><?php echo esc_html( $error ); ?></div>
 				<?php } ?>
-			</div>
-			<br/>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="add-new-h2" target="_top"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
-			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="add-new-h2" target="_top"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
+
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=UserBulkAdd" class="ui button"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+			<a href="<?php echo get_admin_url(); ?>admin.php?page=mainwp_tab" class="ui button"><?php esc_html_e( 'Return to Overview', 'mainwp' ); ?></a>
 			<?php
 		}
 
@@ -2191,10 +2193,10 @@ class MainWP_User {
 			<p><?php esc_html_e( 'If you need help with managing users, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">Manage Users</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/create-a-new-user/" target="_blank">Create a New User</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-users/delete-users/" target="_blank">Delete User(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">Create a New User</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-user/" target="_blank">Edit an Existing User</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">Bulk Update Administrator Passwords</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-users/" target="_blank">Delete User(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_users_help_item

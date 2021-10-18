@@ -798,7 +798,7 @@ class MainWP_Post_Page_Handler {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => 'Invalid request!' ) ) );
+			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );

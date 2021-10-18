@@ -404,6 +404,12 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_server_info_table' );
 		?>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
+				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements. If you need help with resolving specific errors, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+			</div>
+		<?php endif; ?>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
 				<thead>
 					<tr>
@@ -797,7 +803,12 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_cron_jobs_table' );
 		?>
-
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
+				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+			</div>
+		<?php endif; ?>
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
 			<thead>
 				<tr>
@@ -1053,6 +1064,12 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_error_log_table' );
 		?>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
+				<?php echo __( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
+			</div>
+		<?php endif; ?>
 		<table class="ui stackable celled table" id="mainwp-error-log-table">
 			<thead>
 				<tr>
@@ -1309,6 +1326,13 @@ class MainWP_Server_Information {
 			</div>
 		</div>
 		<div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-action-logs-info-message' ) ) : ?>
+				<div class="ui hidden divider"></div>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
+					<?php echo sprintf( __( 'Enable specific logging system. For additional help, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 		<?php
 		$log_to_db = apply_filters( 'mainwp_logger_to_db', true );
 		if ( $log_to_db ) {

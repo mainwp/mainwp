@@ -1009,7 +1009,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_add_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
 		$fields = self::get_cli_params( $args, $assoc_args, 'add-site' );
 		$data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
 		\WP_CLI::line( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result. 
@@ -1024,7 +1024,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_edit_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_edit_site( $args = array(), $assoc_args = array(), $website = false ) {
 		$fields  = self::get_cli_params( $args, $assoc_args, 'edit-site' );
 		$data    = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $fields );
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
@@ -1041,7 +1041,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_sync_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_sync_site( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$error = false;
 		try {
@@ -1067,7 +1067,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_reconnect_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_reconnect_site( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$error = false;
 		try {
@@ -1093,7 +1093,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_disconnect_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_disconnect_site( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
 		$error = false;
@@ -1120,7 +1120,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_remove_site( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_remove_site( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$data = MainWP_Manage_Sites_Handler::remove_website( $website->id );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . __( 'Site removed successfully.', 'mainwp' ) . '%n' ) );
@@ -1135,7 +1135,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_update_wordpress( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_update_wordpress( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$data = MainWP_Updates_Handler::upgrade_website( $website );
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' updated successfully.', 'mainwp' ) . '%n' ) );
@@ -1150,7 +1150,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_update_plugins( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_update_plugins( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
 		$plugin_upgrades = json_decode( $website->plugin_upgrades, true );
@@ -1181,7 +1181,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_update_themes( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_update_themes( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 		$theme_upgrades = json_decode( $website->theme_upgrades, true );
 		$slugs          = array();
@@ -1211,7 +1211,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_update_translations( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_update_translations( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
 		$translation_upgrades = json_decode( $website->translation_upgrades, true );
@@ -1242,7 +1242,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_update_item( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_update_item( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
 
@@ -1275,7 +1275,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_manage_plugin( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_manage_plugin( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'plugin', 'action' ) );
@@ -1310,7 +1310,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_site_manage_theme( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_site_manage_theme( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'theme', 'action' ) );
@@ -1342,7 +1342,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_site_check_site_http_status( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_site_check_site_http_status( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( '' );
 		\WP_CLI::line( __( 'Checking ', 'mainwp' ) . $website->name . ' (' . $website->url . '). ' . __( 'Please wait... ', 'mainwp' ) );
 		\WP_CLI::line( '' );
@@ -1457,7 +1457,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_site_ignored_plugins_updates( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_site_ignored_plugins_updates( $args = array(), $assoc_args = array(), $website = false ) {
 		$data = json_decode( $website->ignored_plugins, true );
 
 		\WP_CLI::line( '' );
@@ -1480,7 +1480,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_ignored_themes_updates( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_ignored_themes_updates( $args = array(), $assoc_args = array(), $website = false ) {
 		$userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		$data          = json_decode( $userExtension->ignored_themes, true );
 
@@ -1504,7 +1504,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_site_ignored_themes_updates( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_site_ignored_themes_updates( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$data = json_decode( $website->ignored_themes, true );
 
@@ -1530,7 +1530,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_ignore_updates( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_ignore_updates( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
 
@@ -1555,7 +1555,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_ignore_update( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_ignore_update( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug', 'name' ) );
 		$type   = $params['type'];
@@ -1578,7 +1578,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_unignore_updates( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_unignore_updates( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
 		$type   = $params['type'];
@@ -1601,7 +1601,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 * @param array  $assoc_args Arguments.
 	 * @param object $website    Object containing child site data.
 	 */
-	public static function callback_updates_unignore_update( $args = array(), $assoc_args, $website = false ) {
+	public static function callback_updates_unignore_update( $args = array(), $assoc_args = array(), $website = false ) {
 
 		$params = self::get_cli_params( $args, $assoc_args, array( 'type', 'slug' ) );
 		$type   = $params['type'];

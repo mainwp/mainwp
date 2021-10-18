@@ -333,6 +333,11 @@ class MainWP_System_Utility {
 				include_once ABSPATH . '/wp-admin/includes/template.php';
 			}
 			include_once ABSPATH . 'wp-admin/includes/file.php';
+
+			if ( ! function_exists( 'wp_create_nonce' ) ) {
+				include_once ABSPATH . WPINC . '/pluggable.php';
+			}
+			
 			$creds = request_filesystem_credentials( 'test' );
 			ob_end_clean();
 			if ( empty( $creds ) ) {

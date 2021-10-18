@@ -225,7 +225,7 @@ class MainWP_Monitoring_Handler {
 		}
 
 		if ( null == $website ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request. Please, try again.', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		MainWP_Utility::end_session();

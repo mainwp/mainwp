@@ -506,7 +506,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 	public function mainwp_upgrade_plugintheme() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! isset( $_POST['type'] ) ) {
-			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Invalid request', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => '<i class="red times icon"></i> ' . __( 'Plugin or theme not specified. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		if ( 'plugin' === $_POST['type'] && ! mainwp_current_user_have_right( 'dashboard', 'update_plugins' ) ) {
@@ -614,7 +614,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_ignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
@@ -635,7 +635,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -655,7 +655,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -674,7 +674,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? esc_html( wp_unslash( $_POST['slug'] ) ) : '';
@@ -698,7 +698,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -719,7 +719,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignoreplugintheme' );
 
 		if ( ! isset( $_POST['id'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item ID not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
@@ -742,7 +742,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -760,7 +760,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler {
 		$this->secure_request( 'mainwp_unignorepluginsthemes' );
 
 		if ( ! isset( $_POST['slug'] ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Item slug not found. Please reload the page and try again.', 'mainwp' ) ) ) );
 		}
 		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 		$slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';

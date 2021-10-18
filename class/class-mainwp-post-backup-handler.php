@@ -92,7 +92,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( 'Invalid request' );
+				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
 			}
 
 			$ret = array( 'result' => MainWP_Backup_Handler::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
@@ -126,7 +126,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( 'Invalid request' );
+				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
 			}
 
 			$excludedFolder = isset( $_POST['exclude'] ) ? trim( $_POST['exclude'], "\n" ) : '';
@@ -182,7 +182,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( 'Invalid request' );
+				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
 			}
 			$pid       = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
 			$type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
@@ -218,7 +218,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( 'Invalid request' );
+				throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
 			}
 			$type  = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 			$url   = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
@@ -253,7 +253,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 		$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 		try {
 			if ( ! $site_id ) {
-				throw new MainWP_Exception( __( 'Invalid request!', 'mainwp' ) );
+				throw new MainWP_Exception( __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
 			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
@@ -567,7 +567,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler {
 			$site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
 			$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false;
 			if ( ! $site_id || ! $task_id ) {
-				throw new MainWP_Exception( 'Invalid request' );
+				throw new MainWP_Exception( __( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
 			}
 
 			$fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false;

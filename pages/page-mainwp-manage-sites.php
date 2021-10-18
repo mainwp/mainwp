@@ -504,11 +504,6 @@ class MainWP_Manage_Sites {
 	 */
 	public static function render_new_site() {
 		$websites            = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-		$referrer_page_check = false;
-		$referrer_page       = wp_get_referer();
-		if ( admin_url( 'admin.php?page=mainwp-setup' ) === $referrer_page ) {
-			$referrer_page_check = true;
-		}
 
 		$showpage = 'AddNew';
 		self::render_header( $showpage );
@@ -525,36 +520,15 @@ class MainWP_Manage_Sites {
 			?>
 		<div id="mainwp-add-new-site" class="ui segment">
 
-			<?php if ( ! $websites && $referrer_page_check ) : ?>
-			<div id="mainwp-add-site-welcome-message" class="ui inverted dimmer">
-				<div class="ui segment" style="width: 60%;">
-					<div class="ui huge header">
-						<?php esc_html_e( 'Let\'s start connecting your WordPress Sites.', 'mainwp' ); ?>
-						<div class="sub header"><?php esc_html_e( 'What is MainWP and How Works', 'mainwp' ); ?></div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
+					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %sTest Connection%s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'If you still can not connect the site, see the list of %spotential issues%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
 					</div>
-					<p><?php esc_html_e( 'The MainWP Dashboard is a WordPress plugin that utilizes a control dashboard for your managed sites. The Dashboard plugin allows you to connect and control completely independent WordPress sites even those on different hosts and servers.', 'mainwp' ); ?></p>
-					<div class="ui hidden divider"></div>
-					<img class="ui centered image" src="/wp-content/plugins/mainwp/assets/images/mainwp-demo-infographic.png" alt="<?php esc_attr_e( 'How MainWP works', 'mainwp' ); ?>">
-					<div class="ui hidden divider"></div>
-					<div class="ui message">
-						<div class="header"><?php esc_html_e( 'MainWP Dashboard requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect.', 'mainwp' ); ?></div>
-						<?php esc_html_e( 'The MainWP Child plugin is used to securely manage multiple WordPress websites from your MainWP Dashboard. This plugin is to be installed on every WordPress site you want to control from your Dashboard. It allows your Dashboard plugin to safely connect to your website and communicate with it while performing requested actions.', 'mainwp' ); ?>
-						<p><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank" class="ui mini button"><?php esc_html_e( 'How to Install MainWP Child Plugin', 'mainwp' ); ?></a> <a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank" class="ui mini button"><?php esc_html_e( 'How to Connect Child Sites', 'mainwp' ); ?></a></p>
-					</div>
-					<div class="ui big cancel green button"><?php esc_html_e( 'OK, Let\'s Start!', 'mainwp' ); ?></div>
-				</div>
-
-			</div>
-
-			<script type="text/javascript">
-			jQuery( '#mainwp-add-site-welcome-message' ).dimmer( 'show' );
-			jQuery( '.ui.cancel.button' ).on( 'click', function () {
-				jQuery( '#mainwp-add-site-welcome-message' ).dimmer( 'hide' );
-			} );
-			</script>
 			<?php endif; ?>
 
-			<div class="ui hidden divider"></div>
 			<div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
 
 			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
@@ -589,7 +563,7 @@ class MainWP_Manage_Sites {
 						</div>
 					</div>
 					<div class="ui four wide middle aligned column">
-						<input type="button" name="mainwp_managesites_test" id="mainwp_managesites_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
+						<input type="button" name="mainwp_managesites_edit_test" id="mainwp_managesites_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
 				</div>
 				</div>
 				<div class="ui grid field">
@@ -788,6 +762,12 @@ class MainWP_Manage_Sites {
 			} else {
 				?>
 				<div class="ui segment" id="mainwp-import-sites">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
+							<?php echo sprintf( __( 'Use the form to bulk import sites. You can download the sample CSV file to see how to fomat the import file properly. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<form method="POST" action="" enctype="multipart/form-data" id="mainwp_managesites_bulkadd_form" class="ui form">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -805,7 +785,7 @@ class MainWP_Manage_Sites {
 						</div>
 						<div class="ui divider"></div>
 						<input type="button" name="mainwp_managesites_add" id="mainwp_managesites_bulkadd" class="ui big green button" value="<?php esc_attr_e( 'Import Sites', 'mainwp' ); ?>"/>
-						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
+						<a href="<?php echo MAINWP_PLUGIN_URL . 'assets/csv/sample.csv'; ?>" class="ui big green basic right floated button"><?php esc_html_e( 'Download Sample CSV file', 'mainwp' ); ?></a>
 					</form>
 				</div>
 				<?php
@@ -1486,10 +1466,10 @@ class MainWP_Manage_Sites {
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/import-sites/" target="_blank">Import Sites</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a></div>
 				</div>
 				<?php
 			} elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
@@ -1497,10 +1477,10 @@ class MainWP_Manage_Sites {
 				<p><?php esc_html_e( 'If you need help connecting your websites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/" target="_blank">Set up the MainWP Plugin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/add-site-to-your-dashboard/import-sites/" target="_blank">Import Sites</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/install-mainwp-child/" target="_blank">Install MainWP Child</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/set-unique-security-id/" target="_blank">Set Unique Security ID</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">Add a Site to your Dashboard</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">Import Sites</a></div>
 				</div>
 				<?php
 			} else {
@@ -1508,14 +1488,14 @@ class MainWP_Manage_Sites {
 				<p><?php esc_html_e( 'If you need help with managing child sites, please review following help documents', 'mainwp' ); ?></p>
 				<div class="ui relaxed bulleted list">
 					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/" target="_blank">Manage Child Sites</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/edit-a-child-site/" target="_blank">Edit a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/delete-a-child-site/" target="_blank">Delete a Child Site</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/security-issues/" target="_blank">Security Issues</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/manage-child-site-groups/" target="_blank">Manage Child Site Groups</a></div>
-					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-sites/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/access-child-site-wp-admin/" target="_blank">Access Child Site WP Admin</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/synchronize-a-child-site/" target="_blank">Synchronize a Child Site</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">Edit a Child Site</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/reconnect-a-child-site/" target="_blank">Reconnect a Child Site</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/delete-a-child-site/" target="_blank">Delete a Child Site</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">Security Issues</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">Manage Child Site Groups</a></div>
+					<div class="item"><a href="https://kb.mainwp.com/docs/manage-child-site-notes/" target="_blank">Manage Child Site Notes</a></div>
 				</div>
 				<?php
 			}

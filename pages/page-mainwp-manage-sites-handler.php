@@ -37,14 +37,14 @@ class MainWP_Manage_Sites_Handler {
 		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
 
 		if ( 0 !== strpos( $url, 'http://' ) && 0 !== strpos( $url, 'https://' ) ) { // to fix: valid url to check.
-			die( wp_json_encode( array( 'error' => __( 'Invalid url!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_websites_by_url( $url );
 		$ret     = array();
 
 		if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-			$ret['response'] = 'ERROR You already added your site to MainWP';
+			$ret['response'] = __( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
 		} else {
 			try {
 				$verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
@@ -93,7 +93,7 @@ class MainWP_Manage_Sites_Handler {
 				$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 				MainWP_Manage_Sites_View::m_reconnect_site( $website );
 			} else {
-				throw new \Exception( __( 'Invalid request! Please try again. If the process keeps failing, please contact the MainWP support.', 'mainwp' ) );
+				throw new \Exception( __( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
 			}
 		} catch ( \Exception $e ) {
 			die( 'ERROR ' . $e->getMessage() );

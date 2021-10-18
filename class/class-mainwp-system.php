@@ -742,9 +742,9 @@ class MainWP_System {
 			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/dragula/dragula.min.css', array(), $this->current_version );
 		}
 
-		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] ) ) {
-			wp_enqueue_script( 'dragula', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
-			wp_enqueue_style( 'dragula', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
+		if ( isset( $_GET['page'] ) && ( 'managesites' === $_GET['page'] || 'MonitoringSites' === $_GET['page'] || 'ManageGroups' === $_GET['page'] ) ) {
+			wp_enqueue_script( 'preview', MAINWP_PLUGIN_URL . 'assets/js/preview.js', array(), $this->current_version, true );
+			wp_enqueue_style( 'preview', MAINWP_PLUGIN_URL . 'assets/css/preview.css', array(), $this->current_version );
 		}
 
 		$this->init_session();
@@ -866,6 +866,10 @@ class MainWP_System {
 			wp_enqueue_script( 'semantic-ui-hamburger', MAINWP_PLUGIN_URL . 'assets/js/hamburger/hamburger.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-clipboard', MAINWP_PLUGIN_URL . 'assets/js/clipboard/clipboard.min.js', array( 'jquery' ), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), $this->current_version, true );
+
+			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+				wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
+			}
 		}
 
 		if ( $load_cust_scripts ) {

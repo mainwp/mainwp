@@ -51,7 +51,7 @@ class Rest_Api {
 
 		// add ajax action.
 		MainWP_Post_Handler::instance()->add_post_action( 'mainwp_generate_api_credentials', array( &$this, 'mainwp_generate_api_credentials' ) );
-
+		add_filter( 'mainwp_rest_api_validate', array( &$this, 'rest_api_validate' ), 10, 2 );
 		// only activate the api if enabled in the plugin settings.
 		if ( get_option( 'mainwp_enable_rest_api' ) ) {
 			// check to see whether activated or not.
@@ -473,6 +473,21 @@ class Rest_Api {
 		} else {
 			return false;
 		}
+	}
+
+
+	/**
+	 * Method rest_api_validate()
+	 *
+	 * Hook validate the request.
+	 *
+	 * @param bool $false input filter value.
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return bool Whether the api credentials are valid.
+	 */
+	public function rest_api_validate( $false, $request ) {
+		return $this->mainwp_validate_request( $request );
 	}
 
 	/**

@@ -442,6 +442,12 @@ class MainWP_Plugins {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp-plugins-table-wrapper">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
+							<?php echo sprintf( __( 'Manage installed plugins on your child sites. Here you can activate, deactive, and delete installed plugins. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<div id="mainwp-loading-plugins-row" class="ui active inverted dimmer" style="display:none">
 						<div class="ui large text loader"><?php esc_html_e( 'Loading Plugins...', 'mainwp' ); ?></div>
@@ -479,8 +485,6 @@ class MainWP_Plugins {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_plugins_sidebar_top' );
-
-				MainWP_UI::render_sidebar_options();
 				?>
 
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
@@ -1227,6 +1231,12 @@ class MainWP_Plugins {
 			</div>
 		</div>
 		<div class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
+					<?php echo sprintf( __( 'Install plugins on your child sites. You can install plugins from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 			<div class="mainwp-upload-plugin" style="display:none;">
 				<?php MainWP_Install_Bulk::render_upload( 'plugin' ); ?>
@@ -1254,7 +1264,6 @@ class MainWP_Plugins {
 		?>
 	<div class="mainwp-side-content mainwp-no-padding">
 		<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
-		<?php MainWP_UI::render_sidebar_options(); ?>
 		<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 			<?php do_action( 'mainwp_manage_plugins_before_select_sites' ); ?>
 			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
@@ -1339,17 +1348,13 @@ class MainWP_Plugins {
 			<div class="ui alt segment" id="mainwp-plugin-auto-updates">
 				<div class="mainwp-main-content">
 					<div class="mainwp-actions-bar">
-						<div class="ui grid">
+						<div class="ui mini form grid">
 							<div class="ui two column row">
-								<div class="column">
-									<div class="alignleft">
-										<?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?>
-										<div id="mainwp-bulk-actions" name="bulk_action" class="ui dropdown">
-											<div class="text"><?php esc_html_e( 'Select actions', 'mainwp' ); ?></div>
-											<i class="dropdown icon"></i>
-											<div class="menu">
-												<div class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></div>
-												<div class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></div>
+								<div class="left aligned column">
+									<select id="mainwp-bulk-actions" name="bulk_action" class="ui selection dropdown">
+										<option class="item" value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+										<option class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></option>
+										<option class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></option>
 												<?php
 												/**
 												 * Action: mainwp_plugins_auto_updates_bulk_action
@@ -1360,20 +1365,33 @@ class MainWP_Plugins {
 												 */
 												do_action( 'mainwp_plugins_auto_updates_bulk_action' );
 												?>
-											</div>
-										</div>
+									</select>
 										<input type="button" name="" id="mainwp-bulk-trust-plugins-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
 									</div>
-								</div>
 								<div class="right aligned column"></div>
 							</div>
 						</div>
 					</div>
+
 					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : ?>
 						<div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<div id="mainwp-auto-updates-plugins-content" class="ui segment">
+						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
+							<div><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
+						</div>
+						<?php endif; ?>
+						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-plugins-auto-updates-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-plugins-auto-updates-info-message"></i>
+							<div><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></div>
+							<div><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></div>
+							<div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
+						</div>
+						<?php endif; ?>
 						<div class="ui inverted dimmer">
 							<div class="ui text loader"><?php esc_html_e( 'Loading plugins', 'mainwp' ); ?></div>
 						</div>
@@ -1388,19 +1406,8 @@ class MainWP_Plugins {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<?php do_action( 'mainwp_manage_plugins_sidebar_top' ); ?>
-				<?php MainWP_UI::render_sidebar_options(); ?>
 				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
 					<?php do_action( 'mainwp_manage_plugins_before_search_options' ); ?>
-					<div class="ui info message">
-						<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
-						<p><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
-					</div>
-					<div class="ui info message">
-						<i class="close icon mainwp-notice-dismiss" notice-id="plugins-auto-updates"></i>
-						<p><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
-						<p><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></p>
-						<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></p>
-					</div>
 					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Plugin Status to Search', 'mainwp' ); ?></div>
 					<div class="content active">
 					<div class="ui mini form">
@@ -1782,6 +1789,12 @@ class MainWP_Plugins {
 		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php
 			/**
 			 * Action: mainwp_plugins_before_ignored_updates
@@ -1796,9 +1809,7 @@ class MainWP_Plugins {
 				<?php esc_html_e( 'Globally Ignored Plugins', 'mainwp' ); ?>
 				<div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
 			</h3>
-			<?php
-			self::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins );
-			?>
+			<?php self::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
 			<div class="ui hidden divider"></div>
 			<h3 class="ui header">
 				<?php esc_html_e( 'Per Site Ignored Plugins' ); ?>
@@ -1981,6 +1992,12 @@ class MainWP_Plugins {
 		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-plugins" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php
 			/**
 			 * Action: mainwp_plugins_before_ignored_abandoned
@@ -2159,13 +2176,13 @@ class MainWP_Plugins {
 			<p><?php esc_html_e( 'If you need help with managing plugins, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">Managing Plugins with MainWP</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/install-plugins/" target="_blank">Install Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/activate-plugins/" target="_blank">Activate Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/delete-plugins/" target="_blank">Delete Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/abandoned-plugins/" target="_blank">Abandoned Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/update-plugins/" target="_blank">Update Plugins</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">Install Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/activate-plugins/" target="_blank">Activate Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-plugins/" target="_blank">Delete Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">Abandoned Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">Update Plugins</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/plugins-auto-updates/" target="_blank">Plugins Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">Ignore Plugin Updates</a></div>
 				<?php
 				/**
 				 * Action: mainwp_plugins_help_item

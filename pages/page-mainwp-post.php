@@ -569,6 +569,12 @@ class MainWP_Post {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp-posts-table-wrapper">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
+							<?php echo sprintf( __( 'Manage existing posts on your child sites. Here you can edit, view and delete pages. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<?php self::render_table( true ); ?>
 				</div>
 			</div>
@@ -582,7 +588,6 @@ class MainWP_Post {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_posts_sidebar_top' );
-				MainWP_UI::render_sidebar_options();
 				?>
 				<div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">
 					<?php
@@ -1912,11 +1917,20 @@ class MainWP_Post {
 
 		$referer = wp_get_referer();
 
+		if ( isset( $_GET['boilerplate'] ) ) {
 		if ( 'auto-draft' === $post->post_status ) {
-			$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Bulkpost', 'mainwp' ) : __( 'Create New Bulkpage', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Boilerplate Post', 'mainwp' ) : __( 'Create New Boilerplate Page', 'mainwp' );
 		} else {
-			$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Bulkpost', 'mainwp' ) : __( 'Edit Bulkpage', 'mainwp' );
+				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Boilerplate Post', 'mainwp' ) : __( 'Edit Boilerplate Page', 'mainwp' );
+			}
+		} else {
+			if ( 'auto-draft' === $post->post_status ) {
+				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Bulk Post', 'mainwp' ) : __( 'Create New Bulk Page', 'mainwp' );
+			} else {
+				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Bulk Post', 'mainwp' ) : __( 'Edit Bulk Page', 'mainwp' );
+			}
 		}
+
 
 		$note_title = apply_filters( 'mainwp_bulkpost_edit_title', $note_title, $post );
 
@@ -1956,7 +1970,32 @@ class MainWP_Post {
 						<?php
 					}
 					?>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_boilerplate_info_notice' ) ) : ?>
+						<?php if ( isset( $_GET['boilerplate'] ) ) : ?>
+						<div class="ui message info">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_boilerplate_info_notice"></i>
+							<div><?php echo __( 'Boilerplate gives you the ability to create quickly, edit, and remove repetitive pages or posts across your network of child sites. Using the available placeholders (tokens), you can customize these pages for each site.', 'mainwp' ); ?></div>
+							<div><?php echo __( 'This is the perfect solution for commonly repeated pages such as your “Privacy Policy,” “About Us,” “Terms of Use,” “Support Policy,” or any other page with standard text that you need to distribute across your sites.', 'mainwp' ); ?></div>
+						</div>
+						<?php endif; ?>
+					<?php endif; ?>
+
+
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-create-new-bulkpost-info-message' ) ) : ?>
+						<?php if ( ! isset( $_GET['boilerplate'] ) ) : ?>
+						<div class="ui message info">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
+							<?php if ( 'bulkpost' === $post_type ) : ?>
+							<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
+							<?php else : ?>
+							<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
+							<?php endif; ?>
+						</div>
+						<?php endif; ?>
+					<?php endif; ?>
+
 					<h3 class="header" id="bulkpost-title"><?php echo esc_html( $note_title ); ?></h3>
+
 					<div class="field">
 						<label><?php esc_html_e( 'Title', 'mainwp' ); ?></label>
 						<input type="text" name="post_title" id="title"  value="<?php echo ( 'Auto Draft' !== $post->post_title ) ? esc_attr( $post->post_title ) : ''; ?>" value="" autocomplete="off" spellcheck="true">
@@ -2099,10 +2138,7 @@ class MainWP_Post {
 				$sel_groups = array();
 				?>
 				<div class="mainwp-side-content mainwp-no-padding">
-					<?php
-					do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type );
-					MainWP_UI::render_sidebar_options( false );
-					?>
+					<?php do_action( 'mainwp_bulkpost_edit_top_side', $post, $post_type ); ?>
 					<div class="mainwp-select-sites ui fluid accordion mainwp-sidebar-accordion">
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
 						<div class="content active">
@@ -2443,11 +2479,11 @@ class MainWP_Post {
 			<p><?php esc_html_e( 'If you need help with managing posts, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">Manage Posts</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/create-a-new-post/" target="_blank">Create a New Post</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/manage-posts/delete-posts/" target="_blank">Delete Post(s)</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">Create a New Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/edit-an-existing-post/" target="_blank">Edit an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/change-status-of-an-existing-post/" target="_blank">Change Status of an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/view-an-existing-post/" target="_blank">View an Existing Post</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-posts/" target="_blank">Delete Post(s)</a></div>
 				<?php
 				/**
 				 * Action: mainwp_posts_help_item

@@ -83,6 +83,9 @@
 .mainwp-ui #mainwp-theme-auto-updates,
 .mainwp-ui #mainwp-manage-users { padding: 0 !important; }
 
+.mainwp-ui #mainwp-add-new-bulkpost { padding: 0 !important; }
+.mainwp-ui #mainwp-add-new-bulkpost .mainwp-main-content { padding-left: 1em !important; }
+
 .mainwp-ui .mainwp-posts .mainwp-main-content,
 .mainwp-ui #mainwp-manage-pages .mainwp-main-content,
 .mainwp-ui #mainwp-manage-plugins .mainwp-main-content,
@@ -115,4 +118,23 @@
 
 .mainwp-ui .progress .bar {
   border-radius: 0;
+}
+
+.mainwp-ui .ui.em.divider {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.mainwp-ui .ui.vertical.menu {
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+.mainwp-ui .ui.vertical.right.pointing.menu .active.item::after {
+  left: -9px !important;
+  right: auto !important;
+  border-top: 0px solid #d4d4d5;
+  border-right: 0px solid #d4d4d5;
+  border-bottom: 1px solid #d4d4d5;
+  border-left: 1px solid #d4d4d5;
 }

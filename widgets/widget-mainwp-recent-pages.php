@@ -155,7 +155,7 @@ class MainWP_Recent_Pages {
 				</h3>
 			</div>
 			<div class="four wide column right aligned">
-				<div class="ui dropdown top right pointing mainwp-dropdown-tab">
+				<div class="ui dropdown right pointing mainwp-dropdown-tab">
 						<div class="text"><?php esc_html_e( 'Published', 'mainwp' ); ?></div>
 						<i class="dropdown icon"></i>
 						<div class="menu">

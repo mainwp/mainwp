@@ -405,7 +405,6 @@ class MainWP_Setup_Wizard {
 				<div class="ui horizontal divider"><?php esc_html_e( 'Advanced Options (optional)', 'mainwp' ); ?></div>
 			<div class="ui hidden divider"></div>
 			<div class="ui hidden divider"></div>
-
 			<div class="field">
 						<label><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?></label>
 				<input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />

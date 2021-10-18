@@ -695,7 +695,12 @@ class MainWP_Manage_Sites_View {
 		}
 		?>
 		<div class="ui segment">
-			<h3 class="ui dividing header"><?php esc_html_e( 'Basic Security Check', 'mainwp' ); ?></h3>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
+					<?php echo sprintf( __( 'Fix detected security issues on the childs site.. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php
 			// Render security check issues.
 			$websiteid = isset( $_GET['scanid'] ) ? intval( $_GET['scanid'] ) : null;
@@ -808,6 +813,13 @@ class MainWP_Manage_Sites_View {
 
 		?>
 		<div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-mainwp-edit-site-info-message-info-message"></i>
+					<?php echo sprintf( __( 'Edit the %s (%s) child site settings. For additional help, please check this %shelp documentation%s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
+			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 			<?php if ( $updated ) : ?>
 			<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
 			<?php endif; ?>
@@ -825,6 +837,9 @@ class MainWP_Manage_Sites_View {
 							</select>
 							<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
 						</div>
+					</div>
+					<div class="ui four wide middle aligned column">
+						<input type="button" name="mainwp_managesites_edit_test" id="mainwp_managesites_edit_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
 					</div>
 				</div>
 				<div class="ui grid field">
@@ -981,7 +996,7 @@ class MainWP_Manage_Sites_View {
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Select SSL Version. If you are not sure, select "Auto Detect".', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<select class="ui dropdown" id="mainwp_managesites_edit_ssl_version" name="mainwp_managesites_edit_ssl_version">
 							<option <?php echo ( 0 == $website->ssl_version ) ? 'selected' : ''; ?> value="0"><?php esc_html_e( 'Auto detect', 'mainwp' ); ?></option>
-							<option <?php echo ( 6 == $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php esc_html_e( "Let's encrypt (TLS v1.2)", 'mainwp' ); ?></option>
+							<option <?php echo ( 6 == $website->ssl_version ) ? 'selected' : ''; ?> value="6"><?php esc_html_e( 'TLS v1.2', 'mainwp' ); ?></option>
 							<option <?php echo ( 1 == $website->ssl_version ) ? 'selected' : ''; ?> value="1"><?php esc_html_e( 'TLS v1.x', 'mainwp' ); ?></option>
 							<option <?php echo ( 2 == $website->ssl_version ) ? 'selected' : ''; ?> value="2"><?php esc_html_e( 'SSL v2', 'mainwp' ); ?></option>
 							<option <?php echo ( 3 == $website->ssl_version ) ? 'selected' : ''; ?> value="3"><?php esc_html_e( 'SSL v3', 'mainwp' ); ?></option>
@@ -1030,6 +1045,25 @@ class MainWP_Manage_Sites_View {
 				<input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 			</form>
 		</div>
+		<div class="ui modal" id="mainwp-test-connection-modal">
+			<div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
+			<div class="content">
+				<div class="ui active inverted dimmer">
+					<div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+				</div>
+				<div id="mainwp-test-connection-result" class="ui segment" style="display:none">
+					<h2 class="ui center aligned icon header">
+						<i class=" icon"></i>
+						<div class="content">
+							<span></span>
+							<div class="sub header"></div>
+						</div>
+					</h2>
+				</div>
+			</div>
+			<div class="actions">
+				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+			</div>
 		</div>
 		<?php
 	}
@@ -1077,7 +1111,12 @@ class MainWP_Manage_Sites_View {
 		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui form">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ); ?>" />
 			<input type="hidden" name="mainwp_managesites_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />				
-			<div class="ui info message"><?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if extensions are in use.', 'mainwp' ); ?></div>
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
+					<?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ); ?>
+				</div>
+			<?php endif; ?>
 			<h3 class="ui header"><?php echo $title; ?></h3>
 			<div class="sub header"><?php echo $email_description; ?></h3></div>
 			<div class="ui divider"></div>
@@ -1118,18 +1157,16 @@ class MainWP_Manage_Sites_View {
 			<div class="ui grid field" >				
 				<label class="six wide column middle aligned"></label>
 				<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<?php
-				if ( $overrided ) {
-					?>
-					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Delete Template', 'mainwp' ); ?></a>
-					<?php
-				} else {
-					?>
+					<?php if ( $overrided ) : ?>
+						<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
+					<?php  else : ?>
 					<a href="<?php echo wp_nonce_url( 'admin.php?page=managesites&emailsettingsid=' . $siteid . '&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
-					<?php
-				}
-				?>
+					<?php endif; ?>
+					<?php if ( $overrided ) : ?>
+						<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>
+					<?php  else : ?>
 				<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>'); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
+					<?php endif; ?>
 				</div>		
 			</div>	
 			<div class="ui divider"></div>
@@ -1221,7 +1258,7 @@ class MainWP_Manage_Sites_View {
 						jQuery( "#mainwp-edit-email-template-modal" ).modal( {
 							closable: false,
 							onHide: function() {
-								location.href = '<?php echo esc_js( $localion ); ?>';
+								location.reload( true );
 							}
 						} ).modal( 'show' );
 					}
@@ -1584,6 +1621,9 @@ class MainWP_Manage_Sites_View {
 						} else {
 							$message = sprintf( __( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . __( 'Dashboard', 'mainwp' ) . '">', '</a>' );
 						}
+
+						$website = MainWP_DB::instance()->get_website_by_id( $id );
+
 						/**
 						 * New site added
 						 *
@@ -1593,9 +1633,8 @@ class MainWP_Manage_Sites_View {
 						 *
 						 * @since 3.4
 						 */
-						do_action( 'mainwp_added_new_site', $id );
+						do_action( 'mainwp_added_new_site', $id, $website );
 
-						$website = MainWP_DB::instance()->get_website_by_id( $id );
 						MainWP_Sync::sync_information_array( $website, $information );
 					} else {
 						$error = __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' );

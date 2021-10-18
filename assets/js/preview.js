@@ -24,7 +24,7 @@
 		var mshotEnabledLinkSelector = 'td span.mainwp-preview-item';
 
 		// Show a preview image of the hovered URL.
-		$( '#mainwp-manage-sites-body-table' ).on( 'click', mshotEnabledLinkSelector, function () {
+		$( '.mainwp-with-preview-table' ).on( 'click', mshotEnabledLinkSelector, function () {
 			clearTimeout( mshotRemovalTimer );
 
 			if ( $( '.mainwp-preview-mshot' ).length > 0 ) {

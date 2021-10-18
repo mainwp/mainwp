@@ -517,7 +517,13 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		$pagelength_title = implode( ',', array_values( $pages_length ) );
 
 		?>
-		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable stackable table">
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-monitoring-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-monitoring-info-message"></i>
+				<?php echo sprintf( __( 'Monitor your sites uptime and site health. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/sites-monitoring/" target="_blank">', '</a>' ); ?>
+			</div>
+		<?php endif; ?>
+		<table id="mainwp-manage-sites-table" style="width:100%" class="ui single line selectable stackable table mainwp-with-preview-table">
 			<thead>
 			<tr>
 				<?php $this->print_column_headers( $optimize, true ); ?>

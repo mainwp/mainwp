@@ -241,7 +241,12 @@ class MainWP_Notification_Settings {
 				<form method="POST" action="admin.php?page=SettingsEmail">
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SettingsEmail' ); ?>" />
 					<input type="hidden" name="mainwp_setting_emails_type" value="<?php echo esc_html( $type ); ?>" />						
-					<div class="ui info message"><?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if extensions are in use.', 'mainwp' ); ?></div>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-email-tokens-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
+							<?php _e( '<a href="https://mainwp.com/extension/boilerplate/" target="_blank">Boilerplate</a> and <a href="https://mainwp.com/extension/pro-reports/" target="_blank">Reports</a> extensions tokens are supported in the email settings and templates if Extensions are in use.', 'mainwp' ); ?>
+						</div>
+					<?php endif; ?>
 					<h3 class="ui header"><?php echo $title; ?></h3>
 					<div class="sub header"><?php echo $email_description; ?></h3></div>
 					<div class="ui divider"></div>
@@ -282,18 +287,16 @@ class MainWP_Notification_Settings {
 					<div class="ui grid field" >				
 						<label class="six wide column middle aligned"></label>
 						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<?php
-						if ( $overrided ) {
-							?>
-							<a href="<?php echo wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Delete Template', 'mainwp' ); ?></a>
-							<?php
-						} else {
-							?>
+						<?php if ( $overrided ) : ?>
+							<a href="<?php echo wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'delete-email-template' ); ?>" onclick="mainwp_confirm('<?php echo esc_js( 'Are you sure you want to delete this template file?', 'mainwp' ); ?>', function(){ window.location = jQuery('a#email-delete-template').attr('href');}); return false;" id="email-delete-template" class="ui button"><?php esc_html_e( 'Return to Default Template', 'mainwp' ); ?></a>
+						<?php else : ?>
 							<a href="<?php echo wp_nonce_url( 'admin.php?page=SettingsEmail&edit-email=' . $type, 'copy-email-template' ); ?>" class="ui button"><?php esc_html_e( 'Copy file to uploads', 'mainwp' ); ?></a>
-							<?php
-						}
-						?>
+						<?php endif; ?>
+						<?php if ( $overrided ) : ?>
+							<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>', true ); return false;"><?php esc_html_e( 'Edit Template', 'mainwp' ); ?></a>
+						<?php else : ?>
 						<a href="javascript:void(0)" class="ui button" onclick="mainwp_view_template('<?php echo esc_js( $type ); ?>', true ); return false;"><?php esc_html_e( 'View Template', 'mainwp' ); ?></a>
+						<?php endif; ?>
 						</div>		
 					</div>
 					<div class="ui divider"></div>

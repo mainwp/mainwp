@@ -93,7 +93,7 @@ function mainwp_extensions_activate( pObj, retring ) {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
         loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully,' ) );
-        statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
+        statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
                 success = true;
             } else if ( response.error ) {
         loadingEl.find( '.message' ).addClass( 'red' );
@@ -147,7 +147,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
         loadingEl.find( '.message' ).html(  __( 'Extension license Dectivated successfully.' ) );
-        statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
+        statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
         success = true;
             } else if ( response.error ) {
         loadingEl.find( '.message' ).addClass( 'red' );
@@ -366,7 +366,7 @@ extensions_activate_next = function ( pObj ) {
                   countSuccessActivation++;
             loadingEl.find( '.message' ).addClass( 'green' );
             loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully,' ) );
-            statusEl.html( '<i class="ui green empty circular label"></i> ' + __( 'License activated' ) );
+            statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
             apiEl.find( '.mainwp-extensions-deactivate-chkbox' ).attr( 'checked', false );
               } else if ( response.error ) {
             loadingEl.find( '.message' ).addClass( 'red' );

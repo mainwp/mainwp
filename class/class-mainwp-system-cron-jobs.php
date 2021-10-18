@@ -299,11 +299,9 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
-		$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
-		$today_0h                    = MainWP_Utility::get_timestamp( $today_0h );
 
-		$today_end                    = strtotime( date( 'Y-m-d' ) . ' 23:59:59' ); // phpcs:ignore -- to check localtime.
-		$today_end = MainWP_Utility::get_timestamp( $today_end );
+		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
+		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
 
 		$today_m_y = date( 'd/m/Y', MainWP_Utility::get_timestamp() ); //phpcs:ignore -- local time.
 
@@ -392,39 +390,39 @@ class MainWP_System_Cron_Jobs {
 				$this->refresh_saved_fields();
 			}
 		}
+		$sync_time_runable = null;
+		if ( ! empty( $timeDailyUpdate ) ) {
+			$sync_time_runable = false;
+			$run_timestamp     = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+			if ( $local_timestamp > $run_timestamp ) {
+				$sync_time_runable = true; // it is time to run or worked.
+			} elseif ( ( $local_timestamp - $lasttimeStartAutomaticUpdate ) > DAY_IN_SECONDS ) {
+				$sync_time_runable = true;
+			}
 
-		$sync_time_runable = false;
-		if ( ! $updatecheck_running ) {
-			if ( ! empty( $timeDailyUpdate ) ) {
-				$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
-				if ( $local_timestamp < $run_timestamp && ( ( $local_timestamp - $lasttimeAutomaticUpdate ) < $frequence_period_in_seconds ) ) { // not run this time.
-					MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
-					MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
-					return;
-				} else {
-					if ( $today_m_y !== $mainwpLastAutomaticUpdate ) {  // phpcs:ignore -- local time.
-						$sync_time_runable = true;
-					}
-				}
+			if ( ! $updatecheck_running && ! $sync_time_runable ) {
+				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time :: ' . date( 'Y-m-d H:i:s', $run_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+				// sync time is false.
+				return;
 			}
 		}
 
 		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
 		$frequence_now         = ceil( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= frequencyDailyUpdate, computes frequence value now.
 
-		$run_frequency = false;
+		$run_frequency = null;
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
+			$run_frequency = false;
 			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * $frequence_today_count ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
-					// ok, run.
+				// ok, run.
 				$run_frequency = true;
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 			} else {
-				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now );
 				$run_frequency = false;
 			}
-
-			if ( ! $updatecheck_running && ! $run_frequency ) {
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait to run :: ' . $frequence_now . ' :: time :: ' . ( $today_0h + $frequence_period_in_seconds * $frequence_today_count - $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
-				return;
+			if ( ! $run_frequency ) {
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 			}
 		}
 
@@ -443,17 +441,35 @@ class MainWP_System_Cron_Jobs {
 		$mainwpHoursIntervalAutomaticUpdate = apply_filters( 'mainwp_updatescheck_hours_interval', false );
 
 		if ( ! $updatecheck_running ) {
+			$run_hours_interval = null;
 			if ( $mainwpHoursIntervalAutomaticUpdate > 0 ) {
-				if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > time() ) ) {
+				$run_hours_interval = false;
+				if ( $lasttimeAutomaticUpdate && ( $lasttimeAutomaticUpdate + $mainwpHoursIntervalAutomaticUpdate * 3600 > $local_timestamp ) ) {
 					MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated hours interval' );
+					MainWP_Logger::instance()->log_action( 'CRON :: updates check :: already updated hours interval', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 					return;
+				} else {
+					$run_hours_interval = true;
 				}
+			}
+
+			if ( $run_hours_interval ) {
+				$websites = array(); // ok run.
+			} elseif ( null === $sync_time_runable && $run_frequency ) {
+				$websites = array(); // ok run.
+			} elseif ( $sync_time_runable && $run_frequency ) {
+				$websites = array(); // ok run.
 			} elseif ( $run_frequency ) {
-				$websites = array(); // ok, go check.
-			} elseif ( $sync_time_runable ) {
-				$websites = array(); // ok, runtime.
-			} elseif ( $today_m_y === $mainwpLastAutomaticUpdate ) { // phpcs:ignore -- update check at local server time
-				MainWP_Logger::instance()->debug( 'CRON :: updates check :: already updated today' );
+				$websites = array(); // ok run.
+			} elseif ( null === $run_frequency && null === $sync_time_runable && $today_m_y != $mainwpLastAutomaticUpdate ) {
+				$websites = array(); // ok run for today.
+			} else {
+				// $run_hours_interval == false|null.
+				// $run_frequency == false|null.
+				// $sync_time_runable == false|null.
+				// $today_m_y == $mainwpLastAutomaticUpdate.
+				MainWP_Logger::instance()->debug( 'CRON :: updates check :: waiting conditionals to run.' );
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: waiting conditionals to run.', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				return;
 			}
 		}

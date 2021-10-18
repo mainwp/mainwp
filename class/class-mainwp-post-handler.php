@@ -968,7 +968,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function mainwp_saving_status() {
 		if ( ! isset( $_REQUEST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['nonce'] ), 'mainwp_ajax' ) ) {
-			die( 'Invalid request.' );
+			die( __( 'WP nonce could not be verified. Please reload the page and try again.', 'mainwp' ) );
 		}
 		$saving_status = isset( $_POST['saving_status'] ) ? sanitize_text_field( wp_unslash( $_POST['saving_status'] ) ) : false;
 		if ( ! empty( $saving_status ) ) {

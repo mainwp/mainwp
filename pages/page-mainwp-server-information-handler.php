@@ -806,6 +806,8 @@ class MainWP_Server_Information_Handler {
 			'mainwp_minimumIPDelay'                  => __( 'Minimum delay between requests to the same ip', 'mainwp' ),
 			'mainwp_maximumSyncRequests'             => __( 'Maximum simultaneous sync requests', 'mainwp' ),
 			'mainwp_maximumInstallUpdateRequests'    => __( 'Minimum simultaneous install/update requests', 'mainwp' ),
+			'mainwp_maximumSyncRequests'             => __( 'Maximum simultaneous sync requests', 'mainwp' ),
+			'mainwp_maximumInstallUpdateRequests'    => __( 'Maximum simultaneous install and update requests', 'mainwp' ),
 		);
 
 		if ( ! is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
@@ -848,6 +850,12 @@ class MainWP_Server_Information_Handler {
 					break;
 				case 'mainwp_minimumDelay':
 					$value = ( false === $value ) ? 200 : $value;
+					break;
+				case 'mainwp_maximumSyncRequests':
+					$value = ( false === $value ) ? 8 : $value;
+					break;
+				case 'mainwp_maximumInstallUpdateRequests':
+					$value = ( false === $value ) ? 3 : $value;
 					break;
 				default:
 					$value = empty( $value ) ? __( 'No', 'mainwp' ) : __( 'Yes', 'mainwp' );

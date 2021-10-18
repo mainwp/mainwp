@@ -475,7 +475,7 @@ class MainWP_Api_Manager {
 		$error = '';
 		switch ( $response['code'] ) {
 			case '100':
-				$error = __( 'Invalid request! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
+				$error = __( 'Activation error! Please try to deactivate and re-activate the extension on the WP > Plugins page and try to activate API key again.', 'mainwp' );
 				break;
 			case '102':
 				$error = __( 'Activation error! Download permission for this product could not be found.', 'mainwp' );

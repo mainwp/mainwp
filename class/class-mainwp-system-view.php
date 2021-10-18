@@ -744,6 +744,13 @@ class MainWP_System_View {
 			<div class="content">
 				<div class="content-massage"></div>
 				<div class="ui mini yellow message hidden update-confirm-notice" ><?php printf( __( 'To disable update confirmations, go to the %1$sSettings%2$s page and disable the "Disable update confirmations" option', 'mainwp' ), '<a href="admin.php?page=Settings">', '</a>' ); ?></div>
+				<div class="ui form hidden" id="mainwp-confirm-form">
+					<div class="ui divider"></div>
+					<div class="field">
+						<label></label>
+					  <input type="text" id="mainwp-confirm-input" name="mainwp-confirm-input">
+					</div>
+				</div>
 			</div>
 			<div class="actions">
 				<div class="ui two columns grid">

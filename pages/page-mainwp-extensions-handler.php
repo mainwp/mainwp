@@ -916,7 +916,7 @@ class MainWP_Extensions_Handler {
 			$id = MainWP_DB::instance()->add_website( $current_user->ID, $clone_name, $clone_url, $website->adminname, $website->pubkey, $website->privkey, $website->nossl, $website->nosslkey, array(), array(), $website->verify_certificate, ( null !== $website->uniqueId ? $website->uniqueId : '' ), $website->http_user, $website->http_pass, $website->ssl_version, $website->wpe, $isStaging = 1 );
 
 			/** This action is documented in class\class-mainwp-manage-sites-view.php */
-			do_action( 'mainwp_added_new_site', $id );
+			do_action( 'mainwp_added_new_site', $id, $website );
 
 			if ( $id ) {
 				$group_id = get_option( 'mainwp_stagingsites_group_id' );

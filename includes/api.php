@@ -44,7 +44,7 @@ function live_reports_responder_secure_connection() {
 	$pubkey      = isset( $_POST['pubkey'] ) ? sanitize_text_field( wp_unslash( $_POST['pubkey'] ) ) : null;
 
 	if ( ( null == $siteurl ) || ( null == $signature ) || ( null == $action ) || ( null == $timestamp ) ) {
-		return array( 'error' => 'Invalid request.' );
+		return array( 'error' => 'Required data missing. Please reload the page and try again.' );
 	}
 
 	$access = get_option( 'live-report-responder-provideaccess' );
@@ -184,7 +184,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'displayconten
 		echo wp_json_encode(
 			array(
 				'result'  => 'error',
-				'message' => 'Error - Invalid Request',
+				'message' => 'Required request data not found. Please try again.',
 			)
 		);
 		exit;
@@ -259,7 +259,7 @@ if ( isset( $_POST['content'] ) && isset( $_POST['action'] ) && ( 'livereport' =
 		echo wp_json_encode(
 			array(
 				'result'  => 'error',
-				'message' => 'Error - Invalid Request',
+				'message' => 'Required request data not found. Please try again.',
 			)
 		);
 		exit;
@@ -317,7 +317,7 @@ if ( isset( $_POST['email'] ) && isset( $_POST['action'] ) && ( 'getallsitesbyem
 		echo wp_json_encode(
 			array(
 				'result'  => 'error',
-				'message' => 'Error - Invalid Request',
+				'message' => 'Required request data not found. Please try again.',
 			)
 		);
 		exit;
@@ -375,7 +375,7 @@ if ( isset( $_POST['action'] ) && ( 'getallsites' == $_POST['action'] ) ) {
 		echo wp_json_encode(
 			array(
 				'result'  => 'error',
-				'message' => 'Error - Invalid Request',
+				'message' => 'Required request data not found. Please try again.',
 			)
 		);
 		exit;
@@ -414,7 +414,7 @@ if ( isset( $_POST['action'] ) && ( 'checkvalid_live_reports_responder_url' == $
 		echo wp_json_encode(
 			array(
 				'result'  => 'error',
-				'message' => 'Error - Invalid Request',
+				'message' => 'Required request data not found. Please try again.',
 			)
 		);
 		exit;

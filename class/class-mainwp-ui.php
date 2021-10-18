@@ -631,6 +631,51 @@ class MainWP_UI {
 			$fix_menu_overflow = 2;
 		}
 		?>
+
+		<div class="ui modal" id="mainwp-overview-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="content ui form">
+				<?php
+				/**
+				 * Action: mainwp_overview_screen_options_top
+				 *
+				 * Fires at the top of the Sceen Options modal on the Overview page.
+				 *
+				 * @since 4.1
+				 */
+				do_action( 'mainwp_overview_screen_options_top' );
+				?>
+				<form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
+					<?php echo MainWP_UI::render_screen_options( false ); ?>
+					<?php
+					/**
+					 * Action: mainwp_overview_screen_options_bottom
+					 *
+					 * Fires at the bottom of the Sceen Options modal on the Overview page.
+					 *
+					 * @since 4.1
+					 */
+					do_action( 'mainwp_overview_screen_options_bottom' );
+					?>
+			</div>
+			<div class="actions">
+				<div class="ui two columns grid">
+					<div class="left aligned column">
+						<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any widgets you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><input type="button" class="ui button" name="reset" id="reset-overview-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+					</div>
+					<div class="ui right aligned column">
+						<input type="submit" class="ui green button" id="submit-overview-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+						<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+					</div>
+				</div>
+			</div>
+
+			<input type="hidden" name="reset_overview_widgets_order" value="0" />
+			</form>
+		</div>
+
 		<div class="mainwp-content-wrap <?php echo empty( $sidebarPosition ) ? 'mainwp-sidebar-left' : ''; ?>" menu-overflow="<?php echo intval( $fix_menu_overflow ); ?>">
 			<?php
 			/**
@@ -653,6 +698,7 @@ class MainWP_UI {
 					</div>
 				</div>
 			</div>
+
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
 
@@ -836,6 +882,8 @@ class MainWP_UI {
 	public static function render_header_actions() {
 		$sites_count = MainWP_DB::instance()->get_websites_count();
 		$website_id  = '';
+		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
+		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages );
 		ob_start();
 		if ( isset( $_GET['dashboard'] ) ) :
 			$id      = intval( $_GET['dashboard'] );
@@ -910,7 +958,15 @@ class MainWP_UI {
 			<?php $website_id = intval( $_GET['dashboard'] ); ?>
 			<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
 		<?php endif; ?>
-		<?php if ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) ) : ?>
+		<?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) ) : ?>
+			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
+				<?php $website_id = intval( $_GET['dashboard'] ); ?>
+			<?php else : ?>
+				<?php $website_id = intval( $_GET['id'] ); ?>
+			<?php endif; ?>
+			<a href="#" site-id="<?php echo $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Remove the site from your MainWP Dashboard.', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="mainwp-remove-site-button ui red basic icon button" target="_blank"><i class="times icon"></i></a>
+		<?php endif; ?>
+		<?php if ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) || in_array( $_GET['page'], $sidebar_pages ) ) : ?>
 		<a class="ui button basic icon" onclick="jQuery( '#mainwp-overview-screen-options-modal' ).modal({allowMultiple:true}).modal( 'show' ); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="<?php esc_html_e( 'Screen Options', 'mainwp' ); ?>">
 			<i class="cog icon"></i>
 		</a>
@@ -1358,6 +1414,7 @@ class MainWP_UI {
 		<div id="mainwp-notes-modal" class="ui modal">
 			<div class="header"><?php esc_html_e( 'Notes', 'mainwp' ); ?></div>
 			<div class="content" id="mainwp-notes-content">
+				<div id="mainwp-notes-status" class="ui message hidden"></div>
 				<?php
 				/**
 				 * Action: mainwp_before_edit_site_note
@@ -1390,12 +1447,11 @@ class MainWP_UI {
 			<div class="actions">
 				<div class="ui grid">
 					<div class="eight wide left aligned middle aligned column">
-						<div id="mainwp-notes-status" class="left aligned"></div>
+						<input type="button" class="ui green button" id="mainwp-notes-save" value="<?php esc_attr_e( 'Save Note', 'mainwp' ); ?>" style="display:none;"/>
+						<input type="button" class="ui green button" id="mainwp-notes-edit" value="<?php esc_attr_e( 'Edit Note', 'mainwp' ); ?>"/>
 					</div>
 					<div class="eight wide column">
-						<input type="button" class="ui green button" id="mainwp-notes-save" value="<?php esc_attr_e( 'Save note', 'mainwp' ); ?>" style="display:none;"/>
-						<input type="button" class="ui basic green button" id="mainwp-notes-edit" value="<?php esc_attr_e( 'Edit', 'mainwp' ); ?>"/>
-						<input type="button" class="ui red button" id="mainwp-notes-cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
+						<input type="button" class="ui button" id="mainwp-notes-cancel" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"/>
 						<input type="hidden" id="mainwp-notes-websiteid" value=""/>
 						<input type="hidden" id="mainwp-notes-slug" value=""/>
 						<input type="hidden" id="mainwp-which-note" value="<?php echo esc_html( $what ); ?>"/>
@@ -1460,6 +1516,9 @@ class MainWP_UI {
 			$show_widgets = array();
 		}
 
+		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
+		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages );
+
 		/**
 		 * Action: mainwp_screen_options_modal_top
 		 *
@@ -1469,13 +1528,38 @@ class MainWP_UI {
 		 */
 		do_action( 'mainwp_screen_options_modal_top' );
 		?>
+		<?php if ( ! $setting_page ) : ?>
+			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : ?>
+			<?php
+			$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
+			if ( false === $sidebarPosition ) {
+				$sidebarPosition = 1;
+			}
+			$manageGroupsPage = false;
+			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+				$manageGroupsPage = true;
+			}
+			?>
+			<div class="ui grid field">
+				<label class="six wide column middle aligned"><?php echo $manageGroupsPage ? __( 'Groups menu position', 'mainwp' ) : __( 'Sidebar position', 'mainwp' ); ?></label>
+				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show the element on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+					<select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
+						<option value="1" <?php echo ( 1 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
+						<option value="0" <?php echo ( 0 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
+					</select>
+				</div>
+			</div>
+			<?php endif; ?>
+		<?php endif; ?>
+		<?php if ( isset( $_GET['page'] ) && ! in_array( $_GET['page'], $sidebar_pages ) ) : ?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Hide the Update Everything button', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, the "Update Everything" button will be hidden in the Updates Overview widget.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
-		<?php if ( $setting_page ) { ?>
+
+		<?php if ( $setting_page ) : ?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable screenshots', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable screenshots feature.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1483,7 +1567,7 @@ class MainWP_UI {
 				<input type="checkbox" name="enable_screenshots_feature" <?php echo ( ( 1 == get_option( 'mainwp_enable_screenshots', 1 ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
-		<?php } ?>
+		<?php endif; ?>
 		<?php
 		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 		if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
@@ -1530,6 +1614,7 @@ class MainWP_UI {
 				</ul>
 			</div>
 		</div>
+		<?php endif; ?>
 		<?php
 		/**
 		 * Action: mainwp_screen_options_modal_bottom
@@ -1539,46 +1624,6 @@ class MainWP_UI {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_screen_options_modal_bottom' );
-	}
-
-	/**
-	 * Method render_sidebar_options()
-	 *
-	 * Render sidebar Options.
-	 *
-	 * @param bool $with_form Default: True. With form tags.
-	 *
-	 * @return void  Render sidebar Options html.
-	 */
-	public static function render_sidebar_options( $with_form = true ) {
-		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
-		if ( false === $sidebarPosition ) {
-			$sidebarPosition = 1;
-		}
-		?>
-		<div class="mainwp-sidebar-options ui fluid accordion mainwp-sidebar-accordion">
-			<div class="title active"><i class="cog icon"></i> <?php esc_html_e( 'Sidebar Options', 'mainwp' ); ?></div>
-			<div class="content active">
-				<div class="ui mini form">
-					<?php if ( $with_form ) { ?>
-					<form method="post">
-					<?php } ?>
-					<div class="field">
-						<label><?php esc_html_e( 'Sidebar position', 'mainwp' ); ?></label>
-						<select name="mainwp_sidebar_position" id="mainwp_sidebar_position" class="ui dropdown" onchange="mainwp_sidebar_position_onchange(this)">
-							<option value="1" <?php echo ( 1 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
-							<option value="0" <?php echo ( 0 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
-						</select>
-					</div>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'onchange_sidebarposition' ); ?>" />
-					<?php if ( $with_form ) { ?>	
-					</form>
-					<?php } ?>
-				</div>
-			</div>
-		</div>
-		<div class="ui fitted divider"></div>
-		<?php
 	}
 
 }

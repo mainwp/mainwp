@@ -1115,8 +1115,8 @@ class MainWP_DB extends MainWP_DB_Base {
 		$groupnames,
 		$verifyCertificate = 1,
 		$uniqueId = '',
-		$http_user,
-		$http_pass,
+		$http_user = null,
+		$http_pass = null,
 		$sslVersion = 0,
 		$wpe = 0,
 		$isStaging = 0 ) {

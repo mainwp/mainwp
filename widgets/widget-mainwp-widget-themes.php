@@ -291,7 +291,7 @@ class MainWP_Widget_Themes {
 		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
 
 		if ( empty( $theme ) || empty( $websiteId ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid request!', 'mainwp' ) ) ) );
+			die( wp_json_encode( array( 'error' => __( 'Theme or site ID not found. Please, reload the page and try again.', 'mainwp' ) ) ) );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $websiteId );

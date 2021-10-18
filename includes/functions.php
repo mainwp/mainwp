@@ -53,7 +53,7 @@ if ( ! function_exists( 'mainwp_current_user_can' ) ) {
 	 *
 	 * @return bool true|false
 	 */
-	function mainwp_current_user_can( $cap_type = '', $cap ) {
+	function mainwp_current_user_can( $cap_type = '', $cap = '' ) {
 		if ( function_exists( 'MainWP\Dashboard\mainwp_current_user_have_right' ) ) {
 			return MainWP\Dashboard\mainwp_current_user_have_right( $cap_type, $cap );
 		}

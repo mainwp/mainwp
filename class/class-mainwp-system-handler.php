@@ -245,8 +245,12 @@ class MainWP_System_Handler {
 	 */
 	public function handle_mainwp_tools_settings() {
 		$update_screen_options = false;
+		$user = wp_get_current_user();
 		if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
 			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
+				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
+					delete_user_option( $user->ID, 'mainwp_notice_saved_status' );
+				} else {
 				$update_screen_options = true;
 				MainWP_Utility::update_option( 'mainwp_enable_managed_cr_for_wc', ( ! isset( $_POST['enable_managed_cr_for_wc'] ) ? 0 : 1 ) );
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
@@ -258,10 +262,11 @@ class MainWP_System_Handler {
 					MainWP_Twitter::clear_all_twitter_messages();
 				}
 			}
-		} elseif ( ( isset( $_GET['page'] ) && 'mainwp_tab' === $_GET['page'] ) || isset( $_GET['dashboard'] ) ) {
-			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPScrOptions' ) ) {
-				$update_screen_options = true;
 			}
+		}
+
+		if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPScrOptions' ) ) {
+			$update_screen_options = true;
 		}
 
 		if ( $update_screen_options ) {
@@ -282,13 +287,15 @@ class MainWP_System_Handler {
 				}
 			}
 
-			$user = wp_get_current_user();
+			$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_show_widgets', $show_wids, true );
+				update_user_option( $user->ID, 'mainwp_sidebarPosition', $val, true );
 			}
 
 			MainWP_Utility::update_option( 'mainwp_hide_update_everything', ( ! isset( $_POST['hide_update_everything'] ) ? 0 : 1 ) );
 			MainWP_Utility::update_option( 'mainwp_number_overview_columns', ( isset( $_POST['number_overview_columns'] ) ? intval( $_POST['number_overview_columns'] ) : 2 ) );
+
 			if ( isset( $_POST['reset_overview_widgets_order'] ) && $_POST['reset_overview_widgets_order'] ) {
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_toplevel_page_mainwp_tab', false, true );
 				update_user_option( $user->ID, 'mainwp_widgets_sorted_mainwp_page_managesites', false, true );

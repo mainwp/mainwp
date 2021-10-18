@@ -385,7 +385,7 @@ class MainWP_Overview {
 	<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
-				<div class="ui message">
+				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
 					<?php echo sprintf( __( 'To hide or show a widget, click the "Cog" icon or go to the %1$sMainWP Tools%2$s page and select options from "Show widgets"', 'mainwp' ), '<a href="admin.php?page=MainWPTools">', '</a>' ); ?>
 				</div>
@@ -485,49 +485,6 @@ class MainWP_Overview {
 			 */
 			do_action( 'mainwp_after_overview_widgets' );
 			?>
-
-		<div class="ui modal" id="mainwp-overview-screen-options-modal">
-			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
-			<div class="content ui form">
-						<?php
-						/**
-						 * Action: mainwp_overview_screen_options_top
-						 *
-						 * Fires at the top of the Sceen Options modal on the Overview page.
-						 *
-						 * @since 4.1
-						 */
-						do_action( 'mainwp_overview_screen_options_top' );
-						?>
-				<form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
-					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
-					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
-					<?php echo MainWP_UI::render_screen_options( false ); ?>
-							<?php
-							/**
-							 * Action: mainwp_overview_screen_options_bottom
-							 *
-							 * Fires at the bottom of the Sceen Options modal on the Overview page.
-							 *
-							 * @since 4.1
-							 */
-							do_action( 'mainwp_overview_screen_options_bottom' );
-							?>
-			</div>
-			<div class="actions">
-				<div class="ui two columns grid">
-					<div class="left aligned column">
-						<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any widgets you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-overview-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
-					</div>
-					<div class="ui right aligned column">
-				<input type="submit" class="ui green button" id="submit-overview-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-				<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
-			</div>
-				</div>
-			</div>
-			<input type="hidden" name="reset_overview_widgets_order" value="0" />					
-				</form>
-		</div>
 	<script type="text/javascript">
 		var page_sortablewidgets = '<?php echo esc_js( MainWP_System_Utility::get_page_id( $screen->id ) ); ?>';
 		jQuery( document ).ready( function( $ ) {
@@ -596,11 +553,11 @@ class MainWP_Overview {
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/" target="_blank">Understanding MainWP Dashboard UI</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/screen-options/" target="_blank">Screen Options</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/mainwp-tables/" target="_blank">MainWP Tables</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/understanding-mainwp-dashboard-user-interface/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-navigation/" target="_blank">MainWP Navigation</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/screen-options/" target="_blank">Screen Options</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard/" target="_blank">MainWP Dashboard</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-tables/" target="_blank">MainWP Tables</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/individual-child-site-mode/" target="_blank">Individual Child Site Mode</a></div>
 				<?php
 				/**
 				 * Action: mainwp_overview_help_item

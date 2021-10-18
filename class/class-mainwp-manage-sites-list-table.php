@@ -875,12 +875,12 @@ class MainWP_Manage_Sites_List_Table {
 		do_action( 'mainwp_before_manage_sites_table' );
 		?>
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
-			<div class="ui message">
+			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-columns-notice"></i>
 				<?php echo __( 'To hide or show a column, click the "Cog" icon and select options from "Show columns"', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
-		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable table">
+		<table id="mainwp-manage-sites-table" style="width:100%;" class="ui single line selectable table mainwp-with-preview-table">
 			<thead>
 				<tr><?php $this->print_column_headers( $optimize, true ); ?></tr>
 			</thead>

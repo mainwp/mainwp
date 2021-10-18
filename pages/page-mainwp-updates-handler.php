@@ -66,7 +66,7 @@ class MainWP_Updates_Handler {
 			}
 		}
 
-		throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Invalid request.', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', '<i class="red times icon"></i> ' . __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 	}
 
 	/**
@@ -653,11 +653,11 @@ class MainWP_Updates_Handler {
 				} elseif ( isset( $information['error'] ) ) {
 					throw new MainWP_Exception( 'WPERROR', esc_html( $information['error'] ) );
 				} else {
-					throw new MainWP_Exception( 'ERROR', 'Invalid response from site!' );
+					throw new MainWP_Exception( 'ERROR', __( 'Invalid response retured from the child site. Please try again.', 'mainwp' ) );
 				}
 			}
 		}
-		throw new MainWP_Exception( 'ERROR', __( 'Invalid request!', 'mainwp' ) );
+		throw new MainWP_Exception( 'ERROR', __( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
 	}
 
 	/**

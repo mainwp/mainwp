@@ -133,10 +133,13 @@ class MainWP_Extensions_View {
 			<?php self::render_incompatible_notice(); ?>
 			<?php if ( 0 == count( $extensions ) ) : ?>
 				<?php self::render_intro_notice(); ?>
-				<?php
-				else :
-					self::render_search_box( $extensions );
-					?>
+				<?php else : ?>
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) : ?>
+					<div class="ui info message">
+						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
+						<?php echo sprintf( __( 'Quickly access, install, and activate your MainWP extensions. If you need additional help with managing your MainWP Extensions, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a>' ); ?>
+					</div>
+					<?php endif; ?>
 				<div class="ui four stackable cards" id="mainwp-extensions-list">
 					<?php $available_extensions_data = self::get_available_extensions(); ?>
 					<?php if ( isset( $extensions ) && is_array( $extensions ) ) : ?>
@@ -172,9 +175,11 @@ class MainWP_Extensions_View {
 			<?php self::render_purchase_notice(); ?>
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
+				<?php if ( 0 != count( $extensions ) ) : ?>
+				<?php self::render_search_box( $extensions ); ?>
+				<?php endif; ?>
 				<?php self::render_side_box( $username, $password ); ?>
 			</div>
-			<div style="clear:both"></div>
 		</div>
 		<?php
 	}
@@ -231,8 +236,12 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_search_box( $extensions ) {
 		?>
-		<div class="ui stackable grid">
-			<div class="eight wide column">
+		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+			<div class="title">
+				<i class="dropdown icon"></i>
+				<?php esc_html_e( 'Search Installed Extensions', 'mainwp' ); ?>
+			</div>
+			<div class="content">
 				<div id="mainwp-search-extensions" class="ui fluid search">
 					<div class="ui icon fluid input">
 						<input class="prompt" type="text" placeholder="Find extension...">
@@ -240,6 +249,9 @@ class MainWP_Extensions_View {
 					</div>
 					<div class="results"></div>
 				</div>
+			</div>
+		</div>
+		<div class="ui fitted divider"></div>
 				<script type="text/javascript">
 				jQuery( document ).ready( function () {
 				jQuery( '.ui.search' ).search( {
@@ -255,9 +267,8 @@ class MainWP_Extensions_View {
 				} );
 				} );
 				</script>
-			</div>
-			<div class="eight wide right aligned column"></div>
-		</div>
+
+
 		<?php
 	}
 
@@ -359,8 +370,14 @@ class MainWP_Extensions_View {
 			<?php endif; ?>
 			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 				<div class="ui middle aligned extra content">
-					<span class="activate-api-status"><i class="ui <?php echo ( $active ? 'green' : 'red' ); ?> empty circular label"></i> <?php echo ( $active ? esc_html__( 'License activated', 'mainwp' ) : esc_html__( 'License deactivated', 'mainwp' ) ); ?></span>
-					<a class="ui mini right floated button" id="mainwp-manage-extension-license"><?php esc_html_e( 'Manage License', 'mainwp' ); ?></a>
+					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Excentino API license is not activated.', 'mainwp' ) ); ?>" data-position="top left" data-inverted="" class="activate-api-status">
+						<?php if ( $active ) : ?>
+							<i class="circular inverted green unlock icon"></i>
+						<?php else : ?>
+							<i class="circular inverted grey lock icon"></i>
+						<?php endif; ?>
+					</span>
+					<a class="ui mini right floated icon button" id="mainwp-manage-extension-license"  data-tooltip="<?php esc_attr_e( 'Manage the extension API license.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="cogs icon"></i></a>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -407,12 +424,12 @@ class MainWP_Extensions_View {
 	 */
 	public static function render_side_box( $username, $password ) {
 		?>
-		<?php MainWP_UI::render_sidebar_options(); ?>
-		<div class="mainwp-search-options">
-		<div class="ui header">
+		<div class="mainwp-search-options ui fluid accordion mainwp-sidebar-accordion">
+			<div class="title active">
+				<i class="dropdown icon"></i>
 			<?php esc_html_e( 'Install and Activate Extensions', 'mainwp' ); ?>
-			<div class="sub header"><?php esc_html_e( 'Enter your mainwp.com login to automatically install and activate purchased extensions.', 'mainwp' ); ?></div>
 		</div>
+			<div class="content active">
 		<?php if ( empty( $username ) ) : ?>
 		<div class="ui message info">
 			<div class="header"><?php esc_html_e( 'Not registered?', 'mainwp' ); ?></div>
@@ -424,6 +441,9 @@ class MainWP_Extensions_View {
 		<?php endif; ?>
 		<div class="ui form" id="mainwp-extensions-api-fields">
 			<div class="field">
+						<label><?php esc_html_e( 'Enter your mainwp.com login to automatically install and activate purchased extensions.', 'mainwp' ); ?></label>
+					</div>
+					<div class="field">
 				<div class="ui input fluid">
 					<input type="text" id="mainwp_com_username" placeholder="<?php esc_attr_e( 'Your MainWP Username', 'mainwp' ); ?>" value="<?php echo esc_attr( $username ); ?>"/>
 				</div>
@@ -447,7 +467,7 @@ class MainWP_Extensions_View {
 		<input type="button" class="ui fluid basic green button" id="mainwp-extensions-bulkinstall" value="<?php esc_attr_e( 'Install Extensions', 'mainwp' ); ?>">
 		<br/>
 		<input type="button" class="ui fluid green button" id="mainwp-extensions-grabkeys" value="<?php esc_attr_e( 'Activate Extensions', 'mainwp' ); ?>">
-
+			</div>
 		</div>
 		<?php
 	}

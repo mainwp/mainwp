@@ -540,6 +540,12 @@ class MainWP_Settings {
 		self::render_header( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-settings-info-message"></i>
+					<?php echo sprintf( __( 'Manage MainWP general settings. For additional help, review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
@@ -1132,6 +1138,12 @@ class MainWP_Settings {
 		?>
 
 		<div id="mainwp-advanced-settings" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-advanced-settings-info-notice' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-advanced-settings-info-notice"></i>
+					<?php echo __( 'Set how many requests are performed at once and delay between requests in order to optimize your MainWP Dashboard performance. Both Cross IP and IP Settings handle the majority of work connecting to your Child sites, while the sync, update, and installation request have specialized options under the Frontend Requests Settings section.', 'mainwp' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
 				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
@@ -1165,56 +1177,67 @@ class MainWP_Settings {
 										<em><?php esc_html_e( 'If you have confirmed the placement of your openssl.cnf and are still receiving an error banner, click the "Error Fixed" button to dismiss it.', 'mainwp' ); ?></em>
 									</div>
 								</div>
-							<?php
-						}
-						?>
+					<?php } ?>
+
 						<h3 class="ui dividing header"><?php esc_html_e( 'Cross IP Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_maximumRequests" id="mainwp_maximumRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 4', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_minimumDelay" id="mainwp_minimumDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 200', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<h3 class="ui dividing header"><?php esc_html_e( 'Per IP Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous requests per IP', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'If too many requests are sent out, they will begin to time out. This causes your sites to be shown as offline while they are up and running.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_maximumIPRequests" id="mainwp_maximumIPRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Minimum delay between requests to the same IP', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control minimum time delay between two requests.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_minimumIPDelay" id="mainwp_minimumIPDelay" value="<?php echo ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 1000 : get_option( 'mainwp_minimumIPDelay' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 1000', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<h3 class="ui dividing header"><?php esc_html_e( 'Frontend Request Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous sync requests', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input" data-tooltip="<?php esc_attr_e( 'This option allows you to control how many sites your MainWP Dashboard should sync at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_maximumSyncRequests" id="mainwp_maximumSyncRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumSyncRequests' ) ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 8', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Maximum simultaneous install and update requests', 'mainwp' ); ?></label>
 							<div class="ten wide column ui right labeled input"  data-tooltip="<?php esc_attr_e( 'This option allows you to control how many update and install requests your MainWP Dashboard should process at once.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="text" name="mainwp_maximumInstallUpdateRequests" id="mainwp_maximumInstallUpdateRequests" value="<?php echo ( ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ) ); ?>"/><div class="ui basic label"><?php esc_html_e( 'Default: 3', 'mainwp' ); ?></div>
 							</div>
 						</div>
+
 						<h3 class="ui dividing header"><?php esc_html_e( 'SSL Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field" >
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Verify SSL certificate', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will verify the SSL Certificate on your Child Site (if exists) while connecting the Child Site.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<input type="checkbox" name="mainwp_sslVerifyCertificate" id="mainwp_sslVerifyCertificate" value="checked" <?php echo ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ? 'checked="checked"' : ''; ?>/><label><?php esc_html_e( 'Default: On', 'mainwp' ); ?></label>
 							</div>
 						</div>
+
 						<h3 class="ui dividing header"><?php esc_html_e( 'IPv4 Settings', 'mainwp' ); ?></h3>
+
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Force IPv4', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox"  data-tooltip="<?php esc_attr_e( 'Enable if you want to force your MainWP Dashboard to use IPv4 while tryig to connect child sites.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
@@ -1235,7 +1258,6 @@ class MainWP_Settings {
 						?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
-						<div style="clear:both"></div>
 					</form>
 				</div>
 			</div>
@@ -1259,9 +1281,18 @@ class MainWP_Settings {
 
 		?>
 		<div id="mainwp-tools-settings" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
+					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed. For additional help, review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
+			<?php if ( isset( $_POST['mainwp_restore_info_messages'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
+				<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Info messages have been restored successfully!', 'mainwp' ); ?></div>
+			<?php endif; ?>
 				<div class="ui form">
 					<form method="POST" action="">
 						<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1300,7 +1331,12 @@ class MainWP_Settings {
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Disconnect all child sites', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-inverted="" data-position="top left"><a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="if (!confirm('<?php esc_attr_e( 'Are you sure that you want to disconnect your sites?', 'mainwp' ); ?>')) return false; mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a></div>
+						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+						<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
+					</div>
+					<script type="text/javascript">
+					jQuery( '#mainwp-disconnect-sites-tool' ).popup();
+					</script>
 						</div>
 						<?php echo MainWP_UI::render_screen_options(); ?>
 						<div class="ui grid field">
@@ -1315,6 +1351,12 @@ class MainWP_Settings {
 								<input type="checkbox" name="mainwp_hide_twitters_message" id="mainwp_hide_twitters_message" <?php echo ( ( 1 == get_option( 'mainwp_hide_twitters_message', 0 ) ) ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
+					<div class="ui grid field">
+						<label class="six wide column middle aligned"><?php esc_html_e( 'Restore all info messages', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Click this button to restore all info messages in your MainWP Dashboard and Extensions.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<input type="submit" name="mainwp_restore_info_messages" id="mainwp_restore_info_messages" class="ui button" value="<?php esc_attr_e( 'Restore Info Messages', 'mainwp' ); ?>"/>
+						</div>
+					</div>
 						<?php
 						$enabled_lcr = ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) ? true : false;
 						?>
@@ -1336,12 +1378,10 @@ class MainWP_Settings {
 						?>
 						<div class="ui divider"></div>
 						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
-						<div style="clear:both"></div>
 					</form>
 				</div>
 			</div>
 		<?php
-
 		self::render_footer( 'MainWPTools' );
 	}
 
@@ -1358,6 +1398,12 @@ class MainWP_Settings {
 
 		?>
 		<div id="rest-api-settings" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
+					<?php echo sprintf( __( 'Enable the MainWP REST API functionality and generate API credentials. Check this %shelp document%s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
@@ -1537,6 +1583,12 @@ class MainWP_Settings {
 		self::render_header( 'SettingsClientReportsResponder' );
 		?>
 		<div id="mainwp-mcrwc-settings" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-live-reports-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-live-reports-info-message"></i>
+					<?php echo __( 'This feature is deprecated. It will be removed in one of the next updates.', 'mainwp' ); ?>
+				</div>
+			<?php endif; ?>
 				<?php
 				if ( isset( $_POST['save_changes'] ) || isset( $_POST['reset_connection'] ) ) {
 					$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
@@ -1652,7 +1704,7 @@ class MainWP_Settings {
 			?>
 			<p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
-				<div class="item"><a href="https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">MainWP Dashboard Settings</a></div>
 			</div>
 			<?php
 		}

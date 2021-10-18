@@ -67,40 +67,12 @@ class MainWP_Manage_Groups {
 	 */
 	private static function create_group_item( $group ) {
 		?>
-		<tr group-id="<?php echo esc_attr( $group->id ); ?>" class="mainwp-group-row">
-			<td>
-				<span class="ui text">
-					<?php echo esc_html( stripslashes( $group->name ) ); ?>
-				</span>
-				<span class="ui mini input fluid" style="display:none;">
-					<input type="text" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" value="<?php echo esc_attr( $group->name ); ?>" />
-				</span>
-			</td>
-			<td></td>
-			<td class="right aligned">
-				<a href="#" class="managegroups-edit ui button green mini"> <?php esc_html_e( 'Edit Group', 'mainwp' ); ?></a>
-				<a href="#" class="managegroups-rename ui button mini"><?php esc_html_e( 'Rename Group', 'mainwp' ); ?></a>
-				<a href="#" class="managegroups-save ui button basic green mini" style="display:none;"> <?php esc_html_e( 'Save Group Name', 'mainwp' ); ?></a>
-				<a href="#" class="managegroups-delete ui button basic red mini"><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
-				<?php
-				/**
-				 * Action: mainwp_groups_action
-				 *
-				 * Adds action to the Group actions row.
-				 *
-				 * @since 4.1
-				 */
-				do_action( 'mainwp_groups_action', $group );
-				?>
-			</td>
-		</tr>
-		<tr id="mainwp-group-<?php echo esc_attr( $group->id ); ?>-sites" class="mainwp-group-sites-row">
-			<td colspan="3">
-				<div class="ui list">
-					<?php echo self::get_website_list_content(); ?>
-				</div>
-			</td>
-		</tr>
+		<a class="item" id="<?php echo $group->id; ?>">
+			<div class="ui small label"><?php echo $group->nrsites; ?></div>
+			<input type="hidden" value="<?php echo $group->name; ?>" id="mainwp-hidden-group-name">
+			<input type="hidden" value="<?php echo $group->id; ?>" id="mainwp-hidden-group-id">
+			<?php echo $group->name; ?>
+		</a>
 		<?php
 	}
 
@@ -119,11 +91,33 @@ class MainWP_Manage_Groups {
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+			$note       = html_entity_decode( $website->note );
+			$esc_note   = MainWP_Utility::esc_content( $note );
+			$strip_note = wp_strip_all_tags( $esc_note );
 			?>
+			<tr id="<?php echo esc_attr( $website->id ); ?>">
+				<td>
 			<div class="item ui checkbox">
-				<input type="checkbox" name="sites" value="<?php echo esc_attr( $website->id ); ?>" id="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>" >
-				<label for="<?php echo MainWP_Utility::get_nice_url( $website->url ); ?>"><?php echo MainWP_Utility::get_nice_url( $website->url ); ?></label>
+						<input type="checkbox" name="sites" class="mainwp-site-checkbox" value="<?php echo esc_attr( $website->id ); ?>" id="<?php echo 'site-' . esc_attr( $website->id ); ?>" >
 			</div>
+				</td>
+				<td><a href="admin.php?page=managesites&dashboard=<?php echo $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Go to the site overview.', 'mainwp' ); ?>" data-position="right center" data-inverted=""><?php echo $website->name; ?></a></td>
+				<td>
+					<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+				</td>
+				<td><a href="<?php echo $website->url; ?>" target="_blank"><?php echo $website->url; ?></a></td>
+				<td>
+					<span class="mainwp-preview-item" data-position="left center" data-inverted="" data-tooltip="<?php esc_attr_e( 'Click to see the site homepage screenshot.', 'mainwp' ); ?>" preview-site-url="<?php echo $website->url; ?>" ><i class="camera icon"></i></span>
+				</td>
+				<td>
+				<?php if ( '' == $website->note ) : ?>
+					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
+				<?php else : ?>
+					<a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo $website->id; ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+				<?php endif; ?>
+					<span style="display: none" id="mainwp-notes-<?php echo $website->id; ?>-note"><?php echo wp_unslash( $esc_note ); ?></span>
+				</td>
+			</tr>
 			<?php
 		}
 		MainWP_DB::free_result( $websites );
@@ -143,6 +137,11 @@ class MainWP_Manage_Groups {
 			return;
 		}
 
+		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
+		if ( false === $sidebarPosition ) {
+			$sidebarPosition = 1;
+		}
+
 		/**
 		 * Sites Page header
 		 *
@@ -159,11 +158,9 @@ class MainWP_Manage_Groups {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_groups_info' ) ) { ?>
 			<div class="ui message info">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_groups_info"></i>
-				<?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to split sites into different groups. Later, you will be able to make Site Selection by a group that will speed up your work and makes it much easier.', 'mainwp' ); ?>
-				<br />
-				<?php esc_html_e( 'One child site can be assigned to multiple Groups at the same time.', 'mainwp' ); ?>
-				<br />
-				<?php echo sprintf( __( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?>
+					<div><?php esc_html_e( 'In case you are managing a large number of WordPress sites, it could be useful for you to split sites into different groups. Later, you will be able to make Site Selection by a group that will speed up your work and makes it much easier.', 'mainwp' ); ?></div>
+					<div><?php esc_html_e( 'One child site can be assigned to multiple Groups at the same time.', 'mainwp' ); ?></div>
+					<div><?php echo sprintf( __( 'For more information check the %1$sKnowledge Base%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-child-site-groups/" target="_blank">', '</a>' ); ?></div>
 			</div>
 			<?php } ?>
 			<?php
@@ -176,36 +173,82 @@ class MainWP_Manage_Groups {
 			 */
 			do_action( 'mainwp_before_groups_table' );
 			?>
-			<table id="mainwp-groups-table" class="ui table">
-				<thead>
-					<tr>
-						<th colspan="3">
-							<?php esc_html_e( 'Groups', 'mainwp' ); ?>
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php echo self::get_group_list_content(); ?>
-					<tr class="managegroups-group-add" style="display:none;">
-						<td>
-							<span class="ui mini input fluid"><input type="text" placeholder="<?php esc_attr_e( 'Group name', 'mainwp' ); ?>" value="" /></span>
-						</td>
-						<td></td>
-						<td class="right aligned">
-							<a href="#" class="managegroups-savenew ui button green mini"><?php esc_html_e( 'Save Group', 'mainwp' ); ?></a>
-							<a href="#" class="managegroups-cancel ui button basic red mini"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></a>
-						</td>
-					</tr>
-				</tbody>
-				<tfoot class="full-width">
-					<tr>
-						<th colspan="3">
-							<input type="button" value="<?php esc_attr_e( 'Save Selection', 'mainwp' ); ?>" class="managegroups-saveAll ui right floated green button" style="display:none" />
-							<a class="managegroups-addnew ui green basic button" href="javascript:void(0)"><?php esc_html_e( 'Create New Group', 'mainwp' ); ?></a>
-						</th>
-					</tr>
-				</tfoot>
-			</table>
+			<div class="ui grid">
+				<div class="<?php echo 1 == $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
+					<?php if ( 1 == $sidebarPosition ) : ?>
+						<?php echo self::render_groups_sites_table_element(); ?>
+					<?php else : ?>
+						<?php echo self::render_groups_menu_element(); ?>
+					<?php endif; ?>
+				</div>
+				<div class="<?php echo 1 == $sidebarPosition ? 'four' : 'twelve'; ?> wide column">
+					<?php if ( 1 == $sidebarPosition ) : ?>
+						<?php echo self::render_groups_menu_element(); ?>
+					<?php else : ?>
+						<?php echo self::render_groups_sites_table_element(); ?>
+					<?php endif; ?>
+				</div>
+				<script type="text/javascript">
+					jQuery( '#mainwp-manage-groups-sites-table' ).dataTable( {
+						"searching" : true,
+						"colReorder" : true,
+						"stateSave":  true,
+						"paging": false,
+						"info": true,
+						"order": [],
+						"scrollX" : false,
+						"columnDefs": [ {
+							"targets": 'no-sort',
+							"orderable": false
+						} ],
+						"preDrawCallback": function( settings ) {
+							jQuery( '#mainwp-manage-groups-sites-table .ui.checkbox' ).checkbox();
+						}
+					} );
+				</script>
+			</div>
+			<?php MainWP_UI::render_modal_edit_notes(); ?>
+			<div class="ui mini modal" id="mainwp-create-group-modal">
+				<div class="header"><?php echo __( 'Create Group', 'mainwp' ); ?></div>
+				<div class="content">
+					<div class="ui form">
+						<div class="field">
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" >
+						</div>
+					</div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<a class="ui green button" id="mainwp-save-new-group-button" href="#"><?php echo __( 'Create Group', 'mainwp' ); ?></a>
+						</div>
+						<div class="right aligned column">
+							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="ui mini modal" id="mainwp-rename-group-modal">
+				<div class="header"><?php echo __( 'Rename Group', 'mainwp' ); ?></div>
+				<div class="content">
+					<div class="ui form">
+						<div class="field">
+							<input type="text" value="" name="mainwp-group-name" id="mainwp-group-name" placeholder="<?php esc_attr_e( 'Enter group name', 'mainwp' ); ?>" >
+						</div>
+					</div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo __( 'Update Group', 'mainwp' ); ?></a>
+						</div>
+						<div class="right aligned column">
+							<div class="ui cancel button"><?php echo __( 'Close', 'mainwp' ); ?></div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<?php
 			/**
 			 * Action: mainwp_after_groups_table
@@ -226,201 +269,69 @@ class MainWP_Manage_Groups {
 		 * @since Unknown
 		 */
 		do_action( 'mainwp_pagefooter_sites', 'ManageGroups' );
-		?>
-
-		<script type="text/javascript">
-			jQuery( document ).ready( function () {
-
-				jQuery( document ).on( 'click', '.managegroups-rename', function () {
-					var parentObj = jQuery( this ).closest( 'tr' );
-					parentObj.find( '.text' ).hide();
-					parentObj.find( '.input' ).show();
-					parentObj.find( '.managegroups-rename' ).hide();
-					parentObj.find( '.managegroups-save' ).show();
-					parentObj.addClass('active');
-					return false;
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-save', function () {
-					var parentObj = jQuery( this ).closest( 'tr' );
-					var groupId = parentObj.attr( 'group-id' );
-					var newName = parentObj.find( '.input input' ).val();
-
-					var data = mainwp_secure_data( {
-						action: 'mainwp_group_rename',
-						groupId: groupId,
-						newName: newName
-					} );
-
-					jQuery.post( ajaxurl, data, function ( pParentObj ) {
-						return function ( response ) {
-							if ( response.error )
-								return;
-
-							response = jQuery.trim( response.result );
-							pParentObj.find( '.input input' ).val( response );
-							pParentObj.find( '.text' ).html( response );
-
-							pParentObj.find( '.input' ).hide();
-							pParentObj.find( '.managegroups-save' ).hide();
-							pParentObj.find( '.text' ).show();
-							pParentObj.find( '.managegroups-rename' ).show();
-							parentObj.removeClass('active');
 						}
-					}( parentObj ), 'json' );
 
-					return false;
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-delete', function () {
-
-					var msg = 'Are you sure you want to delete this sites group?';
-					var me = this;
-					var confirmed = function() {
-						var parentObj = jQuery( me ).closest( 'tr' );
-						parentObj.addClass( 'negative' );
-						var groupId = parentObj.attr( 'group-id' );
-
-						var data = mainwp_secure_data( {
-							action: 'mainwp_group_delete',
-							groupId: groupId
-						} );
-
-						jQuery.post( ajaxurl, data, function ( pParentObj ) {
-							return function ( response ) {
-								response = jQuery.trim( response );
-								if ( response == 'OK' )
-									pParentObj.animate( { opacity: 0 }, 300, function () {
-										pParentObj.remove()
-									} );
+	/**
+	 * Method render_groups_menu_element()
+	 *
+	 * Render the groups menu HTML element.
+	 */
+	public static function render_groups_menu_element() {
+		$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
+		if ( false === $sidebarPosition ) {
+			$sidebarPosition = 1;
 							}
-						}( parentObj ) );
-					};
-					mainwp_confirm( msg, confirmed);
-					return false;
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-addnew', function () {
-					var addNewContainer = jQuery( '.managegroups-group-add' );
-					addNewContainer.find( 'input' ).val( '' );
-					addNewContainer.show();
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-cancel', function () {
-					var addNewContainer = jQuery( '.managegroups-group-add' );
-					addNewContainer.hide();
-					addNewContainer.find( 'input' ).val( '' );
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-savenew', function () {
-					var parentObj = jQuery( this ).closest( 'tr' );
-					var newName = parentObj.find( 'input' ).val();
-
-					var data = mainwp_secure_data( {
-						action: 'mainwp_group_add',
-						newName: newName
-					} );
-
-					jQuery.post( ajaxurl, data, function ( response ) {
-						try {
-							resp = jQuery.parseJSON( response );
-
-							if ( resp.error != undefined )
-								return;
-						} catch ( err ) {
-
+		?>
+		<div class="ui fluid <?php echo 1 == $sidebarPosition ? 'right' : ''; ?> pointing vertical menu sticky" id="mainwp-groups-menu" style="margin-top:52px">
+			<h4 class="item ui header"><?php esc_html_e( 'Sites Groups', 'mainwp' ); ?></h4>
+			<?php echo self::get_group_list_content(); ?>
+			<div class="item">
+				<div class="ui two columns grid">
+					<div class="left aligned column">
+						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new group.', 'mainwp' ); ?>"><?php esc_html_e( 'New Group', 'mainwp' ); ?></a>
+					</div>
+					<div class="right aligned column">
+						<a href="#" class="ui tiny icon green basic button disabled" id="mainwp-rename-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Edit selected group.', 'mainwp' ); ?>"><i class="edit icon"></i></a>
+						<a href="#" class="ui tiny icon button disabled" id="mainwp-delete-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Delete selected group.', 'mainwp' ); ?>"><i class="trash icon"></i></a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php
 						}
 
-						response = jQuery.trim( response );
-
-						var addNewContainer = jQuery( '.managegroups-group-add' );
-						addNewContainer.hide();
-						addNewContainer.find( 'input' ).val( '' );
-
-						addNewContainer.after( response );
-					} );
-
-					return false;
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-edit', function () {
-
-					var parentObj = jQuery( this ).closest( '.mainwp-group-row' );
-					var curActive = parentObj.hasClass('active') ? true : false;
-
-					jQuery('.mainwp-group-row').removeClass('active'); // remove all active.
-					jQuery('.mainwp-group-sites-row').removeClass('active'); // hide all sites row.
-
-					if ( curActive ) {
-						parentObj.removeClass('active');
-						parentObj.next('.mainwp-group-sites-row').removeClass('active');
-					} else {
-						parentObj.addClass('active');
-						parentObj.next('.mainwp-group-sites-row').addClass('active');
-					}
-
-					if ( jQuery( '.mainwp-group-row.active' ).length > 0 ) {
-						jQuery( '.managegroups-saveAll' ).show();
-					} else {
-						jQuery( '.managegroups-saveAll' ).hide();
-					}
-
-					var groupId = parentObj.attr( 'group-id' );
-
-					var data = mainwp_secure_data( {
-						action: 'mainwp_group_getsites',
-						groupId: groupId
-					} );
-
-					jQuery( '.managegroups-saveAll' ).attr( "disabled", true );
-					jQuery.post( ajaxurl, data, function ( response ) {
-						jQuery('.managegroups-saveAll').removeAttr("disabled");
-
-						response = jQuery.trim( response );
-						if ( response == 'ERROR' )
-							return;
-
-						jQuery( 'input[name="sites"]' ).attr( 'checked', false );
-
-						var websiteIds = jQuery.parseJSON( response );
-						for ( var i = 0; i < websiteIds.length; i++ ) {
-							parentObj.next( 'tr' ).find( 'input[name="sites"][value="' + websiteIds[i] + '"]' ).attr( 'checked', true );
-						}
-					} );
-				} );
-
-				jQuery( document ).on( 'click', '.managegroups-saveAll', function () {
-					var checkedGroup = jQuery( '#mainwp-manage-groups tr.mainwp-group-row.active' );
-					var groupId = checkedGroup.attr( 'group-id' );
-
-					if ( groupId == undefined )
-						return;
-
-
-					var allCheckedWebsites = jQuery( '#mainwp-manage-groups tr.mainwp-group-sites-row.active' ).find( 'input[name="sites"]:checked' );
-					var allCheckedIds = [ ];
-					for ( var i = 0; i < allCheckedWebsites.length; i++ ) {
-						allCheckedIds.push( jQuery( allCheckedWebsites[i] ).val() );
-					}
-
-					var data = mainwp_secure_data( {
-						action: 'mainwp_group_updategroup',
-						groupId: groupId,
-						websiteIds: allCheckedIds
-					} );
-
-					var btn = this;
-					jQuery(btn).attr("disabled", true);
-					jQuery.post( ajaxurl, data, function ( response ) {
-						jQuery(btn).removeAttr("disabled");
-						jQuery( '#mainwp-message-zone' ).stop( true, true );
-						jQuery( '#mainwp-message-zone' ).show();
-							jQuery( '#mainwp-message-zone' ).fadeOut( 3000 );
-						return;
-					}, 'json' );
-				} );
-			} );
-		</script>
+	/**
+	 * Method render_groups_sites_table_element()
+	 *
+	 * Render the groups menu HTML element.
+	 */
+	public static function render_groups_sites_table_element() {
+		?>
+		<table class="ui table selection mainwp-with-preview-table" id="mainwp-manage-groups-sites-table">
+			<thead>
+				<tr>
+					<th class="no-sort collapsing"><div class="ui checkbox" data-tooltip="<?php esc_attr_e( 'Click to select all sites.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><input type="checkbox" name="example"></div></th>
+					<th><?php esc_html_e( 'Sites', 'mainwp' ); ?></th>
+					<th class="no-sort collapsing"><i class="sign-in icon"></i></th>
+					<th><?php esc_html_e( 'URL', 'mainwp' ); ?></th>
+					<th class="no-sort collapsing"><i class="camera icon"></i></th>
+					<th class="no-sort collapsing"><i class="sticky note outline icon"></i></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php echo self::get_website_list_content(); ?>
+			</tbody>
+			<tfoot>
+				<tr class="full-width">
+					<th colspan="6">
+						<a href="#" class="ui tiny green button" id="mainwp-save-sites-groups-selection-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Save the selected group sites selection.', 'mainwp' ); ?>"><?php esc_html_e( 'Save Selection', 'mainwp' ); ?></a>
+					</th>
+				</tr>
+			</tfoot>
+		</table>
+		<div class="ui inverted dimmer">
+			<div class="ui loader"></div>
+		</div>
 		<?php
 	}
 

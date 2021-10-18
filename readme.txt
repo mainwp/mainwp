@@ -176,6 +176,40 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.10 - 10-XX-2021 =
+* Fixed: An issue with saving the OpenSSL.cnf file path option
+* Fixed: Incorrect color coding for the error message in the Quick Setup Wizard
+* Fixed: Letter capitalization in the Email Settings info message
+* Fixed: Button alignment problem on the basic security scan page
+* Fixed: Incorrect handle in the preview.js enqueue call
+* Fixed: Incorrect help documentation URLs
+* Fixed: Incorrect redirection after closing the View/Edit email template modal
+* Added: Remove Site button to the header element on the single site Overview and Edit page
+* Added: The message zone element to the site Edit page
+* Added: The Test Connection button to the Site Edit page
+* Added: Screen Options to all pages with sidebar element
+* Added: Sidebar position option to Screen Options
+* Added: 'extra' parameter in the mainwp_confirm function to require entering a word to confirm action
+* Added: Restore Info Messages button to the MainWP Tools page to restore dismissed info messages
+* Added: Info messages to pages where these were missing
+* Added: Accordion elements to the sidebar on the Extensions page
+* Added: 'Maximum simultaneous sync requests' and 'Maximum simultaneous install and update requests' chekcs to the System Report
+* Updated: Reworded multiple error messages
+* Updated: Moved the Manage Groups JS code to a separate file
+* Updated: Changed the TLS version option label from "Let's Encrypt (TLS v1.2)" to "TLS v1.2"
+* Updated: Confirmation modal for the Disconnect Sites button in the MainWP Tools
+* Updated: Moved the Search Extensions field to the sidebar on the Extensions pages
+* Updated: Extensions API activation indicator appearance
+* Updated: Moved the sample_user.csv file to the plugin directory
+* Updated: Completely redesigned the Manage Groups page
+* Updated: Moved the 'Save Note' and 'Edit Note' button in the 'Edit Notes' modal
+* Updated: Moved the feedback message position to the top of the element in the Edit Notes modal
+* Updated: Renamed the 'View Template' button to 'Edit Template' button if a custom template is in use
+* Updated: Renamed the 'Delete Template' button to 'Return to Default Template' button
+* Removed: Unused JavaScript code
+* Removed: Unused CSS code
+* Removed: Sidebar Options section from the sidebar element
+
 = 4.1.9.1 - 10-1-2021 =
 * Updated: OpenSSL version requirement to 1.1.0 or greater
 
@@ -197,8 +231,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Usability improvements of the login form on the Manage Extensions page
 * Updated: PHP minimal requirement on the Server Information page
 * Updated: Reduced the number of default Manage Sites columns
-* Updated: Reversed the checkbox options for hiding and unhiding
-* Overview widgets and Manage Sites columns
+* Updated: Reversed the checkbox options for hiding and unhiding Overview widgets and Manage Sites columns
 * Updated: Renamed the Global Options to General Settings page
 * Updated: Renamed the Advanced Options to Advanced Settings page
 * Updated: Merged General Settings and Optimization sections in Settings

@@ -421,6 +421,12 @@ class MainWP_Themes {
 					</div>
 				</div>
 				<div class="ui segment" id="mainwp_themes_wrap_table">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
+							<?php echo sprintf( __( 'Manage installed themes on your child sites. Here you can activate, deactive, and delete installed themes. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<div id="mainwp-loading-themes-row" class="ui active inverted dimmer" style="display:none">
 						<div class="ui large text loader"><?php esc_html_e( 'Loading Themes...', 'mainwp' ); ?></div>
@@ -458,7 +464,6 @@ class MainWP_Themes {
 				 * @since 4.1
 				 */
 				do_action( 'mainwp_manage_themes_sidebar_top' );
-				MainWP_UI::render_sidebar_options();
 				?>
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php
@@ -1188,6 +1193,12 @@ class MainWP_Themes {
 					</div>
 				</div>
 				<div class="ui segment">
+					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
+							<?php echo sprintf( __( 'Install themes on your child sites. You can install themes from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
+						</div>
+					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
 					<div class="mainwp-upload-theme">
 						<?php MainWP_Install_Bulk::render_upload( 'theme' ); ?>
@@ -1204,7 +1215,6 @@ class MainWP_Themes {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
-				<?php MainWP_UI::render_sidebar_options(); ?>
 				<div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
 					<?php do_action( 'mainwp_manage_themes_before_select_sites' ); ?>
 					<div class="active title"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
@@ -1407,11 +1417,26 @@ class MainWP_Themes {
 							</div>
 						</div>
 					</div>
+
 					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : ?>
 						<div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
 					<div id="mainwp-auto-updates-themes-content" class="ui segment">
+						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
+							<div><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></div>
+						</div>
+						<?php endif; ?>
+						<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-themes-auto-updates-info-message' ) ) : ?>
+						<div class="ui info message">
+							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-themes-auto-updates-info-message"></i>
+							<div><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update themes that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></div>
+							<div><?php esc_html_e( 'Only mark themes as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!	', 'mainwp' ); ?></div>
+							<div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></div>
+						</div>
+						<?php endif; ?>
 						<div class="ui inverted dimmer">
 							<div class="ui text loader"><?php esc_html_e( 'Loading themes', 'mainwp' ); ?></div>
 						</div>
@@ -1426,18 +1451,7 @@ class MainWP_Themes {
 				</div>
 				<div class="mainwp-side-content mainwp-no-padding">
 					<?php do_action( 'mainwp_manage_themes_sidebar_top' ); ?>
-					<?php MainWP_UI::render_sidebar_options(); ?>
 					<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
-						<div class="ui info message">
-							<i class="close icon mainwp-notice-dismiss" notice-id="disable-auto-updates"></i>
-							<p><?php echo sprintf( __( 'Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); ?></p>
-						</div>
-						<div class="ui info message">
-							<i class="close icon mainwp-notice-dismiss" notice-id="themes-auto-updates"></i>
-							<p><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update themes that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></p>
-							<p><?php esc_html_e( 'Only mark themes as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!	', 'mainwp' ); ?></p>
-							<p><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored themes can not be automatically updated.', 'mainwp' ); ?></strong></p>
-						</div>
 						<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Theme Status to Search', 'mainwp' ); ?></div>
 						<div class="content active">
 						<div class="ui mini form">
@@ -1800,6 +1814,12 @@ class MainWP_Themes {
 		self::render_header( 'Ignore' );
 		?>
 		<div id="mainwp-ignored-plugins" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php
 			/**
 			 * Action: mainwp_themes_before_ignored_updates
@@ -1993,6 +2013,12 @@ class MainWP_Themes {
 		self::render_header( 'IgnoreAbandoned' );
 		?>
 		<div id="mainwp-ignored-abandoned-themes" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
+				<div class="ui info message">
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
+				</div>
+			<?php endif; ?>
 			<?php
 			/**
 			 * Action: mainwp_themes_before_ignored_abandoned
@@ -2168,13 +2194,13 @@ class MainWP_Themes {
 			<p><?php esc_html_e( 'If you need help with managing themes, please review following help documents', 'mainwp' ); ?></p>
 			<div class="ui relaxed bulleted list">
 				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">Managing Themes with MainWP</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/install-themes/" target="_blank">Install Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/activate-themes/" target="_blank">Activate Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/delete-themes/" target="_blank">Delete Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/abandoned-themes/" target="_blank">Abandoned Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/update-themes/" target="_blank">Update Themes</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
-				<div class="item"><a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">Install Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/activate-themes/" target="_blank">Activate Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/delete-themes/" target="_blank">Delete Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">Abandoned Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">Update Themes</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/themes-auto-updates/" target="_blank">Themes Auto Updates</a></div>
+				<div class="item"><a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">Ignore Theme Updates</a></div>
 				<?php
 				/**
 				 * Action: mainwp_themes_help_item

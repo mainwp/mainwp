@@ -176,7 +176,7 @@ class MainWP_Extensions_View {
 			</div>
 			<div class="mainwp-side-content mainwp-no-padding">
 				<?php if ( 0 != count( $extensions ) ) : ?>
-				<?php self::render_search_box( $extensions ); ?>
+					<?php self::render_search_box( $extensions ); ?>
 				<?php endif; ?>
 				<?php self::render_side_box( $username, $password ); ?>
 			</div>

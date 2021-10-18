@@ -648,7 +648,7 @@ class MainWP_UI {
 				<form method="POST" action="" name="mainwp_overview_screen_options_form" id="mainwp-overview-screen-options-form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MainWPScrOptions' ); ?>" />
-					<?php echo MainWP_UI::render_screen_options( false ); ?>
+					<?php echo self::render_screen_options( false ); ?>
 					<?php
 					/**
 					 * Action: mainwp_overview_screen_options_bottom
@@ -880,8 +880,8 @@ class MainWP_UI {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
 	 */
 	public static function render_header_actions() {
-		$sites_count = MainWP_DB::instance()->get_websites_count();
-		$website_id  = '';
+		$sites_count   = MainWP_DB::instance()->get_websites_count();
+		$website_id    = '';
 		$sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
 		$sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages );
 		ob_start();
@@ -1530,16 +1530,16 @@ class MainWP_UI {
 		?>
 		<?php if ( ! $setting_page ) : ?>
 			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : ?>
-			<?php
-			$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
-			if ( false === $sidebarPosition ) {
-				$sidebarPosition = 1;
-			}
-			$manageGroupsPage = false;
-			if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
-				$manageGroupsPage = true;
-			}
-			?>
+				<?php
+				$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
+				if ( false === $sidebarPosition ) {
+					$sidebarPosition = 1;
+				}
+				$manageGroupsPage = false;
+				if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) {
+					$manageGroupsPage = true;
+				}
+				?>
 			<div class="ui grid field">
 				<label class="six wide column middle aligned"><?php echo $manageGroupsPage ? __( 'Groups menu position', 'mainwp' ) : __( 'Sidebar position', 'mainwp' ); ?></label>
 				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show the element on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1559,7 +1559,7 @@ class MainWP_UI {
 			</div>
 		</div>
 
-		<?php if ( $setting_page ) : ?>
+			<?php if ( $setting_page ) : ?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable screenshots', 'mainwp' ); ?></label>
 			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable screenshots feature.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -1568,13 +1568,13 @@ class MainWP_UI {
 			</div>
 		</div>
 		<?php endif; ?>
-		<?php
-		$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
-		if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
-			$overviewColumns = 2;
-		}
+			<?php
+			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
+			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
+				$overviewColumns = 2;
+			}
 
-		?>
+			?>
 		<div class="ui grid field">
 			<label class="six wide column middle aligned"><?php esc_html_e( 'Widgets columns', 'mainwp' ); ?></label>
 			<div class="ten wide column">

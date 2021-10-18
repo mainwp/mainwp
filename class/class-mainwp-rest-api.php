@@ -481,7 +481,7 @@ class Rest_Api {
 	 *
 	 * Hook validate the request.
 	 *
-	 * @param bool $false input filter value.
+	 * @param bool  $false input filter value.
 	 * @param array $request The request made in the API call which includes all parameters.
 	 *
 	 * @return bool Whether the api credentials are valid.

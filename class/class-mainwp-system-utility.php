@@ -337,7 +337,7 @@ class MainWP_System_Utility {
 			if ( ! function_exists( 'wp_create_nonce' ) ) {
 				include_once ABSPATH . WPINC . '/pluggable.php';
 			}
-			
+
 			$creds = request_filesystem_credentials( 'test' );
 			ob_end_clean();
 			if ( empty( $creds ) ) {

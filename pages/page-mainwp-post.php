@@ -1918,9 +1918,9 @@ class MainWP_Post {
 		$referer = wp_get_referer();
 
 		if ( isset( $_GET['boilerplate'] ) ) {
-		if ( 'auto-draft' === $post->post_status ) {
+			if ( 'auto-draft' === $post->post_status ) {
 				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Create New Boilerplate Post', 'mainwp' ) : __( 'Create New Boilerplate Page', 'mainwp' );
-		} else {
+			} else {
 				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Boilerplate Post', 'mainwp' ) : __( 'Edit Boilerplate Page', 'mainwp' );
 			}
 		} else {
@@ -1930,7 +1930,6 @@ class MainWP_Post {
 				$note_title = ( 'bulkpost' === $post_type ) ? __( 'Edit Bulk Post', 'mainwp' ) : __( 'Edit Bulk Page', 'mainwp' );
 			}
 		}
-
 
 		$note_title = apply_filters( 'mainwp_bulkpost_edit_title', $note_title, $post );
 
@@ -1986,9 +1985,9 @@ class MainWP_Post {
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
 							<?php if ( 'bulkpost' === $post_type ) : ?>
-							<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
 							<?php else : ?>
-							<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
 							<?php endif; ?>
 						</div>
 						<?php endif; ?>

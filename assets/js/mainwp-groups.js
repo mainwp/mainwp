@@ -55,7 +55,7 @@ jQuery( document ).ready( function () {
         if ( resp.error != undefined )
           return;
       } catch ( err ) {
-
+        // to fix js error.
       }
       jQuery( '#mainwp-create-group-modal' ).modal( {
         onHide: function () {

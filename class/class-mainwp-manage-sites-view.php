@@ -13,7 +13,7 @@ namespace MainWP\Dashboard;
  * @package MainWP\Dashboard
  */
 class MainWP_Manage_Sites_View {
-
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 	/**
 	 * Method init_menu()
 	 *

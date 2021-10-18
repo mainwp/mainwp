@@ -16,7 +16,8 @@ namespace MainWP\Dashboard;
  * @package MainWP\Dashboard
  */
 class MainWP_Settings {
-
+	
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 
 	/**
 	 * Get Class Name

@@ -402,7 +402,7 @@ class MainWP_System_Cron_Jobs {
 
 			if ( ! $updatecheck_running && ! $sync_time_runable ) {
 				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time :: ' . date( 'Y-m-d H:i:s', $run_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time :: ' . date( 'Y-m-d H:i:s', $run_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 				// sync time is false.
 				return;
 			}
@@ -417,12 +417,12 @@ class MainWP_System_Cron_Jobs {
 			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * $frequence_today_count ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
 				// ok, run.
 				$run_frequency = true;
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 			} else {
 				$run_frequency = false;
 			}
 			if ( ! $run_frequency ) {
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 			}
 		}
 

@@ -133,8 +133,8 @@
 .mainwp-ui .ui.vertical.right.pointing.menu .active.item::after {
   left: -9px !important;
   right: auto !important;
-  border-top: 0px solid #d4d4d5;
-  border-right: 0px solid #d4d4d5;
+  border-top: 0 solid #d4d4d5;
+  border-right: 0 solid #d4d4d5;
   border-bottom: 1px solid #d4d4d5;
   border-left: 1px solid #d4d4d5;
 }

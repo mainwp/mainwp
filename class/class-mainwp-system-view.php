@@ -748,7 +748,7 @@ class MainWP_System_View {
 					<div class="ui divider"></div>
 					<div class="field">
 						<label></label>
-					  <input type="text" id="mainwp-confirm-input" name="mainwp-confirm-input">
+						<input type="text" id="mainwp-confirm-input" name="mainwp-confirm-input">
 					</div>
 				</div>
 			</div>

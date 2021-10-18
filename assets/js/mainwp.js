@@ -1732,7 +1732,6 @@ mainwp_managesites_test = function() {
 // Test Connection (Edit Site Page)
 mainwp_managesites_edit_test = function() {
 
-  var errors = [];
   var clean_url = jQuery( '#mainwp_managesites_edit_siteurl' ).val();
   var protocol = jQuery( '#mainwp_managesites_edit_siteurl_protocol' ).val();
 

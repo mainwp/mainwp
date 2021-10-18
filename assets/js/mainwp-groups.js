@@ -157,7 +157,7 @@ jQuery( document ).ready( function () {
 
     jQuery( this ).addClass( 'disabled' );
 
-    jQuery.post( ajaxurl, data, function ( response ) {
+    jQuery.post( ajaxurl, data, function () {
       jQuery( this ).removeClass( 'disabled' );
       jQuery( '#mainwp-message-zone' ).stop( true, true );
       jQuery( '#mainwp-message-zone' ).show();

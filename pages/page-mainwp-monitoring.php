@@ -124,7 +124,7 @@ class MainWP_Monitoring {
 				'last_sync'    => 1,
 				'site_actions' => 1,
 			);
-			
+
 			if ( ! is_array( $hide_cols ) ) {
 				$hide_cols = array();
 			}

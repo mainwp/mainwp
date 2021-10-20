@@ -331,7 +331,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
 
-		$renderItems = array();		
+		$renderItems = array();
 		if ( isset( $managesites_pages[ $shownPage ] ) ) {
 			foreach ( $managesites_pages as $page => $value ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, $page ) ) {

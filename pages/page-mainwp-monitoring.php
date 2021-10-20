@@ -75,9 +75,185 @@ class MainWP_Monitoring {
 	 * @uses \MainWP\Dashboard\MainWP_Monitoring_Sites_List_Table
 	 */
 	public static function on_load_page() {
+		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		self::$sitesTable = new MainWP_Monitoring_Sites_List_Table();
 	}
 
+	/**
+	 * Method screen_options()
+	 *
+	 * Create Screen Options button.
+	 *
+	 * @param mixed $input Screen options button HTML.
+	 *
+	 * @return mixed Screen sptions button.
+	 */
+	public static function screen_options( $input ) {
+		return $input .
+				'<a class="ui button basic icon" onclick="mainwp_manage_sites_screen_options(); return false;" data-inverted="" data-position="bottom right" href="#" target="_blank" data-tooltip="' . esc_html__( 'Screen Options', 'mainwp' ) . '">
+					<i class="cog icon"></i>
+				</a>';
+	}
+
+	/**
+	 * Method render_screen_options()
+	 *
+	 * Render Screen Options Modal.
+	 */
+	public static function render_screen_options() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
+		$columns = self::$sitesTable->get_columns();
+
+		if ( isset( $columns['cb'] ) ) {
+			unset( $columns['cb'] );
+		}
+
+		$sites_per_page = get_option( 'mainwp_default_monitoring_sites_per_page', 25 );
+
+		if ( isset( $columns['site_actions'] ) && empty( $columns['site_actions'] ) ) {
+			$columns['site_actions'] = __( 'Actions', 'mainwp' );
+		}
+
+		$show_cols = get_user_option( 'mainwp_settings_show_monitoring_sites_columns' );
+		if ( false === $show_cols ) { // to backwards.
+			$default_cols = array(
+				'site'         => 1,
+				'login'        => 1,
+				'url'          => 1,
+				'site_health'  => 1,
+				'last_sync'    => 1,
+				'site_actions' => 1,
+			);
+			
+			if ( ! is_array( $hide_cols ) ) {
+				$hide_cols = array();
+			}
+
+			$show_cols = array();
+			foreach ( $columns as $name => $title ) {
+				if ( isset( $default_cols[ $name ] ) ) {
+					$show_cols[ $name ] = 1;
+				} {
+					$show_cols[ $name ] = 1; // show other columns.
+				}
+			}
+			$user = wp_get_current_user();
+			if ( $user ) {
+				update_user_option( $user->ID, 'mainwp_settings_show_monitoring_sites_columns', $show_cols, true );
+			}
+		}
+
+		if ( ! is_array( $show_cols ) ) {
+			$show_cols = array();
+		}
+
+		?>
+		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'MonitoringSitesScrOptions' ); ?>" />
+					<div class="ui grid field">
+						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
+						<div class="ten wide column">
+							<div class="ui info message">
+								<ul>
+									<li><?php esc_html_e( 'Based on your Dashboard server default large numbers can severely impact page load times.', 'mainwp' ); ?></li>
+									<li><?php esc_html_e( 'Do not add commas for thousands (ex 1000).', 'mainwp' ); ?></li>
+									<li><?php esc_html_e( '-1 to default to All of your Child Sites.', 'mainwp' ); ?></li>
+								</ul>
+							</div>
+							<input type="text" name="mainwp_default_monitoring_sites_per_page" id="mainwp_default_monitoring_sites_per_page" saved-value="<?php echo intval( $sites_per_page ); ?>" value="<?php echo intval( $sites_per_page ); ?>"/>
+						</div>
+					</div>
+					<div class="ui grid field">
+						<label class="six wide column"><?php esc_html_e( 'Show columns', 'mainwp' ); ?></label>
+						<div class="ten wide column">
+							<ul class="mainwp_hide_wpmenu_checkboxes">
+								<?php
+								foreach ( $columns as $name => $title ) {
+									if ( empty( $title ) ) {
+										continue;
+									}
+									?>
+									<li>
+										<div class="ui checkbox <?php echo ( 'site_preview' == $name ) ? 'site_preview not-auto-init' : ''; ?>">
+											<input type="checkbox"
+											<?php
+											$show_col = ! isset( $show_cols[ $name ] ) || ( 1 == $show_cols[ $name ] );
+											if ( $show_col ) {
+												echo 'checked="checked"';
+											}
+											?>
+											id="mainwp_show_column_<?php echo esc_attr( $name ); ?>" name="mainwp_show_column_<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $name ); ?>">
+											<label for="mainwp_show_column_<?php echo esc_attr( $name ); ?>" ><?php echo $title; ?></label>
+											<input type="hidden" value="<?php echo esc_attr( $name ); ?>" name="show_columns_name[]" />
+										</div>
+									</li>
+									<?php
+								}
+								?>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-monitoringsites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+						</div>
+						<div class="ui right aligned column">
+					<input type="submit" class="ui green button" name="btnSubmit" id="submit-monitoringsites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+				</div>
+					</div>
+				</div>
+				<input type="hidden" name="reset_monitoringsites_columns_order" value="0">
+			</form>
+		</div>
+		<div class="ui small modal" id="mainwp-monitoring-sites-site-preview-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+			</div>
+			<div class="actions">
+				<div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>
+				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
+					onChecked   : function() {
+						var $chk = jQuery( this );
+						jQuery( '#mainwp-monitoring-sites-site-preview-screen-options-modal' ).modal( {
+							allowMultiple: true, // multiple modals.
+							width: 100,
+							onDeny: function () {
+								$chk.prop('checked', false);
+							}
+						} ).modal( 'show' );
+					}
+				} );
+				jQuery('#reset-monitoringsites-settings').on( 'click', function () {
+					mainwp_confirm(__( 'Are you sure.' ), function(){
+						jQuery('input[name=mainwp_default_monitoring_sites_per_page]').val(25);
+						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
+						//default columns: Site, Open Admin, URL, Site Health, Status Code and Actions.
+						var cols = ['site','login','url','site_health','status_code','site_actions'];
+						jQuery.each( cols, function ( index, value ) {
+							jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
+						} );
+						jQuery('input[name=reset_monitoringsites_columns_order]').attr('value',1);
+						jQuery('#submit-monitoringsites-settings').click();						
+					}, false, false, true );
+					return false;
+				});
+			} );
+		</script>
+		<?php
+	}
 
 	/**
 	 * Method render_all_sites()
@@ -112,6 +288,7 @@ class MainWP_Monitoring {
 			</form>
 		</div>		
 		<?php
+		self::render_screen_options();
 		/** This action is documented in ../pages/page-mainwp-manage-sites.php */
 		do_action( 'mainwp_pagefooter_sites', 'MonitoringSites' );
 	}

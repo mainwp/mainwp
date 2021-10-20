@@ -240,8 +240,12 @@ class MainWP_Manage_Sites {
 			return;
 		}
 
+		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );
+		
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
-		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+		if ( 'grid' !== $sitesViewMode ) {
+			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+		}
 	}
 
 	/**
@@ -367,6 +371,10 @@ class MainWP_Manage_Sites {
 			$show_cols = array();
 		}
 
+		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
+		if ( 'grid' !== $siteViewMode && 'table' !== $siteViewMode ) {
+			$siteViewMode = 'table';
+		}
 		?>
 		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
 			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
@@ -374,6 +382,20 @@ class MainWP_Manage_Sites {
 				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'ManageSitesScrOptions' ); ?>" />
+					<div class="ui grid field">
+						<label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Sites view mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+							<div class="ui info message">
+								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
+								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+							</div>
+							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
+								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
+								<option value="grid" <?php echo ( 'grid' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
 					<div class="ui grid field">
 						<label class="six wide column"><?php esc_html_e( 'Default items per page value', 'mainwp' ); ?></label>
 						<div class="ten wide column">
@@ -442,6 +464,7 @@ class MainWP_Manage_Sites {
 				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
 			</div>
 		</div>
+		
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {
@@ -457,7 +480,8 @@ class MainWP_Manage_Sites {
 					}
 				} );
 				jQuery('#reset-managersites-settings').on( 'click', function () {
-					mainwp_confirm(__( 'Are you sure.' ), function(){
+					mainwp_confirm(__( 'Are you sure.' ), function(){						
+						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
 						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
 						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
 						//default columns: Site, Open Admin, URL, Updates, Site Health, Last Sync and Actions.
@@ -1240,7 +1264,13 @@ class MainWP_Manage_Sites {
 				return;
 			}
 		}
-		self::render_all_sites();
+
+		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );		
+		if ( 'grid' == $sitesViewMode ) {
+			MainWP_Manage_Screenshots::render_all_sites();
+		} else {
+			self::render_all_sites();
+		}
 	}
 
 

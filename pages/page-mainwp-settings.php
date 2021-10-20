@@ -86,8 +86,8 @@ class MainWP_Settings {
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
-				__( 'MainWP Tools', 'mainwp' ),
-				' <div class="mainwp-hidden">' . __( 'MainWP Tools', 'mainwp' ) . '</div>',
+				__( 'Tools', 'mainwp' ),
+				' <div class="mainwp-hidden">' . __( 'Tools', 'mainwp' ) . '</div>',
 				'read',
 				'MainWPTools',
 				array(
@@ -196,7 +196,7 @@ class MainWP_Settings {
 						<a href="<?php echo admin_url( 'admin.php?page=SettingsEmail' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
 					<?php } ?>
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'MainWP Tools', 'mainwp' ); ?></a>
+						<a href="<?php echo admin_url( 'admin.php?page=MainWPTools' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
 					<?php } ?>					
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
@@ -275,7 +275,7 @@ class MainWP_Settings {
 				'right'      => '',
 			),
 			array(
-				'title'      => __( 'MainWP Tools', 'mainwp' ),
+				'title'      => __( 'Tools', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=MainWPTools',
 				'slug'       => 'MainWPTools',
@@ -353,7 +353,7 @@ class MainWP_Settings {
 
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MainWPTools' ) ) {
 			$renderItems[] = array(
-				'title'  => __( 'MainWP Tools', 'mainwp' ),
+				'title'  => __( 'Tools', 'mainwp' ),
 				'href'   => 'admin.php?page=MainWPTools',
 				'active' => ( 'MainWPTools' == $shownPage ) ? true : false,
 			);
@@ -509,6 +509,7 @@ class MainWP_Settings {
 					update_option( $option, $value );
 				}
 
+				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
 				/**
 				* Action: mainwp_after_save_general_settings
 				*
@@ -640,6 +641,13 @@ class MainWP_Settings {
 									<option value="1" <?php echo ( 1 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right (default)', 'mainwp' ); ?></option>
 									<option value="0" <?php echo ( 0 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Left', 'mainwp' ); ?></option>
 								</select>
+							</div>
+						</div>
+						<?php echo MainWP_UI::render_screen_options(); ?>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+								<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo ( ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) ? 'checked="true"' : '' ); ?> />
 							</div>
 						</div>
 						<h3 class="ui dividing header"><?php esc_html_e( 'Updates Settings', 'mainwp' ); ?></h3>
@@ -1338,13 +1346,6 @@ class MainWP_Settings {
 					<script type="text/javascript">
 					jQuery( '#mainwp-disconnect-sites-tool' ).popup();
 					</script>
-						</div>
-						<?php echo MainWP_UI::render_screen_options(); ?>
-						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Show favicons', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will download and show child sites favicons.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
-								<input type="checkbox" name="mainwp_use_favicon" id="mainwp_use_favicon" <?php echo ( ( 1 == get_option( 'mainwp_use_favicon', 1 ) ) ? 'checked="true"' : '' ); ?> />
-							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Turn off brag button', 'mainwp' ); ?></label>

@@ -127,11 +127,6 @@ class MainWP_Menu {
 			if ( ! self::is_disable_menu_item( 3, 'MonitoringSites' ) ) {
 				MainWP_Monitoring::init_menu();
 			}
-			if ( get_option( 'mainwp_enable_screenshots', 1 ) ) {
-				if ( ! self::is_disable_menu_item( 3, 'ScreenshotsSites' ) ) {
-					MainWP_Manage_Screenshots::init_menu();
-				}
-			}
 			if ( ! self::is_disable_menu_item( 2, 'Settings' ) ) {
 				MainWP_Settings::init_menu();
 			}

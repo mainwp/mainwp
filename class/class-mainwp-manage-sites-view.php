@@ -62,11 +62,6 @@ class MainWP_Manage_Sites_View {
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'MonitoringSites' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=MonitoringSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Monitoring', 'mainwp' ); ?></a>
 					<?php } ?>
-					<?php if ( get_option( 'mainwp_enable_screenshots', 1 ) ) { ?>
-						<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ScreenshotsSites' ) ) { ?>
-						<a href="<?php echo admin_url( 'admin.php?page=ScreenshotsSites' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Screenshots', 'mainwp' ); ?></a>
-					<?php } ?>
-					<?php } ?>
 					<?php
 					if ( isset( $subPages ) && is_array( $subPages ) ) {
 						foreach ( $subPages as $subPage ) {
@@ -151,16 +146,6 @@ class MainWP_Manage_Sites_View {
 			),
 		);
 
-		if ( get_option( 'mainwp_enable_screenshots', 1 ) ) {
-			$items_menu[] = array(
-				'title'      => __( 'Screenshots', 'mainwp' ),
-				'parent_key' => 'managesites',
-				'href'       => 'admin.php?page=ScreenshotsSites',
-				'slug'       => 'ScreenshotsSites',
-				'right'      => '',
-			);
-		}
-
 		MainWP_Menu::init_subpages_left_menu( $subPages, $items_menu, 'managesites', 'ManageSites' );
 
 		foreach ( $items_menu as $item ) {
@@ -192,7 +177,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	public static function render_header( $shownPage = '', $subPages = '' ) {
 
-		if ( '' === $shownPage ) {
+		if ( '' === $shownPage || 'managesites' === $shownPage ) {
 			$shownPage = 'ManageSites';
 		}
 
@@ -238,14 +223,6 @@ class MainWP_Manage_Sites_View {
 				'access' => true,
 			),
 		);
-
-		if ( get_option( 'mainwp_enable_screenshots', 1 ) ) {
-			$managesites_pages['ScreenshotsSites'] = array(
-				'href'   => 'admin.php?page=ScreenshotsSites',
-				'title'  => __( 'Screenshots', 'mainwp' ),
-				'access' => true,
-			);
-		}
 
 		$total_info    = MainWP_Manage_Sites_Update_View::get_total_info( $site_id );
 		$total_updates = $total_info['total_upgrades'];
@@ -354,8 +331,7 @@ class MainWP_Manage_Sites_View {
 	 */
 	private static function render_managesites_header( $site_pages, $managesites_pages, $subPages, $site_id, $shownPage ) {
 
-		$renderItems = array();
-
+		$renderItems = array();		
 		if ( isset( $managesites_pages[ $shownPage ] ) ) {
 			foreach ( $managesites_pages as $page => $value ) {
 				if ( MainWP_Menu::is_disable_menu_item( 3, $page ) ) {
@@ -698,7 +674,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-					<?php echo sprintf( __( 'Fix detected security issues on the childs site.. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Fix detected security issues on the childs site.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

@@ -494,7 +494,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	 */
 	public function display( $optimize = true ) {
 
-		$sites_per_page = get_option( 'mainwp_default_sites_per_page', 25 );
+		$sites_per_page = get_option( 'mainwp_default_monitoring_sites_per_page', 25 );
 
 		$sites_per_page = intval( $sites_per_page );
 
@@ -547,6 +547,9 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 	</div>
 
 		<?php
+
+		$count = MainWP_DB::instance()->get_websites_count( null, true );
+
 		$table_features = array(
 			'searching'     => 'true',
 			'paging'        => 'true',
@@ -569,6 +572,29 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 		?>
 	<script type="text/javascript">	
 			jQuery( document ).ready( function( $ ) {
+
+				mainwp_manage_sites_screen_options = function () {
+					jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
+						allowMultiple: true,
+						onHide: function () {
+							var val = jQuery( '#mainwp_default_monitoring_sites_per_page' ).val();
+							var saved = jQuery( '#mainwp_default_monitoring_sites_per_page' ).attr( 'saved-value' );
+							if ( saved != val ) {
+								jQuery( '#mainwp-manage-sites-table' ).DataTable().page.len( val );
+								jQuery( '#mainwp-manage-sites-table' ).DataTable().state.save();
+							}
+						}
+					} ).modal( 'show' );
+
+					jQuery( '#manage-sites-screen-options-form' ).submit( function() {
+						if ( jQuery('input[name=reset_monitoringsites_columns_order]').attr('value') == 1 ) {
+							$manage_sites_table.colReorder.reset();
+						}					
+						jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
+					} );
+					return false;
+				};
+
 			<?php if ( ! $optimize ) { ?>
 				try {
 					$manage_sites_table = jQuery( '#mainwp-manage-sites-table' ).DataTable( {
@@ -662,6 +688,47 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 					// to fix js error.
 				}
 					<?php } ?>
+
+					
+				_init_manage_sites_screen = function() {
+						<?php
+						if ( 0 == $count ) {
+							?>
+							jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+								var col_id = jQuery( this ).attr( 'id' );
+								col_id = col_id.replace( "mainwp_show_column_", "" );
+								try {	
+									$manage_sites_table.column( '#' + col_id ).visible( false );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+
+							//default columns: Site, Open Admin, URL, Updates, Site Health, Status Code and Actions.
+							var cols = ['site','login','url','site_health','status_code','site_actions'];
+							jQuery.each( cols, function ( index, value ) {
+								try {	
+									$manage_sites_table.column( '#' + value ).visible( true );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+							<?php
+						} else {
+							?>
+							jQuery( '#mainwp-manage-sites-screen-options-modal input[type=checkbox][id^="mainwp_show_column_"]' ).each( function() {
+								var col_id = jQuery( this ).attr( 'id' );
+								col_id = col_id.replace( "mainwp_show_column_", "" );
+								try {	
+									$manage_sites_table.column( '#' + col_id ).visible( jQuery(this).is( ':checked' ) );
+								} catch(err) {
+									// to fix js error.
+								}
+							} );
+					<?php } ?>
+					};
+					_init_manage_sites_screen();
+
 				} );
 
 				mainwp_manage_monitor_sites_filter = function() {
@@ -684,7 +751,6 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 						}
 					<?php } ?>
 				};
-
 				</script>
 		<?php
 	}

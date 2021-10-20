@@ -672,7 +672,7 @@ class MainWP_UI {
 				</div>
 			</div>
 
-			<input type="hidden" name="reset_overview_widgets_order" value="0" />
+			<input type="hidden" name="reset_overview_settings" value="" />
 			</form>
 		</div>
 
@@ -1527,10 +1527,12 @@ class MainWP_UI {
 		 * @since 4.1
 		 */
 		do_action( 'mainwp_screen_options_modal_top' );
+		$which_settings = 'overview_settings';
 		?>
 		<?php if ( ! $setting_page ) : ?>
 			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : ?>
 				<?php
+				$which_settings = 'sidebar_settings';
 				$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
 				if ( false === $sidebarPosition ) {
 					$sidebarPosition = 1;
@@ -1541,7 +1543,7 @@ class MainWP_UI {
 				}
 				?>
 			<div class="ui grid field">
-				<label class="six wide column middle aligned"><?php echo $manageGroupsPage ? __( 'Groups menu position', 'mainwp' ) : __( 'Sidebar position', 'mainwp' ); ?></label>
+				<label tabindex="0" class="six wide column middle aligned"><?php echo $manageGroupsPage ? __( 'Groups menu position', 'mainwp' ) : __( 'Sidebar position', 'mainwp' ); ?></label>
 				<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Select if you want to show the element on left or right.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 					<select name="mainwp_sidebarPosition" id="mainwp_sidebarPosition" class="ui dropdown">
 						<option value="1" <?php echo ( 1 == $sidebarPosition ? 'selected' : '' ); ?>><?php esc_html_e( 'Right', 'mainwp' ); ?></option>
@@ -1558,17 +1560,7 @@ class MainWP_UI {
 				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
-
-			<?php if ( $setting_page ) : ?>
-		<div class="ui grid field">
-			<label class="six wide column middle aligned"><?php esc_html_e( 'Enable screenshots', 'mainwp' ); ?></label>
-			<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable screenshots feature.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-				<div class="ui info message"><?php esc_html_e( 'This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?></div>
-				<input type="checkbox" name="enable_screenshots_feature" <?php echo ( ( 1 == get_option( 'mainwp_enable_screenshots', 1 ) ) ? 'checked="true"' : '' ); ?> />
-			</div>
-		</div>
-		<?php endif; ?>
-			<?php
+		<?php
 			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
 				$overviewColumns = 2;
@@ -1615,6 +1607,7 @@ class MainWP_UI {
 			</div>
 		</div>
 		<?php endif; ?>
+		<input type="hidden" name="reset_overview_which_settings" value="<?php echo esc_html( $which_settings ); ?>" />			
 		<?php
 		/**
 		 * Action: mainwp_screen_options_modal_bottom

@@ -326,7 +326,6 @@ class MainWP_Overview {
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twitter_notice()
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::get_twit_to_send()
 	 * @uses \MainWP\Dashboard\MainWP_UI::do_widget_boxes()
-	 * @uses \MainWP\Dashboard\MainWP_UI::render_screen_options()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
 	 */
 	public static function render_dashboard_body( $websites, $dashboard, $screen_layout ) {
@@ -525,16 +524,6 @@ class MainWP_Overview {
 
 			} );
 			jQuery( '.mainwp-widget .mainwp-dropdown-tab .item' ).tab();
-			jQuery('#reset-overview-settings').on( 'click', function () {
-				mainwp_confirm(__( 'Are you sure.' ), function(){
-					jQuery('input[name=hide_update_everything]').prop( 'checked', false );
-					jQuery('input[name=number_overview_columns][value=2]').prop( 'checked', true );
-					jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop( 'checked', true );
-					jQuery('input[name=reset_overview_widgets_order]').attr( 'value', 1 );
-					jQuery('#submit-overview-settings').click();
-				}, false, false, true );
-				return false;
-			});
 		} );
 	</script>
 		<?php

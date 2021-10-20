@@ -854,6 +854,26 @@ mainwp_managesites_check_abandoned_int = function( siteid, which ) {
     return false;
 };
 
+/**
+ * MainWP UI.
+ */
+jQuery(document).ready(function () {
+  jQuery('#reset-overview-settings').on( 'click', function () {
+    mainwp_confirm(__( 'Are you sure.' ), function(){
+      var which_set = jQuery('input[name=reset_overview_which_settings]').val();
+      if ( 'sidebar_settings' == which_set ) {
+        jQuery('#mainwp_sidebarPosition').dropdown( 'set selected', 1 );
+      } else if ( 'overview_settings' == which_set ) {
+        jQuery('input[name=hide_update_everything]').prop( 'checked', false );
+        jQuery('input[name=number_overview_columns][value=2]').prop( 'checked', true );
+        jQuery('.mainwp_hide_wpmenu_checkboxes input[name="mainwp_show_widgets[]"]').prop( 'checked', true );        
+      }
+      jQuery('input[name=reset_overview_settings]').attr( 'value', 1 );
+      jQuery('#submit-overview-settings').click();
+    }, false, false, true );
+    return false;
+  });
+});
 
 /**
  * Sync Sites
@@ -2737,16 +2757,6 @@ jQuery(document).ready(function () {
     }
   });
 });
-
-jQuery( document ).ready( function () {
-  $enableScreenshotsCheckbox = jQuery( '#enable_disable_screenshots' );
-  $enableScreenshotsCheckbox.checkbox( {
-    onChange: function() {
-      val = $enableScreenshotsCheckbox.checkbox('is checked');
-      window.location = 'admin.php?page=ScreenshotsSites&enable=' + ( val ? 'true' : 'false') + '&_wpnonce=' + mainwp_js_nonce;
-    }
-  } );  
-} );
 
 /*
  * Server Info

@@ -168,7 +168,7 @@ class MainWP_Updates {
 	 * @return string Dashboard link.
 	 */
 	public static function render_site_link_dashboard( $website, $echo = true ) {
-		$lnk = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
+		$lnk = '<a href="' . admin_url( 'admin.php?page=managesites&dashboard=' . $website->id ) . '"  data-inverted="" data-tooltip="' . esc_html__( 'Visit this dashboard.', 'mainwp' ) . '">' . stripslashes( $website->name ) . '</a>';
 		if ( $echo ) {
 			echo $lnk;
 		} else {

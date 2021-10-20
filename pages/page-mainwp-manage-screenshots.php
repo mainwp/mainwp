@@ -24,41 +24,15 @@ class MainWP_Manage_Screenshots {
 	}
 
 	/**
-	 * Method init_menu()
-	 *
-	 * Add Screenshots Sub Menu.
-	 */
-	public static function init_menu() {
-		add_submenu_page(
-			'mainwp_tab',
-			__( 'Screenshots', 'mainwp' ),
-			'<div class="mainwp-hidden">' . __( 'Screenshots', 'mainwp' ) . '</div>',
-			'read',
-			'ScreenshotsSites',
-			array(
-				self::get_class_name(),
-				'render_all_screenshots',
-			)
-		);
-
-		if ( isset( $_GET['page'] ) && ( 'ScreenshotsSites' == $_GET['page'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'mainwp_nonce' ) ) {
-			MainWP_Utility::update_option( 'enable_disable_screenshots', ( isset( $_GET['enable'] ) && 'true' == sanitize_key( $_GET['enable'] ) ) ? true : false );
-			wp_safe_redirect( admin_url( 'admin.php?page=ScreenshotsSites' ) );
-		}
-	}
-
-
-	/**
-	 * Method render_all_screenshots()
+	 * Method render_all_sites()
 	 *
 	 * Render Screenshots.
 	 *
 	 * @return string MainWP Screenshots Table.
 	 */
-	public static function render_all_screenshots() {
+	public static function render_all_sites() {
 		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_screenshots' ) ) {
 			mainwp_do_not_have_permissions( __( 'manage screenshots', 'mainwp' ) );
-
 			return;
 		}
 
@@ -69,23 +43,20 @@ class MainWP_Manage_Screenshots {
 		 *
 		 * @since Unknown
 		 */
-		do_action( 'mainwp_pageheader_sites', 'ScreenshotsSites' );
+		do_action( 'mainwp_pageheader_sites', 'managesites' );
 
 		self::render_header_tabs();
-		$enableScr = get_option( 'enable_disable_screenshots', true );
-
+		
 		$websites = self::prepare_items();
 
 		MainWP_DB::data_seek( $websites, 0 );
 
-		if ( $enableScr ) {
-			?>
+		?>
 		<div class="ui secondary segment" style="margin-bottom:0;">
 			<div class="ui form">
 				<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
 			</div>
 		</div>
-		<?php } ?>
 		<div id="mainwp-screenshots-sites" class="ui segment">
 		<?php
 		/**
@@ -96,11 +67,8 @@ class MainWP_Manage_Screenshots {
 		 * @since 4.1.8
 		 */
 		$cards_per_row = apply_filters( 'mainwp_cards_per_row', 'five' );
-		if ( $enableScr ) {
-			?>
-
-			<div id="mainwp-sites-previews">
-
+		?>
+		<div id="mainwp-sites-previews">
 				<div class="ui <?php echo $cards_per_row; ?> cards" >
 					<?php
 					while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -143,10 +111,25 @@ class MainWP_Manage_Screenshots {
 				transition : 'fade in',
 				duration   : 1000
 			});
+
+			mainwp_manage_sites_screen_options = function () {
+				jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( {
+					allowMultiple: true,
+					onHide: function () {
+						//ok.
+					}
+				} ).modal( 'show' );
+
+				jQuery( '#manage-sites-screen-options-form' ).submit( function() {
+					jQuery( '#mainwp-manage-sites-screen-options-modal' ).modal( 'hide' );
+				} );
+				return false;
+			};
+
 		</script>
-			<?php
-		}
+		<?php
 		MainWP_DB::free_result( $websites );
+		self::render_screen_options();
 		/**
 		 * Sites Page Footer
 		 *
@@ -154,8 +137,83 @@ class MainWP_Manage_Screenshots {
 		 *
 		 * @since Unknown
 		 */
-		do_action( 'mainwp_pagefooter_sites', 'ScreenshotsSites' );
+		do_action( 'mainwp_pagefooter_sites', 'managesites' );
 	}
+
+	/**
+	 * Method render_screen_options()
+	 *
+	 * Render Screen Options Modal.
+	 */
+	public static function render_screen_options() {
+
+		$siteViewMode = get_user_option( 'mainwp_sitesviewmode' );
+		if ( 'grid' !== $siteViewMode && 'table' !== $siteViewMode ) {
+			$siteViewMode = 'table';
+		}
+		?>
+		<div class="ui modal" id="mainwp-manage-sites-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<form method="POST" action="" id="manage-sites-screen-options-form" name="manage_sites_screen_options_form">
+					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
+					<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'SreenshotsSitesScrOptions' ); ?>" />
+					<div class="ui grid field">
+						<label class="top aligned six wide column" tabindex="0"><?php esc_html_e( 'Sites view mode', 'mainwp' ); ?></label>
+						<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Sites view mode.', 'mainwp' ); ?>" data-inverted="" data-position="left center">
+							<div class="ui info message">
+								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
+								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+							</div>
+							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
+								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
+								<option value="grid" <?php echo ( 'grid' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Grid', 'mainwp' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="ui hidden divider"></div>
+					<div class="ui hidden divider"></div>
+				</div>
+				<div class="actions">
+					<div class="ui two columns grid">
+						<div class="left aligned column">
+							<span data-tooltip="<?php esc_attr_e( 'Returns this page to the state it was in when installed. The feature also restores any column you have moved through the drag and drop feature on the page.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><input type="button" class="ui button" name="reset" id="reset-managersites-settings" value="<?php esc_attr_e( 'Reset Page', 'mainwp' ); ?>" /></span>
+						</div>
+						<div class="ui right aligned column">
+					<input type="submit" class="ui green button" name="btnSubmit" id="submit-managersites-settings" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+					<div class="ui cancel button"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
+				</div>
+					</div>
+				</div>
+				<input type="hidden" name="reset_managersites_columns_order" value="0">
+			</form>
+		</div>
+		<div class="ui small modal" id="mainwp-manage-sites-site-preview-screen-options-modal">
+			<div class="header"><?php esc_html_e( 'Screen Options', 'mainwp' ); ?></div>
+			<div class="scrolling content ui form">
+				<span><?php esc_html_e( 'Would you like to turn on home screen previews?  This function queries WordPress.com servers to capture a screenshot of your site the same way comments shows you preview of URLs.', 'mainwp' ); ?>
+			</div>
+			<div class="actions">
+				<div class="ui ok button"><?php esc_html_e( 'Yes', 'mainwp' ); ?></div>
+				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery('#reset-managersites-settings').on( 'click', function () {
+					mainwp_confirm(__( 'Are you sure.' ), function(){						
+						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
+						jQuery('#submit-managersites-settings').click();						
+					}, false, false, true );
+					return false;
+				});
+			} );
+		</script>
+		<?php
+	}
+
 
 	/**
 	 * Method render_header_tabs()
@@ -170,16 +228,12 @@ class MainWP_Manage_Screenshots {
 			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
 			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
 		}
-		$enableScr = get_option( 'enable_disable_screenshots', true );
+	
 		?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">
 				<div class="equal width row ui mini form">
 				<div class="middle aligned column">
-						<div class="ten wide column ui toggle checkbox not-auto-init" id="enable_disable_screenshots" data-tooltip="<?php esc_attr_e( 'Enable/Disable screenshots.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-							<label class="six wide column middle aligned"><?php esc_html_e( 'Enable the Screenshots feature', 'mainwp' ); ?></label>
-							<input type="checkbox" <?php echo $enableScr ? 'checked="true"' : ''; ?>/>
-						</div>
 					</div>
 					<div class="right aligned middle aligned column">
 					<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
@@ -222,7 +276,7 @@ class MainWP_Manage_Screenshots {
 					if ( 'yes' == isNot ){
 						params += '&isnot=yes';
 					}
-					window.location = 'admin.php?page=ScreenshotsSites' + params;
+					window.location = 'admin.php?page=managesites' + params;
 					return false;
 				};
 

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8
 Requires PHP: 7.0
-Stable tag: 4.1.9.1
+Stable tag: 4.1.10
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -176,7 +176,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.1.10 - 10-XX-2021 =
+= 4.1.10 - 10-20-2021 =
 * Fixed: An issue with saving the OpenSSL.cnf file path option
 * Fixed: Incorrect color coding for the error message in the Quick Setup Wizard
 * Fixed: Letter capitalization in the Email Settings info message
@@ -194,6 +194,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Info messages to pages where these were missing
 * Added: Accordion elements to the sidebar on the Extensions page
 * Added: 'Maximum simultaneous sync requests' and 'Maximum simultaneous install and update requests' chekcs to the System Report
+* Added: Option to hide unwanted columns to the Monitoring page Screen Options
 * Updated: Reworded multiple error messages
 * Updated: Moved the Manage Groups JS code to a separate file
 * Updated: Changed the TLS version option label from "Let's Encrypt (TLS v1.2)" to "TLS v1.2"
@@ -206,6 +207,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Moved the feedback message position to the top of the element in the Edit Notes modal
 * Updated: Renamed the 'View Template' button to 'Edit Template' button if a custom template is in use
 * Updated: Renamed the 'Delete Template' button to 'Return to Default Template' button
+* Updated: Moved the Screenshots page to the Grid sites view mode
 * Removed: Unused JavaScript code
 * Removed: Unused CSS code
 * Removed: Sidebar Options section from the sidebar element

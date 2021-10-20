@@ -37,7 +37,7 @@ class MainWP_Monitoring_Handler {
 				MainWP_Utility::update_option( 'mainwp_sitehealthThreshold', $val );
 				return true;
 			}
-		}
+		}		
 		return false;
 	}
 

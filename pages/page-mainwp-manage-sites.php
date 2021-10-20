@@ -241,7 +241,7 @@ class MainWP_Manage_Sites {
 		}
 
 		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );
-		
+
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		if ( 'grid' !== $sitesViewMode ) {
 			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
@@ -1265,7 +1265,7 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );		
+		$sitesViewMode = get_user_option( 'mainwp_sitesviewmode' );
 		if ( 'grid' == $sitesViewMode ) {
 			MainWP_Manage_Screenshots::render_all_sites();
 		} else {

@@ -226,7 +226,7 @@ class MainWP_System_Handler {
 						$show_cols[ $col ] = 0; // uncheck, hide columns.
 					}
 				}
-			}			
+			}
 			$user = wp_get_current_user();
 			if ( $user ) {
 				$val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'table' );
@@ -246,7 +246,7 @@ class MainWP_System_Handler {
 				}
 				update_user_option( $user->ID, 'mainwp_sitesviewmode', $val, true );
 			}
-		}		
+		}
 	}
 
 	/**
@@ -270,7 +270,7 @@ class MainWP_System_Handler {
 					}
 				}
 			}
-			
+
 			$user = wp_get_current_user();
 			if ( $user ) {
 				update_user_option( $user->ID, 'mainwp_settings_show_monitoring_sites_columns', $show_cols, true );
@@ -288,8 +288,8 @@ class MainWP_System_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function handle_mainwp_tools_settings() {
-		
-		$user                  = wp_get_current_user();
+
+		$user = wp_get_current_user();
 		if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {
 			if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 				if ( isset( $_POST['mainwp_restore_info_messages'] ) && ! empty( $_POST['mainwp_restore_info_messages'] ) ) {
@@ -304,7 +304,7 @@ class MainWP_System_Handler {
 				}
 			}
 		}
-		
+
 		$update_screen_options = false;
 		if ( isset( $_POST['wp_nonce'] ) && ( wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) || wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPScrOptions' ) ) ) {
 			$update_screen_options = true;
@@ -379,7 +379,7 @@ class MainWP_System_Handler {
 			$this->handle_manage_sites_screen_settings();
 			$this->handle_monitoring_sites_screen_settings();
 		}
-				
+
 		if ( isset( $_POST['select_mainwp_options_siteview'] ) ) {
 			$this->include_pluggable();
 			if ( check_admin_referer( 'mainwp-admin-nonce' ) ) {

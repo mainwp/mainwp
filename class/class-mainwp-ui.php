@@ -1532,7 +1532,7 @@ class MainWP_UI {
 		<?php if ( ! $setting_page ) : ?>
 			<?php if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $sidebar_pages ) ) : ?>
 				<?php
-				$which_settings = 'sidebar_settings';
+				$which_settings  = 'sidebar_settings';
 				$sidebarPosition = get_user_option( 'mainwp_sidebarPosition' );
 				if ( false === $sidebarPosition ) {
 					$sidebarPosition = 1;
@@ -1560,7 +1560,7 @@ class MainWP_UI {
 				<input type="checkbox" name="hide_update_everything" <?php echo ( ( 1 == get_option( 'mainwp_hide_update_everything' ) ) ? 'checked="true"' : '' ); ?> />
 			</div>
 		</div>
-		<?php
+			<?php
 			$overviewColumns = get_option( 'mainwp_number_overview_columns', 2 );
 			if ( 2 != $overviewColumns && 3 != $overviewColumns ) {
 				$overviewColumns = 2;

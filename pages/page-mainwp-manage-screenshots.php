@@ -46,7 +46,7 @@ class MainWP_Manage_Screenshots {
 		do_action( 'mainwp_pageheader_sites', 'managesites' );
 
 		self::render_header_tabs();
-		
+
 		$websites = self::prepare_items();
 
 		MainWP_DB::data_seek( $websites, 0 );
@@ -228,7 +228,7 @@ class MainWP_Manage_Screenshots {
 			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
 			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
 		}
-	
+
 		?>
 		<div class="mainwp-sub-header">
 			<div class="ui grid">

@@ -687,9 +687,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 				} catch(err) {
 					// to fix js error.
 				}
-					<?php } ?>
-
-					
+				<?php } ?>
 				_init_manage_sites_screen = function() {
 						<?php
 						if ( 0 == $count ) {

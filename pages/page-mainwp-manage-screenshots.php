@@ -199,7 +199,6 @@ class MainWP_Manage_Screenshots {
 				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
 			</div>
 		</div>
-		
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery('#reset-managersites-settings').on( 'click', function () {

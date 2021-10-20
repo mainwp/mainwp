@@ -464,7 +464,6 @@ class MainWP_Manage_Sites {
 				<div class="ui cancel button"><?php esc_html_e( 'No', 'mainwp' ); ?></div>
 			</div>
 		</div>
-		
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery( '.ui.checkbox.not-auto-init.site_preview' ).checkbox( {

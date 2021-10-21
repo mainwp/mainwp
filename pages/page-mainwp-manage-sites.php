@@ -248,7 +248,6 @@ class MainWP_Manage_Sites {
 		} else {
 			new MainWP_Manage_Screenshots(); // to init hooks.
 		}
-
 	}
 
 	/**

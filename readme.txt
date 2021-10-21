@@ -176,7 +176,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
-= 4.1.10 - 10-20-2021 =
+= 4.1.10 - 10-21-2021 =
 * Fixed: An issue with saving the OpenSSL.cnf file path option
 * Fixed: Incorrect color coding for the error message in the Quick Setup Wizard
 * Fixed: Letter capitalization in the Email Settings info message
@@ -193,7 +193,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Added: Restore Info Messages button to the MainWP Tools page to restore dismissed info messages
 * Added: Info messages to pages where these were missing
 * Added: Accordion elements to the sidebar on the Extensions page
-* Added: 'Maximum simultaneous sync requests' and 'Maximum simultaneous install and update requests' chekcs to the System Report
+* Added: 'Maximum simultaneous sync requests' and 'Maximum simultaneous install and update requests' checks to the System Report
 * Added: Option to hide unwanted columns to the Monitoring page Screen Options
 * Updated: Reworded multiple error messages
 * Updated: Moved the Manage Groups JS code to a separate file

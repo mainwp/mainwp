@@ -390,7 +390,7 @@ class MainWP_Manage_Sites {
 							<div class="ui info message">
 								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
 								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 							</div>
 							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
 								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
@@ -481,7 +481,7 @@ class MainWP_Manage_Sites {
 					}
 				} );
 				jQuery('#reset-managersites-settings').on( 'click', function () {
-					mainwp_confirm(__( 'Are you sure.' ), function(){						
+					mainwp_confirm(__( 'Are you sure.' ), function(){
 						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
 						jQuery('input[name=mainwp_default_sites_per_page]').val(25);
 						jQuery('.mainwp_hide_wpmenu_checkboxes input[id^="mainwp_show_column_"]').prop( 'checked', false );
@@ -491,7 +491,7 @@ class MainWP_Manage_Sites {
 							jQuery('.mainwp_hide_wpmenu_checkboxes input[id="mainwp_show_column_' + value + '"]').prop( 'checked', true );
 						} );
 						jQuery('input[name=reset_managersites_columns_order]').attr('value',1);
-						jQuery('#submit-managersites-settings').click();						
+						jQuery('#submit-managersites-settings').click();
 					}, false, false, true );
 					return false;
 				});

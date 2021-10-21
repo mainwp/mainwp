@@ -70,7 +70,7 @@ class MainWP_Manage_Screenshots {
 								<div class="item" data-value=""><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
 								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
 							</div>
-						</div>											
+						</div>
 						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
 							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
 							<i class="dropdown icon"></i>
@@ -95,7 +95,7 @@ class MainWP_Manage_Screenshots {
 				mainwp_screenshots_sites_filter = function() {
 					var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
 					var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-					var params = '';						
+					var params = '';
 					params += '&g=' + group;
 					if ( 'yes' == isNot ){
 						params += '&isnot=yes';
@@ -162,7 +162,7 @@ class MainWP_Manage_Screenshots {
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
 				<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
 				<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-				<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+				<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 		</div>
 			<?php endif; ?>
 		<?php
@@ -182,7 +182,7 @@ class MainWP_Manage_Screenshots {
 
 						?>
 					<div class="card" site-url="<?php echo $website->url; ?>">
-						<div class="image">						
+						<div class="image">
 							<img data-src="//s0.wordpress.com/mshots/v1/<?php echo rawurlencode( $website->url ); ?>?w=900">
 						</div>
 						<div class="content">
@@ -271,7 +271,7 @@ class MainWP_Manage_Screenshots {
 							<div class="ui info message">
 								<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
 								<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
-								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+								<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you a preview of URLs.', 'mainwp' ); ?></div>
 							</div>
 							<select name="mainwp_sitesviewmode" id="mainwp_sitesviewmode" class="ui dropdown">
 								<option value="table" <?php echo ( 'table' == $siteViewMode ? 'selected' : '' ); ?>><?php esc_html_e( 'Table', 'mainwp' ); ?></option>
@@ -309,9 +309,9 @@ class MainWP_Manage_Screenshots {
 		<script type="text/javascript">
 			jQuery( document ).ready( function () {
 				jQuery('#reset-managersites-settings').on( 'click', function () {
-					mainwp_confirm(__( 'Are you sure.' ), function(){						
+					mainwp_confirm(__( 'Are you sure.' ), function(){
 						jQuery('#mainwp_sitesviewmode').dropdown( 'set selected', 'table' );
-						jQuery('#submit-managersites-settings').click();						
+						jQuery('#submit-managersites-settings').click();
 					}, false, false, true );
 					return false;
 				});

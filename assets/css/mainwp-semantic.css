@@ -138,3 +138,7 @@
   border-bottom: 1px solid #d4d4d5;
   border-left: 1px solid #d4d4d5;
 }
+
+.mainwp-ui .ui.multiple.dropdown > .label {
+  vertical-align: baseline;
+}

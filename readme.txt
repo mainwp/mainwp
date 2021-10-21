@@ -208,6 +208,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: Renamed the 'View Template' button to 'Edit Template' button if a custom template is in use
 * Updated: Renamed the 'Delete Template' button to 'Return to Default Template' button
 * Updated: Moved the Screenshots page to the Grid sites view mode
+* Updated: Moved 'Use WP Cron' and 'Optimize for shared hosting or big networks' options to Advanced Settings
+* Updated: Removed the push to the bottom effect from the sticky header element
 * Removed: Unused JavaScript code
 * Removed: Unused CSS code
 * Removed: Sidebar Options section from the sidebar element

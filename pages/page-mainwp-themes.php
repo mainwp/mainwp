@@ -424,7 +424,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed themes on your child sites. Here you can activate, deactive, and delete installed themes. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage installed themes on your child sites.  Here you can activate, deactive, and delete installed themes.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1196,7 +1196,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-							<?php echo sprintf( __( 'Install themes on your child sites. You can install themes from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1817,7 +1817,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2016,7 +2016,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

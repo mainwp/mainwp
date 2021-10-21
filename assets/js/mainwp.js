@@ -1395,7 +1395,7 @@ mainwp_managesites_add = function () {
       if (response == 'HTTPERROR') {
         errors.push(__('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, contact the MainWP Support.'));
       } else if (response == 'NOMAINWP') {
-        errors.push(__('MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.'));
+        errors.push(__('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.'));
       } else if (response.substr(0, 5) == 'ERROR') {
         if (response.length == 5) {
           errors.push(__('Undefined error occurred. Please try again. If the issue does not resolve, please contact the MainWP Support.'));
@@ -2635,9 +2635,9 @@ getErrorMessage = function (pError) {
   } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
     var error = '';
     if (pError.extra) {
-      error = __('MainWP Child plugin not detected. First, install and activate the plugin and add your site to your MainWP Dashboard afterward. If you continue experiencing this issue, check the child site for <a href="https://meta.mainwp.com/t/known-plugin-conflicts/402">known plugin conflicts</a>, or check the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a> for help.', pError.extra); // to fix incorrect encoding
+      error = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a> for help.', pError.extra); // to fix incorrect encoding
     } else {
-      error = __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP Dashboard afterwards.');
+      error = __('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a> for help.');
     }
 
     return error;

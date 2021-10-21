@@ -258,7 +258,7 @@ class MainWP_Bulk_Update_Admin_Passwords {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-admin-pass-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-admin-pass-info-message"></i>
-							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites. If needed, use the provided form to set a new password for these accounts. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'See the list of Admininstrator users used to establish secure connection between your MainWP Dashboard and child sites.  If needed, use the provided form to set a new password for these accounts.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/bulk-update-administrator-passwords/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 						<?php

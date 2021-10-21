@@ -1224,7 +1224,7 @@ class MainWP_Connect {
 			$others['raw_response'] = 'yes';
 		}
 
-		$params['optimize'] = ( ( 1 == get_option( 'mainwp_optimize' ) ) ? 1 : 0 );
+		$params['optimize'] = ( ( 1 == get_option( 'mainwp_optimize', 0 ) ) ? 1 : 0 );
 
 		$updating_website = false;
 		$type             = '';

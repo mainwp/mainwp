@@ -445,7 +445,7 @@ class MainWP_Plugins {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed plugins on your child sites. Here you can activate, deactive, and delete installed plugins. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactive, and delete installed plugins.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -1234,7 +1234,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Install plugins on your child sites. You can install plugins from the WordPress.org repository or by uploading a ZIP file. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1389,7 +1389,7 @@ class MainWP_Plugins {
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-plugins-auto-updates-info-message"></i>
 							<div><?php esc_html_e( 'The MainWP Advanced Auto Updates feature is a tool for your Dashboard to automatically update plugins that you trust to be updated without breaking your Child sites.', 'mainwp' ); ?></div>
 							<div><?php esc_html_e( 'Only mark plugins as trusted if you are absolutely sure they can be automatically updated by your MainWP Dashboard without causing issues on the Child sites!', 'mainwp' ); ?></div>
-							<div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release. Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
+							<div><strong><?php esc_html_e( 'Advanced Auto Updates a delayed approximately 24 hours from the update release.  Ignored plugins can not be automatically updated.', 'mainwp' ); ?></strong></div>
 						</div>
 						<?php endif; ?>
 						<div class="ui inverted dimmer">
@@ -1792,7 +1792,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -1995,7 +1995,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

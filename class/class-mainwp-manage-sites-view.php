@@ -792,7 +792,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-mainwp-edit-site-info-message-info-message"></i>
-					<?php echo sprintf( __( 'Edit the %s (%s) child site settings. For additional help, please check this %shelp documentation%s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Edit the %s (%s) child site settings.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1269,7 +1269,7 @@ class MainWP_Manage_Sites_View {
 		<div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Email settings saved successfully.', 'mainwp' ); ?></div>
 		<?php endif; ?>		
 		<div class="ui info message">
-			<?php esc_html_e( 'Email notifications sent from MainWP Dashboard about this child site are listed below. Click on an email to configure it.', 'mainwp' ); ?>
+			<?php esc_html_e( 'Email notifications sent from MainWP Dashboard about this child site are listed below.  Click on an email to configure it.', 'mainwp' ); ?>
 		</div>
 			<table class="ui single line table" id="mainwp-emails-settings-table">
 				<thead>
@@ -1418,7 +1418,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
 					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to your MainWP Dashboard afterward. If you continue experiencing this issue, check the child site for %1$sknown plugin conflicts%2$s, or check the %3$sMainWP Community%4$s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/t/known-plugin-conflicts/402">', '</a>', '<a href="https://meta.mainwp.com/c/community-support/5">', '</a>' );
+					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
 					throw new \Exception( $error );
 				}
 			}
@@ -1620,7 +1620,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = __( 'MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.', 'mainwp' );
+					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
 				} else {
 					$error = $e->getMessage();
 				}

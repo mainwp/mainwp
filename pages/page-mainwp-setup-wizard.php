@@ -446,7 +446,7 @@ class MainWP_Setup_Wizard {
 		<form method="post" class="ui form">
 			<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 			<div class="ui grid field">
-				<div class="ui info message"><?php echo sprintf( __( 'Excessive checking can cause server resource issues. For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
+				<div class="ui info message"><?php echo sprintf( __( 'Excessive checking can cause server resource issues.  For frequent checks or lots of sites, we recommend the %1$sMainWP Advanced Uptime Monitoring%2$s extension.', 'mainwp' ), '<a href="https://mainwp.com/extension/advanced-uptime-monitor" target="_blank">', '</a>' ); ?></div>
 				<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring', 'mainwp' ); ?></label>
 				<div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="monitoring">
 					<input type="checkbox" name="mainwp_setup_disableSitesChecking" id="mainwp_setup_disableSitesChecking" <?php echo ( 1 == $disableSitesMonitoring ? '' : 'checked="true"' ); ?>/>

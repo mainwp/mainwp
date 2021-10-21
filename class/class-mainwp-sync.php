@@ -123,7 +123,7 @@ class MainWP_Sync {
 				$pWebsite,
 				'stats',
 				array(
-					'optimize'                     => ( ( get_option( 'mainwp_optimize' ) == 1 ) ? 1 : 0 ),
+					'optimize'                     => ( ( get_option( 'mainwp_optimize', 0 ) == 1 ) ? 1 : 0 ),
 					'cloneSites'                   => ( ! $cloneEnabled ? 0 : rawurlencode( wp_json_encode( $cloneSites ) ) ),
 					'othersData'                   => wp_json_encode( $othersData ),
 					'server'                       => get_admin_url(),
@@ -145,7 +145,7 @@ class MainWP_Sync {
 				$sync_errors  = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors  = __( 'MainWP Child plugin not detected', 'mainwp' );
+				$sync_errors  = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
 				$check_result = 1;
 			}
 

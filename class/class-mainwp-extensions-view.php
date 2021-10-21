@@ -137,7 +137,7 @@ class MainWP_Extensions_View {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-extensions-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-extensions-info-message"></i>
-						<?php echo sprintf( __( 'Quickly access, install, and activate your MainWP extensions. If you need additional help with managing your MainWP Extensions, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a>' ); ?>
+						<?php echo sprintf( __( 'Quickly access, install, and activate your MainWP extensions.  If you need additional help with managing your MainWP Extensions, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/category/getting-started/first-steps-with-extensions/" target="_blank">', '</a>' ); ?>
 					</div>
 					<?php endif; ?>
 				<div class="ui four stackable cards" id="mainwp-extensions-list">

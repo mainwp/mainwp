@@ -117,7 +117,7 @@ mainwp_setup_managesites_add = function () {
       if ( response == 'HTTPERROR' ) {
         errors.push( 'This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, contact the MainWP Support.' );
       } else if ( response == 'NOMAINWP' ) {
-        errors.push( 'MainWP Child Plugin not detected! Please make sure that the MainWP Child plugin is installed and activated on the child site. For additional help, contact the MainWP Support.' );
+        errors.push( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a> for help.' );
       } else if ( response.substr( 0, 5 ) == 'ERROR' ) {
         if ( response.length == 5 ) {
           errors.push( 'Undefined error occurred. Please try again. If the issue does not resolve, please contact the MainWP Support.' );

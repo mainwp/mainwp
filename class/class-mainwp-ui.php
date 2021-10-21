@@ -706,7 +706,8 @@ class MainWP_UI {
 				jQuery('#mainwp-documentation-sidebar').prependTo('body');
 				jQuery('body > div#wpwrap').addClass('pusher');
 
-				jQuery( '.ui.sticky' ).sticky();
+				jQuery( '.ui.sticky' ).sticky( 'setting', 'pushing', false ).sticky();
+
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.help.sidebar' ).sidebar( {
 						transition: 'overlay'

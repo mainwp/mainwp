@@ -24,6 +24,112 @@ class MainWP_Manage_Screenshots {
 	}
 
 	/**
+	 * MainWP_Manage_Screenshots constructor.
+	 *
+	 * Run each time the class is called.
+	 * Add action to generate tabletop.
+	 */
+	public function __construct() {
+		add_action( 'mainwp_managesites_tabletop', array( &$this, 'generate_tabletop' ) );
+	}
+
+	/**
+	 * Method generate_tabletop()
+	 *
+	 * Run the render_manage_sites_table_top menthod.
+	 */
+	public function generate_tabletop() {
+		$this->render_manage_sites_table_top();
+	}
+
+	/**
+	 * Render manage sites table top.
+	 */
+	public function render_manage_sites_table_top() {
+		$selected_group = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
+		$is_not         = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
+
+		if ( ! isset( $_REQUEST['g'] ) ) {
+			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
+			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
+		}
+
+		?>
+		<div class="ui grid">
+			<div class="equal width row ui mini form">
+			<div class="middle aligned column">
+					<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
+				</div>
+				<div class="right aligned middle aligned column">
+				<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
+					<div class="ui selection dropdown" id="mainwp_is_not_site">
+							<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
+							<div class="menu">
+								<div class="item" data-value=""><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
+								<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
+							</div>
+						</div>											
+						<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
+							<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
+							<i class="dropdown icon"></i>
+							<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
+							<div class="menu">
+								<?php
+								$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
+								foreach ( $groups as $group ) {
+									?>
+									<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
+									<?php
+								}
+								?>
+								<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
+							</div>
+						</div>
+						<button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+				mainwp_screenshots_sites_filter = function() {
+					var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
+					var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
+					var params = '';						
+					params += '&g=' + group;
+					if ( 'yes' == isNot ){
+						params += '&isnot=yes';
+					}
+					window.location = 'admin.php?page=managesites' + params;
+					return false;
+				};
+
+				jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
+					var filter = jQuery(this).val().toLowerCase();
+					var siteItems =  jQuery('#mainwp-sites-previews').find( '.card' );
+					for ( var i = 0; i < siteItems.length; i++ ) {
+						var currentElement = jQuery( siteItems[i] );
+						var valueurl = jQuery(currentElement).attr('site-url').toLowerCase();
+						var valuename = currentElement.find('.ui.header').text().toLowerCase();
+						if ( valueurl.indexOf( filter ) > -1 || valuename.indexOf( filter ) > -1 ) {
+							currentElement.show();
+						} else {
+							currentElement.hide();
+						}
+					}
+				} );
+
+				jQuery('#mainwp-sites-previews .image img').visibility({
+					type       : 'image',
+					transition : 'fade in',
+					duration   : 1000
+				});
+
+		</script>
+		<?php
+	}
+
+	/**
 	 * Method render_all_sites()
 	 *
 	 * Render Screenshots.
@@ -45,19 +151,20 @@ class MainWP_Manage_Screenshots {
 		 */
 		do_action( 'mainwp_pageheader_sites', 'managesites' );
 
-		self::render_header_tabs();
-
 		$websites = self::prepare_items();
 
 		MainWP_DB::data_seek( $websites, 0 );
 
 		?>
-		<div class="ui secondary segment" style="margin-bottom:0;">
-			<div class="ui form">
-				<input type="text" id="mainwp-screenshots-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>">
-			</div>
-		</div>
 		<div id="mainwp-screenshots-sites" class="ui segment">
+			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-grid-view-mode-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-grid-view-mode-info-message"></i>
+				<div><strong><?php echo __( 'Sites view mode is an experimental feature.', 'mainwp' ); ?></strong></div>
+				<div><?php echo __( 'In the Grid mode, sites options are limited in comparison to the Table mode.', 'mainwp' ); ?></div>
+				<div><?php echo __( 'Grid mode queries WordPress.com servers to capture a screenshot of your site the same way comments show you preview of URLs.', 'mainwp' ); ?></div>
+		</div>
+			<?php endif; ?>
 		<?php
 		/**
 		 * Filter: mainwp_cards_per_row
@@ -212,99 +319,6 @@ class MainWP_Manage_Screenshots {
 		</script>
 		<?php
 	}
-
-
-	/**
-	 * Method render_header_tabs()
-	 *
-	 * Render Sites sub page header tabs.
-	 */
-	public static function render_header_tabs() {
-		$selected_group = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
-		$is_not         = isset( $_REQUEST['isnot'] ) && ( 'yes' == $_REQUEST['isnot'] ) ? true : false;
-
-		if ( ! isset( $_REQUEST['g'] ) ) {
-			$selected_group = get_user_option( 'mainwp_screenshots_filter_group' );
-			$is_not         = get_user_option( 'mainwp_screenshots_filter_is_not' );
-		}
-
-		?>
-		<div class="mainwp-sub-header">
-			<div class="ui grid">
-				<div class="equal width row ui mini form">
-				<div class="middle aligned column">
-					</div>
-					<div class="right aligned middle aligned column">
-					<?php esc_html_e( 'Filter sites: ', 'mainwp' ); ?>
-						<div class="ui selection dropdown" id="mainwp_is_not_site">
-								<input type="hidden" value="<?php echo $is_not ? 'yes' : ''; ?>">
-								<i class="dropdown icon"></i>
-								<div class="default text"><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
-								<div class="menu">
-									<div class="item" data-value=""><?php esc_html_e( 'Is', 'mainwp' ); ?></div>
-									<div class="item" data-value="yes"><?php esc_html_e( 'Is not', 'mainwp' ); ?></div>
-								</div>
-							</div>											
-							<div id="mainwp-filter-sites-group" class="ui multiple selection dropdown">
-								<input type="hidden" value="<?php echo esc_html( $selected_group ); ?>">
-								<i class="dropdown icon"></i>
-								<div class="default text"><?php esc_html_e( 'All groups', 'mainwp' ); ?></div>
-								<div class="menu">
-									<?php
-									$groups = MainWP_DB_Common::instance()->get_groups_for_manage_sites();
-									foreach ( $groups as $group ) {
-										?>
-										<div class="item" data-value="<?php echo $group->id; ?>"><?php echo esc_html( stripslashes( $group->name ) ); ?></div>
-										<?php
-									}
-									?>
-									<div class="item" data-value="nogroups"><?php esc_html_e( 'No Groups', 'mainwp' ); ?></div>
-								</div>
-							</div>
-							<button onclick="mainwp_screenshots_sites_filter()" class="ui tiny basic button"><?php esc_html_e( 'Filter Sites', 'mainwp' ); ?></button>
-					</div>
-				</div>
-			</div>	
-		</div>
-		<script type="text/javascript">
-				mainwp_screenshots_sites_filter = function() {
-					var group = jQuery( "#mainwp-filter-sites-group" ).dropdown( "get value" );
-					var isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
-					var params = '';						
-					params += '&g=' + group;
-					if ( 'yes' == isNot ){
-						params += '&isnot=yes';
-					}
-					window.location = 'admin.php?page=managesites' + params;
-					return false;
-				};
-
-				jQuery( document ).on( 'keyup', '#mainwp-screenshots-sites-filter', function () {
-					var filter = jQuery(this).val().toLowerCase();
-					var siteItems =  jQuery('#mainwp-sites-previews').find( '.card' );
-					for ( var i = 0; i < siteItems.length; i++ ) {
-						var currentElement = jQuery( siteItems[i] );
-						var valueurl = jQuery(currentElement).attr('site-url').toLowerCase();
-						var valuename = currentElement.find('.ui.header').text().toLowerCase();
-						if ( valueurl.indexOf( filter ) > -1 || valuename.indexOf( filter ) > -1 ) {
-							currentElement.show();
-						} else {
-							currentElement.hide();
-						}
-					}
-				} );
-
-				jQuery('#mainwp-sites-previews .image img').visibility({
-					type       : 'image',
-					transition : 'fade in',
-					duration   : 1000
-				});
-
-		</script>
-
-		<?php
-	}
-
 
 	/**
 	 * Prepare the items to be listed.

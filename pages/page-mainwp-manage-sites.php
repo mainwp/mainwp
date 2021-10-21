@@ -245,7 +245,10 @@ class MainWP_Manage_Sites {
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		if ( 'grid' !== $sitesViewMode ) {
 			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+		} else {
+			new MainWP_Manage_Screenshots(); // to init hooks.
 		}
+
 	}
 
 	/**
@@ -546,7 +549,7 @@ class MainWP_Manage_Sites {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
 					<div><?php echo sprintf( __( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %sTest Connection%s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
 					<div><?php echo sprintf( __( 'If you still can not connect the site, see the list of %spotential issues%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
 					</div>
@@ -557,7 +560,7 @@ class MainWP_Manage_Sites {
 			<div id="mainwp_managesites_add_errors" style="display: none" class="mainwp-notice mainwp-notice-red"></div>
 			<div id="mainwp_managesites_add_message" style="display: none" class="mainwp-notice mainwp-notice-green"></div>
 			<div class="ui info message" id="mainwp_message_verify_installed_child" style="display:none">
-				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard.', 'mainwp' ); ?>
+				<?php esc_html_e( 'MainWP requires the MainWP Child plugin to be installed and activated on the WordPress site that you want to connect to your MainWP Dashboard. ', 'mainwp' ); ?>
 				<?php esc_html_e( 'To install the MainWP Child plugin, please follow these steps:', 'mainwp' ); ?>
 				<ol>
 					<li><?php printf( __( 'Login to the WordPress site you want to connect %1$s(open it in a new browser tab)%2$s', 'mainwp' ), '<em>', '</em>' ); ?></li>
@@ -788,7 +791,7 @@ class MainWP_Manage_Sites {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-							<?php echo sprintf( __( 'Use the form to bulk import sites. You can download the sample CSV file to see how to fomat the import file properly. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Use the form to bulk import sites.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>

@@ -572,7 +572,7 @@ class MainWP_Post {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing posts on your child sites. Here you can edit, view and delete pages. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1974,7 +1974,7 @@ class MainWP_Post {
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp_boilerplate_info_notice"></i>
 							<div><?php echo __( 'Boilerplate gives you the ability to create quickly, edit, and remove repetitive pages or posts across your network of child sites. Using the available placeholders (tokens), you can customize these pages for each site.', 'mainwp' ); ?></div>
-							<div><?php echo __( 'This is the perfect solution for commonly repeated pages such as your “Privacy Policy,” “About Us,” “Terms of Use,” “Support Policy,” or any other page with standard text that you need to distribute across your sites.', 'mainwp' ); ?></div>
+							<div><?php echo __( 'This is the perfect solution for commonly repeated pages such as your "Privacy Policy", "About Us", "Terms of Use", "Support Policy" or any other page with standard text that you need to distribute across your sites.', 'mainwp' ); ?></div>
 						</div>
 						<?php endif; ?>
 					<?php endif; ?>

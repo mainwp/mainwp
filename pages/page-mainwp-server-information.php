@@ -407,7 +407,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements. If you need help with resolving specific errors, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
@@ -806,7 +806,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly. If scheduled actions do not run normally, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
@@ -1330,7 +1330,7 @@ class MainWP_Server_Information {
 				<div class="ui hidden divider"></div>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
-					<?php echo sprintf( __( 'Enable specific logging system. For additional help, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Enable specific logging system.  For additional help, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 		<?php

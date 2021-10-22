@@ -177,7 +177,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 4.1.10.1 - 10-22-2021 =
-Fixed: An issue with the Removal verification caused by the Update confirmations option
+* Fixed: An issue with the Removal verification caused by the Update confirmations option
 
 = 4.1.10 - 10-21-2021 =
 * Fixed: An issue with saving the OpenSSL.cnf file path option

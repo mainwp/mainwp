@@ -152,7 +152,7 @@ jQuery( document ).ready( function () {
 mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateType, multiple, extra ) {    // updateType: 1 single update, 2 multi update
   if ( jQuery( '#mainwp-disable-update-confirmations' ).length > 0 ) {
     var confVal = jQuery( '#mainwp-disable-update-confirmations' ).val();
-    if ( typeof updateType !== 'undefined' && ( confVal == 2 || ( confVal == 1 && updateType == 1 ) ) ) {
+    if ( typeof updateType !== 'undefined' && updateType !== false && ( confVal == 2 || ( confVal == 1 && updateType == 1 ) ) ) {
       if ( confirmed_callback && typeof confirmed_callback == 'function' )
                 confirmed_callback();
             return false;
@@ -161,14 +161,14 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateTy
     
   jQuery( '#mainwp-modal-confirm .content-massage' ).html( msg );
 
-  if ( typeof extra !== 'undefined' ) {
+  if ( typeof extra !== 'undefined' && extra !== false ) {
     jQuery( '#mainwp-confirm-form' ).show();
     jQuery( '#mainwp-confirm-form' ).find( 'label' ).html( 'Type ' + extra + ' to confirm' );
   }
 
     var opts = {
         onApprove : function() {
-      if ( typeof extra !== 'undefined' ) {
+      if ( typeof extra !== 'undefined'  && extra !== false ) {
         var extraValue = jQuery( '#mainwp-confirm-input' ).val();
         if ( confirmed_callback && typeof confirmed_callback == 'function' ) {
           if ( extraValue === extra ) {
@@ -196,7 +196,7 @@ mainwp_confirm = function( msg, confirmed_callback, cancelled_callback, updateTy
   jQuery( '#mainwp-modal-confirm' ).modal( opts ).modal( 'show' );
     
     // if it is update confirm and then display the update confirm notice text
-  if ( typeof updateType !== 'undefined' && ( updateType == 1 || updateType == 2 ) ) {
+  if ( typeof updateType !== 'undefined' && updateType !== false && ( updateType == 1 || updateType == 2 ) ) {
     jQuery( '#mainwp-modal-confirm .update-confirm-notice ').show();
     }
     

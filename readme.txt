@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8.1
 Requires PHP: 7.0
-Stable tag: 4.1.10
+Stable tag: 4.1.10.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.10.1 - 10-22-2021 =
+* Fixed: An issue with the Update confirmations option
 
 = 4.1.10 - 10-21-2021 =
 * Fixed: An issue with saving the OpenSSL.cnf file path option

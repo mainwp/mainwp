@@ -28,7 +28,7 @@ jQuery( document ).ready( function () {
 
   jQuery( document ).on( 'click', '#mainwp-bulk-trust-plugins-action-apply', function () {
 
-    var action = jQuery( '#mainwp-bulk-actions' ).find( '.item.selected' ).attr( 'value' );
+    var action = jQuery("#mainwp-bulk-actions").dropdown( "get value" );
 
         if ( action == 'none' )
             return false;

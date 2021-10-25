@@ -1002,11 +1002,11 @@ class MainWP_System_Cron_Jobs {
 					if ( ( null != $sitesCheckCompleted ) && ( false == $sitesCheckCompleted[ $websiteId ] ) ) {
 						continue;
 					}
-					MainWP_Logger::instance()->debug( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']' );
-
-					MainWP_Logger::instance()->log_action( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 					try {
+
+						MainWP_Logger::instance()->debug( 'CRON :: auto update plugins [websiteid=' . $websiteId . ']' );
+						MainWP_Logger::instance()->log_action( 'CRON :: auto update plugins [websiteid=' . $websiteId . '] :: slugs :: ' . urldecode( implode( ',', $slugs ) ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 						/**
 						* Action: mainwp_before_plugin_theme_translation_update
@@ -1052,6 +1052,8 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 
+					MainWP_Logger::instance()->log_action( 'CRON :: auto update theme [websiteid=' . $websiteId . '] :: themes :: ' . implode( ',', $slugs ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+					
 					/**
 					* Action: mainwp_before_plugin_theme_translation_update
 					*
@@ -1098,6 +1100,7 @@ class MainWP_System_Cron_Jobs {
 						continue;
 					}
 					MainWP_Logger::Instance()->debug( 'CRON :: auto update core [websiteid=' . $websiteId . ']' );
+					MainWP_Logger::instance()->log_action( 'CRON :: auto update core [websiteid=' . $websiteId . ']', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 					try {
 						MainWP_Connect::fetch_url_authed( $allWebsites[ $websiteId ], 'upgrade' );
 					} catch ( \Exception $e ) {

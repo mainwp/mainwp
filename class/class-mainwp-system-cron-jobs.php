@@ -1053,7 +1053,7 @@ class MainWP_System_Cron_Jobs {
 					}
 
 					MainWP_Logger::instance()->log_action( 'CRON :: auto update theme [websiteid=' . $websiteId . '] :: themes :: ' . implode( ',', $slugs ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
-					
+
 					/**
 					* Action: mainwp_before_plugin_theme_translation_update
 					*

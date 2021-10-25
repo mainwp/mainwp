@@ -1,4 +1,6 @@
 
+/* eslint complexity: ["error", 100] */
+
 function reload_init()
 {
     read_current_url();

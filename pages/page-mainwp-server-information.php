@@ -487,7 +487,11 @@ class MainWP_Server_Information {
 					self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
 					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
-						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
+						$reuire_curl = '7.18.1';
+						if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {
+							$reuire_curl = '7.29.0';
+						}
+						self::render_row( 'cURL Version', '>=', $reuire_curl, 'get_curl_version', '', '', null );
 						$openssl_version = 'OpenSSL/1.1.0';
 						self::render_row(
 							'cURL SSL Version',

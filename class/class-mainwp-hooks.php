@@ -852,7 +852,7 @@ class MainWP_Hooks {
 	 * @return array $gen_email_settings email settings.
 	 */
 	public function get_notification_settings( $settings, $type ) {
-		$gen_email_settings = selfMainWP_Notification_Settings::get_general_email_settings( $type );
+		$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( $type );
 		return $gen_email_settings;
 	}
 

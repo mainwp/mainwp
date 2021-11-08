@@ -949,7 +949,7 @@ class MainWP_Utility {
 	 * @return array result error or success
 	 * @throws \Exception Error message.
 	 */
-	public static function check_abandoned( $siteId = null, $which ) {
+	public static function check_abandoned( $siteId = null, $which = '' ) {
 		if ( self::ctype_digit( $siteId ) ) {
 			$website = MainWP_DB::instance()->get_website_by_id( $siteId );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {

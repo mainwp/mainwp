@@ -179,6 +179,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 = 4.1.10.2 - 11-8-2021 =
 * Fixed: An issue with running scheduled tasks
 * Fixed: An issue with showing the Remove Site button in the wrong pages
+* Fixed: An issue with setting plugins and themes Trusted status
 * Added: Support for email notifications hooked by extension
 
 = 4.1.10.1 - 10-22-2021 =

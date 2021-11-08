@@ -549,8 +549,8 @@ class MainWP_Extensions_View {
 			'mainwp-branding-extension'              =>
 			array(
 				'slug'       => 'mainwp-branding-extension',
-				'title'      => 'MainWP Branding Extension',
-				'desc'       => 'The MainWP Branding extension allows you to alter the details of the MianWP Child Plugin to reflect your companies brand or completely hide the plugin from the installed plugins list.',
+				'title'      => 'MainWP White Label Extension',
+				'desc'       => 'The MainWP White Label extension allows you to alter the details of the MianWP Child Plugin to reflect your companies brand or completely hide the plugin from the installed plugins list.',
 				'link'       => 'https://mainwp.com/extension/child-plugin-branding/',
 				'img'        => $folder_url . 'branding.png',
 				'product_id' => 'MainWP Branding Extension',

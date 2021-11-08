@@ -848,7 +848,7 @@ class MainWP_Hooks {
 	 *
 	 * @param string $settings hook settings input value.
 	 * @param string $type Notification type.
-	 * 	
+	 *
 	 * @return array $gen_email_settings email settings.
 	 */
 	public function get_notification_settings( $settings, $type ) {

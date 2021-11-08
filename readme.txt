@@ -176,6 +176,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 == Changelog ==
 
+= 4.1.10.2 - 11-8-2021 =
+* Fixed: An issue with running scheduled tasks
+* Fixed: An issue with showing the Remove Site button in the wrong pages
+* Added: Support for email notifications hooked by extension
+
 = 4.1.10.1 - 10-22-2021 =
 * Fixed: An issue with the Removal verification caused by the Update confirmations option
 

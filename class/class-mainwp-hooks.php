@@ -107,7 +107,6 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_notification_get_settings', array( &$this, 'get_notification_settings' ), 10, 2 );
 		add_filter( 'mainwp_send_wp_mail', array( &$this, 'hook_send_wp_mail' ), 10, 5 );
 		add_filter( 'mainwp_notification_get_template_content', array( &$this, 'hook_get_template_html' ), 10, 3 );
-		
 	}
 
 	/**
@@ -843,7 +842,7 @@ class MainWP_Hooks {
 		return MainWP_DB::fetch_array( $result );
 	}
 
-	
+
 	/**
 	 * Get notification email settings.
 	 *
@@ -881,7 +880,7 @@ class MainWP_Hooks {
 	 *
 	 * @return string
 	 */
-	public function hook_get_template_html( $input, $template_name, $args = array() ) {		
+	public function hook_get_template_html( $input, $template_name, $args = array() ) {
 		$mail_content = MainWP_Notification_Template::instance()->get_template_html(
 			$template_name,
 			$args

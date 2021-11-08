@@ -280,7 +280,11 @@ class MainWP_Notification_Settings {
 						<?php
 						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
 						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
-						echo $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+						$copy_message = apply_filters( 'minwp_notification_template_copy_message', '', $templ, $type, $overrided );
+						if ( empty( $copy_message ) ) {
+							$copy_message = $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
+						}
+						echo $copy_message;
 						?>
 						</div>		
 					</div>
@@ -329,6 +333,12 @@ class MainWP_Notification_Settings {
 		} elseif ( 'http_check' === $type ) {
 			$email_description = esc_html__( 'Alert if any of your websites return unexpected HTTP status after running updates.', 'mainwp' );
 		}
+
+		$addition_desc = apply_filters( 'mainwp_notification_type_desc', '', $type );
+		if ( ! empty( $addition_desc ) ) {
+			$email_description = $addition_desc;
+		}
+
 		return $email_description;
 	}
 
@@ -369,6 +379,11 @@ class MainWP_Notification_Settings {
 
 		if ( $enable_http_check ) {
 			$types['http_check'] = __( 'After Updates HTTP Check Email', 'mainwp' );
+		}
+
+		$addition_types = apply_filters( 'mainwp_notification_types', array(), $type );
+		if ( ! empty( $addition_types ) ) {
+			$types = array_merge( $types, $addition_types );
 		}
 
 		if ( empty( $type ) ) {
@@ -508,6 +523,11 @@ class MainWP_Notification_Settings {
 				'heading'    => 'Sites Check',
 			),
 		);
+
+		$addition_default_fields = apply_filters( 'mainwp_default_emails_fields', array(), $recipients, $type, $field , $general );
+		if ( ! empty( $addition_default_fields ) ) {
+			$default_fields = array_merge( $default_fields, $addition_default_fields );
+		}
 
 		if ( ! empty( $type ) && ! empty( $field ) ) {
 			return isset( $default_fields[ $type ] ) && isset( $default_fields[ $type ][ $field ] ) ? $default_fields[ $type ][ $field ] : '';

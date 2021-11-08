@@ -453,7 +453,13 @@ class MainWP_Settings {
 					MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
 				}
 				MainWP_Utility::update_option( 'mainwp_timeDailyUpdate', isset( $_POST['mainwp_timeDailyUpdate'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_timeDailyUpdate'] ) ) : '' );
-				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 ) );
+
+				$old_freq = get_option( 'mainwp_frequencyDailyUpdate' );
+				$new_freq = ( isset( $_POST['mainwp_frequencyDailyUpdate'] ) ? intval( $_POST['mainwp_frequencyDailyUpdate'] ) : 1 );
+				if ( $old_freq != $new_freq ) {
+					MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', 0 ); // reset the value.
+				}
+				MainWP_Utility::update_option( 'mainwp_frequencyDailyUpdate', $new_freq );
 
 				$val  = ( isset( $_POST['mainwp_sidebarPosition'] ) ? intval( $_POST['mainwp_sidebarPosition'] ) : 1 );
 				$user = wp_get_current_user();
@@ -567,15 +573,16 @@ class MainWP_Settings {
 						<?php
 						$timeDailyUpdate      = get_option( 'mainwp_timeDailyUpdate' );
 						$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
-						?>
+						$run_timestamp        = MainWP_System_Cron_Jobs::get_timestamp_from_hh_mm( $timeDailyUpdate );
 
+						?>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Automatic daily sync time', 'mainwp' ); ?></label>
 							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set specific time for the automatic daily sync process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 								<div class="time-selector">
 									<div class="ui input left icon">
 										<i class="clock icon"></i>
-										<input type="text" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
+										<input type="text" current-utc-datetime="<?php echo date( 'Y-m-d H:i:s' ); ?>" sync-time-local-datetime="<?php echo date( 'Y-m-d H:i:s', $run_timestamp ); ?>" local-datetime="<?php echo date( 'Y-m-d H:i:s', MainWP_Utility::get_timestamp() ); // phpcs:ignore -- to get local time. ?>" name="mainwp_timeDailyUpdate" id="mainwp_timeDailyUpdate" value="<?php echo esc_attr( $timeDailyUpdate ); ?>" />
 									</div>
 								</div>
 								<script type="text/javascript">

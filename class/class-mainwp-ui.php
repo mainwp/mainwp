@@ -959,7 +959,7 @@ class MainWP_UI {
 			<?php $website_id = intval( $_GET['dashboard'] ); ?>
 			<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website_id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><i class="sign in icon"></i></a>
 		<?php endif; ?>
-		<?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) ) : ?>
+		<?php if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && isset( $_GET['page'] ) && 'managesites' == $_GET['page'] ) ) : ?>
 			<?php if ( isset( $_GET['dashboard'] ) ) : ?>
 				<?php $website_id = intval( $_GET['dashboard'] ); ?>
 			<?php else : ?>

@@ -265,7 +265,10 @@ class MainWP_Notification {
 	 * @param bool   $mail_content Text format.
 	 * @param string $content_type email content.
 	 */
-	public static function send_wp_mail( $email, $subject, $mail_content, $content_type ) {
+	public static function send_wp_mail( $email, $subject, $mail_content, $content_type = '' ) {
+		if ( empty( $content_type ) ) {
+			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
+		}
 		return wp_mail(
 			$email,
 			$subject,

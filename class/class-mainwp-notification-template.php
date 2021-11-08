@@ -301,6 +301,12 @@ class MainWP_Notification_Template {
 			'site_health'  => 'emails/mainwp-site-health-monitoring-email.php',
 			'http_check'   => 'emails/mainwp-after-update-http-check-email.php',
 		);
+
+		$addition_template_name = apply_filters( 'mainwp_get_notification_template_name_by_type', '', $type );
+		if ( ! empty( $addition_template_name ) ) {
+			return $addition_template_name;
+		}
+
 		return isset( $types[ $type ] ) ? $types[ $type ] : null;
 	}
 
@@ -342,6 +348,7 @@ class MainWP_Notification_Template {
 		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
 				$source_dir = $this->template_path;
+				$source_dir = apply_filters( 'mainwp_default_template_source_dir', $source_dir, $type  );
 				$dest_dir   = $this->template_custom_path;
 				$templ      = self::get_template_name_by_notification_type( $type );
 				$copied     = $wp_filesystem->copy( $source_dir . $templ, $dest_dir . $templ );
@@ -353,7 +360,7 @@ class MainWP_Notification_Template {
 
 		if ( ! empty( $type ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
 			$template_name = self::get_template_name_by_notification_type( $type );
-			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? sanitize_text_field( wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) ) : '';
+			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : '';
 			$updated       = $this->save_template( $template_code, $template_name );
 			if ( $updated ) {
 				$updated_templ = 3;
@@ -382,7 +389,7 @@ class MainWP_Notification_Template {
 		if ( current_user_can( 'edit_themes' ) && ! empty( $template_code ) && ! empty( $template ) ) {
 			$saved = false;
 			$file  = $this->template_custom_path . $template;
-			$code  = wp_unslash( $template_code );
+			$code  = $template_code;
 
 			if ( is_writeable( $file ) ) { // phpcs:ignore WordPress.VIP.FileSystemWritesDisallow.file_ops_is_writeable
 				$f = fopen( $file, 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen

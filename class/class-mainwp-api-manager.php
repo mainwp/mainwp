@@ -66,7 +66,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @since 1.2
 	 */
-	private function __clone() {
+	public function __clone() {
 	}
 
 	/**
@@ -74,7 +74,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @since 1.2
 	 */
-	private function __wakeup() {
+	public function __wakeup() {
 	}
 
 	/**

@@ -104,6 +104,10 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_db_get_websites_for_current_user', array( &$this, 'db_get_websites_for_current_user' ), 10, 2 );
 
 		add_action( 'mainwp_secure_request', array( &$this, 'hook_secure_request' ), 10, 2 );
+		add_filter( 'mainwp_notification_get_settings', array( &$this, 'get_notification_settings' ), 10, 2 );
+		add_filter( 'mainwp_send_wp_mail', array( &$this, 'hook_send_wp_mail' ), 10, 5 );
+		add_filter( 'mainwp_notification_get_template_content', array( &$this, 'hook_get_template_html' ), 10, 3 );
+		
 	}
 
 	/**
@@ -837,6 +841,52 @@ class MainWP_Hooks {
 	 */
 	public function db_fetch_array( $false, $result ) {
 		return MainWP_DB::fetch_array( $result );
+	}
+
+	
+	/**
+	 * Get notification email settings.
+	 *
+	 * @return array $gen_email_settings email settings.
+	 */
+	public function get_notification_settings( $settings, $type ) {
+		$gen_email_settings = selfMainWP_Notification_Settings::get_general_email_settings( $type );
+		return $gen_email_settings;
+	}
+
+	/**
+	 * Hook send_wp_mail().
+	 *
+	 * Send email via wp_mail().
+	 *
+	 * @param string $email send to email.
+	 * @param string $subject email content.
+	 * @param bool   $mail_content Text format.
+	 * @param string $content_type email content.
+	 */
+	public function hook_send_wp_mail( $input, $email, $subject, $formated_content, $content_type = '' ) {
+		MainWP_Notification::send_wp_mail(
+			$email,
+			$subject,
+			$formated_content,
+			$content_type
+		);
+	}
+
+	/**
+	 * Hook get template HTML content.
+	 *
+	 * @param string $template_name Template name.
+	 * @param array  $args          Arguments. (default: array).
+	 *
+	 * @return string
+	 */
+	public function hook_get_template_html( $input, $template_name, $args = array() ) {		
+		$mail_content = MainWP_Notification_Template::instance()->get_template_html(
+			$template_name,
+			$args
+		);
+		return $mail_content;
 	}
 
 	/**

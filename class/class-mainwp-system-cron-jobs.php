@@ -303,7 +303,7 @@ class MainWP_System_Cron_Jobs {
 		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
 		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
 
-		$today_m_y = date( 'd/m/Y', MainWP_Utility::get_timestamp() ); //phpcs:ignore -- local time.
+		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 
 		$lasttimeAutomaticUpdate      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
@@ -390,17 +390,17 @@ class MainWP_System_Cron_Jobs {
 				$this->refresh_saved_fields();
 			}
 		}
-		$sync_time_runable = null;
+		$run_synctime = null;
 		if ( ! empty( $timeDailyUpdate ) ) {
-			$sync_time_runable = false;
+			$run_synctime  = false;
 			$run_timestamp     = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( $local_timestamp > $run_timestamp ) {
-				$sync_time_runable = true; // it is time to run or worked.
+				$run_synctime = true; // it is time to run or worked.
 			} elseif ( ( $local_timestamp - $lasttimeStartAutomaticUpdate ) > DAY_IN_SECONDS ) {
-				$sync_time_runable = true;
+				$run_synctime = true;
 			}
 
-			if ( ! $updatecheck_running && ! $sync_time_runable ) {
+			if ( ! $updatecheck_running && ! $run_synctime ) {
 				MainWP_Logger::instance()->info( 'CRON :: updates check :: wait sync time' );
 				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait sync time :: ' . date( 'Y-m-d H:i:s', $run_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 				// sync time is false.
@@ -415,14 +415,11 @@ class MainWP_System_Cron_Jobs {
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
 			$run_frequency = false;
 			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * $frequence_today_count ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
-				// ok, run.
 				$run_frequency = true;
 				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
-			} else {
-				$run_frequency = false;
 			}
 			if ( ! $run_frequency ) {
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' / ' . $frequencyDailyUpdate . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 			}
 		}
 
@@ -453,20 +450,24 @@ class MainWP_System_Cron_Jobs {
 				}
 			}
 
+			$run_valid = false;
 			if ( $run_hours_interval ) {
-				$websites = array(); // ok run.
-			} elseif ( null === $sync_time_runable && $run_frequency ) {
-				$websites = array(); // ok run.
-			} elseif ( $sync_time_runable && $run_frequency ) {
-				$websites = array(); // ok run.
-			} elseif ( $run_frequency ) {
-				$websites = array(); // ok run.
-			} elseif ( null === $run_frequency && null === $sync_time_runable && $today_m_y != $mainwpLastAutomaticUpdate ) {
-				$websites = array(); // ok run for today.
-			} else {
+				$run_valid = true;
+			} elseif ( ( null === $run_synctime || $run_synctime ) && $run_frequency ) { // if not set sync time, and run frequency.
+				$run_valid = true;
+			} elseif ( ( null === $run_synctime || $run_synctime ) && $today_m_y != $mainwpLastAutomaticUpdate ) { // if sync time or not set sync time, and other day, to fix.
+				$run_valid = true;
+			} elseif ( ( null === $run_frequency ) && ( null === $run_synctime || $run_synctime ) && $today_m_y == $mainwpLastAutomaticUpdate ) { // if sync time or not set sync time, and other day, to fix.
+				MainWP_Logger::instance()->log_action( 'CRON :: already checked update today', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+				$run_valid = false;
+				return;
+			}
+		
+
+			if ( ! $run_valid ) {
 				// $run_hours_interval == false|null.
 				// $run_frequency == false|null.
-				// $sync_time_runable == false|null.
+				// $run_synctime == false|null.
 				// $today_m_y == $mainwpLastAutomaticUpdate.
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: waiting conditionals to run.' );
 				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: waiting conditionals to run.', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );

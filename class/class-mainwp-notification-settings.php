@@ -278,8 +278,8 @@ class MainWP_Notification_Settings {
 						<label class="six wide column middle aligned"><?php esc_html_e( 'HTML template', 'mainwp' ); ?></label>
 						<div class="ui ten wide column" data-tooltip="<?php esc_attr_e( 'Manage the email HTML template.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
 						<?php
-						$templ     = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
-						$overrided = MainWP_Notification_Template::instance()->is_overrided_template( $type );
+						$templ        = MainWP_Notification_Template::get_template_name_by_notification_type( $type );
+						$overrided    = MainWP_Notification_Template::instance()->is_overrided_template( $type );
 						$copy_message = apply_filters( 'minwp_notification_template_copy_message', '', $templ, $type, $overrided );
 						if ( empty( $copy_message ) ) {
 							$copy_message = $overrided ? esc_html__( 'This template has been overridden and can be found in:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>' : esc_html__( 'To override and edit this email template copy:', 'mainwp' ) . ' <code>mainwp/templates/' . $templ . '</code> ' . esc_html__( 'to the folder:', 'mainwp' ) . ' <code>wp-content/uploads/mainwp/templates/' . $templ . '</code>';
@@ -524,7 +524,7 @@ class MainWP_Notification_Settings {
 			),
 		);
 
-		$addition_default_fields = apply_filters( 'mainwp_default_emails_fields', array(), $recipients, $type, $field , $general );
+		$addition_default_fields = apply_filters( 'mainwp_default_emails_fields', array(), $recipients, $type, $field, $general );
 		if ( ! empty( $addition_default_fields ) ) {
 			$default_fields = array_merge( $default_fields, $addition_default_fields );
 		}

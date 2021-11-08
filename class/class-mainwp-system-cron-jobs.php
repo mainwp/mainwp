@@ -393,7 +393,7 @@ class MainWP_System_Cron_Jobs {
 		$run_synctime = null;
 		if ( ! empty( $timeDailyUpdate ) ) {
 			$run_synctime  = false;
-			$run_timestamp     = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( $local_timestamp > $run_timestamp ) {
 				$run_synctime = true; // it is time to run or worked.
 			} elseif ( ( $local_timestamp - $lasttimeStartAutomaticUpdate ) > DAY_IN_SECONDS ) {
@@ -462,7 +462,6 @@ class MainWP_System_Cron_Jobs {
 				$run_valid = false;
 				return;
 			}
-		
 
 			if ( ! $run_valid ) {
 				// $run_hours_interval == false|null.

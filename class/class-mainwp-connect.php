@@ -142,7 +142,7 @@ class MainWP_Connect {
 			} while ( $running > 0 );
 
 			if ( 'resource' === gettype( $mh ) ) {
-			curl_multi_close( $mh );
+				curl_multi_close( $mh );
 			}
 		} else {
 			$data        = curl_exec( $ch );
@@ -151,8 +151,8 @@ class MainWP_Connect {
 			$errno       = curl_errno( $ch );
 			$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
 			if ( 'resource' === gettype( $ch ) ) {
-			curl_close( $ch );
-		}
+				curl_close( $ch );
+			}
 		}
 
 		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
@@ -730,7 +730,7 @@ class MainWP_Connect {
 			} while ( $running > 0 );
 
 			if ( 'resource' === gettype( $mh ) ) {
-			curl_multi_close( $mh );
+				curl_multi_close( $mh );
 			}
 		} else {
 			foreach ( $requestHandles as $id => $ch ) {
@@ -1097,9 +1097,9 @@ class MainWP_Connect {
 		if ( is_a( $resource, 'CurlHandle' ) ) {
 			$result = spl_object_hash( $resource );
 		} elseif ( is_resource( $resource ) ) {
-		$resourceString = (string) $resource;
-		$exploded       = explode( '#', $resourceString );
-		$result         = array_pop( $exploded );
+			$resourceString = (string) $resource;
+			$exploded       = explode( '#', $resourceString );
+			$result         = array_pop( $exploded );
 		}
 		return $result;
 	}
@@ -1599,7 +1599,7 @@ class MainWP_Connect {
 				usleep( 10000 );
 			} while ( $running > 0 );
 			if ( 'resource' === gettype( $mh ) ) {
-			@curl_multi_close( $mh );
+				@curl_multi_close( $mh );
 			}
 		} else {
 			$data        = @curl_exec( $ch );
@@ -1846,7 +1846,7 @@ class MainWP_Connect {
 		}
 		curl_exec( $ch );
 		if ( 'resource' === gettype( $ch ) ) {
-		curl_close( $ch );
+			curl_close( $ch );
 		}
 		fclose( $fp );
 	}
@@ -1944,7 +1944,7 @@ class MainWP_Connect {
 		$data     = @curl_exec( $ch );
 		$httpCode = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 		if ( 'resource' === gettype( $ch ) ) {
-		curl_close( $ch );
+			curl_close( $ch );
 		}
 		if ( 200 == $httpCode ) {
 			return $data;

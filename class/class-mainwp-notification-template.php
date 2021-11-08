@@ -348,7 +348,7 @@ class MainWP_Notification_Template {
 		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
 				$source_dir = $this->template_path;
-				$source_dir = apply_filters( 'mainwp_default_template_source_dir', $source_dir, $type  );
+				$source_dir = apply_filters( 'mainwp_default_template_source_dir', $source_dir, $type );
 				$dest_dir   = $this->template_custom_path;
 				$templ      = self::get_template_name_by_notification_type( $type );
 				$copied     = $wp_filesystem->copy( $source_dir . $templ, $dest_dir . $templ );

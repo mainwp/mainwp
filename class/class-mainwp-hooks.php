@@ -846,6 +846,9 @@ class MainWP_Hooks {
 	/**
 	 * Get notification email settings.
 	 *
+	 * @param string $settings hook settings input value.
+	 * @param string $type Notification type.
+	 * 	
 	 * @return array $gen_email_settings email settings.
 	 */
 	public function get_notification_settings( $settings, $type ) {
@@ -858,13 +861,14 @@ class MainWP_Hooks {
 	 *
 	 * Send email via wp_mail().
 	 *
+	 * @param string $input hook input value.
 	 * @param string $email send to email.
 	 * @param string $subject email content.
 	 * @param bool   $mail_content Text format.
 	 * @param string $content_type email content.
 	 */
 	public function hook_send_wp_mail( $input, $email, $subject, $formated_content, $content_type = '' ) {
-		MainWP_Notification::send_wp_mail(
+		return MainWP_Notification::send_wp_mail(
 			$email,
 			$subject,
 			$formated_content,
@@ -875,6 +879,7 @@ class MainWP_Hooks {
 	/**
 	 * Hook get template HTML content.
 	 *
+	 * @param string $input hooks input value.
 	 * @param string $template_name Template name.
 	 * @param array  $args          Arguments. (default: array).
 	 *

@@ -864,8 +864,8 @@ class MainWP_Hooks {
 	 * @param string $input hook input value.
 	 * @param string $email send to email.
 	 * @param string $subject email content.
-	 * @param bool   $mail_content Text format.
-	 * @param string $content_type email content.
+	 * @param bool   $formated_content email content.
+	 * @param string $content_type Text format.
 	 */
 	public function hook_send_wp_mail( $input, $email, $subject, $formated_content, $content_type = '' ) {
 		return MainWP_Notification::send_wp_mail(

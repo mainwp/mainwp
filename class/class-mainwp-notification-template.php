@@ -134,6 +134,7 @@ class MainWP_Notification_Template {
 	 */
 	public function get_template( $template_name, $args = array() ) {
 
+		// template full path.
 		$template = $this->locate_template( $template_name );
 
 		/**
@@ -256,6 +257,7 @@ class MainWP_Notification_Template {
 		// Get default template.
 		if ( ! $template ) {
 			$template_path = $this->template_path;
+			$template_path = apply_filters( 'mainwp_default_template_source_dir', $template_path, $template_name );
 			$template      = $template_path . $template_name;
 		}
 
@@ -332,36 +334,34 @@ class MainWP_Notification_Template {
 		 */
 		global $wp_filesystem;
 
-		$type = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
+		$type            = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
+		$templ_base_name = ! empty( $type ) ? self::get_template_name_by_notification_type( $type ) : '';
 
-		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
+		if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
 				$dir     = $this->template_custom_path;
-				$templ   = self::get_template_name_by_notification_type( $type );
-				$deleted = $wp_filesystem->delete( $dir . $templ );
+				$deleted = $wp_filesystem->delete( $dir . $templ_base_name );
 				if ( $deleted ) {
 					$updated_templ = 1;
 				}
 			}
 		}
 
-		if ( ! empty( $type ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
+		if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) ) {
 			if ( $hasWPFileSystem ) {
-				$source_dir = $this->template_path;
-				$source_dir = apply_filters( 'mainwp_default_template_source_dir', $source_dir, $type );
-				$dest_dir   = $this->template_custom_path;
-				$templ      = self::get_template_name_by_notification_type( $type );
-				$copied     = $wp_filesystem->copy( $source_dir . $templ, $dest_dir . $templ );
+				$template_path = $this->template_path;
+				$source_dir    = apply_filters( 'mainwp_default_template_source_dir', $template_path, $templ_base_name );
+				$dest_dir      = $this->template_custom_path;
+				$copied        = $wp_filesystem->copy( $source_dir . $templ_base_name, $dest_dir . $templ_base_name );
 				if ( $copied ) {
 					$updated_templ = 2;
 				}
 			}
 		}
 
-		if ( ! empty( $type ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
-			$template_name = self::get_template_name_by_notification_type( $type );
+		if ( ! empty( $templ_base_name ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'save-email-template' ) ) {
 			$template_code = isset( $_POST[ 'edit_' . $type . '_code' ] ) ? wp_unslash( $_POST[ 'edit_' . $type . '_code' ] ) : '';
-			$updated       = $this->save_template( $template_code, $template_name );
+			$updated       = $this->save_template( $template_code, $templ_base_name );
 			if ( $updated ) {
 				$updated_templ = 3;
 			}

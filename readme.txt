@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8.1
 Requires PHP: 7.0
-Stable tag: 4.1.10.2
+Stable tag: 4.1.10.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,9 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.10.3 - 11-9-2021 =
+* Fixed: An issue with triggering email notifications by extensions
 
 = 4.1.10.2 - 11-8-2021 =
 * Fixed: An issue with running scheduled tasks

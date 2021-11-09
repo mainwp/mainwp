@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.10.2';
+	public static $version = '4.1.10.3';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -527,7 +527,7 @@ class MainWP_System {
 			 *
 			 * @uses \MainWP\Dashboard\MainWP_System_Handler::handle_settings_post()
 			 */
-			function mainwp_current_user_have_right( $cap_type = '', $cap = '' ) {
+			function mainwp_current_user_have_right( $cap_type = '', $cap ) {
 
 				/**
 				 * Current user global.

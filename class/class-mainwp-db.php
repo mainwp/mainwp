@@ -1313,15 +1313,15 @@ class MainWP_DB extends MainWP_DB_Base {
 		$maximumFileDescriptorsAuto,
 		$maximumFileDescriptors,
 		$verifyCertificate = 1,
-		$archiveFormat = 'global',
+		$archiveFormat,
 		$uniqueId = '',
 		$http_user = null,
 		$http_pass = null,
 		$sslVersion = 0,
-		$disableChecking = 1,
-		$checkInterval = 1440,
-		$disableHealthChecking = 1,
-		$healthThreshold = 80,
+		$disableChecking,
+		$checkInterval,
+		$disableHealthChecking,
+		$healthThreshold,
 		$wpe = 0 ) {
 
 		if ( MainWP_Utility::ctype_digit( $websiteid ) && MainWP_Utility::ctype_digit( $userid ) ) {

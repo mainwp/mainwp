@@ -407,7 +407,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-server-info-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-server-info-info-message"></i>
-				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( __( 'Check your system configuration and make sure your MainWP Dashboard passes all system requirements.  If you need help with resolving specific errors, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/resolving-system-requirement-issues/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 			<table class="ui stackable celled table fixed mainwp-system-info-table">
@@ -487,7 +487,11 @@ class MainWP_Server_Information {
 					self::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, self::ERROR );
 					self::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
 					if ( function_exists( 'curl_version' ) ) {
-						self::render_row( 'cURL Version', '>=', '7.18.1', 'get_curl_version', '', '', null );
+						$reuire_curl = '7.18.1';
+						if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {
+							$reuire_curl = '7.29.0';
+						}
+						self::render_row( 'cURL Version', '>=', $reuire_curl, 'get_curl_version', '', '', null );
 						$openssl_version = 'OpenSSL/1.1.0';
 						self::render_row(
 							'cURL SSL Version',
@@ -806,7 +810,7 @@ class MainWP_Server_Information {
 		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cron-info-message' ) ) : ?>
 			<div class="ui info message">
 				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cron-info-message"></i>
-				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
+				<?php echo sprintf( __( 'Make sure scheduled actions are working correctly.  If scheduled actions do not run normally, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/scheduled-events-not-occurring/" target="_blank">', '</a>' ); ?>
 			</div>
 		<?php endif; ?>
 		<table class="ui stackable celled table fixed" id="mainwp-cron-jobs-table">
@@ -1330,7 +1334,7 @@ class MainWP_Server_Information {
 				<div class="ui hidden divider"></div>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
-					<?php echo sprintf( __( 'Enable specific logging system.  For additional help, please review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Enable specific logging system.  For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 		<?php

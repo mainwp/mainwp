@@ -135,7 +135,7 @@ class MainWP_DB_Common extends MainWP_DB {
 	public function get_group_by_id( $id ) {
 		if ( MainWP_Utility::ctype_digit( $id ) ) {
 			$group = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'group' ) . ' WHERE id= %d', $id ) );
-			return $group; 	 
+			return $group;
 		}
 
 		return null;

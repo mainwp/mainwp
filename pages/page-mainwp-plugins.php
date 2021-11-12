@@ -846,7 +846,7 @@ class MainWP_Plugins {
 				$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
 				$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
 				$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
-				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
+				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : 0;
 				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
 				$pluginsVersion[ $pn ]         = array(
 					'name' => $plugin['name'],

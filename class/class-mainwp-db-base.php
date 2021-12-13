@@ -319,8 +319,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_num_rows.
 	 */
 	public static function num_rows( $result ) {
-		if ( false === $result ) {
-			return 0;
+		if ( ! self::is_result( $result ) ) {
+			return false;
 		}
 
 		if ( self::use_mysqli() ) {

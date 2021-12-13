@@ -1467,6 +1467,9 @@ class MainWP_Live_Reports_Responder_DB {
 	 * @return (bool) Returns true on success or false on failure. 
 	 */
 	public static function free_result( $result ) {
+		if ( false === $result ) {
+			return false;
+		}
 		if ( self::use_mysqli() ) {
 			return \mysqli_free_result( $result );
 		} else {

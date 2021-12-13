@@ -464,7 +464,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		}
 
 		if ( 'wp.url' === $orderBy ) {
-			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')";
 		}
 
 		// wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
@@ -618,7 +618,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		if ( $is_count ) {
 			$orderBy = '';
 		} elseif ( 'wp.url' === $orderBy ) {
-			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')";
+			$orderBy = "replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')";
 		}
 
 		if ( ! empty( $orderBy ) ) {
@@ -1487,9 +1487,9 @@ class MainWP_DB extends MainWP_DB_Base {
 			return $results;
 		}
 
-		$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www' ), array( '', '', '', '', '' ), $url );
+		$url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
 
-		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . " WHERE  replace(replace(replace(replace(replace(url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www', '')  = %s ", $this->escape( $url ) ), OBJECT );
+		return $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp' ) . " WHERE  replace(replace(replace(replace(replace(url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '')  = %s ", $this->escape( $url ) ), OBJECT );
 	}
 
 	/**

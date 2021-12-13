@@ -611,7 +611,7 @@ class MainWP_Extensions_Handler {
 			}
 		}
 
-		if ( '' !== $groups ) {
+		if ( is_array( $groups ) ) {
 			foreach ( $groups as $k => $v ) {
 				if ( MainWP_Utility::ctype_digit( $v ) ) {
 					$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $v ) );

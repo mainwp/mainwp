@@ -182,7 +182,7 @@ class MainWP_Widget_Plugins {
 				for ( $i = 0; $i < $_count; $i ++ ) {
 					$slug = wp_strip_all_tags( $actived_plugins[ $i ]['slug'] );
 					?>
-					<div class="item <?php echo esc_html( dirname( $slug) ); ?>">
+					<div class="item <?php echo esc_html( dirname( $slug ) ); ?>">
 						<input class="pluginSlug" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $actived_plugins[ $i ]['slug'] ) ); ?>"/>
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $website->id ); ?>"/>
 						<div class="right floated pluginsAction">

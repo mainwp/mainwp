@@ -133,8 +133,6 @@ class MainWP_Manage_Screenshots {
 	 * Method render_all_sites()
 	 *
 	 * Render Screenshots.
-	 *
-	 * @return string MainWP Screenshots Table.
 	 */
 	public static function render_all_sites() {
 		/**

@@ -232,8 +232,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_fetch_object
 	 */
 	public static function fetch_object( $result ) {
-		if ( false === $result ) {
-			return false;
+		if ( is_bool( $result ) ) {
+			return $result;
 		}
 
 		if ( self::use_mysqli() ) {
@@ -253,8 +253,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_free_result
 	 */
 	public static function free_result( $result ) {
-		if ( false === $result ) {
-			return false;
+		if ( is_bool( $result ) ) {
+			return $result;
 		}
 
 		if ( self::use_mysqli() ) {
@@ -275,8 +275,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_data_seek
 	 */
 	public static function data_seek( $result, $offset ) {
-		if ( false === $result ) {
-			return false;
+		if ( is_bool( $result ) ) {
+			return $result;
 		}
 
 		if ( self::use_mysqli() ) {
@@ -297,8 +297,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_fetch_array.
 	 */
 	public static function fetch_array( $result, $result_type = null ) {
-		if ( false === $result ) {
-			return false;
+		if ( is_bool( $result ) ) {
+			return $result;
 		}
 
 		if ( self::use_mysqli() ) {
@@ -340,8 +340,8 @@ class MainWP_DB_Base {
 	 * @return boolean|mixed false|\mysqli_result
 	 */
 	public static function is_result( $result ) {
-		if ( false === $result ) {
-			return false;
+		if ( is_bool( $result ) ) {
+			return $result;
 		}
 
 		if ( self::use_mysqli() ) {

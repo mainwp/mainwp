@@ -979,7 +979,13 @@ class MainWP_Manage_Sites_List_Table {
 								"stateDuration" : <?php echo $table_features['stateDuration']; ?>,
 								"order" : <?php echo $table_features['order']; ?>,
 								"lengthMenu" : [ [<?php echo $pagelength_val; ?>, -1 ], [<?php echo $pagelength_title; ?>, "All" ] ],
-								"columnDefs": [ { "targets": 'no-sort', "orderable": false } ],
+								"columnDefs": [ 
+									{ 
+										"targets": 'no-sort', 
+										"orderable": false 
+									},
+									<?php do_action('mainwp_manage_sites_table_columns_defs'); ?>									
+								],
 								"pageLength": <?php echo intval( $sites_per_page ); ?>,
 								"initComplete": function( settings, json ) {
 								},

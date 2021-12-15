@@ -244,11 +244,24 @@ class MainWP_Manage_Sites {
 
 		add_filter( 'mainwp_header_actions_right', array( self::get_class_name(), 'screen_options' ), 10, 2 );
 		if ( 'grid' !== $sitesViewMode ) {
-			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+			self::load_sites_table();
 		} else {
 			new MainWP_Manage_Screenshots(); // to init hooks.
 		}
 	}
+
+
+	/**
+	 * Method load_sites_table()
+	 *
+	 * Load sites table.
+	 */
+	public static function load_sites_table() {
+		if ( null === self::$sitesTable ) {
+			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+		}
+	}
+
 
 	/**
 	 * Method on_load_sunpages()
@@ -508,7 +521,7 @@ class MainWP_Manage_Sites {
 	 * @uses \MainWP\Dashboard\MainWP_Manage_Sites_List_Table
 	 */
 	public static function ajax_optimize_display_rows() {
-		self::$sitesTable = new MainWP_Manage_Sites_List_Table();
+		self::load_sites_table();
 		self::$sitesTable->prepare_items( true );
 		$output = self::$sitesTable->ajax_get_datatable_rows();
 		self::$sitesTable->clear_items();
@@ -548,9 +561,9 @@ class MainWP_Manage_Sites {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
-					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %sTest Connection%s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'If you still can not connect the site, see the list of %spotential issues%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'Use the provided form to connect your websites to your MainWP Dashboard.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'If you are experiencing issues with adding a website to your MainWP Dashboard, use the %1$sTest Connection%2$s feature to ensure that your MainWP Dashboard can communicate with your website.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/test-connection-between-your-mainwp-dashboard-and-child-site/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'If you still can not connect the site, see the list of %1$spotential issues%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' ); ?></div>
 					</div>
 			<?php endif; ?>
 
@@ -790,7 +803,7 @@ class MainWP_Manage_Sites {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-sites-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-sites-info-message"></i>
-							<?php echo sprintf( __( 'Use the form to bulk import sites.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Use the form to bulk import sites.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-sites/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>

@@ -1424,12 +1424,19 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
-				$newValues = array(
-					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
-					'backup_before_upgrade' => $backup_before_upgrade,
-					'force_use_ipv4'        => $forceuseipv4,
-					'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
-				);
+                // Move to hook mainwp_update_site.
+                $auto_purge_cache = isset( $_POST['mainwp_auto_purge_cache'] ) ? intval( $_POST['mainwp_auto_purge_cache'] ) : 2;
+                if ( 2 < $auto_purge_cache ) {
+                    $auto_purge_cache = 2;
+                }
+
+                $newValues = array(
+                    'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
+                    'backup_before_upgrade' => $backup_before_upgrade,
+                    'auto_purge_cache'      => $auto_purge_cache,// Move to hook mainwp_update_site.
+                    'force_use_ipv4'        => $forceuseipv4,
+                    'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+                );
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 					$newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;

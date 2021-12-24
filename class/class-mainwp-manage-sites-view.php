@@ -902,6 +902,9 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				<?php endif; ?>
+
+                <?php MainWP_Auto_Cache_Purge_View::instance()->render_child_site_settings($website); // move to `mainwp_manage_sites_edit` hook. ?>
+
 				<h3 class="ui dividing header"><?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' ); ?></label>					

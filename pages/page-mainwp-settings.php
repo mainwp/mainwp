@@ -514,6 +514,11 @@ class MainWP_Settings {
 				}
 
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
+
+                // Auto Cache Purge Settings. move to `mainwp_after_save_general_settings` hook.
+                $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
+                MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
+
 				/**
 				* Action: mainwp_after_save_general_settings
 				*
@@ -756,6 +761,7 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
+                        <?php MainWP_Auto_Cache_Purge_View::instance()->render_global_settings($website); //move to `mainwp_settings_form_bottom` hook.?>
 						<?php MainWP_Monitoring_View::render_settings(); ?>					
 						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<?php

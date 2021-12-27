@@ -3,6 +3,8 @@
  * MainWP Common Handler
  *
  * This class handles the common functions.
+ *
+ * @package     MainWP/Dashboard
  */
 
 namespace MainWP\Dashboard;
@@ -41,11 +43,9 @@ class MainWP_Common_Handler {
 	 *
 	 * Handle get sites available updates count.
 	 *
-	 * @param array $request The request made in the API call which includes all parameters.
-	 *
 	 * @return object $response An object that contains the return data and status of the API request.
 	 */
-	public function sites_available_updates_count() {
+	public function sites_available_updates_count() {  // phpcs:ignore -- complex function.
 		$is_staging = 'no';
 		$sql        = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'premium_upgrades', 'favi_icon' ), $is_staging );
 

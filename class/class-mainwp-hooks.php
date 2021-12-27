@@ -51,6 +51,8 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_update_user_extension', array( &$this, 'update_user_extension' ), 10, 3 );
 		add_filter( 'mainwp_getwebsitesbyurl', array( &$this, 'get_websites_by_url' ) );
 		add_filter( 'mainwp_getWebsitesByUrl', array( &$this, 'get_websites_by_url' ) );
+		add_action( 'mainwp_manage_posts_get_edit', array( &$this, 'hook_posts_get_edit' ), 10, 2 );
+		add_action( 'mainwp_manage_posts_bulk_posting', array( &$this, 'hook_posts_bulk_posting' ), 10, 2 );
 
 		/**
 		 * The mainwp_getErrorMessage filter has been deprecated.
@@ -1126,4 +1128,30 @@ class MainWP_Hooks {
 		return MainWP_DB::instance()->get_websites_by_group_ids( $ids, $userId );
 	}
 
+	/**
+	 * Method hook_posts_get_edit()
+	 *
+	 * Get and create post to edit.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
+	 */
+	public function hook_posts_get_edit() {
+		MainWP_Post_Page_Handler::get_post();
+		die();
+	}
+
+	/**
+	 * Method hook_posts_bulk_posting()
+	 *
+	 * Post Bulk posting.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_post()
+	 */
+	public function hook_posts_bulk_posting() {
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		if ( $post_id ) {
+			MainWP_Post_Page_Handler::posting_posts( $post_id, 'ajax_posting' );
+		}
+		die();
+	}
 }

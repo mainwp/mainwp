@@ -33,7 +33,7 @@ jQuery( document ).ready( function () {
     jQuery( document ).on( 'click', '#mainwp_managesites_btn_save_csv', function () {
         var fail_data = '';
         jQuery( '#mainwp_managesites_import_fail_logging span' ).each(function(){
-            fail_data += jQuery(this).html() + "\r\n";
+            fail_data += jQuery(this).html() + "\r";
         });
         var blob = new Blob( [ fail_data ], { type: "text/plain;charset=utf-8" } );
         saveAs( blob, "import_sites_fails.csv" );

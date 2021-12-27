@@ -401,10 +401,11 @@ class MainWP_Manage_Sites_View {
 
 				$content = $wp_filesystem->get_contents( $tmp_path );
 
-				// to compatible with EOL on OS.
-				$content        = str_replace( "\r\n", "\n", $content );
-				$content        = str_replace( "\r", "\n", $content );
-				$lines          = explode( "\n", $content );
+				// to compatible with EOL on OSs.
+				$content        = str_replace( "\r\n", "\r", $content );
+				$content        = str_replace( "\n", "\r", $content );
+				$lines          = explode( "\r", $content );
+
 				$default_values = array(
 					'name'               => '',
 					'url'                => '',
@@ -432,7 +433,7 @@ class MainWP_Manage_Sites_View {
 						$items = str_getcsv( $line, ',' );
 
 						if ( ( null == $header_line ) && ! empty( $_POST['mainwp_managesites_chk_header_first'] ) ) {
-							$header_line = $line . "\r\n";
+							$header_line = $line . "\r";
 							continue;
 						}
 
@@ -468,7 +469,7 @@ class MainWP_Manage_Sites_View {
 					<input type="hidden" id="mainwp_managesites_total_import" value="<?php echo esc_attr( $row ); ?>"/>
 
 					<div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_logging">
-						<pre class="log"><?php echo esc_html( $header_line ); ?></pre>
+						<pre class="log"><?php echo esc_html( $header_line ) . "\n"; ?></pre>
 					</div>
 					<div class="mainwp_managesites_import_listing" id="mainwp_managesites_import_fail_logging" style="display: none;">
 					<?php
@@ -791,7 +792,7 @@ class MainWP_Manage_Sites_View {
 		<div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
 				<div class="ui info message">
-					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-mainwp-edit-site-info-message-info-message"></i>
+					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
 					<?php echo sprintf( __( 'Edit the %s (%s) child site settings.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>

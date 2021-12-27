@@ -190,7 +190,8 @@ mainwp_post_posting_start_specific = function( siteToPosting ) {
       post_id: jQuery('#bulk_posting_id').val(),
       site_id: jQuery(siteToPosting).attr('site-id'),
       count: bulkInstallDone,
-      total: bulkInstallTotal
+      total: bulkInstallTotal,
+      delete_bulkpost: ( bulkInstallDone == bulkInstallTotal ) ? true : false
   } );
   siteToPosting.find('.progress').html('<i class="notched circle loading icon"></i>');
   jQuery.post( ajaxurl, data, function ( response ) {

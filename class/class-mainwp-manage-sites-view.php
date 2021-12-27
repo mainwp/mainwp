@@ -402,9 +402,9 @@ class MainWP_Manage_Sites_View {
 				$content = $wp_filesystem->get_contents( $tmp_path );
 
 				// to compatible with EOL on OSs.
-				$content        = str_replace( "\r\n", "\r", $content );
-				$content        = str_replace( "\n", "\r", $content );
-				$lines          = explode( "\r", $content );
+				$content = str_replace( "\r\n", "\r", $content );
+				$content = str_replace( "\n", "\r", $content );
+				$lines   = explode( "\r", $content );
 
 				$default_values = array(
 					'name'               => '',

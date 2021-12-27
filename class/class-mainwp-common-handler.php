@@ -2,8 +2,7 @@
 /**
  * MainWP Common Handler
  *
- * This class handles the common functions. 
- *
+ * This class handles the common functions.
  */
 
 namespace MainWP\Dashboard;
@@ -62,9 +61,8 @@ class MainWP_Common_Handler {
 
 		MainWP_DB::data_seek( $websites, 0 );
 
-
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-			
+
 			$wp_upgrades = json_decode( MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' ), true );
 			if ( $website->is_ignoreCoreUpdates ) {
 				$wp_upgrades = array();

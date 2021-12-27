@@ -714,10 +714,10 @@ class MainWP_Post_Page_Handler {
 
 				$last_ajax_posting = false;
 				if ( 'ajax_posting' == $what ) {
-					$total = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
-					$count = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
+					$total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
+					$count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
 					$delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
-					
+
 					if ( $delete_bulkpost ) {
 						$last_ajax_posting = true;
 					}

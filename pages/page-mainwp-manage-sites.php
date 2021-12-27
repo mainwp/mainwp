@@ -1122,7 +1122,7 @@ class MainWP_Manage_Sites {
 	 */
 	public static function render_all_sites( $showDelete = true, $showAddNew = true ) {
 
-		self::load_sites_table();// to fix loading. 
+		self::load_sites_table();// to fix loading.
 
 		$optimize_for_sites_table = ( 1 == get_option( 'mainwp_optimize' ) );
 

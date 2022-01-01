@@ -200,7 +200,7 @@ class MainWP_Settings {
 					<?php } ?>					
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
-					<?php } ?>					
+					<?php } ?>
 					<?php
 					if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
@@ -227,7 +227,6 @@ class MainWP_Settings {
 		</div>
 		<?php
 	}
-
 
 	/**
 	 * Instantiate left menu
@@ -761,7 +760,6 @@ class MainWP_Settings {
 								<input type="text" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo ( ( false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ) ? 365 : get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
 							</div>
 						</div>
-                        <?php MainWP_Auto_Cache_Purge_View::instance()->render_global_settings($website); //move to `mainwp_settings_form_bottom` hook.?>
 						<?php MainWP_Monitoring_View::render_settings(); ?>					
 						<?php MainWP_Manage_Backups::render_settings(); ?>
 						<?php

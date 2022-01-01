@@ -56,6 +56,11 @@ class MainWP_Auto_Cache_Purge_View {
 
     }
 
+    public function init() {
+        //add_action( 'admin_init', array( &$this, 'admin_init' ) );
+       // add_action( 'mainwp_settings_form_bottom', array( $this, 'your_custom_function_name' ), 10, 9 );
+    }
+
     /**
      * MainWP Dashboard auto cache purge data.
      *
@@ -63,7 +68,19 @@ class MainWP_Auto_Cache_Purge_View {
      */
     public function admin_init() {
         add_filter( 'mainwp_sync_others_data', array( $this, 'mydashboard_sync_others_data' ), 10, 2 );
+        add_action( 'mainwp_settings_form_bottom', array( $this, 'render_cache_control_global_settings' ) );
+
     }
+
+    public function render_cache_control_global_settings() {
+        self::instance()->render_global_settings($website);
+    }
+
+    public function handle_cache_control_settings(){
+        $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
+        MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
+    }
+
 
     /**
      * Sync Data with Child Site on Sync.
@@ -90,6 +107,8 @@ class MainWP_Auto_Cache_Purge_View {
      */
     public static function render_global_settings() {
         ?>
+            <h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?>
+            <div class="sub header">Enable this setting to purge all cache after any update.</div></h3>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php echo __( 'Automatically purge cache', 'mainwp' ); ?></label>
                 <div class="ten wide column ui toggle checkbox">

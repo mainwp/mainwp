@@ -885,7 +885,7 @@ class MainWP_Extensions_View {
 				'slug'       => 'mainwp-time-capsule-extension',
 				'title'      => 'MainWP Time Capsule Extension',
 				'desc'       => 'With the MainWP Time Capsule Extension, you can control the WP Time Capsule Plugin on all your child sites directly from your MainWP Dashboard. This includes the ability to create your child site backups and even restore your child sites to a point back in time directly from your dashboard.',
-				'link'       => 'https://mainwp.com/extension/vulnerability-checker/',
+				'link'       => 'https://mainwp.com/extension/time-capsule/',
 				'img'        => $folder_url . 'time-capsule.png',
 				'product_id' => 'MainWP Time Capsule Extension',
 				'catalog_id' => '1049003',
@@ -923,6 +923,17 @@ class MainWP_Extensions_View {
 				'product_id' => 'MainWP Virusdie Extension',
 				'catalog_id' => '1213235',
 				'group'      => array( 'security' ),
+			),
+			'mainwp-lighthouse-extension'            =>
+			array(
+				'slug'       => 'mainwp-lighthouse-extension',
+				'title'      => 'MainWP Lighthouse Extension',
+				'desc'       => 'MainWP Lighthouse Extension is used for measuring the quality of your websites. It uses the Google PageSpeed Insights API to audit performance, accessibility and search engine optimization of your WordPress sites.',
+				'link'       => 'https://mainwp.com/extension/lighthouse/',
+				'img'        => $folder_url . 'lighthouse.png',
+				'product_id' => 'MainWP Lighthouse Extension',
+				'catalog_id' => '1233934',
+				'group'      => array( 'performance' ),
 			),
 		);
 	}

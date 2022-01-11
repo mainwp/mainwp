@@ -137,7 +137,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
         slug: extensionSlug
     } );
 
-    loadingEl.show();
+  loadingEl.show();
   loadingEl.find( '.message' ).removeClass( 'red green' );
   loadingEl.find( '.message' ).html( '<i class="notched circle loading icon"></i>' + __( 'Deactivating...' ) );
 
@@ -146,7 +146,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
         if ( response ) {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
-        loadingEl.find( '.message' ).html(  __( 'Extension license Dectivated successfully.' ) );
+        loadingEl.find( '.message' ).html(  __( 'Extension license Deactivated successfully.' ) );
         statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
         success = true;
             } else if ( response.error ) {

@@ -688,7 +688,7 @@ class MainWP_System {
          * Initiate Auto Cache Purge Class.
          * @since
          */
-        MainWP_Auto_Cache_Purge_View::instance()->admin_init();
+        MainWP_Auto_Cache_Purge_View::instance()->init();
 
 		/**
 		 * Filter: mainwp_ui_use_wp_calendar

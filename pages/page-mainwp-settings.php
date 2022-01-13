@@ -139,6 +139,20 @@ class MainWP_Settings {
 			);
 		}
 
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
+            add_submenu_page(
+                'mainwp_tab',
+                __( 'Cache Control', 'mainwp' ),
+                ' <div class="mainwp-hidden">' . __( 'Cache Control', 'mainwp' ) . '</div>',
+                'read',
+                'cache-control',
+                array(
+                    self::get_class_name(),
+                    'render_cache_control',
+                )
+            );
+        }
+
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
 				add_submenu_page(
@@ -201,6 +215,7 @@ class MainWP_Settings {
 					<?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'RESTAPI' ) ) { ?>
 						<a href="<?php echo admin_url( 'admin.php?page=RESTAPI' ); ?>" class="mainwp-submenu"><?php esc_html_e( 'REST API', 'mainwp' ); ?></a>
 					<?php } ?>
+
 					<?php
 					if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 						if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
@@ -287,6 +302,13 @@ class MainWP_Settings {
 				'slug'       => 'RESTAPI',
 				'right'      => '',
 			),
+            array(
+                'title' => __('Cache Control', 'mainwp'),
+                'parent_key' => 'Settings',
+                'href' => 'admin.php?page=cache-control',
+                'slug' => 'cache-control',
+                'right' => '',
+            )
 		);
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
@@ -513,10 +535,6 @@ class MainWP_Settings {
 				}
 
 				MainWP_Utility::update_option( 'mainwp_use_favicon', ( ! isset( $_POST['mainwp_use_favicon'] ) ? 0 : 1 ) );
-
-                // Auto Cache Purge Settings. move to `mainwp_after_save_general_settings` hook.
-                $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
-                MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
 
 				/**
 				* Action: mainwp_after_save_general_settings
@@ -1549,6 +1567,23 @@ class MainWP_Settings {
 		}
 		self::render_footer( 'Emails' );
 	}
+
+    /**
+     * Render Cache Control Settings SubPage.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_edit_settings()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::emails_general_settings_handle()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_all_settings()
+     * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
+     */
+    public static function render_cache_control() {
+
+        self::render_header( 'cache-control' );
+        $updated = MainWP_Auto_Cache_Purge_View::handle_cache_control_post();
+        MainWP_Auto_Cache_Purge_View::render_global_settings( $updated );
+        self::render_footer( 'cache-control' );
+    }
 
 	/**
 	 * Method generate_random_string()

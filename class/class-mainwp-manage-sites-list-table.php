@@ -182,7 +182,7 @@ class MainWP_Manage_Sites_List_Table {
 		 *
 		 * @since Unknown
 		 */
-		$item = apply_filters( 'mainwp_sitestable_item', $item, $item );
+		$item = apply_filters( 'mainwp_sitestable_item', $item, $column_name );
 
 		switch ( $column_name ) {
 			case 'status':

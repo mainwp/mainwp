@@ -1162,14 +1162,18 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' plugins updated successfully.', 'mainwp' ) . '%n' ) );
 
-		MainWP_Connect::fetch_url_authed(
-			$website,
-			'upgradeplugintheme',
-			array(
-				'type' => 'plugin',
-				'list' => $list,
-			)
-		);
+		try {
+			MainWP_Connect::fetch_url_authed(
+				$website,
+				'upgradeplugintheme',
+				array(
+					'type' => 'plugin',
+					'list' => $list,
+				)
+			);
+		} catch ( \Exception $e ) {
+			$error = MainWP_Error_Helper::get_console_error_message( $e );
+		}
 	}
 
 	/**
@@ -1192,14 +1196,18 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' themes updated successfully.', 'mainwp' ) . '%n' ) );
 
-		MainWP_Connect::fetch_url_authed(
-			$website,
-			'upgradeplugintheme',
-			array(
-				'type' => 'theme',
-				'list' => $list,
-			)
-		);
+		try {
+			MainWP_Connect::fetch_url_authed(
+				$website,
+				'upgradeplugintheme',
+				array(
+					'type' => 'theme',
+					'list' => $list,
+				)
+			);
+		} catch ( \Exception $e ) {
+			$error = MainWP_Error_Helper::get_console_error_message( $e );
+		}
 	}
 
 	/**
@@ -1223,14 +1231,18 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' translations updated successfully.', 'mainwp' ) . '%n' ) );
 
-		MainWP_Connect::fetch_url_authed(
-			$website,
-			'upgradetranslation',
-			array(
-				'type' => 'translation',
-				'list' => $list,
-			)
-		);
+		try {
+			MainWP_Connect::fetch_url_authed(
+				$website,
+				'upgradetranslation',
+				array(
+					'type' => 'translation',
+					'list' => $list,
+				)
+			);
+		} catch ( \Exception $e ) {
+			$error = MainWP_Error_Helper::get_console_error_message( $e );
+		}
 	}
 
 	/**
@@ -1251,14 +1263,18 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
 
-		$data = MainWP_Connect::fetch_url_authed(
-			$website,
-			'upgradeplugintheme',
-			array(
-				'type' => $type,
-				'list' => urldecode( $slug ),
-			)
-		);
+		try {
+			$data = MainWP_Connect::fetch_url_authed(
+				$website,
+				'upgradeplugintheme',
+				array(
+					'type' => $type,
+					'list' => urldecode( $slug ),
+				)
+			);
+		} catch ( \Exception $e ) {
+			$error = MainWP_Error_Helper::get_console_error_message( $e );
+		}
 
 		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' item updated successfully.', 'mainwp' ) . '%n' ) );
 	}

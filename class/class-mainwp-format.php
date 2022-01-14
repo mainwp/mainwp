@@ -182,7 +182,7 @@ class MainWP_Format {
 	 *
 	 * @return string Formatted content
 	 */
-	public static function format_email( $to_email = null, $body, $title = '', $plain_text = false ) {
+	public static function format_email( $to_email = null, $body = '', $title = '', $plain_text = false ) {
 
 		$current_year = gmdate( 'Y' );
 		if ( $plain_text ) {

@@ -16,9 +16,9 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Live_Reports_Responder_DB {
 	//  phpcs:disable PSR1.Classes.ClassDeclaration,Generic.Files.OneObjectStructurePerFile,WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, accessing the database directly to custom database functions - Deprecated
-	
+
 	/**
-	 * @var string $mainwp_wpcreport_db_version Wordpress Client Report database version.
+	 * @var string $mainwp_wpcreport_db_version WordPress Client Report database version.
 	 */
 	private $mainwp_wpcreport_db_version = '5.6';
 
@@ -26,7 +26,7 @@ class MainWP_Live_Reports_Responder_DB {
 	 * @var string $table_prefix Table prefix.
 	 */
 	private $table_prefix;
-	
+
 	/**
 	 * @staic
 	 * @var null Public static instance.
@@ -43,21 +43,21 @@ class MainWP_Live_Reports_Responder_DB {
 
 		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
-		
+
 		$this->table_prefix      = $wpdb->prefix . 'mainwp_';
 		$this->default_tokens    = array(
-			'client.site.name'           => 'Displays the Site Name',
-			'client.site.url'            => 'Displays the Site Url',
-			'client.name'                => 'Displays the Client Name',
-			'client.contact.name'        => 'Displays the Client Contact Name',
-			'client.contact.address.1'   => 'Displays the Client Contact Address 1',
-			'client.contact.address.2'   => 'Displays the Client Contact Address 2',
-			'client.company'             => 'Displays the Client Company',
-			'client.city'                => 'Displays the Client City',
-			'client.state'               => 'Displays the Client State',
-			'client.zip'                 => 'Displays the Client Zip',
-			'client.phone'               => 'Displays the Client Phone',
-			'client.email'               => 'Displays the Client Email',
+			'client.site.name'         => 'Displays the Site Name',
+			'client.site.url'          => 'Displays the Site Url',
+			'client.name'              => 'Displays the Client Name',
+			'client.contact.name'      => 'Displays the Client Contact Name',
+			'client.contact.address.1' => 'Displays the Client Contact Address 1',
+			'client.contact.address.2' => 'Displays the Client Contact Address 2',
+			'client.company'           => 'Displays the Client Company',
+			'client.city'              => 'Displays the Client City',
+			'client.state'             => 'Displays the Client State',
+			'client.zip'               => 'Displays the Client Zip',
+			'client.phone'             => 'Displays the Client Phone',
+			'client.email'             => 'Displays the Client Email',
 		);
 		$default_report_logo     = MAINWP_PLUGIN_URL . 'assets/images/default-report-logo.png';
 		$this->default_reports[] = array(
@@ -335,30 +335,30 @@ class MainWP_Live_Reports_Responder_DB {
 		);
 		$this->default_formats   = array(
 			array(
-				'title'      => 'Default Header',
-				'type'       => 'H',
-				'content'    => $this->default_reports[0]['header'],
+				'title'   => 'Default Header',
+				'type'    => 'H',
+				'content' => $this->default_reports[0]['header'],
 			),
 			array(
-				'title'      => ' Basic Report',
-				'type'       => 'B',
-				'content'    => $this->default_reports[0]['body'],
+				'title'   => ' Basic Report',
+				'type'    => 'B',
+				'content' => $this->default_reports[0]['body'],
 			),
 			array(
-				'title'      => 'Full Report',
-				'type'       => 'B',
-				'content'    => $this->default_reports[1]['body'],
+				'title'   => 'Full Report',
+				'type'    => 'B',
+				'content' => $this->default_reports[1]['body'],
 			),
 		);
 	}
 
 	/**
 	 * Method table_name()
-	 * 
+	 *
 	 * Add suffix to table_prefix.
-	 * 
+	 *
 	 * @param mixed $suffix Given table suffix.
-	 * 
+	 *
 	 * @return string Table name.
 	 */
 	public function table_name( $suffix ) {
@@ -367,8 +367,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method use_mysqli()
-	 * 
+	 *
 	 * Determine whether a $wpdb variable is an instantiated object of mysqli.
+	 *
 	 * @return (bool) Return true on seuccess and false on failer.
 	 */
 	public static function use_mysqli() {
@@ -384,9 +385,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method install()
-	 * 
+	 *
 	 * Create database structure.
-	 * 
+	 *
 	 * @return (int|false) Return report ID on success and false on failer.
 	 */
 	public function install() {
@@ -496,9 +497,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 		foreach ( $this->default_tokens as $token_name => $token_description ) {
 			$token   = array(
-				'type'               => 1,
-				'token_name'         => $token_name,
-				'token_description'  => $token_description,
+				'type'              => 1,
+				'token_name'        => $token_name,
+				'token_description' => $token_description,
 			);
 			$current = $this->get_tokens_by( 'token_name', $token_name );
 			if ( $current ) {
@@ -535,10 +536,10 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_instance()
-	 * 
+	 *
 	 * Create a new public static instance of
 	 * MainWP_Live_Reports_Responder_DB().
-	 * 
+	 *
 	 * @return void $instance New public static Instance.
 	 */
 	public static function get_instance() {
@@ -550,11 +551,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method add_token()
-	 * 
+	 *
 	 * Add Report token.
-	 * 
+	 *
 	 * @param array $token Token Array.
-	 * 
+	 *
 	 * @return (int|bool) Return int Token ID on success and false on failer.
 	 */
 	public function add_token( $token ) {
@@ -576,16 +577,16 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method update_token()
-	 * 
+	 *
 	 * Update report token.
-	 * 
+	 *
 	 * @param mixed $id Report ID.
 	 * @param mixed $token Token ID.
-	 * 
+	 *
 	 * @return (int|bool) Return int token ID or false on failer.
 	 */
 	public function update_token( $id, $token ) {
-		
+
 		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
@@ -600,13 +601,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_tokens_by()
-	 * 
+	 *
 	 * Get report tokens by ID, name or URL.
-	 * 
+	 *
 	 * @param string $by By token name or token ID. Default: id.
-	 * @param null $value Token ID.
+	 * @param null   $value Token ID.
 	 * @param string $site_url Child Site URL.
-	 * 
+	 *
 	 * @return (array|object|null|void) Database query result by token or null on failure
 	 */
 	public function get_tokens_by( $by = 'id', $value = null, $site_url = '' ) {
@@ -656,9 +657,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_tokens()
-	 * 
+	 *
 	 * Get all report tokens.
-	 * 
+	 *
 	 * @return (array|object|null) Database query results.
 	 */
 	public function get_tokens() {
@@ -671,17 +672,17 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_site_token_values()
-	 * 
-	 * Get Child site token values. 
-	 * 
+	 *
+	 * Get Child site token values.
+	 *
 	 * @param mixed $id Token ID.
-	 * 
+	 *
 	 * @return (array|object|null) Database query results.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function get_site_token_values( $id ) {
-		
+
 		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
@@ -693,12 +694,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_site_tokens()
-	 * 
-	 * 
-	 * @param mixed $site_url Child Site URL.
-	 * 
+	 *
+	 * @param mixed  $site_url Child Site URL.
+	 *
 	 * @param string $index Default: id.
-	 * 
+	 *
 	 * @return array $return Array of tokens.
 	 */
 	public function get_site_tokens( $site_url, $index = 'id' ) {
@@ -750,12 +750,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_default_token_site()
-	 * 
+	 *
 	 * Get default Child Site token.
-	 * 
+	 *
 	 * @param mixed $token_name Token name.
 	 * @param mixed $site_url Child ite URL.
-	 * 
+	 *
 	 * @return (string|bool) Return string Child Site name|URL or false on failer.
 	 */
 	public function get_default_token_site( $token_name, $site_url ) {
@@ -791,17 +791,17 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method add_token_site()
-	 * 
+	 *
 	 * Add Child Site token.
-	 * 
+	 *
 	 * @param mixed $token_id Token ID.
 	 * @param mixed $token_value Token value.
 	 * @param mixed $site_url Child Site URL.
-	 * 
+	 *
 	 * @return string Child Site token value.
 	 */
 	public function add_token_site( $token_id, $token_value, $site_url ) {
-		
+
 		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
@@ -817,9 +817,9 @@ class MainWP_Live_Reports_Responder_DB {
 		if ( $wpdb->insert(
 			$this->table_name( 'client_report_site_token' ),
 			array(
-				'token_id'       => $token_id,
-				'token_value'    => $token_value,
-				'site_url'       => $site_url,
+				'token_id'    => $token_id,
+				'token_value' => $token_value,
+				'site_url'    => $site_url,
 			)
 		)
 		) {
@@ -831,13 +831,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method update_token_site()
-	 * 
+	 *
 	 * Update Child Site token value.
-	 * 
+	 *
 	 * @param mixed $token_id Token ID.
 	 * @param mixed $token_value Token value.
 	 * @param mixed $site_url Child Site URL.
-	 * 
+	 *
 	 * @return (string|bool) Return token value or false on failer.
 	 */
 	public function update_token_site( $token_id, $token_value, $site_url ) {
@@ -872,12 +872,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method delete_site_tokens()
-	 * 
+	 *
 	 * Delete Child Site token value.
-	 * 
+	 *
 	 * @param null $token_id Token ID.
 	 * @param null $site_url Child SIte URL.
-	 * 
+	 *
 	 * @return (int|bool) Number of rows affected/selected for all other queries and Boolean true. Boolean false on error.
 	 */
 	public function delete_site_tokens( $token_id = null, $site_url = null ) {
@@ -895,12 +895,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method delete_token_by()
-	 * 
+	 *
 	 * Delete Child Site token by id.
 	 *
 	 * @param string $by Query type. Default: 'id'.
-	 * @param null $value Token id.
-	 * 
+	 * @param null   $value Token id.
+	 *
 	 * @return (bool) Boolean true on success. Boolean false on error.
 	 */
 	public function delete_token_by( $by = 'id', $value = null ) {
@@ -919,11 +919,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method update_report()
-	 * 
+	 *
 	 * Update Client Report.
-	 * 
+	 *
 	 * @param array $report Client Report array.
-	 * 
+	 *
 	 * @return (string|bool) Client Report token value. Boolean false on failer.
 	 */
 	public function update_report( $report ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -938,10 +938,10 @@ class MainWP_Live_Reports_Responder_DB {
 			$client_id = 0;
 			if ( ! empty( $report['client'] ) ) {
 				$update_client = array(
-					'client'     => isset( $report['client'] ) ? $report['client'] : '',
-					'name'       => isset( $report['name'] ) ? $report['name'] : '',
-					'company'    => isset( $report['company'] ) ? $report['company'] : '',
-					'email'      => isset( $report['email'] ) ? $report['email'] : '',
+					'client'  => isset( $report['client'] ) ? $report['client'] : '',
+					'name'    => isset( $report['name'] ) ? $report['name'] : '',
+					'company' => isset( $report['company'] ) ? $report['company'] : '',
+					'email'   => isset( $report['email'] ) ? $report['email'] : '',
 				);
 
 				if ( isset( $report['client_id'] ) && ! empty( $report['client_id'] ) ) {
@@ -969,10 +969,10 @@ class MainWP_Live_Reports_Responder_DB {
 					$client_id = $client->clientid;
 				} else {
 					$update_client = array(
-						'client'     => '',
-						'name'       => isset( $report['name'] ) ? $report['name'] : '',
-						'company'    => isset( $report['company'] ) ? $report['company'] : '',
-						'email'      => isset( $report['email'] ) ? $report['email'] : '',
+						'client'  => '',
+						'name'    => isset( $report['name'] ) ? $report['name'] : '',
+						'company' => isset( $report['company'] ) ? $report['company'] : '',
+						'email'   => isset( $report['email'] ) ? $report['email'] : '',
 					);
 					$updatedClient = $this->update_client( $update_client );
 					if ( $updatedClient ) {
@@ -1043,15 +1043,15 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_report_by()
-	 * 
+	 *
 	 * Get Client Report by given query type $by.
-	 * 
+	 *
 	 * @param string $by Query type. Default: 'id'. Choices: id, client, site, title, all.
-	 * @param null $value Further variables to substitute into the query's placeholders if being called with individual arguments.
+	 * @param null   $value Further variables to substitute into the query's placeholders if being called with individual arguments.
 	 * @param string $orderby Order By. Default: null. Choices: client, name.
 	 * @param string $order Order. Default: null. Choices: client, name.
 	 * @param object $output Report object.
-	 * 
+	 *
 	 * @return (object|bool) Return Client Report object or false on failer.
 	 */
 	public function get_report_by( $by = 'id', $value = null, $orderby = null, $order = null, $output = OBJECT ) {
@@ -1116,9 +1116,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_avail_archive_reports()
-	 * 
+	 *
 	 * Get available achived client reports.
-	 * 
+	 *
 	 * @return (object|bool) Return Client Report object or false on failer.
 	 */
 	public function get_avail_archive_reports() {
@@ -1139,9 +1139,9 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_schedule_reports()
-	 * 
+	 *
 	 * Get schedualed client reports.
-	 * 
+	 *
 	 * @return (object|bool) Return Client Report object or false on failer.
 	 */
 	public function get_schedule_reports() {
@@ -1159,12 +1159,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method delete_report_by()
-	 * 
+	 *
 	 * Delete Client Report by id.
-	 * 
+	 *
 	 * @param string $by Query type. Default: 'id'.
-	 * @param null $value Client Report ID.
-	 * 
+	 * @param null   $value Client Report ID.
+	 *
 	 * @return (bool) Return true on success and false on failer.
 	 */
 	public function delete_report_by( $by = 'id', $value = null ) {
@@ -1177,15 +1177,15 @@ class MainWP_Live_Reports_Responder_DB {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
 	/**
 	 * Method get_clients()
-	 * 
-	 * Get all clients. 
-	 * 
+	 *
+	 * Get all clients.
+	 *
 	 * @return (object|bool) Return Clients object or false on failer.
 	 */
 	public function get_clients() {
@@ -1198,12 +1198,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_client_by()
-	 * 
+	 *
 	 * Get client by clientid.
-	 * 
+	 *
 	 * @param string $by Query type. Defualt: 'clientid'.
-	 * @param null $value Query value placeholder.
-	 * 
+	 * @param null   $value Query value placeholder.
+	 *
 	 * @return (array|object|null|void) Database query result for client or null on failure.
 	 */
 	public function get_client_by( $by = 'clientid', $value = null ) {
@@ -1242,15 +1242,15 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method update_client()
-	 * 
+	 *
 	 * Update Client.
-	 * 
+	 *
 	 * @param object $client Client object.
-	 * 
+	 *
 	 * @return (int|bool) int Client ID or false on failer.
 	 */
 	public function update_client( $client ) {
-		
+
 		/** @global object $wpdb WordPress Database Access Abstraction Object */
 		global $wpdb;
 
@@ -1270,11 +1270,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_formats()
-	 * 
+	 *
 	 * Get Client Report format.
-	 * 
+	 *
 	 * @param null $type Format type.
-	 * 
+	 *
 	 * @return (object|bool) Return report format object or false on failer.
 	 */
 	public function get_formats( $type = null ) {
@@ -1290,13 +1290,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_format_by()
-	 * 
+	 *
 	 * Get Client Report format by.
-	 * 
+	 *
 	 * @param string $by Query type. id|title.
-	 * @param mixed $value Id or title to grab.
-	 * @param null $type format type. Default: null as query placeholder.
-	 * 
+	 * @param mixed  $value Id or title to grab.
+	 * @param null   $type format type. Default: null as query placeholder.
+	 *
 	 * @return (array|object|null|void) Database query result or null on failure.
 	 */
 	public function get_format_by( $by, $value, $type = null ) {
@@ -1328,11 +1328,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method update_format()
-	 * 
+	 *
 	 * Update Client Report format.
-	 * 
+	 *
 	 * @param object $format Client Report format object.
-	 * 
+	 *
 	 * @return (int|false) The number of rows inserted, or false on error.
 	 */
 	public function update_format( $format ) {
@@ -1356,12 +1356,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method delete_format_by()
-	 * 
+	 *
 	 * Delete Client Report format by id.
-	 * 
+	 *
 	 * @param string $by Query type. Default: 'id'.
-	 * @param null $value Query value placeholder.
-	 * 
+	 * @param null   $value Query value placeholder.
+	 *
 	 * @return (bool) Return true on success and false on failer.
 	 */
 	public function delete_format_by( $by = 'id', $value = null ) {
@@ -1379,13 +1379,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method escape()
-	 * 
+	 *
 	 * Escape the given data.
-	 * 
+	 *
 	 * @param mixed $data Given data.
-	 * 
+	 *
 	 * @deprecated $wpdb->escape is deprecated - Replace with wpdb::prepare() https://developer.wordpress.org/reference/classes/wpdb/escape/.
-	 * 
+	 *
 	 * @return (string|bool) Escaped data or false on failer.
 	 */
 	protected function escape( $data ) {
@@ -1401,13 +1401,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method query()
-	 * 
+	 *
 	 * SQL Query.
-	 * 
+	 *
 	 * @param mixed $sql Given SQL Query.
-	 * 
-	 * @return (bool|object) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries 
-	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return TRUE. 
+	 *
+	 * @return (bool|object) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries
+	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return TRUE.
 	 */
 	public function query( $sql ) {
 		if ( null == $sql ) {
@@ -1427,14 +1427,14 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method m_query()
-	 * 
+	 *
 	 * MySQLi or MySQL Query.
-	 * 
+	 *
 	 * @param mixed $query SQL query.
 	 * @param mixed $link mysqli_connect link.
-	 * 
-	 * @return (bool) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries 
-	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return true. 
+	 *
+	 * @return (bool) Returns false on failure. For successful SELECT, SHOW, DESCRIBE or EXPLAIN queries
+	 * mysqli_query() will return a mysqli_result object. For other successful queries mysqli_query() will return true.
 	 */
 	public static function m_query( $query, $link ) {
 		if ( self::use_mysqli() ) {
@@ -1445,12 +1445,12 @@ class MainWP_Live_Reports_Responder_DB {
 	}
 	/**
 	 * Method fetch_object(
-	 * 
+	 *
 	 * MySQLi Query.
-	 * 
+	 *
 	 * @param object $result SQL Query.
-	 * 
-	 * @return (object|null) Returns an object with string properties that corresponds to the fetched row or null if there are no more rows in resultset.  
+	 *
+	 * @return (object|null) Returns an object with string properties that corresponds to the fetched row or null if there are no more rows in resultset.
 	 */
 	public static function fetch_object( $result ) {
 		if ( self::use_mysqli() ) {
@@ -1462,11 +1462,15 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method free_result()
+	 *
 	 * @param object $result SQL Query.
-	 * 
-	 * @return (bool) Returns true on success or false on failure. 
+	 *
+	 * @return (bool) Returns true on success or false on failure.
 	 */
 	public static function free_result( $result ) {
+		if ( is_bool( $result ) ) {
+			return $result;
+		}
 		if ( self::use_mysqli() ) {
 			return \mysqli_free_result( $result );
 		} else {
@@ -1476,13 +1480,13 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method data_seek()
-	 * 
-	 * Data Seek. 
-	 * 
+	 *
+	 * Data Seek.
+	 *
 	 * @param mixed $result Required. Specifies a result set identifier returned by mysqli_query(), mysqli_store_result() or mysqli_use_result()
 	 * @param mixed $offset Required. Specifies the field offset. Must be between 0 and the total number of rows - 1.
-	 * 
-	 * @return (bool) Returns true on success or false on failure. 
+	 *
+	 * @return (bool) Returns true on success or false on failure.
 	 */
 	public static function data_seek( $result, $offset ) {
 		if ( self::use_mysqli() ) {
@@ -1494,12 +1498,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method fetch_array()
-	 * 
+	 *
 	 * Fetch array.
-	 * 
+	 *
 	 * @param mixed $result Required. Specifies which data pointer to use. The data pointer is the result from the mysql_query() function
-	 * @param null $result_type Optional. Specifies what kind of array to return. Placeholder: null.
-	 * 
+	 * @param null  $result_type Optional. Specifies what kind of array to return. Placeholder: null.
+	 *
 	 * @return array The array that was fetched.
 	 */
 	public static function fetch_array( $result, $result_type = null ) {
@@ -1512,12 +1516,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method num_rows()
-	 * 
+	 *
 	 * Num Rows.
-	 * 
+	 *
 	 * @param mixed $result
-	 * 
-	 * @return (int|bool) The number of rows in a result set on success or false on failure. 
+	 *
+	 * @return (int|bool) The number of rows in a result set on success or false on failure.
 	 */
 	public static function num_rows( $result ) {
 		if ( self::use_mysqli() ) {
@@ -1529,12 +1533,12 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method is_result()
-	 * 
+	 *
 	 * Is result.
-	 * 
+	 *
 	 * @param mixed $result SQL Result.
-	 * 
-	 * @return bool Returns TRUE if var is a resource, FALSE otherwise. 
+	 *
+	 * @return bool Returns TRUE if var is a resource, FALSE otherwise.
 	 */
 	public static function is_result( $result ) {
 		if ( self::use_mysqli() ) {
@@ -1546,11 +1550,11 @@ class MainWP_Live_Reports_Responder_DB {
 
 	/**
 	 * Method get_results_result()
-	 * 
+	 *
 	 * Get results result.
-	 * 
-	 * @param mixed $sql SQL query. 
-	 * 
+	 *
+	 * @param mixed $sql SQL query.
+	 *
 	 * @return (array|object|null) Database query results.
 	 */
 	public function get_results_result( $sql ) {

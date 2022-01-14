@@ -1528,14 +1528,14 @@ class MainWP_Settings {
 			$keys           = array( 'name', 'url', 'adminname', 'wpgroups', 'uniqueId', 'http_user', 'http_pass', 'verify_certificate', 'ssl_version' );
 			$allowedHeaders = array( 'site name', 'url', 'admin name', 'group', 'security id', 'http username', 'http password', 'verify certificate', 'ssl version' );
 
-			$csv = implode( ',', $allowedHeaders ) . "\r\n";
+			$csv = implode( ',', $allowedHeaders ) . "\r";
 			MainWP_DB::data_seek( $websites, 0 );
 			while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 				if ( empty( $website ) ) {
 					continue;
 				}
 				$row  = MainWP_Utility::map_site( $website, $keys, false );
-				$csv .= '"' . implode( '","', $row ) . '"' . "\r\n";
+				$csv .= '"' . implode( '","', $row ) . '"' . "\r";
 			}
 
 			header( 'Content-Type: text/csv; charset=utf-8' );

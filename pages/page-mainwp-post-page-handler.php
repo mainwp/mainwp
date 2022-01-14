@@ -386,8 +386,10 @@ class MainWP_Post_Page_Handler {
 	 */
 	public static function ajax_posting_posts() {
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
-		$post_id = $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
-		self::posting_posts( $post_id, 'ajax_posting' );
+		$post_id = isset( $_POST['post_id'] ) && $_POST['post_id'] ? intval( $_POST['post_id'] ) : false;
+		if ( $post_id ) {
+			self::posting_posts( $post_id, 'ajax_posting' );
+		}
 		die();
 	}
 
@@ -712,9 +714,11 @@ class MainWP_Post_Page_Handler {
 
 				$last_ajax_posting = false;
 				if ( 'ajax_posting' == $what ) {
-					$total = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
-					$count = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
-					if ( $total == $count ) {
+					$total           = isset( $_POST['total'] ) ? intval( $_POST['total'] ) : 0;
+					$count           = isset( $_POST['count'] ) ? intval( $_POST['count'] ) : 0;
+					$delete_bulkpost = isset( $_POST['delete_bulkpost'] ) && ! empty( $_POST['delete_bulkpost'] ) ? true : false;
+
+					if ( $delete_bulkpost ) {
 						$last_ajax_posting = true;
 					}
 				}
@@ -833,6 +837,7 @@ class MainWP_Post_Page_Handler {
 				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
 				update_post_meta( $ret['id'], '_mainwp_edit_post_site_id', $websiteId );
 			}
+			$ret = apply_filters( 'mainwp_manageposts_get_post_result', $ret, $information['my_post'], $websiteId );
 			wp_send_json( $ret );
 		}
 	}
@@ -887,7 +892,8 @@ class MainWP_Post_Page_Handler {
 
 		$post_author             = $current_user->ID;
 		$new_post['post_author'] = $post_author;
-		$new_post['post_type']   = isset( $new_post['post_type'] ) && ( 'page' === $new_post['post_type'] ) ? 'bulkpage' : 'bulkpost';
+		$post_type               = isset( $new_post['post_type'] ) ? $new_post['post_type'] : '';
+		$new_post['post_type']   = 'page' === $post_type ? 'bulkpage' : 'bulkpost';
 
 		$foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
 		if ( 0 < $foundMatches ) {
@@ -1027,6 +1033,7 @@ class MainWP_Post_Page_Handler {
 			}
 		}
 
+		$ret            = array();
 		$ret['success'] = true;
 		$ret['id']      = $new_post_id;
 		return $ret;

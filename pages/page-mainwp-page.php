@@ -459,6 +459,7 @@ class MainWP_Page {
 							<div class="column">
 								<select class="ui dropdown" id="mainwp-bulk-actions">
 									<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+									<?php do_action( 'mainwp_manage_pages_bulk_action' ); ?>	
 									<option value="trash"><?php esc_html_e( 'Move to trash', 'mainwp' ); ?></option>
 									<option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></option>
@@ -1081,7 +1082,7 @@ class MainWP_Page {
 					<td class="date" data-order="<?php echo esc_attr( $raw_dts ); ?>">
 						<abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $page['dts'] ); ?>"><?php echo esc_html( $page['dts'] ); ?></abbr>
 					</td>
-					<td class="status"><?php echo self::get_status( $page['status'] ); ?>
+					<td class="status column-status <?php echo 'trash' == $page['status'] ? 'post-trash' : ''; ?>"><?php echo self::get_status( $page['status'] ); ?>
 					</td>
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) {
@@ -1116,11 +1117,12 @@ class MainWP_Page {
 								<?php endif; ?>
 								<?php if ( 'trash' != $page['status'] ) : ?>
 									<a class="item page_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
+									<?php do_action( 'mainwp_manage_pages_action_item', $page ); ?>
 									<a class="item page_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
-								<?php endif; ?>
+									<?php endif; ?>
 								<?php if ( 'publish' == $page['status'] ) { ?>
 									<a class="item" href="<?php echo esc_html( $website->url ) . ( '/' != substr( $website->url, -1 ) ? '/' : '' ) . '?p=' . intval( $page['id'] ); ?>" target="_blank"><?php esc_html_e( 'View', 'mainwp' ); ?></a>
-								<?php } ?>
+								<?php } ?>								
 								<?php if ( 'trash' == $page['status'] ) { ?>
 									<a class="item page_submitrestore" href="#"><?php esc_html_e( 'Restore', 'mainwp' ); ?></a>
 									<a class="item page_submitdelete_perm" href="#"><?php esc_html_e( 'Delete permanently', 'mainwp' ); ?></a>

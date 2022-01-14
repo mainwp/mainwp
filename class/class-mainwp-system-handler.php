@@ -500,11 +500,21 @@ class MainWP_System_Handler {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function check_update_custom( $transient ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) ) {
+		if ( isset( $_POST['action'] ) && ( ( 'update-plugin' === $_POST['action'] ) || ( 'update-selected' === $_POST['action'] ) ) && is_object( $transient ) && property_exists( $transient, 'response' ) ) {
 			$extensions = MainWP_Extensions_Handler::get_indexed_extensions_infor( array( 'activated' => true ) );
 			if ( defined( 'DOING_AJAX' ) && isset( $_POST['plugin'] ) && 'update-plugin' == $_POST['action'] ) {
+
+				if ( empty( $transient->response ) ) {
+					$transient->response = array();
+				}
+
 				$plugin_slug = sanitize_text_field( wp_unslash( $_POST['plugin'] ) );
 				if ( isset( $extensions[ $plugin_slug ] ) ) {
+
+					if ( ! is_object( $transient->response[ $plugin_slug ] ) || ! property_exists( $transient->response[ $plugin_slug ], 'new_version' ) ) {
+						return $transient;
+					}
+
 					if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 						return $transient;
 					}
@@ -512,22 +522,32 @@ class MainWP_System_Handler {
 					$api_slug = dirname( $plugin_slug );
 					$rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
 
-					if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
+					if ( ! empty( $rslt ) && is_object( $rslt ) && property_exists( $rslt, 'latest_version' ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 						$transient->response[ $plugin_slug ] = self::map_rslt_obj( $rslt );
 					}
 
 					return $transient;
 				}
 			} elseif ( 'update-selected' === $_POST['action'] && isset( $_POST['checked'] ) && is_array( $_POST['checked'] ) ) {
+
+				if ( empty( $transient->response ) ) {
+					$transient->response = array();
+				}
+
 				$updated = false;
 				foreach ( wp_unslash( $_POST['checked'] ) as $plugin_slug ) {
 					if ( isset( $extensions[ $plugin_slug ] ) ) {
+
+						if ( ! isset( $transient->response[ $plugin_slug ] ) ) {
+							$transient->response[ $plugin_slug ] = new \stdClass();
+						}
+
 						if ( isset( $transient->response[ $plugin_slug ] ) && version_compare( $transient->response[ $plugin_slug ]->new_version, $extensions[ $plugin_slug ]['version'], '=' ) ) {
 							continue;
 						}
 						$api_slug = dirname( $plugin_slug );
 						$rslt     = MainWP_API_Handler::get_upgrade_information( $api_slug );
-						if ( ! empty( $rslt ) && isset( $rslt->latest_version ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
+						if ( ! empty( $rslt ) && is_object( $rslt ) && property_exists( $rslt, 'latest_version' ) && version_compare( $rslt->latest_version, $extensions[ $plugin_slug ]['version'], '>' ) ) {
 
 							$this->upgradeVersionInfo->result[ $api_slug ] = $rslt;
 							$transient->response[ $plugin_slug ]           = self::map_rslt_obj( $rslt );
@@ -626,6 +646,10 @@ class MainWP_System_Handler {
 
 		if ( ( null == $this->upgradeVersionInfo ) || ! property_exists( $this->upgradeVersionInfo, 'updated' ) || ( ( time() - $this->upgradeVersionInfo->updated ) > 60 ) ) {
 			$this->check_upgrade();
+		}
+
+		if ( empty( $transient->response ) ) {
+			$transient->response = array();
 		}
 
 		if ( null != $this->upgradeVersionInfo && property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ) {

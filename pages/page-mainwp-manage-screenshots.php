@@ -133,15 +133,8 @@ class MainWP_Manage_Screenshots {
 	 * Method render_all_sites()
 	 *
 	 * Render Screenshots.
-	 *
-	 * @return string MainWP Screenshots Table.
 	 */
 	public static function render_all_sites() {
-		if ( ! mainwp_current_user_have_right( 'dashboard', 'manage_screenshots' ) ) {
-			mainwp_do_not_have_permissions( __( 'manage screenshots', 'mainwp' ) );
-			return;
-		}
-
 		/**
 		 * Sites Page header
 		 *

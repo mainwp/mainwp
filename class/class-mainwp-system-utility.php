@@ -249,8 +249,14 @@ class MainWP_System_Utility {
 
 		global $wp_filesystem;
 
-		$dirs   = self::get_mainwp_dir();
-		$newdir = $dirs[0] . $userid . ( null != $dir ? DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR : '' );
+		$dirs = self::get_mainwp_dir();
+
+		$newdir = $dirs[0] . $userid;
+		if ( '/' == $dir || null === $dir ) {
+			$newdir .= DIRECTORY_SEPARATOR;
+		} else {
+			$newdir .= DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
+		}
 
 		if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
 

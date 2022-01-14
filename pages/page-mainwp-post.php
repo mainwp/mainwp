@@ -524,6 +524,7 @@ class MainWP_Post {
 									<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
 									<option value="publish"><?php esc_html_e( 'Publish', 'mainwp' ); ?></option>
 									<option value="unpublish"><?php esc_html_e( 'Unpublish', 'mainwp' ); ?></option>
+									<?php do_action( 'mainwp_manage_posts_bulk_action' ); ?>									
 									<option value="trash"><?php esc_html_e( 'Trash', 'mainwp' ); ?></option>
 									<option value="restore"><?php esc_html_e( 'Restore', 'mainwp' ); ?></option>
 									<option value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
@@ -572,7 +573,7 @@ class MainWP_Post {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-posts-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-posts-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage existing posts on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-posts/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1267,7 +1268,7 @@ class MainWP_Post {
 
 					<td class="date column-date" data-order="<?php echo esc_attr( $raw_dts ); ?>"><abbr raw_value="<?php echo esc_attr( $raw_dts ); ?>" title="<?php echo esc_attr( $post['dts'] ); ?>"><?php echo esc_html( $post['dts'] ); ?></abbr></td>
 
-					<td class="status column-status"><?php echo self::get_status( $post['status'] ); ?></td>
+					<td class="status column-status <?php echo 'trash' == $post['status'] ? 'post-trash' : ''; ?>"><?php echo self::get_status( $post['status'] ); ?></td>
 
 					<?php
 					if ( MainWP_Utility::enabled_wp_seo() ) :
@@ -1315,9 +1316,10 @@ class MainWP_Post {
 								<?php if ( 'trash' !== $post['status'] ) : ?>
 									<?php if ( isset( $child_to_dash_array[ $post['id'] ] ) ) { ?>
 										<a class="item" href="post.php?post=<?php echo (int) $child_to_dash_array[ $post['id'] ]; ?>&action=edit&select=<?php echo (int) $website->id; ?>"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
-									<?php } else { ?>
+									<?php } else { ?>										
 										<a class="item post_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>
 									<?php } ?>
+									<?php do_action( 'mainwp_manage_posts_action_item', $post ); ?>															
 									<a class="item post_submitdelete" href="#"><?php esc_html_e( 'Trash', 'mainwp' ); ?></a>
 								<?php endif; ?>
 									<a class="item" href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="bottom right"  data-inverted="" class="open_newwindow_wpadmin ui green basic icon button" target="_blank"><?php esc_html_e( 'Go to WP Admin', 'mainwp' ); ?></a>
@@ -1985,9 +1987,9 @@ class MainWP_Post {
 						<div class="ui message info">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-create-new-bulkpost-info-message"></i>
 							<?php if ( 'bulkpost' === $post_type ) : ?>
-								<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( __( 'Create a new bulk post. Scheduling posts on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-post/" target="_blank">', '</a>' ); ?>
 							<?php else : ?>
-								<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
+								<?php echo sprintf( __( 'Create a new bulk page. Scheduling pages on Child Sites is almost the same as publishing it. The only difference is before clicking the Publish button is setting it to Scheduled status and setting the time. For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-page/" target="_blank">', '</a>' ); ?>
 							<?php endif; ?>
 						</div>
 						<?php endif; ?>

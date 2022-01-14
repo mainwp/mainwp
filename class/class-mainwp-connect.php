@@ -93,11 +93,17 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		}
 
+		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
+
+		$http_version = apply_filters( 'mainwp_curl_http_version', false, false, $url );
+		if ( false !== $http_version ) {
+			curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
+		}
+
 		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
 		$headers['Expect'] = self::get_expect_header( $postdata );
 		$headers           = \Requests::flatten( $headers );
 
-		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'X-Requested-With: XMLHttpRequest' ) );
 		curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
@@ -141,14 +147,18 @@ class MainWP_Connect {
 				usleep( 10000 );
 			} while ( $running > 0 );
 
-			curl_multi_close( $mh );
+			if ( 'resource' === gettype( $mh ) ) {
+				curl_multi_close( $mh );
+			}
 		} else {
 			$data        = curl_exec( $ch );
 			$err         = curl_error( $ch );
 			$http_status = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 			$errno       = curl_errno( $ch );
 			$realurl     = curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
-			curl_close( $ch );
+			if ( 'resource' === gettype( $ch ) ) {
+				curl_close( $ch );
+			}
 		}
 
 		MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
@@ -480,7 +490,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_System::$version
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
 	 */
-	public static function fetch_urls_authed( &$websites, $what, $params = null, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function fetch_urls_authed( &$websites, $what, $params, $handler, &$output, $whatPage = null, $others = array(), $is_external_hook = false ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( ! is_array( $websites ) || empty( $websites ) ) {
 			return false;
@@ -673,6 +683,13 @@ class MainWP_Connect {
 
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
 
+			if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+				$http_version = apply_filters( 'mainwp_curl_http_version', false, $website->id );
+				if ( false !== $http_version ) {
+					curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
+				}
+			}
+
 			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
 			MainWP_System_Utility::set_time_limit( $timeout );
 
@@ -725,7 +742,9 @@ class MainWP_Connect {
 				usleep( 10000 );
 			} while ( $running > 0 );
 
-			curl_multi_close( $mh );
+			if ( 'resource' === gettype( $mh ) ) {
+				curl_multi_close( $mh );
+			}
 		} else {
 			foreach ( $requestHandles as $id => $ch ) {
 				$data = curl_exec( $ch );
@@ -908,6 +927,14 @@ class MainWP_Connect {
 			$headers           = \Requests::flatten( $headers );
 
 			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
+
+			if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+				$http_version = apply_filters( 'mainwp_curl_http_version', false, $website->id );
+				if ( false !== $http_version ) {
+					curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
+				}
+			}
+
 			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 			curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
 
@@ -1087,14 +1114,14 @@ class MainWP_Connect {
 	 * @return $result Resource ID only.
 	 */
 	public static function get_resource_id( $resource ) {
-		if ( ! is_resource( $resource ) ) {
-			return false;
+		$result = false;
+		if ( is_a( $resource, 'CurlHandle' ) ) {
+			$result = spl_object_hash( $resource );
+		} elseif ( is_resource( $resource ) ) {
+			$resourceString = (string) $resource;
+			$exploded       = explode( '#', $resourceString );
+			$result         = array_pop( $exploded );
 		}
-
-		$resourceString = (string) $resource;
-		$exploded       = explode( '#', $resourceString );
-		$result         = array_pop( $exploded );
-
 		return $result;
 	}
 
@@ -1532,6 +1559,13 @@ class MainWP_Connect {
 
 		curl_setopt( $ch, CURLOPT_SSLVERSION, $sslVersion );
 
+		if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+			$http_version = apply_filters( 'mainwp_curl_http_version', false, $website->id );
+			if ( false !== $http_version ) {
+				curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
+			}
+		}
+
 		$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
 		$headers['Expect'] = self::get_expect_header( $postdata );
 		$headers           = \Requests::flatten( $headers );
@@ -1592,8 +1626,9 @@ class MainWP_Connect {
 				}
 				usleep( 10000 );
 			} while ( $running > 0 );
-
-			@curl_multi_close( $mh );
+			if ( 'resource' === gettype( $mh ) ) {
+				@curl_multi_close( $mh );
+			}
 		} else {
 			$data        = @curl_exec( $ch );
 			$http_status = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
@@ -1838,7 +1873,9 @@ class MainWP_Connect {
 			curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
 		}
 		curl_exec( $ch );
-		curl_close( $ch );
+		if ( 'resource' === gettype( $ch ) ) {
+			curl_close( $ch );
+		}
 		fclose( $fp );
 	}
 
@@ -1934,9 +1971,9 @@ class MainWP_Connect {
 
 		$data     = @curl_exec( $ch );
 		$httpCode = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-
-		curl_close( $ch );
-
+		if ( 'resource' === gettype( $ch ) ) {
+			curl_close( $ch );
+		}
 		if ( 200 == $httpCode ) {
 			return $data;
 		} else {

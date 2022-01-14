@@ -186,6 +186,11 @@ class Rest_Api {
 				'callback' => 'security-issues',
 			),
 			array(
+				'route'    => 'sites',
+				'method'   => 'GET',
+				'callback' => 'sites-available-updates-count',
+			),
+			array(
 				'route'    => 'site',
 				'method'   => 'GET',
 				'callback' => 'site',
@@ -963,6 +968,31 @@ class Rest_Api {
 			MainWP_DB::free_result( $websites );
 			$response = new \WP_REST_Response( $data );
 			$response->set_status( 200 );
+		} else {
+			// throw common error.
+			$response = $this->mainwp_authentication_error();
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Method mainwp_rest_api_sites_available_updates_count_callback()
+	 *
+	 * Callback function for managing the response to API requests made for the endpoint: sites-available-updates-count
+	 * Can be accessed via a request like: https://yourdomain.com/wp-json/mainwp/v1/sites/sites-available-updates-count
+	 * API Method: GET
+	 *
+	 * @param array $request The request made in the API call which includes all parameters.
+	 *
+	 * @return object $response An object that contains the return data and status of the API request.
+	 */
+	public function mainwp_rest_api_sites_available_updates_count_callback( $request ) {
+
+		// first validate the request.
+		if ( $this->mainwp_validate_request( $request ) ) {
+			$total_upgrades = MainWP_Common_Handler::instance()->sites_available_updates_count();
+			$response       = new \WP_REST_Response( $total_upgrades );
 		} else {
 			// throw common error.
 			$response = $this->mainwp_authentication_error();

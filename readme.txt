@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.8.1
 Requires PHP: 7.0
-Stable tag: 4.1.10.3
+Stable tag: 4.1.11
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,14 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.11 - 12-28-2021 =
+* Fixed: Incorrect error messages for multiple WP CLI commands
+* Fixed: Error that occurs on some setups when removing a child site
+* Fixed: Multiple PHP warnings
+* Updated: PHP 8 compatibility
+* Updated: Improved importing sites process by allowing CSV files with quote marks
+* Dev: Added `sites-available-updates-count` REST API endpoint
 
 = 4.1.10.3 - 11-9-2021 =
 * Fixed: An issue with triggering email notifications by extensions

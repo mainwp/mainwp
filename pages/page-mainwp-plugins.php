@@ -445,7 +445,7 @@ class MainWP_Plugins {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactive, and delete installed plugins.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactivate, and delete installed plugins.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -846,7 +846,7 @@ class MainWP_Plugins {
 				$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
 				$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
 				$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
-				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : '';
+				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : 0;
 				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
 				$pluginsVersion[ $pn ]         = array(
 					'name' => $plugin['name'],

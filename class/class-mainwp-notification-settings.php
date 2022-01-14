@@ -551,7 +551,7 @@ class MainWP_Notification_Settings {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
 	 */
-	public static function replace_tokens_for_settings( $options, $fields = array(), $website ) {
+	public static function replace_tokens_for_settings( $options, $fields, $website ) {
 
 		/**
 		 * Filter: mainwp_boilerplate_get_tokens

@@ -53,8 +53,9 @@ if (jQuery( '.ui.calendar' ).length > 0 ) {
     } );
     jQuery( document ).on( 'click', '#mainwp-do-pages-bulk-actions', function () {
         var action = jQuery( '#mainwp-bulk-actions' ).val();
-        if ( action == 'none' )
+        if ( action != 'trash' && action != 'restore' && action != 'delete' ) {
             return false;
+        }
 
         var tmp = jQuery( "input[name='page[]']:checked" );
         countSent = tmp.length;
@@ -232,7 +233,7 @@ jQuery( document ).ready( function () {
     jQuery( document ).on( 'click', '.post_submitapprove', function() {
         mainwppost_postAction( jQuery( this ), 'approve' );
         return false;
-    } );
+    } );    
     jQuery( document ).on( 'click', '.post_submitdelete_perm', function() {
         mainwppost_postAction( jQuery( this ), 'delete' );
         return false;
@@ -254,8 +255,9 @@ jQuery( document ).ready( function () {
 
     jQuery( document ).on( 'click', '#mainwp-do-posts-bulk-actions', function() {
         var action = jQuery( '#mainwp-bulk-actions' ).val();
-        if ( action == 'none' )
+        if ( action != 'publish' && action != 'unpublish' && action != 'trash' && action != 'restore' && action != 'delete' ) {
             return false;
+        }
 
         var tmp = jQuery( "input[name='post[]']:checked" );
         countSent = tmp.length;

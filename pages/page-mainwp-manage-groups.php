@@ -68,7 +68,7 @@ class MainWP_Manage_Groups {
 	private static function create_group_item( $group ) {
 		?>
 		<a class="item" id="<?php echo $group->id; ?>">
-			<div class="ui small label"><?php echo $group->nrsites; ?></div>
+			<div class="ui small label"><?php echo property_exists( $group, 'nrsites' ) ? $group->nrsites : 0; ?></div>
 			<input type="hidden" value="<?php echo $group->name; ?>" id="mainwp-hidden-group-name">
 			<input type="hidden" value="<?php echo $group->id; ?>" id="mainwp-hidden-group-id">
 			<?php echo $group->name; ?>

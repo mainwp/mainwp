@@ -848,8 +848,8 @@ class MainWP_DB_Common extends MainWP_DB {
 		}
 
 		if ( isset( $data['monitoring_emails'] ) ) {
-			$moniroting_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
-			MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $moniroting_emails );
+			$monitoring_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
+			MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
 		}
 
 		return true;

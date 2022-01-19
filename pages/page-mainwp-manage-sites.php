@@ -1454,9 +1454,9 @@ class MainWP_Manage_Sites {
 
 				MainWP_DB::instance()->update_website_values( $website->id, $newValues );
 
-				$moniroting_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
-				$moniroting_emails = MainWP_Utility::valid_input_emails( $moniroting_emails );
-				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $moniroting_emails );
+				$monitoring_emails = isset( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_monitoringNotificationEmails'] ) ) : '';
+				$monitoring_emails = MainWP_Utility::valid_input_emails( $monitoring_emails );
+				MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', $monitoring_emails );
 				$updated = true;
 			}
 		}

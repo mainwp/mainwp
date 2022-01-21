@@ -1571,17 +1571,14 @@ class MainWP_Settings {
     /**
      * Render Cache Control Settings SubPage.
      *
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_notification_types()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_edit_settings()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::emails_general_settings_handle()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Settings::render_all_settings()
-     * @uses \MainWP\Dashboard\MainWP_Notification_Template::handle_template_file_action()
+     * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::handle_cache_control_post()
+     * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_global_settings()
      */
     public static function render_cache_control() {
 
         self::render_header( 'cache-control' );
-        $updated = MainWP_Auto_Cache_Purge_View::handle_cache_control_post();
-        MainWP_Auto_Cache_Purge_View::render_global_settings( $updated );
+        $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
+        MainWP_Auto_Cache_Purge_View::instance()->render_global_settings( $updated );
         self::render_footer( 'cache-control' );
     }
 

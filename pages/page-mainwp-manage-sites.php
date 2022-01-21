@@ -1270,11 +1270,25 @@ class MainWP_Manage_Sites {
 			}
 		}
 
+        // Edit & Update Cache Control Settings.
+        if ( ! empty( $_GET['cacheControlId'] ) ) {
+            $websiteid = intval( $_GET['cacheControlId'] );
+            if ( $websiteid ) {
+                MainWP_System_Utility::set_current_wpid( $websiteid );
+            }
+            $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            if ( MainWP_System_Utility::can_edit_website($website ) ) {
+                $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_child_site_settings( $website );
+                MainWP_Auto_Cache_Purge_View::render_child_site_settings( $websiteid, $updated );
+                return;
+            }
+        }
+
 		if ( isset( $_GET['id'] ) ) {
 			$websiteid = intval( $_GET['id'] );
 			$website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
 			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
-				// Edit website!
+				// Edit website.
 				$updated = self::update_site_handle( $website );
 				self::render_edit_site( $websiteid, $updated );
 				return;
@@ -1439,16 +1453,9 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
-                // Move to hook mainwp_update_site.
-                $auto_purge_cache = isset( $_POST['mainwp_auto_purge_cache'] ) ? intval( $_POST['mainwp_auto_purge_cache'] ) : 2;
-                if ( 2 < $auto_purge_cache ) {
-                    $auto_purge_cache = 2;
-                }
-
                 $newValues = array(
                     'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
                     'backup_before_upgrade' => $backup_before_upgrade,
-                    'auto_purge_cache'      => $auto_purge_cache,// Move to hook mainwp_update_site.
                     'force_use_ipv4'        => $forceuseipv4,
                     'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
                 );

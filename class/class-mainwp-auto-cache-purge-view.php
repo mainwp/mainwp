@@ -92,35 +92,6 @@ class MainWP_Auto_Cache_Purge_View {
      * @param $subPages $subPages is an Array of subpages.
      * @return array|mixed
      */
-    public function cache_control_child_site_navigation( $site_pages ){
-
-        $site_id = 0;
-        if ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) {
-            $site_id = intval( $_GET['id'] );
-        } elseif ( isset( $_GET['cacheControlid'] ) && ! empty( $_GET['cacheControlid'] ) ) {
-            $site_id = intval( $_GET['cacheControlid'] );
-        }
-
-                if ( isset( $site_pages ) && is_array( $site_pages ) ) {
-                    $site_pages[] = array(
-                        'CacheControl'             => array(
-                        'href'   => 'admin.php?page=managesites&cacheControlid=' . $site_id,
-                        'title'  => __( 'Cache Control', 'mainwp' ),
-                        'access' => true,
-                        ),
-                    );
-                }
-
-
-        return $site_pages;
-    }
-
-    /**
-     * Cache Control page Header Navigation.
-     *
-     * @param $subPages $subPages is an Array of subpages.
-     * @return array|mixed
-     */
     public function cache_control_navigation( $subPages ){
         $currentScreen =  get_current_screen();
 
@@ -146,6 +117,15 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
+     * Force Re-sync after Child Site settings save.
+     */
+    public function cache_control_settings_sync( $website ){
+        $website = MainWP_DB::instance()->get_website_by_id( $website->id );
+
+        return MainWP_Sync::sync_website( $website, $pForceFetch = true );
+    }
+
+    /**
      * Sync Data with Child Site on Sync.
      *
      * @param $data
@@ -157,7 +137,7 @@ class MainWP_Auto_Cache_Purge_View {
             $data = array();
         }
 
-        if ($website->auto_purge_cache === '2') {
+        if ( $website->auto_purge_cache === '2' ) {
             $data['auto_purge_cache'] = get_option( 'mainwp_auto_purge_cache' );
         }else{
             $data['auto_purge_cache'] = $website->auto_purge_cache;
@@ -176,6 +156,7 @@ class MainWP_Auto_Cache_Purge_View {
             $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
             MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
 
+
             return true;
         }
         return false;
@@ -189,7 +170,7 @@ class MainWP_Auto_Cache_Purge_View {
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'cache-control' ) ) {
 
-            if (mainwp_current_user_have_right('dashboard', 'edit_sites')) {
+            if ( mainwp_current_user_have_right('dashboard', 'edit_sites') ) {
 
                 $auto_purge_cache = isset( $_POST['mainwp_auto_purge_cache'] ) ? intval( $_POST['mainwp_auto_purge_cache'] ) : 2;
                 if ( 2 < $auto_purge_cache ) {
@@ -197,10 +178,13 @@ class MainWP_Auto_Cache_Purge_View {
                 }
 
                 $newValues = array(
-                    'auto_purge_cache'      => $auto_purge_cache,
+                    'auto_purge_cache' => $auto_purge_cache,
                 );
 
                 MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+
+                // Force Re-sync Child Site Data.
+                self::instance()->cache_control_settings_sync( $website );
 
                 $updated = true;
             }
@@ -209,7 +193,7 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Render Global Auto Cache Purge settings.
+     * Render Global Cache Control settings.
      */
     public static function render_global_settings( $updated ) {
         if ( ! mainwp_current_user_have_right( 'admin', 'manage_dashboard_settings' ) ) {
@@ -234,6 +218,7 @@ class MainWP_Auto_Cache_Purge_View {
                             <div class="ten wide column ui toggle checkbox">
                                 <input type="checkbox" value="1" name="mainwp_auto_purge_cache" <?php checked( get_option( 'mainwp_auto_purge_cache', 0 ), 1 ); ?> id="mainwp_auto_purge_cache">
                                 <label><em><?php echo __( 'Enable to purge all cache after updates.', 'mainwp' ); ?></em></label>
+                                <em><?php echo __( 'You must Sync Dashboard with Child Sites after saving these settings.', 'mainwp' ); ?></em>
                             </div>
                         </div>
                         <div class="ui divider"></div>
@@ -246,7 +231,7 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Render Child Site ( edit page ) Auto Cache Purge settings.
+     * Render Child Site ( edit page ) Cache Control settings.
      */
     public static function render_child_site_settings( $websiteid, $updated ) {
         MainWP_Manage_Sites::render_header( 'cache-control' );
@@ -257,6 +242,7 @@ class MainWP_Auto_Cache_Purge_View {
 
         // Grab updated Child Site object.
         $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+
         ?>
         <div id="mainwp-cache-control-settings" class="ui segment">
             <?php if ( $updated ) : ?>

@@ -199,9 +199,9 @@ class MainWP_Sync {
 		/**
 		 * Filter: mainwp_before_save_sync_result
 		 *
-		 * Filters data returned from child site before sasving to the database.
+		 * Filters data returned from child site before saving to the database.
 		 *
-		 * @param object $pWebsite Object contaning child site data.
+		 * @param object $pWebsite Object containing child site data.
 		 *
 		 * @since 3.4
 		 */
@@ -489,10 +489,10 @@ class MainWP_Sync {
 			/**
 			 * Action: mainwp_site_synced
 			 *
-			 * Fires upon successfull site sinchronization.
+			 * Fires upon successful site synchronization.
 			 *
-			 * @param object $pWebsite    Object contaning child site info.
-			 * @param array  $information Array contaning information returned from child site.
+			 * @param object $pWebsite    Object containing child site info.
+			 * @param array  $information Array containing information returned from child site.
 			 *
 			 * @since 3.4
 			 */

@@ -195,7 +195,7 @@ class MainWP_Manage_Screenshots {
 							<a href="javascript:void(0)" class="mainwp-sync-this-site" site-id="<?php echo $website->id; ?>"><i class="sync alternate icon"></i></a>
 							<a href="admin.php?page=managesites&id=<?php echo $website->id; ?>"><i class="edit icon"></i></a>
 							<a href="admin.php?page=managesites&scanid=<?php echo $website->id; ?>"><i class="shield icon"></i></a>
-							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>"><i class="sign-in icon"></i></a>
+							<a href="admin.php?page=SiteOpen&newWindow=yes&websiteid=<?php echo $website->id; ?>" target="_blank"><i class="sign-in icon"></i></a>
 						</span>
 						</div>
 					</div>

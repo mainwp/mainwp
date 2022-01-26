@@ -370,7 +370,7 @@ class MainWP_Extensions_View {
 			<?php endif; ?>
 			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 				<div class="ui middle aligned extra content">
-					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Excentino API license is not activated.', 'mainwp' ) ); ?>" data-position="top left" data-inverted="" class="activate-api-status">
+					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" data-position="top left" data-inverted="" class="activate-api-status">
 						<?php if ( $active ) : ?>
 							<i class="circular inverted green unlock icon"></i>
 						<?php else : ?>

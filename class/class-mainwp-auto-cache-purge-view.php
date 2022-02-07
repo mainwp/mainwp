@@ -119,7 +119,7 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Force Re-sync after Child Site settings save.
+     * Force Re-sync after Child Site settings have been saved.
      */
     public function cache_control_settings_sync( $website ){
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );
@@ -128,10 +128,10 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Sync Data with Child Site on Sync.
+     * Send data to Child Site on Sync.
      *
-     * @param $data
-     * @param null $website
+     * @param array $data Array of data to send.
+     * @param array $website Array of previously saved Child Site data.
      * @return array|mixed
      */
     public function cache_control_sync_others_data( $data, $website = null ) {
@@ -145,20 +145,27 @@ class MainWP_Auto_Cache_Purge_View {
         }else{
             $data['auto_purge_cache'] = $website->auto_purge_cache;
         }
-        $newData = json_encode($data['mainwp_cache_control_last_purged']);
-        $newValues = array(
-            'mainwp_cache_control_last_purged' => $newData, //current_time('mysql')
-        );
-
-        MainWP_DB::instance()->update_website_values( $website->id, $newValues );
 
         return $data;
 
     }
 
-    public function synced_site( $pWebsite, $information = array() ) {
+    /**
+     * Grab data via sync_others_data() from Child Site when synced.
+     *
+     * @param array $website  Array of previously saved Child Site data.
+     * @param array $information Array of data sent from Child Site.
+     */
+    public function synced_site( $website, $information = array() ) {
         if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
-// do something here.
+
+            $newData = $information['mainwp_cache_control_last_purged'];
+            $newValues = array(
+                'mainwp_cache_control_last_purged' => $newData,
+            );
+
+            MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+
             unset( $information['mainwp_cache_control_last_purged'] );
         }
     }

@@ -531,7 +531,6 @@ class MainWP_Install extends MainWP_DB_Base {
 
     /**
      * Update DB for version 8.59.
-     * Temporary method will move to DB instance.
      * Fired on line:366 -> $this->update_db_859();
      */
     public function update_db_859() {
@@ -540,6 +539,7 @@ class MainWP_Install extends MainWP_DB_Base {
         if ( version_compare( $current_version, '8.58', '>=' ) ) {
             // Update table `wp_mainwp_wp` to include `auto_purge_cache`.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD auto_purge_cache tinyint(1) NOT NULL DEFAULT 2' );
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cache_control_last_purged LONGTEXT NOT NULL AFTER auto_purge_cache' );
         }
     }
 

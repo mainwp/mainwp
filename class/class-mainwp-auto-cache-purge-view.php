@@ -67,7 +67,7 @@ class MainWP_Auto_Cache_Purge_View {
      *  Instantiate Hooks for the Settings Page.
      *  Called from class-mainwp-system.php line 691.
      */
-    public static function init() {
+    public function init() {
         self::instance()->admin_init();
     }
 
@@ -81,7 +81,8 @@ class MainWP_Auto_Cache_Purge_View {
 
         add_filter( 'mainwp_sync_others_data', array( $this, 'cache_control_sync_others_data' ), 10, 2 );
         add_filter( 'mainwp_page_navigation', array( $this, 'cache_control_navigation' ) );
-
+        add_filter( 'mainwp_sitestable_getcolumns', array( $this,'cache_control_sitestable_column' ), 10, 1 );
+        add_filter( 'mainwp_sitestable_item', array( $this,'cache_control_sitestable_item' ), 10, 1 );
 
 
     }
@@ -133,6 +134,7 @@ class MainWP_Auto_Cache_Purge_View {
      * @return array|mixed
      */
     public function cache_control_sync_others_data( $data, $website = null ) {
+
         if ( ! is_array( $data ) ) {
             $data = array();
         }
@@ -142,7 +144,15 @@ class MainWP_Auto_Cache_Purge_View {
         }else{
             $data['auto_purge_cache'] = $website->auto_purge_cache;
         }
+        $newData = json_encode($data['mainwp_cache_control_last_purged']);
+        $newValues = array(
+            'mainwp_cache_control_last_purged' => $newData, //current_time('mysql')
+        );
+
+        MainWP_DB::instance()->update_website_values( $website->id, $newValues );
+
         return $data;
+
     }
 
     /**
@@ -190,6 +200,29 @@ class MainWP_Auto_Cache_Purge_View {
             }
         }
         return $updated;
+    }
+
+
+    /**
+     * Sites Table Columns.
+     */
+    function cache_control_sitestable_column( $columns ) {
+        $columns['mainwp_cache_control_last_purged'] = "Cache Last Purged";
+        return $columns;
+    }
+
+
+    public function cache_control_sitestable_item( $item ){
+
+            $website = MainWP_DB::instance()->get_website_by_id( $item['id'], true );
+
+
+            if ( property_exists( $website, 'mainwp_cache_control_last_purged' ) && !empty(( $website->mainwp_cache_control_last_purged )) ) {
+                $item['mainwp_cache_control_last_purged'] = $website->mainwp_cache_control_last_purged;
+            } else {
+                $item['mainwp_cache_control_last_purged'] = 'Never Purged';
+            }
+            return $item;
     }
 
     /**

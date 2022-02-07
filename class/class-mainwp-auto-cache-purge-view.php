@@ -83,6 +83,7 @@ class MainWP_Auto_Cache_Purge_View {
         add_filter( 'mainwp_page_navigation', array( $this, 'cache_control_navigation' ) );
         add_filter( 'mainwp_sitestable_getcolumns', array( $this,'cache_control_sitestable_column' ), 10, 1 );
         add_filter( 'mainwp_sitestable_item', array( $this,'cache_control_sitestable_item' ), 10, 1 );
+        add_action( 'mainwp_site_synced', array( $this, 'synced_site' ), 10, 2 );
 
 
     }
@@ -153,6 +154,13 @@ class MainWP_Auto_Cache_Purge_View {
 
         return $data;
 
+    }
+
+    public function synced_site( $pWebsite, $information = array() ) {
+        if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
+// do something here.
+            unset( $information['mainwp_cache_control_last_purged'] );
+        }
     }
 
     /**

@@ -77,15 +77,11 @@ class MainWP_Auto_Cache_Purge_View {
      * Instantiate Hooks for the page.
      */
     public function admin_init() {
-
-
         add_filter( 'mainwp_sync_others_data', array( $this, 'cache_control_sync_others_data' ), 10, 2 );
         add_filter( 'mainwp_page_navigation', array( $this, 'cache_control_navigation' ) );
         add_filter( 'mainwp_sitestable_getcolumns', array( $this,'cache_control_sitestable_column' ), 10, 1 );
         add_filter( 'mainwp_sitestable_item', array( $this,'cache_control_sitestable_item' ), 10, 1 );
         add_action( 'mainwp_site_synced', array( $this, 'synced_site' ), 10, 2 );
-
-
     }
 
     /**
@@ -151,7 +147,8 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Grab data via sync_others_data() from Child Site when synced.
+     * Grab data via sync_others_data() from Child Site when synced
+     * and update stored Child Site Data.
      *
      * @param array $website  Array of previously saved Child Site data.
      * @param array $information Array of data sent from Child Site.
@@ -159,14 +156,19 @@ class MainWP_Auto_Cache_Purge_View {
     public function synced_site( $website, $information = array() ) {
         if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
 
-            $newData = $information['mainwp_cache_control_last_purged'];
+            $last_purged_cache = $information['mainwp_cache_control_last_purged'];
+            $cache_solution    = $information['mainwp_cache_control_cache_solution'];
+
             $newValues = array(
-                'mainwp_cache_control_last_purged' => $newData,
+                'mainwp_cache_control_last_purged'    => $last_purged_cache,
+                'mainwp_cache_control_cache_solution' => $cache_solution,
             );
 
             MainWP_DB::instance()->update_website_values( $website->id, $newValues );
 
             unset( $information['mainwp_cache_control_last_purged'] );
+            unset( $information['mainwp_cache_control_cache_solution']);
+
         }
     }
 
@@ -180,7 +182,6 @@ class MainWP_Auto_Cache_Purge_View {
 
             $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
             MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
-
 
             return true;
         }
@@ -219,24 +220,36 @@ class MainWP_Auto_Cache_Purge_View {
 
 
     /**
-     * Sites Table Columns.
+     * Add "Last Purged Cache" column to Site Table.
      */
-    function cache_control_sitestable_column( $columns ) {
-        $columns['mainwp_cache_control_last_purged'] = "Cache Last Purged";
+    public function cache_control_sitestable_column( $columns ) {
+        $columns['mainwp_cache_control_last_purged'] = "Last Purged Cache";
+        $columns['cache_solution'] = "Cache Solution";
         return $columns;
     }
 
-
+    /**
+     * Display "Last Purged Cache" timestamp for specified Child Site.
+     */
     public function cache_control_sitestable_item( $item ){
 
+            // Grab Child Site data by ID.
             $website = MainWP_DB::instance()->get_website_by_id( $item['id'], true );
 
-
+            // Display Last Purged Cache timestamp.
             if ( property_exists( $website, 'mainwp_cache_control_last_purged' ) && !empty(( $website->mainwp_cache_control_last_purged )) ) {
-                $item['mainwp_cache_control_last_purged'] = $website->mainwp_cache_control_last_purged;
+                $date_time = date('F j, Y g:ia', $website->mainwp_cache_control_last_purged );
+                $item['mainwp_cache_control_last_purged'] = $date_time;
             } else {
                 $item['mainwp_cache_control_last_purged'] = 'Never Purged';
             }
+
+            if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && !empty(( $website->mainwp_cache_control_cache_solution )) ) {
+                $item['cache_solution'] = $website->mainwp_cache_control_cache_solution;
+            } else {
+                $item['cache_solution'] = 'None Found';
+            }
+
             return $item;
     }
 

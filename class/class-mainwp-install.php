@@ -540,6 +540,7 @@ class MainWP_Install extends MainWP_DB_Base {
             // Update table `wp_mainwp_wp` to include `auto_purge_cache`.
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD auto_purge_cache tinyint(1) NOT NULL DEFAULT 2' );
             $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cache_control_last_purged LONGTEXT NOT NULL AFTER auto_purge_cache' );
+            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cache_control_cache_solution LONGTEXT NOT NULL AFTER mainwp_cache_control_last_purged' );
         }
     }
 

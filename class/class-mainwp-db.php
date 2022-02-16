@@ -522,7 +522,7 @@ class MainWP_DB extends MainWP_DB_Base {
 		$for_manager  = false;
 
 		$data = array( 'id', 'url', 'name' );
-		if ( $selectgroups ){
+		if ( $selectgroups ) {
 			$data[] = 'wpgroups';
 		}
 

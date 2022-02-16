@@ -283,7 +283,7 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 */
-	public static function render_extension_card( $extension, $extension_update, $img_url ) {
+	public static function render_extension_card( $extension, $extension_update, $img_url ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
 			$extension_page_url = admin_url( 'admin.php?page=' . $extension['direct_page'] );

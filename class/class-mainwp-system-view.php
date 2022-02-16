@@ -658,7 +658,7 @@ class MainWP_System_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
-	public static function render_footer_content( $websites, $current_wpid = false ) {
+	public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
 			$count = count( $websites );

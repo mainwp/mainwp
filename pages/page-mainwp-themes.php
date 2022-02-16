@@ -1363,7 +1363,7 @@ class MainWP_Themes {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
-	public static function render_auto_update() {
+	public static function render_auto_update() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$cachedThemesSearch = null;
 		if ( isset( $_SESSION['SNThemesAllStatus'] ) ) {

@@ -761,7 +761,7 @@ class MainWP_Hooks {
 	 *
 	 * To escape content.
 	 *
-	 * @param mixed  $response     response data.
+	 * @param mixed  $content     response data.
 	 * @param string $type content type for escape.
 	 * @param array  $more_allowed input allowed tags - option.
 	 *

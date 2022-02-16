@@ -392,7 +392,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::grab_api_key()
 	 */
-	public function grab_license_key( $api, $username, $password ) {
+	public function grab_license_key( $api, $username, $password ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$options = $this->get_activation_info( $api );
 		if ( ! is_array( $options ) ) {

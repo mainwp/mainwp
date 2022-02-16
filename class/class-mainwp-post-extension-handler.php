@@ -150,7 +150,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function save_extensions_api_login() {
+	public function save_extensions_api_login() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$this->check_security( 'mainwp_extension_saveextensionapilogin' );
 		$api_login_history = isset( $_SESSION['api_login_history'] ) ? $_SESSION['api_login_history'] : array();
 

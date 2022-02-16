@@ -349,7 +349,7 @@ class MainWP_Menu {
 	 *
 	 * Build Top Level Main Menu HTML & Render.
 	 */
-	public static function render_left_menu() {
+	public static function render_left_menu() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * MainWP Left Menu, Sub Menu & Active menu slugs.

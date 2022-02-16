@@ -72,7 +72,7 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
 	 * @uses \MainWP\Dashboard\MainWP_Post::list_meta_row()
 	 */
-	public static function ajax_add_meta() {
+	public static function ajax_add_meta() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_addmeta' );
 
@@ -1016,7 +1016,7 @@ class MainWP_Post_Page_Handler {
 		foreach ( $post_custom as $meta_key => $meta_values ) {
 			foreach ( $meta_values as $meta_value ) {
 				if ( is_serialized( $meta_value ) ) {
-					$meta_value = unserialize( $meta_value );
+					$meta_value = unserialize( $meta_value ); // phpcs:ignore -- compatible.
 					update_post_meta( $new_post_id, $meta_key, $meta_value );
 				} else {
 					update_post_meta( $new_post_id, $meta_key, $meta_value );
@@ -1082,7 +1082,7 @@ class MainWP_Post_Page_Handler {
 			$dashboard_url   = str_replace( '/', '\/', $dashboard_url );
 		}
 
-		$foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER );
+		$foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source, null ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER ); // phpcs:ignore -- Current complexity.
 
 		if ( 0 < $foundMatches ) {
 

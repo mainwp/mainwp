@@ -1491,7 +1491,7 @@ class MainWP_UI {
 				<div class="ui hidden divider"></div>
 				<a href="admin.php?page=managesites&do=new" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Site', 'mainwp' ); ?></a>
 				<div class="ui hidden fitted divider"></div>
-				<small><?php echo sprintf( __( 'or you can %sbulk import%s your sites.', 'mainwp' ), '<a href="admin.php?page=managesites&do=bulknew">', '</a>' ); ?></small>
+				<small><?php echo sprintf( __( 'or you can %1$sbulk import%2$s your sites.', 'mainwp' ), '<a href="admin.php?page=managesites&do=bulknew">', '</a>' ); ?></small>
 			</div>
 			<div class="actions">
 				<div class="ui grid">
@@ -1509,7 +1509,7 @@ class MainWP_UI {
 		blurring: true,
 		inverted: true,
 		closable: false
-	  } ).modal( 'show' );
+	} ).modal( 'show' );
 		</script>
 			<?php
 		endif;
@@ -1524,7 +1524,7 @@ class MainWP_UI {
 	 *
 	 * @return void  Render modal window for Screen Options html.
 	 */
-	public static function render_screen_options( $setting_page = true ) {
+	public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_widgets = array(
 			'overview'          => __( 'Updates Overview', 'mainwp' ),

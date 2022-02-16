@@ -1704,7 +1704,7 @@ class MainWP_Updates {
 	 * @param int    $total_themes_outdate total theme outdate.
 	 * @param string $site_view current site view.
 	 */
-	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) {
+	public static function render_header_tabs( $show_language_updates, $current_tab, $total_wp_upgrades, $total_plugin_upgrades, $total_theme_upgrades, $total_translation_upgrades, $total_plugins_outdate, $total_themes_outdate, $site_view ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Action: mainwp_updates_before_nav_tabs

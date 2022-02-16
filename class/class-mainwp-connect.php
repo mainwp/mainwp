@@ -1389,7 +1389,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
-	private static function check_constraints( &$identifier, $website ) {
+	private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$semLock      = '103218';
 		$identifier   = self::get_lock_identifier( $semLock );
 		$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );

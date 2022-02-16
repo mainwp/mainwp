@@ -1363,7 +1363,7 @@ class MainWP_Manage_Sites {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::valid_input_emails()
 	 */
-	private static function update_site_handle( $website ) {
+	private static function update_site_handle( $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Current user global.

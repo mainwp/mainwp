@@ -1261,7 +1261,7 @@ class MainWP_Server_Information {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public static function render_action_logs() {
+	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		self::render_header( 'ActionLogs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {

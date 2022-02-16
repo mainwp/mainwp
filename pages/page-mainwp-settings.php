@@ -1020,9 +1020,9 @@ class MainWP_Settings {
 
 			$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
 			if ( $lasttimeStartAutomaticUpdate < $today_0h && $local_timestamp > $run_timestamp ) {
-				$next_time = $local_timestamp; // Any minute
+				$next_time = $local_timestamp; // Any minute.
 			} elseif ( $frequence_now > $frequence_today_count ) {
-				$next_time = $local_timestamp; // Any minute
+				$next_time = $local_timestamp; // Any minute.
 			} else { // frequence_now <= frequence_today_count.
 				$next_time = $run_timestamp + $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
 			}

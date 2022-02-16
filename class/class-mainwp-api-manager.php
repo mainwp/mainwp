@@ -170,11 +170,11 @@ class MainWP_Api_Manager {
 			if ( $current_api_key != $api_key ) {
 				$reset = $this->replace_license_key(
 					array(
-						'email'          => $current_activation_email,
-						'licence_key'    => $current_api_key,
-						'product_id'     => $options['product_id'],
-						'instance'       => $options['instance_id'],
-						'platform'       => $this->domain,
+						'email'       => $current_activation_email,
+						'licence_key' => $current_api_key,
+						'product_id'  => $options['product_id'],
+						'instance'    => $options['instance_id'],
+						'platform'    => $this->domain,
 					)
 				);
 				if ( ! $reset ) {
@@ -185,12 +185,12 @@ class MainWP_Api_Manager {
 			$return = array();
 
 			$args = array(
-				'email'              => $api_email,
-				'licence_key'        => $api_key,
-				'product_id'         => $options['product_id'],
-				'instance'           => $options['instance_id'],
-				'software_version'   => $options['software_version'],
-				'platform'           => $this->domain,
+				'email'            => $api_email,
+				'licence_key'      => $api_key,
+				'product_id'       => $options['product_id'],
+				'instance'         => $options['instance_id'],
+				'software_version' => $options['software_version'],
+				'platform'         => $this->domain,
 			);
 
 			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
@@ -273,11 +273,11 @@ class MainWP_Api_Manager {
 		if ( 'Activated' == $activation_status && '' != $current_api_key && '' != $current_activation_email ) {
 			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate(
 				array(
-					'email'          => $current_activation_email,
-					'licence_key'    => $current_api_key,
-					'product_id'     => $options['product_id'],
-					'instance'       => $options['instance_id'],
-					'platform'       => $this->domain,
+					'email'       => $current_activation_email,
+					'licence_key' => $current_api_key,
+					'product_id'  => $options['product_id'],
+					'instance'    => $options['instance_id'],
+					'platform'    => $this->domain,
 				)
 			); // reset license key activation.
 
@@ -322,8 +322,8 @@ class MainWP_Api_Manager {
 
 		return MainWP_Api_Manager_Key::instance()->test_login_api(
 			array(
-				'username'   => $username,
-				'password'   => $password,
+				'username' => $username,
+				'password' => $password,
 			)
 		);
 	}
@@ -408,12 +408,12 @@ class MainWP_Api_Manager {
 			if ( '' != $username && '' != $password ) {
 
 				$args = array(
-					'username'           => $username,
-					'password'           => $password,
-					'product_id'         => isset( $options['product_id'] ) ? $options['product_id'] : '',
-					'instance'           => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
-					'software_version'   => isset( $options['software_version'] ) ? $options['software_version'] : '',
-					'platform'           => $this->domain,
+					'username'         => $username,
+					'password'         => $password,
+					'product_id'       => isset( $options['product_id'] ) ? $options['product_id'] : '',
+					'instance'         => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
+					'software_version' => isset( $options['software_version'] ) ? $options['software_version'] : '',
+					'platform'         => $this->domain,
 				);
 
 				$activate_results            = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );
@@ -440,7 +440,7 @@ class MainWP_Api_Manager {
 					} elseif ( empty( $activate_results['api_key'] ) ) {
 						$return['error'] = __( 'License key could not be found.', 'mainwp' );
 					} else {
-						$return['error'] = __( 'An undefined error occurred. Please try again later or contact MainWP Support.', 'mainwp' );
+						$return['error'] = __( 'An undefined error occurred. Please try again later.', 'mainwp' );
 					}
 				}
 

@@ -678,6 +678,10 @@ class MainWP_Manage_Sites_List_Table {
 						$qry_group_ids[] = $gr->id;
 					}
 				}
+				// to fix.
+				if ( in_array( 'nogroups', $group_ids ) ) {
+					$qry_group_ids[] = 'nogroups';
+				}
 			}
 
 			if ( ! empty( $qry_group_ids ) ) {

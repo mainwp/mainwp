@@ -2001,7 +2001,7 @@ class MainWP_User {
 				$errors[] = __( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
 			}
 		} else {
-			$errors[] = __( 'File could not be uploaded. Please try again. If process keeps failing, please contact the MainWP support.', 'mainwp' );
+			$errors[] = __( 'File could not be uploaded. Please try again. If process keeps failing, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' );
 		}
 
 		if ( 0 < count( $errors ) ) {

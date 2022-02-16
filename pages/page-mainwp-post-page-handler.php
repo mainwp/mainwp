@@ -797,9 +797,10 @@ class MainWP_Post_Page_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
 	 */
 	public static function get_post() {
-		$postId    = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
-		$postType  = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
-		$websiteId = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$postId        = isset( $_POST['postId'] ) ? intval( $_POST['postId'] ) : false;
+		$postType      = isset( $_POST['postType'] ) ? sanitize_text_field( wp_unslash( $_POST['postType'] ) ) : '';
+		$websiteId     = isset( $_POST['websiteId'] ) ? intval( $_POST['websiteId'] ) : false;
+		$replaceadvImg = isset( $_POST['replace_advance_img'] ) && ! empty( $_POST['replace_advance_img'] ) ? true : true;
 
 		if ( empty( $postId ) || empty( $websiteId ) ) {
 			die( wp_json_encode( array( 'error' => 'Post ID or site ID not found. Please, reload the page and try again.' ) ) );
@@ -831,7 +832,7 @@ class MainWP_Post_Page_Handler {
 		if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
 			die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
 		} else {
-			$ret = self::new_post( $information['my_post'] );
+			$ret = self::new_post( $information['my_post'], $replaceadvImg, $website );
 			if ( is_array( $ret ) && isset( $ret['id'] ) ) {
 				// to support edit post.
 				update_post_meta( $ret['id'], '_selected_sites', array( $websiteId ) );
@@ -848,10 +849,12 @@ class MainWP_Post_Page_Handler {
 	 * Create new post.
 	 *
 	 * @param array $post_data Array of post data.
+	 * @param bool  $replaceadvImg replace advanced images of post or not.
+	 * @param mixed $website The website object.
 	 *
 	 * @return array result
 	 */
-	public static function new_post( $post_data = array() ) {
+	public static function new_post( $post_data = array(), $replaceadvImg = false, $website = false ) {
 		$new_post            = maybe_unserialize( base64_decode( $post_data['new_post'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_custom         = maybe_unserialize( base64_decode( $post_data['post_custom'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_category       = rawurldecode( isset( $post_data['post_category'] ) ? base64_decode( $post_data['post_category'] ) : null ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -859,7 +862,7 @@ class MainWP_Post_Page_Handler {
 		$post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images );
+		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
 	}
 
 	/**
@@ -874,10 +877,12 @@ class MainWP_Post_Page_Handler {
 	 * @param mixed $upload_dir Child Site upload directory.
 	 * @param mixed $post_tags Post tags.
 	 * @param mixed $post_gallery_images Post Gallery Images.
+	 * @param bool  $replaceadvImg replace advanced images of post or not.
+	 * @param mixed $website The website object.
 	 *
 	 * @return array result
 	 */
-	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Current user global.
@@ -901,7 +906,7 @@ class MainWP_Post_Page_Handler {
 				$hrefLink = $match[2];
 				$imgUrl   = $match[4];
 
-				if ( ! isset( $upload_dir['baseurl'] ) || ( 0 !== strripos( $imgUrl, $upload_dir['baseurl'] ) ) ) {
+				if ( ! isset( $upload_dir['baseurl'] ) || ( false === strripos( $imgUrl, $upload_dir['baseurl'] ) ) ) { // url of image is not in child site.
 					continue;
 				}
 
@@ -929,6 +934,7 @@ class MainWP_Post_Page_Handler {
 					}
 					$lnkToReplace = dirname( $imgUrl );
 					if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
+						$new_post['post_content'] = str_replace( $imgUrl, $localUrl, $new_post['post_content'] ); // replace src image.
 						$new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
 					}
 				} catch ( \Exception $e ) {
@@ -973,6 +979,11 @@ class MainWP_Post_Page_Handler {
 			}
 		}
 
+		if ( $replaceadvImg && $website ) {
+			$new_post['post_content'] = self::replace_advanced_image( $new_post['post_content'], $upload_dir, $website );
+			$new_post['post_content'] = self::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true ); // to fix images url with slashes.
+		}
+
 		$is_sticky = false;
 		if ( isset( $new_post['is_sticky'] ) ) {
 			$is_sticky = ! empty( $new_post['is_sticky'] ) ? true : false;
@@ -1004,7 +1015,12 @@ class MainWP_Post_Page_Handler {
 
 		foreach ( $post_custom as $meta_key => $meta_values ) {
 			foreach ( $meta_values as $meta_value ) {
-				add_post_meta( $new_post_id, $meta_key, $meta_value );
+				if ( is_serialized( $meta_value ) ) {
+					$meta_value = unserialize( $meta_value );
+					update_post_meta( $new_post_id, $meta_key, $meta_value );
+				} else {
+					update_post_meta( $new_post_id, $meta_key, $meta_value );
+				}
 			}
 		}
 
@@ -1039,6 +1055,81 @@ class MainWP_Post_Page_Handler {
 		return $ret;
 	}
 
+	/**
+	 * Method replace_advanced_image()
+	 *
+	 * Handle upload advanced image.
+	 *
+	 * @param array $content post content data.
+	 * @param array $upload_dir upload directory info.
+	 * @param mixed $website The website.
+	 * @param bool  $withslashes to use preg pattern with slashes.
+	 *
+	 * @return mixed array of result.
+	 */
+	public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
+		
+		if ( empty( $upload_dir ) || ! isset( $upload_dir['baseurl'] ) ) {
+			return $content;
+		}
+
+		$dashboard_url = get_site_url();
+		$site_url_source = $website->url;
+		
+		// to fix url with slashes.
+		if ( $withslashes ) {
+			$site_url_source = str_replace( '/', '\/', $site_url_source );
+			$dashboard_url = str_replace( '/', '\/', $dashboard_url );
+		}
+
+		$foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER );
+
+		if ( 0 < $foundMatches ) {
+
+			$matches_checked = array();
+			$check_double    = array();
+			foreach ( $matches as $match ) {
+				// to avoid double images.
+				if ( ! in_array( $match[0], $check_double ) ) {
+					$check_double[]    = $match[0];
+					$matches_checked[] = $match;
+				}
+			}
+			foreach ( $matches_checked as $match ) {
+
+				$imgUrl = $match[0];
+				if ( false === strripos( wp_unslash( $imgUrl ), $upload_dir['baseurl'] ) ) {
+					continue;
+				}
+
+				if ( preg_match( '/-\d{3}x\d{3}\.[a-zA-Z0-9]{3,4}$/', $imgUrl, $imgMatches ) ) {
+					$search         = $imgMatches[0];
+					$replace        = '.' . $match[3];
+					$originalImgUrl = str_replace( $search, $replace, $imgUrl );
+				} else {
+					$originalImgUrl = $imgUrl;
+				}
+
+				try {
+					$downloadfile = self::upload_image( wp_unslash( $originalImgUrl ) );
+					$localUrl     = $downloadfile['url'];
+					$linkToReplaceWith = dirname( $localUrl );
+					$lnkToReplace = dirname( $imgUrl );
+					if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
+						$content = str_replace( $imgUrl, $localUrl, $content ); // replace src image.
+						$content = str_replace( $lnkToReplace, $linkToReplaceWith, $content );
+					}
+				} catch ( \Exception $e ) {
+					// ok.
+				}
+			}
+			if ( false === strripos( $site_url_source, $dashboard_url ) ) {
+				// replace other images src outside upload folder.
+				$content = str_replace( $site_url_source, $dashboard_url, $content );
+			}
+		}
+		return $content;		
+	}
 
 	/**
 	 * Method upload_image()

@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 5.8.1
+Tested up to: 5.9
 Requires PHP: 7.0
-Stable tag: 4.1.11
+Stable tag: 4.1.12
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.1.12 - 2-16-2022 =
+* Fixed: An error caused by the missing `LOGGED_IN_SALT` info
+* Fixed: An error with creating DB tables on specific hosts
+* Fixed: An error with filtering sites when the No Groups filter selected
+* Fixed: Ignoring the status code 200 (OK) error
+* Fixed: Bug with listing sites with CLI command
+* Added: Info modal for MainWP Dashboards with no sites connected
+* Added: `Lato` font files included in the plugin directory
+* Added: Domain Monitor extension information
+* Added: Domain Monitor extension icon
+* Updated: Multiple error messages
+* Updated: Load fonts from the plugin directory instead of Google Fonts server
 
 = 4.1.11 - 12-28-2021 =
 * Fixed: Incorrect error messages for multiple WP CLI commands

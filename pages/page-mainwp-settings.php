@@ -543,13 +543,15 @@ class MainWP_Settings {
 			return;
 		}
 
+		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
+
 		self::render_header( '' );
 		?>
 		<div id="mainwp-general-settings" class="ui segment">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-settings-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-settings-info-message"></i>
-					<?php echo sprintf( __( 'Manage MainWP general settings.  For additional help, review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage MainWP general settings.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_GET['message'] ) && 'saved' == $_GET['message'] ) : ?>
@@ -597,7 +599,7 @@ class MainWP_Settings {
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Daily update frequency', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how often you want your MainWP Dashboard to run the auto update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how often you want your MainWP Dashboard to run the auto update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" frequence-today-count="<?php echo intval( $frequence_today_count ); ?>" >
 								<select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
 									<option value="1" <?php echo ( 1 == $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
 									<option value="2" <?php echo ( 2 == $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
@@ -973,6 +975,67 @@ class MainWP_Settings {
 		<?php
 	}
 
+
+
+	/**
+	 * Method get_next_time_automatic_update_to_show()
+	 *
+	 * Get websites automatic update next time.
+	 *
+	 * @return mixed array
+	 */
+	public static function get_next_time_automatic_update_to_show() {
+
+		$local_timestamp = MainWP_Utility::get_timestamp();
+		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
+		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
+
+		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
+		if ( ! empty( $timeDailyUpdate ) ) {
+			$run_timestamp = MainWP_System_Cron_Jobs::get_timestamp_from_hh_mm( $timeDailyUpdate );
+		} else {
+			$run_timestamp = $today_0h; // midnight.
+		}
+
+		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
+		if ( $frequencyDailyUpdate <= 0 ) {
+			$frequencyDailyUpdate = 1;
+		}
+
+		$next_time = 0;
+
+		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
+			$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+
+			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
+			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
+				$frequence_period_in_seconds = HOUR_IN_SECONDS;
+			}
+
+			if ( $local_timestamp > $run_timestamp ) {
+				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
+			} else {
+				$frequence_now = 0;
+			}
+
+			$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
+			if ( $lasttimeStartAutomaticUpdate < $today_0h && $local_timestamp > $run_timestamp ) {
+				$next_time = $local_timestamp; // Any minute
+			} elseif ( $frequence_now > $frequence_today_count ) {
+				$next_time = $local_timestamp; // Any minute
+			} else { // frequence_now <= frequence_today_count.
+				$next_time = $run_timestamp + $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
+			}
+		}
+
+		if ( empty( $next_time ) ) {
+			$next_time = $today_end + 1;
+		}
+
+		return $next_time;
+	}
+
+
 	/**
 	 * Method get_websites_automatic_update_time()
 	 *
@@ -988,6 +1051,7 @@ class MainWP_Settings {
 		$lastAutomaticUpdate    = MainWP_DB::instance()->get_websites_last_automatic_sync();
 		$lasttimeAutomatic      = get_option( 'mainwp_updatescheck_last_timestamp' );
 		$lasttimeStartAutomatic = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+		$local_timestamp        = MainWP_Utility::get_timestamp();
 
 		if ( empty( $lasttimeStartAutomatic ) && ! empty( $lasttimeAutomatic ) ) {
 			$lasttimeStartAutomatic = $lasttimeAutomatic;
@@ -998,58 +1062,24 @@ class MainWP_Settings {
 		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$nextAutomaticUpdate = self::get_next_time_automatic_update_to_show();
+			$next_time = self::get_next_time_automatic_update_to_show();
+			if ( $next_time < $local_timestamp + 5 * MINUTE_IN_SECONDS ) {
+				$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
+			} else {
+				$nextAutomaticUpdate = MainWP_Utility::format_timestamp( $next_time );
+			}
 		}
 
 		if ( 0 == $lastAutomaticUpdate ) {
 			$lastAutomaticUpdate = __( 'Never', 'mainwp' );
 		} else {
-			$lastAutomaticUpdate = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lastAutomaticUpdate ) );
+			$lastAutomaticUpdate = MainWP_Utility::format_timestamp( $lastAutomaticUpdate );
 		}
 
 		return array(
 			'last' => $lastAutomaticUpdate,
 			'next' => $nextAutomaticUpdate,
 		);
-	}
-
-	/**
-	 * Method get_next_time_automatic_update_to_show()
-	 *
-	 * Get websites automatic update next time.
-	 *
-	 * @return mixed array
-	 */
-	public static function get_next_time_automatic_update_to_show() {
-		$next_time = 0;
-
-		$local_timestamp = MainWP_Utility::get_timestamp();
-
-		$total_frequency_daily_update = get_option( 'mainwp_frequencyDailyUpdate' );
-		if ( $total_frequency_daily_update <= 0 ) {
-			$total_frequency_daily_update = 1;
-		}
-
-		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
-		if ( $total_frequency_daily_update > 1 ) { // check this if frequency > 1 only.
-			$frequence_period_in_seconds = DAY_IN_SECONDS / $total_frequency_daily_update;
-			$today_0h                    = strtotime( date( 'Y-m-d' ) . ' 00:00:00' ); // phpcs:ignore -- to check localtime.
-			$frequence_now               = round( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= total_frequency_daily_update, computes frequence value now.
-			if ( $frequence_now > $frequence_today_count ) {
-				$next_time = __( 'Any minute', 'mainwp' );
-			} elseif ( $frequence_now < $frequence_today_count ) {
-				$frequence_now = $frequence_today_count;
-				$next_time     = $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
-			} else { // frequence_now = frequence_today_count.
-				$next_time = $frequence_period_in_seconds * ( $frequence_today_count + 1 ); // calculate nex time.
-			}
-		}
-
-		if ( empty( $next_time ) ) {
-			$next_time = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( mktime( 0, 0, 0, date( 'n' ), date( 'j' ) + 1 ) ) ); // phpcs:ignore -- midnight local time.
-		}
-
-		return $next_time;
 	}
 
 	/**
@@ -1294,7 +1324,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-tools-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-tools-info-message"></i>
-					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %shelp document%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Use MainWP tools to adjust your MainWP Dashboard to your needs and perform specific actions when needed.  For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/mainwp-dashboard-settings/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) : ?>
@@ -1404,7 +1434,7 @@ class MainWP_Settings {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-rest-api-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-rest-api-info-message"></i>
-					<?php echo sprintf( __( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %shelp document%s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Enable the MainWP REST API functionality and generate API credentials.  Check this %1$shelp document%2$s to see all available endpoints.', 'mainwp' ), '<a href="https://mainwp.dev/rest-api/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 				<?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'RESTAPI' ) ) : ?>

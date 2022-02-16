@@ -86,7 +86,7 @@ class MainWP_Install extends MainWP_DB_Base {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
 		$sql = array();
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp' ) . " (
    id int(11) NOT NULL auto_increment,
    userid int(11) NOT NULL,
    adminname text NOT NULL,
@@ -135,16 +135,16 @@ class MainWP_Install extends MainWP_DB_Base {
   verify_certificate tinyint(1) NOT NULL DEFAULT 1,
   force_use_ipv4 tinyint(1) NOT NULL DEFAULT 0,
   ssl_version tinyint(1) NOT NULL DEFAULT 0,
-  ip text NOT NULL DEFAULT "",
+  ip text NOT NULL DEFAULT '',
   uniqueId text NOT NULL,
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150,
-  http_user text NOT NULL DEFAULT "",
-  http_pass text NOT NULL DEFAULT "",
+  http_user text NOT NULL DEFAULT '',
+  http_pass text NOT NULL DEFAULT '',
   wpe tinyint(1) NOT NULL,
   is_staging tinyint(1) NOT NULL DEFAULT 0,
-  KEY idx_userid (userid)';
+  KEY idx_userid (userid)";
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';
@@ -152,23 +152,23 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_sync' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_sync' ) . " (
   sync_id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
-  version text NOT NULL DEFAULT "",
-  sync_errors longtext NOT NULL DEFAULT "",
-  uptodate longtext NOT NULL DEFAULT "",
+  version text NOT NULL DEFAULT '',
+  sync_errors longtext NOT NULL DEFAULT '',
+  uptodate longtext NOT NULL DEFAULT '',
   dtsAutomaticSync int(11) NOT NULL DEFAULT 0,
   dtsAutomaticSyncStart int(11) NOT NULL DEFAULT 0,
   dtsSync int(11) NOT NULL DEFAULT 0,
   dtsSyncStart int(11) NOT NULL DEFAULT 0,
   totalsize int(11) NOT NULL DEFAULT 0,
   dbsize int(11) NOT NULL DEFAULT 0,
-  extauth text NOT NULL DEFAULT "",
+  extauth text NOT NULL DEFAULT '',
   last_post_gmt int(11) NOT NULL DEFAULT 0,
   health_value int(11) NOT NULL DEFAULT 0,
   health_site_noticed tinyint(1) NOT NULL DEFAULT 1,
-  KEY idx_wpid (wpid)';
+  KEY idx_wpid (wpid)";
 
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
@@ -179,12 +179,12 @@ class MainWP_Install extends MainWP_DB_Base {
 
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_options' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_options' ) . " (
   opt_id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
-  name text NOT NULL DEFAULT "",
-  value longtext NOT NULL DEFAULT "",
-  KEY idx_wpid (wpid)';
+  name text NOT NULL DEFAULT '',
+  value longtext NOT NULL DEFAULT '',
+  KEY idx_wpid (wpid)";
 
 		if ( '' == $currentVersion ) {
 			$tbl .= ',
@@ -264,20 +264,20 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (
   task_id int(11) NOT NULL,
   wp_id int(11) NOT NULL,
   dtsFetched int(11) NOT NULL DEFAULT 0,
-  fetchResult text NOT NULL DEFAULT "",
-  downloadedDB text NOT NULL DEFAULT "",
-  downloadedFULL text NOT NULL DEFAULT "",
+  fetchResult text NOT NULL DEFAULT '',
+  downloadedDB text NOT NULL DEFAULT '',
+  downloadedFULL text NOT NULL DEFAULT '',
   downloadedDBComplete tinyint(1) NOT NULL DEFAULT 0,
   downloadedFULLComplete tinyint(1) NOT NULL DEFAULT 0,
   removedFiles tinyint(1) NOT NULL DEFAULT 0,
   attempts int(11) NOT NULL DEFAULT 0,
-  last_error text NOT NULL DEFAULT "",
+  last_error text NOT NULL DEFAULT '',
   pid int(11) NOT NULL DEFAULT 0,
-  KEY idx_task_id (task_id)';
+  KEY idx_task_id (task_id)";
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.53', '<=' ) ) {
 			$tbl .= ',
 			UNIQUE (task_id)';
@@ -321,12 +321,12 @@ class MainWP_Install extends MainWP_DB_Base {
 		$tbl  .= ') ' . $charset_collate;
 		$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'action_log' ) . " (
 	id int(11) NOT NULL auto_increment,
-	log_content mediumtext NOT NULL DEFAULT "",	
+	log_content mediumtext NOT NULL DEFAULT '',	
 	log_type tinyint(1) DEFAULT 0,	
-	log_user varchar(128) NOT NULL DEFAULT "",
-	log_timestamp int(11) NOT NULL DEFAULT 0';
+	log_user varchar(128) NOT NULL DEFAULT '',
+	log_timestamp int(11) NOT NULL DEFAULT 0";
 		if ( '' == $currentVersion || version_compare( $currentVersion, '8.50', '<=' ) ) {
 			$tbl .= ',
 	PRIMARY KEY  (id)  ';
@@ -334,13 +334,13 @@ class MainWP_Install extends MainWP_DB_Base {
 			$tbl  .= ') ' . $charset_collate . ';';
 			$sql[] = $tbl;
 
-		$tbl = 'CREATE TABLE ' . $this->table_name( 'request_log' ) . ' (
+		$tbl = 'CREATE TABLE ' . $this->table_name( 'request_log' ) . " (
   id int(11) NOT NULL auto_increment,
   wpid int(11) NOT NULL,
-  ip text NOT NULL DEFAULT "",
-  subnet text NOT NULL DEFAULT "",
+  ip text NOT NULL DEFAULT '',
+  subnet text NOT NULL DEFAULT '',
   micro_timestamp_stop DECIMAL( 12, 2 ) NOT NULL DEFAULT  0,
-  micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0';
+  micro_timestamp_start DECIMAL( 12, 2 ) NOT NULL DEFAULT  0";
 		if ( '' == $currentVersion || version_compare( $currentVersion, '5.7', '<=' ) ) {
 			$tbl .= ',
   PRIMARY KEY  (id)  ';

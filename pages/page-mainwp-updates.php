@@ -466,7 +466,7 @@ class MainWP_Updates {
 
 						$pluginsInfo[ $slug ] = array(
 							'name'      => esc_html( $plugin_upgrade['Name'] ),
-							'slug'      => esc_html( $plugin_upgrade['update']['slug'] ),
+							'slug'      => isset( $plugin_upgrade['update']['slug'] ) ? esc_html( $plugin_upgrade['update']['slug'] ) : '',
 							'premium'   => ( isset( $plugin_upgrade['premium'] ) ? esc_html( $plugin_upgrade['premium'] ) : 0 ),
 							'PluginURI' => esc_html( $plugin_upgrade['PluginURI'] ),
 						);
@@ -628,8 +628,8 @@ class MainWP_Updates {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-updates-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-updates-message"></i>
-					<div><?php echo sprintf( __( 'Manage available updates for all your child sites.  From here, you can update update %splugins%s, %sthemes%s, and %sWordPress core%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
-					<div><?php echo sprintf( __( 'Also, from here, you can ignore updates for %sWordPress core%s, %splugins%s, and %sthemes%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'Manage available updates for all your child sites.  From here, you can update update %1$splugins%2$s, %3$sthemes%4$s, and %5$sWordPress core%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/update-plugins/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-themes/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/update-wordpress-core/" target="_blank">', '</a>' ); ?></div>
+					<div><?php echo sprintf( __( 'Also, from here, you can ignore updates for %1$sWordPress core%2$s, %3$splugins%4$s, and %5$sthemes%6$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-wordpress-core-update/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>', '<a href="https://kb.mainwp.com/docs/ignore-theme-updates/" target="_blank">', '</a>' ); ?></div>
 				</div>
 			<?php endif; ?>
 		<?php

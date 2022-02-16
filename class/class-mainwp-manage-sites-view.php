@@ -941,13 +941,13 @@ class MainWP_Manage_Sites_View {
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable Child Site Health monitoring (optional)', 'mainwp' ); ?></label>					
 					<div class="six wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="health-monitoring" data-tooltip="<?php esc_attr_e( 'Enable if you want to monitoring this website.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-						<input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo ( 0 == $website->disable_status_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
+						<input type="checkbox" name="mainwp_managesites_edit_disableSiteHealthMonitoring" id="mainwp_managesites_edit_disableSiteHealthMonitoring" <?php echo ( 0 == $website->disable_health_check ? 'checked="true"' : '' ); ?>><label for="mainwp_managesites_edit_disableSiteHealthMonitoring"></label>
 					</div>
 				</div>
 				<?php
 				$healthThreshold = $website->health_threshold;
 				?>
-				<div class="ui grid field" <?php echo 1 == $website->disable_status_check ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
+				<div class="ui grid field" <?php echo 1 == $website->disable_health_check ? 'style="display:none"' : ''; ?> hide-element="health-monitoring">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Site health threshold (optional)', 'mainwp' ); ?></label>
 					<div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Site health threshold.', 'mainwp' ); ?>" data-inverted="" data-position="top left">				
 						<select name="mainwp_managesites_edit_healthThreshold" id="mainwp_managesites_edit_healthThreshold" class="ui dropdown">
@@ -1614,14 +1614,14 @@ class MainWP_Manage_Sites_View {
 
 						MainWP_Sync::sync_information_array( $website, $information );
 					} else {
-						$error = __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' );
+						$error = sprintf( __( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/potential-issues/" target="_blank">', '</a>' );
 					}
 				}
 			} catch ( MainWP_Exception $e ) {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
+					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
 				} else {
 					$error = $e->getMessage();
 				}

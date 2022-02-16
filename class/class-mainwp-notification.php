@@ -269,12 +269,23 @@ class MainWP_Notification {
 		if ( empty( $content_type ) ) {
 			$content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
 		}
+
+		$from_header = array(
+			'from_name'  => get_option( 'admin_email' ),
+			'from_email' => get_option( 'admin_email' ),
+		);
+
+		$custom_header = apply_filters( 'mainwp_send_mail_from_header', false, $email, $subject );
+		if ( is_array( $custom_header ) && isset( $custom_header['from_name'] ) && isset( $custom_header['from_email'] ) && ! empty( $custom_header['from_name'] ) && ! empty( $custom_header['from_email'] ) ) {
+			$from_header = $custom_header;
+		}
+
 		return wp_mail(
 			$email,
 			$subject,
 			$mail_content,
 			array(
-				'From: "' . get_option( 'admin_email' ) . '" <' . get_option( 'admin_email' ) . '>',
+				'From: "' . $from_header['from_name'] . '" <' . $from_header['from_email'] . '>',
 				$content_type,
 			)
 		);

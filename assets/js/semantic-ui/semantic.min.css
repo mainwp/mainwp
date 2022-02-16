@@ -8,7 +8,43 @@
  * http://opensource.org/licenses/MIT
  *
  */
-@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin);/*!
+ @font-face {
+   font-family: 'Lato';
+   font-style: normal;
+   font-weight: 400;
+   src: url('fonts/Lato/Lato-Regular.ttf') format('truetype'),
+        url('fonts/Lato/Lato-Regular.woff') format('woff'),
+        url('fonts/Lato/Lato-Regular.woff2') format('woff2'),
+        url('fonts/Lato/Lato-Regular.eot') format('embedded-opentype');
+ }
+ @font-face {
+   font-family: 'Lato';
+   font-style: italic;
+   font-weight: 400;
+   src: url('fonts/Lato/Lato-Italic.ttf') format('truetype'),
+        url('fonts/Lato/Lato-Italic.woff') format('woff'),
+        url('fonts/Lato/Lato-Italic.woff2') format('woff2'),
+        url('fonts/Lato/Lato-Italic.eot') format('embedded-opentype');
+ }
+ @font-face {
+   font-family: 'Lato';
+   font-style: normal;
+   font-weight: 700;
+   src: url('fonts/Lato/Lato-Bold.ttf') format('truetype'),
+        url('fonts/Lato/Lato-Bold.woff') format('woff'),
+        url('fonts/Lato/Lato-Bold.woff2') format('woff2'),
+        url('fonts/Lato/Lato-Bold.eot') format('embedded-opentype');
+ }
+ @font-face {
+   font-family: 'Lato';
+   font-style: italic;
+   font-weight: 700;
+   src: url('fonts/Lato/Lato-BoldItalic.ttf') format('truetype'),
+        url('fonts/Lato/Lato-BoldItalic.woff') format('woff'),
+        url('fonts/Lato/Lato-BoldItalic.woff2') format('woff2'),
+        url('fonts/Lato/Lato-BoldItalic.eot') format('embedded-opentype');
+ }
+ /*!
  * # Semantic UI 2.4.2 - Reset
  * http://github.com/semantic-org/semantic-ui/
  *

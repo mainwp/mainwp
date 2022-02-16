@@ -431,7 +431,7 @@ class MainWP_Format {
 
                                                 <!-- // Begin: Standard Header Image \\ -->
 
-                                                <a href="https://mainwp.com" target="_blank" style="color: #446200;font-weight: normal;text-decoration: underline;"><img src="https://gallery.mailchimp.com/f3ac05fd307648a9c6bbe320a/images/header.png" alt="MainWP" border="0" style="border: px none;border-color: ;border-style: none;border-width: px;height: 130px;width: 600px;margin: 0;padding: 0;line-height: 100%;outline: none;text-decoration: none;" width="600" height="130"></a>
+                                                <a href="https://mainwp.com" target="_blank" style="color: #446200;font-size:45px;font-weight: normal;text-decoration: underline;">MainWP</a>
 
                                                 <!-- // End: Standard Header Image \\ -->
 

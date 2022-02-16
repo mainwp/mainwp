@@ -100,7 +100,7 @@ class MainWP_Manage_Sites {
 		add_action( 'mainwp_pagefooter_sites', array( self::get_class_name(), 'render_footer' ) );
 
 		add_action( 'mainwp_securityissues_sites', array( MainWP_Security_Issues::get_class_name(), 'render' ) );
-		add_action( 'mainwp_extension_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
+		add_action( 'mainwp_manage_sites_edit', array( self::get_class_name(), 'on_edit_site' ) );
 
 		// Hook the Help Sidebar content.
 		add_action( 'mainwp_help_sidebar_content', array( self::get_class_name(), 'mainwp_help_content' ) );
@@ -257,7 +257,7 @@ class MainWP_Manage_Sites {
 	 * Load sites table.
 	 */
 	public static function load_sites_table() {
-		if ( null === self::$sitesTable ) {
+		if ( empty( self::$sitesTable ) ) {
 			self::$sitesTable = new MainWP_Manage_Sites_List_Table();
 		}
 	}

@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.11';
+	public static $version = '4.1.12';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -541,6 +541,10 @@ class MainWP_System {
 				}
 
 				if ( defined( 'WP_CLI' ) && WP_CLI ) {
+					return true;
+				}
+
+				if ( defined( 'MAINWP_REST_API' ) && MAINWP_REST_API ) {
 					return true;
 				}
 

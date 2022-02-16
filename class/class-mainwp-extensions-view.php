@@ -935,6 +935,17 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1233934',
 				'group'      => array( 'performance' ),
 			),
+			'mainwp-domain-monitor-extension'         =>
+			array(
+				'slug'       => 'mainwp-domain-monitor-extension',
+				'title'      => 'MainWP Domain Monitor Extension',
+				'desc'       => 'MainWP Domain Monitor Extension lets you keep a watchful eye on your domains. It alerts you via email when monitored domains are nearing expiration.',
+				'link'       => 'https://mainwp.com/extension/domain-monitor/',
+				'img'        => $folder_url . 'domain-monitor.png',
+				'product_id' => 'MainWP Domain Monitor Extension',
+				'catalog_id' => '1240624',
+				'group'      => array( 'admin' ),
+			),
 		);
 	}
 

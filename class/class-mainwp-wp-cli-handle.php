@@ -283,7 +283,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 		if ( empty( $data ) ) {
 			\WP_CLI::line( __( 'No child sites added to your MainWP Dashboard.', 'mainwp' ) );
 		} else {
-			self::print_sites( $data );
+			self::print_sites( $data, true );
 		}
 	}
 
@@ -1693,9 +1693,21 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	/**
 	 * Prints child sites list.
 	 *
-	 * @param array $data Array containing child sites.
+	 * @param array $websites Array containing child sites.
+	 * @param bool  $is_objs Array of objects.
 	 */
-	public static function print_sites( $data ) {
+	public static function print_sites( $websites, $is_objs = false ) {
+		$data = array();
+		if ( $is_objs ) {
+			$fields     = array( 'id', 'url', 'name' );
+			$dbwebsites = array();
+			foreach ( $websites as $site_id => $website ) {
+				$data[ $site_id ] = MainWP_Utility::map_site( $website, $fields, false );
+			}
+		} else {
+			$data = $websites;
+		}
+
 		$idLength   = strlen( 'id' );
 		$nameLength = strlen( 'name' );
 		$urlLength  = strlen( 'url' );

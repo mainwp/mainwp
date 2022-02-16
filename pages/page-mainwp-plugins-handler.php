@@ -13,6 +13,7 @@ namespace MainWP\Dashboard;
  * @uses MainWP_Install_Bulk()
  */
 class MainWP_Plugins_Handler {
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * Get Class Name.

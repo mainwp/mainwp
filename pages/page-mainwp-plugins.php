@@ -15,6 +15,7 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Install_Bulk
  */
 class MainWP_Plugins {
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * Get Class Name.
@@ -1325,7 +1326,7 @@ class MainWP_Plugins {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_UI::render_modal_edit_notes()
 	 */
-	public static function render_auto_update() {
+	public static function render_auto_update() {  // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$cachedAUSearch = null;
 
 		if ( isset( $_SESSION['MainWP_PluginsActiveStatus'] ) ) {

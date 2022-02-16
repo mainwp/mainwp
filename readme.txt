@@ -177,11 +177,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 == Changelog ==
 
 = 4.1.12 - 2-16-2022 =
-* Fixed: An error caused by the missing `LOGGED_IN_SALT` info
 * Fixed: An error with creating DB tables on specific hosts
 * Fixed: An error with filtering sites when the No Groups filter selected
 * Fixed: Ignoring the status code 200 (OK) error
 * Fixed: Bug with listing sites with CLI command
+* Added: Additional checks to allow syncing of child sites when child site is missing logged in salt
 * Added: Info modal for MainWP Dashboards with no sites connected
 * Added: `Lato` font files included in the plugin directory
 * Added: Domain Monitor extension information

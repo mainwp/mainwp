@@ -1068,18 +1068,18 @@ class MainWP_Post_Page_Handler {
 	 * @return mixed array of result.
 	 */
 	public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) {
-		
+
 		if ( empty( $upload_dir ) || ! isset( $upload_dir['baseurl'] ) ) {
 			return $content;
 		}
 
-		$dashboard_url = get_site_url();
+		$dashboard_url   = get_site_url();
 		$site_url_source = $website->url;
-		
+
 		// to fix url with slashes.
 		if ( $withslashes ) {
 			$site_url_source = str_replace( '/', '\/', $site_url_source );
-			$dashboard_url = str_replace( '/', '\/', $dashboard_url );
+			$dashboard_url   = str_replace( '/', '\/', $dashboard_url );
 		}
 
 		$foundMatches = preg_match_all( '#(' . preg_quote( $site_url_source ) . ')[^\.]*(\.(png|gif|jpg|jpeg))#ix', $content, $matches, PREG_SET_ORDER );
@@ -1111,10 +1111,10 @@ class MainWP_Post_Page_Handler {
 				}
 
 				try {
-					$downloadfile = self::upload_image( wp_unslash( $originalImgUrl ) );
-					$localUrl     = $downloadfile['url'];
+					$downloadfile      = self::upload_image( wp_unslash( $originalImgUrl ) );
+					$localUrl          = $downloadfile['url'];
 					$linkToReplaceWith = dirname( $localUrl );
-					$lnkToReplace = dirname( $imgUrl );
+					$lnkToReplace      = dirname( $imgUrl );
 					if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
 						$content = str_replace( $imgUrl, $localUrl, $content ); // replace src image.
 						$content = str_replace( $lnkToReplace, $linkToReplaceWith, $content );
@@ -1128,7 +1128,7 @@ class MainWP_Post_Page_Handler {
 				$content = str_replace( $site_url_source, $dashboard_url, $content );
 			}
 		}
-		return $content;		
+		return $content;
 	}
 
 	/**

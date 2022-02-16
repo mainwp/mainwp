@@ -935,7 +935,7 @@ class MainWP_Extensions_View {
 				'catalog_id' => '1233934',
 				'group'      => array( 'performance' ),
 			),
-			'mainwp-domain-monitor-extension'         =>
+			'mainwp-domain-monitor-extension' =>
 			array(
 				'slug'       => 'mainwp-domain-monitor-extension',
 				'title'      => 'MainWP Domain Monitor Extension',

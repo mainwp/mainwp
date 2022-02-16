@@ -352,7 +352,7 @@ class MainWP_System_Cron_Jobs {
 
 				// send daily digest email one time per day.
 				$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
-				
+
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
 				MainWP_Logger::instance()->log_action( 'CRON :: got to the daily digest mail part', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
@@ -392,7 +392,7 @@ class MainWP_System_Cron_Jobs {
 		}
 		$run_synctime = null;
 		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_synctime = false;
+			$run_synctime  = false;
 			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
 			if ( $local_timestamp > $run_timestamp ) {
 				$run_synctime = true; // it is time to run or worked.
@@ -461,7 +461,7 @@ class MainWP_System_Cron_Jobs {
 				MainWP_Logger::instance()->log_action( 'CRON :: already checked update today', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				$run_valid = false;
 				return;
-			} 
+			}
 
 			if ( ! $run_valid ) {
 				// $run_hours_interval == false|null.

@@ -1481,7 +1481,7 @@ class MainWP_UI {
 	 */
 	public static function render_modal_no_sites_note() {
 		if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-no-sites-modal-notice' ) ) :
-		?>
+			?>
 		<div id="mainwp-no-sites-modal" class="ui small modal">
 			<div class="content" id="mainwp-no-sites-modal-content" style="text-align:center">
 				<div class="ui hidden divider"></div>
@@ -1509,9 +1509,9 @@ class MainWP_UI {
 		blurring: true,
 		inverted: true,
 		closable: false
-  	} ).modal( 'show' );
+	  } ).modal( 'show' );
 		</script>
-		<?php
+			<?php
 		endif;
 	}
 

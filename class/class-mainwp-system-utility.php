@@ -480,7 +480,9 @@ class MainWP_System_Utility {
 			}
 
 			if ( isset( $resp['message'] ) ) {
-				$resp['message'] = MainWP_Utility::esc_content( $resp['message'] );
+				if ( is_string( $resp['message'] ) ) {
+					$resp['message'] = MainWP_Utility::esc_content( $resp['message'] );
+				}
 			}
 
 			if ( isset( $resp['error_message'] ) ) {

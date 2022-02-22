@@ -526,12 +526,6 @@ class MainWP_Connect {
 			$json_format = true;
 		}
 
-		$debug = false;
-		if ( $debug ) {
-			self::debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others );
-			return;
-		}
-
 		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 		$mh    = curl_multi_init();
 
@@ -626,7 +620,13 @@ class MainWP_Connect {
 			}
 
 			if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 != $website->wpe ) || ( isset( $others['upgrade'] ) && ( true == $others['upgrade'] ) ) ) ) {
-				$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+				// to fix.
+				if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
+					$cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+				} else {
+					$cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' );
+				}
+				$cookieFile = $cookieDir . '/' . $cookie_salt;
 				if ( ! file_exists( $cookieFile ) ) {
 					@file_put_contents( $cookieFile, '' );
 				}
@@ -760,324 +760,6 @@ class MainWP_Connect {
 	}
 
 	/**
-	 * Method debug_fetch_urls_authed()
-	 *
-	 * To debug fetch authorized URLs.
-	 *
-	 * @param object $websites Websites information.
-	 * @param string $what Action to perform.
-	 * @param array  $params Request parameters.
-	 * @param mixed  $handler Request handler.
-	 * @param mixed  $output Request output.
-	 * @param mixed  $whatPage Request URL. Default /admin-ajax.php.
-	 * @param bool   $json_format Use JSON format.
-	 * @param array  $others Request additional information.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_last_request_timestamp()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::close_open_requests()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::get_nrof_open_requests()
-	 * @uses \MainWP\Dashboard\MainWP_DB_Common::insert_or_update_request_log()
-	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
-	 * @uses \MainWP\Dashboard\MainWP_System::$version
-	 * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
-	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
-	 */
-	private static function debug_fetch_urls_authed( $websites, $what, $params, $handler, $output, $whatPage, $json_format, $others ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-		$agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
-
-		$timeout = 20 * 60 * 60;
-
-		$handleToWebsite = array();
-		$requestUrls     = array();
-		$requestHandles  = array();
-
-		$dirs      = MainWP_System_Utility::get_mainwp_dir();
-		$cookieDir = $dirs[0] . 'cookies';
-
-		self::init_cookiesdir( $cookieDir );
-
-		foreach ( $websites as $website ) {
-			$url = $website->url;
-			if ( '/' != substr( $url, - 1 ) ) {
-				$url .= '/';
-			}
-
-			if ( false === strpos( $url, 'wp-admin' ) ) {
-				$url .= 'wp-admin/';
-			}
-
-			if ( null != $whatPage ) {
-				$url .= $whatPage;
-			} else {
-				$url .= 'admin-ajax.php';
-			}
-
-			if ( property_exists( $website, 'http_user' ) ) {
-				$http_user = $website->http_user;
-			}
-			if ( property_exists( $website, 'http_pass' ) ) {
-				$http_pass = $website->http_pass;
-			}
-
-			$_new_post = null;
-			if ( isset( $params ) && isset( $params['new_post'] ) ) {
-				$_new_post = $params['new_post'];
-
-				/**
-				 * Filter is being replaced with mainwp_pre_posting_posts.
-				 *
-				 * @deprecated
-				 */
-				$params = apply_filters_deprecated(
-					'mainwp-pre-posting-posts',
-					array(
-						( is_array( $params ) ? $params : array() ),
-						(object) array(
-							'id'   => $website->id,
-							'url'  => $website->url,
-							'name' => $website->name,
-						),
-					),
-					'4.0.7.2',
-					'mainwp_pre_posting_posts'
-				);
-
-				/** This filter is documented in ../class/class-mainwp-connect.php */
-				$params = apply_filters(
-					'mainwp_pre_posting_posts',
-					( is_array( $params ) ? $params : array() ),
-					(object) array(
-						'id'   => $website->id,
-						'url'  => $website->url,
-						'name' => $website->name,
-					)
-				);
-			}
-
-			$ch = curl_init();
-
-			$proxy = new \WP_HTTP_Proxy();
-			if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
-				curl_setopt( $ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
-				curl_setopt( $ch, CURLOPT_PROXY, $proxy->host() );
-				curl_setopt( $ch, CURLOPT_PROXYPORT, $proxy->port() );
-
-				if ( $proxy->use_authentication() ) {
-					curl_setopt( $ch, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
-					curl_setopt( $ch, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
-				}
-			}
-
-			if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 != $website->wpe ) || ( isset( $others['upgrade'] ) && ( true == $others['upgrade'] ) ) ) ) {
-				$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
-				if ( ! file_exists( $cookieFile ) ) {
-					@file_put_contents( $cookieFile, '' );
-				}
-
-				if ( file_exists( $cookieFile ) ) {
-					@chmod( $cookieFile, 0644 );
-					curl_setopt( $ch, CURLOPT_COOKIEJAR, $cookieFile );
-					curl_setopt( $ch, CURLOPT_COOKIEFILE, $cookieFile );
-				}
-			}
-
-			curl_setopt( $ch, CURLOPT_URL, $url );
-			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-			curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-			curl_setopt( $ch, CURLOPT_POST, true );
-
-			$params['json_result'] = $json_format;
-
-			$postdata = self::get_post_data_authed( $website, $what, $params );
-			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-			curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
-			curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-			curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
-			if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
-				$http_pass = stripslashes( $http_pass );
-				curl_setopt( $ch, CURLOPT_USERPWD, "$http_user:$http_pass" );
-			}
-
-			$ssl_verifyhost    = false;
-			$verifyCertificate = isset( $website->verify_certificate ) ? $website->verify_certificate : null;
-			if ( null !== $verifyCertificate ) {
-				if ( 1 == $verifyCertificate ) {
-					$ssl_verifyhost = true;
-				} elseif ( 2 == $verifyCertificate ) {
-					if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-						$ssl_verifyhost = true;
-					}
-				}
-			} else {
-				if ( ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 == get_option( 'mainwp_sslVerifyCertificate' ) ) ) ) {
-					$ssl_verifyhost = true;
-				}
-			}
-
-			if ( $ssl_verifyhost ) {
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
-			} else {
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-				curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-			}
-
-			$headers           = array( 'X-Requested-With' => 'XMLHttpRequest' );
-			$headers['Expect'] = self::get_expect_header( $postdata );
-			$headers           = \Requests::flatten( $headers );
-
-			curl_setopt( $ch, CURLOPT_SSLVERSION, $website->ssl_version );
-
-			if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
-				$http_version = apply_filters( 'mainwp_curl_http_version', false, $website->id );
-				if ( false !== $http_version ) {
-					curl_setopt( $ch, CURLOPT_HTTP_VERSION, $http_version );
-				}
-			}
-
-			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
-			curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
-
-			$force_use_ipv4 = false;
-			$forceUseIPv4   = isset( $website->force_use_ipv4 ) ? $website->force_use_ipv4 : null;
-			if ( null !== $forceUseIPv4 ) {
-				if ( 1 == $forceUseIPv4 ) {
-					$force_use_ipv4 = true;
-				} elseif ( 2 == $forceUseIPv4 ) {
-					if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
-						$force_use_ipv4 = true;
-					}
-				}
-			} else {
-				if ( 1 == get_option( 'mainwp_forceUseIPv4' ) ) {
-					$force_use_ipv4 = true;
-				}
-			}
-
-			if ( $force_use_ipv4 ) {
-				if ( defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
-					curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
-				}
-			}
-
-			curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
-			MainWP_System_Utility::set_time_limit( $timeout );
-
-			$handleToWebsite[ self::get_resource_id( $ch ) ] = $website;
-			$requestUrls[ self::get_resource_id( $ch ) ]     = $website->url;
-			$requestHandles[ self::get_resource_id( $ch ) ]  = $ch;
-
-			if ( null != $_new_post ) {
-				$params['new_post'] = $_new_post;
-			}
-		}
-
-		foreach ( $requestHandles as $id => $ch ) {
-			$website = &$handleToWebsite[ self::get_resource_id( $ch ) ];
-
-			$identifier   = null;
-			$semLock      = '103218';
-			$identifier   = self::get_lock_identifier( $semLock );
-			$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );
-			if ( 0 < $minimumDelay ) {
-				$minimumDelay = $minimumDelay / 1000;
-			}
-			$minimumIPDelay = ( ( false === get_option( 'mainwp_minimumIPDelay' ) ) ? 400 : get_option( 'mainwp_minimumIPDelay' ) );
-			if ( 0 < $minimumIPDelay ) {
-				$minimumIPDelay = $minimumIPDelay / 1000;
-			}
-
-			MainWP_Utility::end_session();
-			$delay = true;
-			while ( $delay ) {
-				self::lock( $identifier );
-
-				if ( 0 < $minimumDelay ) {
-					$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp();
-					if ( $lastRequest > ( ( microtime( true ) ) - $minimumDelay ) ) {
-						self::release( $identifier );
-						usleep( ( $minimumDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $minimumIPDelay && null != $website ) {
-					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-
-					if ( null != $ip && '' != $ip ) {
-						$lastRequest = MainWP_DB_Common::instance()->get_last_request_timestamp( $ip );
-
-						if ( $lastRequest > ( ( microtime( true ) ) - $minimumIPDelay ) ) {
-							self::release( $identifier );
-							usleep( ( $minimumIPDelay - ( ( microtime( true ) ) - $lastRequest ) ) * 1000 * 1000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
-
-			$maximumRequests   = ( ( false === get_option( 'mainwp_maximumRequests' ) ) ? 4 : get_option( 'mainwp_maximumRequests' ) );
-			$maximumIPRequests = ( ( false === get_option( 'mainwp_maximumIPRequests' ) ) ? 1 : get_option( 'mainwp_maximumIPRequests' ) );
-
-			$first = true;
-			$delay = true;
-			while ( $delay ) {
-				if ( ! $first ) {
-					self::lock( $identifier );
-				} else {
-					$first = false;
-				}
-
-				MainWP_DB_Common::instance()->close_open_requests();
-
-				if ( 0 < $maximumRequests ) {
-					$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests();
-					if ( $nrOfOpenRequests >= $maximumRequests ) {
-						self::release( $identifier );
-						usleep( 200000 );
-						continue;
-					}
-				}
-
-				if ( 0 < $maximumIPRequests && null != $website ) {
-					$ip = MainWP_DB::instance()->get_wp_ip( $website->id );
-
-					if ( null != $ip && '' != $ip ) {
-						$nrOfOpenRequests = MainWP_DB_Common::instance()->get_nrof_open_requests( $ip );
-						if ( $nrOfOpenRequests >= $maximumIPRequests ) {
-							self::release( $identifier );
-							usleep( 200000 );
-							continue;
-						}
-					}
-				}
-
-				$delay = false;
-			}
-
-			if ( null != $website ) {
-				MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, null, microtime( true ), null );
-			}
-
-			if ( null != $identifier ) {
-				self::release( $identifier );
-			}
-
-			$data = curl_exec( $ch );
-
-			if ( null != $website ) {
-				MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
-			}
-
-			if ( null != $handler ) {
-				call_user_func_array( $handler, array( $data, $website, &$output ) );
-			}
-		}
-	}
-
-	/**
 	 * Credits WordPress org.
 	 *
 	 * Get the correct "Expect" header for the given request data.
@@ -1126,7 +808,7 @@ class MainWP_Connect {
 	}
 
 	/**
-	 * Method get_lock_identifier(
+	 * Method get_lock_identifier().
 	 *
 	 * Get lock identifier.
 	 *
@@ -1170,6 +852,9 @@ class MainWP_Connect {
 		if ( function_exists( 'sem_acquire' ) ) {
 			return sem_acquire( $identifier );
 		} else {
+			if ( ! is_resource( $identifier ) ) {
+				return false; // to fix.
+			}
 			for ( $i = 0; $i < 3; $i ++ ) {
 				if ( @flock( $identifier, LOCK_EX ) ) {
 					return $identifier;
@@ -1201,6 +886,9 @@ class MainWP_Connect {
 		if ( function_exists( 'sem_release' ) ) {
 			return sem_release( $identifier );
 		} else {
+			if ( ! is_resource( $identifier ) ) {
+				return false; // to fix.
+			}
 			@flock( $identifier, LOCK_UN );
 			@fclose( $identifier );
 		}
@@ -1508,7 +1196,13 @@ class MainWP_Connect {
 		}
 
 		if ( ( null != $website ) && ( ( property_exists( $website, 'wpe' ) && 1 != $website->wpe ) || ( isset( $others['upgrade'] ) && ( true == $others['upgrade'] ) ) ) ) {
-			$cookieFile = $cookieDir . '/' . sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+			// to fix.
+			if ( defined( 'LOGGED_IN_SALT' ) && defined( 'NONCE_SALT' ) ) {
+				$cookie_salt = sha1( sha1( 'mainwp' . LOGGED_IN_SALT . $website->id ) . NONCE_SALT . 'WP_Cookie' );
+			} else {
+				$cookie_salt = sha1( sha1( 'mainwp' . $website->id ) . 'WP_Cookie' );
+			}
+			$cookieFile = $cookieDir . '/' . $cookie_salt;
 			if ( ! file_exists( $cookieFile ) ) {
 				@file_put_contents( $cookieFile, '' );
 			}
@@ -1695,7 +1389,7 @@ class MainWP_Connect {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_wp_ip()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
 	 */
-	private static function check_constraints( &$identifier, $website ) {
+	private static function check_constraints( &$identifier, $website ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$semLock      = '103218';
 		$identifier   = self::get_lock_identifier( $semLock );
 		$minimumDelay = ( ( false === get_option( 'mainwp_minimumDelay' ) ) ? 200 : get_option( 'mainwp_minimumDelay' ) );

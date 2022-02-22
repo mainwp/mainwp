@@ -522,6 +522,9 @@ class MainWP_DB extends MainWP_DB_Base {
 		$for_manager  = false;
 
 		$data = array( 'id', 'url', 'name' );
+		if ( $selectgroups ) {
+			$data[] = 'wpgroups';
+		}
 
 		$dbwebsites = array();
 		$websites   = self::instance()->query( self::instance()->get_sql_websites_for_current_user( $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging ) );

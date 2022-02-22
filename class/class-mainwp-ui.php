@@ -524,6 +524,14 @@ class MainWP_UI {
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
 
+		$count_sites = MainWP_DB::instance()->get_websites_count();
+
+		if ( 0 == $count_sites ) {
+			if ( ! isset( $_GET['do'] ) ) {
+				echo self::render_modal_no_sites_note();
+			}
+		}
+
 		?>
 		<div class="ui segment right sites sidebar" style="padding:0px" id="mainwp-sites-menu-sidebar">
 			<div class="ui segment" style="margin-bottom:0px">
@@ -611,7 +619,7 @@ class MainWP_UI {
 			<a href="https://kb.mainwp.com/" class="ui big green fluid button"><?php esc_html_e( 'Help Documentation', 'mainwp' ); ?></a>
 			<div class="ui hidden divider"></div>
 			<div id="mainwp-sticky-help-button" class="" style="position: absolute; bottom: 1em; left: 1em; right: 1em;">
-				<a href="https://mainwp.com/my-account/get-support/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
+				<a href="https://meta.mainwp.com/" target="_blank" class="ui fluid button"><?php esc_html_e( 'Still Need Help?', 'mainwp' ); ?></a>
 			</div>
 		</div>
 		<?php
@@ -1465,6 +1473,49 @@ class MainWP_UI {
 	}
 
 	/**
+	 * No Sites Modal
+	 *
+	 * Renders modal window for notification when there are no connected sites.
+	 *
+	 * @return void
+	 */
+	public static function render_modal_no_sites_note() {
+		if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-no-sites-modal-notice' ) ) :
+			?>
+		<div id="mainwp-no-sites-modal" class="ui small modal">
+			<div class="content" id="mainwp-no-sites-modal-content" style="text-align:center">
+				<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<h4><?php esc_html_e( 'Hi MainWP Manager, there is not anything to see here before connecting your first site.', 'mainwp' ); ?></h4>
+				<div class="ui hidden divider"></div>
+				<div class="ui hidden divider"></div>
+				<a href="admin.php?page=managesites&do=new" class="ui big green button"><?php esc_html_e( 'Connect Your WordPress Site', 'mainwp' ); ?></a>
+				<div class="ui hidden fitted divider"></div>
+				<small><?php echo sprintf( __( 'or you can %1$sbulk import%2$s your sites.', 'mainwp' ), '<a href="admin.php?page=managesites&do=bulknew">', '</a>' ); ?></small>
+			</div>
+			<div class="actions">
+				<div class="ui grid">
+					<div class="eight wide left aligned middle aligned column">
+						<a href="https://kb.mainwp.com/docs/add-site-to-your-dashboard/" class="ui basic green mini button" target="_blank"><?php esc_html_e( 'See How to Connect Sites', 'mainwp' ); ?></a>
+					</div>
+					<div class="eight wide column">
+						<input type="button" class="ui mini basic cancel button mainwp-notice-dismiss" notice-id="mainwp-no-sites-modal-notice" value="<?php esc_attr_e( 'Let Me Look Around', 'mainwp' ); ?>"/>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+		jQuery( '#mainwp-no-sites-modal' ).modal( {
+		blurring: true,
+		inverted: true,
+		closable: false
+	} ).modal( 'show' );
+		</script>
+			<?php
+		endif;
+	}
+
+	/**
 	 * Method render_screen_options()
 	 *
 	 * Render modal window for Screen Options.
@@ -1473,7 +1524,7 @@ class MainWP_UI {
 	 *
 	 * @return void  Render modal window for Screen Options html.
 	 */
-	public static function render_screen_options( $setting_page = true ) {
+	public static function render_screen_options( $setting_page = true ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$default_widgets = array(
 			'overview'          => __( 'Updates Overview', 'mainwp' ),

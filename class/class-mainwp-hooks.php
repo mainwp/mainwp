@@ -97,6 +97,7 @@ class MainWP_Hooks {
 		add_filter( 'mainwp_getallposts', array( &$this, 'hook_get_all_posts' ), 10, 2 );
 		add_filter( 'mainwp_check_current_user_can', array( &$this, 'hook_current_user_can' ), 10, 3 );
 		add_filter( 'mainwp_escape_response_data', array( &$this, 'hook_escape_response' ), 10, 3 );
+		add_filter( 'mainwp_escape_content', array( &$this, 'hook_escape_content' ), 10, 3 );
 
 		add_filter( 'mainwp_db_fetch_object', array( &$this, 'db_fetch_object' ), 10, 2 );
 		add_filter( 'mainwp_db_fetch_array', array( &$this, 'db_fetch_array' ), 10, 2 );
@@ -754,6 +755,25 @@ class MainWP_Hooks {
 		}
 		return $response;
 	}
+
+	/**
+	 * Method hook_escape_content()
+	 *
+	 * To escape content.
+	 *
+	 * @param mixed  $content     response data.
+	 * @param string $type content type for escape.
+	 * @param array  $more_allowed input allowed tags - option.
+	 *
+	 * @return mixed $response valid response data.
+	 * @throws \Exception Exception message.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Utility::esc_content()
+	 */
+	public function hook_escape_content( $content, $type = 'note', $more_allowed = array() ) {
+		return MainWP_Utility::esc_content( $content, $type, $more_allowed );
+	}
+
 
 	/**
 	 * Method db_free_result()

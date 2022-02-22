@@ -47,7 +47,7 @@ class MainWP_Backup_Tasks {
 	 * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_for_user()
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_sql_websites_by_group_id()
 	 */
-	public static function render() {
+	public static function render() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$tasks = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
 

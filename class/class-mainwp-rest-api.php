@@ -579,8 +579,12 @@ class Rest_Api {
 		// first validate the request.
 		if ( $this->mainwp_validate_request( $request ) ) {
 
+			$params = array(
+				'selectgroups' => ( isset( $request['selectgroups'] ) && true == $request['selectgroups'] ) ? true : false,
+			);
+
 			// get data.
-			$data = MainWP_DB::instance()->get_websites_for_current_user();
+			$data = MainWP_DB::instance()->get_websites_for_current_user( $params );
 
 			$response = new \WP_REST_Response( $data );
 			$response->set_status( 200 );

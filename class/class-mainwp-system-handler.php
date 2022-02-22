@@ -287,7 +287,7 @@ class MainWP_System_Handler {
 	 * @uses \MainWP\Dashboard\MainWP_Twitter::clear_all_twitter_messages()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function handle_mainwp_tools_settings() {
+	public function handle_mainwp_tools_settings() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$user = wp_get_current_user();
 		if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] ) {

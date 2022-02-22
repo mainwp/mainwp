@@ -69,7 +69,7 @@ if ( empty( $heading ) ) {
 											<?php foreach ( $sites_statuses as $item ) : ?>
 											<tr>
 												<td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo esc_html( $item['name'] ); ?></td>
-												<td style="padding:10px;border-bottom: 1px solid #eee;"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['url'] ); ?></a></td>
+												<td style="padding:10px;border-bottom: 1px solid #eee;"><a href="<?php echo esc_html( $item['url'] ); ?>" style="color:#7fb100;"><?php echo esc_html( $item['url'] ); ?></a></td>
 												<td style="padding:10px;border-bottom: 1px solid #eee;"><?php echo esc_html( $item['code'] ); ?></td>
 											</tr>
 											<?php endforeach; ?>

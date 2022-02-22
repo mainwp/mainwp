@@ -356,7 +356,7 @@ class MainWP_Manage_Sites_Update_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
-	public static function render_plugins_updates( $website, $active_tab, $userExtension ) {
+	public static function render_plugins_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$trustedPlugins = json_decode( $userExtension->trusted_plugins, true );
 		if ( ! is_array( $trustedPlugins ) ) {
@@ -463,7 +463,7 @@ class MainWP_Manage_Sites_Update_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
 	 * @uses \MainWP\Dashboard\MainWP_Updates_Table_Helper
 	 */
-	public static function render_themes_updates( $website, $active_tab, $userExtension ) {
+	public static function render_themes_updates( $website, $active_tab, $userExtension ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		$trustedThemes = json_decode( $userExtension->trusted_themes, true );
 		if ( ! is_array( $trustedThemes ) ) {

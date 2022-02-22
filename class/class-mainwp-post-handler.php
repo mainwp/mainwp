@@ -15,6 +15,7 @@ namespace MainWP\Dashboard;
  * @uses \MainWP\Dashboard\MainWP_Post_Base_Handler
  */
 class MainWP_Post_Handler extends MainWP_Post_Base_Handler {
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- This is the only way to achieve desired results, pull request solutions appreciated.
 
 	/**
 	 * Private static variable to hold the single instance of the class.

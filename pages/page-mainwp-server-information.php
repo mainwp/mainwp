@@ -778,7 +778,7 @@ class MainWP_Server_Information {
 		self::render_header( 'ServerInformationCron' );
 
 		$cron_jobs = array(
-			'Check for available updates' => array( 'mainwp_updatescheck_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
+			'Check for available updates' => array( 'mainwp_updatescheck_start_last_timestamp', 'mainwp_cronupdatescheck_action', __( 'Once every minute', 'mainwp' ) ),
 			'Check for new statistics'    => array( 'mainwp_cron_last_stats', 'mainwp_cronstats_action', __( 'Once hourly', 'mainwp' ) ),
 			'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', __( 'Once daily', 'mainwp' ) ),
 		);
@@ -826,14 +826,29 @@ class MainWP_Server_Information {
 			<tbody>
 				<?php
 				foreach ( $cron_jobs as $cron_job => $hook ) {
+
 					$next_run = wp_next_scheduled( $hook[1] );
+					if ( ! empty( $next_run ) ) {
+						$next_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) );
+					}
+
+					if ( 'mainwp_updatescheck_start_last_timestamp' == $hook[0] ) {
+						$update_time = MainWP_Settings::get_websites_automatic_update_time();
+						$last_run    = $update_time['last'];
+						$next_run    = $update_time['next'];
+					} elseif ( false == get_option( $hook[0] ) ) {
+						$last_run = esc_html__( 'Never', 'mainwp' );
+					} else {
+						$last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) );
+					}
+
 					?>
 					<tr>
 						<td><?php echo $cron_job; ?></td>
 						<td><?php echo $hook[1]; ?></td>
 						<td><?php echo $hook[2]; ?></td>
-						<td><?php echo ( false == get_option( $hook[0] ) ) ? esc_html__( 'Never', 'mainwp' ) : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( get_option( $hook[0] ) ) ); ?></td>
-						<td><?php echo $next_run ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $next_run ) ) : ''; ?></td>
+						<td><?php echo esc_html( $last_run ); ?></td>
+						<td><?php echo ! empty( $next_run ) ? esc_html( $next_run ) : ''; ?></td>
 					</tr>
 					<?php
 				}
@@ -1246,7 +1261,7 @@ class MainWP_Server_Information {
 	 * @uses \MainWP\Dashboard\MainWP_Logger::clear_log()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public static function render_action_logs() {
+	public static function render_action_logs() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		self::render_header( 'ActionLogs' );
 
 		if ( isset( $_REQUEST['actionlogs_status'] ) ) {

@@ -283,7 +283,7 @@ class MainWP_Extensions_View {
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::is_extension_activated()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::polish_ext_name()
 	 */
-	public static function render_extension_card( $extension, $extension_update, $img_url ) {
+	public static function render_extension_card( $extension, $extension_update, $img_url ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		if ( isset( $extension['direct_page'] ) && ! empty( $extension['direct_page'] ) ) {
 			$extension_page_url = admin_url( 'admin.php?page=' . $extension['direct_page'] );
@@ -370,7 +370,7 @@ class MainWP_Extensions_View {
 			<?php endif; ?>
 			<?php if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) : ?>
 				<div class="ui middle aligned extra content">
-					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Excentino API license is not activated.', 'mainwp' ) ); ?>" data-position="top left" data-inverted="" class="activate-api-status">
+					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" data-position="top left" data-inverted="" class="activate-api-status">
 						<?php if ( $active ) : ?>
 							<i class="circular inverted green unlock icon"></i>
 						<?php else : ?>
@@ -934,6 +934,17 @@ class MainWP_Extensions_View {
 				'product_id' => 'MainWP Lighthouse Extension',
 				'catalog_id' => '1233934',
 				'group'      => array( 'performance' ),
+			),
+			'mainwp-domain-monitor-extension' =>
+			array(
+				'slug'       => 'mainwp-domain-monitor-extension',
+				'title'      => 'MainWP Domain Monitor Extension',
+				'desc'       => 'MainWP Domain Monitor Extension lets you keep a watchful eye on your domains. It alerts you via email when monitored domains are nearing expiration.',
+				'link'       => 'https://mainwp.com/extension/domain-monitor/',
+				'img'        => $folder_url . 'domain-monitor.png',
+				'product_id' => 'MainWP Domain Monitor Extension',
+				'catalog_id' => '1240624',
+				'group'      => array( 'admin' ),
 			),
 		);
 	}

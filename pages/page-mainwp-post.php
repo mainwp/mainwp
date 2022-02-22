@@ -2383,12 +2383,12 @@ class MainWP_Post {
 							<input type="text" placeholder="<?php esc_attr_e( 'Date', 'mainwp' ); ?>" id="post_timestamp_value" value="" />
 						</div>
 					</div>
-				</div>
-				<div style="display:none" id="timestampdiv">
+				</div>				
+			</div>
+			<div style="display:none" id="timestampdiv">
 					<?php self::touch_time( $post ); ?>
 					</div>
 				</div>
-			</div>
 			<?php
 	}
 

@@ -101,7 +101,7 @@ abstract class MainWP_Post_Base_Handler {
 
 		if ( ! $secure ) {
 			if ( $die ) {
-				die( wp_json_encode( array( 'error' => __( 'Insecure request! Please try again. If you keep experiencing the problem, please contact the MainWP Support.', 'mainwp' ) ) ) );
+				die( wp_json_encode( array( 'error' => __( 'Insecure request! Please try again. If you keep experiencing the problem, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) ) ) );
 			} else {
 				return false;
 			}

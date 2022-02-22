@@ -1245,6 +1245,9 @@ class MainWP_System_Cron_Jobs {
 		$sites_offline = MainWP_DB::instance()->get_websites_offline_check_status();
 		if ( is_array( $sites_offline ) && count( $sites_offline ) > 0 ) {
 			foreach ( $sites_offline as $site ) {
+				if ( 200 == $site->http_response_code ) { // to fix: ignored 200 http code.
+					continue;
+				}
 				$email_settings_sites[ $site->id ] = $site->settings_notification_emails; // ok.
 				$code                              = $site->http_response_code;
 				$code_string                       = MainWP_Utility::get_http_codes( $code );

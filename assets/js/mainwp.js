@@ -1271,7 +1271,7 @@ mainwp_site_overview_reconnect = function (pElement) {
       if (response.substr(0, 5) == 'ERROR') {
         var error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please contact the MainWP support.';
+          error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.';
         } else {
           error = response.substr(6);
         }
@@ -1298,7 +1298,7 @@ mainwp_managesites_reconnect = function (pElement) {
       if (response.substr(0, 5) == 'ERROR') {
         var error;
         if (response.length == 5) {
-          error = 'Undefined error! Please try again. If the process keeps failing, please contact the MainWP support.';
+          error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.';
         } else {
           error = response.substr(6);
         }
@@ -1394,12 +1394,12 @@ mainwp_managesites_add = function () {
       jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
       if (response == 'HTTPERROR') {
-        errors.push(__('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, contact the MainWP Support.'));
+        errors.push(__('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.'));
       } else if (response == 'NOMAINWP') {
-        errors.push(__('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.'));
+        errors.push(__('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.' ) );
       } else if (response.substr(0, 5) == 'ERROR') {
         if (response.length == 5) {
-          errors.push(__('Undefined error occurred. Please try again. If the issue does not resolve, please contact the MainWP Support.'));
+          errors.push(__('Undefined error occurred. Please try again. If the issue does not resolve, please review this <a href="https://kb.mainwp.com/docs/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.'));
         } else {
           errors.push(__('Error detected: ') + response.substr(6));
         }

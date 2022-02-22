@@ -142,7 +142,7 @@ class MainWP_Install_Bulk {
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function prepare_install() {
+	public static function prepare_install() { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
 
 		if ( ! isset( $_POST['url'] ) ) {

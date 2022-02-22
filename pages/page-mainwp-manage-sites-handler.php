@@ -173,16 +173,25 @@ class MainWP_Manage_Sites_Handler {
 	 * @return mixed Results.
 	 */
 	public static function rest_api_add_site( $data, &$output = array() ) {
-		$params['url']            = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';
-		$params['name']           = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
-		$params['wpadmin']        = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
-		$params['unique_id']      = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
-		$params['ssl_verify']     = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
-		$params['force_use_ipv4'] = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
-		$params['http_user']      = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
-		$params['http_pass']      = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';
-		$params['groupids']       = isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) ) : array();
-		return MainWP_Manage_Sites_View::add_wp_site( false, $params, $output );
+		$params['url']                     = isset( $data['url'] ) ? sanitize_text_field( wp_unslash( $data['url'] ) ) : '';
+		$params['name']                    = isset( $data['name'] ) ? sanitize_text_field( wp_unslash( $data['name'] ) ) : '';
+		$params['wpadmin']                 = isset( $data['admin'] ) ? sanitize_text_field( wp_unslash( $data['admin'] ) ) : '';
+		$params['unique_id']               = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
+		$params['ssl_verify']              = empty( $data['ssl_verify'] ) ? false : intval( $data['ssl_verify'] );
+		$params['force_use_ipv4']          = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
+		$params['http_user']               = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
+		$params['http_pass']               = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';
+		$params['groupids']                = isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) ) : array();
+		$website                           = MainWP_DB::instance()->get_websites_by_url( $params['url'] );
+		list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $params, $output );
+
+		if ( '' !== $error ) {
+			return array( 'error' => $error );
+		}
+		return array(
+			'response' => $message,
+			'siteid'   => $site_id,
+		);
 	}
 
 	/**

@@ -164,7 +164,7 @@ class MainWP_System_View {
 		mainwpAddTranslation( $mainwpTranslations, 'Any', __( 'Any', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'HTTP error', __( 'HTTP error', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Error on your child WordPress', __( 'Error on your child WordPress', 'mainwp' ) );
-		mainwpAddTranslation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, please, contact MainWP Support.', __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, please, contact MainWP Support.', 'mainwp' ) );
+		mainwpAddTranslation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', __( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Remove', __( 'Remove', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please reconnect to Dropbox', __( 'Please reconnect to Dropbox', 'mainwp' ) );
 		mainwpAddTranslation( $mainwpTranslations, 'Please wait', __( 'Please wait', 'mainwp' ) );
@@ -658,7 +658,7 @@ class MainWP_System_View {
 	 * @uses \MainWP\Dashboard\MainWP_DB::data_seek()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
-	public static function render_footer_content( $websites, $current_wpid = false ) {
+	public static function render_footer_content( $websites, $current_wpid = false ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		$cntr = 0;
 		if ( is_array( $websites ) ) {
 			$count = count( $websites );

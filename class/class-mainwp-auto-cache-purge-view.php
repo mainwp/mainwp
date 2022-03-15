@@ -136,10 +136,24 @@ class MainWP_Auto_Cache_Purge_View {
             $data = array();
         }
 
+        // Whether to purge child site or not.
         if ( $website->auto_purge_cache === '2' ) {
             $data['auto_purge_cache'] = get_option( 'mainwp_auto_purge_cache' );
         }else{
             $data['auto_purge_cache'] = $website->auto_purge_cache;
+        }
+
+        // Cloudflair settings.
+        if ( get_option( 'mainwp_use_cloudflair_cache' ) === '1' && $website->mainwp_override_global_settings === '0' ){
+            $data['cloud_flair_enabled'] = true;
+            $data['mainwp_cloudflair_key'] = get_option( 'mainwp_cloudflair_key' );
+            $data['mainwp_cloudflair_email'] = get_option( 'mainwp_cloudflair_email' );
+        }else if ( $website->mainwp_override_global_settings === '1' && get_option( 'mainwp_use_cloudflair_cache' ) === '0' || $website->mainwp_override_global_settings === '1' && get_option( 'mainwp_use_cloudflair_cache' ) === '1' ) {
+            $data['cloud_flair_enabled'] = true;
+            $data['mainwp_cloudflair_key'] = $website->mainwp_cloudflair_key;
+            $data['mainwp_cloudflair_email'] = $website->mainwp_cloudflair_email;
+        }else if ( $website->mainwp_override_global_settings === '0' && get_option( 'mainwp_use_cloudflair_cache' ) === '0' ) {
+            $data['cloud_flair_enabled'] = false;
         }
 
         return $data;
@@ -156,6 +170,7 @@ class MainWP_Auto_Cache_Purge_View {
     public function synced_site( $website, $information = array() ) {
         if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
 
+            // Grab synced data from child site.
             $last_purged_cache = $information['mainwp_cache_control_last_purged'];
             $cache_solution    = $information['mainwp_cache_control_cache_solution'];
 
@@ -183,6 +198,15 @@ class MainWP_Auto_Cache_Purge_View {
             $auto_cache_purge = ( isset( $_POST['mainwp_auto_purge_cache'] ) ? 1 : 0 );
             MainWP_Utility::update_option( 'mainwp_auto_purge_cache', $auto_cache_purge );
 
+            $mainwp_use_cloudflair_cache = ( isset( $_POST['mainwp_use_cloudflair_cache'] ) ? 1 : 0 );
+            MainWP_Utility::update_option( 'mainwp_use_cloudflair_cache', $mainwp_use_cloudflair_cache );
+
+            $mainwp_cloudflair_email = ( isset( $_POST['mainwp_cloudflair_email'] ) ? $_POST['mainwp_cloudflair_email'] : '' );
+            MainWP_Utility::update_option( 'mainwp_cloudflair_email', $mainwp_cloudflair_email );
+
+            $mainwp_cloudflair_key = ( isset( $_POST['mainwp_cloudflair_key'] ) ? $_POST['mainwp_cloudflair_key'] : '' );
+            MainWP_Utility::update_option( 'mainwp_cloudflair_key', $mainwp_cloudflair_key );
+
             return true;
         }
         return false;
@@ -198,15 +222,28 @@ class MainWP_Auto_Cache_Purge_View {
 
             if ( mainwp_current_user_have_right('dashboard', 'edit_sites') ) {
 
+                // Handle $auto_purge_cache variable.
                 $auto_purge_cache = isset( $_POST['mainwp_auto_purge_cache'] ) ? intval( $_POST['mainwp_auto_purge_cache'] ) : 2;
                 if ( 2 < $auto_purge_cache ) {
                     $auto_purge_cache = 2;
                 }
 
+                // Override Global Settings option.
+                $mainwp_override_global_settings = ( isset( $_POST['mainwp_override_global_settings'] ) ? 1 : 0 );
+
+                // Cloudflair API Credentials for Child Site.
+                $mainwp_cloudflair_email = ( isset( $_POST['mainwp_cloudflair_email'] ) ? $_POST['mainwp_cloudflair_email'] : '' );
+                $mainwp_cloudflair_key = ( isset( $_POST['mainwp_cloudflair_key'] ) ? $_POST['mainwp_cloudflair_key'] : '' );
+
+                // Build array of new values.
                 $newValues = array(
-                    'auto_purge_cache' => $auto_purge_cache,
+                    'auto_purge_cache'                => $auto_purge_cache,
+                    'mainwp_override_global_settings' => $mainwp_override_global_settings,
+                    'mainwp_cloudflair_email'         => $mainwp_cloudflair_email,
+                    'mainwp_cloudflair_key'           => $mainwp_cloudflair_key,
                 );
 
+                // Save to wp_mainwp_wp
                 MainWP_DB::instance()->update_website_values( $website->id, $newValues );
 
                 // Force Re-sync Child Site Data.
@@ -220,7 +257,7 @@ class MainWP_Auto_Cache_Purge_View {
 
 
     /**
-     * Add "Last Purged Cache" column to Site Table.
+     * Add Cache Control columns to Site Table.
      */
     public function cache_control_sitestable_column( $columns ) {
         $columns['mainwp_cache_control_last_purged'] = "Last Purged Cache";
@@ -229,7 +266,7 @@ class MainWP_Auto_Cache_Purge_View {
     }
 
     /**
-     * Display "Last Purged Cache" timestamp for specified Child Site.
+     * Display Cache Control data for specified Child Site.
      */
     public function cache_control_sitestable_item( $item ){
 
@@ -246,8 +283,10 @@ class MainWP_Auto_Cache_Purge_View {
 
             if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && !empty(( $website->mainwp_cache_control_cache_solution )) ) {
                 $item['cache_solution'] = $website->mainwp_cache_control_cache_solution;
+            } else if ( !get_option( 'mainwp_use_cloudflair_cache' ) == '0' ) {
+                $item['cache_solution']  = 'Cloudflare';
             } else {
-                $item['cache_solution'] = 'None Found';
+                $item['cache_solution'] = 'N/A';
             }
 
             return $item;
@@ -269,7 +308,7 @@ class MainWP_Auto_Cache_Purge_View {
                 <?php endif; ?>
 
                 <h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?>
-                <div class="sub header">Enable this setting to purge all cache after any update.</div></h3>
+                <div class="sub header">You must Sync Dashboard with Child Sites after saving these settings.</div></h3>
                 <div class="ui form">
                     <form method="POST" action="admin.php?page=cache-control">
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -279,7 +318,27 @@ class MainWP_Auto_Cache_Purge_View {
                             <div class="ten wide column ui toggle checkbox">
                                 <input type="checkbox" value="1" name="mainwp_auto_purge_cache" <?php checked( get_option( 'mainwp_auto_purge_cache', 0 ), 1 ); ?> id="mainwp_auto_purge_cache">
                                 <label><em><?php echo __( 'Enable to purge all cache after updates.', 'mainwp' ); ?></em></label>
-                                <em><?php echo __( 'You must Sync Dashboard with Child Sites after saving these settings.', 'mainwp' ); ?></em>
+                            </div>
+                        </div>
+                        <div class="ui divider"></div>
+                        <div class="ui grid field">
+                            <label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API.', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui toggle checkbox">
+                                <input type="checkbox" value="1" name="mainwp_use_cloudflair_cache" <?php checked( get_option( 'mainwp_use_cloudflair_cache', 0 ), 1 ); ?> id="mainwp_use_cloudflair_cache">
+                                <label><em><?php echo __( 'Enable to use global CloudFlair API.', 'mainwp' ); ?></em></label>
+                            </div>
+                        </div>
+                        <h4 class="ui header"><?php esc_html_e( 'Cloudflair API Credentials', 'mainwp' ); ?>
+                            <div class="sub header">Credentials for global CloudFlair account.</div></h4>
+                        <div class="ui grid field">
+                            <label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Email', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui">
+                                <input type="text"  name="mainwp_cloudflair_email" placeholder="user@domain.tdl" value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_email' ) ); ?>" autocomplete="off">
+                            </div>
+                            <label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Key', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui">
+                                <input type="text"  name="mainwp_cloudflair_key" placeholder="eg: 55160fc7127bf21e139a52d3a005a62fec798 " value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_key' ) ); ?>" autocomplete="off">
+                                <label><em><?php echo __( 'Retrieved from the backend after logging in', 'mainwp' ); ?></em></label>
                             </div>
                         </div>
                         <div class="ui divider"></div>
@@ -310,8 +369,7 @@ class MainWP_Auto_Cache_Purge_View {
                 <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
             <?php endif; ?>
 
-            <h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?>
-                <div class="sub header">Enable this setting to purge all cache after any update.</div></h3>
+            <h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?></h3>
             <div class="ui form">
                 <form method="POST" action="admin.php?page=managesites&cacheControlId=<?php echo $website->id ?>" >
                     <?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -327,7 +385,27 @@ class MainWP_Auto_Cache_Purge_View {
                             <label><em><?php echo __( 'Enable to purge all cache after updates.', 'mainwp' ); ?></em></label>
                         </div>
                     </div>
-
+                    <div class="ui divider"></div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API', 'mainwp' ); ?></label>
+                        <div class="ten wide column ui toggle checkbox">
+                            <input type="checkbox" value="1" name="mainwp_override_global_settings" <?php checked( $website->mainwp_override_global_settings, 1 ); ?> id="mainwp_override_global_settings">
+                            <label><em><?php echo __( 'Enable to override global CloudFlair API Key', 'mainwp' ); ?></em></label>
+                        </div>
+                    </div>
+                    <h4 class="ui header"><?php esc_html_e( 'Cloudflair API Credentials', 'mainwp' ); ?>
+                        <div class="sub header">Credentials for Individual Child Site.</div></h4>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Email', 'mainwp' ); ?></label>
+                        <div class="ten wide column ui">
+                            <input type="text"  name="mainwp_cloudflair_email" placeholder="user@domain.tdl" value="<?php echo esc_attr( $website->mainwp_cloudflair_email ); ?>" autocomplete="off">
+                        </div>
+                        <label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Key', 'mainwp' ); ?></label>
+                        <div class="ten wide column ui">
+                            <input type="text"  name="mainwp_cloudflair_key" placeholder="eg: 55160fc7127bf21e139a52d3a005a62fec798 " value="<?php echo esc_attr( $website->mainwp_cloudflair_key ); ?>" autocomplete="off">
+                            <label><em><?php echo __( 'Retrieved from the backend after logging in', 'mainwp' ); ?></em></label>
+                        </div>
+                    </div>
                     <div class="ui divider"></div>
                     <input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                     <div style="clear:both"></div>

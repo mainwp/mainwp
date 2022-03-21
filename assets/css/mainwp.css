@@ -6,6 +6,7 @@
 .mainwp-main-content {
   width: calc( 100% - 300px );
     padding-right: 1em;
+  padding-bottom: 1em;
   float: left;
 }
 
@@ -823,4 +824,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme{
 
 th .sort.icon, .up.icon, .down.icon {
     float:right;
+}
+
+#mainwp-themes-content td.child-active{
+    background:#e3ffa7 !important;
 }

@@ -63,6 +63,48 @@ class MainWP_Settings {
 	/** Run the export_sites method that exports the Child Sites .csv file */
 	public static function admin_init() {
 		self::export_sites();
+		if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) {
+			delete_option( 'mainwp_extensions_api_username' );
+			delete_option( 'mainwp_extensions_api_password' );
+			delete_option( 'mainwp_extensions_api_save_login' );
+			delete_option( 'mainwp_extensions_plan_info' );
+			update_option( 'mainwp_extensions_master_api_key', '' );
+			
+			$new_extensions = array();
+			$extensions       = get_option( 'mainwp_extensions', array() );
+			
+			foreach ( $extensions as $ext ) {
+				if ( isset( $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
+					if ( isset( $ext['api_key'] ) ){
+						$ext['api_key'] = '';
+					}
+					if ( isset( $ext['activation_email'] ) ){
+						$ext['activation_email'] = '';
+					}
+					if ( isset( $ext['activated_key'] ) ){
+						$ext['activated_key'] = 'Deactivated';
+					}
+
+					$act_info                         = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
+					if ( isset( $act_info['api_key'] ) ){
+						$act_info['api_key'] = '';
+					}
+					if ( isset( $act_info['activation_email'] ) ){
+						$act_info['activation_email'] = '';
+					}
+					if ( isset( $act_info['activated_key'] ) ){
+						$act_info['activated_key'] = 'Deactivated';
+					}
+					MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );					
+				}
+				$new_extensions[] = $ext;
+			}
+			
+			MainWP_Utility::update_option( 'mainwp_extensions', $new_extensions );
+			update_option( 'mainwp_extensions_all_activation_cached', '' );	
+			wp_safe_redirect( admin_url( 'admin.php?page=MainWPTools' ) );
+			die();
+		}
 	}
 
 	/**
@@ -599,7 +641,7 @@ class MainWP_Settings {
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Daily update frequency', 'mainwp' ); ?></label>
-							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how often you want your MainWP Dashboard to run the auto update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" frequence-today-count="<?php echo intval( $frequence_today_count ); ?>" >
+							<div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how often you want your MainWP Dashboard to run the auto update process.', 'mainwp' ); ?>" data-inverted="" data-position="top left" >
 								<select name="mainwp_frequencyDailyUpdate" id="mainwp_frequencyDailyUpdate" class="ui dropdown">
 									<option value="1" <?php echo ( 1 == $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Once per day', 'mainwp' ); ?></option>
 									<option value="2" <?php echo ( 2 == $frequencyDailyUpdate ? 'selected' : '' ); ?>><?php esc_html_e( 'Twice per day', 'mainwp' ); ?></option>
@@ -693,7 +735,7 @@ class MainWP_Settings {
 								</select>
 								<div class="ui hidden divider"></div>
 								<div class="ui label"><?php esc_html_e( 'Last run: ', 'mainwp' ); ?><?php echo esc_html( $lastAutomaticUpdate ); ?></div>
-								<div class="ui label"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
+								<div class="ui label" frequence-today-count="<?php echo intval( $frequence_today_count ); ?>"><?php esc_html_e( 'Next run: ', 'mainwp' ); ?><?php echo esc_html( $nextAutomaticUpdate ); ?></div>
 							</div>
 						</div>
 						<div class="ui grid field">
@@ -975,67 +1017,6 @@ class MainWP_Settings {
 		<?php
 	}
 
-
-
-	/**
-	 * Method get_next_time_automatic_update_to_show()
-	 *
-	 * Get websites automatic update next time.
-	 *
-	 * @return mixed array
-	 */
-	public static function get_next_time_automatic_update_to_show() {
-
-		$local_timestamp = MainWP_Utility::get_timestamp();
-		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
-		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
-
-		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
-		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_timestamp = MainWP_System_Cron_Jobs::get_timestamp_from_hh_mm( $timeDailyUpdate );
-		} else {
-			$run_timestamp = $today_0h; // midnight.
-		}
-
-		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
-		if ( $frequencyDailyUpdate <= 0 ) {
-			$frequencyDailyUpdate = 1;
-		}
-
-		$next_time = 0;
-
-		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
-			$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
-
-			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
-			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
-				$frequence_period_in_seconds = HOUR_IN_SECONDS;
-			}
-
-			if ( $local_timestamp > $run_timestamp ) {
-				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
-			} else {
-				$frequence_now = 0;
-			}
-
-			$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
-			if ( $lasttimeStartAutomaticUpdate < $today_0h && $local_timestamp > $run_timestamp ) {
-				$next_time = $local_timestamp; // Any minute.
-			} elseif ( $frequence_now > $frequence_today_count ) {
-				$next_time = $local_timestamp; // Any minute.
-			} else { // frequence_now <= frequence_today_count.
-				$next_time = $run_timestamp + $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
-			}
-		}
-
-		if ( empty( $next_time ) ) {
-			$next_time = $today_end + 1;
-		}
-
-		return $next_time;
-	}
-
-
 	/**
 	 * Method get_websites_automatic_update_time()
 	 *
@@ -1062,7 +1043,7 @@ class MainWP_Settings {
 		} elseif ( 0 < MainWP_DB::instance()->get_websites_count_where_dts_automatic_sync_smaller_then_start( $lasttimeStartAutomatic ) || 0 < MainWP_DB::instance()->get_websites_check_updates_count( $lasttimeStartAutomatic ) ) {
 			$nextAutomaticUpdate = __( 'Processing your websites.', 'mainwp' );
 		} else {
-			$next_time = self::get_next_time_automatic_update_to_show();
+			$next_time = MainWP_System_Cron_Jobs::get_next_time_automatic_update_to_show();
 			if ( $next_time < $local_timestamp + 5 * MINUTE_IN_SECONDS ) {
 				$nextAutomaticUpdate = __( 'Any minute', 'mainwp' );
 			} else {
@@ -1374,9 +1355,12 @@ class MainWP_Settings {
 						<div class="ten wide column" id="mainwp-disconnect-sites-tool" data-content="<?php esc_attr_e( 'This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable. Use only if you attend to reconnect site to the same or a different dashboard right away.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
 						<a href="admin.php?page=MainWPTools&disconnectSites=yes&_wpnonce=<?php echo wp_create_nonce( 'disconnect_sites' ); ?>" onclick="mainwp_tool_disconnect_sites(); return false;" class="ui button green basic"><?php esc_html_e( 'Disconnect Websites', 'mainwp' ); ?></a>
 					</div>
-					<script type="text/javascript">
-					jQuery( '#mainwp-disconnect-sites-tool' ).popup();
-					</script>
+						</div>
+						<div class="ui grid field">
+							<label class="six wide column middle aligned"><?php esc_html_e( 'Delete extensions API Activation data', 'mainwp' ); ?></label>
+							<div class="ten wide column" id="mainwp-clear-activation-data" data-content="<?php esc_attr_e( 'Delete extensions API activation data. This will not affect extensions settings, it just removes API activation data.', 'mainwp' ); ?>" data-variation="inverted" data-position="top left">
+								<a href="admin.php?page=MainWPTools&clearActivationData=yes&_wpnonce=<?php echo wp_create_nonce( 'clear_activation_data' ); ?>" onclick="mainwp_tool_clear_activation_data(this); return false;" class="ui button green basic"><?php esc_html_e( 'Delete Extensions API Activation Data', 'mainwp' ); ?></a>
+							</div>
 						</div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php esc_html_e( 'Turn off brag button', 'mainwp' ); ?></label>
@@ -1414,6 +1398,10 @@ class MainWP_Settings {
 					</form>
 				</div>
 			</div>
+			<script type="text/javascript">
+				jQuery( '#mainwp-disconnect-sites-tool' ).popup();
+				jQuery( '#mainwp-clear-activation-data' ).popup();
+			</script>
 		<?php
 		self::render_footer( 'MainWPTools' );
 	}

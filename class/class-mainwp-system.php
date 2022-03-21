@@ -33,7 +33,7 @@ class MainWP_System {
 	 *
 	 * @var string Current plugin version.
 	 */
-	public static $version = '4.1.12';
+	public static $version = '4.2-beta1';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -328,6 +328,9 @@ class MainWP_System {
 				foreach ( (array) $alloptions_db as $o ) {
 					$alloptions[ $o->option_name ] = $o->option_value;
 					unset( $options[ array_search( $o->option_name, $options ) ] );
+				}
+				if ( ! is_array( $notoptions ) ) {
+					$notoptions = array();
 				}
 				foreach ( $options as $option ) {
 					$notoptions[ $option ] = true;
@@ -645,7 +648,6 @@ class MainWP_System {
 	 * @uses \MainWP\Dashboard\MainWP_Post_Plugin_Theme_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_Post_Site_Handler::init()
 	 * @uses \MainWP\Dashboard\MainWP_System_Handler::activate_extension()
-	 * @uses \MainWP\Dashboard\MainWP_System_Handler::deactivate_extension()
 	 * @uses \MainWP\Dashboard\MainWP_System_Utility::is_admin()
 	 * @uses \MainWP\Dashboard\MainWP_System_View::get_class_name()
 	 * @uses \MainWP\Dashboard\MainWP_System_View::get_mainwp_translations()
@@ -708,7 +710,7 @@ class MainWP_System {
 
 		$enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
 		$primaryBackup             = get_option( 'mainwp_primaryBackup' );
-		$disable_backup_checking   = ( empty( $enableLegacyBackupFeature ) && empty( $primaryBackup ) ) ? true : false;
+		$disable_backup_checking   = true; // removed option.
 
 		$mainwpParams = array(
 			'image_url'                        => MAINWP_PLUGIN_URL . 'assets/images/',

@@ -199,7 +199,8 @@ class MainWP_Widget_Themes {
 				<?php
 				$_count = count( $inactive_themes );
 				for ( $i = 0; $i < $_count; $i ++ ) {
-					$slug = $inactive_themes[ $i ]['slug'];
+					$slug      = $inactive_themes[ $i ]['slug'];
+					$is_parent = ( isset( $inactive_themes[ $i ]['parent_active'] ) && 1 == $inactive_themes[ $i ]['parent_active'] ) ? true : false;
 					?>
 					<div class="item">
 						<input class="themeName" type="hidden" name="slug" value="<?php echo esc_attr( wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) ); ?>"/>
@@ -209,8 +210,11 @@ class MainWP_Widget_Themes {
 							<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_themes' ) ) { ?>
 								<a href="#" class="mainwp-theme-activate ui mini green button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Activate the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme on the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Activate', 'mainwp' ); ?></a>
 							<?php } ?>
-							<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) { ?>
-								<a href="#" class="mainwp-theme-delete ui mini basic button" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr_e( ' theme from the child site.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
+							<?php
+							if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) {
+								$parent_str = sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), $inactive_themes[ $i ]['child_theme'] );
+								?>
+								<a href="#" class="<?php echo $is_parent ? '' : 'mainwp-theme-delete'; ?> ui mini basic button" data-position="top right" data-tooltip="<?php echo ! $is_parent ? esc_attr__( 'Delete the ', 'mainwp' ) . wp_strip_all_tags( $inactive_themes[ $i ]['name'] ) . esc_attr__( ' theme from the child site.', 'mainwp' ) : $parent_str; ?>" <?php echo $is_parent ? 'disabled onclick="javascript:void(0)"' : ''; ?> data-inverted=""><?php esc_html_e( 'Delete', 'mainwp' ); ?></a>
 							<?php } ?>
 						</div>
 						<div class="middle aligned content">

@@ -50,14 +50,25 @@ class MainWP_Themes_Handler {
 				return;
 			}
 
-			foreach ( $themes as $theme ) {
-				if ( ! isset( $theme['name'] ) ) {
-					continue;
+			if ( isset( $themes['not_criteria_themes'] ) && is_array( $themes['not_criteria_themes'] ) ) {
+				foreach ( $themes['not_criteria_themes'] as $theme ) {
+					if ( ! isset( $theme['name'] ) ) {
+						continue;
+					}
+					$theme['websiteid']            = $website->id;
+					$theme['websiteurl']           = $website->url;
+					$output->not_criteria_themes[] = $theme;
 				}
-				$theme['websiteid']  = $website->id;
-				$theme['websiteurl'] = $website->url;
+			} else {
+				foreach ( $themes as $theme ) {
+					if ( ! isset( $theme['name'] ) ) {
+						continue;
+					}
+					$theme['websiteid']  = $website->id;
+					$theme['websiteurl'] = $website->url;
 
-				$output->themes[] = $theme;
+					$output->themes[] = $theme;
+				}
 			}
 			unset( $themes );
 		} else {
@@ -140,7 +151,9 @@ class MainWP_Themes_Handler {
 		do_action( 'mainwp_after_theme_action', $information, $pAction, $theme, $website );
 
 		if ( isset( $information['error'] ) ) {
-			$information['error'] = esc_html( $information['error'] );
+			if ( is_string( $information['error'] ) ) {
+				$information['error'] = esc_html( $information['error'] );
+			}
 			wp_send_json( $information );
 		}
 

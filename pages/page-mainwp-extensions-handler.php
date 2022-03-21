@@ -286,18 +286,6 @@ class MainWP_Extensions_Handler {
 	}
 
 	/**
-	 * Activate MainWP Extension License.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Post_Handler::secure_request()
-	 */
-	public static function activate_license() {
-		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_activatelicense' );
-		$item_id  = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
-		$response = MainWP_Api_Manager::instance()->grab_license_key_by_id( $item_id );
-		die( wp_json_encode( $response ) );
-	}
-
-	/**
 	 * Install MainWP Extension.
 	 *
 	 * @param mixed $url MainWP Extension update URL.

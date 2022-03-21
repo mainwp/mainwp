@@ -1137,8 +1137,16 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command {
 	 */
 	public static function callback_site_site_update_wordpress( $args = array(), $assoc_args = array(), $website = false ) {
 		\WP_CLI::line( __( 'Please wait... ', 'mainwp' ) );
-		$data = MainWP_Updates_Handler::upgrade_website( $website );
-		\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' updated successfully.', 'mainwp' ) . '%n' ) );
+		$error = false;
+		try {
+			$data = MainWP_Updates_Handler::upgrade_website( $website );
+			\WP_CLI::line( \WP_CLI::colorize( '%g' . $website->name . __( ' updated successfully.', 'mainwp' ) . '%n' ) );
+		} catch ( \Exception $e ) {
+			\WP_CLI::error( 'Updates failed: ' . MainWP_Error_Helper::get_console_error_message( $e ) );
+			if ( $e->getMesage() == 'WPERROR' ) {
+				\WP_CLI::debug( 'Error: ' . MainWP_Utility::value_to_string( $e->get_message_extra(), 1 ) );
+			}
+		}
 	}
 
 	/**

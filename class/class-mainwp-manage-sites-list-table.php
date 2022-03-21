@@ -526,7 +526,7 @@ class MainWP_Manage_Sites_List_Table {
 			$this->userExtension = MainWP_DB_Common::instance()->get_user_extension();
 		}
 
-		$orderby = 'wp.url';
+		$orderby = 'wp.name';
 
 		$req_orderby = null;
 		$req_order   = null;

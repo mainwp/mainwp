@@ -239,6 +239,71 @@ class MainWP_System_Cron_Jobs {
 	}
 
 	/**
+	 * Method get_next_time_automatic_update_to_show()
+	 *
+	 * Get websites automatic update next time.
+	 *
+	 * @return mixed array
+	 */
+	public static function get_next_time_automatic_update_to_show() {
+
+		$local_timestamp = MainWP_Utility::get_timestamp();
+		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
+		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
+
+		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
+		if ( ! empty( $timeDailyUpdate ) ) {
+			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+		} else {
+			$run_timestamp = $today_0h; // midnight.
+		}
+
+		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
+		if ( $frequencyDailyUpdate <= 0 ) {
+			$frequencyDailyUpdate = 1;
+		}
+
+		$next_time = 0;
+
+		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
+			$lasttimeStartAutomaticUpdate = get_option( 'mainwp_updatescheck_start_last_timestamp' );
+
+			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
+			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
+				$frequence_period_in_seconds = HOUR_IN_SECONDS;
+			}
+
+			if ( $local_timestamp > $run_timestamp ) {
+				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
+			} else {
+				$frequence_now = 0;
+			}
+
+			$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
+			if ( $lasttimeStartAutomaticUpdate < $today_0h ) {
+				if ( $local_timestamp > $run_timestamp ) {
+					$next_time = $local_timestamp; // Any minute.
+				} else {
+					$next_time = $run_timestamp;
+				}
+			} elseif ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * ( $frequence_today_count + 1 ) ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
+				$next_time = $local_timestamp; // Any minute.
+			} else { // frequence_now <= frequence_today_count.
+				$next_time = $run_timestamp + $frequence_period_in_seconds * ( $frequence_now + 1 ); // calculate nex time.
+				if ( $next_time > $today_end + 30 * MINUTE_IN_SECONDS ) {
+					$next_time = $run_timestamp + DAY_IN_SECONDS; // Ok, for next_time jump to next day.
+				}
+			}
+		}
+
+		if ( empty( $next_time ) ) {
+			$next_time = $today_end + 1;
+		}
+
+		return $next_time;
+	}
+
+	/**
 	 * Method cron_updates_check()
 	 *
 	 * MainWP Cron Check Update
@@ -282,26 +347,35 @@ class MainWP_System_Cron_Jobs {
 		);
 
 		$updatecheck_running = ( 'Y' == get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
-		$timeDailyUpdate     = get_option( 'mainwp_timeDailyUpdate' );
-
-		$run_timestamp = 0;
 
 		$local_timestamp = MainWP_Utility::get_timestamp();
+		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
+		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
+
+		$timeDailyUpdate = get_option( 'mainwp_timeDailyUpdate' );
+		if ( ! empty( $timeDailyUpdate ) ) {
+			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
+		} else {
+			$run_timestamp = $today_0h; // midnight.
+		}
 
 		$frequencyDailyUpdate = get_option( 'mainwp_frequencyDailyUpdate' );
 		if ( $frequencyDailyUpdate <= 0 ) {
 			$frequencyDailyUpdate = 1;
 		}
 
-		$frequency_second = DAY_IN_SECONDS;
-		if ( 1 < $frequencyDailyUpdate ) {
-			$frequency_second = ( DAY_IN_SECONDS / intval( $frequencyDailyUpdate ) );
-		}
-
 		$frequence_period_in_seconds = DAY_IN_SECONDS / $frequencyDailyUpdate;
 
-		$today_0h = strtotime( date("Y-m-d 00:00:00", $local_timestamp) ); // phpcs:ignore -- to localtime.
-		$today_end   = strtotime( date("Y-m-d 23:59:59", $local_timestamp ) ) ; // phpcs:ignore -- to localtime.
+		$frequence_now = 0;
+		if ( 1 < $frequencyDailyUpdate ) {
+			$frequence_period_in_seconds = ( $today_end - $run_timestamp ) / $frequencyDailyUpdate; // new way to set run frequency.
+			if ( $frequence_period_in_seconds < HOUR_IN_SECONDS ) {
+				$frequence_period_in_seconds = HOUR_IN_SECONDS;
+			}
+			if ( $local_timestamp > $run_timestamp ) {
+				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
+			}
+		}
 
 		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 
@@ -311,92 +385,92 @@ class MainWP_System_Cron_Jobs {
 		$lasttimeDailyDigest          = get_option( 'mainwp_updatescheck_dailydigest_last_timestamp' );
 		$mainwpLastDailydigest        = get_option( 'mainwp_dailydigest_last' );
 
+		/**
+		 * Filter: mainwp_updatescheck_sendmail_at_time
+		 *
+		 * Filters the the time when the Daily Digest email will be sent.
+		 *
+		 * @since 3.4
+		 */
+		$send_noti_at   = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
+		$time_to_noti   = false;
+		$time_notice_at = false;
+		if ( ! empty( $send_noti_at ) ) {
+			$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at, $lasttimeDailyDigest );
+			$time_notice_at = $local_timestamp > $send_timestamp ? true : false;
+		} else {
+			if ( 1 < $frequencyDailyUpdate ) {
+				$time_to_noti = ( $today_m_y != $mainwpLastDailydigest ) ? true : false;
+			}
+		}
 		$sendmail_for_each_auto_sync = apply_filters( 'mainwp_updatescheck_sendmail_for_each_auto_sync_finished', false );
 
-		$check_ready_sendmail = ( $sendmail_for_each_auto_sync || $today_m_y !== $mainwpLastDailydigest ) ? true : false;
+		$check_ready_sendmail = false;
+		if ( $sendmail_for_each_auto_sync || 1 == $frequencyDailyUpdate || $time_notice_at || $time_to_noti ) {
+			$check_ready_sendmail = true;
+		}
 
 		if ( $check_ready_sendmail && 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
-			/**
-			 * Filter: mainwp_updatescheck_sendmail_at_time
-			 *
-			 * Filters the the time when the Daily Digest email will be sent.
-			 *
-			 * @since 3.4
-			 */
-			$send_noti_at   = apply_filters( 'mainwp_updatescheck_sendmail_at_time', false );
-			$time_to_noti   = false;
-			$time_notice_at = false;
-
-			if ( ! empty( $send_noti_at ) ) {
-				$send_timestamp = self::get_timestamp_from_hh_mm( $send_noti_at, $lasttimeDailyDigest );
-				$time_notice_at = $local_timestamp > $send_timestamp ? true : false;
-			} else {
-				if ( 1 < $frequencyDailyUpdate ) {
-					$next_time_to_send = $today_end - $frequency_second;
-					$time_to_noti      = ( $local_timestamp > $next_time_to_send ) ? true : false;
-					// to fix.
-					if ( ! $time_to_noti ) {
-						$send_timestamp = self::get_timestamp_from_hh_mm( '00:01', $lasttimeDailyDigest ); // to check more than 24 hours from the last send.
-						$time_to_noti   = $local_timestamp > $send_timestamp ? true : false;
-					}
-				}
+			
+			if ( $local_timestamp > $lasttimeAutomaticUpdate + HOUR_IN_SECONDS ){
+				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', '' ); // to fix: may old notification update info, send notification next time.
+				return;
 			}
 
-			if ( 1 == $frequencyDailyUpdate || $time_notice_at || $time_to_noti ) {
+			$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 
-				$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
+			MainWP_Utility::update_option( 'mainwp_dailydigest_last', $today_m_y );
 
-				MainWP_Utility::update_option( 'mainwp_dailydigest_last', $today_m_y );
+			MainWP_Utility::update_option( 'mainwp_updatescheck_dailydigest_last_timestamp', $local_timestamp );
 
-				MainWP_Utility::update_option( 'mainwp_updatescheck_dailydigest_last_timestamp', $local_timestamp );
+			// send daily digest email one time per day.
+			$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
 
-				// send daily digest email one time per day.
-				$individual_digestWebsites = get_option( 'mainwp_updatescheck_individual_digest_websites' );
+			MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', '' ); // here to fix.
 
-				MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
+			MainWP_Logger::instance()->debug( 'CRON :: updates check :: got to the mail part' );
 
-				MainWP_Logger::instance()->log_action( 'CRON :: got to the daily digest mail part', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+			MainWP_Logger::instance()->log_action( 'CRON :: got to the daily digest mail part', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
-				$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
-				if ( empty( $gen_email_settings['disable'] ) ) {
-					// send general daily digests.
-					$this->start_notification_daily_digest( $gen_email_settings, $plain_text ); // general email.
-				}
+			$gen_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
+			if ( empty( $gen_email_settings['disable'] ) ) {
+				// send general daily digests.
+				$this->start_notification_daily_digest( $gen_email_settings, $plain_text ); // general email.
+			}
 
-				$to_admin_digestWebsites = array();
+			$to_admin_digestWebsites = array();
 
-				if ( is_array( $individual_digestWebsites ) && 0 < count( $individual_digestWebsites ) ) {
-					// send individual site daily digests, one email for one site.
-					foreach ( $individual_digestWebsites as $siteid ) {
-						$website        = MainWP_DB::instance()->get_website_by_id( $siteid, false, array( 'settings_notification_emails' ) );
-						$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'daily_digest', $website );  // get site email settings.
-						if ( ! $email_settings['disable'] ) {
-							$to_admin_digestWebsites[] = $siteid;
-							$sent                      = $this->start_notification_daily_digest( $email_settings, $plain_text, array( $siteid ), $website );
-							if ( $sent ) {
-								usleep( 100000 );
-							}
+			if ( is_array( $individual_digestWebsites ) && 0 < count( $individual_digestWebsites ) ) {
+				// send individual site daily digests, one email for one site.
+				foreach ( $individual_digestWebsites as $siteid ) {
+					$website        = MainWP_DB::instance()->get_website_by_id( $siteid, false, array( 'settings_notification_emails' ) );
+					$email_settings = MainWP_Notification_Settings::get_site_email_settings( 'daily_digest', $website );  // get site email settings.
+					if ( ! $email_settings['disable'] ) {
+						$to_admin_digestWebsites[] = $siteid;
+						$sent                      = $this->start_notification_daily_digest( $email_settings, $plain_text, array( $siteid ), $website );
+						if ( $sent ) {
+							usleep( 100000 );
 						}
 					}
 				}
-
-				if ( 0 < count( $to_admin_digestWebsites ) ) {
-					$admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'daily_digest', '', true ); // get default subject and heading only.
-					$admin_email_settings['disable']    = 0;
-					$admin_email_settings['recipients'] = MainWP_Notification_Settings::get_general_email(); // sent to general notification email only.
-					// send all individual daily digest to admin in one email.
-					$this->start_notification_daily_digest( $admin_email_settings, $plain_text, $to_admin_digestWebsites ); // will send email to general notification email.
-				}
-				$this->refresh_saved_fields();
 			}
+
+			if ( 0 < count( $to_admin_digestWebsites ) ) {
+				$admin_email_settings               = MainWP_Notification_Settings::get_default_emails_fields( 'daily_digest', '', true ); // get default subject and heading only.
+				$admin_email_settings['disable']    = 0;
+				$admin_email_settings['recipients'] = MainWP_Notification_Settings::get_general_email(); // sent to general notification email only.
+				// send all individual daily digest to admin in one email.
+				$this->start_notification_daily_digest( $admin_email_settings, $plain_text, $to_admin_digestWebsites ); // will send email to general notification email.
+			}
+			$this->refresh_saved_fields();
 		}
+
 		$run_synctime = null;
 		if ( ! empty( $timeDailyUpdate ) ) {
-			$run_synctime  = false;
-			$run_timestamp = self::get_timestamp_from_hh_mm( $timeDailyUpdate );
-			if ( $local_timestamp > $run_timestamp ) {
+			$run_synctime = false;
+			if ( $local_timestamp > $run_timestamp && $lasttimeStartAutomaticUpdate < $run_timestamp ) {
 				$run_synctime = true; // it is time to run or worked.
-			} elseif ( ( $local_timestamp - $lasttimeStartAutomaticUpdate ) > DAY_IN_SECONDS ) {
+			} elseif ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) {
 				$run_synctime = true;
 			}
 
@@ -409,17 +483,18 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		$frequence_today_count = get_option( 'mainwp_updatescheck_frequency_today_count' );
-		$frequence_now         = ceil( ( $local_timestamp - $today_0h ) / $frequence_period_in_seconds ); // 0 <= frequence_now <= frequencyDailyUpdate, computes frequence value now.
 
 		$run_frequency = null;
 		if ( $frequencyDailyUpdate > 1 ) { // check this if frequency > 1 only.
 			$run_frequency = false;
-			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * $frequence_today_count ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
+			if ( ( $local_timestamp > $today_0h + $frequence_period_in_seconds * ( $frequence_today_count + 1 ) ) || ( $local_timestamp > $lasttimeStartAutomaticUpdate + $frequence_period_in_seconds ) ) {
 				$run_frequency = true;
-				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 			}
+
 			if ( ! $run_frequency ) {
 				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: wait frequency today :: ' . $frequence_now . ' / ' . $frequencyDailyUpdate . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
+			} else {
+				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: running frequency now :: ' . $frequence_now . ' :: ' . date( 'Y-m-d H:i:s', $local_timestamp ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER ); //phpcs:ignore -- local time.
 			}
 		}
 
@@ -457,17 +532,9 @@ class MainWP_System_Cron_Jobs {
 				$run_valid = true;
 			} elseif ( ( null === $run_synctime || $run_synctime ) && $today_m_y != $mainwpLastAutomaticUpdate ) { // if sync time or not set sync time, and other day, to fix.
 				$run_valid = true;
-			} elseif ( ( null === $run_frequency ) && ( null === $run_synctime || $run_synctime ) && $today_m_y == $mainwpLastAutomaticUpdate ) { // if sync time or not set sync time, and other day, to fix.
-				MainWP_Logger::instance()->log_action( 'CRON :: already checked update today', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
-				$run_valid = false;
-				return;
 			}
 
 			if ( ! $run_valid ) {
-				// $run_hours_interval == false|null.
-				// $run_frequency == false|null.
-				// $run_synctime == false|null.
-				// $today_m_y == $mainwpLastAutomaticUpdate.
 				MainWP_Logger::instance()->debug( 'CRON :: updates check :: waiting conditionals to run.' );
 				MainWP_Logger::instance()->log_action( 'CRON :: updates check :: waiting conditionals to run.', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 				return;
@@ -489,10 +556,12 @@ class MainWP_System_Cron_Jobs {
 			}
 		}
 
+		MainWP_Logger::instance()->info( 'CRON :: updates check found' . count( $checkupdate_websites ) . ' websites' );
+
 		MainWP_Logger::instance()->debug( 'CRON :: backup task running :: found ' . ( count( $checkupdate_websites ) - count( $websites ) ) . ' websites' );
 		MainWP_Logger::instance()->debug( 'CRON :: updates check :: found ' . count( $checkupdate_websites ) . ' websites' );
 
-		MainWP_Logger::instance()->log_action( 'CRON :: updates check found ' . count( $checkupdate_websites ), MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
+		MainWP_Logger::instance()->log_action( 'CRON :: updates check found ' . count( $checkupdate_websites ) . ' websites', MAINWP_UPDATE_CHECK_LOG_PRIORITY_NUMBER );
 
 		$userid = null;
 		foreach ( $websites as $website ) {
@@ -541,7 +610,7 @@ class MainWP_System_Cron_Jobs {
 			}
 
 			update_option( 'mainwp_last_synced_all_sites', time() );
-			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_now );
+			MainWP_Utility::update_option( 'mainwp_updatescheck_frequency_today_count', $frequence_now + 1 );
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_timestamp', $local_timestamp );
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last', $today_m_y );
@@ -1211,7 +1280,6 @@ class MainWP_System_Cron_Jobs {
 			'mainwp_updatescheck_mail_ignore_core_new',
 			'mainwp_updatescheck_mail_ignore_plugins_new',
 			'mainwp_updatescheck_mail_ignore_themes_new',
-			'mainwp_updatescheck_ready_sendmail',
 			'mainwp_updatescheck_individual_digest_websites',
 			'mainwp_updatescheck_sites_icon',
 		);

@@ -44,8 +44,12 @@ updatesoverview_upgrade = function ( id, obj ) {
       } );
 
       jQuery.post( ajaxurl, data, function ( response ) {        
-        if ( response.error ) {          
-          jQuery( '.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child' ).html( '<i class="red times icon"></i>' );
+        if ( response.error ) { 
+            var err_msg = '';
+            if ( response.error.extra ) {
+                err_msg = response.error.extra + ' ';
+            }          
+          jQuery( '.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child' ).html( err_msg + '<i class="red times icon"></i>' );
         } else {          
           jQuery( '.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child' ).html( '<i class="green check icon"></i>' );
         }
@@ -244,7 +248,7 @@ updatesoverview_wordpress_upgrade_all_update_done = function ()
 
     if ( websitesDone == websitesTotal )
     {
-        updatesoverview_check_to_continue_updates();
+        //updatesoverview_check_to_continue_updates();
         return;
     }
 
@@ -263,8 +267,12 @@ updatesoverview_wordpress_upgrade_int = function ( websiteId, bulkMode )
         {            
             if ( response.error )
             {
+                var err_msg = '';
+                if ( response.error.extra ) {
+                    err_msg = response.error.extra + ' ';
+                }  
                 if ( pBulkMode )
-                    updatesoverview_wordpress_upgrade_all_update_site_status( pWebsiteId, '<i class="red times icon"></i>' );                
+                    updatesoverview_wordpress_upgrade_all_update_site_status( pWebsiteId, err_msg + '<i class="red times icon"></i>' );                
             } else
             {
                 result = response.result;

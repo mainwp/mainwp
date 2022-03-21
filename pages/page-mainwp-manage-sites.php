@@ -1403,7 +1403,8 @@ class MainWP_Manage_Sites {
 
 				$http_user = isset( $_POST['mainwp_managesites_edit_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_http_user'] ) ) : '';
 				$http_pass = isset( $_POST['mainwp_managesites_edit_http_pass'] ) ? wp_unslash( $_POST['mainwp_managesites_edit_http_pass'] ) : '';
-				$url       = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' == sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
+				$url       = ( isset( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) && ( 'www' == sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_wpurl_with_www'] ) ) ) ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $website->url, true );
+				$url       = ( isset( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) && ( 'https' == sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_siteurl_protocol'] ) ) ) ? 'https' : 'http' ) . '://' . MainWP_Utility::remove_http_prefix( $url, true );
 
 				$disableChecking       = isset( $_POST['mainwp_managesites_edit_disableChecking'] ) ? 0 : 1;
 				$checkInterval         = isset( $_POST['mainwp_managesites_edit_checkInterval'] ) ? intval( $_POST['mainwp_managesites_edit_checkInterval'] ) : 1440;

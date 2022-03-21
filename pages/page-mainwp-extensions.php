@@ -186,13 +186,13 @@ class MainWP_Extensions {
 
 			if ( isset( $extension['apiManager'] ) && $extension['apiManager'] ) {
 
-				$api = dirname( $slug );
+				$api_slug = dirname( $slug );
 
 				if ( $is_cached ) {
-					$options = isset( $activations_cached[ $api ] ) ? $activations_cached[ $api ] : array();
+					$options = isset( $activations_cached[ $api_slug ] ) ? $activations_cached[ $api_slug ] : array();
 				} else {
-					$options                    = MainWP_Api_Manager::instance()->get_activation_info( $api );
-					$activations_cached[ $api ] = $options;
+					$options                         = MainWP_Api_Manager::instance()->get_activation_info( $api_slug );
+					$activations_cached[ $api_slug ] = $options;
 				}
 
 				if ( ! is_array( $options ) ) {
@@ -200,12 +200,14 @@ class MainWP_Extensions {
 				}
 
 				$extension['api_key']             = isset( $options['api_key'] ) ? $options['api_key'] : '';
-				$extension['activation_email']    = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
 				$extension['activated_key']       = isset( $options['activated_key'] ) ? $options['activated_key'] : 'Deactivated';
 				$extension['deactivate_checkbox'] = isset( $options['deactivate_checkbox'] ) ? $options['deactivate_checkbox'] : 'off';
 				$extension['product_id']          = isset( $options['product_id'] ) ? $options['product_id'] : '';
 				$extension['instance_id']         = isset( $options['instance_id'] ) ? $options['instance_id'] : '';
 				$extension['software_version']    = isset( $options['software_version'] ) ? $options['software_version'] : '';
+				if ( isset( $options['product_item_id'] ) ) {
+					$extension['product_item_id'] = $options['product_item_id'];
+				}
 			}
 			$save_extensions[] = $extension;
 			if ( mainwp_current_user_have_right( 'extension', dirname( $slug ) ) ) {
@@ -337,7 +339,7 @@ class MainWP_Extensions {
 	 *
 	 * Get purchased MainWP Extensions.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_software()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_purchased_extension()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::check_response_for_intall_errors()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_extension_groups()
@@ -347,14 +349,13 @@ class MainWP_Extensions {
 	 */
 	public static function get_purchased_exts() { // phpcs:ignore -- complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 		MainWP_Post_Handler::instance()->secure_request( 'mainwp_extension_getpurchased' );
-		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? trim( wp_unslash( $_POST['password'] ) ) : '';
+		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false;
 
-		if ( ( '' == $username ) || ( '' == $password ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Invalid login.', 'mainwp' ) ) ) );
+		if ( '' == $api_key ) {
+			die( wp_json_encode( array( 'error' => __( 'Requires API KEY.', 'mainwp' ) ) ) );
 		}
 
-		$data   = MainWP_Api_Manager::instance()->get_purchased_software( $username, $password );
+		$data   = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
 		$result = json_decode( $data, true );
 		$return = array();
 
@@ -403,7 +404,7 @@ class MainWP_Extensions {
 						 * @since Unknown
 						 * @ignore
 						 */
-						$package_url = apply_filters( 'mainwp_api_manager_upgrade_url', $product_info['package'] );
+						$package_url = apply_filters( 'mainwp_api_manager_upgrade_package_url', $product_info['package'], $product_info );
 
 						$item_html = '
 						<div class="item extension-to-install" download-link="' . $package_url . '" product-id="' . $product_id . '">
@@ -473,7 +474,7 @@ class MainWP_Extensions {
 
 				$html .= '<div class="mainwp-installing-extensions">';
 
-				if ( empty( $installing_exts ) ) {
+				if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_available_exts ) ) {
 					$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
 				} else {
 					$html .= '<div class="ui message yellow">' . __( 'You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' ) . '</div>';

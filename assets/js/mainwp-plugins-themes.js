@@ -356,11 +356,11 @@ mainwp_fetch_plugins = function () {
         jQuery( '#mainwp-message-zone' ).removeClass( 'yellow' );
         jQuery( '#mainwp-message-zone' ).hide();
     }
-
     var data = mainwp_secure_data( {
         action: 'mainwp_plugins_search',
         keyword: jQuery( '#mainwp_plugin_search_by_keyword' ).val(),
         status: _status,
+        not_criteria: jQuery('#display_sites_not_meeting_criteria').is(':checked'),
         'groups[]': selected_groups,
         'sites[]': selected_sites
     } );
@@ -547,7 +547,14 @@ jQuery( document ).ready( function () {
             } else if ( action == 'delete' ) {
                 var themesToDelete = [ ];
                 for ( var i = 0; i < selectedThemes.length; i++ ) {
+                    if( jQuery( selectedThemes[i] ).attr( 'not-delete' ) == 1 ){
+                        jQuery( selectedThemes[i] ).attr('checked', false );
+                        continue;
+                    }
                     themesToDelete.push( jQuery( selectedThemes[i] ).attr( 'slug' ) );
+                }
+                if ( themesToDelete.length == 0 ) {
+                    return;
                 }
                 var data = mainwp_secure_data( {
                     action: 'mainwp_theme_delete',
@@ -557,11 +564,11 @@ jQuery( document ).ready( function () {
 
                 themeCountSent++;
                 jQuery.post( ajaxurl, data, function (response) {
-                    if ( response.error != undefined && response.error === Object(response.error) ){ // check if .error is object.
+                    if ( response.error != undefined && response.error == Object(response.error) ){ // check if .error is object.
                         entries = Object.entries(response.error);
                         for (var entry of entries) {
                             warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
-                            jQuery( '#mainwp-message-zone' ).after('<div class="ui info message yellow"><i class="times circle red icon"></i> <i class="ui close icon"></i><span>' + warnings + '</span></div>');
+                            jQuery( '#mainwp-message-zone' ).after('<div class="ui info message yellow"><i class="ui close icon"></i><span>' + warnings + '</span></div>');
                         }
                     }
                     themeCountReceived++;
@@ -661,6 +668,7 @@ mainwp_fetch_themes = function () {
         action: 'mainwp_themes_search',
         keyword: jQuery( '#mainwp_theme_search_by_keyword' ).val(),
         status: _status,
+        not_criteria: jQuery('#display_sites_not_meeting_criteria').is(':checked'),
         'groups[]': selected_groups,
         'sites[]': selected_sites
     } );

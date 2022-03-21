@@ -102,10 +102,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function activate_api_extension() {
 		$this->check_security( 'mainwp_extension_api_activate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		$api       = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
-		$api_key   = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
-		$api_email = isset( $_POST['email'] ) ? sanitize_text_field( wp_unslash( $_POST['email'] ) ) : '';
-		$result    = MainWP_Api_Manager::instance()->license_key_activation( $api, $api_key, $api_email );
+		$api_slug = isset( $_POST['slug'] ) ? dirname( $_POST['slug'] ) : '';
+		$api_key  = isset( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : '';
+		$result   = MainWP_Api_Manager::instance()->license_key_activation( $api_slug, $api_key );
 		wp_send_json( $result );
 	}
 
@@ -120,8 +119,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	public function deactivate_extension() {
 		$this->check_security( 'mainwp_extension_deactivate' );
 		MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
-		$api    = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
-		$result = MainWP_Api_Manager::instance()->license_key_deactivation( $api );
+		$api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
+		$api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : '';
+		$result   = MainWP_Api_Manager::instance()->license_key_deactivation( $api_slug, $api_key );
 		wp_send_json( $result );
 	}
 
@@ -134,10 +134,9 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 */
 	public function grab_extension_api_key() {
 		$this->check_security( 'mainwp_extension_grabapikey' );
-		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? trim( wp_unslash( $_POST['password'] ) ) : '';
-		$api      = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
-		$result   = MainWP_Api_Manager::instance()->grab_license_key( $api, $username, $password );
+		$api_slug       = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : '';
+		$master_api_key = isset( $_POST['master_api_key'] ) ? wp_unslash( $_POST['master_api_key'] ) : '';
+		$result         = MainWP_Api_Manager::instance()->grab_license_key( $api_slug, $master_api_key );
 		wp_send_json( $result );
 	}
 
@@ -146,7 +145,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::verify_mainwp_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::encrypt_string()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
@@ -172,16 +171,19 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 			$_SESSION['api_login_history'] = $new_api_login_history;
 		}
 
-		$username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? trim( $_POST['password'] ) : '';
-		if ( ( '' == $username ) && ( '' == $password ) ) {
-			MainWP_Utility::update_option( 'mainwp_extensions_api_username', $username );
-			MainWP_Utility::update_option( 'mainwp_extensions_api_password', $password );
+		$api_key = isset( $_POST['api_key'] ) ? trim( $_POST['api_key'] ) : false;
+
+		if ( '' === $api_key && false !== $api_key ) {
+			MainWP_Utility::update_option( 'mainwp_extensions_master_api_key', '' );
+		}
+
+		if ( empty( $api_key ) ) {
 			die( wp_json_encode( array( 'saved' => 1 ) ) );
 		}
+
 		$result = array();
 		try {
-			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
+			$test = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
 		} catch ( \Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( wp_json_encode( $return ) );
@@ -197,10 +199,11 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		if ( is_array( $result ) ) {
 			if ( isset( $result['success'] ) && $result['success'] ) {
 				if ( $save_login ) {
-					$enscrypt_u = MainWP_Api_Manager_Password_Management::encrypt_string( $username );
-					$enscrypt_p = MainWP_Api_Manager_Password_Management::encrypt_string( $password );
-					MainWP_Utility::update_option( 'mainwp_extensions_api_username', $enscrypt_u );
-					MainWP_Utility::update_option( 'mainwp_extensions_api_password', $enscrypt_p );
+					if ( empty( $api_key ) && isset( $result['master_api_key'] ) ) {
+						$api_key = $result['master_api_key'];
+					}
+					$enscrypt_api_key = MainWP_Api_Manager_Password_Management::encrypt_string( $api_key );
+					MainWP_Utility::update_option( 'mainwp_extensions_master_api_key', $enscrypt_api_key );
 					MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', true );
 					$plan_info = isset( $result['plan_info'] ) ? wp_json_encode( $result['plan_info'] ) : '';
 					MainWP_Utility::update_option( 'mainwp_extensions_plan_info', $plan_info );
@@ -212,8 +215,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 		}
 
 		if ( ! $save_login ) {
-			MainWP_Utility::update_option( 'mainwp_extensions_api_username', '' );
-			MainWP_Utility::update_option( 'mainwp_extensions_api_password', '' );
 			MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
 			MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
 		}
@@ -239,24 +240,21 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler {
 	 *
 	 * @return void
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::verify_mainwp_api()
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Password_Management::decrypt_string()
 	 * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
 	public function test_extensions_api_login() {
 		$this->check_security( 'mainwp_extension_testextensionapilogin' );
-		$enscrypt_u = get_option( 'mainwp_extensions_api_username' );
-		$enscrypt_p = get_option( 'mainwp_extensions_api_password' );
-		$username   = ! empty( $enscrypt_u ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_u ) : '';
-		$password   = ! empty( $enscrypt_p ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_p ) : '';
-
-		if ( ( '' === $username ) || ( '' === $password ) ) {
-			die( wp_json_encode( array( 'error' => __( 'Login Invalid.', 'mainwp' ) ) ) );
+		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
+		$api_key          = false;
+		if ( false !== $enscrypt_api_key ) {
+			$api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
 		}
 
 		$result = array();
 		try {
-			$test = MainWP_Api_Manager::instance()->test_login_api( $username, $password );
+			$test = MainWP_Api_Manager::instance()->verify_mainwp_api( $api_key );
 		} catch ( \Exception $e ) {
 			$return['error'] = $e->getMessage();
 			die( wp_json_encode( $return ) );

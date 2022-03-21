@@ -1165,6 +1165,12 @@ mainwp_tool_disconnect_sites_next_int = function (websiteId, data, errors) {
   });
 };
 
+mainwp_tool_clear_activation_data = function ( pObj ) {
+  var loc = jQuery( pObj ).attr( 'href' );
+  mainwp_confirm( 'Are you sure?', function () {
+    window.location =  loc;
+  });
+};
 
 /**
  * Manage sites page
@@ -1206,6 +1212,8 @@ jQuery(document).ready(function () {
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
     var url = jQuery('#mainwp_managesites_add_wpurl').val();
     var protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
+    var with_www = 'none-www';
+
     if (url.lastIndexOf('http://') === 0) {
       protocol = 'http';
       url = url.substring(7);
@@ -1213,6 +1221,12 @@ jQuery(document).ready(function () {
       protocol = 'https';
       url = url.substring(8);
     }
+
+    if (url.lastIndexOf('www.') === 0) {
+      with_www = 'www.';
+      url = url.substring(4);
+    }
+
     if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
       jQuery('#mainwp_managesites_add_wpname').val(url);
     }
@@ -1377,7 +1391,6 @@ mainwp_managesites_add = function () {
     jQuery.post(ajaxurl, data, function (res_things) {
       response = res_things.response;
       response = jQuery.trim(response);
-
       var url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val();
       if (url.substr(-1) != '/') {
         url += '/';
@@ -1676,7 +1689,11 @@ mainwp_managesites_test = function() {
     var clean_url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
 
-    url = protocol + '://' + clean_url;
+    if( with_www == 'none-www' ) {
+      with_www = '';
+    }
+
+    url = protocol + '://' + with_www + clean_url;
 
     if ( url.substr( -1 ) != '/' ) {
       url += '/';
@@ -1696,7 +1713,6 @@ mainwp_managesites_test = function() {
 
     var clean_url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
-
     url = protocol + '://' + clean_url;
 
     if ( url.substr( -1 ) != '/' ) {

@@ -516,6 +516,10 @@ class MainWP_Utility {
 	 * @return string Filtered content containing only the allowed HTML.
 	 */
 	public static function esc_content( $content, $type = 'note', $more_allowed = array() ) {
+		if ( ! is_string( $content ) ) {
+			return $content;
+		}
+
 		if ( 'note' === $type ) {
 
 			$allowed_html = array(

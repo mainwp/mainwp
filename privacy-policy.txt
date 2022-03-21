@@ -1,6 +1,6 @@
 MainWP Dashboard Privacy Policy 
 
-Last updated: March 8, 2022
+Last updated: March 21, 2022
 
 We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin (“Plugin”) operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States (“us,” “we,” “our”) as this Privacy Policy contains important information regarding your privacy. 
 
@@ -12,9 +12,9 @@ What personal data we collect
 
 We do not collect, store, nor process any personal data through this Plugin. 
 
-Third-party extensions
+Third-party extensions and integrations
 
-This Plugin may be used with extensions that are operated by parties other than us. We do not control such extensions and are not responsible for their contents or the privacy or other practices of such extensions. Further, it is up to you to take precautions to ensure that whatever extensions you use adequately protect your privacy. Please review the Privacy Policies of such extensions before using them. 
+This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them. 
 
 Our contact information 
 If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following: 

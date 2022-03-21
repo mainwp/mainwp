@@ -271,11 +271,11 @@ class MainWP_Menu {
 		 */
 		global $_mainwp_disable_menus_items;
 		$disabled = false;
-		$_level = 'level_' . $level;
+		$_level   = 'level_' . $level;
 		if ( is_array( $_mainwp_disable_menus_items ) && isset( $_mainwp_disable_menus_items[ $_level ] ) && isset( $_mainwp_disable_menus_items[ $_level ][ $item ] ) ) {
 			$disabled = $_mainwp_disable_menus_items[ $_level ][ $item ];
 		}
-		$disabled = apply_filters( 'mainwp_is_disable_menu_item', $disabled, $level, $item );
+		$disabled                                        = apply_filters( 'mainwp_is_disable_menu_item', $disabled, $level, $item );
 		$_mainwp_disable_menus_items[ $_level ][ $item ] = $disabled;
 		return $disabled;
 	}

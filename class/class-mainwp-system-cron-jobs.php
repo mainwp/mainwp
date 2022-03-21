@@ -411,8 +411,8 @@ class MainWP_System_Cron_Jobs {
 		}
 
 		if ( $check_ready_sendmail && 'Y' == get_option( 'mainwp_updatescheck_ready_sendmail' ) ) {
-			
-			if ( $local_timestamp > $lasttimeAutomaticUpdate + HOUR_IN_SECONDS ){
+
+			if ( $local_timestamp > $lasttimeAutomaticUpdate + HOUR_IN_SECONDS ) {
 				MainWP_Utility::update_option( 'mainwp_updatescheck_ready_sendmail', '' ); // to fix: may old notification update info, send notification next time.
 				return;
 			}

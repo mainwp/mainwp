@@ -69,39 +69,39 @@ class MainWP_Settings {
 			delete_option( 'mainwp_extensions_api_save_login' );
 			delete_option( 'mainwp_extensions_plan_info' );
 			update_option( 'mainwp_extensions_master_api_key', '' );
-			
+
 			$new_extensions = array();
-			$extensions       = get_option( 'mainwp_extensions', array() );
-			
+			$extensions     = get_option( 'mainwp_extensions', array() );
+
 			foreach ( $extensions as $ext ) {
 				if ( isset( $ext['api'] ) && isset( $ext['apiManager'] ) && ! empty( $ext['apiManager'] ) ) {
-					if ( isset( $ext['api_key'] ) ){
+					if ( isset( $ext['api_key'] ) ) {
 						$ext['api_key'] = '';
 					}
-					if ( isset( $ext['activation_email'] ) ){
+					if ( isset( $ext['activation_email'] ) ) {
 						$ext['activation_email'] = '';
 					}
-					if ( isset( $ext['activated_key'] ) ){
+					if ( isset( $ext['activated_key'] ) ) {
 						$ext['activated_key'] = 'Deactivated';
 					}
 
-					$act_info                         = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
-					if ( isset( $act_info['api_key'] ) ){
+					$act_info = MainWP_Api_Manager::instance()->get_activation_info( $ext['api'] );
+					if ( isset( $act_info['api_key'] ) ) {
 						$act_info['api_key'] = '';
 					}
-					if ( isset( $act_info['activation_email'] ) ){
+					if ( isset( $act_info['activation_email'] ) ) {
 						$act_info['activation_email'] = '';
 					}
-					if ( isset( $act_info['activated_key'] ) ){
+					if ( isset( $act_info['activated_key'] ) ) {
 						$act_info['activated_key'] = 'Deactivated';
 					}
-					MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );					
+					MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
 				}
 				$new_extensions[] = $ext;
 			}
-			
+
 			MainWP_Utility::update_option( 'mainwp_extensions', $new_extensions );
-			update_option( 'mainwp_extensions_all_activation_cached', '' );	
+			update_option( 'mainwp_extensions_all_activation_cached', '' );
 			wp_safe_redirect( admin_url( 'admin.php?page=MainWPTools' ) );
 			die();
 		}

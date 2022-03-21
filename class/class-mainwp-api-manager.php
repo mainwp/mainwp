@@ -325,6 +325,7 @@ class MainWP_Api_Manager {
 	/**
 	 * Get users purchased extensions.
 	 *
+	 * @param string $api_key api key.
 	 * @param string $productId extension (product) ID.
 	 * @param bool   $no_register registration request.
 	 *

@@ -32,8 +32,7 @@ jQuery( document ).ready( function () {
   jQuery( document ).on( 'change', '#mainwp_managesites_add_wpurl', function() {
     var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
-    var with_www = 'none-www';
-    
+      
     if ( url.lastIndexOf( 'http://' ) === 0 ) {
       protocol = 'http';
       url = url.substring( 7 );
@@ -42,10 +41,6 @@ jQuery( document ).ready( function () {
       url = url.substring( 8 );
     }
 
-    if ( url.lastIndexOf( 'www.' ) === 0 ) {
-      with_www = 'www.';
-      url = url.substring(4);
-    }
     if ( jQuery( '#mainwp_managesites_add_wpname' ).val() == '' ) {
       jQuery( '#mainwp_managesites_add_wpname' ).val( url );
     }

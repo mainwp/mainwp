@@ -136,7 +136,7 @@ class MainWP_Auto_Cache_Purge_View {
             $data = array();
         }
 
-        // Whether to purge child site or not.
+        // Whether to purge child site or not. Sets 'mainwp_child_auto_purge_cache' option.
         if ( $website->auto_purge_cache === '2' ) {
             $data['auto_purge_cache'] = get_option( 'mainwp_auto_purge_cache' );
         }else{
@@ -144,15 +144,15 @@ class MainWP_Auto_Cache_Purge_View {
         }
 
         // Cloudflair settings.
-        if ( get_option( 'mainwp_use_cloudflair_cache' ) === '1' && $website->mainwp_override_global_settings === '0' ){
+        if ( get_option( 'mainwp_use_cloudflair_cache' ) == '1' && $website->mainwp_override_global_settings == '0' ){
             $data['cloud_flair_enabled'] = true;
             $data['mainwp_cloudflair_key'] = get_option( 'mainwp_cloudflair_key' );
             $data['mainwp_cloudflair_email'] = get_option( 'mainwp_cloudflair_email' );
-        }else if ( $website->mainwp_override_global_settings === '1' && get_option( 'mainwp_use_cloudflair_cache' ) === '0' || $website->mainwp_override_global_settings === '1' && get_option( 'mainwp_use_cloudflair_cache' ) === '1' ) {
+        }else if ( $website->mainwp_override_global_settings == '1' && get_option( 'mainwp_use_cloudflair_cache' ) == '0' || $website->mainwp_override_global_settings == '1' && get_option( 'mainwp_use_cloudflair_cache' ) == '1' ) {
             $data['cloud_flair_enabled'] = true;
             $data['mainwp_cloudflair_key'] = $website->mainwp_cloudflair_key;
             $data['mainwp_cloudflair_email'] = $website->mainwp_cloudflair_email;
-        }else if ( $website->mainwp_override_global_settings === '0' && get_option( 'mainwp_use_cloudflair_cache' ) === '0' ) {
+        }else if ( $website->mainwp_override_global_settings == '0' && get_option( 'mainwp_use_cloudflair_cache' ) == '0' ) {
             $data['cloud_flair_enabled'] = false;
         }
 
@@ -222,7 +222,7 @@ class MainWP_Auto_Cache_Purge_View {
 
             if ( mainwp_current_user_have_right('dashboard', 'edit_sites') ) {
 
-                // Handle $auto_purge_cache variable.
+                // Handle $auto_purge_cache variable. 'wp_mainwp_wp'.
                 $auto_purge_cache = isset( $_POST['mainwp_auto_purge_cache'] ) ? intval( $_POST['mainwp_auto_purge_cache'] ) : 2;
                 if ( 2 < $auto_purge_cache ) {
                     $auto_purge_cache = 2;
@@ -243,7 +243,7 @@ class MainWP_Auto_Cache_Purge_View {
                     'mainwp_cloudflair_key'           => $mainwp_cloudflair_key,
                 );
 
-                // Save to wp_mainwp_wp
+                // Save to wp_mainwp_wp.
                 MainWP_DB::instance()->update_website_values( $website->id, $newValues );
 
                 // Force Re-sync Child Site Data.
@@ -281,9 +281,10 @@ class MainWP_Auto_Cache_Purge_View {
                 $item['mainwp_cache_control_last_purged'] = 'Never Purged';
             }
 
-            if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && !empty(( $website->mainwp_cache_control_cache_solution )) ) {
+            // Check if CloudFlare has been enabled & display correctly.
+            if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && !empty(( $website->mainwp_cache_control_cache_solution )) && $website->mainwp_cache_control_cache_solution != 'Cloudflare' ) {
                 $item['cache_solution'] = $website->mainwp_cache_control_cache_solution;
-            } else if ( !get_option( 'mainwp_use_cloudflair_cache' ) == '0' ) {
+            } else if ( $website->mainwp_cache_control_cache_solution == 'Cloudflare' ){
                 $item['cache_solution']  = 'Cloudflare';
             } else {
                 $item['cache_solution'] = 'N/A';
@@ -386,6 +387,13 @@ class MainWP_Auto_Cache_Purge_View {
                         </div>
                     </div>
                     <div class="ui divider"></div>
+                    <div class="ui grid field">
+<!--                        <label class="six wide column middle aligned">--><?php //echo __( 'Disable Cloudflair Cache', 'mainwp' ); ?><!--</label>-->
+<!--                        <div class="ten wide column ui toggle checkbox">-->
+<!--                            <input type="checkbox" value="1" name="mainwp_override_global_settings" --><?php //checked( $website->mainwp_override_global_settings, 1 ); ?><!-- id="mainwp_override_global_settings">-->
+<!--                            <label><em>--><?php //echo __( 'Enable to disable CloudFlair Cache', 'mainwp' ); ?><!--</em></label>-->
+<!--                        </div>-->
+                    </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">

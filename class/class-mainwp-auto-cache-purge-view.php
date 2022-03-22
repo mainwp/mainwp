@@ -60,7 +60,6 @@ class MainWP_Auto_Cache_Purge_View {
 	 * Run each time the class is called.
 	 */
 	public function __construct() {
-
 	}
 
 	/**
@@ -165,7 +164,6 @@ class MainWP_Auto_Cache_Purge_View {
 		}
 
 		return $data;
-
 	}
 
 	/**

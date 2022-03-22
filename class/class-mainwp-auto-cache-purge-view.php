@@ -115,6 +115,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Force Re-sync after Child Site settings have been saved.
+	 *
+	 * @param mixed $website website data.
 	 */
 	public function cache_control_settings_sync( $website ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
@@ -273,7 +275,7 @@ class MainWP_Auto_Cache_Purge_View {
 
 		// Display Last Purged Cache timestamp.
 		if ( ! empty( $last_purged ) ) {
-			$date_time                                = date( 'F j, Y g:ia', $last_purged );
+			$date_time                                = date( 'F j, Y g:ia', $last_purged ); // phpcs: ignore -- date local.
 			$item['mainwp_cache_control_last_purged'] = $date_time;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';

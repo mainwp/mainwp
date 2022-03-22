@@ -60,7 +60,6 @@ class MainWP_Auto_Cache_Purge_View {
 	 * Run each time the class is called.
 	 */
 	public function __construct() {
-
 	}
 
 	/**
@@ -116,6 +115,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Force Re-sync after Child Site settings have been saved.
+	 *
+	 * @param mixed $website website data.
 	 */
 	public function cache_control_settings_sync( $website ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $website->id );
@@ -165,7 +166,6 @@ class MainWP_Auto_Cache_Purge_View {
 		}
 
 		return $data;
-
 	}
 
 	/**
@@ -177,21 +177,13 @@ class MainWP_Auto_Cache_Purge_View {
 	 */
 	public function synced_site( $website, $information = array() ) {
 		if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
-
 			// Grab synced data from child site.
 			$last_purged_cache = $information['mainwp_cache_control_last_purged'];
 			$cache_solution    = $information['mainwp_cache_control_cache_solution'];
-
-			$newValues = array(
-				'mainwp_cache_control_last_purged'    => $last_purged_cache,
-				'mainwp_cache_control_cache_solution' => $cache_solution,
-			);
-
-			MainWP_DB::instance()->update_website_values( $website->id, $newValues );
-
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_last_purged', $last_purged_cache );
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_cache_solution', $cache_solution );
 			unset( $information['mainwp_cache_control_last_purged'] );
 			unset( $information['mainwp_cache_control_cache_solution'] );
-
 		}
 	}
 
@@ -222,6 +214,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Handle Cache Control form $_POST for Child Site edit page.
+	 *
+	 * @param mixed $website Website infor.
 	 */
 	public function handle_cache_control_child_site_settings( $website ) {
 
@@ -260,6 +254,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Add Cache Control columns to Site Table.
+	 *
+	 * @param array $columns Columns infor.
 	 */
 	public function cache_control_sitestable_column( $columns ) {
 		$columns['mainwp_cache_control_last_purged'] = 'Last Purged Cache';
@@ -269,34 +265,38 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Display Cache Control data for specified Child Site.
+	 *
+	 *  @param mixed $item Site infor.
 	 */
 	public function cache_control_sitestable_item( $item ) {
+		$site_options   = MainWP_DB::instance()->get_website_options_array( $item, array( 'mainwp_cache_control_last_purged', 'mainwp_cache_control_cache_solution' ) );
+		$last_purged    = isset( $site_options['mainwp_cache_control_last_purged'] ) ? $site_options['mainwp_cache_control_last_purged'] : 0;
+		$cache_solution = isset( $site_options['mainwp_cache_control_cache_solution'] ) ? $site_options['mainwp_cache_control_cache_solution'] : '';
 
-			// Grab Child Site data by ID.
-			$website = MainWP_DB::instance()->get_website_by_id( $item['id'], true );
-
-			// Display Last Purged Cache timestamp.
-		if ( property_exists( $website, 'mainwp_cache_control_last_purged' ) && ! empty( ( $website->mainwp_cache_control_last_purged ) ) ) {
-			$date_time                                = date( 'F j, Y g:ia', $website->mainwp_cache_control_last_purged );
+		// Display Last Purged Cache timestamp.
+		if ( ! empty( $last_purged ) ) {
+			$date_time                                = date( 'F j, Y g:ia', $last_purged ); // phpcs:ignore -- date local.
 			$item['mainwp_cache_control_last_purged'] = $date_time;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';
 		}
 
 			// Check if CloudFlare has been enabled & display correctly.
-		if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && ! empty( ( $website->mainwp_cache_control_cache_solution ) ) && $website->mainwp_cache_control_cache_solution != 'Cloudflare' ) {
-			$item['cache_solution'] = $website->mainwp_cache_control_cache_solution;
-		} elseif ( $website->mainwp_cache_control_cache_solution == 'Cloudflare' ) {
+		if ( ! empty( $cache_solution ) && 'Cloudflare' !== $cache_solution ) {
+			$item['cache_solution'] = $cache_solution;
+		} elseif ( 'Cloudflare' == $cache_solution ) {
 			$item['cache_solution'] = 'Cloudflare';
 		} else {
 			$item['cache_solution'] = 'N/A';
 		}
 
-			return $item;
+		return $item;
 	}
 
 	/**
 	 * Render Global Cache Control settings.
+	 *
+	 * @param bool $updated Updated or not.
 	 */
 	public static function render_global_settings( $updated ) {
 		if ( ! mainwp_current_user_have_right( 'admin', 'manage_dashboard_settings' ) ) {
@@ -355,6 +355,9 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Render Child Site ( edit page ) Cache Control settings.
+	 *
+	 * @param int  $websiteid Website id.
+	 * @param bool $updated Updated or not.
 	 */
 	public static function render_child_site_settings( $websiteid, $updated ) {
 		MainWP_Manage_Sites::render_header( 'cache-control' );

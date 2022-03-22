@@ -1270,19 +1270,19 @@ class MainWP_Manage_Sites {
 			}
 		}
 
-        // Edit & Update Cache Control Settings.
-        if ( ! empty( $_GET['cacheControlId'] ) ) {
-            $websiteid = intval( $_GET['cacheControlId'] );
-            if ( $websiteid ) {
-                MainWP_System_Utility::set_current_wpid( $websiteid );
-            }
-            $website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website($website ) ) {
-                $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_child_site_settings( $website );
-                MainWP_Auto_Cache_Purge_View::render_child_site_settings( $websiteid, $updated );
-                return;
-            }
-        }
+		// Edit & Update Cache Control Settings.
+		if ( ! empty( $_GET['cacheControlId'] ) ) {
+			$websiteid = intval( $_GET['cacheControlId'] );
+			if ( $websiteid ) {
+				MainWP_System_Utility::set_current_wpid( $websiteid );
+			}
+			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+				$updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_child_site_settings( $website );
+				MainWP_Auto_Cache_Purge_View::render_child_site_settings( $websiteid, $updated );
+				return;
+			}
+		}
 
 		if ( isset( $_GET['id'] ) ) {
 			$websiteid = intval( $_GET['id'] );
@@ -1454,12 +1454,12 @@ class MainWP_Manage_Sites {
 					$forceuseipv4 = 0;
 				}
 
-                $newValues = array(
-                    'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
-                    'backup_before_upgrade' => $backup_before_upgrade,
-                    'force_use_ipv4'        => $forceuseipv4,
-                    'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
-                );
+				$newValues = array(
+					'automatic_update'      => ( ! isset( $_POST['mainwp_automaticDailyUpdate'] ) ? 0 : 1 ),
+					'backup_before_upgrade' => $backup_before_upgrade,
+					'force_use_ipv4'        => $forceuseipv4,
+					'loadFilesBeforeZip'    => isset( $_POST['mainwp_options_loadFilesBeforeZip'] ) ? 1 : 0,
+				);
 
 				if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) {
 					$newValues['is_ignoreCoreUpdates']   = ! empty( $_POST['mainwp_is_ignoreCoreUpdates'] ) ? 1 : 0;

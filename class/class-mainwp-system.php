@@ -690,11 +690,12 @@ class MainWP_System {
 		MainWP_Post_Extension_Handler::instance()->init();
 		MainWP_Post_Backup_Handler::instance()->init();
 
-        /**
-         * Initiate Auto Cache Purge Class.
-         * @since
-         */
-        MainWP_Auto_Cache_Purge_View::instance()->init();
+		/**
+		 * Initiate Auto Cache Purge Class.
+		 *
+		 * @since
+		 */
+		MainWP_Auto_Cache_Purge_View::instance()->init();
 
 		/**
 		 * Filter: mainwp_ui_use_wp_calendar

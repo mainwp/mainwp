@@ -1457,8 +1457,8 @@ class MainWP_Server_Information {
 				</div>
 				<div class="middle aligned center aligned column">
 					<i class="massive icons">
-					  <i style="font-size:350px;color:#eeeeee;" class="file outline icon"></i>
-					  <i style="font-size:80px;color:#eeeeee;" class=" lock icon"></i>
+					<i style="font-size:350px;color:#eeeeee;" class="file outline icon"></i>
+					<i style="font-size:80px;color:#eeeeee;" class=" lock icon"></i>
 					</i>
 				</div>
 			</div>

@@ -175,21 +175,13 @@ class MainWP_Auto_Cache_Purge_View {
 	 */
 	public function synced_site( $website, $information = array() ) {
 		if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
-
 			// Grab synced data from child site.
 			$last_purged_cache = $information['mainwp_cache_control_last_purged'];
 			$cache_solution    = $information['mainwp_cache_control_cache_solution'];
-
-			$newValues = array(
-				'mainwp_cache_control_last_purged'    => $last_purged_cache,
-				'mainwp_cache_control_cache_solution' => $cache_solution,
-			);
-
-			MainWP_DB::instance()->update_website_values( $website->id, $newValues );
-
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_last_purged', $last_purged_cache );
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_cache_solution', $cache_solution );
 			unset( $information['mainwp_cache_control_last_purged'] );
 			unset( $information['mainwp_cache_control_cache_solution'] );
-
 		}
 	}
 
@@ -275,28 +267,28 @@ class MainWP_Auto_Cache_Purge_View {
 	 *  @param mixed $item Site infor.
 	 */
 	public function cache_control_sitestable_item( $item ) {
+		$site_options   = MainWP_DB::instance()->get_website_options_array( $item, array( 'mainwp_cache_control_last_purged', 'mainwp_cache_control_cache_solution' ) );
+		$last_purged    = isset( $site_options['mainwp_cache_control_last_purged'] ) ? $site_options['mainwp_cache_control_last_purged'] : 0;
+		$cache_solution = isset( $site_options['mainwp_cache_control_cache_solution'] ) ? $site_options['mainwp_cache_control_cache_solution'] : '';
 
-			// Grab Child Site data by ID.
-			$website = MainWP_DB::instance()->get_website_by_id( $item['id'], true );
-
-			// Display Last Purged Cache timestamp.
-		if ( property_exists( $website, 'mainwp_cache_control_last_purged' ) && ! empty( ( $website->mainwp_cache_control_last_purged ) ) ) {
-			$date_time                                = date( 'F j, Y g:ia', $website->mainwp_cache_control_last_purged );
+		// Display Last Purged Cache timestamp.
+		if ( ! empty( $last_purged ) ) {
+			$date_time                                = date( 'F j, Y g:ia', $last_purged );
 			$item['mainwp_cache_control_last_purged'] = $date_time;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';
 		}
 
 			// Check if CloudFlare has been enabled & display correctly.
-		if ( property_exists( $website, 'mainwp_cache_control_cache_solution' ) && ! empty( ( $website->mainwp_cache_control_cache_solution ) ) && $website->mainwp_cache_control_cache_solution != 'Cloudflare' ) {
-			$item['cache_solution'] = $website->mainwp_cache_control_cache_solution;
-		} elseif ( $website->mainwp_cache_control_cache_solution == 'Cloudflare' ) {
+		if ( ! empty( $cache_solution ) && 'Cloudflare' !== $cache_solution ) {
+			$item['cache_solution'] = $cache_solution;
+		} elseif ( 'Cloudflare' == $cache_solution ) {
 			$item['cache_solution'] = 'Cloudflare';
 		} else {
 			$item['cache_solution'] = 'N/A';
 		}
 
-			return $item;
+		return $item;
 	}
 
 	/**

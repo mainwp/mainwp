@@ -181,19 +181,19 @@ class MainWP_Settings {
 			);
 		}
 
-        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
-            add_submenu_page(
-                'mainwp_tab',
-                __( 'Cache Control', 'mainwp' ),
-                ' <div class="mainwp-hidden">' . __( 'Cache Control', 'mainwp' ) . '</div>',
-                'read',
-                'cache-control',
-                array(
-                    self::get_class_name(),
-                    'render_cache_control',
-                )
-            );
-        }
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'cache-control' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Cache Control', 'mainwp' ),
+				' <div class="mainwp-hidden">' . __( 'Cache Control', 'mainwp' ) . '</div>',
+				'read',
+				'cache-control',
+				array(
+					self::get_class_name(),
+					'render_cache_control',
+				)
+			);
+		}
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
 			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsClientReportsResponder' ) ) {
@@ -344,13 +344,13 @@ class MainWP_Settings {
 				'slug'       => 'RESTAPI',
 				'right'      => '',
 			),
-            array(
-                'title' => __('Cache Control', 'mainwp'),
-                'parent_key' => 'Settings',
-                'href' => 'admin.php?page=cache-control',
-                'slug' => 'cache-control',
-                'right' => '',
-            )
+			array(
+				'title'      => __('Cache Control', 'mainwp'),
+				'parent_key' => 'Settings',
+				'href'       => 'admin.php?page=cache-control',
+				'slug'       => 'cache-control',
+				'right'      => '',
+			),
 		);
 
 		if ( 1 == get_option( 'mainwp_enable_managed_cr_for_wc' ) ) {
@@ -1586,19 +1586,19 @@ class MainWP_Settings {
 		self::render_footer( 'Emails' );
 	}
 
-    /**
-     * Render Cache Control Settings SubPage.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::handle_cache_control_post()
-     * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_global_settings()
-     */
-    public static function render_cache_control() {
+	/**
+	 * Render Cache Control Settings SubPage.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::handle_cache_control_post()
+	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_global_settings()
+	 */
+	public static function render_cache_control() {
 
-        self::render_header( 'cache-control' );
-        $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
-        MainWP_Auto_Cache_Purge_View::instance()->render_global_settings( $updated );
-        self::render_footer( 'cache-control' );
-    }
+		self::render_header( 'cache-control' );
+		$updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
+		MainWP_Auto_Cache_Purge_View::instance()->render_global_settings( $updated );
+		self::render_footer( 'cache-control' );
+	}
 
 	/**
 	 * Method generate_random_string()

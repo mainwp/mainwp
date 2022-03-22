@@ -79,10 +79,10 @@ class MainWP_Install extends MainWP_DB_Base {
 			$currentVersion = false;
 		}
 
-        // This stops my update ( kwcjr )
-//		if ( $currentVersion == $this->mainwp_db_version ) {
-//			return;
-//		}
+		// This stops my update ( kwcjr )
+		// if ( $currentVersion == $this->mainwp_db_version ) {
+		// return;
+		// }
 
 		$charset_collate = $this->wpdb->get_charset_collate();
 

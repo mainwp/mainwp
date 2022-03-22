@@ -194,7 +194,9 @@ class MainWP_Manage_Sites_View {
 			$site_id = intval( $_GET['scanid'] );
 		} elseif ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) {
 			$site_id = intval( $_GET['emailsettingsid'] );
-		}
+		} elseif ( isset( $_GET['cacheControlId'] ) && ! empty( $_GET['cacheControlId'] ) ) {
+            $site_id = intval( $_GET['cacheControlId'] );
+        }
 
 		$managesites_pages = array(
 			'ManageSites'     => array(
@@ -260,6 +262,11 @@ class MainWP_Manage_Sites_View {
 				'title'  => __( 'Security Scan', 'mainwp' ),
 				'access' => true,
 			),
+            'ManageSitesCacheControl'             => array(
+                'href'   => 'admin.php?page=managesites&cacheControlId=' . $site_id,
+                'title'  => __( 'Cache Control', 'mainwp' ),
+                'access' => true,
+            ),
 		);
 
 		/**
@@ -912,6 +919,7 @@ class MainWP_Manage_Sites_View {
 						</div>
 					</div>
 				<?php endif; ?>
+
 				<h3 class="ui dividing header"><?php esc_html_e( 'Child Site Uptime Monitoring (Optional)', 'mainwp' ); ?></h3>
 				<div class="ui grid field">
 					<label class="six wide column middle aligned"><?php esc_html_e( 'Enable basic uptime monitoring (optional)', 'mainwp' ); ?></label>					
@@ -1055,7 +1063,7 @@ class MainWP_Manage_Sites_View {
 	}
 
 	/**
-	 * Render signle site Email notification settings.
+	 * Render single site Email notification settings.
 	 *
 	 * Credits.
 	 *
@@ -1093,6 +1101,7 @@ class MainWP_Manage_Sites_View {
 		$email_description = MainWP_Notification_Settings::get_settings_desc( $type );
 		?>
 		<div class="ui segment">
+            <h1>wht</h1>
 		<?php MainWP_Notification_Settings::render_update_template_message( $updated_templ ); ?>		
 		<form method="POST" action="admin.php?page=managesites&emailsettingsid=<?php echo $siteid; ?>" class="ui form">
 			<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'UpdateWebsiteEmailSettings' . $siteid ); ?>" />

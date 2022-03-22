@@ -25,7 +25,7 @@ class MainWP_Install extends MainWP_DB_Base {
 	 *
 	 * @var string DB version info.
 	 */
-	protected $mainwp_db_version = '8.58';
+	protected $mainwp_db_version = '8.59';
 
 	/**
 	 * Private static variable to hold the single instance of the class.
@@ -79,9 +79,10 @@ class MainWP_Install extends MainWP_DB_Base {
 			$currentVersion = false;
 		}
 
-		if ( $currentVersion == $this->mainwp_db_version ) {
-			return;
-		}
+        // This stops my update ( kwcjr )
+//		if ( $currentVersion == $this->mainwp_db_version ) {
+//			return;
+//		}
 
 		$charset_collate = $this->wpdb->get_charset_collate();
 
@@ -522,5 +523,4 @@ class MainWP_Install extends MainWP_DB_Base {
 			}
 		}
 	}
-
 }

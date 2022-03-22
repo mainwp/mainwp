@@ -132,6 +132,7 @@ class MainWP_Menu {
 			}
 			MainWP_Extensions::init_menu();
 
+
 			/**
 			 * Action: mainwp_admin_menu
 			 *

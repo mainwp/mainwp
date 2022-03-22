@@ -43,7 +43,6 @@ class MainWP_API_Handler {
 				$args['version']                    = $ext['version'];
 				$args['product_id']                 = $ext['product_id'];
 				$args['api_key']                    = $ext['api_key'];
-				$args['activation_email']           = $ext['activation_email'];
 				$args['instance']                   = $ext['instance_id'];
 				$args['software_version']           = $ext['software_version'];
 				$check_exts[ $args['plugin_name'] ] = $args;
@@ -110,7 +109,6 @@ class MainWP_API_Handler {
 				$args['version']          = $ext['version'];
 				$args['product_id']       = $ext['product_id'];
 				$args['api_key']          = $ext['api_key'];
-				$args['activation_email'] = $ext['activation_email'];
 				$args['instance']         = $ext['instance_id'];
 				$args['software_version'] = $ext['software_version'];
 				$response                 = MainWP_Api_Manager::instance()->update_check( $args );
@@ -138,10 +136,10 @@ class MainWP_API_Handler {
 	 *
 	 * @return array $rslt An array containing extension information.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::request_plugin_information()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::request_extension_information()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_extensions()
 	 */
-	public static function get_plugin_information( $pSlug ) {
+	public static function get_update_information( $pSlug ) {
 		$extensions = MainWP_Extensions_Handler::get_extensions();
 		$rslt       = null;
 		foreach ( $extensions as $ext ) {
@@ -151,10 +149,9 @@ class MainWP_API_Handler {
 				$args['version']          = $ext['version'];
 				$args['product_id']       = $ext['product_id'];
 				$args['api_key']          = $ext['api_key'];
-				$args['activation_email'] = $ext['activation_email'];
 				$args['instance']         = $ext['instance_id'];
 				$args['software_version'] = $ext['software_version'];
-				$rslt                     = MainWP_Api_Manager::instance()->request_plugin_information( $args );
+				$rslt                     = MainWP_Api_Manager::instance()->request_extension_information( $args );
 				break;
 			}
 		}

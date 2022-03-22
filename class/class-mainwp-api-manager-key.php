@@ -85,10 +85,6 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-		if ( isset( $args['password'] ) ) {
-			$args['password'] = stripslashes( $args['password'] );
-		}
-
 		$request = wp_remote_post(
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
 			array(
@@ -122,16 +118,13 @@ class MainWP_Api_Manager_Key {
 	public function deactivate( $args ) {
 
 		$defaults = array(
-			'request' => 'deactivation',
+			'request' => 'deactivate', // old: wc-api/deactivation.
 		);
 
 		$args = wp_parse_args( $defaults, $args );
 
-		if ( isset( $args['password'] ) ) {
-			$args['password'] = stripslashes( $args['password'] );
-		}
 		$request = wp_remote_post(
-			MainWP_Api_Manager::instance()->get_upgrade_url() . '?wc-api=am-software-api',
+			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',  // old: wc-api/deactivate.
 			array(
 				'body'      => $args,
 				'timeout'   => 50,
@@ -168,9 +161,6 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-		if ( isset( $args['password'] ) ) {
-			$args['password'] = stripslashes( $args['password'] );
-		}
 		$request = wp_remote_post(
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
 			array(
@@ -206,14 +196,13 @@ class MainWP_Api_Manager_Key {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function test_login_api( $args ) {
+	public function verify_api_key( $args ) {
 
 		$defaults = array(
 			'request' => 'testloginapi',
 		);
 
-		$args             = wp_parse_args( $defaults, $args );
-		$args['password'] = stripslashes( $args['password'] );
+		$args = wp_parse_args( $defaults, $args );
 
 		$request = wp_remote_post(
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
@@ -229,7 +218,7 @@ class MainWP_Api_Manager_Key {
 			unset( $log['http_response'] );
 		}
 
-		MainWP_Logger::instance()->debug( 'test_login_api:: RESULT :: ' . MainWP_Utility::value_to_string( $log, true ) );
+		MainWP_Logger::instance()->debug( 'verify_api_key:: RESULT :: ' . MainWP_Utility::value_to_string( $log, true ) );
 
 		if ( is_wp_error( $request ) ) {
 			if ( 1 == self::$apisslverify ) {
@@ -271,9 +260,6 @@ class MainWP_Api_Manager_Key {
 
 		$args = wp_parse_args( $defaults, $args );
 
-		if ( isset( $args['password'] ) ) {
-			$args['password'] = stripslashes( $args['password'] );
-		}
 		$request = wp_remote_post(
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
 			array(
@@ -308,9 +294,6 @@ class MainWP_Api_Manager_Key {
 		);
 		$args     = wp_parse_args( $defaults, $args );
 
-		if ( isset( $args['password'] ) ) {
-			$args['password'] = stripslashes( $args['password'] );
-		}
 		$request = wp_remote_post(
 			MainWP_Api_Manager::instance()->get_upgrade_url() . '?mainwp-api=am-software-api',
 			array(

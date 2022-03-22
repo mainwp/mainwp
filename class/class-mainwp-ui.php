@@ -710,11 +710,11 @@ class MainWP_UI {
 			<script type="text/javascript">
 			jQuery( document ).ready( function () {
 
-				jQuery('#mainwp-sites-menu-sidebar').prependTo('body');
-				jQuery('#mainwp-documentation-sidebar').prependTo('body');
-				jQuery('body > div#wpwrap').addClass('pusher');
+				jQuery( '#mainwp-sites-menu-sidebar' ).prependTo( 'body' );
+				jQuery( '#mainwp-documentation-sidebar' ).prependTo( 'body' );
+				jQuery( 'body > div#wpwrap' ).addClass( 'pusher' );
 
-				jQuery( '.ui.sticky' ).sticky( 'setting', 'pushing', false ).sticky();
+				jQuery( '.ui.sticky' ).sticky( { pushing: false } ).sticky();
 
 				jQuery( '#mainwp-help-sidebar' ).on( 'click', function() {
 					jQuery( '.ui.help.sidebar' ).sidebar( {

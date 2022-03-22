@@ -491,7 +491,11 @@ class MainWP_Post_Page_Handler {
 				$featured_image_data = null;
 				$mainwp_upload_dir   = wp_upload_dir();
 
-				$post_status = get_post_meta( $id, '_edit_post_status', true );
+				// to fix.
+				$post_status = $_post->post_status;
+				if ( 'public' == $post_status ) {
+					$post_status = get_post_meta( $id, '_edit_post_status', true );
+				}
 
 				/**
 				 * Post status

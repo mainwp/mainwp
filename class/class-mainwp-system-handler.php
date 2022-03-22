@@ -437,7 +437,7 @@ class MainWP_System_Handler {
 	 *
 	 * @return mixed $info|$false
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_plugin_information()
+	 * @uses \MainWP\Dashboard\MainWP_API_Handler::get_update_information()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_View::get_available_extensions()
 	 * @uses \MainWP\Dashboard\MainWP_System::get_plugin_slug()
 	 * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_slugs()
@@ -464,9 +464,13 @@ class MainWP_System_Handler {
 
 		if ( '' !== $am_slugs ) {
 			$am_slugs = explode( ',', $am_slugs );
-			$dir_slug = dirname( $arg->slug );
+			if ( false !== strpos( $arg->slug, '/' ) ) { // to fix.
+				$dir_slug = dirname( $arg->slug );
+			} else {
+				$dir_slug = $arg->slug;
+			}
 			if ( in_array( $dir_slug, $am_slugs ) ) {
-				$info = MainWP_API_Handler::get_plugin_information( $dir_slug );
+				$info = MainWP_API_Handler::get_update_information( $dir_slug );
 				if ( is_object( $info ) && property_exists( $info, 'sections' ) ) {
 					if ( ! is_array( $info->sections ) || ! isset( $info->sections['changelog'] ) || empty( $info->sections['changelog'] ) ) {
 						$exts_data = MainWP_Extensions_View::get_available_extensions();

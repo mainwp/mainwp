@@ -446,7 +446,7 @@ class MainWP_Plugins {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactivate, and delete installed plugins.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactivate, and delete installed plugins.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -612,11 +612,17 @@ class MainWP_Plugins {
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
+					<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
 				</div>
 			</div>
+			<div class="ui hidden fitted divider"></div>
+			<div class="field">
+				<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+					<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
+					</div>
+			</div>
 		</div>
-
 		<?php
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
@@ -632,6 +638,18 @@ class MainWP_Plugins {
 			</script>
 			<?php
 		}
+		?>
+		<script type="text/javascript">
+			jQuery( document ).on( 'keyup', '#mainwp_plugin_search_by_keyword', function () {
+				if( jQuery(this).val() != '' ){
+					jQuery( '#display_sites_not_meeting_criteria' ).removeAttr('disabled');
+				} else {
+					jQuery( '#display_sites_not_meeting_criteria' ).closest('.checkbox').checkbox('set unchecked');
+					jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');					
+				}
+			});
+		</script>
+		<?php
 	}
 
 	/**
@@ -641,6 +659,7 @@ class MainWP_Plugins {
 	 * @param mixed $status active|inactive Whether the plugin is active or inactive.
 	 * @param mixed $groups Selected Child Site Groups.
 	 * @param mixed $sites Selected individual Child Sites.
+	 * @param mixed $not_criteria Show not criteria result.
 	 *
 	 * @return string Plugin Table.
 	 *
@@ -667,7 +686,7 @@ class MainWP_Plugins {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
+	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria ) { // phpcs:ignore -- Current complexity required to achieve desired results. Pull request solutions appreciated.
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
@@ -801,6 +820,8 @@ class MainWP_Plugins {
 				$post_data['filter'] = false;
 			}
 
+			$post_data['not_criteria'] = $not_criteria ? true : false;
+
 			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_plugins', $post_data, array( MainWP_Plugins_Handler::get_class_name(), 'plugins_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
@@ -829,7 +850,7 @@ class MainWP_Plugins {
 
 		ob_start();
 
-		if ( 0 == count( $output->plugins ) ) {
+		if ( 0 == count( $output->plugins ) && ! $not_criteria ) {
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No plugins found.', 'mainwp' ); ?></div>
 			<?php
@@ -843,10 +864,20 @@ class MainWP_Plugins {
 				$pluginsMainWP      = array();
 				$pluginsRealVersion = array();
 
-			foreach ( $output->plugins as $plugin ) {
+				$plugins_list = array();
+
+			if ( $not_criteria ) {
+				if ( property_exists( $output, 'not_criteria_plugins' ) && ! empty( $output->not_criteria_plugins ) ) {
+					$plugins_list = $output->not_criteria_plugins;
+				}
+			} else {
+				$plugins_list = $output->plugins;
+			}
+
+			foreach ( $plugins_list as $plugin ) {
 				$pn                            = esc_html( $plugin['name'] . '_' . $plugin['version'] );
 				$sites[ $plugin['websiteid'] ] = esc_html( $plugin['websiteurl'] );
-				$plugins[ $pn ]                = rawurlencode( $plugin['slug'] );
+				$plugins[ $pn ]                = isset( $plugin['slug'] ) ? rawurlencode( $plugin['slug'] ) : '';
 				$muPlugins[ $pn ]              = isset( $plugin['mu'] ) ? esc_html( $plugin['mu'] ) : 0;
 				$pluginsName[ $pn ]            = esc_html( $plugin['name'] );
 				$pluginsVersion[ $pn ]         = array(
@@ -862,6 +893,7 @@ class MainWP_Plugins {
 
 				$sitePlugins[ $plugin['websiteid'] ][ $pn ] = $plugin;
 			}
+
 				uasort(
 					$pluginsVersion,
 					function( $a, $b ) {
@@ -950,7 +982,6 @@ class MainWP_Plugins {
 	 * @param array $pluginsRealVersion Latest plugin release version.
 	 */
 	public static function render_manage_table( $sites, $plugins, $sitePlugins, $pluginsMainWP, $muPlugins, $pluginsName, $pluginsVersion, $pluginsRealVersion ) {
-
 		/**
 		 * Action: mainwp_before_plugins_table
 		 *
@@ -1035,7 +1066,9 @@ class MainWP_Plugins {
 					</td>
 					<?php endforeach; ?>
 				</tr>
-				<?php endforeach; ?>
+					<?php
+				endforeach;
+				?>
 				</tbody>
 			<tfoot>
 				<tr>
@@ -1235,7 +1268,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Install plugins on your child sites.  You can install plugins from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1438,7 +1471,7 @@ class MainWP_Plugins {
 						</div>
 						<div class="field">
 							<div class="ui input fluid">
-								<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_au_plugin_keyword" class="text" value="<?php echo ( null !== $cachedAUSearch ) ? $cachedAUSearch['keyword'] : ''; ?>">
+								<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_au_plugin_keyword" class="text" value="<?php echo ( null !== $cachedAUSearch ) ? $cachedAUSearch['keyword'] : ''; ?>">
 							</div>
 						</div>
 					</div>
@@ -1793,7 +1826,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-plugin-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -1996,7 +2029,7 @@ class MainWP_Plugins {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-plugins-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-plugins-info-message"></i>
-					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage plugins you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-plugins/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

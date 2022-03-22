@@ -32,7 +32,7 @@ jQuery( document ).ready( function () {
   jQuery( document ).on( 'change', '#mainwp_managesites_add_wpurl', function() {
     var url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
-
+      
     if ( url.lastIndexOf( 'http://' ) === 0 ) {
       protocol = 'http';
       url = url.substring( 7 );

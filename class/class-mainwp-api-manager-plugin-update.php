@@ -72,7 +72,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		if ( $bulk_check ) {
 			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
 		} else {
-			$upgrade_url = esc_url_raw( add_query_arg( 'wc-api', 'upgrade-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) );
+			$upgrade_url = esc_url_raw( add_query_arg( 'mainwp-api', 'am-software-api', MainWP_Api_Manager::instance()->get_upgrade_url() ) ); // old: wc-api/upgrade-api.
 		}
 
 		$query_url = '';
@@ -99,15 +99,13 @@ class MainWP_Api_Manager_Plugin_Update {
 			'version'          => $plugin['software_version'],
 			'product_id'       => $plugin['product_id'],
 			'api_key'          => $plugin['api_key'],
-			'activation_email' => $plugin['activation_email'],
 			'instance'         => $plugin['instance'],
-			'domain'           => $plugin['domain'],
 			'software_version' => $plugin['software_version'],
 			'extra'            => isset( $plugin['extra'] ) ? $plugin['extra'] : '',
 		);
 
 		// Check for a plugin update.
-		return $this->plugin_information( $args );
+		return $this->plugin_information( $args ); // pluginupdatecheck.
 	}
 
 
@@ -117,16 +115,21 @@ class MainWP_Api_Manager_Plugin_Update {
 	 * @param array $plugins List of plugins (extensions).
 	 *
 	 * @return array Plugin Information & bulkupdatecheck.
-	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_domain()
 	 */
 	public function bulk_update_check( $plugins ) {
+		$enscrypt_api_key = get_option( 'mainwp_extensions_master_api_key', false );
+		$mainwp_api_key   = false;
+		if ( false !== $enscrypt_api_key ) {
+			$mainwp_api_key = ! empty( $enscrypt_api_key ) ? MainWP_Api_Manager_Password_Management::decrypt_string( $enscrypt_api_key ) : '';
+		}
 		$args = array(
 			'request'    => 'bulkupdatecheck',
-			'domain'     => MainWP_Api_Manager::instance()->get_domain(),
 			'extensions' => base64_encode( serialize( $plugins ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		);
-		return $this->plugin_information( $args, true ); // bulk update check.
+		if ( false !== $mainwp_api_key ) {
+			$args['api_key'] = $mainwp_api_key;
+		}
+		return $this->plugin_information( $args, true ); // bulkupdatecheck.
 	}
 
 
@@ -140,7 +143,7 @@ class MainWP_Api_Manager_Plugin_Update {
 	public function request( $args ) {
 		$args['request'] = 'plugininformation';
 
-		$response = $this->plugin_information( $args );
+		$response = $this->plugin_information( $args ); // plugininformation.
 
 		// If everything is okay return the response.
 		if ( isset( $response ) && is_object( $response ) && false !== $response ) {
@@ -194,7 +197,7 @@ class MainWP_Api_Manager_Plugin_Update {
 		if ( ! $bulk_check ) {
 			if ( is_object( $response ) ) {
 				if ( isset( $response->package ) ) {
-					$response->package = apply_filters( 'mainwp_api_manager_upgrade_url', $response->package );
+					$response->package = apply_filters( 'mainwp_api_manager_upgrade_package_url', $response->package, $response );
 				}
 				return $response;
 			}

@@ -48,14 +48,25 @@ class MainWP_Plugins_Handler {
 				return;
 			}
 
-			foreach ( $plugins as $plugin ) {
-				if ( ! isset( $plugin['name'] ) ) {
-					continue;
+			if ( isset( $plugins['not_criteria_plugins'] ) && is_array( $plugins['not_criteria_plugins'] ) ) {
+				foreach ( $plugins['not_criteria_plugins'] as $plugin ) {
+					if ( ! isset( $plugin['name'] ) ) {
+						continue;
+					}
+					$plugin['websiteid']            = $website->id;
+					$plugin['websiteurl']           = $website->url;
+					$output->not_criteria_plugins[] = $plugin;
 				}
-				$plugin['websiteid']  = $website->id;
-				$plugin['websiteurl'] = $website->url;
+			} else {
+				foreach ( $plugins as $plugin ) {
+					if ( ! isset( $plugin['name'] ) ) {
+						continue;
+					}
+					$plugin['websiteid']  = $website->id;
+					$plugin['websiteurl'] = $website->url;
 
-				$output->plugins[] = $plugin;
+					$output->plugins[] = $plugin;
+				}
 			}
 			unset( $plugins );
 		} else {

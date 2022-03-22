@@ -793,14 +793,14 @@ class MainWP_Manage_Sites_View {
 
 		$groups = MainWP_DB_Common::instance()->get_groups_for_current_user();
 
-		$website_url = MainWP_Utility::remove_http_prefix( $website->url, true );
+		$website_url = MainWP_Utility::remove_http_www_prefix( $website->url, true );
 
 		?>
 		<div class="ui segment mainwp-edit-site-<?php echo intval( $website->id ); ?>" id="mainwp-edit-site">
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-edit-site-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-edit-site-info-message"></i>
-					<?php echo sprintf( __( 'Edit the %s (%s) child site settings.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Edit the %1$s (%2$s) child site settings.  For additional help, please check this %3$shelp documentation%4$s.', 'mainwp' ), $website->name, '<a href="' . $website->url . '" target="_blank">' . $website->url . '</a>', '<a href="https://kb.mainwp.com/docs/edit-a-child-site/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -819,6 +819,15 @@ class MainWP_Manage_Sites_View {
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'http:' ) ? 'selected' : '' ); ?> value="http">http://</option>
 								<option <?php echo ( MainWP_Utility::starts_with( $website->url, 'https:' ) ? 'selected' : '' ); ?> value="https">https://</option>
 							</select>
+							<div class="ui compact selection dropdown"">
+								<input type="hidden" name="mainwp_managesites_edit_wpurl_with_www" value="<?php echo ( false !== stripos( $website->url, '/www.' ) ? 'www' : 'none-www' ); ?>">
+								<i class="dropdown icon"></i>
+								<div class="default text"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
+								<div class="menu">
+									<div class="item" data-value="www"><?php esc_html_e( 'www', 'mainwp' ); ?></div>
+									<div class="item" data-value="none-www"><strike><?php esc_html_e( 'www', 'mainwp' ); ?></strike></div>
+								</div>
+							</div>
 							<input type="text" id="mainwp_managesites_edit_siteurl" disabled="disabled" name="mainwp_managesites_edit_siteurl" value="<?php echo esc_html( $website_url ); ?>" />
 						</div>
 					</div>
@@ -1428,7 +1437,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' === $e->getMessage() ) {
 					throw new \Exception( 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' ) );
 				} elseif ( 'NOMAINWP' === $e->getMessage() ) {
-					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
+					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://meta.mainwp.com/c/community-support/5" target="_blank>', '</a>' );
 					throw new \Exception( $error );
 				}
 			}
@@ -1630,7 +1639,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
+					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' );
 				} else {
 					$error = $e->getMessage();
 				}

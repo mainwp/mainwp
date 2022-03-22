@@ -322,12 +322,14 @@ class MainWP_Updates_Overview {
 				}
 			}
 
-			$pluginsIgnoredAbandoned_perSites = json_decode( MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' ), true );
+			$pluginsIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
+			$pluginsIgnoredAbandoned_perSites = ! empty( $pluginsIgnoredAbandoned_perSites ) ? json_decode( $pluginsIgnoredAbandoned_perSites, true ) : array();
 			if ( is_array( $pluginsIgnoredAbandoned_perSites ) ) {
 				$pluginsIgnoredAbandoned_perSites = array_filter( $pluginsIgnoredAbandoned_perSites );
 			}
 
-			$themesIgnoredAbandoned_perSites = json_decode( MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' ), true );
+			$themesIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );
+			$themesIgnoredAbandoned_perSites = ! empty( $themesIgnoredAbandoned_perSites ) ? json_decode( $themesIgnoredAbandoned_perSites, true ) : array();
 			if ( is_array( $themesIgnoredAbandoned_perSites ) ) {
 				$themesIgnoredAbandoned_perSites = array_filter( $themesIgnoredAbandoned_perSites );
 			}

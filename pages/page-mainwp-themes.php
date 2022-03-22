@@ -16,6 +16,8 @@ namespace MainWP\Dashboard;
  */
 class MainWP_Themes {
 
+	// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
+
 	/**
 	 * Get Class Name
 	 *
@@ -424,7 +426,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed themes on your child sites.  Here you can activate, deactive, and delete installed themes.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage installed themes on your child sites.  Here you can activate, deactive, and delete installed themes.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -585,17 +587,21 @@ class MainWP_Themes {
 		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
 			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
 		}
-
 		?>
-
 		<div class="ui mini form">
 			<div class="field">
 				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
+					<input type="text" placeholder="<?php esc_attr_e( 'Theme name', 'mainwp' ); ?>" id="mainwp_theme_search_by_keyword" size="50" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>"/>
 				</div>
 			</div>
+			<div class="ui hidden fitted divider"></div>
+				<div class="field">
+					<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+						<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
+						</div>
+				</div>
 		</div>
-
 		<?php
 		if ( is_array( $statuses ) && 0 < count( $statuses ) ) {
 			$status = '';
@@ -611,6 +617,18 @@ class MainWP_Themes {
 			</script>
 			<?php
 		}
+		?>
+		<script type="text/javascript">
+			jQuery( document ).on( 'keyup', '#mainwp_theme_search_by_keyword', function () {
+				if( jQuery(this).val() != '' ){
+					jQuery( '#display_sites_not_meeting_criteria' ).removeAttr('disabled');
+				} else {
+					jQuery( '#display_sites_not_meeting_criteria' ).closest('.checkbox').checkbox('set unchecked');
+					jQuery( '#display_sites_not_meeting_criteria' ).attr('disabled', 'true');
+				}
+			});
+		</script>
+		<?php
 	}
 
 	/**
@@ -622,6 +640,7 @@ class MainWP_Themes {
 	 * @param string $status Search status parameter.
 	 * @param array  $groups Selected groups of child sites.
 	 * @param array  $sites Selected child sites.
+	 * @param mixed  $not_criteria Show not criteria result.
 	 *
 	 * @return mixed $result Errors|HTML.
 	 *
@@ -639,7 +658,7 @@ class MainWP_Themes {
 	 * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::get_nice_url()
 	 */
-	public static function render_table( $keyword, $status, $groups, $sites ) { // phpcs:ignore -- complex function.
+	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
 		$output         = new \stdClass();
@@ -774,6 +793,8 @@ class MainWP_Themes {
 				$post_data['filter'] = false;
 			}
 
+			$post_data['not_criteria'] = $not_criteria ? true : false;
+
 			MainWP_Connect::fetch_urls_authed( $dbwebsites, 'get_all_themes', $post_data, array( MainWP_Themes_Handler::get_class_name(), 'themes_search_handler' ), $output );
 
 			if ( 0 < count( $output->errors ) ) {
@@ -800,7 +821,7 @@ class MainWP_Themes {
 
 		$bulkActions = self::render_bulk_actions( $status );
 
-		if ( 0 == count( $output->themes ) ) {
+		if ( 0 == count( $output->themes ) && ! $not_criteria ) {
 			ob_start();
 			?>
 			<div class="ui message yellow"><?php esc_html_e( 'No themes found.', 'mainwp' ); ?></div>
@@ -814,8 +835,17 @@ class MainWP_Themes {
 			$themesVersion     = array();
 			$themesRealVersion = array();
 			$themesSlug        = array();
+			$themes_list       = array();
 
-			foreach ( $output->themes as $theme ) {
+			if ( $not_criteria ) {
+				if ( property_exists( $output, 'not_criteria_themes' ) && ! empty( $output->not_criteria_themes ) ) {
+					$themes_list = $output->not_criteria_themes;
+				}
+			} else {
+				$themes_list = $output->themes;
+			}
+
+			foreach ( $themes_list as $theme ) {
 				$theme['name']       = esc_html( $theme['name'] );
 				$theme['version']    = esc_html( $theme['version'] );
 				$theme['title']      = esc_html( $theme['title'] );
@@ -849,7 +879,7 @@ class MainWP_Themes {
 			);
 
 			ob_start();
-			self::render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion );
+			self::render_manage_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion );
 			$newOutput = ob_get_clean();
 		}
 
@@ -863,7 +893,7 @@ class MainWP_Themes {
 	}
 
 	/**
-	 * Method render_manage_themes_table()
+	 * Method render_manage_table()
 	 *
 	 * Render the Manage Themes table
 	 *
@@ -874,7 +904,7 @@ class MainWP_Themes {
 	 * @param string $themesVersion Installed theme version.
 	 * @param string $themesRealVersion Current theme version.
 	 */
-	public static function render_manage_themes_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
+	public static function render_manage_table( $sites, $themes, $siteThemes, $themesSlug, $themesVersion, $themesRealVersion ) {
 
 		/**
 		 * Action: mainwp_before_themes_table
@@ -940,13 +970,28 @@ class MainWP_Themes {
 						} else {
 							$active_status_class = '';
 						}
+
+						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['child_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['child_active'] ) {
+							$active_status_class .= ' child-active';
+						}
+
+						$not_delete = false;
+						$parent_str = '';
+						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) {
+							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) . '" data-position="bottom center" data-inverted=""><i class="lock icon"></i></span>';
+							$not_delete = true;
+						}
 						?>
 						<td class="center aligned <?php echo $active_status_class; ?>">
 							<?php if ( isset( $siteThemes[ $site_id ] ) && isset( $siteThemes[ $site_id ][ $theme_name ] ) ) : ?>
+								<?php if ( '' != $parent_str ) : ?>
+									<?php echo $parent_str; ?>
+								<?php else : ?>
 								<div class="ui checkbox">
-									<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" name="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" class="mainwp-selected-theme" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" slug="<?php echo esc_attr( $themesSlug[ $theme_name ] ); ?>"  />
-									<label></label>
+									<input type="checkbox" value="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" name="<?php echo esc_attr( $themes[ $theme_name ] ); ?>" class="mainwp-selected-theme" version="<?php echo esc_attr( $themesRealVersion[ $theme_name ] ); ?>" slug="<?php echo esc_attr( $themesSlug[ $theme_name ] ); ?>"  not-delete="<?php echo $not_delete ? 1 : 0; ?>" />
+										<label></label>
 								</div>
+								<?php endif; ?>
 							</div>
 							<?php endif; ?>
 						</td>
@@ -983,6 +1028,7 @@ class MainWP_Themes {
 		</table>
 		<div class="ui horizontal list">
 			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
+			<div class="item"><a class="ui empty circular label" style="background:#e3ffa7;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active/Child theme', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
 		</div>
@@ -1196,7 +1242,7 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-install-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-install-themes-info-message"></i>
-							<?php echo sprintf( __( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Install themes on your child sites.  You can install themes from the WordPress.org repository or by uploading a ZIP file.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/install-themes/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
@@ -1481,7 +1527,7 @@ class MainWP_Themes {
 							</div>
 							<div class="field">
 								<div class="ui input fluid">
-									<input type="text" placeholder="<?php esc_attr_e( 'Containing keyword', 'mainwp' ); ?>" id="mainwp_au_theme_keyword" class="text" value="<?php echo ( null !== $cachedThemesSearch ) ? $cachedThemesSearch['keyword'] : ''; ?>">
+									<input type="text" placeholder="<?php esc_attr_e( 'Theme name', 'mainwp' ); ?>" id="mainwp_au_theme_keyword" class="text" value="<?php echo ( null !== $cachedThemesSearch ) ? $cachedThemesSearch['keyword'] : ''; ?>">
 								</div>
 							</div>
 						</div>
@@ -1817,7 +1863,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/ignore-themes-updates/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php
@@ -2016,7 +2062,7 @@ class MainWP_Themes {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-ignored-abandoned-themes-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-ignored-abandoned-themes-info-message"></i>
-					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Manage themes you have told your MainWP Dashboard to ignore updates on global or per site level.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/abandoned-themes/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

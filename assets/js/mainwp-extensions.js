@@ -70,7 +70,7 @@ function mainwp_extensions_activate( pObj, retring ) {
         var key = apiEl.find( 'input[type="text"].extension-api-key' ).val();
         var email = apiEl.find( 'input[type="text"].extension-api-email' ).val();
 
-        if ( key == '' || email == '' )
+        if ( key == '' )
             return;
 
         var data = mainwp_secure_data( {
@@ -131,10 +131,11 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
   loadingEl.hide();
 
   var extensionSlug = jQuery( apiEl ).attr( 'extension-slug' );
-
+  var extensionApiKey = jQuery( apiEl ).find( '.extension-api-key' ).val();
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_deactivate',
-        slug: extensionSlug
+        slug: extensionSlug,
+        api_key: extensionApiKey
     } );
 
   loadingEl.show();
@@ -146,7 +147,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-deactivate', function () {
         if ( response ) {
             if ( response.result == 'SUCCESS' ) {
         loadingEl.find( '.message' ).addClass( 'green' );
-        loadingEl.find( '.message' ).html(  __( 'Extension license Deactivated successfully.' ) );
+        loadingEl.find( '.message' ).html(  __( 'Extension license deactivated successfully.' ) );
         statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
         success = true;
             } else if ( response.error ) {
@@ -176,42 +177,33 @@ jQuery( document ).on( 'click', '#mainwp-extensions-savelogin', function () {
 
 function mainwp_extensions_savelogin( pObj, retring ) {
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
-
-  var username = grabingEl.find( '#mainwp_com_username' ).val();
-  var pwd = grabingEl.find( '#mainwp_com_password' ).val();
-
+  var api_key = grabingEl.find( '#mainwp_com_api_key' ).val();
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
-
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_saveextensionapilogin',
-        username: username,
-        password: pwd,
+        api_key: api_key,
         saveLogin: jQuery( '#extensions_api_savemylogin_chk' ).is( ':checked' ) ? 1 : 0
     } );
 
-  if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Username and Password is required." ) ).show();
-    statusEl.addClass( 'yellow' );
-  } else {
-
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
-    } else
+    } else {
         statusEl.removeClass( 'red' );
         statusEl.removeClass( 'green' );
         statusEl.removeClass( 'yellow' );
         statusEl.show();
-        statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Verifying. Please wait...' ) );
+      statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Validating. Please wait...' ) );
+    }
 
     jQuery.post( ajaxurl, data, function ( response ) {
         var undefError = false;
         if ( response ) {
             if ( response.saved ) {
                 statusEl.addClass( 'green' );
-        statusEl.html( 'Login saved.' ).fadeIn();
+                statusEl.html( 'Saved.' ).fadeIn();
             } else if ( response.result == 'SUCCESS' ) {
                 statusEl.addClass( 'green' );
-                statusEl.html( 'Account verification successful!' ).fadeIn();
+                statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
                   setTimeout( function () {
                     statusEl.fadeOut();
                 }, 3000 );
@@ -234,8 +226,6 @@ function mainwp_extensions_savelogin( pObj, retring ) {
             statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
         }
     }, 'json' );
-
-  }
     return false;
 }
 
@@ -247,65 +237,63 @@ var countSuccessActivation = 0;
 
 // Bulk grab API keys
 jQuery( document ).on( 'click', '#mainwp-extensions-grabkeys', function () {
-    mainwp_extensions_grabkeys( this, false );
+    mainwp_extensions_grabkeys( false );
 } );
 
-function mainwp_extensions_grabkeys( pObj, retring ) {
+function mainwp_extensions_grabkeys( retring ) {
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
-  var username = grabingEl.find( '#mainwp_com_username' ).val();
-  var pwd = grabingEl.find( '#mainwp_com_password' ).val();
+  var master_api_key = grabingEl.find( '#mainwp_com_api_key' ).val();
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
 
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_testextensionapilogin',
-        username: username,
-        password: pwd
+        master_api_key: master_api_key
     } );
 
-  if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Username and Password is required." ) ).show();
+  if ( master_api_key == '' ) {
+    statusEl.html( __( "Master API Key is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
-    statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
-  } else {
-    statusEl.removeClass( 'red' );
-      statusEl.removeClass( 'yellow' );
-    statusEl.removeClass( 'green' );
-    statusEl.show();
-      statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Verifying. Please wait...' ) );
-  }
+        statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
+    } else {
+        statusEl.removeClass( 'red' );
+        statusEl.removeClass( 'yellow' );
+        statusEl.removeClass( 'green' );
+        statusEl.show();
+        statusEl.html( '<i class="notched circle loading icon"></i> ' + __( 'Validating. Please wait...' ) );
+    }
 
-  jQuery.post( ajaxurl, data, function ( response ) {
-        var undefError = false;
-        if ( response ) {
-            if ( response.result == 'SUCCESS' ) {
-      statusEl.addClass( 'green' );
-            statusEl.html( 'Account verification successful!' ).fadeIn();
-        setTimeout( function () {
-                    statusEl.fadeOut();
-                }, 3000 );
-      totalActivateThreads = jQuery( '#mainwp-extensions-list .card[status="queue"]' ).length;
-                if ( totalActivateThreads > 0 )
-                    extensions_loop_next();
-            } else if ( response.error ) {
-      statusEl.addClass( 'red' );
-                statusEl.html( response.error ).fadeIn();
-            } else if ( response.retry_action && response.retry_action == 1 ) {
-                jQuery( "#mainwp_api_sslVerifyCertificate" ).val( 0 );
-                mainwp_extensions_grabkeys( pObj, true );
-                return false;
+    jQuery.post( ajaxurl, data, function ( response ) {
+            var undefError = false;
+            if ( response ) {
+                if ( response.result == 'SUCCESS' ) {
+                    statusEl.addClass( 'green' );
+                    statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
+                    setTimeout( function () {
+                        statusEl.fadeOut();
+                    }, 3000 );
+                    totalActivateThreads = jQuery( '#mainwp-extensions-list .card[status="queue"]' ).length;
+                    if ( totalActivateThreads > 0 )
+                        extensions_loop_next();
+                } else if ( response.error ) {
+                    statusEl.addClass( 'red' );
+                    statusEl.html( response.error ).fadeIn();
+                } else if ( response.retry_action && response.retry_action == 1 ) {
+                    jQuery( "#mainwp_api_sslVerifyCertificate" ).val( 0 );
+                    mainwp_extensions_grabkeys( true );
+                    return false;
+                } else {
+                    undefError = true;
+                }
             } else {
                 undefError = true;
             }
-        } else {
-            undefError = true;
-        }
-        if ( undefError ) {
-      statusEl.addClass( 'red' );
-      statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
-        }
-    }, 'json' );
+            if ( undefError ) {
+                statusEl.addClass( 'red' );
+                statusEl.html( __( 'Undefined error occurred. Please try again.' ) ).fadeIn();
+            }
+        }, 'json' );
     }
     return false;
 }
@@ -324,20 +312,18 @@ extensions_loop_next = function () {
 extensions_activate_next = function ( pObj ) {
 
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
-  var username = grabingEl.find( '#mainwp_com_username' ).val();
-  var pwd = grabingEl.find( '#mainwp_com_password' ).val();
   var apiEl = pObj;
   var statusEl = apiEl.find( ".activate-api-status" );
   var loadingEl = apiEl.find( ".api-feedback" );
 
-
+  var master_api_key = grabingEl.find( '#mainwp_com_api_key' ).val();
+  
   apiEl.attr( "status", "running" );
 
   var extensionSlug = apiEl.attr( 'extension-slug' );
   var data = mainwp_secure_data( {
     action: 'mainwp_extension_grabapikey',
-    username: username,
-    password: pwd,
+    master_api_key: master_api_key,
     slug: extensionSlug
   } );
 
@@ -365,7 +351,7 @@ extensions_activate_next = function ( pObj ) {
               if ( response.result == 'SUCCESS' ) {
                   countSuccessActivation++;
             loadingEl.find( '.message' ).addClass( 'green' );
-            loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully,' ) );
+            loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully.' ) );
             statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
             apiEl.find( '.mainwp-extensions-deactivate-chkbox' ).attr( 'checked', false );
               } else if ( response.error ) {
@@ -391,18 +377,17 @@ jQuery( document ).on( 'click', '#mainwp-extensions-bulkinstall', function () {
 mainwp_extension_grab_purchased = function ( pObj, retring ) {
 
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
-  var username = grabingEl.find( '#mainwp_com_username' ).val();
-  var pwd = grabingEl.find( '#mainwp_com_password' ).val();
+  var api_key = grabingEl.find( '#mainwp_com_api_key' ).val();
+
   var statusEl = jQuery( ".mainwp-extensions-api-loading" );
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_getpurchased',
-        username: username,
-        password: pwd
+        api_key: api_key
     } );
 
-  if ( username == '' || pwd == '' ) {
-    statusEl.html( __( "Username and Password is required." ) ).show();
-    statusEl.addClass( 'yellow' );
+   if ( api_key == '' ) {
+        statusEl.html( __( "Master API Key is required." ) ).show();
+        statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
         statusEl.html( __( "Connection error detected. The Verify Certificate option has been switched to NO. Retrying..." ) ).fadeIn();
@@ -602,7 +587,7 @@ jQuery( document ).on( 'click', '#mainwp-extensions-api-sslverify-certificate', 
         if ( response ) {
             if ( response.saved ) {
                 statusEl.css( 'color', '#0074a2' );
-                statusEl.html( '<i class="check circle icon"></i> Saved!' ).fadeIn();
+                statusEl.html( 'MainWP Master API Key saved!' ).fadeIn();
                 setTimeout( function ()
                 {
                     statusEl.fadeOut();

@@ -271,17 +271,14 @@ class MainWP_Menu {
 		 * @global object
 		 */
 		global $_mainwp_disable_menus_items;
-
-		$_level = 'level_' . $level;
+		$disabled = false;
+		$_level   = 'level_' . $level;
 		if ( is_array( $_mainwp_disable_menus_items ) && isset( $_mainwp_disable_menus_items[ $_level ] ) && isset( $_mainwp_disable_menus_items[ $_level ][ $item ] ) ) {
-			if ( $_mainwp_disable_menus_items[ $_level ][ $item ] ) {
-				return true;
-			} else {
-				return false;
-			}
+			$disabled = $_mainwp_disable_menus_items[ $_level ][ $item ];
 		}
-		$_mainwp_disable_menus_items[ $_level ][ $item ] = false;
-		return false;
+		$disabled                                        = apply_filters( 'mainwp_is_disable_menu_item', $disabled, $level, $item );
+		$_mainwp_disable_menus_items[ $_level ][ $item ] = $disabled;
+		return $disabled;
 	}
 
 	/**

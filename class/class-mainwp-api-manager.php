@@ -34,13 +34,6 @@ class MainWP_Api_Manager {
 	private $renew_license_url = 'https://mainwp.com/my-account';
 
 	/**
-	 * MainWP installation domain name.
-	 *
-	 * @var string $domain Empty by default.
-	 */
-	public $domain = '';
-
-	/**
 	 * Protected static variable to hold the single instance of the class.
 	 *
 	 * @var mixed Default null
@@ -85,16 +78,6 @@ class MainWP_Api_Manager {
 	 * Replace HTTP protocol to HTTPS.
 	 */
 	public function __construct() {
-		$this->domain = str_ireplace( array( 'http://', 'https://' ), '', home_url() );
-	}
-
-	/**
-	 * Get domain.
-	 *
-	 * @return string Current MainWP Dashboard URL.
-	 */
-	public function get_domain() {
-		return $this->domain;
 	}
 
 	/**
@@ -146,35 +129,31 @@ class MainWP_Api_Manager {
 	/**
 	 * Check API Key & API Email again MainWP Servers.
 	 *
-	 * @param array  $api       Extension activation info.
+	 * @param array  $api_slug       Extension activation info.
 	 * @param string $api_key   API license key.
-	 * @param string $api_email API email address.
 	 *
 	 * @return array Activation info.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::activate()
 	 * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
 	 */
-	public function license_key_activation( $api, $api_key, $api_email ) {
+	public function license_key_activation( $api_slug, $api_key ) {
 
-		$options = $this->get_activation_info( $api );
+		$options = $this->get_activation_info( $api_slug );
 
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
-		$current_api_key          = isset( $options['api_key'] ) ? $options['api_key'] : '';
-		$current_activation_email = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
-		$activation_status        = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
+		$current_api_key   = isset( $options['api_key'] ) ? $options['api_key'] : '';
+		$activation_status = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
 
-		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || '' == $api_email || $current_api_key != $api_key ) {
+		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || $current_api_key != $api_key ) {
 			if ( $current_api_key != $api_key ) {
 				$reset = $this->replace_license_key(
 					array(
-						'email'       => $current_activation_email,
-						'licence_key' => $current_api_key,
-						'product_id'  => $options['product_id'],
-						'instance'    => $options['instance_id'],
-						'platform'    => $this->domain,
+						'api_key'    => $api_key,
+						'product_id' => $options['product_id'],
+						'instance'   => $options['instance_id'],
 					)
 				);
 				if ( ! $reset ) {
@@ -185,12 +164,10 @@ class MainWP_Api_Manager {
 			$return = array();
 
 			$args = array(
-				'email'            => $api_email,
-				'licence_key'      => $api_key,
+				'api_key'          => $api_key,
 				'product_id'       => $options['product_id'],
 				'instance'         => $options['instance_id'],
 				'software_version' => $options['software_version'],
-				'platform'         => $this->domain,
 			);
 
 			$activate_results = json_decode( MainWP_Api_Manager_Key::instance()->activate( $args ), true );
@@ -200,7 +177,6 @@ class MainWP_Api_Manager {
 				$mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
 				$return['message']              = __( 'The extension has been activated. ', 'mainwp' ) . $mess;
 				$options['api_key']             = $api_key;
-				$options['activation_email']    = $api_email;
 				$options['activated_key']       = 'Activated';
 				$options['deactivate_checkbox'] = 'off';
 			}
@@ -213,9 +189,8 @@ class MainWP_Api_Manager {
 				} else {
 					$return['error'] = __( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
 				}
-				$options['api_key']          = '';
-				$options['activation_email'] = '';
-				$options['activated_key']    = 'Deactivated';
+				$options['api_key']       = '';
+				$options['activated_key'] = 'Deactivated';
 			}
 
 			$error = $this->check_response_for_api_errors( $activate_results );
@@ -223,7 +198,7 @@ class MainWP_Api_Manager {
 				$return['error'] = $error;
 			}
 
-			$this->set_activation_info( $api, $options );
+			$this->set_activation_info( $api_slug, $options );
 
 			return $return;
 		} else {
@@ -251,40 +226,41 @@ class MainWP_Api_Manager {
 	/**
 	 * Deactivate license Key.
 	 *
-	 * @param array $api Extension activation info.
+	 * @param array $api_slug Extension activation info.
+	 * @param array $api_key Extension activation api key.
 	 *
 	 * @return array Deactivation info.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::deactivate()
 	 */
-	public function license_key_deactivation( $api ) {
+	public function license_key_deactivation( $api_slug, $api_key ) {
 
-		$options = $this->get_activation_info( $api );
+		$options = $this->get_activation_info( $api_slug );
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
 
-		$activation_status        = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
-		$current_api_key          = isset( $options['api_key'] ) ? $options['api_key'] : '';
-		$current_activation_email = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
+		$activation_status = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
+
+		if ( empty( $api_key ) ) {
+			$options['api_key'] = '';
+			$this->set_activation_info( $api_slug, $options );
+		}
 
 		$return = array();
 
-		if ( 'Activated' == $activation_status && '' != $current_api_key && '' != $current_activation_email ) {
+		if ( 'Activated' == $activation_status && '' != $api_key ) {
 			$activate_results = MainWP_Api_Manager_Key::instance()->deactivate(
 				array(
-					'email'       => $current_activation_email,
-					'licence_key' => $current_api_key,
-					'product_id'  => $options['product_id'],
-					'instance'    => $options['instance_id'],
-					'platform'    => $this->domain,
+					'product_id' => $options['product_id'],
+					'instance'   => $options['instance_id'],
+					'api_key'    => $api_key,
 				)
 			); // reset license key activation.
 
 			$activate_results = json_decode( $activate_results, true );
-			if ( true == $activate_results['deactivated'] || ( isset( $activate_results['activated'] ) && 'inactive' == $activate_results['activated'] ) ) {
+			if ( isset( $activate_results['deactivated'] ) && true == $activate_results['deactivated'] ) {
 				$options['api_key']              = '';
-				$options['activation_email']     = '';
 				$options['activated_key']        = 'Deactivated';
 				$options['deactivate_checkbox']  = 'on';
 				$return['result']                = 'SUCCESS';
@@ -293,10 +269,12 @@ class MainWP_Api_Manager {
 
 			$error = $this->check_response_for_api_errors( $activate_results );
 			if ( ! empty( $error ) ) {
-				$return['error'] = $error;
+				$return['error']          = $error;
+				$options['api_key']       = '';
+				$options['activated_key'] = 'Deactivated';
 			}
 
-			$this->set_activation_info( $api, $options );
+			$this->set_activation_info( $api_slug, $options );
 
 			return $return;
 		}
@@ -308,22 +286,20 @@ class MainWP_Api_Manager {
 	/**
 	 * Test the users MainWP.com Login details against MainWP Server.
 	 *
-	 * @param string $username MainWP registered username.
-	 * @param string $password MainWP registered password.
+	 * @param string $api_key MainWP api key.
 	 *
-	 * @return mixed test_login_api() login test result.
+	 * @return mixed Login test result.
 	 *
-	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::test_login_api()
+	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::verify_api_key()
 	 */
-	public function test_login_api( $username, $password ) {
-		if ( empty( $username ) || empty( $password ) ) {
+	public function verify_mainwp_api( $api_key ) {
+		if ( empty( $api_key ) ) {
 			return false;
 		}
 
-		return MainWP_Api_Manager_Key::instance()->test_login_api(
+		return MainWP_Api_Manager_Key::instance()->verify_api_key(
 			array(
-				'username' => $username,
-				'password' => $password,
+				'api_key' => $api_key,
 			)
 		);
 	}
@@ -332,23 +308,15 @@ class MainWP_Api_Manager {
 	/**
 	 * Check if the user purchased the software.
 	 *
-	 * @param string $username MainWP registered username.
-	 * @param string $password MainWP registered password.
 	 * @param string $productId extension (product) ID.
 	 *
 	 * @return mixed purchase_software() purchase extensions.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::purchase_software()
 	 */
-	public function purchase_software( $username, $password, $productId ) {
-		if ( empty( $username ) || empty( $password ) ) {
-			return false;
-		}
-
+	public function purchase_software( $productId ) {
 		return MainWP_Api_Manager_Key::instance()->purchase_software(
 			array(
-				'username'   => $username,
-				'password'   => $password,
 				'product_id' => $productId,
 			)
 		);
@@ -357,8 +325,7 @@ class MainWP_Api_Manager {
 	/**
 	 * Get users purchased extensions.
 	 *
-	 * @param string $username MainWP registered username.
-	 * @param string $password MainWP registered password.
+	 * @param string $api_key api key.
 	 * @param string $productId extension (product) ID.
 	 * @param bool   $no_register registration request.
 	 *
@@ -366,16 +333,15 @@ class MainWP_Api_Manager {
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::get_purchased_software()
 	 */
-	public function get_purchased_software( $username, $password, $productId = '', $no_register = false ) {
-		if ( empty( $username ) || empty( $password ) ) {
+	public function get_purchased_extension( $api_key, $productId = '', $no_register = false ) {
+		if ( empty( $api_key ) ) {
 			return false;
 		}
 
 		return MainWP_Api_Manager_Key::instance()->get_purchased_software(
 			array(
-				'username'   => $username,
-				'password'   => $password,
 				'product_id' => $productId,
+				'api_key'    => $api_key,
 				'noauth'     => $no_register ? 1 : 0,
 			)
 		);
@@ -384,42 +350,43 @@ class MainWP_Api_Manager {
 	/**
 	 * Grab users associate MainWP License key for the selected Extension.
 	 *
-	 * @param array  $api      Extension activation info.
-	 * @param string $username MainWP registered username.
-	 * @param string $password MainWP registered password.
+	 * @param array  $api_slug      Extension activation info.
+	 * @param string $master_api_key MainWP master api key.
 	 *
 	 * @return mixed Activation info.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Api_Manager_Key::grab_api_key()
 	 */
-	public function grab_license_key( $api, $username, $password ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public function grab_license_key( $api_slug, $master_api_key ) { // phpcs:ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-		$options = $this->get_activation_info( $api );
+		$options = $this->get_activation_info( $api_slug );
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
 		$activation_status = isset( $options['activated_key'] ) ? $options['activated_key'] : '';
+		$api_key           = isset( $options['api_key'] ) ? $options['api_key'] : '';
 
-		$api_key   = isset( $options['api_key'] ) ? $options['api_key'] : '';
-		$api_email = isset( $options['activation_email'] ) ? $options['activation_email'] : '';
+		if ( ! isset( $options['product_item_id'] ) ) {
+			$options['product_item_id'] = 0; // to compatible.
+		}
 
-		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || '' == $api_email ) {
+		if ( 'Deactivated' == $activation_status || '' == $activation_status || '' == $api_key || ! isset( $options['product_item_id'] ) ) {
 			$return = array();
-			if ( '' != $username && '' != $password ) {
-
+			if ( ! empty( $master_api_key ) ) {
 				$args = array(
-					'username'         => $username,
-					'password'         => $password,
+					'api_key'          => $master_api_key,
 					'product_id'       => isset( $options['product_id'] ) ? $options['product_id'] : '',
 					'instance'         => isset( $options['instance_id'] ) ? $options['instance_id'] : '',
 					'software_version' => isset( $options['software_version'] ) ? $options['software_version'] : '',
-					'platform'         => $this->domain,
 				);
 
-				$activate_results            = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );
-				$options['api_key']          = '';
-				$options['activation_email'] = '';
-				$options['activated_key']    = 'Deactivated';
+				$activate_results         = json_decode( MainWP_Api_Manager_Key::instance()->grab_api_key( $args ), true );
+				$options['api_key']       = '';
+				$options['activated_key'] = 'Deactivated';
+
+				if ( ! isset( $options['product_item_id'] ) ) {
+					$options['product_item_id'] = 0; // to compatible.
+				}
 
 				if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && ( true == $activate_results['activated'] ) && ! empty( $activate_results['api_key'] ) ) {
 					$return['result']               = 'SUCCESS';
@@ -427,9 +394,8 @@ class MainWP_Api_Manager {
 					$return['message']              = __( 'Extension activated. ', 'mainwp' ) . $mess;
 					$options['api_key']             = $activate_results['api_key'];
 					$return['api_key']              = $activate_results['api_key'];
-					$options['activation_email']    = $activate_results['activation_email'];
-					$return['activation_email']     = $activate_results['activation_email'];
 					$options['activated_key']       = 'Activated';
+					$options['product_item_id']     = isset( $activate_results['product_item_id'] ) ? intval( $activate_results['product_item_id'] ) : 0;
 					$options['deactivate_checkbox'] = 'off';
 				} else {
 
@@ -449,11 +415,11 @@ class MainWP_Api_Manager {
 					$return['error'] = $error;
 				}
 
-				$this->set_activation_info( $api, $options );
+				$this->set_activation_info( $api_slug, $options );
 
 				return $return;
 			} else {
-				return array( 'error' => __( 'Username and Password are required in order to grab extensions API keys.', 'mainwp' ) );
+				return array( 'error' => __( 'MainWP API key are required in order to grab extensions API keys.', 'mainwp' ) );
 			}
 		}
 
@@ -470,6 +436,10 @@ class MainWP_Api_Manager {
 	public function check_response_for_api_errors( $response ) {
 		if ( ! is_array( $response ) || ! isset( $response['code'] ) ) {
 			return false;
+		}
+
+		if ( isset( $response['error'] ) ) {
+			return $response['error'];
 		}
 
 		$error = '';
@@ -547,8 +517,6 @@ class MainWP_Api_Manager {
 	 * @uses MainWP_Api_Manager_Plugin_Update::update_check()
 	 */
 	public function update_check( $args ) {
-		$args['domain'] = $this->domain;
-
 		return MainWP_Api_Manager_Plugin_Update::instance()->update_check( $args );
 	}
 
@@ -561,9 +529,7 @@ class MainWP_Api_Manager {
 	 *
 	 * @uses MainWP_Api_Manager_Plugin_Update::request()
 	 */
-	public function request_plugin_information( $args ) {
-		$args['domain'] = $this->domain;
-
+	public function request_extension_information( $args ) {
 		return MainWP_Api_Manager_Plugin_Update::instance()->request( $args );
 	}
 

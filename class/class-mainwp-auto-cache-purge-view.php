@@ -275,7 +275,7 @@ class MainWP_Auto_Cache_Purge_View {
 
 		// Display Last Purged Cache timestamp.
 		if ( ! empty( $last_purged ) ) {
-			$date_time                                = date( 'F j, Y g:ia', $last_purged ); // phpcs: ignore -- date local.
+			$date_time                                = date( 'F j, Y g:ia', $last_purged ); // phpcs:ignore -- date local.
 			$item['mainwp_cache_control_last_purged'] = $date_time;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';

@@ -7,6 +7,7 @@
 
 namespace MainWP\Dashboard;
 
+// phpcs:disable Generic.Metrics.CyclomaticComplexity -- complexity.
 /**
  * Class MainWP_Server_Information
  */
@@ -1441,7 +1442,7 @@ class MainWP_Server_Information {
 								</div>
 							</div>
 							<div class="column">
-								<h3 class="ui header"><?php echo __( 'Our representative�s contact information', 'mainwp' ); ?></h3>
+								<h3 class="ui header"><?php echo __( 'Our representative\'s contact information', 'mainwp' ); ?></h3>
 								<p><?php echo __( 'If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following:', 'mainwp' ); ?></p>
 								<div class="item"><?php echo __( 'Osano International Compliance Services Limited', 'mainwp' ); ?></div>
 								<div class="item"><?php echo __( 'ATTN: NT2D', 'mainwp' ); ?></div>

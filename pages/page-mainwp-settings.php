@@ -345,7 +345,7 @@ class MainWP_Settings {
 				'right'      => '',
 			),
 			array(
-				'title'      => __('Cache Control', 'mainwp'),
+				'title'      => __( 'Cache Control', 'mainwp' ),
 				'parent_key' => 'Settings',
 				'href'       => 'admin.php?page=cache-control',
 				'slug'       => 'cache-control',

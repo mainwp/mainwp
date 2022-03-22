@@ -1277,7 +1277,7 @@ class MainWP_Manage_Sites {
 				MainWP_System_Utility::set_current_wpid( $websiteid );
 			}
 			$website = MainWP_DB::instance()->get_website_by_id( $websiteid );
-			if ( MainWP_System_Utility::can_edit_website($website ) ) {
+			if ( MainWP_System_Utility::can_edit_website( $website ) ) {
 				$updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_child_site_settings( $website );
 				MainWP_Auto_Cache_Purge_View::render_child_site_settings( $websiteid, $updated );
 				return;

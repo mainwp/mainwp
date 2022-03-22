@@ -220,6 +220,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Handle Cache Control form $_POST for Child Site edit page.
+	 *
+	 * @param mixed $website Website infor.
 	 */
 	public function handle_cache_control_child_site_settings( $website ) {
 
@@ -258,6 +260,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Add Cache Control columns to Site Table.
+	 *
+	 * @param array $columns Columns infor.
 	 */
 	public function cache_control_sitestable_column( $columns ) {
 		$columns['mainwp_cache_control_last_purged'] = 'Last Purged Cache';
@@ -267,6 +271,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Display Cache Control data for specified Child Site.
+	 *
+	 *  @param mixed $item Site infor.
 	 */
 	public function cache_control_sitestable_item( $item ) {
 
@@ -295,6 +301,8 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Render Global Cache Control settings.
+	 *
+	 * @param bool $updated Updated or not.
 	 */
 	public static function render_global_settings( $updated ) {
 		if ( ! mainwp_current_user_have_right( 'admin', 'manage_dashboard_settings' ) ) {
@@ -353,6 +361,9 @@ class MainWP_Auto_Cache_Purge_View {
 
 	/**
 	 * Render Child Site ( edit page ) Cache Control settings.
+	 *
+	 * @param int  $websiteid Website id.
+	 * @param bool $updated Updated or not.
 	 */
 	public static function render_child_site_settings( $websiteid, $updated ) {
 		MainWP_Manage_Sites::render_header( 'cache-control' );

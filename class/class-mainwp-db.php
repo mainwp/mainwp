@@ -1156,8 +1156,6 @@ class MainWP_DB extends MainWP_DB_Base {
 				'pluginDir'             => '',
 				'automatic_update'      => 0,
 				'backup_before_upgrade' => 2,
-                'auto_purge_cache'      => 2,
-                'mainwp_override_global_settings' => 0,
 				'verify_certificate'    => intval( $verifyCertificate ),
 				'ssl_version'           => $sslVersion,
 				'uniqueId'              => $uniqueId,

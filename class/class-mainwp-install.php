@@ -361,12 +361,6 @@ class MainWP_Install extends MainWP_DB_Base {
 		} else {
 			update_site_option( 'mainwp_db_version', $this->mainwp_db_version );
 		}
-
-
-        // Update DB Tables for version 8.59.
-        $this->update_db_859();
-
-
 	}
 
 	/**
@@ -529,26 +523,4 @@ class MainWP_Install extends MainWP_DB_Base {
 			}
 		}
 	}
-
-    /**
-     * Update DB for version 8.59.
-     *
-     * This adds the necessary table columns to table 'wp_mainwp_wp' for MainWP Cache Control to function.
-     *
-     * @usedby This File. Fired on line:366 -> $this->update_db_859();
-     */
-    public function update_db_859() {
-        $current_version = get_site_option( 'mainwp_db_version' );
-
-        if ( version_compare( $current_version, '8.58', '<=' ) ) {
-            // Update table `wp_mainwp_wp` to include the following columns.
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD auto_purge_cache tinyint(1) NOT NULL DEFAULT 2' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cache_control_last_purged LONGTEXT NOT NULL AFTER auto_purge_cache' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cache_control_cache_solution LONGTEXT NOT NULL AFTER mainwp_cache_control_last_purged' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cloudflair_email LONGTEXT NOT NULL AFTER mainwp_cache_control_cache_solution' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_cloudflair_key LONGTEXT NOT NULL AFTER mainwp_cloudflair_email' );
-            $this->wpdb->query( 'ALTER TABLE ' . $this->table_name( 'wp' ) . ' ADD mainwp_override_global_settings tinyint(1) NOT NULL DEFAULT 0 AFTER mainwp_cloudflair_key' );
-        }
-    }
-
 }

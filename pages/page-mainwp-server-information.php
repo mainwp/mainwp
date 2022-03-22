@@ -1,6 +1,6 @@
 <?php
 /**
- * MainWP Server Information Page.
+ * MainWP Info Page.
  *
  * @package MainWP/Dashboard
  */
@@ -16,7 +16,7 @@ class MainWP_Server_Information {
 	const ERROR   = 2;
 
 	/**
-	 * The Server information page sub-pages.
+	 * The Info page sub-pages.
 	 *
 	 * @static
 	 * @var array Sub pages.
@@ -35,7 +35,7 @@ class MainWP_Server_Information {
 	/**
 	 * Method init_menu()
 	 *
-	 * Initiate Server Information subPage menu.
+	 * Initiate Info subPage menu.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
 	 * @uses \MainWP\Dashboard\MainWP_Server_Information_Handler::is_apache_server_software()
@@ -43,8 +43,8 @@ class MainWP_Server_Information {
 	public static function init_menu() {
 		add_submenu_page(
 			'mainwp_tab',
-			__( 'Status', 'mainwp' ),
-			' <span id="mainwp-ServerInformation">' . __( 'Status', 'mainwp' ) . '</span>',
+			__( 'Info', 'mainwp' ),
+			' <span id="mainwp-ServerInformation">' . __( 'Info', 'mainwp' ) . '</span>',
 			'read',
 			'ServerInformation',
 			array(
@@ -120,11 +120,24 @@ class MainWP_Server_Information {
 				)
 			);
 		}
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Plugin Privacy', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Plugin Privacy', 'mainwp' ) . '</div>',
+				'read',
+				'PluginPrivacy',
+				array(
+					self::get_class_name(),
+					'render_plugin_privacy_page',
+				)
+			);
+		}
 
 		/**
 		 * Filter mainwp_getsubpages_server
 		 *
-		 * Filters subpages for the Status page.
+		 * Filters subpages for the Info page.
 		 *
 		 * @since Unknown
 		 */
@@ -206,7 +219,7 @@ class MainWP_Server_Information {
 	public static function init_left_menu( $subPages = array() ) {
 		MainWP_Menu::add_left_menu(
 			array(
-				'title'      => __( 'Status', 'mainwp' ),
+				'title'      => __( 'Info', 'mainwp' ),
 				'parent_key' => 'mainwp_tab',
 				'slug'       => 'ServerInformation',
 				'href'       => 'admin.php?page=ServerInformation',
@@ -253,6 +266,13 @@ class MainWP_Server_Information {
 				'slug'       => 'ActionLogs',
 				'right'      => '',
 			),
+			array(
+				'title'      => __( 'Plugin Privacy', 'mainwp' ),
+				'parent_key' => 'ServerInformation',
+				'href'       => 'admin.php?page=PluginPrivacy',
+				'slug'       => 'PluginPrivacy',
+				'right'      => '',
+			),
 		);
 
 		MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Server' );
@@ -265,7 +285,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Renders Server Information header.
+	 * Renders Info header.
 	 *
 	 * @param string $shownPage Current page.
 	 *
@@ -276,7 +296,7 @@ class MainWP_Server_Information {
 	 */
 	public static function render_header( $shownPage = '' ) {
 			$params = array(
-				'title' => __( 'Server Information', 'mainwp' ),
+				'title' => __( 'Info', 'mainwp' ),
 			);
 
 			MainWP_UI::render_top_header( $params );
@@ -310,6 +330,14 @@ class MainWP_Server_Information {
 					'title'  => __( 'Action Logs', 'mainwp' ),
 					'href'   => 'admin.php?page=ActionLogs',
 					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
+				);
+			}
+
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
+				$renderItems[] = array(
+					'title'  => __( 'Plugin Privacy', 'mainwp' ),
+					'href'   => 'admin.php?page=PluginPrivacy',
+					'active' => ( 'PluginPrivacy' === $shownPage ) ? true : false,
 				);
 			}
 
@@ -398,7 +426,7 @@ class MainWP_Server_Information {
 		/**
 		 * Action: mainwp_before_server_info_table
 		 *
-		 * Fires on the top of the Status page, before the Server Info table.
+		 * Fires on the top of the Info page, before the Server Info table.
 		 *
 		 * @since 4.0
 		 */
@@ -676,7 +704,7 @@ class MainWP_Server_Information {
 		/**
 		 * Action: mainwp_after_server_info_table
 		 *
-		 * Fires on the bottom of the Status page, after the Server Info table.
+		 * Fires on the bottom of the Info page, after the Server Info table.
 		 *
 		 * @since 4.0
 		 */
@@ -1191,7 +1219,7 @@ class MainWP_Server_Information {
 	}
 
 	/**
-	 * Renders the wp comfig page.
+	 * Renders the WP Config page.
 	 *
 	 * @return void
 	 */
@@ -1363,6 +1391,89 @@ class MainWP_Server_Information {
 		</div>
 		<?php
 		self::render_footer( 'ActionLogs' );
+	}
+
+	/**
+	 * Renders the Plugin Privacy page.
+	 *
+	 * @return void
+	 */
+	public static function render_plugin_privacy_page() {
+
+		self::render_header( 'PluginPrivacy' );
+		/**
+		 * Action: mainwp_before_plugin_privacy_section
+		 *
+		 * Fires before the Plugin Privacy section.
+		 *
+		 * @since 4.2
+		 */
+		do_action( 'mainwp_before_plugin_privacy_section' );
+		?>
+		<div class="ui padded segment">
+			<div class="ui two columns grid">
+				<div class="column">
+					<div id="mainwp-plugin-privacy" class="ui piled segment">
+						<h2 class="ui header">
+							<?php echo __( 'Plugin Dashboard Privacy Policy', 'mainwp' ); ?>
+							<div class="sub header"><em><?php echo __( 'Last updated: March 21, 2022', 'mainwp' ); ?></em></div>
+						</h2>
+						<p><?php echo __( 'We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy.', 'mainwp' ); ?></p>
+						<p><?php echo __( 'Your access to and use of the Plugin is conditional upon your acceptance of and compliance with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin.', 'mainwp' ); ?></p>
+						<p><?php echo __( 'By accessing or using the Plugin, you agree to be bound by this Privacy Policy. If you disagree with any part of this Privacy Policy, then you do not have our permission to access or use the Plugin.', 'mainwp' ); ?></p>
+						<h3 class="ui header"><?php echo __( 'What personal data we collect', 'mainwp' ); ?></h3>
+						<p><?php echo __( 'We do not collect, store, nor process any personal data through this Plugin.', 'mainwp' ); ?></p>
+						<h3 class="ui header"><?php echo __( 'Third-party extensions and integrations', 'mainwp' ); ?></h3>
+						<p><?php echo __( 'This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them.', 'mainwp' ); ?></p>
+						<div class="ui hidden divider"></div>
+						<div class="ui two columns grid">
+							<div class="column">
+								<h3 class="ui header"><?php echo __( 'Our contact information', 'mainwp' ); ?></h3>
+								<p><?php echo __( 'If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following:', 'mainwp' ); ?></p>
+								<div class="ui list">
+									<div class="item"><?php echo __( 'Sick Marketing, LLC d/b/a MainWP', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'support@mainwp.com', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( '4730 S. Fort Apache Road', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'Suite 300', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'PO Box 27740', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'Last Vegas, NV 89126', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'United States', 'mainwp' ); ?></div>
+								</div>
+							</div>
+							<div class="column">
+								<h3 class="ui header"><?php echo __( 'Our representative�s contact information', 'mainwp' ); ?></h3>
+								<p><?php echo __( 'If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following:', 'mainwp' ); ?></p>
+								<div class="item"><?php echo __( 'Osano International Compliance Services Limited', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'ATTN: NT2D', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( '25/28 North Wall Quay', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Dublin 1, D01 H104', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Ireland', 'mainwp' ); ?></div>
+							</div>
+						</div>
+					</div>
+					<div class="ui divider"></div>
+					<a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Dashboard Privacy Policy', 'mainwp' ); ?></a> <a href="<?php echo get_site_url() . '/wp-content/plugins/mainwp/mainwp-child-privacy-policy.txt'; ?>" class="ui green basic button" target="_blank"><?php echo __( 'Download MainWP Child Privacy Policy', 'mainwp' ); ?></a>
+				</div>
+				<div class="middle aligned center aligned column">
+					<i class="massive icons">
+					  <i style="font-size:350px;color:#eeeeee;" class="file outline icon"></i>
+					  <i style="font-size:80px;color:#eeeeee;" class=" lock icon"></i>
+					</i>
+				</div>
+			</div>
+		</div>
+
+		<?php
+		/**
+		 * Action: mainwp_after_plugin_privacy_section
+		 *
+		 * Fires after the Plugin Privacy section.
+		 *
+		 * @since 4.2
+		 */
+		do_action( 'mainwp_after_plugin_privacy_section' );
+
+		self::render_footer( 'PluginPrivacy' );
 	}
 
 	/**

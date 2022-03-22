@@ -682,7 +682,7 @@ class MainWP_Manage_Sites_View {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-security-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-security-info-message"></i>
-					<?php echo sprintf( __( 'Fix detected security issues on the child site.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Fix detected security issues on the childs site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/security-issues/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 			<?php

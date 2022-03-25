@@ -978,7 +978,7 @@ class MainWP_Themes {
 						$not_delete = false;
 						$parent_str = '';
 						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) {
-							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) . '" data-position="bottom center" data-inverted=""><i class="lock icon"></i></span>';
+							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) ? $siteThemes[ $site_id ][ $theme_name ]['child_theme'] : '' ) . '" data-position="bottom center" data-inverted=""><i class="lock icon"></i></span>';
 							$not_delete = true;
 						}
 						?>

@@ -383,7 +383,7 @@ class MainWP_Extensions_View {
 						<i class="large yellow circle info icon"></i>
 					<?php endif; ?>
 					</a>
-					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" data-position="top right" data-inverted="" class="right floated activate-api-status mainwp-manage-extension-license">
+					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" api-actived="<?php echo $active ? '1' : '0'; ?>" data-position="top right" data-inverted="" class="right floated activate-api-status mainwp-manage-extension-license">
 						<?php if ( $active ) : ?>
 							<i class="check circle icon green large"></i>
 						<?php else : ?>

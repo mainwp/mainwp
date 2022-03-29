@@ -38,7 +38,11 @@ jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function () {
 
 jQuery( document ).ready( function () {
   jQuery( document ).on( 'click', '.mainwp-manage-extension-license', function () {
-        jQuery( this ).closest( ".card" ).find( "#mainwp-extensions-api-form" ).toggle();
+        var currentCard = jQuery( this ).closest( ".card" );
+        currentCard.find( "#mainwp-extensions-api-form" ).toggle();
+        if ( jQuery(this).attr('api-actived') == '0' ) {
+            extensions_activate_next( currentCard, false );
+        }
         return false;
   } );
   jQuery( document ).on( 'click', '.extension-privacy-info-link', function () {
@@ -302,7 +306,7 @@ function mainwp_extensions_grabkeys( retring ) {
 
 extensions_loop_next = function () {
   while ( ( extToActivate = jQuery( '#mainwp-extensions-list .card[status="queue"]:first' ) ) && ( extToActivate.length > 0 ) && ( currentActivateThreads < maxActivateThreads ) ) {
-        extensions_activate_next( extToActivate );
+        extensions_activate_next( extToActivate, true );
     }
     if ( ( finishedActivateThreads == totalActivateThreads ) && ( countSuccessActivation == totalActivateThreads ) ) {
         setTimeout( function () {
@@ -311,7 +315,7 @@ extensions_loop_next = function () {
     }
 };
 
-extensions_activate_next = function ( pObj ) {
+extensions_activate_next = function ( pObj , bulkAct ) {
 
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
   var apiEl = pObj;
@@ -341,7 +345,9 @@ extensions_activate_next = function ( pObj ) {
     loadingEl.find( '.message' ).addClass( 'green' );
     loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
     countSuccessActivation++;
-    extensions_loop_next();
+    if ( bulkAct ) {
+        extensions_loop_next();
+    }
     return;
   }
 
@@ -356,6 +362,11 @@ extensions_activate_next = function ( pObj ) {
             loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully.' ) );
             statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
             apiEl.find( '.mainwp-extensions-deactivate-chkbox' ).attr( 'checked', false );
+            if ( ! bulkAct ) {
+                setTimeout( function () {
+                    location.href = 'admin.php?page=Extensions';
+                }, 2000 );
+            }
               } else if ( response.error ) {
             loadingEl.find( '.message' ).addClass( 'red' );
             loadingEl.find( '.message' ).html( response.error );
@@ -367,8 +378,9 @@ extensions_activate_next = function ( pObj ) {
         loadingEl.find( '.message' ).addClass( 'red' );
         loadingEl.find( '.message' ).html( __( 'Undefined error. Please try again. ') );
           }
-
-          extensions_loop_next();
+          if ( bulkAct ) {
+            extensions_loop_next();
+          }
       }, 'json' );
 };
 

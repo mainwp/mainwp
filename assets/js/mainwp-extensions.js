@@ -37,7 +37,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function () {
 } );
 
 jQuery( document ).ready( function () {
-  jQuery( document ).on( 'click', '#mainwp-manage-extension-license', function () {
+  jQuery( document ).on( 'click', '.mainwp-manage-extension-license', function () {
         jQuery( this ).closest( ".card" ).find( "#mainwp-extensions-api-form" ).toggle();
         return false;
   } );

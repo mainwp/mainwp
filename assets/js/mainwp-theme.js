@@ -83,7 +83,7 @@ window.wp = window.wp || { };
             // Render and append
             this.view.render();
             this.$el.empty().append( this.view.el ).addClass( 'rendered' );
-            this.$el.append( '<br class="clear"/>' );
+            this.$el.append( '<br class="clear"/>' );           
         },
 
         // Defines search element container
@@ -109,8 +109,7 @@ window.wp = window.wp || { };
             view.render();
             this.searchContainer
                 .append( view.el )
-                .append( '<i class="search icon"></i>' );
-            $('#wp-filter-search-input').val( $('#mainwp-search-themes-input-container').attr('skeyword') );    
+                .append( '<i class="search icon"></i>' );           
         },
 
         // Checks when the user gets close to the bottom

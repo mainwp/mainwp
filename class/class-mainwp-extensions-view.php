@@ -383,14 +383,13 @@ class MainWP_Extensions_View {
 						<i class="large yellow circle info icon"></i>
 					<?php endif; ?>
 					</a>
-					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" data-position="top right" data-inverted="" class="right floated activate-api-status">
+					<span data-tooltip="<?php echo ( $active ? __( 'Extension API license is activated properly.', 'mainwp' ) : __( 'Extension API license is not activated.', 'mainwp' ) ); ?>" data-position="top right" data-inverted="" class="right floated activate-api-status mainwp-manage-extension-license">
 						<?php if ( $active ) : ?>
 							<i class="check circle icon green large"></i>
 						<?php else : ?>
 							<i class="exclamation circle icon grey large"></i>
 						<?php endif; ?>
 					</span>
-					<!-- <a class="ui mini right floated icon button" id="mainwp-manage-extension-license"  data-tooltip="<?php esc_attr_e( 'Manage the extension API license.', 'mainwp' ); ?>" data-position="top left" data-inverted=""><i class="cogs icon"></i></a> -->
 				</div>
 				<div class="ui extra content mainwp-privacy-info-content hidden" style="background:#f9fafb">
 					<h4><?php echo __( 'Privacy info:', 'mainwp' ); ?></h4>

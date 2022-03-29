@@ -1399,8 +1399,13 @@ class MainWP_Themes {
 				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview', 'mainwp' ); ?>" />
 			</div>
 		</script>
-
-
+		<script type="text/javascript">
+			jQuery( document ).ready( function() {
+				setTimeout( function () {
+					jQuery('#wp-filter-search-input').val( jQuery('#mainwp-search-themes-input-container').attr('skeyword') ); 
+				}, 1000 );
+			});
+		</script>
 		<?php
 	}
 

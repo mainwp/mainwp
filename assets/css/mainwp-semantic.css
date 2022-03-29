@@ -142,3 +142,6 @@
 .mainwp-ui .ui.multiple.dropdown > .label {
   vertical-align: baseline;
 }
+
+.mainwp-ui [data-tooltip]:before,
+.mainwp-ui [data-tooltip]:after { z-index: 999999 !important; }

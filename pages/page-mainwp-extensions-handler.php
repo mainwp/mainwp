@@ -364,7 +364,7 @@ class MainWP_Extensions_Handler {
 				$thePlugin = get_plugin_data( $path . $srcFile );
 
 				if ( null != $thePlugin && '' !== $thePlugin && '' !== $thePlugin['Name'] ) {
-					$output     .= esc_html( $thePlugin['Name'] ) . ' (' . esc_html( $thePlugin['Version'] ) . ')' . __( ' installed successfully.', 'mainwp' );
+					$output     .= str_replace( array( 'Extension', 'MainWP' ), '', esc_html( $thePlugin['Name'] ) ) . sprintf( __( ' installed successfully. Don\'t forget to %1$sactivate the extension API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' );
 					$plugin_slug = $result['destination_name'] . '/' . $srcFile;
 
 					if ( $activatePlugin ) {

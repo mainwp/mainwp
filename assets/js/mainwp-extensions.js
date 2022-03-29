@@ -479,7 +479,7 @@ mainwp_extension_bulk_install_specific = function ( pExtToInstall ) {
 
   var statusEl = pExtToInstall.find( '.installing-extension' );
 
-  statusEl.html( '<i class="notched circle loading icon"></i>' + __( 'Installing extension. Please wait...' ) );
+  statusEl.html( '<span data-tooltip="Installing extension. Please wait..." data-position="right center" data-inverted=""><i class="notched circle loading icon"></i></span>' );
 
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_downloadandinstall',

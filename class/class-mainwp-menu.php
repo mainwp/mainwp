@@ -377,6 +377,8 @@ class MainWP_Menu {
 
 		$mainwp_leftmenu = isset( $mainwp_leftmenu['mainwp_tab'] ) ? $mainwp_leftmenu['mainwp_tab'] : array();
 
+		$version = get_option( 'mainwp_plugin_version' );
+
 		?>
 		<div class="mainwp-nav-wrap">
 			<div id="mainwp-logo">
@@ -416,6 +418,7 @@ class MainWP_Menu {
 				?>
 				" />
 				</a>
+			<span class="ui mini green right ribbon label"><?php echo $version; ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">

@@ -410,8 +410,8 @@ class MainWP_Extensions {
 						<div class="item extension-to-install" download-link="' . $package_url . '" product-id="' . $product_id . '">
 							<div class="ui grid">
 								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" status="queue"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
-									<div class="column"><span class="installing-extension" status="queue"></span></div>
+									<div class="four wide column"><span class="ui checkbox"><input type="checkbox" status="queue"><label><strong>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</strong></label></span></div>
+									<div class="twelve wide column"><span class="installing-extension" status="queue"></span></div>
 								</div>
 							</div>
 						</div>';
@@ -427,8 +427,8 @@ class MainWP_Extensions {
 						<div class="item">
 							<div class="ui grid">
 								<div class="two column row">
-									<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
-									<div class="column"><i class="times circle red icon"></i> ' . $error . '</div>
+									<div class="four wide column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $software_title ) . '</label></span></div>
+									<div class="twelve wide column"><i class="times circle red icon"></i> ' . $error . '</div>
 								</div>
 							</div>
 						</div>';
@@ -452,8 +452,8 @@ class MainWP_Extensions {
 					<div class="item" product-id="' . $product_id . '">
 						<div class="ui grid">
 							<div class="two column row">
-								<div class="column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . $ext['title'] . '</label></span></div>
-								<div class="column">' . __( 'Extension not purchased. ', 'mainwp' ) . '<a class="right floated" href="' . $ext['link'] . '" target="_blank">' . __( 'Get it here.', 'mainwp' ) . '</a></div>
+								<div class="four wide column"><span class="ui checkbox"><input type="checkbox" disabled="disabled"><label>' . str_replace( array( 'Extension', 'MainWP' ), '', $ext['title'] ) . '</label></span></div>
+								<div class="twelve wide column">' . __( 'Extension not purchased. ', 'mainwp' ) . '<a href="' . $ext['link'] . '" target="_blank">' . __( 'Find out more...', 'mainwp' ) . '</a></div>
 							</div>
 						</div>
 					</div>';
@@ -477,7 +477,8 @@ class MainWP_Extensions {
 				if ( empty( $installing_exts ) && count( $purchased_data ) == count( $all_available_exts ) ) {
 					$html .= '<div class="ui message yellow">' . __( 'All purchased extensions already installed.', 'mainwp' ) . '</div>';
 				} else {
-					$html .= '<div class="ui message yellow">' . __( 'You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' ) . '</div>';
+					$html .= '<div class="ui message info">' . __( 'You have access to all your purchased Extensions but you DO NOT need to install all off them. In order to avoid information overload, we highly recommend adding Extensions one at a time and as you need them. Skip any Extension you do not want to install at this time.', 'mainwp' ) . '</div>';
+					$html .= '<div class="ui message info">' . sprintf( __( 'After installing all needed extensions, close the modal by clicking the Close button and %1$sactivate extensions API license%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/activate-extensions-api/" target="_blank">', '</a>' ) . '</div>';
 					$html .= '<div id="mainwp-bulk-activating-extensions-status" class="ui message" style="display:none;"></div>';
 
 					foreach ( $all_groups as $gr_id => $gr_name ) {

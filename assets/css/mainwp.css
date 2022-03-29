@@ -4,17 +4,22 @@
 /* Genaral Style */
 
 .mainwp-main-content {
-  width: calc( 100% - 300px );
+  width: calc( 100% - 298px );
     padding-right: 1em;
   padding-bottom: 1em;
+  border-left: 1px solid #dadada;
+  border-right: 1px solid #dadada;
   float: left;
+  margin-right: -1px !important;
+  margin-left: -1px !important;
 }
 
 .mainwp-side-content {
-    height: 100% !important;
+    height: 100%;
     width: 300px;
     float: right;
     border-left: 1px solid #dadada;
+    border-bottom: 1px solid #dadada;
     padding: 1em;
 }
 
@@ -30,6 +35,7 @@
     float: left;
     border-left: none;
     border-right: 1px solid rgba(34,36,38,.15);
+    border-bottom: 1px solid #dadada;
 }
 
 .mainwp-sidebar-left .mainwp-main-content {
@@ -157,7 +163,7 @@
 /* Select Sites */
 
 #mainwp-select-sites-body {
-  max-height: 230px;
+  height: 220px;
   overflow: auto;
 }
 

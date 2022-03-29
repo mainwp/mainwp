@@ -498,7 +498,7 @@ class MainWP_Setup_Wizard {
 			jQuery( document ).ready( function () {
 				jQuery( '.mainwp-quick-setup-wizard-steps-content .ui.checkbox' ).checkbox();
 			});
-		 </script>
+		</script>
 		<?php
 	}
 

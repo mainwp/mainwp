@@ -108,9 +108,9 @@ window.wp = window.wp || { };
             // Render and append after screen title
             view.render();
             this.searchContainer
-                //.append( $.parseHTML( '<label class="screen-reader-text" for="wp-filter-search-input">' + l10n.search + '</label>' ) )
                 .append( view.el )
                 .append( '<i class="search icon"></i>' );
+            $('#wp-filter-search-input').val( $('#mainwp-search-themes-input-container').attr('skeyword') );    
         },
 
         // Checks when the user gets close to the bottom

@@ -597,7 +597,7 @@ class MainWP_Themes {
 			<div class="ui hidden fitted divider"></div>
 				<div class="field">
 					<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+						<input type="checkbox" <?php echo ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? '' : 'disabled'; ?> value="1" id="display_sites_not_meeting_criteria" />
 						<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
 						</div>
 				</div>
@@ -915,7 +915,7 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_before_themes_table' );
 		?>
-		<table id="mainwp-manage-themes-table" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-themes-table" style="min-width:100%" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -1204,7 +1204,7 @@ class MainWP_Themes {
 						<div class="ui two column row">
 							<div class="column">
 								<div class="ui fluid search focus">
-									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container"></div>
+									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; ?>"></div>
 									<div class="results"></div>
 								</div>
 								<?php

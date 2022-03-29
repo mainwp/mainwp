@@ -105,12 +105,9 @@ class MainWP_Extensions {
 		$compatible_v4_checks = array(
 			'advanced-uptime-monitor-extension/advanced-uptime-monitor-extension.php',
 			'mainwp-article-uploader-extension/mainwp-article-uploader-extension.php',
-			'mainwp-backupwordpress-extension/mainwp-backupwordpress-extension.php',
 			'mainwp-backwpup-extension/mainwp-backwpup-extension.php',
-			'mainwp-blogvault-backup-extension/mainwp-blogvault-backup-extension.php',
 			'boilerplate-extension/boilerplate-extension.php',
 			'mainwp-branding-extension/mainwp-branding-extension.php',
-			'mainwp-broken-links-checker-extension/mainwp-broken-links-checker-extension.php',
 			'mainwp-bulk-settings-manager/mainwp-bulk-settings-manager.php',
 			'mainwp-clean-and-lock-extension/mainwp-clean-and-lock-extension.php',
 			'mainwp-client-reports-extension/mainwp-client-reports-extension.php',
@@ -120,12 +117,10 @@ class MainWP_Extensions {
 			'mainwp-favorites-extension/mainwp-favorites-extension.php',
 			'mainwp-file-uploader-extension/mainwp-file-uploader-extension.php',
 			'mainwp-google-analytics-extension/mainwp-google-analytics-extension.php',
-			'mainwp-links-manager-extension/mainwp-links-manager-extension.php',
 			'mainwp-maintenance-extension/mainwp-maintenance-extension.php',
 			'mainwp-piwik-extension/mainwp-piwik-extension.php',
 			'mainwp-post-dripper-extension/mainwp-post-dripper-extension.php',
 			'mainwp-rocket-extension/mainwp-rocket-extension.php',
-			'mainwp-spinner/mainwp-spinner.php',
 			'mainwp-sucuri-extension/mainwp-sucuri-extension.php',
 			'mainwp-team-control/mainwp-team-control.php',
 			'mainwp-updraftplus-extension/mainwp-updraftplus-extension.php',
@@ -355,7 +350,8 @@ class MainWP_Extensions {
 			die( wp_json_encode( array( 'error' => __( 'Requires API KEY.', 'mainwp' ) ) ) );
 		}
 
-		$data   = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+		$data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+
 		$result = json_decode( $data, true );
 		$return = array();
 
@@ -393,6 +389,10 @@ class MainWP_Extensions {
 					$item_html      = '';
 					$error          = '';
 					$software_title = isset( $all_available_exts[ $product_id ] ) ? $all_available_exts[ $product_id ]['title'] : $product_id;
+
+					if ( is_numeric( $software_title ) ) {
+						continue;
+					}
 
 					if ( isset( $product_info['package'] ) && ! empty( $product_info['package'] ) ) {
 

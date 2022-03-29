@@ -1,7 +1,6 @@
 /* eslint complexity: ["error", 100] */
 
-jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
-{
+jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function () {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_add_menu',
@@ -21,8 +20,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
     return false;
 } );
 
-jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function ()
-{
+jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function () {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_remove_menu',
@@ -42,6 +40,10 @@ jQuery( document ).ready( function () {
   jQuery( document ).on( 'click', '#mainwp-manage-extension-license', function () {
         jQuery( this ).closest( ".card" ).find( "#mainwp-extensions-api-form" ).toggle();
         return false;
+  } );
+  jQuery( document ).on( 'click', '.extension-privacy-info-link', function () {
+    jQuery( '.mainwp-privacy-info-content' ).toggle( 300 );
+    return false;
   } );
 } );
 
@@ -203,7 +205,7 @@ function mainwp_extensions_savelogin( pObj, retring ) {
                 statusEl.html( 'Saved.' ).fadeIn();
             } else if ( response.result == 'SUCCESS' ) {
                 statusEl.addClass( 'green' );
-                statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
+                statusEl.html( 'MainWP Main API Key is valid!' ).fadeIn();
                   setTimeout( function () {
                     statusEl.fadeOut();
                 }, 3000 );
@@ -251,7 +253,7 @@ function mainwp_extensions_grabkeys( retring ) {
     } );
 
   if ( master_api_key == '' ) {
-    statusEl.html( __( "Master API Key is required." ) ).show();
+    statusEl.html( __( "Main API Key is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
@@ -269,7 +271,7 @@ function mainwp_extensions_grabkeys( retring ) {
             if ( response ) {
                 if ( response.result == 'SUCCESS' ) {
                     statusEl.addClass( 'green' );
-                    statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
+                    statusEl.html( 'MainWP Main API Key is valid!' ).fadeIn();
                     setTimeout( function () {
                         statusEl.fadeOut();
                     }, 3000 );
@@ -386,7 +388,7 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
     } );
 
    if ( api_key == '' ) {
-        statusEl.html( __( "Master API Key is required." ) ).show();
+        statusEl.html( __( "Main API Key is required." ) ).show();
         statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
@@ -587,7 +589,7 @@ jQuery( document ).on( 'click', '#mainwp-extensions-api-sslverify-certificate', 
         if ( response ) {
             if ( response.saved ) {
                 statusEl.css( 'color', '#0074a2' );
-                statusEl.html( 'MainWP Master API Key saved!' ).fadeIn();
+                statusEl.html( 'MainWP Main API Key saved!' ).fadeIn();
                 setTimeout( function ()
                 {
                     statusEl.fadeOut();

@@ -1988,7 +1988,6 @@ class MainWP_Updates {
 
 		$checks = array(
 			'backupbuddy'     => 'backupbuddy/backupbuddy.php',
-			'backupwordpress' => 'backupwordpress/backupwordpress.php',
 			'backupwp'        => array( 'backwpup/backwpup.php', 'backwpup-pro/backwpup.php' ),
 			'updraftplus'     => 'updraftplus/updraftplus.php',
 

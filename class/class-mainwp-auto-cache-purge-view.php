@@ -325,20 +325,20 @@ class MainWP_Auto_Cache_Purge_View {
 						</div>
 						<div class="ui divider"></div>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API.', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflare Cache API.', 'mainwp' ); ?></label>
 							<div class="ten wide column ui toggle checkbox">
 								<input type="checkbox" value="1" name="mainwp_use_cloudflair_cache" <?php checked( get_option( 'mainwp_use_cloudflair_cache', 0 ), 1 ); ?> id="mainwp_use_cloudflair_cache">
-								<label><em><?php echo __( 'Enable to use global CloudFlair API.', 'mainwp' ); ?></em></label>
+								<label><em><?php echo __( 'Enable to use global CloudFlare API.', 'mainwp' ); ?></em></label>
 							</div>
 						</div>
-						<h4 class="ui header"><?php esc_html_e( 'Cloudflair API Credentials', 'mainwp' ); ?>
-							<div class="sub header">Credentials for global CloudFlair account.</div></h4>
+						<h4 class="ui header"><?php esc_html_e( 'Cloudflare API Credentials', 'mainwp' ); ?>
+							<div class="sub header">Credentials for global Cloudflare account.</div></h4>
 						<div class="ui grid field">
-							<label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Email', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Email', 'mainwp' ); ?></label>
 							<div class="ten wide column ui">
 								<input type="text"  name="mainwp_cloudflair_email" placeholder="user@domain.tdl" value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_email' ) ); ?>" autocomplete="off">
 							</div>
-							<label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Key', 'mainwp' ); ?></label>
+							<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Key', 'mainwp' ); ?></label>
 							<div class="ten wide column ui">
 								<input type="text"  name="mainwp_cloudflair_key" placeholder="eg: 55160fc7127bf21e139a52d3a005a62fec798 " value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_key' ) ); ?>" autocomplete="off">
 								<label><em><?php echo __( 'Retrieved from the backend after logging in', 'mainwp' ); ?></em></label>
@@ -404,17 +404,17 @@ class MainWP_Auto_Cache_Purge_View {
 						<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflair Cache API', 'mainwp' ); ?></label>
 						<div class="ten wide column ui toggle checkbox">
 							<input type="checkbox" value="1" name="mainwp_cache_override_global_settings" <?php checked( $site_cache_override_global_settings, 1 ); ?> id="mainwp_cache_override_global_settings">
-							<label><em><?php echo __( 'Enable to override global CloudFlair API Key', 'mainwp' ); ?></em></label>
+							<label><em><?php echo __( 'Enable to override global Cloudflare API Key', 'mainwp' ); ?></em></label>
 						</div>
 					</div>
-					<h4 class="ui header"><?php esc_html_e( 'Cloudflair API Credentials', 'mainwp' ); ?>
+					<h4 class="ui header"><?php esc_html_e( 'Cloudflare API Credentials', 'mainwp' ); ?>
 						<div class="sub header"><?php esc_html_e( 'Credentials for Individual Child Site.', 'mainwp' ); ?></div></h4>
 					<div class="ui grid field">
-						<label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Email', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Email', 'mainwp' ); ?></label>
 						<div class="ten wide column ui">
 							<input type="text"  name="mainwp_cloudflair_email" placeholder="user@domain.tdl" value="<?php echo esc_attr( $site_cloudflair_email ); ?>" autocomplete="off">
 						</div>
-						<label class="six wide column middle aligned"><?php echo __( 'Cloudflair API Key', 'mainwp' ); ?></label>
+						<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Key', 'mainwp' ); ?></label>
 						<div class="ten wide column ui">
 							<input type="text"  name="mainwp_cloudflair_key" placeholder="eg: 55160fc7127bf21e139a52d3a005a62fec798 " value="<?php echo esc_attr( $site_cloudflair_key ); ?>" autocomplete="off">
 							<label><em><?php echo __( 'Retrieved from the backend after logging in', 'mainwp' ); ?></em></label>

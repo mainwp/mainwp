@@ -384,9 +384,6 @@ mainwp_get_primaryBackup_link = function ( what ) {
         case 'backupbuddy':
             slug = 'Extensions-Mainwp-Buddy-Extension&subpage=backup';
             break;
-        case 'backupwp':
-            slug = 'Extensions-Mainwp-Backupwordpress-Extension&tab=schedules';
-            break;
         case 'backwpup':
             slug = 'Extensions-Mainwp-Backwpup-Extension';
             break;

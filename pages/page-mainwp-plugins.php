@@ -618,7 +618,7 @@ class MainWP_Plugins {
 			<div class="ui hidden fitted divider"></div>
 			<div class="field">
 				<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+						<input type="checkbox" <?php echo ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? '' : 'disabled'; ?> value="1" id="display_sites_not_meeting_criteria" />
 					<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
 					</div>
 			</div>
@@ -991,7 +991,7 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-plugins-table" style="min-width:100%" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>

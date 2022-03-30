@@ -306,19 +306,26 @@ class MainWP_Auto_Cache_Purge_View {
 
 		?>
 			<div id="mainwp-cache-control-settings" class="ui segment">
+				<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-general-cache-control-info-message' ) ) : ?>
+					<div class="ui info message">
+						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-general-cache-control-info-message"></i>
+						<div><?php echo __( 'MainWP Cache Control allows you to automatically purge the Cache on your child sites after performing an update of WP Core, Theme, or a Plugin through the MainWP Dashboard.', 'mainwp' ); ?></div>
+						<p><?php echo __( 'MainWP Cache Control will NOT purge both Cloudflare Cache and Cache from one of the supported plugins. If MainWP detects that a Child site uses one of the supported Plugins, only its Cache will be automatically purged. If a supported Caching plugin is not detected by MainWP, then the Cloudflare cache will be purged.', 'mainwp' ); ?></p>
+						<p><?php echo sprintf( __( 'For additional help, review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/cache-control/" target="_blank">', '</a>' ); ?></p>
+					</div>
+				<?php endif; ?>
 				<?php if ( $updated ) : ?>
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
-
 				<h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?>
-				<div class="sub header">You must Sync Dashboard with Child Sites after saving these settings.</div></h3>
+				<div class="sub header"><?php esc_html_e( 'You must Sync Dashboard with Child Sites after saving these settings.', 'mainwp' ); ?></div></h3>
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=cache-control">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'cache-control' ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo __( 'Automatically purge cache', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox">
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Click to enable or disable the Cache Control feature.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="checkbox" value="1" name="mainwp_auto_purge_cache" <?php checked( get_option( 'mainwp_auto_purge_cache', 0 ), 1 ); ?> id="mainwp_auto_purge_cache">
 								<label><em><?php echo __( 'Enable to purge all cache after updates.', 'mainwp' ); ?></em></label>
 							</div>
@@ -326,20 +333,20 @@ class MainWP_Auto_Cache_Purge_View {
 						<div class="ui divider"></div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflare Cache API.', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox">
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Click to enable or disable support for the Cloudflare API.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="checkbox" value="1" name="mainwp_use_cloudflair_cache" <?php checked( get_option( 'mainwp_use_cloudflair_cache', 0 ), 1 ); ?> id="mainwp_use_cloudflair_cache">
 								<label><em><?php echo __( 'Enable to use global CloudFlare API.', 'mainwp' ); ?></em></label>
 							</div>
 						</div>
 						<h4 class="ui header"><?php esc_html_e( 'Cloudflare API Credentials', 'mainwp' ); ?>
-							<div class="sub header">Credentials for global Cloudflare account.</div></h4>
+							<div class="sub header"><?php esc_html_e( 'Credentials for global Cloudflare account.', 'mainwp' ); ?></div></h4>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Email', 'mainwp' ); ?></label>
-							<div class="ten wide column ui">
+							<div class="ten wide column ui" data-tooltip="<?php esc_attr_e( 'Enter your Cloudflare API email address.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="text"  name="mainwp_cloudflair_email" placeholder="user@domain.tdl" value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_email' ) ); ?>" autocomplete="off">
 							</div>
 							<label class="six wide column middle aligned"><?php echo __( 'Cloudflare API Key', 'mainwp' ); ?></label>
-							<div class="ten wide column ui">
+							<div class="ten wide column ui" data-tooltip="<?php esc_attr_e( 'Enter your Cloudflare API Key.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="text"  name="mainwp_cloudflair_key" placeholder="eg: 55160fc7127bf21e139a52d3a005a62fec798 " value="<?php echo esc_attr( get_option( 'mainwp_cloudflair_key' ) ); ?>" autocomplete="off">
 								<label><em><?php echo __( 'Retrieved from the backend after logging in', 'mainwp' ); ?></em></label>
 							</div>

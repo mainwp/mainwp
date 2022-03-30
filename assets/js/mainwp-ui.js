@@ -260,10 +260,31 @@ mainwp_ss_select = function ( me, val ) {
     var tab = parent.find( '#select_sites_tab' ).val();
     if ( tab == 'site' ) {
       parent.find( '#mainwp-select-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      if ( val == true ) {
+        jQuery( '.mainwp-ss-select' ).hide();
+        jQuery( '.mainwp-ss-deselect' ).show();
+      } else {
+        jQuery( '.mainwp-ss-select' ).show();
+        jQuery( '.mainwp-ss-deselect' ).hide();
+      }
     } else if ( tab == 'staging' ) {
       parent.find( '#mainwp-select-staging-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      if ( val == true ) {
+        jQuery( '.mainwp-ss-select' ).hide();
+        jQuery( '.mainwp-ss-deselect' ).show();
+      } else {
+        jQuery( '.mainwp-ss-select' ).show();
+        jQuery( '.mainwp-ss-deselect' ).hide();
+      }
     } else { //group
       parent.find( '#mainwp-select-groups-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      if ( val == true ) {
+        jQuery( '.mainwp-ss-select' ).hide();
+        jQuery( '.mainwp-ss-deselect' ).show();
+      } else {
+        jQuery( '.mainwp-ss-select' ).show();
+        jQuery( '.mainwp-ss-deselect' ).hide();
+      }
     }
     mainwp_newpost_updateCategories();
     return false;

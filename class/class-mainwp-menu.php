@@ -418,7 +418,7 @@ class MainWP_Menu {
 				?>
 				" />
 				</a>
-			<span class="ui mini green right ribbon label"><?php echo $version; ?></span>
+			<span class="ui mini green right ribbon label"><?php echo __( 'Version ', 'mainwp' ); ?> <?php echo $version; ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">

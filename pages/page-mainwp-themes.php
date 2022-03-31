@@ -386,15 +386,7 @@ class MainWP_Themes {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
-								<div id="mainwp-themes-bulk-actions-wapper">
-								<?php
-								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-									echo $cachedResult['bulk_actions'];
-								} else {
-									MainWP_UI::render_empty_bulk_actions();
-								}
-								?>
-								</div>
+								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_left
@@ -407,7 +399,16 @@ class MainWP_Themes {
 								?>
 							</div>
 							<div class="right aligned column">
-								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<div id="mainwp-themes-bulk-actions-wapper">
+								<?php
+								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+									echo $cachedResult['bulk_actions'];
+								} else {
+									MainWP_UI::render_empty_bulk_actions();
+								}
+								?>
+								</div>
+
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_right

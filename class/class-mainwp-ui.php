@@ -226,9 +226,9 @@ class MainWP_UI {
 		?>
 		<?php if ( $show_select_all ) : ?>
 
-		<div class="ui list" style="background:#f9fafb;padding: 12px 5px;border-bottom: 1px solid #dadada;margin-top:0;">
+		<div class="ui list" id="mainwp-select-sites-select-all-actions">
 			<div onClick="return mainwp_ss_select( this, true )" class="item mainwp-ss-select"><i class="check square green outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
-			<div onClick="return mainwp_ss_select( this, false )" class="item mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="minus square outline icon"></i> <?php esc_attr_e( 'Deselect None', 'mainwp' ); ?></div>
+			<div onClick="return mainwp_ss_select( this, false )" class="item mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="minus square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
 		</div>
 
 		<?php endif; ?>
@@ -1063,7 +1063,12 @@ class MainWP_UI {
 						}
 
 						?>
-						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>"><?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?></a>
+						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>">
+							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?>
+							<?php if ( 'admin.php?page=PluginPrivacy' == $item['href'] || 'admin.php?page=cache-control' == $item['href'] ) : ?>
+								<span class="ui mini red right floated label mainwp-new-feature-label">NEW!</span>
+							<?php endif; ?>
+						</a>
 						<?php
 					}
 				}

@@ -868,8 +868,7 @@ class MainWP_Post_Page_Handler {
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-		$post_password       = isset( $post_data['post_password'] ) ? $post_data['post_password'] : null;
-		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website, $post_password );
+		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
 	}
 
 	/**
@@ -886,11 +885,10 @@ class MainWP_Post_Page_Handler {
 	 * @param mixed $post_gallery_images Post Gallery Images.
 	 * @param bool  $replaceadvImg replace advanced images of post or not.
 	 * @param mixed $website The website object.
-	 * @param mixed $post_password The post password.
 	 *
 	 * @return array result
 	 */
-	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false, $post_password = null ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+	public static function create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg = false, $website = false ) { // phpcs:ignore -- complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
 		/**
 		 * Current user global.
@@ -999,10 +997,6 @@ class MainWP_Post_Page_Handler {
 		}
 		$edit_id = $new_post['edit_id'];
 		unset( $new_post['edit_id'] );
-
-		if ( null !== $post_password ) {
-			$new_post['post_password'] = $post_password;
-		}
 
 		$wp_error = null;
 		remove_filter( 'content_save_pre', 'wp_filter_post_kses' );

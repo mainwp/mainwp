@@ -508,7 +508,7 @@ class MainWP_Page {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-pages-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-pages-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage existing pages on your child sites.  Here you can edit, view and delete pages.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-pages/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<?php self::render_table( true ); ?>
@@ -1374,6 +1374,7 @@ class MainWP_Page {
 							'post_type'      => 'page',
 							'post_name'      => $post_slug,
 							'post_excerpt'   => $_post->post_excerpt,
+							'post_password'  => $_post->post_password,
 							'comment_status' => $_post->comment_status,
 							'ping_status'    => $_post->ping_status,
 							'mainwp_post_id' => $_post->ID,

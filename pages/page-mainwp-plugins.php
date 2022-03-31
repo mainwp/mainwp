@@ -404,15 +404,9 @@ class MainWP_Plugins {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
-								<div id="mainwp-plugins-bulk-actions-wapper">
-									<?php
-									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-										echo $cachedResult['bulk_actions'];
-									} else {
-										MainWP_UI::render_empty_bulk_actions();
-									}
-									?>
-								</div>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
+								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_left
@@ -425,9 +419,15 @@ class MainWP_Plugins {
 								?>
 							</div>
 							<div class="right aligned column">
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
-								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<div id="mainwp-plugins-bulk-actions-wapper">
+									<?php
+									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+										echo $cachedResult['bulk_actions'];
+									} else {
+										MainWP_UI::render_empty_bulk_actions();
+									}
+									?>
+								</div>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_right

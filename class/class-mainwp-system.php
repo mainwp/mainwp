@@ -691,9 +691,9 @@ class MainWP_System {
 		MainWP_Post_Backup_Handler::instance()->init();
 
 		/**
-		 * Initiate Auto Cache Purge Class.
-		 *
-		 * @since
+		 * Initiate MainWP Cache Control Class.
+         *
+		 * @since 4.2
 		 */
 		MainWP_Auto_Cache_Purge_View::instance()->init();
 

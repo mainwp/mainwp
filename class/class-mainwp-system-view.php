@@ -698,16 +698,16 @@ class MainWP_System_View {
 					if ( is_array( $websites ) ) {
 						$count = count( $websites );
 						for ( $i = 0; $i < $count; $i ++ ) {
-							$nice_url    = MainWP_Utility::get_nice_url( $website->url );
+							$site_name   = $website->name;
 							$website     = $websites[ $i ];
 							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
 							?>
 							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
 								<div class="right floated content">
-									<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
+									<div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
 								</div>
 								<div class="content">
-								<?php echo esc_html( $nice_url ); ?>
+								<?php echo esc_html( $site_name ); ?>
 								<?php do_action( 'mainwp_sync_popup_content', $website ); ?>
 								</div>
 							</div>
@@ -716,15 +716,15 @@ class MainWP_System_View {
 					} else {
 						MainWP_DB::data_seek( $websites, 0 );
 						while ( $website = MainWP_DB::fetch_object( $websites ) ) {
-							$nice_url    = MainWP_Utility::get_nice_url( $website->url );
+							$site_name   = $site_name    = $website->name;
 							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
 							?>
 							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
 								<div class="right floated content">
-									<div class="sync-site-status" niceurl="<?php echo esc_html( $nice_url ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
+									<div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></div>
 								</div>
 								<div class="content">
-								<?php echo esc_html( $nice_url ); ?>
+								<?php echo esc_html( $site_name ); ?>
 								<?php do_action( 'mainwp_sync_popup_content', $website ); ?>
 								</div>
 							</div>

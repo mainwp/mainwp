@@ -167,6 +167,16 @@
   overflow: auto;
 }
 
+#mainwp-select-sites-select-all-actions {
+  background:#f9fafb;
+  padding: 12px 5px;
+  border-bottom: 1px solid #dadada;margin-top:0;
+}
+
+#mainwp-select-sites-select-all-actions .item {
+  cursor: pointer;
+}
+
 #mainwp-select-sites-list .item label .url {
   display: none; }
 

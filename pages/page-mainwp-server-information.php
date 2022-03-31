@@ -1378,7 +1378,10 @@ class MainWP_Server_Information {
 				<div class="ui hidden divider"></div>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-action-logs-info-message"></i>
-					<?php echo sprintf( __( 'Enable specific logging system.  For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?>
+					<div><?php echo __( 'Enable a specific logging system.', 'mainwp' ); ?></div>
+					<p><?php echo __( 'Each specific log type changes only the type of information logged. It does not change the log view.', 'mainwp' ); ?></p>
+					<p><?php echo __( 'After disabling the Action Log, logs will still be visible. To remove records, click the Delete Logs button.', 'mainwp' ); ?></p>
+					<p><?php echo sprintf( __( 'For additional help, please review this %1$shelp document%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/action-logs/" target="_blank">', '</a>' ); ?></p>
 				</div>
 			<?php endif; ?>
 		<?php

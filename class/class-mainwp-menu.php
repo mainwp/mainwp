@@ -616,8 +616,11 @@ class MainWP_Menu {
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
 				<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>>
-					<?php if ( 'admin.php?page=PluginPrivacy' == $href || 'admin.php?page=cache-control' == $href ) : ?>
+					<?php if ( 'admin.php?page=PluginPrivacy' == $href ) : ?>
 						<span class="ui mini red label mainwp-new-feature-label">NEW!</span>
+					<?php endif; ?>
+					<?php if ( 'admin.php?page=cache-control' == $href ) : ?>
+						<span class="ui mini blue label mainwp-beta-feature-label">BETA!</span>
 					<?php endif; ?>
 					<?php echo esc_html( $title ); ?>
 				</a>

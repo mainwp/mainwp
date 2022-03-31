@@ -143,5 +143,5 @@
   vertical-align: baseline;
 }
 
-.mainwp-ui [data-tooltip]:before,
-.mainwp-ui [data-tooltip]:after { z-index: 999999 !important; }
+.mainwp-ui .mainwp-main-content .ui.checkbox .box::after,
+.mainwp-ui .mainwp-main-content .ui.checkbox label::after { top: 1px; left: 1px; }

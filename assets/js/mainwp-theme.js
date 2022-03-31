@@ -83,7 +83,7 @@ window.wp = window.wp || { };
             // Render and append
             this.view.render();
             this.$el.empty().append( this.view.el ).addClass( 'rendered' );
-            this.$el.append( '<br class="clear"/>' );
+            this.$el.append( '<br class="clear"/>' );           
         },
 
         // Defines search element container
@@ -108,9 +108,8 @@ window.wp = window.wp || { };
             // Render and append after screen title
             view.render();
             this.searchContainer
-                //.append( $.parseHTML( '<label class="screen-reader-text" for="wp-filter-search-input">' + l10n.search + '</label>' ) )
                 .append( view.el )
-                .append( '<i class="search icon"></i>' );
+                .append( '<i class="search icon"></i>' );           
         },
 
         // Checks when the user gets close to the bottom

@@ -494,6 +494,11 @@ class MainWP_Setup_Wizard {
 
 			<?php wp_nonce_field( 'mwp-setup' ); ?>
 		</form>
+		<script type="text/javascript">
+			jQuery( document ).ready( function () {
+				jQuery( '.mainwp-quick-setup-wizard-steps-content .ui.checkbox' ).checkbox();
+			});
+		</script>
 		<?php
 	}
 

@@ -22,7 +22,7 @@ class MainWP_Cache {
 	 * Start session.
 	 */
 	public static function init_session() {
-		if ( PHP_SESSION_NONE !== session_status() ) {
+		if ( PHP_SESSION_NONE === session_status() ) {
 			session_start();
 		}
 	}

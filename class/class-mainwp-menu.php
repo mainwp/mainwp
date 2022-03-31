@@ -377,6 +377,8 @@ class MainWP_Menu {
 
 		$mainwp_leftmenu = isset( $mainwp_leftmenu['mainwp_tab'] ) ? $mainwp_leftmenu['mainwp_tab'] : array();
 
+		$version = get_option( 'mainwp_plugin_version' );
+
 		?>
 		<div class="mainwp-nav-wrap">
 			<div id="mainwp-logo">
@@ -416,6 +418,7 @@ class MainWP_Menu {
 				?>
 				" />
 				</a>
+			<span class="ui mini green right ribbon label"><?php echo __( 'Version ', 'mainwp' ); ?> <?php echo $version; ?></span>
 			</div>
 			<div class="ui hidden divider"></div>
 			<div class="mainwp-nav-menu">
@@ -612,7 +615,12 @@ class MainWP_Menu {
 			}
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
-			<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>><?php echo esc_html( $title ); ?></a>
+				<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>>
+					<?php if ( 'admin.php?page=PluginPrivacy' == $href || 'admin.php?page=cache-control' == $href ) : ?>
+						<span class="ui mini red label mainwp-new-feature-label">NEW!</span>
+					<?php endif; ?>
+					<?php echo esc_html( $title ); ?>
+				</a>
 				<?php
 			}
 		}

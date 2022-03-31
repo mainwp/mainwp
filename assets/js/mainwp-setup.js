@@ -19,9 +19,9 @@ jQuery( document ).ready( function () {
     var hiel = jQuery( this ).attr( 'hide-parent' );
     // if semantic ui checkbox is checked.
     if ( jQuery( this ).find( 'input' ).is( ':checked' ) ) {
-     jQuery( '[hide-element=' + hiel + ']' ).fadeIn( 500 );
-    } else {
      jQuery( '[hide-element=' + hiel + ']' ).fadeOut( 500 );
+    } else {
+     jQuery( '[hide-element=' + hiel + ']' ).fadeIn( 500 );
     }
   } );
 

@@ -1,7 +1,6 @@
 /* eslint complexity: ["error", 100] */
 
-jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
-{
+jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function () {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_add_menu',
@@ -21,8 +20,7 @@ jQuery( document ).on( 'click', '.mainwp-extensions-add-menu', function ()
     return false;
 } );
 
-jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function ()
-{
+jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function () {
     var extensionSlug = jQuery( this ).parents( '.plugin-card' ).attr( 'extension_slug' );
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_remove_menu',
@@ -39,9 +37,17 @@ jQuery( document ).on( 'click', '.mainwp-extensions-remove-menu', function ()
 } );
 
 jQuery( document ).ready( function () {
-  jQuery( document ).on( 'click', '#mainwp-manage-extension-license', function () {
-        jQuery( this ).closest( ".card" ).find( "#mainwp-extensions-api-form" ).toggle();
+  jQuery( document ).on( 'click', '.mainwp-manage-extension-license', function () {
+        var currentCard = jQuery( this ).closest( ".card" );
+        currentCard.find( "#mainwp-extensions-api-form" ).toggle();
+        if ( jQuery(this).attr('api-actived') == '0' ) {
+            extensions_activate_next( currentCard, false );
+        }
         return false;
+  } );
+  jQuery( document ).on( 'click', '.extension-privacy-info-link', function () {
+    jQuery( '.mainwp-privacy-info-content' ).toggle( 300 );
+    return false;
   } );
 } );
 
@@ -203,7 +209,7 @@ function mainwp_extensions_savelogin( pObj, retring ) {
                 statusEl.html( 'Saved.' ).fadeIn();
             } else if ( response.result == 'SUCCESS' ) {
                 statusEl.addClass( 'green' );
-                statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
+                statusEl.html( 'MainWP Main API Key is valid!' ).fadeIn();
                   setTimeout( function () {
                     statusEl.fadeOut();
                 }, 3000 );
@@ -251,7 +257,7 @@ function mainwp_extensions_grabkeys( retring ) {
     } );
 
   if ( master_api_key == '' ) {
-    statusEl.html( __( "Master API Key is required." ) ).show();
+    statusEl.html( __( "Main API Key is required." ) ).show();
     statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
@@ -269,7 +275,7 @@ function mainwp_extensions_grabkeys( retring ) {
             if ( response ) {
                 if ( response.result == 'SUCCESS' ) {
                     statusEl.addClass( 'green' );
-                    statusEl.html( 'MainWP Master API Key is valid!' ).fadeIn();
+                    statusEl.html( 'MainWP Main API Key is valid!' ).fadeIn();
                     setTimeout( function () {
                         statusEl.fadeOut();
                     }, 3000 );
@@ -300,7 +306,7 @@ function mainwp_extensions_grabkeys( retring ) {
 
 extensions_loop_next = function () {
   while ( ( extToActivate = jQuery( '#mainwp-extensions-list .card[status="queue"]:first' ) ) && ( extToActivate.length > 0 ) && ( currentActivateThreads < maxActivateThreads ) ) {
-        extensions_activate_next( extToActivate );
+        extensions_activate_next( extToActivate, true );
     }
     if ( ( finishedActivateThreads == totalActivateThreads ) && ( countSuccessActivation == totalActivateThreads ) ) {
         setTimeout( function () {
@@ -309,7 +315,7 @@ extensions_loop_next = function () {
     }
 };
 
-extensions_activate_next = function ( pObj ) {
+extensions_activate_next = function ( pObj , bulkAct ) {
 
   var grabingEl = jQuery( "#mainwp-extensions-api-fields" );
   var apiEl = pObj;
@@ -339,7 +345,9 @@ extensions_activate_next = function ( pObj ) {
     loadingEl.find( '.message' ).addClass( 'green' );
     loadingEl.find( '.message' ).html(  __( 'Extension already activated.' ) );
     countSuccessActivation++;
-    extensions_loop_next();
+    if ( bulkAct ) {
+        extensions_loop_next();
+    }
     return;
   }
 
@@ -354,6 +362,11 @@ extensions_activate_next = function ( pObj ) {
             loadingEl.find( '.message' ).html(  __( 'Extension license activated successfully.' ) );
             statusEl.html( '<i class="circular inverted green unlock icon"></i>' );
             apiEl.find( '.mainwp-extensions-deactivate-chkbox' ).attr( 'checked', false );
+            if ( ! bulkAct ) {
+                setTimeout( function () {
+                    location.href = 'admin.php?page=Extensions';
+                }, 2000 );
+            }
               } else if ( response.error ) {
             loadingEl.find( '.message' ).addClass( 'red' );
             loadingEl.find( '.message' ).html( response.error );
@@ -365,8 +378,9 @@ extensions_activate_next = function ( pObj ) {
         loadingEl.find( '.message' ).addClass( 'red' );
         loadingEl.find( '.message' ).html( __( 'Undefined error. Please try again. ') );
           }
-
-          extensions_loop_next();
+          if ( bulkAct ) {
+            extensions_loop_next();
+          }
       }, 'json' );
 };
 
@@ -386,7 +400,7 @@ mainwp_extension_grab_purchased = function ( pObj, retring ) {
     } );
 
    if ( api_key == '' ) {
-        statusEl.html( __( "Master API Key is required." ) ).show();
+        statusEl.html( __( "Main API Key is required." ) ).show();
         statusEl.addClass( 'yellow' );
   } else {
     if ( retring == true ) {
@@ -477,7 +491,7 @@ mainwp_extension_bulk_install_specific = function ( pExtToInstall ) {
 
   var statusEl = pExtToInstall.find( '.installing-extension' );
 
-  statusEl.html( '<i class="notched circle loading icon"></i>' + __( 'Installing extension. Please wait...' ) );
+  statusEl.html( '<span data-tooltip="Installing extension. Please wait..." data-position="right center" data-inverted=""><i class="notched circle loading icon"></i></span>' );
 
     var data = mainwp_secure_data( {
         action: 'mainwp_extension_downloadandinstall',
@@ -587,7 +601,7 @@ jQuery( document ).on( 'click', '#mainwp-extensions-api-sslverify-certificate', 
         if ( response ) {
             if ( response.saved ) {
                 statusEl.css( 'color', '#0074a2' );
-                statusEl.html( 'MainWP Master API Key saved!' ).fadeIn();
+                statusEl.html( 'MainWP Main API Key saved!' ).fadeIn();
                 setTimeout( function ()
                 {
                     statusEl.fadeOut();

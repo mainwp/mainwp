@@ -123,7 +123,11 @@ jQuery( document ).ready( function () {
       } else {
           jQuery( '#mainwp-message-zone' ).fadeOut(5000);
           var ids = checkedVals.join("-");
-          location.href = 'admin.php?page=PluginsInstall&selected_sites=' + ids;
+          var kwd =  jQuery( '#mainwp_plugin_search_by_keyword').val();
+          if ( '' != kwd ) {
+            kwd = '&s=' + encodeURIComponent( kwd );
+          }
+          location.href = 'admin.php?page=PluginsInstall&selected_sites=' + ids + kwd;
       }
       return false;
   } );
@@ -478,7 +482,11 @@ jQuery( document ).ready( function () {
         } else {
             jQuery( '#mainwp-message-zone' ).fadeOut(5000);
             var ids = checkedVals.join("-");
-            location.href = 'admin.php?page=ThemesInstall&selected_sites=' + ids;
+            var kwd =  jQuery( '#mainwp_theme_search_by_keyword').val();
+            if ( '' != kwd ) {
+                kwd = '&s=' + encodeURIComponent( kwd );
+            }
+            location.href = 'admin.php?page=ThemesInstall&selected_sites=' + ids + kwd;
         }
         return false;
     });

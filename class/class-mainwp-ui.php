@@ -136,7 +136,7 @@ class MainWP_UI {
 		$tab_id = wp_rand();
 
 		self::render_select_sites_header( $tab_id, $staging_enabled, $selected_groups, $show_group, $show_select_all );
-		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id );
+		self::render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all );
 		self::render_select_sites_staging( $staging_enabled, $tab_id, $selected_websites, $edit_site_id, $type );
 		if ( $show_group ) {
 			self::render_select_sites_group( $groups, $tab_id, $selected_groups, $type );
@@ -175,23 +175,11 @@ class MainWP_UI {
 		do_action( 'mainwp_before_select_sites_filters' );
 		?>
 		<div id="mainwp-select-sites-filters">
-			<div class="ui grid">
-			<?php if ( $show_select_all ) { ?>
-				<div class="four wide column">				
-					<div class="ui basic icon mini buttons">					
-						<a class="ui button" onClick="return mainwp_ss_select( this, true )" data-tooltip="<?php esc_attr_e( 'Select all websites.', 'mainwp' ); ?>" data-inverted=""><i class="check square outline icon"></i></a>
-						<a class="ui button" onClick="return mainwp_ss_select( this, false )" data-tooltip="<?php esc_attr_e( 'Deselect all websites.', 'mainwp' ); ?>" data-inverted=""><i class="square outline icon"></i></a>
-					</div>				
-				</div>
-				<?php } ?>
-				<div class="<?php echo $show_select_all ? 'twelve' : 'sixteen'; ?> wide column">
 					<div class="ui mini fluid icon input">
 						<input type="text" id="mainwp-select-sites-filter" value="" placeholder="<?php esc_attr_e( 'Type to filter your sites', 'mainwp' ); ?>" <?php echo esc_attr( count( $selected_groups ) > 0 ? 'style="display: none;"' : '' ); ?> />
 						<i class="filter icon"></i>
 					</div>
 				</div>
-			</div>
-		</div>
 		<?php
 		/**
 		 * Action: mainwp_after_select_sites_filters
@@ -215,7 +203,6 @@ class MainWP_UI {
 				<?php endif; ?>
 			</div>
 		</div>
-		<div class="ui divider hidden"></div>
 		<?php
 	}
 
@@ -228,14 +215,24 @@ class MainWP_UI {
 	 * @param mixed  $selected_websites Selected Child Sites.
 	 * @param bool   $enableOfflineSites (bool) True, if offline sites is enabled. False if not.
 	 * @param mixed  $edit_site_id Child Site ID to edit.
+	 * @param bool   $show_select_all    Whether or not to show select all, Default: true.
 	 *
 	 * @return void Render Select Sites html.
 	 *
 	 * @uses \MainWP\Dashboard\MainWP_DB::fetch_object()
 	 * @uses \MainWP\Dashboard\MainWP_DB::free_result()
 	 */
-	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id ) {
+	public static function render_select_sites( $websites, $type, $tab_id, $selected_websites, $enableOfflineSites, $edit_site_id, $show_select_all ) {
 		?>
+		<?php if ( $show_select_all ) : ?>
+
+		<div class="ui list" id="mainwp-select-sites-select-all-actions">
+			<div onClick="return mainwp_ss_select( this, true )" class="item mainwp-ss-select"><i class="check square green outline icon"></i> <?php esc_attr_e( 'Select All', 'mainwp' ); ?></div>
+			<div onClick="return mainwp_ss_select( this, false )" class="item mainwp-ss-deselect" style="display:none;padding-top:0;"><i class="minus square outline icon"></i> <?php esc_attr_e( 'Deselect All', 'mainwp' ); ?></div>
+		</div>
+
+		<?php endif; ?>
+
 		<div class="ui tab active" data-tab="mainwp-select-sites-<?php echo $tab_id; ?>" id="mainwp-select-sites" select-by="site">
 			<?php
 			/**
@@ -1066,7 +1063,12 @@ class MainWP_UI {
 						}
 
 						?>
-						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>"><?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?></a>
+						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>">
+							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?>
+							<?php if ( 'admin.php?page=PluginPrivacy' == $item['href'] || 'admin.php?page=cache-control' == $item['href'] ) : ?>
+								<span class="ui mini red right floated label mainwp-new-feature-label">NEW!</span>
+							<?php endif; ?>
+						</a>
 						<?php
 					}
 				}

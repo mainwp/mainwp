@@ -404,15 +404,9 @@ class MainWP_Plugins {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
-								<div id="mainwp-plugins-bulk-actions-wapper">
-									<?php
-									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-										echo $cachedResult['bulk_actions'];
-									} else {
-										MainWP_UI::render_empty_bulk_actions();
-									}
-									?>
-								</div>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
+								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
+								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_left
@@ -425,9 +419,15 @@ class MainWP_Plugins {
 								?>
 							</div>
 							<div class="right aligned column">
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', true ).change(); return false;" class="ui mini button"><?php esc_html_e( 'Select All', 'mainwp' ); ?></a>
-								<a href="#" onclick="jQuery( '.mainwp_plugins_site_check_all' ).prop( 'checked', false ).change(); return false;"   class="ui mini button"><?php esc_html_e( 'Select None', 'mainwp' ); ?></a>
-								<button id="mainwp-install-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<div id="mainwp-plugins-bulk-actions-wapper">
+									<?php
+									if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+										echo $cachedResult['bulk_actions'];
+									} else {
+										MainWP_UI::render_empty_bulk_actions();
+									}
+									?>
+								</div>
 								<?php
 								/**
 								 * Action: mainwp_plugins_actions_bar_right
@@ -446,7 +446,10 @@ class MainWP_Plugins {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-plugins-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-plugins-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed plugins on your child sites.  Here you can activate, deactivate, and delete installed plugins.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<div><?php echo __( 'Manage installed plugins on your child sites. Here you can activate, deactive, and delete installed plugins.', 'mainwp' ); ?></div>
+							<p><?php echo __( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
+							<p><?php echo __( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></p>
+							<p><?php echo sprintf( __( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-plugins-with-mainwp/" target="_blank">', '</a>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -618,7 +621,7 @@ class MainWP_Plugins {
 			<div class="ui hidden fitted divider"></div>
 			<div class="field">
 				<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+						<input type="checkbox" <?php echo ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? '' : 'disabled'; ?> value="1" id="display_sites_not_meeting_criteria" />
 					<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
 					</div>
 			</div>
@@ -690,9 +693,10 @@ class MainWP_Plugins {
 		$keyword = trim( $keyword );
 		MainWP_Cache::init_cache( 'Plugins' );
 
-			$output          = new \stdClass();
-			$output->errors  = array();
-			$output->plugins = array();
+			$output                       = new \stdClass();
+			$output->errors               = array();
+			$output->plugins              = array();
+			$output->not_criteria_plugins = array();
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -701,6 +705,7 @@ class MainWP_Plugins {
 						$website    = MainWP_DB::instance()->get_website_by_id( $v );
 						$allPlugins = json_decode( $website->plugins, true );
 						$_count     = count( $allPlugins );
+						$not_found  = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$plugin = $allPlugins[ $i ];
 
@@ -717,6 +722,16 @@ class MainWP_Plugins {
 							$plugin['websiteid']  = $website->id;
 							$plugin['websiteurl'] = $website->url;
 							$output->plugins[]    = $plugin;
+							$not_found            = false;
+						}
+
+						if ( $not_found && $not_criteria ) {
+							for ( $i = 0; $i < $_count; $i ++ ) {
+								$plugin                         = $allPlugins[ $i ];
+								$plugin['websiteid']            = $website->id;
+								$plugin['websiteurl']           = $website->url;
+								$output->not_criteria_plugins[] = $plugin;
+							}
 						}
 					}
 				}
@@ -732,6 +747,7 @@ class MainWP_Plugins {
 							}
 							$allPlugins = json_decode( $website->plugins, true );
 							$_count     = count( $allPlugins );
+							$not_found  = true;
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$plugin = $allPlugins[ $i ];
 
@@ -747,6 +763,15 @@ class MainWP_Plugins {
 								$plugin['websiteid']  = $website->id;
 								$plugin['websiteurl'] = $website->url;
 								$output->plugins[]    = $plugin;
+								$not_found            = false;
+							}
+							if ( $not_found && $not_criteria ) {
+								for ( $i = 0; $i < $_count; $i ++ ) {
+									$plugin                         = $allPlugins[ $i ];
+									$plugin['websiteid']            = $website->id;
+									$plugin['websiteurl']           = $website->url;
+									$output->not_criteria_plugins[] = $plugin;
+								}
 							}
 						}
 						MainWP_DB::free_result( $websites );
@@ -929,23 +954,34 @@ class MainWP_Plugins {
 	public static function render_bulk_actions( $status ) {
 		ob_start();
 		?>
+
+
 		<select class="ui dropdown" id="mainwp-bulk-actions">
 			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+			<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+				<option value="ignore_updates" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
+			<?php endif; ?>
 		<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
-			<?php if ( 'active' === $status || 'all' === $status ) : ?>
+				<?php if ( 'active' === $status ) : ?>
 				<option value="deactivate" data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
+				<?php else : ?>
+					<option value="deactivate" disabled data-value="deactivate"><?php esc_html_e( 'Deactivate', 'mainwp' ); ?></option>
 			<?php endif; ?>
 		<?php endif; ?>
-		<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
-			<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+			<?php if ( 'inactive' === $status ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
 				<option value="activate" data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
 			<?php endif; ?>
-			<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) : ?>
 				<option value="delete" data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 			<?php endif; ?>
+			<?php else : ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_deactivate_plugins' ) ) : ?>
+					<option value="activate" disabled data-value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
+				<?php endif; ?>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_plugins' ) ) : ?>
+					<option value="delete" disabled data-value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 		<?php endif; ?>
-		<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-				<option value="ignore_updates" data-value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
 		<?php endif; ?>
 		<?php
 		/**
@@ -991,7 +1027,7 @@ class MainWP_Plugins {
 		 */
 		do_action( 'mainwp_before_plugins_table' );
 		?>
-		<table id="mainwp-manage-plugins-table" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-plugins-table" style="min-width:100%" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -1017,14 +1053,15 @@ class MainWP_Plugins {
 			</thead>
 			<tbody>
 				<?php foreach ( $sites as $site_id => $site_url ) : ?>
+					<?php $website = MainWP_DB::instance()->get_website_by_id( $site_id ); ?>
 				<tr>
-					<td>
+					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo intval( $site_id ); ?>"/>
 						<div class="ui slider checkbox">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_plugins_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
-						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $site_url ); ?></a>
+						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
 					</td>
 					<?php
 					/**

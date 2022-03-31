@@ -516,6 +516,7 @@ class MainWP_Post_Page_Handler {
 					'post_tags'      => $post_tags,
 					'post_name'      => $post_slug,
 					'post_excerpt'   => $_post->post_excerpt,
+					'post_password'  => $_post->post_password,
 					'comment_status' => $_post->comment_status,
 					'ping_status'    => $_post->ping_status,
 					'mainwp_post_id' => $_post->ID,
@@ -866,6 +867,7 @@ class MainWP_Post_Page_Handler {
 		$post_featured_image = base64_decode( $post_data['post_featured_image'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		$upload_dir          = maybe_unserialize( base64_decode( $post_data['child_upload_dir'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+		$post_gallery_images = base64_decode( $post_data['post_gallery_images'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 		return self::create_post( $new_post, $post_custom, $post_category, $post_featured_image, $upload_dir, $post_tags, $post_gallery_images, $replaceadvImg, $website );
 	}
 

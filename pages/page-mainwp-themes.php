@@ -386,15 +386,7 @@ class MainWP_Themes {
 					<div class="ui grid">
 						<div class="ui two column row">
 							<div class="column">
-								<div id="mainwp-themes-bulk-actions-wapper">
-								<?php
-								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
-									echo $cachedResult['bulk_actions'];
-								} else {
-									MainWP_UI::render_empty_bulk_actions();
-								}
-								?>
-								</div>
+								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_left
@@ -407,7 +399,16 @@ class MainWP_Themes {
 								?>
 							</div>
 							<div class="right aligned column">
-								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
+								<div id="mainwp-themes-bulk-actions-wapper">
+								<?php
+								if ( is_array( $cachedResult ) && isset( $cachedResult['bulk_actions'] ) ) {
+									echo $cachedResult['bulk_actions'];
+								} else {
+									MainWP_UI::render_empty_bulk_actions();
+								}
+								?>
+								</div>
+
 								<?php
 								/**
 								 * Action: mainwp_themes_actions_bar_right
@@ -426,7 +427,9 @@ class MainWP_Themes {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-themes-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-themes-info-message"></i>
-							<?php echo sprintf( __( 'Manage installed themes on your child sites.  Here you can activate, deactive, and delete installed themes.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?>
+							<div><?php echo __( 'Manage installed themes on your child sites. Here you can activate, deactive, and delete installed themes.', 'mainwp' ); ?></div>
+							<p><?php echo __( 'To Activate or Delete a specific theme, you must search only for Inactive themes on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></p>
+							<p><?php echo sprintf( __( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/managing-themes-with-mainwp/" target="_blank">', '</a>' ); ?></p>
 						</div>
 					<?php endif; ?>
 					<div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -597,7 +600,7 @@ class MainWP_Themes {
 			<div class="ui hidden fitted divider"></div>
 				<div class="field">
 					<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-						<input type="checkbox" disabled value="1" id="display_sites_not_meeting_criteria" />
+						<input type="checkbox" <?php echo ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? '' : 'disabled'; ?> value="1" id="display_sites_not_meeting_criteria" />
 						<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
 						</div>
 				</div>
@@ -661,9 +664,10 @@ class MainWP_Themes {
 	public static function render_table( $keyword, $status, $groups, $sites, $not_criteria ) { // phpcs:ignore -- complex function.
 		MainWP_Cache::init_cache( 'Themes' );
 
-		$output         = new \stdClass();
-		$output->errors = array();
-		$output->themes = array();
+		$output                      = new \stdClass();
+		$output->errors              = array();
+		$output->themes              = array();
+		$output->not_criteria_themes = array();
 
 		if ( 1 == get_option( 'mainwp_optimize' ) ) {
 			if ( '' != $sites ) {
@@ -672,6 +676,7 @@ class MainWP_Themes {
 						$website   = MainWP_DB::instance()->get_website_by_id( $v );
 						$allThemes = json_decode( $website->themes, true );
 						$_count    = count( $allThemes );
+						$not_found = true;
 						for ( $i = 0; $i < $_count; $i ++ ) {
 							$theme = $allThemes[ $i ];
 							if ( 'active' === $status || 'inactive' === $status ) {
@@ -689,6 +694,15 @@ class MainWP_Themes {
 							$theme['websiteid']  = $website->id;
 							$theme['websiteurl'] = $website->url;
 							$output->themes[]    = $theme;
+							$not_found           = false;
+						}
+						if ( $not_found && $not_criteria ) {
+							for ( $i = 0; $i < $_count; $i ++ ) {
+								$theme                         = $allThemes[ $i ];
+								$theme['websiteid']            = $website->id;
+								$theme['websiteurl']           = $website->url;
+								$output->not_criteria_themes[] = $theme;
+							}
 						}
 					}
 				}
@@ -704,6 +718,7 @@ class MainWP_Themes {
 							}
 							$allThemes = json_decode( $website->themes, true );
 							$_count    = count( $allThemes );
+							$not_found = true;
 							for ( $i = 0; $i < $_count; $i ++ ) {
 								$theme = $allThemes[ $i ];
 								if ( 'active' === $status || 'inactive' === $status ) {
@@ -720,6 +735,16 @@ class MainWP_Themes {
 								$theme['websiteid']  = $website->id;
 								$theme['websiteurl'] = $website->url;
 								$output->themes[]    = $theme;
+								$not_found           = false;
+							}
+
+							if ( $not_found && $not_criteria ) {
+								for ( $i = 0; $i < $_count; $i ++ ) {
+									$theme                         = $allThemes[ $i ];
+									$theme['websiteid']            = $website->id;
+									$theme['websiteurl']           = $website->url;
+									$output->not_criteria_themes[] = $theme;
+								}
 							}
 						}
 						MainWP_DB::free_result( $websites );
@@ -915,7 +940,7 @@ class MainWP_Themes {
 		 */
 		do_action( 'mainwp_before_themes_table' );
 		?>
-		<table id="mainwp-manage-themes-table" class="ui celled single line selectable compact table">
+		<table id="mainwp-manage-themes-table" style="min-width:100%" class="ui celled single line selectable compact table">
 			<thead>
 				<tr>
 					<th class="mainwp-first-th no-sort"></th>
@@ -941,14 +966,15 @@ class MainWP_Themes {
 			</thead>
 			<tbody>
 				<?php foreach ( $sites as $site_id => $site_url ) : ?>
+					<?php $website = MainWP_DB::instance()->get_website_by_id( $site_id ); ?>
 				<tr>
-					<td>
+					<td style="padding-left:40px;padding-right:40px;">
 						<input class="websiteId" type="hidden" name="id" value="<?php echo esc_attr( $site_id ); ?>"/>
 						<div class="ui slider checkbox">
 							<input type="checkbox" value="" id="<?php echo esc_url( $site_url ); ?>" class="mainwp_themes_site_check_all"/><label></label>
 						</div>
 						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $site_id; ?>" target="_blank" data-tooltip="<?php esc_html_e( 'Go to the site WP Admin', 'mainwp' ); ?>" data-inverted=""><i class="sign-in alternate icon"></i></a>
-						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $site_url ); ?></a>
+						<a href="<?php echo esc_attr( $site_url ); ?>"><?php echo esc_html( $website->name ); ?></a>
 					</td>
 					<?php
 					/**
@@ -978,7 +1004,7 @@ class MainWP_Themes {
 						$not_delete = false;
 						$parent_str = '';
 						if ( isset( $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) && 1 == $siteThemes[ $site_id ][ $theme_name ]['parent_active'] ) {
-							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) . '" data-position="bottom center" data-inverted=""><i class="lock icon"></i></span>';
+							$parent_str = '<span data-tooltip="' . sprintf( __( 'Parent theme of the active theme (%s) on the site can not be deleted.', 'mainwp' ), isset( $siteThemes[ $site_id ][ $theme_name ]['child_theme'] ) ? $siteThemes[ $site_id ][ $theme_name ]['child_theme'] : '' ) . '" data-position="right center" data-inverted="" data-variation="mini"><i class="lock icon"></i></span>';
 							$not_delete = true;
 						}
 						?>
@@ -1030,8 +1056,10 @@ class MainWP_Themes {
 			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#e3ffa7;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active/Child theme', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
+			<div class="item"><i class="ui red lock icon"></i> <?php echo esc_html__( 'Parent of Active Child Theme/Installed/Inactive', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#fafafa;border:1px solid #f4f4f4;"></a> <?php echo esc_html__( 'Not installed', 'mainwp' ); ?></div>
 		</div>
+
 		<?php
 		/**
 		 * Action: mainwp_after_themes_table
@@ -1115,19 +1143,34 @@ class MainWP_Themes {
 		?>
 		<select class="ui dropdown" id="mainwp-bulk-actions">
 			<option value="none"><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
+					<option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
+				<?php endif; ?>
 				<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
-					<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+					<?php if ( 'inactive' === $status ) : ?>
 					<option data-value="activate" value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
+					<?php else : ?>
+						<option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
 					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( 'inactive' === $status || 'all' === $status ) : ?>
+				<?php if ( 'inactive' === $status ) : ?>
 					<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
 					<option data-value="delete" value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 					<?php endif; ?>
+				<?php else : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+						<option data-value="delete" disabled value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
+					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( mainwp_current_user_have_right( 'dashboard', 'ignore_unignore_updates' ) ) : ?>
-				<option data-value="ignore_updates" value="ignore_updates"><?php esc_html_e( 'Ignore updates', 'mainwp' ); ?></option>
+				<?php if ( 'all' === $status ) : ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'activate_themes' ) ) : ?>
+						<option data-value="activate" disabled value="activate"><?php esc_html_e( 'Activate', 'mainwp' ); ?></option>
+					<?php endif; ?>
+					<?php if ( mainwp_current_user_have_right( 'dashboard', 'delete_themes' ) ) : ?>
+						<option data-value="delete" disabled value="delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></option>
 				<?php endif; ?>
+				<?php endif; ?>
+
 				<?php
 				/**
 				 * Action: mainwp_themes_bulk_action
@@ -1204,7 +1247,7 @@ class MainWP_Themes {
 						<div class="ui two column row">
 							<div class="column">
 								<div class="ui fluid search focus">
-									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container"></div>
+									<div class="ui icon fluid input hide-if-upload" id="mainwp-search-themes-input-container" skeyword="<?php echo isset( $_GET['s'] ) ? esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : ''; ?>"></div>
 									<div class="results"></div>
 								</div>
 								<?php
@@ -1399,8 +1442,13 @@ class MainWP_Themes {
 				<iframe src="{{ data.preview_url }}" title="<?php esc_attr_e( 'Preview', 'mainwp' ); ?>" />
 			</div>
 		</script>
-
-
+		<script type="text/javascript">
+			jQuery( document ).ready( function() {
+				setTimeout( function () {
+					jQuery('#wp-filter-search-input').val( jQuery('#mainwp-search-themes-input-container').attr('skeyword') ); 
+				}, 1000 );
+			});
+		</script>
 		<?php
 	}
 

@@ -1068,7 +1068,7 @@ class MainWP_UI {
 							<?php if ( 'admin.php?page=PluginPrivacy' == $item['href'] ) : ?>
 								<span class="ui mini red right floated label mainwp-new-feature-label">NEW!</span>
 							<?php endif; ?>
-							<?php if ( 'admin.php?page=cache-control' == $item['href'] ) : ?>
+							<?php if ( 'admin.php?page=cache-control' == $item['href'] || 'admin.php?page=CacheControlLogs' == $item['href'] ) : ?>
 								<span class="ui mini blue right floated label mainwp-beta-feature-label">BETA!</span>
 							<?php endif; ?>
 						</a>

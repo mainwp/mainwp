@@ -317,7 +317,22 @@ class MainWP_Auto_Cache_Purge_View {
 		$websites = MainWP_DB::instance()->query( $sql );
 		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 			$mainwp_cache_control_logs = MainWP_DB::instance()->get_website_option( $website, 'mainwp_cache_control_logs' );
-			echo "<tr><td>{$website->siteurl}</td><td>{$mainwp_cache_control_logs}</td></tr>";
+			?>
+			<tr>
+				<td>
+					<a href="<?php echo 'admin.php?page=managesites&dashboard=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Open the site overview', 'mainwp' ); ?>" data-position="right center"  data-inverted=""><?php echo stripslashes( $website->name ); ?></a>
+				</td>
+				<td>
+					<?php if ( ! mainwp_current_user_have_right( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>
+						<i class="sign in icon"></i>
+					<?php else : ?>
+						<a href="<?php echo 'admin.php?page=SiteOpen&newWindow=yes&websiteid=' . $website->id; ?>" data-tooltip="<?php esc_attr_e( 'Jump to the site WP Admin', 'mainwp' ); ?>"  data-position="right center"  data-inverted="" class="open_newwindow_wpadmin" target="_blank"><i class="sign in icon"></i></a>
+					<?php endif; ?>
+				</td>
+				<td><?php echo $mainwp_cache_control_logs; ?></td>
+			</tr>
+			<?php
+
 		}
 	}
 
@@ -483,16 +498,17 @@ class MainWP_Auto_Cache_Purge_View {
 		 */
 		do_action( 'mainwp_before_cache_control_log_table' );
 		?>
-		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-cache-control-log-info-message' ) ) : ?>
 			<div class="ui info message">
-				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
-				<?php echo __( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-cache-control-log-info-message"></i>
+				<?php echo __( 'See the Cache Control feature logs.', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
-		<table class="ui stackable celled table" id="mainwp-cache-control-log-table">
+		<table class="ui celled table" id="mainwp-cache-control-log-table">
 			<thead>
 			<tr>
-				<th><?php esc_html_e( 'Child Site', 'mainwp' ); ?></th>
+					<th class=""><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th class="no-sort collapsing"><i class="sign in icon"></i></th>
 				<th><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
 			</tr>
 			</thead>
@@ -500,6 +516,10 @@ class MainWP_Auto_Cache_Purge_View {
 			<?php self::cache_control_log_item(); ?>
 			</tbody>
 		</table>
+
+		<script type="text/javascript">
+			jQuery( '#mainwp-cache-control-log-table' ).DataTable();
+		</script>
 		<?php
 		/**
 		 * Action: mainwp_after_error_log_table

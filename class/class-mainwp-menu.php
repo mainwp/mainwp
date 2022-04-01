@@ -619,7 +619,7 @@ class MainWP_Menu {
 					<?php if ( 'admin.php?page=PluginPrivacy' == $href ) : ?>
 						<span class="ui mini red label mainwp-new-feature-label">NEW!</span>
 					<?php endif; ?>
-					<?php if ( 'admin.php?page=cache-control' == $href ) : ?>
+					<?php if ( 'admin.php?page=cache-control' == $href || 'admin.php?page=CacheControlLogs' == $href ) : ?>
 						<span class="ui mini blue label mainwp-beta-feature-label">BETA!</span>
 					<?php endif; ?>
 					<?php echo esc_html( $title ); ?>

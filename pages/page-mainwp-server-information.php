@@ -1435,7 +1435,6 @@ class MainWP_Server_Information {
 	public static function render_cache_control_logs() {
 
 		self::render_header( 'CacheControlLogs' );
-		// $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
 		MainWP_Auto_Cache_Purge_View::instance()->render_cache_control_log_page();
 		self::render_footer( 'CacheControlLogs' );
 	}

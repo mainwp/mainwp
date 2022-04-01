@@ -716,7 +716,7 @@ class MainWP_System_View {
 					} else {
 						MainWP_DB::data_seek( $websites, 0 );
 						while ( $website = MainWP_DB::fetch_object( $websites ) ) {
-							$site_name   = $site_name    = $website->name;
+							$site_name   = $website->name;
 							$is_sync_err = ( '' != $website->sync_errors ) ? true : false;
 							?>
 							<div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">

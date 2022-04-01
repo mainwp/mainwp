@@ -473,7 +473,6 @@ class MainWP_Auto_Cache_Purge_View {
             mainwp_do_not_have_permissions( 'error log', 'mainwp' );
             return;
         }
-        //MainWP_Settings::render_header( 'CacheControlLogs' );
 
         /**
          * Action: mainwp_before_error_log_table
@@ -510,7 +509,5 @@ class MainWP_Auto_Cache_Purge_View {
          * @since 4.1
          */
         do_action( 'mainwp_after_cache_control_log_table' );
-
-       // MainWP_Settings::render_footer( 'CacheControlLogs' );
     }
 }

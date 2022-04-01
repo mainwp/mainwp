@@ -121,6 +121,21 @@ class MainWP_Server_Information {
 				)
 			);
 		}
+
+		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CacheControlLogs' ) ) {
+			add_submenu_page(
+				'mainwp_tab',
+				__( 'Cache Control Logs', 'mainwp' ),
+				'<div class="mainwp-hidden">' . __( 'Cache Control Logs', 'mainwp' ) . '</div>',
+				'read',
+				'CacheControlLogs',
+				array(
+					self::get_class_name(),
+					'render_cache_control_logs',
+				)
+			);
+		}
+
 		if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PluginPrivacy' ) ) {
 			add_submenu_page(
 				'mainwp_tab',
@@ -268,6 +283,13 @@ class MainWP_Server_Information {
 				'right'      => '',
 			),
 			array(
+				'title'      => __( 'Cache Control Logs', 'mainwp' ),
+				'parent_key' => 'ServerInformation',
+				'href'       => 'admin.php?page=CacheControlLogs',
+				'slug'       => 'CacheControlLogs',
+				'right'      => '',
+			),
+			array(
 				'title'      => __( 'Plugin Privacy', 'mainwp' ),
 				'parent_key' => 'ServerInformation',
 				'href'       => 'admin.php?page=PluginPrivacy',
@@ -331,6 +353,14 @@ class MainWP_Server_Information {
 					'title'  => __( 'Action Logs', 'mainwp' ),
 					'href'   => 'admin.php?page=ActionLogs',
 					'active' => ( 'ActionLogs' === $shownPage ) ? true : false,
+				);
+			}
+
+			if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CacheControlLogs' ) ) {
+				$renderItems[] = array(
+					'title'  => __( 'Cache Control Logs', 'mainwp' ),
+					'href'   => 'admin.php?page=CacheControlLogs',
+					'active' => ( 'CacheControlLogs' === $shownPage ) ? true : false,
 				);
 			}
 
@@ -1395,6 +1425,19 @@ class MainWP_Server_Information {
 		</div>
 		<?php
 		self::render_footer( 'ActionLogs' );
+	}
+
+	/**
+	 * Render Cache Control Logs SubPage.
+	 *
+	 * @uses \MainWP\Dashboard\MainWP_Auto_Cache_Purge_View::render_log_page()
+	 */
+	public static function render_cache_control_logs() {
+
+		self::render_header( 'CacheControlLogs' );
+		// $updated = MainWP_Auto_Cache_Purge_View::instance()->handle_cache_control_post();
+		MainWP_Auto_Cache_Purge_View::instance()->render_cache_control_log_page();
+		self::render_footer( 'CacheControlLogs' );
 	}
 
 	/**

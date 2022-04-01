@@ -692,7 +692,7 @@ class MainWP_System {
 
 		/**
 		 * Initiate MainWP Cache Control Class.
-         *
+		 *
 		 * @since 4.2
 		 */
 		MainWP_Auto_Cache_Purge_View::instance()->init();

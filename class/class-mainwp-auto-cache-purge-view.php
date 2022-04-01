@@ -174,39 +174,39 @@ class MainWP_Auto_Cache_Purge_View {
 	 *
 	 * @param array $website  Array of previously saved Child Site data.
 	 * @param array $information Array of data sent from Child Site.
-     *
-     * @uses  MainWP_DB::instance()->update_website_option() to update the xx_mainwp_wp_options table.
+	 *
+	 * @uses  MainWP_DB::instance()->update_website_option() to update the xx_mainwp_wp_options table.
 	 */
 	public function synced_site( $website, $information = array() ) {
 		if ( is_array( $information ) && isset( $information['mainwp_cache_control_last_purged'] ) ) {
 
-            // Grab last purged time.
+			// Grab last purged time.
 			$last_purged_cache = $information['mainwp_cache_control_last_purged'];
-            MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_last_purged', $last_purged_cache );
-            unset( $information['mainwp_cache_control_last_purged'] );
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_last_purged', $last_purged_cache );
+			unset( $information['mainwp_cache_control_last_purged'] );
 
-            // Grab Cache Solution.
-			$cache_solution    = $information['mainwp_cache_control_cache_solution'];
+			// Grab Cache Solution.
+			$cache_solution = $information['mainwp_cache_control_cache_solution'];
 			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_cache_solution', $cache_solution );
 			unset( $information['mainwp_cache_control_cache_solution'] );
 
-            // Grab Cache Control Log.
-            $cache_control_log = $information['mainwp_cache_control_logs'];
-            MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_logs', $cache_control_log );
-            unset( $information['mainwp_cache_control_logs'] );
+			// Grab Cache Control Log.
+			$cache_control_log = $information['mainwp_cache_control_logs'];
+			MainWP_DB::instance()->update_website_option( $website, 'mainwp_cache_control_logs', $cache_control_log );
+			unset( $information['mainwp_cache_control_logs'] );
 
 		}
 	}
 
-    /**
-     * Handle Cache Control form $_POST.
-     *
-     * This method grabs $_POST data and updates the form field options within the DB.
-     *
-     * @uses MainWP_Utility::update_option() to update the xx_options table.
-     *
-     * @return bool
-     */
+	/**
+	 * Handle Cache Control form $_POST.
+	 *
+	 * This method grabs $_POST data and updates the form field options within the DB.
+	 *
+	 * @uses MainWP_Utility::update_option() to update the xx_options table.
+	 *
+	 * @return bool
+	 */
 	public function handle_cache_control_post() {
 		if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'cache-control' ) ) {
 
@@ -308,18 +308,18 @@ class MainWP_Auto_Cache_Purge_View {
 		return $item;
 	}
 
-    /**
-     * Cache Control Log Items.
-     */
-    public static function cache_control_log_item() {
+	/**
+	 * Cache Control Log Items.
+	 */
+	public static function cache_control_log_item() {
 
-        $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'mainwp_cache_control_logs' ) );
-        $websites = MainWP_DB::instance()->query( $sql );
-        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-            $mainwp_cache_control_logs = MainWP_DB::instance()->get_website_option( $website, 'mainwp_cache_control_logs' );
-            echo "<tr><td>{$website->siteurl}</td><td>{$mainwp_cache_control_logs}</td></tr>";
-        }
-    }
+		$sql      = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'mainwp_cache_control_logs' ) );
+		$websites = MainWP_DB::instance()->query( $sql );
+		while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+			$mainwp_cache_control_logs = MainWP_DB::instance()->get_website_option( $website, 'mainwp_cache_control_logs' );
+			echo "<tr><td>{$website->siteurl}</td><td>{$mainwp_cache_control_logs}</td></tr>";
+		}
+	}
 
 	/**
 	 * Render Global Cache Control settings.
@@ -465,49 +465,49 @@ class MainWP_Auto_Cache_Purge_View {
 		MainWP_Manage_Sites::render_footer( 'cache-control' );
 	}
 
-    /**
-     * Renders Cache Control Log page.
-     */
-    public static function render_cache_control_log_page() {
-        if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
-            mainwp_do_not_have_permissions( 'error log', 'mainwp' );
-            return;
-        }
+	/**
+	 * Renders Cache Control Log page.
+	 */
+	public static function render_cache_control_log_page() {
+		if ( ! mainwp_current_user_have_right( 'dashboard', 'see_server_information' ) ) {
+			mainwp_do_not_have_permissions( 'error log', 'mainwp' );
+			return;
+		}
 
-        /**
-         * Action: mainwp_before_error_log_table
-         *
-         * Fires before the Error Log table.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_before_cache_control_log_table' );
-        ?>
-        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
-            <div class="ui info message">
-                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
-                <?php echo __( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
-            </div>
-        <?php endif; ?>
-        <table class="ui stackable celled table" id="mainwp-cache-control-log-table">
-            <thead>
-            <tr>
-                <th><?php esc_html_e( 'Child Site', 'mainwp' ); ?></th>
-                <th><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php self::cache_control_log_item(); ?>
-            </tbody>
-        </table>
-        <?php
-        /**
-         * Action: mainwp_after_error_log_table
-         *
-         * Fires after the Error Log table.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_after_cache_control_log_table' );
-    }
+		/**
+		 * Action: mainwp_before_error_log_table
+		 *
+		 * Fires before the Error Log table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_before_cache_control_log_table' );
+		?>
+		<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-error-log-info-message' ) ) : ?>
+			<div class="ui info message">
+				<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-error-log-info-message"></i>
+				<?php echo __( 'See the WordPress error log to fix problems that arise on your MainWP Dashboard site.', 'mainwp' ); ?>
+			</div>
+		<?php endif; ?>
+		<table class="ui stackable celled table" id="mainwp-cache-control-log-table">
+			<thead>
+			<tr>
+				<th><?php esc_html_e( 'Child Site', 'mainwp' ); ?></th>
+				<th><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
+			</tr>
+			</thead>
+			<tbody>
+			<?php self::cache_control_log_item(); ?>
+			</tbody>
+		</table>
+		<?php
+		/**
+		 * Action: mainwp_after_error_log_table
+		 *
+		 * Fires after the Error Log table.
+		 *
+		 * @since 4.1
+		 */
+		do_action( 'mainwp_after_cache_control_log_table' );
+	}
 }

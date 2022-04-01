@@ -1682,13 +1682,7 @@ mainwp_managesites_test = function() {
   } else {
     var clean_url = jQuery( '#mainwp_managesites_add_wpurl' ).val();
     var protocol = jQuery( '#mainwp_managesites_add_wpurl_protocol' ).val();
-
-    if( with_www == 'none-www' ) {
-      with_www = '';
-    }
-
-    url = protocol + '://' + with_www + clean_url;
-
+    url = protocol + '://' + clean_url;
     if ( url.substr( -1 ) != '/' ) {
       url += '/';
     }

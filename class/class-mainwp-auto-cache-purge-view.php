@@ -81,6 +81,8 @@ class MainWP_Auto_Cache_Purge_View {
 		add_filter( 'mainwp_sitestable_getcolumns', array( $this, 'cache_control_sitestable_column' ), 10, 1 );
 		add_filter( 'mainwp_sitestable_item', array( $this, 'cache_control_sitestable_item' ), 10, 1 );
 		add_action( 'mainwp_site_synced', array( $this, 'synced_site' ), 10, 2 );
+		add_action( 'mainwp_after_upgrade_wp_success', array( $this, 'upgrade_wp_success' ), 10, 2 );
+		add_action( 'mainwp_after_plugin_theme_translation_update', array( $this, 'update_plugin_theme_success' ), 10, 4 );
 	}
 
 	/**
@@ -166,6 +168,32 @@ class MainWP_Auto_Cache_Purge_View {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Grab and update stored Child Site Data.
+	 *
+	 * @param array $website  Array of previously saved Child Site data.
+	 * @param array $information Array of data sent from Child Site.
+	 *
+	 * @uses  MainWP_DB::instance()->update_website_option() to update the xx_mainwp_wp_options table.
+	 */
+	public function upgrade_wp_success( $website, $information = array() ) {
+		$this->synced_site( $website, $information );
+	}
+
+		/**
+		 * Grab and update stored Child Site Data.
+		 *
+		 * @param array  $information Array of data sent from Child Site.
+		 * @param string $type  type data.
+		 * @param string $list  list data.
+		 * @param array  $website  Array of previously saved Child Site data.
+		 *
+		 * @uses  MainWP_DB::instance()->update_website_option() to update the xx_mainwp_wp_options table.
+		 */
+	public function update_plugin_theme_success( $information, $type, $list, $website = null ) {
+		$this->synced_site( $website, $information );
 	}
 
 	/**

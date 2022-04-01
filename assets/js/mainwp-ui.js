@@ -259,7 +259,15 @@ mainwp_ss_select = function ( me, val ) {
     var parent = jQuery( me ).closest( '.mainwp_select_sites_wrapper' );
     var tab = parent.find( '#select_sites_tab' ).val();
     if ( tab == 'site' ) {
-      parent.find( '#mainwp-select-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      parent.find( '#mainwp-select-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).each( function () {
+        jQuery( this ).attr( 'checked', val ).change();
+        if(val) {
+            jQuery( this ).closest('.item.checkbox').checkbox('set checked');
+        }
+        else {
+            jQuery( this ).closest('.item.checkbox').checkbox('set unchecked');
+        }
+    } );
       if ( val == true ) {
         jQuery( '.mainwp-ss-select' ).hide();
         jQuery( '.mainwp-ss-deselect' ).show();
@@ -268,7 +276,15 @@ mainwp_ss_select = function ( me, val ) {
         jQuery( '.mainwp-ss-deselect' ).hide();
       }
     } else if ( tab == 'staging' ) {
-      parent.find( '#mainwp-select-staging-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      parent.find( '#mainwp-select-staging-sites-list .item:not(.no-select) INPUT:enabled:checkbox' ).each( function () {
+        jQuery( this ).attr( 'checked', val ).change();
+        if(val) {
+            jQuery( this ).closest('.item.checkbox').checkbox('set checked');
+        }
+        else {
+            jQuery( this ).closest('.item.checkbox').checkbox('set unchecked');
+        }
+    } );
       if ( val == true ) {
         jQuery( '.mainwp-ss-select' ).hide();
         jQuery( '.mainwp-ss-deselect' ).show();
@@ -277,7 +293,15 @@ mainwp_ss_select = function ( me, val ) {
         jQuery( '.mainwp-ss-deselect' ).hide();
       }
     } else { //group
-      parent.find( '#mainwp-select-groups-list .item:not(.no-select) INPUT:enabled:checkbox' ).attr( 'checked', val ).change();
+      parent.find( '#mainwp-select-groups-list .item:not(.no-select) INPUT:enabled:checkbox' ).each( function () {
+        jQuery( this ).attr( 'checked', val ).change();
+        if(val) {
+            jQuery( this ).closest('.item.checkbox').checkbox('set checked');
+        }
+        else {
+            jQuery( this ).closest('.item.checkbox').checkbox('set unchecked');
+        }
+    } );
       if ( val == true ) {
         jQuery( '.mainwp-ss-select' ).hide();
         jQuery( '.mainwp-ss-deselect' ).show();

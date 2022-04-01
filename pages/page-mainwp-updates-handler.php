@@ -49,6 +49,7 @@ class MainWP_Updates_Handler {
 			if ( is_array( $information ) ) {
 				if ( isset( $information['upgrade'] ) && ( 'SUCCESS' === $information['upgrade'] ) ) {
 					MainWP_DB::instance()->update_website_option( $website, 'wp_upgrades', wp_json_encode( array() ) );
+					do_action( 'mainwp_after_upgrade_wp_success', $website, $information );
 					return '<i class="green check icon"></i>';
 				} elseif ( isset( $information['upgrade'] ) ) {
 					$errorMsg = '';

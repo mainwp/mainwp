@@ -1461,7 +1461,7 @@ class MainWP_Server_Information {
 				<div class="column">
 					<div id="mainwp-plugin-privacy" class="ui piled segment">
 						<h2 class="ui header">
-							<?php echo __( 'Plugin Dashboard Privacy Policy', 'mainwp' ); ?>
+							<?php echo __( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
 							<div class="sub header"><em><?php echo __( 'Last updated: March 21, 2022', 'mainwp' ); ?></em></div>
 						</h2>
 						<p><?php echo __( 'We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy.', 'mainwp' ); ?></p>

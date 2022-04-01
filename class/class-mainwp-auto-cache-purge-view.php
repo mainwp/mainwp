@@ -389,24 +389,22 @@ class MainWP_Auto_Cache_Purge_View {
 					<div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
 				<?php endif; ?>
 				<h3 class="ui dividing header"><?php esc_html_e( 'Cache Control Settings', 'mainwp' ); ?>
-				<div class="sub header"><?php esc_html_e( 'You must Sync Dashboard with Child Sites after saving these settings.', 'mainwp' ); ?></div></h3>
+				<div class="sub header"><?php echo sprintf( __( 'See the list of supported %1$scaching systems%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/cache-control/" target="_blank">', '</a>' ); ?> <?php esc_html_e( 'You must Sync your MainWP Dashboard with Child Sites after saving these settings.', 'mainwp' ); ?></div></h3>
 				<div class="ui form">
 					<form method="POST" action="admin.php?page=cache-control">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
 						<input type="hidden" name="wp_nonce" value="<?php echo wp_create_nonce( 'cache-control' ); ?>" />
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo __( 'Automatically purge cache', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Click to enable or disable the Cache Control feature.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to purge all cache after updates.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="checkbox" value="1" name="mainwp_auto_purge_cache" <?php checked( get_option( 'mainwp_auto_purge_cache', 0 ), 1 ); ?> id="mainwp_auto_purge_cache">
-								<label><em><?php echo __( 'Enable to purge all cache after updates.', 'mainwp' ); ?></em></label>
 							</div>
 						</div>
 						<div class="ui divider"></div>
 						<div class="ui grid field">
 							<label class="six wide column middle aligned"><?php echo __( 'Use Cloudflare Cache API.', 'mainwp' ); ?></label>
-							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Click to enable or disable support for the Cloudflare API.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
+							<div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Enable to use global Cloudflare API.', 'mainwp' ); ?>" data-position="top left" data-inverted="">
 								<input type="checkbox" value="1" name="mainwp_use_cloudflair_cache" <?php checked( get_option( 'mainwp_use_cloudflair_cache', 0 ), 1 ); ?> id="mainwp_use_cloudflair_cache">
-								<label><em><?php echo __( 'Enable to use global CloudFlare API.', 'mainwp' ); ?></em></label>
 							</div>
 						</div>
 						<h4 class="ui header"><?php esc_html_e( 'Cloudflare API Credentials', 'mainwp' ); ?>
@@ -423,7 +421,7 @@ class MainWP_Auto_Cache_Purge_View {
 							</div>
 						</div>
 						<div class="ui divider"></div>
-						<input type="submit" name="submit" id="submit" class="ui green big button right floated" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
+						<input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
 						<div style="clear:both"></div>
 					</form>
 				</div>

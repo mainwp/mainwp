@@ -25,6 +25,10 @@ The Dashboard plugin allows you to connect and control all the WordPress sites y
 
 MainWP is the perfect solution for WordPress consultants, marketers, developers, WordPress shops, or anyone with multiple WordPress sites.
 
+= Your Guarantee of Privacy =
+
+The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure you that the plugins do not collect any personally identifiable information (PII) please review them before activating the plugin.
+
 = How does MainWP work? =
 
 First, Install and Activate this MainWP Dashboard plugin on a WordPress site you will use for controlling all other sites; this is your Dashboard Site.  We highly recommend this be a new, clean WordPress installation and not on one of your operating sites. Using a clean site helps to eliminate any unnecessary plugin conflicts or security issues.

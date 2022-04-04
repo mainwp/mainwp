@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 5.4
-Tested up to: 5.9
+Tested up to: 5.9.2
 Requires PHP: 7.0
-Stable tag: 4.1.12
+Stable tag: 4.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -173,6 +173,39 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 7. Manage Posts Screen
 8. MainWP Settings Screen
 9. Global Dashboard Screen
+
+= 4.2 - 4-5-2022 =
+* Fixed: Error with updating sites via CLI
+* Fixed: An issue with publishing posts with the Private visibility
+* Fixed: An issue with publishing Password protected posts
+* Fixed: An issue with editing posts with the Private visibility
+* Fixed: An issue with editing Password protected posts
+* Fixed: An issue with publishing pages with the Private visibility
+* Fixed: An issue with publishing Password protected pages
+* Fixed: An issue with editing pages with the Private visibility
+* Fixed: An issue with editing Password protected pages
+* Fixed: An issue with showing cached search results for Posts, Pages, Plugins, and Themes
+* Fixed: Missing toggle switch element in the Quick Setup Wizard
+* Fixed: Cosmetic issue where the header element gets pushed to the bottom
+* Added: Plugin privacy policy file to the plugin directory
+* Added: Plugin Privacy page
+* Added: Child and Parent theme indicator to the Manage Themes page
+* Added: The "Delete Extensions API Activation Data" button to the MainWP > Tools page
+* Added: Negative search ability Plugins and Theme search page
+* Added: Automatic cache clearing after updates feature
+* Added: Version number label under the logo in the menu element
+* Added: Extensions privacy info
+* Updated: Extensions licensing system
+* Updated: Site URL edit field to allow www/non-www change in site URL
+* Updated: Disallow users to delete the parent theme of the active child site
+* Updated: Renamed the Status menu item to Info
+* Updated: Info notice on Manage Plugins and Manage Themes page
+* Updated: The Select All, Deselect All element in the Select Sites box
+* Updated: Show site Title instead of URL in Manage Plugins and Manage Themes table
+* Updated: Show site Title instead or URL in the Sync Sites modal
+* Updated: The Select Sites box minimal height 
+* Updated: Info notices on the Extensions installation process
+* Updated: Available extension info to remove retired extensions
 
 == Changelog ==
 

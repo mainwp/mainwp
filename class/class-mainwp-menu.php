@@ -459,16 +459,21 @@ class MainWP_Menu {
 
 							$id_attr = ! empty( $item_id ) ? 'id="' . esc_html( $item_id ) . '"' : '';
 
+							$label_new = '';
+							if ( 'admin.php?page=Extensions' == $href ) {
+								$label_new = '<span class="ui mini red label mainwp-top-level-menu-item-label mainwp-new-feature-label">NEW!</span>';
+							}
+
 							if ( $has_sub ) {
 								echo '<div ' . $id_attr . " class=\"item $active_item\">";
-								echo "<a class=\"title with-sub $active_item\" href=\"$href\"><b>$title</b> <i class=\"dropdown icon\"></i></a>";
+								echo "<a class=\"title with-sub $active_item\" href=\"$href\"><b>$title</b>$label_new <i class=\"dropdown icon\"></i></a>";
 								echo "<div class=\"content menu $active_item\">";
 								self::render_sub_item( $item_key );
 								echo '</div>';
 								echo '</div>';
 							} else {
 								echo '<div ' . $id_attr . ' class="item">';
-								echo "<a class='title $active_item' href=\"$href\"><b>$title</b></a>";
+								echo "<a class='title $active_item' href=\"$href\"><b>$title</b>$label_new</a>";
 								echo '</div>';
 							}
 						}
@@ -616,7 +621,7 @@ class MainWP_Menu {
 			if ( empty( $right ) || ( ! empty( $right ) && mainwp_current_user_have_right( $right_group, $right ) ) ) {
 				?>
 				<a class="item" href="<?php echo esc_url( $href ); ?>" <?php echo '_blank' == $_blank ? 'target="_blank"' : ''; ?>>
-					<?php if ( 'admin.php?page=PluginPrivacy' == $href ) : ?>
+					<?php if ( 'admin.php?page=PluginPrivacy' == $href || 'admin.php?page=PluginsManage' == $href || 'admin.php?page=ThemesManage' == $href ) : ?>
 						<span class="ui mini red label mainwp-new-feature-label">NEW!</span>
 					<?php endif; ?>
 					<?php if ( 'admin.php?page=cache-control' == $href || 'admin.php?page=CacheControlLogs' == $href ) : ?>

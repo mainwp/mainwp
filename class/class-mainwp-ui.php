@@ -1065,7 +1065,7 @@ class MainWP_UI {
 						?>
 						<a class="<?php echo esc_attr( $active ); ?> item" <?php echo esc_attr( $style ); ?> href="<?php echo esc_url( $item['href'] ); ?>">
 							<?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; ?>
-							<?php if ( 'admin.php?page=PluginPrivacy' == $item['href'] ) : ?>
+							<?php if ( 'admin.php?page=PluginPrivacy' == $item['href'] || 'admin.php?page=PluginsManage' == $item['href'] || 'admin.php?page=ThemesManage' == $item['href'] ) : ?>
 								<span class="ui mini red right floated label mainwp-new-feature-label">NEW!</span>
 							<?php endif; ?>
 							<?php if ( 'admin.php?page=cache-control' == $item['href'] || 'admin.php?page=CacheControlLogs' == $item['href'] ) : ?>

@@ -126,6 +126,14 @@
       overflow-y: scroll;
     }
 
+    #mainwp-main-menu .mainwp-top-level-menu-item-label {
+      float: none;
+      display: inline;
+      margin-left: 35px;
+      padding: 3px 5px;
+      font-size: 8px;
+    }
+
 /* Extensions sub-submenu */
 
 .mainwp-sub-submenu {

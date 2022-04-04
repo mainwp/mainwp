@@ -555,10 +555,7 @@ class MainWP_Plugins {
 				</div>
 					</div>
 				<div class="ui fitted divider"></div>
-				<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
-					<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
-					<div class="content active"><?php self::render_search_options(); ?></div>
-				</div>
+				<?php self::render_search_options(); ?>
 				<div class="ui fitted divider"></div>
 					<div class="mainwp-search-submit">
 					<?php
@@ -611,19 +608,26 @@ class MainWP_Plugins {
 		if ( $cachedSearch && isset( $cachedSearch['keyword'] ) ) {
 			$cachedSearch['keyword'] = trim( $cachedSearch['keyword'] );
 		}
+		$disabledNegative = ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? false : true;
+		$checkedNegative  = ! $disabledNegative && ( null != $cachedSearch ) && ! empty( $cachedSearch['not_criteria'] ) ? true : false;
 		?>
-		<div class="ui mini form">
-			<div class="field">
-				<div class="ui input fluid">
-					<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
-				</div>
-			</div>
-			<div class="ui hidden fitted divider"></div>
-			<div class="field">
-				<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
-						<input type="checkbox" <?php echo ( null != $cachedSearch ) && ! empty( $cachedSearch['keyword'] ) ? '' : 'disabled'; ?> value="1" id="display_sites_not_meeting_criteria" />
-					<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
+		<div class="mainwp-search-options ui accordion mainwp-sidebar-accordion">
+			<div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Search Options', 'mainwp' ); ?></div>
+			<div class="content active">
+				<div class="ui mini form">
+					<div class="field">
+						<div class="ui input fluid">
+							<input type="text" placeholder="<?php esc_attr_e( 'Plugin name', 'mainwp' ); ?>" id="mainwp_plugin_search_by_keyword" class="text" value="<?php echo ( null != $cachedSearch ) ? esc_attr( $cachedSearch['keyword'] ) : ''; ?>" />
+						</div>
 					</div>
+					<div class="ui hidden fitted divider"></div>
+					<div class="field">
+						<div class="ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'Display sites not meeting the above search criteria.', 'mainwp' ); ?>" data-position="left center" data-inverted="">
+								<input type="checkbox" <?php echo $disabledNegative ? 'disabled' : ''; ?> <?php echo ( $checkedNegative ? 'checked="true"' : '' ); ?> value="1" id="display_sites_not_meeting_criteria" />
+							<label for="display_sites_not_meeting_criteria"><?php esc_html_e( 'Negative search', 'mainwp' ); ?></label>
+							</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -864,10 +868,11 @@ class MainWP_Plugins {
 		MainWP_Cache::add_context(
 			'Plugins',
 			array(
-				'keyword' => $keyword,
-				'status'  => $status,
-				'sites'   => ( '' !== $sites ) ? $sites : '',
-				'groups'  => ( '' !== $groups ) ? $groups : '',
+				'keyword'      => $keyword,
+				'status'       => $status,
+				'sites'        => ( '' !== $sites ) ? $sites : '',
+				'groups'       => ( '' !== $groups ) ? $groups : '',
+				'not_criteria' => $not_criteria ? true : false,
 			)
 		);
 

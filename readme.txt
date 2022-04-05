@@ -27,7 +27,7 @@ MainWP is the perfect solution for WordPress consultants, marketers, developers,
 
 = Your Guarantee of Privacy =
 
-The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure you that the plugins do not collect any personally identifiable information (PII) please review them before activating the plugin.
+The MainWP plugins come with their own [privacy policies](https://mainwp.com/mainwp-plugin-privacy-policy/) to ensure you that the plugins do not collect any personally identifiable information (PII). Please review them before activating the plugin.
 
 = How does MainWP work? =
 

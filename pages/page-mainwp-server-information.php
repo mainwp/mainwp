@@ -1482,7 +1482,7 @@ class MainWP_Server_Information {
 									<div class="item"><?php echo __( '4730 S. Fort Apache Road', 'mainwp' ); ?></div>
 									<div class="item"><?php echo __( 'Suite 300', 'mainwp' ); ?></div>
 									<div class="item"><?php echo __( 'PO Box 27740', 'mainwp' ); ?></div>
-									<div class="item"><?php echo __( 'Last Vegas, NV 89126', 'mainwp' ); ?></div>
+									<div class="item"><?php echo __( 'Las Vegas, NV 89126', 'mainwp' ); ?></div>
 									<div class="item"><?php echo __( 'United States', 'mainwp' ); ?></div>
 								</div>
 							</div>

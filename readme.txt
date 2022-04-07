@@ -178,6 +178,8 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 8. MainWP Settings Screen
 9. Global Dashboard Screen
 
+== Changelog ==
+
 = 4.2 - 4-5-2022 =
 * Fixed: Error with updating sites via CLI
 * Fixed: An issue with publishing posts with the Private visibility
@@ -210,8 +212,6 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: The Select Sites box minimal height 
 * Updated: Info notices on the Extensions installation process
 * Updated: Available extension info to remove retired extensions
-
-== Changelog ==
 
 = 4.1.12 - 2-16-2022 =
 * Fixed: An error with creating DB tables on specific hosts

@@ -405,7 +405,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-manage-users-info-message' ) ) : ?>
 						<div class="ui info message">
 							<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-manage-users-info-message"></i>
-							<?php echo sprintf( __( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
+							<?php echo sprintf( __( 'Manage existing users on your child sites.  Here you can Delete, Edit or Change Role for existing users.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/manage-users/" target="_blank">', '</a>' ); ?>
 						</div>
 					<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -1098,6 +1098,9 @@ class MainWP_User {
 		$return = 0;
 
 		foreach ( $users as $user ) {
+			if ( ! is_array( $user ) ) {
+				continue;
+			}
 			ob_start();
 			?>
 			<tr>
@@ -1360,7 +1363,7 @@ class MainWP_User {
 					<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-user-info-message' ) ) : ?>
 					<div class="ui info message">
 						<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-user-info-message"></i>
-						<?php echo sprintf( __( 'Use the provided form to create a new user on your child site.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
+						<?php echo sprintf( __( 'Use the provided form to create a new user on your child site.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/create-a-new-user/" target="_blank">', '</a>' ); ?>
 					</div>
 				<?php endif; ?>
 					<div class="ui message" id="mainwp-message-zone" style="display:none;"></div>
@@ -1598,7 +1601,7 @@ class MainWP_User {
 			<?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-users-info-message' ) ) : ?>
 				<div class="ui info message">
 					<i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-users-info-message"></i>
-					<?php echo sprintf( __( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %shelp documentation%s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
+					<?php echo sprintf( __( 'Use the form to bulk import users.  You can download the sample CSV file to see how to fomat the import file properly.  For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://kb.mainwp.com/docs/import-users/" target="_blank">', '</a>' ); ?>
 				</div>
 			<?php endif; ?>
 

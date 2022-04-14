@@ -115,12 +115,12 @@ mainwp_setup_managesites_add = function () {
       url = url.replace( /"/g, '&quot;' );
 
       if ( response == 'HTTPERROR' ) {
-        errors.push( 'This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.' );
+        errors.push( 'This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.' );
       } else if ( response == 'NOMAINWP' ) {
-        errors.push( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a> for help.' );
+        errors.push( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a> for help.' );
       } else if ( response.substr( 0, 5 ) == 'ERROR' ) {
         if ( response.length == 5 ) {
-          errors.push( 'Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://meta.mainwp.com/c/community-support/5">MainWP Community</a>.' );
+          errors.push( 'Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://kb.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.' );
         } else {
           errors.push( response.substr( 6 ) );
         }

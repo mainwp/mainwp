@@ -1,19 +1,34 @@
 MainWP Child Privacy Policy 
 
-Last updated: February 23, 2022
+Last updated: April 14, 2022
 
-We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Child Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy. 
+We value your privacy very highly. Please read this Privacy Policy carefully before using the
+MainWP Dashboard Plugin (“Plugin”) operated by Sick Marketing, LLC d/b/a MainWP, a Limited
+Liability Company formed in Nevada, United States (“us,” “we,” “our”) as this Privacy Policy
+contains important information regarding your privacy.
 
-Your access to and use of the Plugin is conditional upon your acceptance of and compliance with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin. 
+Your access to and use of the Plugin is conditional upon your acceptance of and compliance
+with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin.
+By accessing or using the Plugin, you agree to be bound by this Privacy Policy. If you disagree
+with any part of this Privacy Policy, then you do not have our permission to access or use the
+Plugin.
 
-By accessing or using the Plugin, you agree to be bound by this Privacy Policy. If you disagree with any part of this Privacy Policy, then you do not have our permission to access or use the Plugin. 
+What personal data we collect
 
-What personal data we collect 
+We do not collect, store, nor process any personal data through this Plugin.
 
-We do not collect, store, nor process any personal data through this Plugin. 
+Third-party extensions
+
+This Plugin may be used with extensions that are operated by parties other than us. We do not
+control such extensions and are not responsible for their contents or the privacy or other
+practices of such extensions. Further, it is up to you to take precautions to ensure that whatever
+extensions you use adequately protect your privacy. Please review the Privacy Policies of such
+extensions before using them.
 
 Our contact information
-If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following: 
+
+If you have any questions regarding our privacy practices, please do not hesitate to contact us
+at the following:
 
 Sick Marketing, LLC d/b/a MainWP
 support@mainwp.com
@@ -24,10 +39,24 @@ Las Vegas, NV 89126
 United States 
 
 Our representative’s contact information 
-If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following: 
 
-Osano International Compliance Services Limited 
-ATTN: NT2D
-25/28 North Wall Quay
-Dublin 1, D01 H104
+If you are a resident of the European Union or the European Economic Area, you may also
+contact our representative at the following:
+
+Ametros Ltd
+Unit 3D
+North Point House
+North Point Business Park
+New Mallow Road
+Cork
 Ireland 
+
+If you are a resident of the United Kingdom, you may contact our representative at the following:
+
+Ametros Group Ltd
+Lakeside Offices
+Thorn Business Park
+Hereford
+Herefordshire
+HR2 6JT
+England

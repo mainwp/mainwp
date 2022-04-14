@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.9.2
 Requires PHP: 7.0
-Stable tag: 4.2
+Stable tag: 4.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -99,7 +99,7 @@ Building on WordPress's core principles, the MainWP plugin allows third-party de
 = More Information =
 [MainWP Documentation](https://kb.mainwp.com/)
 
-[MainWP Community](https://meta.mainwp.com/)
+[MainWP Community](https://managers.mainwp.com/)
 
 [MainWP Support](https://mainwp.com/support/)
 
@@ -143,7 +143,7 @@ Yes, please review the [documentation site](https://kb.mainwp.com).
 Yes, please read the [Quick Start – Setting up your MainWP](https://kb.mainwp.com/docs/set-up-the-mainwp-plugin/) guide on the doc site.
 
 = Where do I go for support or to ask for help? =
-Please post in the [MainWP Community](https://meta.mainwp.com)
+Please post in the [MainWP Community](https://managers.mainwp.com)
 
 = What is the difference between ManageWP and MainWP? =
 Essentially MainWP and ManageWP provide the same type of service but with different philosophies on WordPress management.
@@ -161,7 +161,7 @@ We also participate in the [HackerOne](https://www.hackerone.com) bug bounty pro
 If you want to make some basic changes to the look of your Dashboard, you can use our prebuilt [Custom Dashbboard](https://mainwp.com/extension/mainwp-custom-dashboard-extension/) Extension, or if you want to dig in and build Extensions, you can learn all about Extension creation at [MainWP.dev](https://mainwp.dev)
 
 = I have an idea for MainWP; how do I let you know? =
-Please follow the steps outlined in the [MainWP Feature Requests](https://meta.mainwp.com/c/feature/16) so you can add your idea to the MainWP Community to be voted on.
+Please follow the steps outlined in the [MainWP Feature Requests](https://managers.mainwp.com/c/feature/16) so you can add your idea to the MainWP Community to be voted on.
 
 = I have more questions, do you have any other information? =
 Sure we have a quick FAQ with a lot more questions and answers [here](https://mainwp.com/presales-faq/).
@@ -177,6 +177,24 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 7. Manage Posts Screen
 8. MainWP Settings Screen
 9. Global Dashboard Screen
+
+== Changelog ==
+
+= 4.2.1 - 4-14-2022 =
+* Added: More MainWP Dashboard settings values to the system report
+* Added: UK representative to privacy policy
+* Fixed: `NEW` label placement
+* Fixed: PHP warning `Illegal string offset 'login'`
+* Fixed: PHP warning `Illegal string offset 'id'`
+* Fixed: PHP warning `Undefined array key 'privacy'`
+* Fixed: Cache control log table layout
+* Fixed: Incomplete error message that appears after trying to reconnect a site
+* Updated: Plugin Privacy Policy page
+* Updated: `privacy-policy.txt` file
+* Updated: `mainwp-child-privacy-policy.txt` file
+* Updated: `meta.mainwp.com` URLs changed to `managers.mainwp.com`
+* Updated: Removed the `NEW` label from menu items
+* Updated: Main content area border removed
 
 = 4.2 - 4-5-2022 =
 * Fixed: Error with updating sites via CLI
@@ -210,8 +228,6 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: The Select Sites box minimal height 
 * Updated: Info notices on the Extensions installation process
 * Updated: Available extension info to remove retired extensions
-
-== Changelog ==
 
 = 4.1.12 - 2-16-2022 =
 * Fixed: An error with creating DB tables on specific hosts

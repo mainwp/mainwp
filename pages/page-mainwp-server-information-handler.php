@@ -791,15 +791,20 @@ class MainWP_Server_Information_Handler {
 	 */
 	public static function mainwp_options() { // phpcs:ignore -- current complexity required to achieve desired results. Pull request solutions appreaciated.
 		$mainwp_options = array(
-			'mainwp_number_of_child_sites'           => __( 'Number Of Child Sites', 'mainwp' ),
-			'mainwp_wp_cron'                         => __( 'Use WP-Cron', 'mainwp' ),
-			'mainwp_optimize'                        => __( 'Optimize for Shared Hosting or Big Networks', 'mainwp' ),
-			'mainwp_automaticDailyUpdate'            => __( 'Automatic Daily Update', 'mainwp' ),
-			'mainwp_numberdays_Outdate_Plugin_Theme' => __( 'Abandoned Plugins/Themes Tolerance', 'mainwp' ),
+			'mainwp_number_of_child_sites'           => __( 'Number of child sites', 'mainwp' ),
+			'mainwp_wp_cron'                         => __( 'Use WP Cron', 'mainwp' ),
+			'mainwp_optimize'                        => __( 'Optimize for shared hosting or big networks', 'mainwp' ),
+			'mainwp_automaticDailyUpdate'            => __( 'WP Core advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_pluginAutomaticDailyUpdate'      => __( 'Plugin advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_themeAutomaticDailyUpdate'       => __( 'Theme advanced automatic updates enabled', 'mainwp' ),
+			'mainwp_numberdays_Outdate_Plugin_Theme' => __( 'Abandoned plugins/themes tolerance', 'mainwp' ),
 			'mainwp_maximumPosts'                    => __( 'Maximum number of posts to return', 'mainwp' ),
 			'mainwp_maximumPages'                    => __( 'Maximum number of pages to return', 'mainwp' ),
-			'mainwp_maximumComments'                 => __( 'Maximum Number of Comments', 'mainwp' ),
-			'mainwp_primaryBackup'                   => __( 'Primary Backup System', 'mainwp' ),
+			'mainwp_maximumComments'                 => __( 'Maximum number of comments', 'mainwp' ),
+			'mainwp_enableLegacyBackupFeature'       => __( 'MainWP legacy backups enabled', 'mainwp' ),
+			'mainwp_primaryBackup'                   => __( 'Primary backup system', 'mainwp' ),
+			'mainwp_disableSitesChecking'            => __( 'Basic uptime monitoring enabled', 'mainwp' ),
+			'mainwp_disableSitesHealthMonitoring'    => __( 'Site health monitoring enabled', 'mainwp' ),
 			'mainwp_maximumRequests'                 => __( 'Maximum simultaneous requests', 'mainwp' ),
 			'mainwp_minimumDelay'                    => __( 'Minimum delay between requests', 'mainwp' ),
 			'mainwp_maximumIPRequests'               => __( 'Maximum simultaneous requests per ip', 'mainwp' ),
@@ -808,6 +813,8 @@ class MainWP_Server_Information_Handler {
 			'mainwp_maximumInstallUpdateRequests'    => __( 'Minimum simultaneous install/update requests', 'mainwp' ),
 			'mainwp_maximumSyncRequests'             => __( 'Maximum simultaneous sync requests', 'mainwp' ),
 			'mainwp_maximumInstallUpdateRequests'    => __( 'Maximum simultaneous install and update requests', 'mainwp' ),
+			'mainwp_enable_rest_api'                 => __( 'REST API enabled', 'mainwp' ),
+			'mainwp_auto_purge_cache'                => __( 'Cache control enabled', 'mainwp' ),
 		);
 
 		if ( ! is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
@@ -823,7 +830,7 @@ class MainWP_Server_Information_Handler {
 					$value = MainWP_DB::instance()->get_websites_count();
 					break;
 				case 'mainwp_primaryBackup':
-					$value = __( 'Default MainWP Backups', 'mainwp' );
+					$value = __( 'MainWP Legacy Backups', 'mainwp' );
 					break;
 				case 'mainwp_numberdays_Outdate_Plugin_Theme':
 				case 'mainwp_maximumPosts':
@@ -831,13 +838,6 @@ class MainWP_Server_Information_Handler {
 				case 'mainwp_maximumComments':
 				case 'mainwp_maximumSyncRequests':
 				case 'mainwp_maximumInstallUpdateRequests':
-					break;
-				case 'mainwp_automaticDailyUpdate':
-					if ( 1 == $value ) {
-						$value = 'Install trusted updates';
-					} else {
-						$value = 'Disabled';
-					}
 					break;
 				case 'mainwp_maximumRequests':
 					$value = ( false === $value ) ? 4 : $value;
@@ -856,6 +856,12 @@ class MainWP_Server_Information_Handler {
 					break;
 				case 'mainwp_maximumInstallUpdateRequests':
 					$value = ( false === $value ) ? 3 : $value;
+					break;
+				case 'mainwp_disableSitesChecking':
+					$value = empty( $value ) ? __( 'Yes', 'mainwp' ) : __( 'No', 'mainwp' );
+					break;
+				case 'mainwp_disableSitesHealthMonitoring':
+					$value = empty( $value ) ? __( 'Yes', 'mainwp' ) : __( 'No', 'mainwp' );
 					break;
 				default:
 					$value = empty( $value ) ? __( 'No', 'mainwp' ) : __( 'Yes', 'mainwp' );

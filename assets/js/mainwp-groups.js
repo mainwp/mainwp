@@ -170,10 +170,10 @@ jQuery( document ).ready( function () {
   // Load group sites
   show_group_items = function( group ) {
     var groupID = jQuery( group ).attr( 'id' );
-    var data = {
+    var data = mainwp_secure_data( {
   		action: 'mainwp_group_getsites',
   		groupId: groupID
-  	}
+  	} );
   	jQuery( '.dimmer' ).addClass( 'active' );
     jQuery.post( ajaxurl, data, function ( response ) {
   		jQuery( '.dimmer' ).removeClass( 'active' );

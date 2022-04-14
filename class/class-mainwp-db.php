@@ -345,8 +345,26 @@ class MainWP_DB extends MainWP_DB_Base {
 		$where = $this->get_sql_where_allow_access_sites( 'wp' );
 		$sql   = 'SELECT wp.*
 				FROM ' . $this->table_name( 'wp' ) . ' wp
-				WHERE wp.disable_status_check <> 1 AND ( ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )
-				OR ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) ) )' .
+				WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval = 0 AND wp.offline_checks_last < ' . intval( $last_check ) . ' )' .
+				$where . '
+				LIMIT ' . intval( $count );
+		return $sql;
+	}
+
+
+	/**
+	 * Get child sites to run the status individual check process.
+	 *
+	 * @param int $last_check Time of the last check.
+	 * @param int $count      Number of websites.
+	 *
+	 * @return string SQL string.
+	 */
+	public function get_sql_websites_to_check_individual_status( $count = 20 ) {
+		$where = $this->get_sql_where_allow_access_sites( 'wp' );
+		$sql   = 'SELECT wp.*
+				FROM ' . $this->table_name( 'wp' ) . ' wp
+				WHERE wp.disable_status_check <> 1 AND ( wp.status_check_interval <> 0 AND ( wp.offline_checks_last + wp.status_check_interval * 60 < UNIX_TIMESTAMP() ) )' .
 				$where . '
 				LIMIT ' . intval( $count );
 		return $sql;

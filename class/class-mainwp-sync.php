@@ -145,7 +145,7 @@ class MainWP_Sync {
 				$sync_errors  = __( 'HTTP error', 'mainwp' ) . ( $e->get_message_extra() != null ? ' - ' . $e->get_message_extra() : '' );
 				$check_result = - 1;
 			} elseif ( $e->getMessage() == 'NOMAINWP' ) {
-				$sync_errors  = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' );
+				$sync_errors  = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				$check_result = 1;
 			}
 

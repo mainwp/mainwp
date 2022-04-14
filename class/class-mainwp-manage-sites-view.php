@@ -1639,7 +1639,7 @@ class MainWP_Manage_Sites_View {
 				if ( 'HTTPERROR' == $e->getMessage() ) {
 					$error = 'HTTP error' . ( null != $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
 				} elseif ( 'NOMAINWP' == $e->getMessage() ) {
-					$error = __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' );
+					$error = sprintf( __( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests. If you continue experiencing this issue, check the %sMainWP Community%s for help.', 'mainwp' ), '<a href="https://managers.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
 				} else {
 					$error = $e->getMessage();
 				}

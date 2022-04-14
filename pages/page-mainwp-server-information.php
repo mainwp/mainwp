@@ -1462,7 +1462,7 @@ class MainWP_Server_Information {
 					<div id="mainwp-plugin-privacy" class="ui piled segment">
 						<h2 class="ui header">
 							<?php echo __( 'MainWP Dashboard Plugin Privacy Policy', 'mainwp' ); ?>
-							<div class="sub header"><em><?php echo __( 'Last updated: March 21, 2022', 'mainwp' ); ?></em></div>
+							<div class="sub header"><em><?php echo __( 'Last updated: April 14, 2022', 'mainwp' ); ?></em></div>
 						</h2>
 						<p><?php echo __( 'We value your privacy very highly. Please read this Privacy Policy carefully before using the MainWP Dashboard Plugin ("Plugin") operated by Sick Marketing, LLC d/b/a MainWP, a Limited Liability Company formed in Nevada, United States ("us","we","our") as this Privacy Policy contains important information regarding your privacy.', 'mainwp' ); ?></p>
 						<p><?php echo __( 'Your access to and use of the Plugin is conditional upon your acceptance of and compliance with this Privacy Policy. This Privacy Policy applies to everyone accessing or using the Plugin.', 'mainwp' ); ?></p>
@@ -1489,11 +1489,22 @@ class MainWP_Server_Information {
 							<div class="column">
 								<h3 class="ui header"><?php echo __( 'Our representative\'s contact information', 'mainwp' ); ?></h3>
 								<p><?php echo __( 'If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following:', 'mainwp' ); ?></p>
-								<div class="item"><?php echo __( 'Osano International Compliance Services Limited', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'ATTN: NT2D', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( '25/28 North Wall Quay', 'mainwp' ); ?></div>
-								<div class="item"><?php echo __( 'Dublin 1, D01 H104', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Ametros Ltd', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Unit 3D', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'North Point House', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'North Point Business Park', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'New Mallow Road', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Cork', 'mainwp' ); ?></div>
 								<div class="item"><?php echo __( 'Ireland', 'mainwp' ); ?></div>
+								<div class="ui hidden divider"></div>
+								<p><?php echo __( 'If you are a resident of the United Kingdom, you may contact our representative at the following:', 'mainwp' ); ?></p>
+								<div class="item"><?php echo __( 'Ametros Group Ltd', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Lakeside Offices', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Thorn Business Park', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Hereford', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'Herefordshire', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'HR2 6JT', 'mainwp' ); ?></div>
+								<div class="item"><?php echo __( 'England', 'mainwp' ); ?></div>
 							</div>
 						</div>
 					</div>

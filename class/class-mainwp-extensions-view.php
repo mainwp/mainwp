@@ -1151,9 +1151,9 @@ class MainWP_Extensions_View {
 				'integration_owner_1'    => 'National Institute of Standards and Technology',
 				'integration_owner_pp_1' => 'https://www.nist.gov/privacy-policy',
 			),
-			'mainwp-time-capsule-extension'          =>
+			'mainwp-timecapsule-extension'          =>
 			array(
-				'slug'                 => 'mainwp-time-capsule-extension',
+				'slug'                 => 'mainwp-timecapsule-extension',
 				'title'                => 'MainWP Time Capsule Extension',
 				'desc'                 => 'With the MainWP Time Capsule Extension, you can control the WP Time Capsule Plugin on all your child sites directly from your MainWP Dashboard. This includes the ability to create your child site backups and even restore your child sites to a point back in time directly from your dashboard.',
 				'link'                 => 'https://mainwp.com/extension/time-capsule/',

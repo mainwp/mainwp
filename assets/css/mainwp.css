@@ -7,7 +7,6 @@
   width: calc( 100% - 298px );
     padding-right: 1em;
   padding-bottom: 1em;
-  border-left: 1px solid #dadada;
   border-right: 1px solid #dadada;
   float: left;
   margin-right: -1px !important;
@@ -41,6 +40,8 @@
 .mainwp-sidebar-left .mainwp-main-content {
     float: right;
     padding-left: 1em;
+    border-left: 1px solid #dadada;
+    border-right: 0px solid #dadada !important;
 }
 
 .mainwp-sidebar-accordion .title {

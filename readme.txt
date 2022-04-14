@@ -182,12 +182,19 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 
 = 4.2.1 - 4-14-2022 =
 * Added: More MainWP Dashboard settings values to the system report
+* Added: UK representative to privacy policy
 * Fixed: `NEW` label placement
 * Fixed: PHP warning `Illegal string offset 'login'`
 * Fixed: PHP warning `Illegal string offset 'id'`
+* Fixed: PHP warning `Undefined array key 'privacy'`
 * Fixed: Cache control log table layout
+* Fixed: Incomplete error message that appears after trying to reconnect a site
+* Updated: Plugin Privacy Policy page
+* Updated: `privacy-policy.txt` file
+* Updated: `mainwp-child-privacy-policy.txt` file
 * Updated: `meta.mainwp.com` URLs changed to `managers.mainwp.com`
 * Updated: Removed the `NEW` label from menu items
+* Updated: Main content area border removed
 
 = 4.2 - 4-5-2022 =
 * Fixed: Error with updating sites via CLI

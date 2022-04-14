@@ -355,7 +355,6 @@ class MainWP_DB extends MainWP_DB_Base {
 	/**
 	 * Get child sites to run the status individual check process.
 	 *
-	 * @param int $last_check Time of the last check.
 	 * @param int $count      Number of websites.
 	 *
 	 * @return string SQL string.

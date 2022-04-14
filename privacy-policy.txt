@@ -17,6 +17,7 @@ Third-party extensions and integrations
 This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them. 
 
 Our contact information 
+
 If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following: 
 
 Sick Marketing, LLC d/b/a MainWP
@@ -28,6 +29,7 @@ Las Vegas, NV 89126
 United States 
 
 Our representative’s contact information 
+
 If you are a resident of the European Union or the European Economic Area, you may also contact our representative at the following: 
 
 Osano International Compliance Services Limited 

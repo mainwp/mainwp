@@ -375,7 +375,7 @@ class MainWP_System_Cron_Jobs {
 			if ( $local_timestamp > $run_timestamp ) {
 				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
 			}
-		}
+			}
 
 		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 
@@ -1611,6 +1611,29 @@ class MainWP_System_Cron_Jobs {
 			return;
 		}
 
+		/**
+		 * Filter: mainwp_check_sites_status_chunk_size
+		 *
+		 * Filters the chunk size (number of sites) to process in status check action.
+		 *
+		 * @since Unknown
+		 */
+		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 5 );
+
+		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_individual_status( $chunkSize ) );
+		// start notice.
+		if ( empty( $websites ) ) {
+			$plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
+			$this->start_notification_uptime_status( $plain_text );
+		}
+
+		while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+			MainWP_Monitoring_Handler::handle_check_website( $website );
+		}
+		MainWP_DB::free_result( $websites );
+
+		// global settings sites check.
+
 		$running           = get_option( 'mainwp_cron_checksites_running' );
 		$freq_minutes      = get_option( 'mainwp_frequencySitesChecking', 60 );
 		$lasttime_to_check = get_option( 'mainwp_cron_checksites_last_timestamp', 0 ); // get last check time to continue.
@@ -1625,15 +1648,6 @@ class MainWP_System_Cron_Jobs {
 				return; // to run next time.
 			}
 		}
-
-		/**
-		 * Filter: mainwp_check_sites_status_chunk_size
-		 *
-		 * Filters the chunk size (number of sites) to process in status check action.
-		 *
-		 * @since Unknown
-		 */
-		$chunkSize = apply_filters( 'mainwp_check_sites_status_chunk_size', 10 );
 
 		$websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_to_check_status( $lasttime_to_check, $chunkSize ) );
 
@@ -1652,7 +1666,6 @@ class MainWP_System_Cron_Jobs {
 		}
 		MainWP_DB::free_result( $websites );
 	}
-
 
 	/**
 	 * Method start_notification_uptime_status().

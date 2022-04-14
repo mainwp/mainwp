@@ -530,10 +530,10 @@ class MainWP_Auto_Cache_Purge_View {
 				<?php echo __( 'See the Cache Control feature logs.', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
-		<table class="ui celled table" id="mainwp-cache-control-log-table">
+		<table class="ui single line table" id="mainwp-cache-control-log-table">
 			<thead>
 			<tr>
-					<th class=""><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
+					<th class="collapsing"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
 					<th class="no-sort collapsing"><i class="sign in icon"></i></th>
 				<th><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
 			</tr>
@@ -544,7 +544,12 @@ class MainWP_Auto_Cache_Purge_View {
 		</table>
 
 		<script type="text/javascript">
-			jQuery( '#mainwp-cache-control-log-table' ).DataTable();
+			jQuery( '#mainwp-cache-control-log-table' ).DataTable( {
+				"columnDefs": [ {
+					"targets": 'no-sort',
+					"orderable": false
+				} ],
+			} );
 		</script>
 		<?php
 		/**

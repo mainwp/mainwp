@@ -1151,7 +1151,7 @@ class MainWP_Extensions_View {
 				'integration_owner_1'    => 'National Institute of Standards and Technology',
 				'integration_owner_pp_1' => 'https://www.nist.gov/privacy-policy',
 			),
-			'mainwp-timecapsule-extension'          =>
+			'mainwp-timecapsule-extension' =>
 			array(
 				'slug'                 => 'mainwp-timecapsule-extension',
 				'title'                => 'MainWP Time Capsule Extension',

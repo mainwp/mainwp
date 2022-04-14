@@ -375,7 +375,7 @@ class MainWP_System_Cron_Jobs {
 			if ( $local_timestamp > $run_timestamp ) {
 				$frequence_now = floor( ( $local_timestamp - $run_timestamp ) / $frequence_period_in_seconds );
 			}
-			}
+		}
 
 		$today_m_y = date( 'd/m/Y', $local_timestamp ); //phpcs:ignore -- local time.
 

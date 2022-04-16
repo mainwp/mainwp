@@ -329,9 +329,9 @@ class MainWP_Auto_Cache_Purge_View {
 			$output_format = 'F j, Y g:ia';
 
 			// Now we can use our timestamp with get_date_from_gmt().
-			$local_timestamp = get_date_from_gmt( $utc_timestamp_converted, $output_format );
+			$local_timestamp = MainWP_Utility::format_timestamp( get_date_from_gmt( $utc_timestamp_converted, $output_format ) );
 
-			// Save local timestamp.
+			// Save local timestamp..
 			$item['mainwp_cache_control_last_purged'] = $local_timestamp;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';

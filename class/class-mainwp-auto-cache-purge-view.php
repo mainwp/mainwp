@@ -316,26 +316,26 @@ class MainWP_Auto_Cache_Purge_View {
 		$last_purged    = isset( $site_options['mainwp_cache_control_last_purged'] ) ? $site_options['mainwp_cache_control_last_purged'] : 0;
 		$cache_solution = isset( $site_options['mainwp_cache_control_cache_solution'] ) ? $site_options['mainwp_cache_control_cache_solution'] : '';
 
-        // Display Last Purged Cache timestamp.
-        if ( ! empty( $last_purged ) ) {
+		// Display Last Purged Cache timestamp.
+		if ( ! empty( $last_purged ) ) {
 
-            // Grab UTC Timestamp and convert to local time.
-            $utc_timestamp = $last_purged;
-
+			// Grab UTC Timestamp and convert to local time.
+			$utc_timestamp = $last_purged;
+            
             // This is a format that date_create() will accept.
             $utc_timestamp_converted = gmdate( 'Y-m-d H:i:s', $utc_timestamp );
 
-            // Format our output.
-            $output_format = 'F j, Y g:ia';
+			// Format our output.
+			$output_format = 'F j, Y g:ia';
 
-            // Now we can use our timestamp with get_date_from_gmt().
-            $local_timestamp = get_date_from_gmt( $utc_timestamp_converted, $output_format );
+			// Now we can use our timestamp with get_date_from_gmt().
+			$local_timestamp = get_date_from_gmt( $utc_timestamp_converted, $output_format );
 
-            // Save local timestamp.
-            $item['mainwp_cache_control_last_purged'] = $local_timestamp;
-        } else {
-            $item['mainwp_cache_control_last_purged'] = 'Never Purged';
-        }
+			// Save local timestamp.
+			$item['mainwp_cache_control_last_purged'] = $local_timestamp;
+		} else {
+			$item['mainwp_cache_control_last_purged'] = 'Never Purged';
+		}
 
 		// Check if CloudFlare has been enabled & display correctly.
 		if ( ! empty( $cache_solution ) && 'Cloudflare' !== $cache_solution ) {

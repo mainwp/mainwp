@@ -323,7 +323,7 @@ class MainWP_Auto_Cache_Purge_View {
             $utc_timestamp = $last_purged;
 
             // This is a format that date_create() will accept.
-            $utc_timestamp_converted = date( 'Y-m-d H:i:s', $utc_timestamp );
+            $utc_timestamp_converted = gmdate( 'Y-m-d H:i:s', $utc_timestamp );
 
             // Format our output.
             $output_format = 'F j, Y g:ia';

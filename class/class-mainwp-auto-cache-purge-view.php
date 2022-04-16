@@ -323,7 +323,7 @@ class MainWP_Auto_Cache_Purge_View {
             $dt_gmt = gmdate( 'Y-m-d H:i:s', $last_purged );
 
             // Convert GMT into chosen WP DateTime formats.
-            $local_timestamp = date_i18n(get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( get_date_from_gmt( $dt_gmt ) ) );
+            $local_timestamp = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( get_date_from_gmt( $dt_gmt ) ) );
 
             // Save local timestamp..
 			$item['mainwp_cache_control_last_purged'] = $local_timestamp;

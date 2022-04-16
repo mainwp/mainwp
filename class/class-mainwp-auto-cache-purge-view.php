@@ -319,19 +319,13 @@ class MainWP_Auto_Cache_Purge_View {
 		// Display Last Purged Cache timestamp.
 		if ( ! empty( $last_purged ) ) {
 
-			// Grab UTC Timestamp and convert to local time.
-			$utc_timestamp = $last_purged;
+			// Grab last purged timestamp & convert UTC to GMT - This is a format that date_i18n() will accept.
+            $dt_gmt = gmdate( 'Y-m-d H:i:s', $last_purged );
 
-			// This is a format that date_create() will accept.
-			$utc_timestamp_converted = gmdate( 'Y-m-d H:i:s', $utc_timestamp );
+            // Convert GMT into chosen WP DateTime formats.
+            $local_timestamp = date_i18n(get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( get_date_from_gmt( $dt_gmt ) ) );
 
-			// Format our output.
-			$output_format = 'F j, Y g:ia';
-
-			// Now we can use our timestamp with get_date_from_gmt().
-			$local_timestamp = MainWP_Utility::format_timestamp( get_date_from_gmt( $utc_timestamp_converted, $output_format ) );
-
-			// Save local timestamp..
+            // Save local timestamp..
 			$item['mainwp_cache_control_last_purged'] = $local_timestamp;
 		} else {
 			$item['mainwp_cache_control_last_purged'] = 'Never Purged';

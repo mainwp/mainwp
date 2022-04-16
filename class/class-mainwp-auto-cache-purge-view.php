@@ -321,7 +321,7 @@ class MainWP_Auto_Cache_Purge_View {
 
 			// Grab UTC Timestamp and convert to local time.
 			$utc_timestamp = $last_purged;
-            
+
             // This is a format that date_create() will accept.
             $utc_timestamp_converted = gmdate( 'Y-m-d H:i:s', $utc_timestamp );
 

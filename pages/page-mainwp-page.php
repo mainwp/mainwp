@@ -1109,7 +1109,7 @@ class MainWP_Page {
 						<a href="<?php echo esc_html( $website->url ); ?>" class="mainwp-may-hide-referrer" target="_blank"><?php echo esc_html( $website->url ); ?></a>
 					</td>
 					<td class="right aligned">
-						<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
+						<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 							<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 							<div class="menu">
 								<?php if ( 'future' == $page['status'] || 'draft' == $page['status'] ) : ?>

@@ -107,6 +107,7 @@
 		display: block !important;
 	}
 
+
 	/*--- Tables ---*/
 
 	.mainwp-ui .ui.table:not(.unstackable) thead tr th,
@@ -232,6 +233,21 @@
 	}
 
 	/* --- Users --- */
+
+	.mainwp-ui .ui.button.wp-generate-pw {
+		margin-bottom: 0px !important;
+		display: block !important;
+	}
+
+	.mainwp-ui #mainwp-add-new-user-form input#password {
+		display: block !important;
+		width: 100% !important;
+		border-right: 1px solid #eee !important;
+	}
+
+	.mainwp-ui #mainwp-add-new-user-form .ui.left.labeled.action.input {
+		display: block !important;
+	}
 
 	/* --- Extensions --- */
 

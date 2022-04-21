@@ -1,6 +1,17 @@
 /* eslint complexity: ["error", 100] */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
+
+// Temprary fix for the modal-scroll problem.
+EventTarget.prototype['addEventListenerBase'] = EventTarget.prototype.addEventListener;
+EventTarget.prototype.addEventListener = function(type, listener){
+	if(this !== document.querySelector('body') || type !== 'touchmove'){
+		this.addEventListenerBase(type, listener);
+	}
+};
+
+
+
 jQuery(document).ready(function ($) {
 
   // review for new UI update

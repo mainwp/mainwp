@@ -1121,7 +1121,7 @@ class MainWP_User {
 				<td class="posts column-posts"><a href="<?php echo admin_url( 'admin.php?page=PostBulkManage&siteid=' . intval( $website->id ) . '&userid=' . $user['id'] ); ?>"><?php echo esc_html( $user['post_count'] ); ?></a></td>
 				<td class="website column-website"><a href="<?php echo esc_url( $website->url ); ?>" target="_blank"><?php echo esc_html( $website->url ); ?></a></td>
 				<td class="right aligned">
-					<div class="ui right pointing dropdown icon mini basic green button" style="z-index: 999">
+					<div class="ui left pointing dropdown icon mini basic green button" style="z-index: 999">
 						<a href="javascript:void(0)"><i class="ellipsis horizontal icon"></i></a>
 						<div class="menu">
 							<a class="item user_getedit" href="#"><?php esc_html_e( 'Edit', 'mainwp' ); ?></a>

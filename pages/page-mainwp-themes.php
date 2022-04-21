@@ -383,7 +383,7 @@ class MainWP_Themes {
 		<div id="mainwp-manage-themes" class="ui alt segment">
 			<div class="mainwp-main-content">
 				<div class="ui mini form mainwp-actions-bar">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<div class="ui two column row">
 							<div class="column">
 								<button id="mainwp-install-themes-to-selected-sites" class="ui mini green basic button" style="display: none"><?php esc_html_e( 'Install to Selected Site(s)', 'mainwp' ); ?></button>
@@ -1057,7 +1057,7 @@ class MainWP_Themes {
 				</tr>
 			</tfoot>
 		</table>
-		<div class="ui horizontal list">
+		<div class="ui horizontal list" id="mainwp-manage-themes-table-legend">
 			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#e3ffa7;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active/Child theme', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
@@ -1248,7 +1248,7 @@ class MainWP_Themes {
 		<div class="ui alt segment" id="mainwp-install-themes">
 			<div class="mainwp-main-content">
 				<div class="mainwp-actions-bar">
-					<div class="ui grid">
+					<div class="ui stackable grid">
 						<div class="ui two column row">
 							<div class="column">
 								<div class="ui fluid search focus">
@@ -1486,17 +1486,13 @@ class MainWP_Themes {
 			<div class="ui alt segment" id="mainwp-theme-auto-updates">
 				<div class="mainwp-main-content">
 					<div class="mainwp-actions-bar">
-						<div class="ui grid">
+						<div class="ui mini form stackable grid">
 							<div class="ui two column row">
-								<div class="column">
-									<div class="alignleft">
-										<?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?>
-										<div id="mainwp-bulk-actions" name="bulk_action" class="ui dropdown">
-											<div class="text"><?php esc_html_e( 'Select actions', 'mainwp' ); ?></div>
-											<i class="dropdown icon"></i>
-											<div class="menu">
-												<div class="item" data-value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></div>
-												<div class="item" data-value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></div>
+								<div class="left aligned column">
+									<select id="mainwp-bulk-actions" name="bulk_action" class="ui selection dropdown">
+										<option class="item" value=""><?php esc_html_e( 'Bulk Actions', 'mainwp' ); ?></option>
+										<option class="item" value="trust"><?php esc_html_e( 'Trust', 'mainwp' ); ?></option>
+										<option class="item" value="untrust"><?php esc_html_e( 'Untrust', 'mainwp' ); ?></option>
 												<?php
 												/**
 												 * Action: mainwp_themes_auto_updates_bulk_action
@@ -1507,16 +1503,13 @@ class MainWP_Themes {
 												 */
 												do_action( 'mainwp_themes_auto_updates_bulk_action' );
 												?>
-											</div>
-										</div>
+										</select>
 										<input type="button" name="" id="mainwp-bulk-trust-themes-action-apply" class="ui mini basic button" value="<?php esc_attr_e( 'Apply', 'mainwp' ); ?>"/>
 									</div>
-								</div>
 								<div class="right aligned column"></div>
 							</div>
 						</div>
 					</div>
-
 					<?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : ?>
 						<div class="ui message green"><?php esc_html_e( 'Settings have been saved.', 'mainwp' ); ?></div>
 					<?php endif; ?>

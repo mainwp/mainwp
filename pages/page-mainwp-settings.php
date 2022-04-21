@@ -1475,7 +1475,7 @@ class MainWP_Settings {
 							<div class="six wide column">
 							</div>
 							<div class="ten wide column">
-								<a id="generate-new-api-credentials" href="#" data-tooltip="<?php esc_attr_e( 'Generate new API credentials.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green mini button"><?php esc_html_e( 'Generate new API credentials.', 'mainwp' ); ?></a>	
+								<a id="generate-new-api-credentials" href="#" data-tooltip="<?php esc_attr_e( 'Generate new API credentials.', 'mainwp' ); ?>" data-position="left center" data-inverted="" class="ui green button"><?php esc_html_e( 'Generate New API Credentials.', 'mainwp' ); ?></a>	
 							</div>
 						</div>
 						<div class="ui grid field">

@@ -1139,7 +1139,7 @@ class MainWP_Plugins {
 				</tr>
 			</tfoot>
 			</table>
-		<div class="ui horizontal list">
+		<div class="ui horizontal list" id="mainwp-manage-plugins-table-legend">
 			<div class="item"><a class="ui empty circular label" style="background:#f7ffe6;border:1px solid #7fb100;"></a> <?php echo esc_html__( 'Installed/Active', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#fff4e4;border:1px solid #ffd598;"></a> <?php echo esc_html__( 'Installed/Active/Must Use', 'mainwp' ); ?></div>
 			<div class="item"><a class="ui empty circular label" style="background:#ffe7e7;border:1px solid #910000;"></a> <?php echo esc_html__( 'Installed/Inactive', 'mainwp' ); ?></div>
@@ -1424,7 +1424,7 @@ class MainWP_Plugins {
 			<div class="ui alt segment" id="mainwp-plugin-auto-updates">
 				<div class="mainwp-main-content">
 					<div class="mainwp-actions-bar">
-						<div class="ui mini form grid">
+						<div class="ui mini form stackable grid">
 							<div class="ui two column row">
 								<div class="left aligned column">
 									<select id="mainwp-bulk-actions" name="bulk_action" class="ui selection dropdown">

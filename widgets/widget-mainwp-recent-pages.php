@@ -114,11 +114,11 @@ class MainWP_Recent_Pages {
 		?>
 		<div class="ui hidden divider"></div>
 
-		<div class="ui two column grid">
-			<div class="column">
+		<div class="ui stackable grid">
+			<div class="eight wide column">
 				<a href="<?php echo admin_url( 'admin.php?page=PageBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Pages', 'mainwp' ); ?></a>
 			</div>
-			<div class="column right aligned">
+			<div class="eight wide column right aligned">
 				<a href="<?php echo admin_url( 'admin.php?page=PageBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Page', 'mainwp' ); ?></a>
 			</div>
 		</div>

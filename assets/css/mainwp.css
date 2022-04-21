@@ -282,14 +282,15 @@ table#mainwp-manage-sites-table .error a {
 }
 
 .mainwp-ui .wrap {
-    margin: 0 0 0 200px
+    margin: 0 0 0 200px;
 }
 
+.mainwp-ui .mainwp-nav-wrap.hoverli {
+    background-color: #1c1d1b !important;
+}
 
 /* END V4
 ********************************************************************************/
-
-
 
 .mainwp-action-row {
     min-height: 20px;

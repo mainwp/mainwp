@@ -1290,14 +1290,14 @@ class MainWP_Manage_Sites_View {
 		<div class="ui info message">
 			<?php esc_html_e( 'Email notifications sent from MainWP Dashboard about this child site are listed below.  Click on an email to configure it.', 'mainwp' ); ?>
 		</div>
-			<table class="ui single line table" id="mainwp-emails-settings-table">
+			<table class="ui table" id="mainwp-emails-settings-table">
 				<thead>
 					<tr>						
 						<th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>						
-						<th style="text-align:right"></th>
+						<th class="no-sort collapsing" style="text-align:right">&nbsp;</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1323,7 +1323,7 @@ class MainWP_Manage_Sites_View {
 						<th><?php esc_html_e( 'Email', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Description', 'mainwp' ); ?></th>
 						<th><?php esc_html_e( 'Recipient(s)', 'mainwp' ); ?></th>
-						<th></th>
+						<th>&nbsp;</th>
 					</tr>
 				</tfoot>
 			</table>
@@ -1345,7 +1345,7 @@ class MainWP_Manage_Sites_View {
 					"stateSave":  true,
 					"paging":   false,
 					"ordering": true,
-					"columnDefs": [ { "orderable": false, "targets": [ 0, 3 ] } ],
+					"columnDefs": [ { "orderable": false, "targets": [ 4 ] } ],
 					"order": [ [ 1, "asc" ] ]
 				} );
 			} );

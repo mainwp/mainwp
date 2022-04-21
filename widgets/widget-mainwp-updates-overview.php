@@ -489,8 +489,8 @@ class MainWP_Updates_Overview {
 			 */
 			do_action( 'mainwp_updates_overview_before_total_updates' );
 			?>
-			<div class="ui two column stackable grid">
-				<div class="column">
+			<div class="ui stackable grid">
+				<div class="eight wide column">
 					<div class="ui large statistic horizontal">
 						<div class="value">
 						<?php echo $total_upgrades; ?>
@@ -500,7 +500,7 @@ class MainWP_Updates_Overview {
 					</div>
 					</div>
 				</div>
-				<div class="column middle aligned">
+				<div class="eight wide column middle aligned">
 				<?php
 				/**
 				 * Filter:  mainwp_update_everything_button_text
@@ -512,7 +512,7 @@ class MainWP_Updates_Overview {
 				if ( $can_total_update ) :
 					?>
 					<?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
-					<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
+						<a href="#" <?php echo 0 == $total_upgrades ? 'disabled' : 'onClick="return updatesoverview_global_upgrade_all( \'all\' );"'; ?> class="ui big button fluid green" id="mainwp-update-everything-button" data-tooltip="<?php esc_attr_e( 'Clicking this button will update all Plugins, Themes, WP Core files and translations on All your websites.', 'mainwp' ); ?>" data-inverted="" data-position="top center"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', __( 'Update Everything', 'mainwp' ) ) ); ?></a>
 			<?php endif; ?>
 		<?php endif; ?>
 				</div>

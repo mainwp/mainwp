@@ -493,7 +493,7 @@ class MainWP_Post_Page_Handler {
 
 				// to fix.
 				$post_status = $_post->post_status;
-				if ( 'public' == $post_status ) {
+				if ( 'publish' == $post_status ) {
 					$post_status = get_post_meta( $id, '_edit_post_status', true );
 				}
 

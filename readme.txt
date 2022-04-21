@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 5.4
 Tested up to: 5.9.2
 Requires PHP: 7.0
-Stable tag: 4.2.1
+Stable tag: 4.2.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,16 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 9. Global Dashboard Screen
 
 == Changelog ==
+
+= 4.2.2 - 4-21-2022 =
+* Fixed: An issue with scrolling content in modals on mobile devices
+* Fixed: An issue with pushing posts and pages with status `draft`
+* Fixed: Grid columns responsiveness issues
+* Fixed: Tables responsiveness issues
+* Fixed: An issue with rendering modals on mobile devices
+* Fixed: Column sorting problems in the Manage Email Settings table
+* Updated: Bulk actions menu style on the Advanced Themes Automatic Updates page
+* Updated: Various minor cosmetic improvements
 
 = 4.2.1 - 4-14-2022 =
 * Added: More MainWP Dashboard settings values to the system report

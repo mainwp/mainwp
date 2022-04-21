@@ -173,7 +173,7 @@ class MainWP_Manage_Groups {
 			 */
 			do_action( 'mainwp_before_groups_table' );
 			?>
-			<div class="ui grid">
+			<div class="ui stackable grid">
 				<div class="<?php echo 1 == $sidebarPosition ? 'twelve' : 'four'; ?> wide column">
 					<?php if ( 1 == $sidebarPosition ) : ?>
 						<?php echo self::render_groups_sites_table_element(); ?>
@@ -239,7 +239,7 @@ class MainWP_Manage_Groups {
 					</div>
 				</div>
 				<div class="actions">
-					<div class="ui two columns grid">
+					<div class="ui two columns stackable grid">
 						<div class="left aligned column">
 							<a class="ui green button" id="mainwp-update-new-group-button" href="#"><?php echo __( 'Update Group', 'mainwp' ); ?></a>
 						</div>
@@ -286,7 +286,7 @@ class MainWP_Manage_Groups {
 			<h4 class="item ui header"><?php esc_html_e( 'Sites Groups', 'mainwp' ); ?></h4>
 			<?php echo self::get_group_list_content(); ?>
 			<div class="item">
-				<div class="ui two columns grid">
+				<div class="ui two columns stackable grid">
 					<div class="left aligned column">
 						<a href="#" class="ui tiny green button" id="mainwp-new-sites-group-button" data-inverted="" data-position="top left" data-tooltip="<?php esc_attr_e( 'Click here to create a new group.', 'mainwp' ); ?>"><?php esc_html_e( 'New Group', 'mainwp' ); ?></a>
 					</div>

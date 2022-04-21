@@ -102,8 +102,8 @@ class MainWP_Security_Issues_Widget {
 		do_action( 'mainwp_security_issues_widget_top' );
 		if ( $total_securityIssues > 0 ) {
 			?>
-		<div class="ui two column grid stackable">
-			<div class="column">
+		<div class="ui stackable grid">
+			<div class="eight wide column">
 				<div class="ui horizontal statistics">
 					<div class="statistic" style="margin: 0px;">
 						<div class="value">
@@ -115,7 +115,7 @@ class MainWP_Security_Issues_Widget {
 					</div>
 				</div>
 			</div>
-			<div class="column right aligned">
+			<div class="eight wide column right aligned">
 				<a href="#" class="ui button basic" id="show-security-issues-widget-list" data-tooltip="<?php esc_attr_e( 'Click here to see the list of all sites and detected security issues.', 'mainwp' ); ?>" data-inverted=""><?php esc_html_e( 'See Details', 'mainwp' ); ?></a>
 				<input type="button" class="fix-all-security-issues ui button green" value="<?php esc_html_e( 'Fix All Issues', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Clicking this buttin will resolve all detected security issue on all your child sites.', 'mainwp' ); ?>" data-inverted=""/>
 			</div>

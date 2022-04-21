@@ -121,11 +121,11 @@ class MainWP_Recent_Posts {
 
 		<div class="ui hidden divider"></div>
 
-		<div class="ui two column grid">
-			<div class="column">
+		<div class="ui stackable grid">
+			<div class="eight wide column">
 				<a href="<?php echo admin_url( 'admin.php?page=PostBulkManage' ); ?>" title="" class="ui button green basic"><?php esc_html_e( 'Manage Posts', 'mainwp' ); ?></a>
 			</div>
-			<div class="column right aligned">
+			<div class="eight wide column right aligned">
 				<a href="<?php echo admin_url( 'admin.php?page=PostBulkAdd' ); ?>" title="" class="ui button green"><?php esc_html_e( 'Create New Post', 'mainwp' ); ?></a>
 			</div>
 		</div>

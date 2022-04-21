@@ -8,6 +8,7 @@
 		max-height: 75vh;
 		overflow-y: scroll;
 	}
+
 	#mainwp-updates-overview-menu,
 	#mainwp-updates-stats {
 		width: 100% !important;
@@ -16,7 +17,7 @@
 
 @media screen and ( max-width: 768px ) {
 
-	/*--- WO Overrides ---*/
+	/*--- WP Overrides ---*/
 
 	.mainwp-ui #wpcontent,
 	.mainwp-ui #wpbody {
@@ -25,6 +26,13 @@
 
 	/*--- General ---*/
 
+	.mainwp-ui [data-tooltip]:before,
+	.mainwp-ui [data-tooltip]:after { display: none !important; }
+
+	.mainwp-ui .ui.dropdown {
+		width: 100% !important;
+	}
+
 	.mainwp-nav-wrap {
 		width: 100%;
 		position: relative;
@@ -32,6 +40,10 @@
 
 	.mainwp-nav-wrap .ui.vertical.menu {
 		width: 100%;
+	}
+
+	#mainwp-version-label {
+		display: none !important;
 	}
 
 	.mainwp-content-wrap {
@@ -50,11 +62,16 @@
 
 	.mainwp-actions-bar .ui.buttons {
 		width: 100% !important;
-		margin-top: 1rem;
+		margin-bottom: 1rem !important;
 	}
 
-	.mainwp-actions-bar .ui.buttons .button:not(.mini) {
+	.mainwp-actions-bar .ui.buttons .button:not(.mini),
+	.mainwp-actions-bar .ui.buttons .button:not(.icon) {
 		width: auto !important;
+	}
+
+	#mainwp-top-header .ui.icon.button {
+		display: none !important;
 	}
 
 	#mainwp-top-header #mainwp-sync-sites {
@@ -63,15 +80,23 @@
 		margin-bottom: 20px;
 	}
 
+	.mainwp-widget .ui.icon.button {
+		width: auto !important;
+	}
+
 	.mainwp-side-content {
 		width: 100%;
 		border: none !important;
 		margin-top: 1rem;
 	}
 
-	.mainwp-ui .ui.button:not(.mini) {
-		width: auto;
-		display: inline-block;
+	.mainwp-side-content.mainwp-no-padding {
+		padding: 1em !important;
+	}
+
+	.mainwp-ui .ui.button:not(.mini),
+	.mainwp-ui .ui.button:not(.icon) {
+		width: 100%;
 		margin-left: 0 !important;
 		margin-right: 0 !important;
 		margin-bottom: 10px !important;
@@ -82,9 +107,23 @@
 		display: block !important;
 	}
 
+	/*--- Tables ---*/
+
+	.mainwp-ui .ui.table:not(.unstackable) thead tr th,
+	.mainwp-ui .ui.table:not(.unstackable) tbody tr td,
+	.mainwp-ui .ui.table:not(.unstackable) tfoot tr th, {
+		display: block !important;
+	}
+
 	.mainwp-ui .ui.table tr td {
 		text-align: left !important;
 	}
+
+	.mainwp-ui .ui.table tr td .ui.mini.button {
+		width: auto !important;
+		float: none !important;
+	}
+
 
 	/*--- Overview ---*/
 
@@ -121,9 +160,78 @@
 	#mainwp-install-themes-container {
 		margin-top: 1rem;
 	}
-	/* --- Users --- */
 
-	/*  -  Manage  -  */
+	.mainwp-ui .theme.card {
+		width: 100% !important;
+	}
+
+	#mainwp-manage-plugins-table,
+	#mainwp-manage-themes-table {
+		width: 100% !important;
+		height: auto !important
+	}
+
+	#mainwp-manage-themes-table tbody tr td:first-child {
+		background: #fff !important;
+	}
+
+	#mainwp-manage-themes-table tbody tr {
+		padding: 0px !important;
+	}
+	#mainwp-manage-themes-table tbody tr:hover {
+		background: #fff !important;
+	}
+
+	#mainwp-manage-themes-table tbody tr td:first-child {
+		background: #fff !important;
+	}
+
+	#mainwp-manage-plugins-table .ui.slider.checkbox,
+	#mainwp-manage-themes-table .ui.slider.checkbox {
+		display: none;
+	}
+
+	#mainwp-manage-themes .DTFC_LeftWrapper,
+	#mainwp-manage-themes .DTFC_RightWrapper {
+		display: none;
+	}
+
+	#mainwp-manage-plugins-table-legend .item,
+	#mainwp-manage-themes-table-legend .item {
+		display: block !important;
+	}
+
+	#mainwp-manage-plugins-table-legend .item:first-child,
+	#mainwp-manage-themes-table-legend .item:first-child {
+		margin-left: 1em !important;
+	}
+
+	#mainwp-manage-themes-table tfoot,
+	#mainwp-manage-plugins-table tfoot {
+		display: none !important;
+	}
+
+	#mainwp-manage-themes-table thead,
+	#mainwp-manage-plugins-table thead {
+		display: none !important;
+	}
+
+	#mainwp-manage-themes-table thead th.mainwp-first-th,
+	#mainwp-manage-plugins-table thead th.mainwp-first-th {
+		position: relative !important;
+		left: 0  !important;
+		top: 0  !important;
+		z-index: 0 !important;
+	}
+	#mainwp-manage-themes-table tbody tr td:first-child,
+	#mainwp-manage-plugins-table tbody tr td:first-child {
+		position: relative !important;
+		left: 0  !important;
+		top: 0  !important;
+		z-index: 0 !important;
+	}
+
+	/* --- Users --- */
 
 	/* --- Extensions --- */
 
@@ -183,12 +291,6 @@
 		display: inherit !important;
 	}
 
-	.mainwp-ui .ui.table:not(.unstackable) tr>td,
-	.mainwp-ui .ui.table:not(.unstackable) tr>th {
-		display: inline-block !important;
-		padding: .25em !important;
-	}
-
 	.mainwp-ui .ui.table#mainwp-plugins-updates-sites-inner-table td:first-child,
 	.mainwp-ui .ui.table#mainwp-themes-updates-sites-inner-table td:first-child {
 		font-weight: 400;
@@ -198,104 +300,150 @@
 		display:block !important;
 	}
 
-	#mainwp-http-response-issues-table thead th.sorting_asc:after,
-	#mainwp-http-response-issues-table thead th.sorting:after {
-		content: "";
+	#mainwp-manage-sites-content table.single.line,
+	#mainwp-posts-table,
+	#mainwp-pages-table,
+	#mainwp-manage-themes-table,
+	#mainwp-manage-plugins-table,
+	#mainwp-manage-themes-table table,
+	#mainwp-manage-plugins-table table,
+	#mainwp-wordpress-updates-groups-table,
+	#mainwp-plugins-updates-groups-table,
+	#mainwp-themes-updates-groups-table,
+	#mainwp-translations-groups-table,
+	#mainwp-abandoned-plugins-groups-table,
+	#mainwp-abandoned-themes-groups-table,
+	#mainwp-plugins-updates-sites-table,
+	#mainwp-themes-updates-sites-table,
+	#mainwp-abandoned-plugins-sites-table,
+	#mainwp-abandoned-themes-sites-table,
+	#mainwp-wordpress-updates-table,
+	#mainwp-plugins-updates-table,
+	#mainwp-themes-updates-table,
+	#mainwp-translations-sites-table,
+	#mainwp-abandoned-plugins-items-table,
+	#mainwp-abandoned-plugins-table,
+	#mainwp-abandoned-themes-table,
+	#mainwp-abandoned-themes-items-table,
+	#mainwp-all-active-plugins-table,
+	#mainwp-all-active-themes-table {
+		white-space: normal !important;
 	}
 
-	#mainwp-http-response-issues-table_wrapper .ui.stackable.grid>.row>.sixteen.wide.column {
-		padding: 0.125rem 0 !important;
+	#mainwp-wordpress-updates-groups-table .caret.right.icon,
+	#mainwp-plugins-updates-groups-table .caret.right.icon,
+	#mainwp-themes-updates-groups-table .caret.right.icon,
+	#mainwp-manage-themes-table .caret.right.icon,
+	#mainwp-manage-plugins-table .caret.right.icon,
+	#mainwp-translations-groups-table .caret.right.icon,
+	#mainwp-abandoned-plugins-groups-table .caret.right.icon,
+	#mainwp-abandoned-themes-groups-table .caret.right.icon,
+	#mainwp-plugins-updates-sites-table .caret.right.icon,
+	#mainwp-themes-updates-sites-table .caret.right.icon,
+	#mainwp-abandoned-plugins-sites-table .caret.right.icon,
+	#mainwp-abandoned-themes-sites-table .caret.right.icon,
+	#mainwp-wordpress-updates-table .caret.right.icon,
+	#mainwp-plugins-updates-table .caret.right.icon,
+	#mainwp-themes-updates-table .caret.right.icon,
+	#mainwp-abandoned-plugins-table .caret.right.icon,
+	#mainwp-abandoned-themes-table .caret.right.icon,
+	#mainwp-translations-sites-table .caret.right.icon,
+	#mainwp-abandoned-plugins-items-table .caret.right.icon,
+	#mainwp-abandoned-themes-items-table {
+		display: none !important;
 	}
 
-	/* PLUGINS */
-
-	#mainwp-plugins-updates-table thead tr th:nth-child(4),
-	#mainwp-plugins-updates-table tbody tr th:nth-child(4),
-	#mainwp-plugins-updates-table tbody tr td:nth-child(4),
-	#mainwp-plugins-updates-table tfoot tr th:nth-child(4) {
-		display:none !important;
+	#mainwp-wordpress-updates-groups-table th,
+	#mainwp-plugins-updates-groups-table th,
+	#mainwp-themes-updates-groups-table th,
+	#mainwp-manage-themes-table th,
+	#mainwp-manage-plugins-table th,
+	#mainwp-translations-groups-table th,
+	#mainwp-abandoned-plugins-groups-table th,
+	#mainwp-abandoned-themes-groups-table th,
+	#mainwp-plugins-updates-sites-table th,
+	#mainwp-themes-updates-sites-table th,
+	#mainwp-abandoned-plugins-sites-table th,
+	#mainwp-abandoned-themes-sites-table th,
+	#mainwp-wordpress-updates-table th,
+	#mainwp-plugins-updates-table th,
+	#mainwp-themes-updates-table th,
+	#mainwp-abandoned-plugins-table th,
+	#mainwp-abandoned-themes-table th,
+	#mainwp-translations-sites-table th,
+	#mainwp-abandoned-plugins-items-table th,
+	#mainwp-abandoned-themes-items-table th {
+		display: block !important;
 	}
 
-	/* updates - update all*/
-	#mainwp-plugins-updates-table thead tr th:nth-child(5) a:nth-child(2) {
-		display:none !important;
+	#mainwp-wordpress-updates-groups-table .accordion-trigger,
+	#mainwp-plugins-updates-groups-table .accordion-trigger,
+	#mainwp-themes-updates-groups-table .accordion-trigger,
+	#mainwp-manage-themes-table .accordion-trigger,
+	#mainwp-manage-plugins-table .accordion-trigger,
+	#mainwp-translations-groups-table .accordion-trigger,
+	#mainwp-abandoned-plugins-groups-table .accordion-trigger,
+	#mainwp-abandoned-themes-groups-table .accordion-trigger,
+	#mainwp-plugins-updates-sites-table .accordion-trigger,
+	#mainwp-themes-updates-sites-table .accordion-trigger,
+	#mainwp-abandoned-plugins-sites-table .accordion-trigger,
+	#mainwp-abandoned-themes-sites-table .accordion-trigger,
+	#mainwp-wordpress-updates-table .accordion-trigger,
+	#mainwp-plugins-updates-table .accordion-trigger,
+	#mainwp-themes-updates-table .accordion-trigger,
+	#mainwp-abandoned-plugins-table .accordion-trigger,
+	#mainwp-abandoned-themes-table .accordion-trigger,
+	#mainwp-translations-sites-table .accordion-trigger,
+	#mainwp-abandoned-plugins-items-table .accordion-trigger,
+	#mainwp-abandoned-themes-items-table .accordion-trigger {
+		display: none !important;
 	}
 
-	/* update all plugins */
-	tbody#plugins-updates-global tr.ui.title td a.ui.mini.button.green {
-		background: #fff;
-		color: #7fb100!important;
-		border-radius: .28571429rem;
-		-webkit-box-shadow: 0 0 0 1px #7fb100 inset!important;
-		box-shadow: 0 0 0 1px #7fb100 inset!important;
-	}
-
-	/* updates - ignore */
-	#mainwp-plugins-updates-table tbody tr th:nth-child(5) a:nth-child(1),
-	#mainwp-plugins-updates-table tbody tr td:nth-child(5) a:nth-child(1) {
-		display:none !important;
-	}
-
-	#mainwp-plugins-updates-sites-inner-table {
+	#mainwp-wordpress-updates-groups-table tr td .ui.button,
+	#mainwp-plugins-updates-groups-table tr td .ui.button,
+	#mainwp-themes-updates-groups-table tr td .ui.button,
+	#mainwp-manage-themes-table tr td .ui.button,
+	#mainwp-manage-plugins-table tr td .ui.button,
+	#mainwp-translations-groups-table tr td .ui.button,
+	#mainwp-abandoned-plugins-groups-table tr td .ui.button,
+	#mainwp-abandoned-themes-groups-table tr td .ui.button,
+	#mainwp-plugins-updates-sites-table tr td .ui.button,
+	#mainwp-themes-updates-sites-table tr td .ui.button,
+	#mainwp-abandoned-plugins-sites-table tr td .ui.button,
+	#mainwp-abandoned-themes-sites-table tr td .ui.button,
+	#mainwp-wordpress-updates-table tr td .ui.button,
+	#mainwp-plugins-updates-table tr td .ui.button,
+	#mainwp-themes-updates-table tr td .ui.button,
+	#mainwp-abandoned-plugins-table tr td .ui.button,
+	#mainwp-abandoned-themes-table tr td .ui.button,
+	#mainwp-translations-sites-table tr td .ui.button,
+	#mainwp-abandoned-plugins-items-table tr td .ui.button,
+	#mainwp-abandoned-themes-items-table tr td .ui.button {
+		display: block !important;
 		width: 100% !important;
 	}
 
-	#mainwp-plugins-updates-sites-inner-table thead {
-		display:none;
-	}
-
-	/* THEMES */
-	#mainwp-themes-updates-table thead tr th:nth-child(5) a:nth-child(2) {
-		display:none;
-	}
-
-	/* updates - trusted */
-	#mainwp-themes-updates-table thead tr th:nth-child(4),
-	#mainwp-themes-updates-table tbody tr th:nth-child(4),
-	#mainwp-themes-updates-table tfoot tr th:nth-child(4) {
-		display:none !important;
-	}
-
-	tbody#themes-updates-global tr.ui.title td:nth-child(4),
-	tbody#themes-updates-global tr.ui.title td:nth-child(5) a:nth-child(1) {
-		display:none !important;
-	}
-
-	/* update all themes */
-	tbody#themes-updates-global tr.ui.title td a.ui.mini.button.green {
-		background: #fff;
-		color: #7fb100!important;
-		border-radius: .28571429rem;
-		-webkit-box-shadow: 0 0 0 1px #7fb100 inset!important;
-		box-shadow: 0 0 0 1px #7fb100 inset!important;
-	}
-
-	/* updates - trusted */
-	#mainwp-themes-updates-sites-inner-table tbody tr td:nth-child(4) a:nth-child(1){
-		display:none;
-	}
-
-	#mainwp-themes-updates-sites-inner-table {
-		width: 100% !important;
-	}
-
-	#mainwp-themes-updates-sites-inner-table thead {
-		display:none;
-	}
-
-	/* TRANSLATIONS */
-	#mainwp-translations-sites-table_wrapper #mainwp-translations-sites-table thead,
-	#mainwp-translations-sites-table_wrapper #mainwp-translations-sites-table tfoot {
-		display:none;
-	}
-
-	#mainwp-manage-updates .ui.stackable.grid>.row>.column,
-	#mainwp-manage-updates .ui.stackable.grid>.row>.wide.column {
-		padding: 0.125rem 1rem !important;
-	}
-
-	#mainwp-manage-updates .ui.table:not(.unstackable) tr>td.ui.content .ui.stackable.grid>.row>.sixteen.wide.column{
-		padding: 0.25rem !important;
+	#mainwp-wordpress-updates-groups-table tr table,
+	#mainwp-plugins-updates-groups-table tr table,
+	#mainwp-themes-updates-groups-table tr table,
+	#mainwp-manage-themes-table tr table,
+	#mainwp-manage-plugins-table tr table,
+	#mainwp-translations-groups-table tr table,
+	#mainwp-abandoned-plugins-groups-table tr table,
+	#mainwp-abandoned-themes-groups-table tr table,
+	#mainwp-plugins-updates-sites-table tr table,
+	#mainwp-themes-updates-sites-table tr table,
+	#mainwp-abandoned-plugins-sites-table tr table,
+	#mainwp-abandoned-themes-sites-table tr table,
+	#mainwp-wordpress-updates-table tr table,
+	#mainwp-plugins-updates-table tr table,
+	#mainwp-themes-updates-table tr table,
+	#mainwp-abandoned-plugins-table tr table,
+	#mainwp-abandoned-themes-table tr table,
+	#mainwp-translations-sites-table tr table,
+	#mainwp-abandoned-plugins-items-table tr table,
+	#mainwp-abandoned-themes-items-table tr table {
+		background: #f9fafb !important;
 	}
 
 }

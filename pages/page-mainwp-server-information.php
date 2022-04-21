@@ -1365,7 +1365,7 @@ class MainWP_Server_Information {
 
 		?>
 		<div class="mainwp-sub-header" style="margin: -14px -14px 0 -14px;">
-			<div class="ui mini form two column grid">
+			<div class="ui mini form two column stackable grid">
 				<div class="column">
 				<form method="POST" action="">
 					<?php wp_nonce_field( 'mainwp-admin-nonce' ); ?>
@@ -1456,8 +1456,7 @@ class MainWP_Server_Information {
 		 */
 		do_action( 'mainwp_before_plugin_privacy_section' );
 		?>
-		<div class="ui padded segment">
-			<div class="ui two columns grid">
+		<div class="ui two columns stackable grid">
 				<div class="column">
 					<div id="mainwp-plugin-privacy" class="ui piled segment">
 						<h2 class="ui header">
@@ -1472,7 +1471,7 @@ class MainWP_Server_Information {
 						<h3 class="ui header"><?php echo __( 'Third-party extensions and integrations', 'mainwp' ); ?></h3>
 						<p><?php echo __( 'This Plugin may be used with extensions that are operated by parties other than us. We may also provide extensions that have integrations with third party services. We do not control such extensions and integrations and are not responsible for their contents or the privacy or other practices of such extensions or integrations. Further, it is up to you to take precautions to ensure that whatever extensions or integrations you use adequately protect your privacy. Please review the Privacy Policies of such extensions or integrations before using them.', 'mainwp' ); ?></p>
 						<div class="ui hidden divider"></div>
-						<div class="ui two columns grid">
+					<div class="ui two columns stackable grid">
 							<div class="column">
 								<h3 class="ui header"><?php echo __( 'Our contact information', 'mainwp' ); ?></h3>
 								<p><?php echo __( 'If you have any questions regarding our privacy practices, please do not hesitate to contact us at the following:', 'mainwp' ); ?></p>
@@ -1516,7 +1515,6 @@ class MainWP_Server_Information {
 					<i style="font-size:350px;color:#eeeeee;" class="file outline icon"></i>
 					<i style="font-size:80px;color:#eeeeee;" class=" lock icon"></i>
 					</i>
-				</div>
 			</div>
 		</div>
 

@@ -530,12 +530,12 @@ class MainWP_Auto_Cache_Purge_View {
 				<?php echo __( 'See the Cache Control feature logs.', 'mainwp' ); ?>
 			</div>
 		<?php endif; ?>
-		<table class="ui single line table" id="mainwp-cache-control-log-table">
+		<table class="ui stackable table" id="mainwp-cache-control-log-table">
 			<thead>
 			<tr>
 					<th class="collapsing"><?php esc_html_e( 'Site', 'mainwp' ); ?></th>
 					<th class="no-sort collapsing"><i class="sign in icon"></i></th>
-				<th><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
+					<th class="collapsing"><?php esc_html_e( 'Log', 'mainwp' ); ?></th>
 			</tr>
 			</thead>
 			<tbody>

@@ -1,4 +1,4 @@
-=== MainWP Dashboard - Private WordPress Manager to Manage Multiple Sites ===
+=== MainWP Dashboard – The Private WordPress Manager for Website Maintenance ===
 Contributors: mainwp
 Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multiple Sites, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp

@@ -1,4 +1,4 @@
-=== MainWP Dashboard – The Private WordPress Manager for Website Maintenance ===
+=== MainWP Dashboard – The Private WordPress Manager for Multiple Website Maintenance ===
 Contributors: mainwp
 Tags: WordPress Manager, WordPress Management, Managed WordPress, Manage Multiple Sites, Control multiple sites, WordPress site management, WordPress management dashboard
 Author: mainwp
@@ -187,8 +187,11 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Fixed: Tables responsiveness issues
 * Fixed: An issue with rendering modals on mobile devices
 * Fixed: Column sorting problems in the Manage Email Settings table
+* Fixed: Actions menu placement on mobile devices
 * Updated: Bulk actions menu style on the Advanced Themes Automatic Updates page
-* Updated: Various minor cosmetic improvements
+* Updated: Button elements width and padding on mobile devices
+* Updated: Increased input and dropdown elements width on mobile devices
+* Updated: Side bar element padding on mobile devices
 
 = 4.2.1 - 4-14-2022 =
 * Added: More MainWP Dashboard settings values to the system report
@@ -235,7 +238,7 @@ Sure we have a quick FAQ with a lot more questions and answers [here](https://ma
 * Updated: The Select All, Deselect All element in the Select Sites box
 * Updated: Show site Title instead of URL in Manage Plugins and Manage Themes table
 * Updated: Show site Title instead or URL in the Sync Sites modal
-* Updated: The Select Sites box minimal height 
+* Updated: The Select Sites box minimal height
 * Updated: Info notices on the Extensions installation process
 * Updated: Available extension info to remove retired extensions
 

@@ -870,7 +870,7 @@ class MainWP_System {
 			wp_enqueue_script( 'mainwp-users', MAINWP_PLUGIN_URL . 'assets/js/mainwp-users.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
 			wp_enqueue_script( 'mainwp-moment', MAINWP_PLUGIN_URL . 'assets/js/moment/moment.min.js', array(), $this->current_version, true );
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, false );
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/dataTables.colReorder.js', array( 'jquery' ), $this->current_version, false );
 			wp_enqueue_script( 'semantic-ui-datatables-scroller', MAINWP_PLUGIN_URL . 'assets/js/scroller/scroller.dataTables.js', array( 'jquery' ), $this->current_version, false );
@@ -886,7 +886,7 @@ class MainWP_System {
 		}
 
 		if ( $load_cust_scripts ) {
-			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
+			wp_enqueue_script( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/semantic.min.js', array( 'jquery' ), $this->current_version, true );
 		}
 
 		wp_enqueue_script( 'mainwp-ui', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ui.js', array(), $this->current_version, true );
@@ -927,7 +927,7 @@ class MainWP_System {
 
 		if ( self::is_mainwp_pages() ) {
 			wp_enqueue_style( 'mainwp-filetree', MAINWP_PLUGIN_URL . 'assets/css/jqueryFileTree.css', array(), $this->current_version );
-			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/semantic.min.css', array(), $this->current_version );
 			wp_enqueue_style( 'semantic-mainwp', MAINWP_PLUGIN_URL . 'assets/css/mainwp-semantic.css', array(), $this->current_version );
 			wp_enqueue_style( 'semantic-ui-datatables', MAINWP_PLUGIN_URL . 'assets/js/datatables/datatables.min.css', array(), $this->current_version );
 			wp_enqueue_style( 'semantic-ui-datatables-colreorder', MAINWP_PLUGIN_URL . 'assets/js/colreorder/colReorder.semanticui.css', array(), $this->current_version );
@@ -939,7 +939,7 @@ class MainWP_System {
 		}
 
 		if ( $load_cust_scripts ) {
-			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/semantic-ui/semantic.min.css', array(), $this->current_version );
+			wp_enqueue_style( 'semantic', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/semantic.min.css', array(), $this->current_version );
 		}
 	}
 

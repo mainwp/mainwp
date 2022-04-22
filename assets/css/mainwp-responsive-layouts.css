@@ -2,7 +2,7 @@
 /*---------------[RESPONSIVE LAYOUTS]-------------*/
 /*------------------------------------------------*/
 
-@media only screen and ( min-width: 769px ) and ( max-width: 1440px ) {
+@media only screen and (min-width: 769px) and (max-width: 1440px) {
 
 	#mainwp-main-menu {
 		max-height: 75vh;
@@ -15,7 +15,7 @@
 	}
 }
 
-@media screen and ( max-width: 768px ) {
+@media screen and (max-width: 768px) {
 
 	.mainwp-ui table .menu.transition.visible {
 		top: 0 !important;
@@ -24,7 +24,7 @@
 		width: 100% !important;
 		background: none !important;
 		box-shadow: none !important;
-		border: 0px solid #fff !important;
+		border: 0 solid #fff !important;
 	}
 
 	.mainwp-ui table .menu.transition.visible:after {
@@ -41,7 +41,9 @@
 	/*--- General ---*/
 
 	.mainwp-ui [data-tooltip]:before,
-	.mainwp-ui [data-tooltip]:after { display: none !important; }
+	.mainwp-ui [data-tooltip]:after {
+		display: none !important;
+	}
 
 	.mainwp-ui .ui.dropdown {
 		width: 100% !important;
@@ -69,7 +71,7 @@
 		width: 100%;
 	}
 
-	.mainwp-actions-bar .ui.grid > [class*="two column"].row > .column,
+	.mainwp-actions-bar .ui.grid>[class*="two column"].row>.column,
 	.mainwp-actions-bar .ui.grid .column {
 		width: 100% !important;
 	}
@@ -126,7 +128,8 @@
 
 	.mainwp-ui .ui.table:not(.unstackable) thead tr th,
 	.mainwp-ui .ui.table:not(.unstackable) tbody tr td,
-	.mainwp-ui .ui.table:not(.unstackable) tfoot tr th, {
+	.mainwp-ui .ui.table:not(.unstackable) tfoot tr th,
+		{
 		display: block !important;
 	}
 
@@ -191,13 +194,10 @@
 	}
 
 	#mainwp-manage-themes-table tbody tr {
-		padding: 0px !important;
-	}
-	#mainwp-manage-themes-table tbody tr:hover {
-		background: #fff !important;
+		padding: 0 !important;
 	}
 
-	#mainwp-manage-themes-table tbody tr td:first-child {
+	#mainwp-manage-themes-table tbody tr:hover {
 		background: #fff !important;
 	}
 
@@ -234,22 +234,23 @@
 	#mainwp-manage-themes-table thead th.mainwp-first-th,
 	#mainwp-manage-plugins-table thead th.mainwp-first-th {
 		position: relative !important;
-		left: 0  !important;
-		top: 0  !important;
+		left: 0 !important;
+		top: 0 !important;
 		z-index: 0 !important;
 	}
+
 	#mainwp-manage-themes-table tbody tr td:first-child,
 	#mainwp-manage-plugins-table tbody tr td:first-child {
 		position: relative !important;
-		left: 0  !important;
-		top: 0  !important;
+		left: 0 !important;
+		top: 0 !important;
 		z-index: 0 !important;
 	}
 
 	/* --- Users --- */
 
 	.mainwp-ui .ui.button.wp-generate-pw {
-		margin-bottom: 0px !important;
+		margin-bottom: 0 !important;
 		display: block !important;
 	}
 
@@ -274,7 +275,7 @@
 	/* ---  Contribution by Joris Kramer  --- */
 
 	.mainwp-ui #mainwp-top-header .ui.stackable.grid .left.floated.column {
-		display:none !important;
+		display: none !important;
 	}
 
 	.mainwp-ui #mainwp-top-header .ui.stackable.grid .right.floated.column.right.aligned {
@@ -297,7 +298,7 @@
 	}
 
 	.mainwp-nav-wrap .ui.hidden.divider {
-		display:none !important;
+		display: none !important;
 	}
 
 	#mainwp-main-menu.ui.menu {
@@ -305,7 +306,7 @@
 	}
 
 	.mainwp-ui .ui.grid>.row>.column {
-		width:100% !important;
+		width: 100% !important;
 	}
 
 	.mainwp-ui .ui.segment.mainwp-widget .ui.grid>[class*="two column"].row>.column {
@@ -313,11 +314,11 @@
 	}
 
 	.mainwp-ui .ui.grid>.row>[class*="right aligned"].column.column {
-		text-align:left !important;
+		text-align: left !important;
 		margin-top: 1rem;
 	}
 
-	.mainwp-ui .ui.table:not(.unstackable) tr  {
+	.mainwp-ui .ui.table:not(.unstackable) tr {
 		display: inherit !important;
 	}
 
@@ -327,7 +328,7 @@
 	}
 
 	.mainwp-ui .ui.table:not(.unstackable) tr>td.column-site-bulk {
-		display:block !important;
+		display: block !important;
 	}
 
 	#mainwp-manage-sites-content table.single.line,

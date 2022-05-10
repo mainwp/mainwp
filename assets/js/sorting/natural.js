@@ -29,6 +29,8 @@
  *
  */
 
+/* eslint-disable */
+
 (function() {
 
 /*

@@ -549,7 +549,7 @@ class MainWP_System_Cron_Jobs {
 				array_shift( $last_run );
 			}
 
-			$last_run[] = date( 'Y-m-d H:i:s', $local_timestamp );
+			$last_run[] = date( 'Y-m-d H:i:s', $local_timestamp );  //phpcs:ignore -- local time.
 
 			MainWP_Utility::update_option( 'mainwp_updatescheck_last_run', wp_json_encode( $last_run ) );
 
@@ -560,7 +560,7 @@ class MainWP_System_Cron_Jobs {
 					MainWP_Utility::update_option( 'mainwp_updatescheck_last_run_timestamp_today', $last_run_timestamp_today );
 				}
 			} elseif ( $today_count < $frequencyDailyUpdate ) {
-				$today_count += 1;
+				$today_count++;
 			}
 			MainWP_Utility::update_option( 'mainwp_updatescheck_today_count', $today_count );
 

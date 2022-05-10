@@ -1230,9 +1230,9 @@ class MainWP_Manage_Sites_List_Table {
 				$class[] = 'no-sort';
 			}
 
-			$tag = 'th';
-			$priority = "";
-			$id  = "id='$column_key'";
+			$tag      = 'th';
+			$priority = '';
+			$id       = "id='$column_key'";
 
 			if ( ! empty( $class ) ) {
 				$class = "class='" . join( ' ', $class ) . "'";

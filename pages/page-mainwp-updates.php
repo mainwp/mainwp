@@ -1965,10 +1965,10 @@ class MainWP_Updates {
 			do_action( 'mainwp_updates_after_http_response_table' );
 
 			$table_features = array(
-				'searching' => 'false',
-				'paging'    => 'false',
-				'stateSave' => 'true',
-				'info'      => 'false',
+				'searching'  => 'false',
+				'paging'     => 'false',
+				'stateSave'  => 'true',
+				'info'       => 'false',
 				'responsive' => 'true',
 			);
 

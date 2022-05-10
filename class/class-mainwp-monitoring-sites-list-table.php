@@ -563,7 +563,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
 			'stateSave'     => 'true',
 			'stateDuration' => '0',
 			'order'         => '[]',
-			'responsive'    => 'true'
+			'responsive'    => 'true',
 		);
 
 		/**

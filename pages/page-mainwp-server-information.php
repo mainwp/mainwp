@@ -1071,9 +1071,9 @@ class MainWP_Server_Information {
 		</table>
 		<?php
 		$table_features = array(
-			'searching' => 'true',
-			'paging'    => 'false',
-			'info'      => 'false',
+			'searching'  => 'true',
+			'paging'     => 'false',
+			'info'       => 'false',
 			'responsive' => 'true',
 		);
 		/**

@@ -18,7 +18,7 @@
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 $.isFunction = $.isFunction || function(obj) {
     return typeof obj === "function" && typeof obj.nodeType !== "number";
@@ -512,7 +512,7 @@ $.extend($.expr[ ":" ], {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -2584,7 +2584,7 @@ $.fn.form.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -3203,7 +3203,7 @@ $.extend( $.easing, {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -4976,7 +4976,7 @@ $.fn.calendar.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -5853,7 +5853,7 @@ $.fn.checkbox.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -6580,7 +6580,7 @@ $.fn.dimmer.settings = {
           l = $('<div/>')
               .addClass(settings.className.loader)
               .addClass(settings.loaderVariation);
-          if(!!settings.loaderText){
+          if(settings.loaderText){
             l.text(settings.loaderText);
             l.addClass('text');
           }
@@ -6604,7 +6604,7 @@ $.fn.dimmer.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -10935,7 +10935,7 @@ $.fn.dropdown.settings.templates = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 "use strict";
 
@@ -11645,7 +11645,7 @@ $.fn.embed.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -11987,7 +11987,7 @@ $.fn.modal = function(parameters) {
             var
               $target   = $(event.target),
               isRtl = module.is.rtl();
-            ;
+            
             initialMouseDownInModal = ($target.closest(selector.modal).length > 0);
             if(initialMouseDownInModal) {
               module.verbose('Mouse down event registered inside the modal');
@@ -13098,7 +13098,7 @@ $.fn.modal.settings.templates = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -13657,7 +13657,7 @@ $.extend( $.easing, {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -15199,7 +15199,7 @@ $.fn.popup.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -16233,7 +16233,7 @@ $.fn.progress.settings = {
  *
  */
 
-;(function ( $, window, document, undefined ) {
+(function ( $, window, document, undefined ) {
 
 "use strict";
 
@@ -17572,7 +17572,7 @@ $.fn.slider.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -18127,7 +18127,7 @@ $.fn.rating.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -19695,7 +19695,7 @@ $.fn.search.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -20544,7 +20544,7 @@ $.fn.shape.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -21581,7 +21581,7 @@ $.fn.sidebar.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -22539,7 +22539,7 @@ $.fn.sticky.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -22634,7 +22634,7 @@ $.fn.tab = function(parameters) {
           if(settings.autoTabActivation && instance === undefined && module.determine.activeTab() == null) {
             module.debug('No active tab detected, setting first tab active', module.get.initialPath());
             module.changeTab(settings.autoTabActivation === true ? module.get.initialPath() : settings.autoTabActivation);
-          };
+          }
 
           module.instantiate();
         },
@@ -23541,7 +23541,7 @@ $.fn.tab.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -23816,7 +23816,7 @@ $.fn.toast = function(parameters) {
             }
             if(settings.displayTime > 0) {
               var progressingClass = className.progressing+' '+(settings.pauseOnHover ? className.pausable:'');
-              if (!!settings.showProgress) {
+              if (settings.showProgress) {
                 $progress = $('<div/>', {
                   class: className.progress + ' ' + (settings.classProgress || settings.class),
                   'data-percent': ''
@@ -24434,7 +24434,7 @@ $.extend( $.easing, {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -25544,7 +25544,7 @@ $.fn.transition.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 
@@ -26722,7 +26722,7 @@ $.api.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 "use strict";
 
@@ -27434,7 +27434,7 @@ $.fn.state.settings = {
  *
  */
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
 
 'use strict';
 

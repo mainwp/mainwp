@@ -1226,7 +1226,7 @@ class MainWP_Post_Page_Handler {
 		return $post_id;
 	}
 
-	
+
 	/**
 	 * Method add_status_handle()
 	 *

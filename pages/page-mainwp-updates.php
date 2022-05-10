@@ -1642,7 +1642,7 @@ class MainWP_Updates {
 					}
 				});
 			}
-			
+
 			jQuery( document ).on( 'click', '.trigger-all-accordion', function() {
 				if ( jQuery( this ).hasClass( 'active' ) ) {
 					jQuery( this ).removeClass( 'active' );

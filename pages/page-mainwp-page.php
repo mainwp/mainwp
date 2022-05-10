@@ -1032,7 +1032,6 @@ class MainWP_Page {
 					do_action( 'mainwp_pages_table_column', $page, $website );
 					?>
 					<td class="page-title  column-title">
-						
 						<strong>
 							<abbr title="<?php echo esc_html( $page['title'] ); ?>">
 								<?php if ( 'trash' != $page['status'] ) { ?>
